@@ -1,0 +1,61 @@
+name: Main worflow
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  run-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Node 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install deps
+        run: npm ci && forge install
+
+      - name: Check gas snapshots
+        run: forge snapshot --check
+
+      - name: Run tests
+        run: forge test --gas-report
+  run-slither:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Node 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install deps
+        run: npm ci && forge install
+
+      - name: Install slither
+        run: pip3 install slither-analyzer
+
+      - name: Run slither
+        run: slither .

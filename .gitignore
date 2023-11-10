@@ -1,0 +1,15 @@
+# Builds
+out/
+
+# Private files
+.env
+
+# Cahce
+cache/
+
+# Dependencies
+node_modules/
+
+# devenv
+.devenv
+.direnv

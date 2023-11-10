@@ -1,0 +1,16 @@
+{
+  "name": "foundry-template",
+  "version": "0.1.0",
+  "description": "Template repository for creating a new Foundry project quickly and in accordance with the Real Estate Executive standards",
+  "repository": "git@github.com:petra-foundation/foundry-template.git",
+  "author": "",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "husky": "^8.0.3"
+  }
+}
