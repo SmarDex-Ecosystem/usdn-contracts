@@ -23,12 +23,16 @@ library TickMath {
 
     function maxUsableTick(int24 tickSpacing) internal pure returns (int24 tick) {
         unchecked {
+            // we want to round, so divide before multiply is desired
+            // slither-disable-next-line divide-before-multiply
             tick = (MAX_TICK / tickSpacing) * tickSpacing;
         }
     }
 
     function minUsableTick(int24 tickSpacing) internal pure returns (int24 tick) {
         unchecked {
+            // we want to round, so divide before multiply is desired
+            // slither-disable-next-line divide-before-multiply
             tick = (MIN_TICK / tickSpacing) * tickSpacing;
         }
     }
