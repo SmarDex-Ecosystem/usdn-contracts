@@ -48,7 +48,7 @@ contract TestTickMath is TickMathFixture {
     function test_tickToPrice() public {
         assertEq(handler.getPriceAtTick(-100), 904_882_630_897_776_127); // Wolfram: 904_882_630_897_776_112
         assertEq(handler.getPriceAtTick(0), 1 ether);
-        assertApproxEqAbs(handler.getPriceAtTick(1), 1.001 ether, 1);
+        assertApproxEqAbs(handler.getPriceAtTick(1), 1.001 ether, 1); // We are one wei off here
         assertEq(handler.getPriceAtTick(100), 1_105_115_697_720_767_949); // Wolfram: 1_105_115_697_720_767_968
     }
 
