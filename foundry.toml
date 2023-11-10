@@ -75,7 +75,10 @@ dictionary_weight = 40
 #                                  Remappings                                  #
 # ---------------------------------------------------------------------------- #
 
-remappings = ["@openzeppelin/=node_modules/@openzeppelin/"]
+remappings = [
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "solady/src/=node_modules/solady/src/",
+]
 
 # ---------------------------------------------------------------------------- #
 #                                  Deployments                                 #

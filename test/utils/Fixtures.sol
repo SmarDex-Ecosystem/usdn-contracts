@@ -64,3 +64,17 @@ contract BaseFixture is Test {
         vm.label(BASE_SDEX, "SDEX");
     }
 }
+
+/**
+ * @title TickMathFixture
+ * @dev Utils for testing TickMath.sol
+ */
+contract TickMathFixture is BaseFixture {
+    function bound_int24(int24 x, int24 min, int24 max) internal pure returns (int24) {
+        uint256 _x = uint256(int256(x) + type(int24).max);
+        uint256 _min = uint256(int256(min) + type(int24).max);
+        uint256 _max = uint256(int256(max) + type(int24).max);
+        uint256 _bound = _bound(_x, _min, _max);
+        return int24(int256(_bound) - int256(type(int24).max));
+    }
+}
