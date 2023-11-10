@@ -77,8 +77,12 @@ dictionary_weight = 40
 # ---------------------------------------------------------------------------- #
 
 remappings = [
-    "@openzeppelin/=node_modules/@openzeppelin/",
+    "@chainlink/contracts/=node_modules/@chainlink/contracts/",
+    "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+    "@prb/math/=node_modules/@prb/math/",
+    "abdk-libraries-solidity/=node_modules/abdk-libraries-solidity/",
     "solady/src/=node_modules/solady/src/",
+    "@pythnetwork/pyth-sdk-solidity/=node_modules/@pythnetwork/pyth-sdk-solidity/",
 ]
 
 # ---------------------------------------------------------------------------- #
