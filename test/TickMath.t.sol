@@ -9,7 +9,7 @@ import { TickMathFixture } from "test/utils/Fixtures.sol";
 import { TickMathHandler } from "test/handlers/TickMathHandler.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
-contract TestTickMathSolady is TickMathFixture {
+contract TestTickMath is TickMathFixture {
     TickMathHandler handler;
 
     function setUp() public {
@@ -42,7 +42,7 @@ contract TestTickMathSolady is TickMathFixture {
 
         tickSpacing = -60; // should never happen but we're safe here
         assertEq(TickMath.minUsableTick(tickSpacing), -34_500);
-        assertEq(TickMath.maxUsableTick(tickSpacing), 93_480);
+        assertEq(TickMath.maxUsableTick(tickSpacing), 97_980);
     }
 
     function test_tickToPrice() public {

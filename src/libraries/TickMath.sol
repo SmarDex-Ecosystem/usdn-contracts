@@ -10,12 +10,13 @@ library TickMath {
     // The minimum price we want to resolve is 1000 wei, which equates to 1.001^-34_556
     int24 internal constant MIN_TICK = -34_556;
 
-    // The maximum tick is determined by what price foundry can handle in `assertApproxEqRel` for testing.
-    int24 internal constant MAX_TICK = 93_532;
+    // The maximum tick is determined by limits of the libraries used for math and testing.
+    int24 internal constant MAX_TICK = 98_000;
 
     // Min and max values
     uint256 internal constant MIN_PRICE = 1000;
-    uint256 internal constant MAX_PRICE = 39_823_075_360_216_634_032_273_880_460_244_960_603_683_768_332_879_368_712_516;
+    uint256 internal constant MAX_PRICE =
+        3_464_120_361_320_951_603_222_457_022_263_209_963_088_421_212_476_539_374_818_919;
 
     // Pre-computed value for ln(1.001)
     int256 internal constant LN_BASE = 999_500_333_083_533;
