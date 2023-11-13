@@ -1,32 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import "forge-std/console.sol";
-
-/* -------------------------------------------------------------------------- */
-/*                             External libraries                             */
-/* -------------------------------------------------------------------------- */
-
-/* -------------------------------- PaulRBerg ------------------------------- */
-
-import { SD59x18 } from "@prb/math/src/SD59x18.sol";
-
-/* ------------------------------ Open Zeppelin ----------------------------- */
-
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { ERC20, ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-
-/* -------------------------------------------------------------------------- */
-/*                              Internal imports                              */
-/* -------------------------------------------------------------------------- */
-
-import { TickMath } from "src/libraries/TickMath128.sol";
-import { TickBitmap } from "src/libraries/TickBitmap.sol";
-import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
-
 /* -------------------------------------------------------------------------- */
 /*                                   Structs                                  */
 /* -------------------------------------------------------------------------- */
@@ -61,10 +35,6 @@ interface IUsdnVault {
     /* -------------------------------------------------------------------------- */
     /*                               Opened features                              */
     /* -------------------------------------------------------------------------- */
-
-    /// @notice Update balances according to the current price.
-    /// @param priceData The price data.
-    function updateBalances(bytes calldata priceData) external payable;
 
     /// @notice Liquidate all positions in a tick.
     ///         Note: MaxIter is used to limit the number of iterations.
@@ -203,17 +173,6 @@ interface IUsdnVault {
     /// @return usdp Price of USDP with same number of decimals as price feed.
     function usdpPrice(uint128 currentPrice) external view returns (uint256 usdp);
 
-    /// @notice PNL of long side since last price update.
-    /// @dev The number is formatted with the same number of decimals as the price feed.
-    /// @return pnl PNL of long side since last price update with same number of decimals as price feed.
-    function pnlLong(uint128 price) external view returns (int256 pnl);
-
-    /// @notice Asset available for long side.
-    ///         Note: doesn't take into account the funding rate
-    /// @param currentPrice The current price.
-    /// @return available Asset available for long side.
-    function longAssetAvailable(uint128 currentPrice) external view returns (int256 available);
-
     /// @notice Asset available for long side with funding rate.
     ///         Note: take into account the funding rate
     /// @param currentPrice The current price.
@@ -224,12 +183,6 @@ interface IUsdnVault {
         view
         returns (int256 available);
 
-    /// @notice Asset available for short side.
-    ///        Note: doesn't take into account the funding rate
-    /// @param currentPrice The current price.
-    /// @return available Asset available for short side.
-    function shortAssetAvailable(uint128 currentPrice) external view returns (int256 available);
-
     /// @notice Asset available for short side with funding rate.
     ///         Note: take into account the funding rate
     /// @param currentPrice The current price.
@@ -239,24 +192,6 @@ interface IUsdnVault {
         external
         view
         returns (int256 available);
-
-    /// @notice Trading exposure of long side.
-    /// @param currentPrice The current price.
-    /// @return expo Trading exposure of long side.
-    function longTradingExpo(uint128 currentPrice) external view returns (int256 expo);
-
-    /// @notice Trading exposure of short side.
-    /// @param currentPrice The current price.
-    /// @return expo Trading exposure of short side.
-    function shortTradingExpo(uint128 currentPrice) external view returns (int256 expo);
-
-    /// @notice Funding rate.
-    /// @dev For each % of difference between longTradingExpo and shortTradingExpo, the funding rate is 0.03% per day.
-    function funding(uint128 currentPrice, uint128 timestamp) external view returns (int256 fund);
-
-    /// @notice How much of the long balance needs to be transferred to short balance on next action.
-    /// @dev A negative number means that some of the short balance needs to be transferred to the long balance.
-    function fundingAsset(uint128 currentPrice, uint128 timestamp) external view returns (int256 fund);
 
     /// @notice Get the liquidation price of a long position.
     /// @param tick The position.

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import "forge-std/console.sol";
-
 /* -------------------------------------------------------------------------- */
 /*                             External libraries                             */
 /* -------------------------------------------------------------------------- */
@@ -26,10 +24,10 @@ import { ERC20, ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensio
 import { TickMath } from "src/libraries/TickMath128.sol";
 import { TickBitmap } from "src/libraries/TickBitmap.sol";
 import { IUsdnVault, Position } from "src/interfaces/IUsdnVault.sol";
-import { UsdnVaultStorage } from "./UsdnVaultStorage.sol";
+import { UsdnVaultCore } from "./UsdnVaultCore.sol";
 import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 
-contract UsdnVault is IUsdnVault, UsdnVaultStorage, Ownable {
+contract UsdnVault is IUsdnVault, UsdnVaultCore, Ownable {
     // Safe ERC20 and Tick bitmap
     using SafeERC20 for IERC20Metadata;
     using TickBitmap for mapping(int16 => uint256);
@@ -44,9 +42,6 @@ contract UsdnVault is IUsdnVault, UsdnVaultStorage, Ownable {
     /// @param _tickSpacing The positions tick spacing.
     constructor(IERC20Metadata _asset, IOracleMiddleware _oracleMiddleware, int24 _tickSpacing)
         Ownable(msg.sender)
-        UsdnVaultStorage(_asset, _oracleMiddleware, _tickSpacing)
-    {
-        assetDecimals = _asset.decimals();
-        priceFeedDecimals = oracleMiddleware.decimals();
-    }
+        UsdnVaultCore(_asset, _oracleMiddleware, _tickSpacing)
+    { }
 }
