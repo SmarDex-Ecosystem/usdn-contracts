@@ -31,4 +31,19 @@ contract TestTickMath is Test {
         int256 test = int256(FixedPointMathLib.lnWad(int256(value)));
         assertApproxEqRel(ref, test, 1000); // 0.0000000000001%
     }
+
+    function testFuzzDivUp(uint256 lhs, uint256 rhs) public {
+        lhs = bound(lhs, 0, 10_000_000_000_000_000_000_000_000_000_000_000_000);
+        rhs = bound(rhs, 1, 10_000_000_000_000_000_000_000_000_000_000_000_000);
+        vm.assume(rhs != 0);
+        string[] memory cmds = new string[](4);
+        cmds[0] = "./test_utils/target/release/test_utils";
+        cmds[1] = "div-up";
+        cmds[2] = vm.toString(lhs);
+        cmds[3] = vm.toString(rhs);
+        bytes memory result = vm.ffi(cmds);
+        uint256 ref = abi.decode(result, (uint256));
+        uint256 test = FixedPointMathLib.divUp(lhs, rhs);
+        assertEq(ref, test);
+    }
 }

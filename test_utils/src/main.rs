@@ -1,4 +1,4 @@
-use alloy_primitives::{FixedBytes, I256};
+use alloy_primitives::{FixedBytes, I256, U256};
 use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
 use decimal_rs::{Decimal, DecimalParseError};
@@ -11,15 +11,24 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// e^x in WAD denomination
     ExpWad {
-        /// e(value) in WAD denomination
+        /// exponent
         #[arg(allow_hyphen_values = true)]
         value: String,
     },
+    /// ln(x) in WAD denomination
     LnWad {
-        /// ln(value) in WAD denomination
+        /// operand
         #[arg(allow_hyphen_values = true)]
         value: String,
+    },
+    /// ceil(lhs / rhs)
+    DivUp {
+        /// LHS
+        lhs: String,
+        /// RHS
+        rhs: String,
     },
 }
 
@@ -45,6 +54,15 @@ fn main() -> Result<()> {
             let res = value_dec.ln().ok_or_else(|| anyhow!("exp overflow"))?;
             let res_wad = (res * wad).round(0);
             let res_hex: I256 = res_wad.to_string().parse()?;
+            let bytes: [u8; 32] = res_hex.to_be_bytes();
+            let res_bytes: FixedBytes<32> = bytes.into();
+            println!("{res_bytes}");
+        }
+        Commands::DivUp { lhs, rhs } => {
+            let lhs: Decimal = lhs.parse().map_err(|e: DecimalParseError| anyhow!(e))?;
+            let rhs: Decimal = rhs.parse().map_err(|e: DecimalParseError| anyhow!(e))?;
+            let res = (lhs / rhs).ceil();
+            let res_hex: U256 = res.to_string().parse()?;
             let bytes: [u8; 32] = res_hex.to_be_bytes();
             let res_bytes: FixedBytes<32> = bytes.into();
             println!("{res_bytes}");
