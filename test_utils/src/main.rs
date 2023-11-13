@@ -23,6 +23,12 @@ enum Commands {
         #[arg(allow_hyphen_values = true)]
         value: String,
     },
+    PowWad {
+        /// Base
+        base: String,
+        /// Exponent
+        exp: String,
+    },
     /// ceil(lhs / rhs)
     DivUp {
         /// LHS
@@ -52,6 +58,20 @@ fn main() -> Result<()> {
             let value: Decimal = value.parse().map_err(|e: DecimalParseError| anyhow!(e))?;
             let value_dec = value / wad;
             let res = value_dec.ln().ok_or_else(|| anyhow!("exp overflow"))?;
+            let res_wad = (res * wad).round(0);
+            let res_hex: I256 = res_wad.to_string().parse()?;
+            let bytes: [u8; 32] = res_hex.to_be_bytes();
+            let res_bytes: FixedBytes<32> = bytes.into();
+            println!("{res_bytes}");
+        }
+        Commands::PowWad { base, exp } => {
+            let base: Decimal = base.parse().map_err(|e: DecimalParseError| anyhow!(e))?;
+            let exp: Decimal = exp.parse().map_err(|e: DecimalParseError| anyhow!(e))?;
+            let base_dec = base / wad;
+            let exp_dec = exp / wad;
+            let res = base_dec
+                .checked_pow(&exp_dec)
+                .ok_or_else(|| anyhow!("exp overflow"))?;
             let res_wad = (res * wad).round(0);
             let res_hex: I256 = res_wad.to_string().parse()?;
             let bytes: [u8; 32] = res_hex.to_be_bytes();

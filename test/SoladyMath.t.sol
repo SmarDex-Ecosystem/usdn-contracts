@@ -32,6 +32,20 @@ contract TestSoladyMath is Test {
         assertApproxEqRel(ref, test, 1000); // 0.0000000000001%
     }
 
+    function testFuzzFFIPowWad(int256 base, int256 exp) public {
+        base = bound(base, 1, 0.1 ether);
+        exp = bound(exp, 500_000 ether, 1_000_000 ether);
+        string[] memory cmds = new string[](4);
+        cmds[0] = "./test_utils/target/release/test_utils";
+        cmds[1] = "pow-wad";
+        cmds[2] = vm.toString(base);
+        cmds[3] = vm.toString(exp);
+        bytes memory result = vm.ffi(cmds);
+        int256 ref = abi.decode(result, (int256));
+        int256 test = int256(FixedPointMathLib.powWad(base, exp));
+        assertApproxEqRel(ref, test, 0.0002 ether); // 0.02%
+    }
+
     function testFuzzFFIDivUp(uint256 lhs, uint256 rhs) public {
         // rust implementation only has 38 digits left of decimal point max
         lhs = bound(lhs, 0, 10_000_000_000_000_000_000_000_000_000_000_000_000);
