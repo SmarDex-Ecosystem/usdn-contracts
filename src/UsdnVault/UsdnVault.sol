@@ -25,7 +25,28 @@ import { ERC20, ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensio
 
 import { TickMath } from "src/libraries/TickMath128.sol";
 import { TickBitmap } from "src/libraries/TickBitmap.sol";
-import { IUsdnVault } from "src/interfaces/IUsdnVault.sol";
+import { IUsdnVault, Position } from "src/interfaces/IUsdnVault.sol";
+import { UsdnVaultStorage } from "./UsdnVaultStorage.sol";
 import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 
-contract UsdnVault is IUsdnVault { }
+contract UsdnVault is IUsdnVault, UsdnVaultStorage, Ownable {
+    // Safe ERC20 and Tick bitmap
+    using SafeERC20 for IERC20Metadata;
+    using TickBitmap for mapping(int16 => uint256);
+
+    /* -------------------------------------------------------------------------- */
+    /*                                 Constructor                                */
+    /* -------------------------------------------------------------------------- */
+
+    /// @notice Constructor.
+    /// @param _asset The asset ERC20 contract.
+    /// @param _oracleMiddleware The oracle middleware contract.
+    /// @param _tickSpacing The positions tick spacing.
+    constructor(IERC20Metadata _asset, IOracleMiddleware _oracleMiddleware, int24 _tickSpacing)
+        Ownable(msg.sender)
+        UsdnVaultStorage(_asset, _oracleMiddleware, _tickSpacing)
+    {
+        assetDecimals = _asset.decimals();
+        priceFeedDecimals = oracleMiddleware.decimals();
+    }
+}
