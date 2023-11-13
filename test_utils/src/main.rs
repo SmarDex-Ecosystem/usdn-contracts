@@ -1,4 +1,4 @@
-use alloy_primitives::I256;
+use alloy_primitives::{FixedBytes, I256};
 use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
 use decimal_rs::{Decimal, DecimalParseError};
@@ -12,9 +12,14 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     ExpWad {
-        /// lists test values
+        /// e(value) in WAD denomination
         #[arg(allow_hyphen_values = true)]
-        exp: String,
+        value: String,
+    },
+    LnWad {
+        /// ln(value) in WAD denomination
+        #[arg(allow_hyphen_values = true)]
+        value: String,
     },
 }
 
@@ -24,17 +29,25 @@ fn main() -> Result<()> {
     let wad: Decimal = "1000000000000000000".parse().unwrap();
 
     match &cli.command {
-        Commands::ExpWad { exp } => {
-            let exp: Decimal = exp.parse().map_err(|e: DecimalParseError| anyhow!(e))?;
-            let exp_dec = exp / wad;
-            let res = exp_dec.exp().ok_or_else(|| anyhow!("exp overflow"))?;
+        Commands::ExpWad { value } => {
+            let value: Decimal = value.parse().map_err(|e: DecimalParseError| anyhow!(e))?;
+            let value_dec = value / wad;
+            let res = value_dec.exp().ok_or_else(|| anyhow!("exp overflow"))?;
             let res_wad = (res * wad).floor();
             let res_hex: I256 = res_wad.to_string().parse()?;
-            if res_hex == I256::ZERO {
-                println!("0x0000000000000000000000000000000000000000000000000000000000000000");
-            } else {
-                println!("{}", res_hex.to_hex_string());
-            }
+            let bytes: [u8; 32] = res_hex.to_be_bytes();
+            let res_bytes: FixedBytes<32> = bytes.into();
+            println!("{res_bytes}");
+        }
+        Commands::LnWad { value } => {
+            let value: Decimal = value.parse().map_err(|e: DecimalParseError| anyhow!(e))?;
+            let value_dec = value / wad;
+            let res = value_dec.ln().ok_or_else(|| anyhow!("exp overflow"))?;
+            let res_wad = (res * wad).round(0);
+            let res_hex: I256 = res_wad.to_string().parse()?;
+            let bytes: [u8; 32] = res_hex.to_be_bytes();
+            let res_bytes: FixedBytes<32> = bytes.into();
+            println!("{res_bytes}");
         }
     }
     Ok(())
