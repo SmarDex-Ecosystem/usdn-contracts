@@ -13,7 +13,7 @@ library TickMath {
     // The maximum tick is determined by limits of the libraries used for math and testing.
     int24 internal constant MAX_TICK = 98_000;
 
-    // Min and max values
+    // Min and max representable values for the price
     uint256 internal constant MIN_PRICE = 1000;
     uint256 internal constant MAX_PRICE =
         3_464_120_361_320_951_603_222_457_022_263_209_963_088_421_212_476_539_374_818_919;
@@ -21,6 +21,10 @@ library TickMath {
     // Pre-computed value for ln(1.001)
     int256 internal constant LN_BASE = 999_500_333_083_533;
 
+    /**
+     * @notice Get the largest usable tick, given a tick spacing.
+     * @param tickSpacing only use ticks that are a multiple of this value
+     */
     function maxUsableTick(int24 tickSpacing) internal pure returns (int24 tick) {
         unchecked {
             // we want to round, so divide before multiply is desired
@@ -29,6 +33,10 @@ library TickMath {
         }
     }
 
+    /**
+     * @notice Get the smallest usable tick, given a tick spacing.
+     * @param tickSpacing only use ticks that are a multiple of this value
+     */
     function minUsableTick(int24 tickSpacing) internal pure returns (int24 tick) {
         unchecked {
             // we want to round, so divide before multiply is desired
@@ -38,10 +46,10 @@ library TickMath {
     }
 
     /**
-     * @notice Gets the price at a given tick
-     * @dev Calculates the price as 1.001^tick = 2^(tick * log_2(1.001)) = e^(tick * ln(1.001))
-     * @param tick The tick
-     * @return price The price
+     * @notice Get the price at a given tick
+     * @dev Calculates the price as 1.001^tick = e^(tick * ln(1.001))
+     * @param tick the tick
+     * @return price the corresponding price
      */
     function getPriceAtTick(int24 tick) internal pure returns (uint256 price) {
         if (tick > MAX_TICK || tick < MIN_TICK) revert InvalidTick();
@@ -49,10 +57,10 @@ library TickMath {
     }
 
     /**
-     * @notice Gets the tick corresponding to price, rounded down towards negative infinity.
-     * @dev log2(price)/log2(1.001) = ln(price)/ln(1.001) gives the tick
-     * @param price The price
-     * @return tick The tick corresponding to the price
+     * @notice Get the tick corresponding to a price, rounded down towards negative infinity.
+     * @dev log_1.001(price) = ln(price)/ln(1.001) gives the tick
+     * @param price the price
+     * @return tick the largest tick which price is less than or equal to the given price
      */
     function getTickAtPrice(uint256 price) internal pure returns (int24 tick) {
         if (price < MIN_PRICE || price > MAX_PRICE) revert InvalidPrice();
@@ -74,10 +82,10 @@ library TickMath {
     }
 
     /**
-     * @notice Gets the tick closest to price
-     * @dev log2(price)/log2(1.001) = ln(price)/ln(1.001) gives the tick
-     * @param price The price
-     * @return tick The closest tick to the price
+     * @notice Get the tick closest to price
+     * @dev log_1.001(price) = ln(price)/ln(1.001) gives the tick
+     * @param price the price
+     * @return tick the closest tick to the given price
      */
     function getClosestTickAtPrice(uint256 price) internal pure returns (int24 tick) {
         if (price < MIN_PRICE || price > MAX_PRICE) revert InvalidPrice();
