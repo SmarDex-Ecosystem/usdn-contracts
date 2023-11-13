@@ -39,14 +39,16 @@ contract USDN is IUSDN, Context, IERC20, IERC20Metadata, IERC20Errors, AccessCon
     string private _name;
     string private _symbol;
 
-    constructor(string memory name_, string memory symbol_, address defaultAdmin, address minter, address adjustment)
-        EIP712(name_, "1")
-    {
+    constructor(string memory name_, string memory symbol_, address minter, address adjustment) EIP712(name_, "1") {
         _name = name_;
         _symbol = symbol_;
-        _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
-        _grantRole(MINTER_ROLE, minter);
-        _grantRole(ADJUSTMENT_ROLE, adjustment);
+        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        if (minter != address(0)) {
+            _grantRole(MINTER_ROLE, minter);
+        }
+        if (adjustment != address(0)) {
+            _grantRole(ADJUSTMENT_ROLE, adjustment);
+        }
     }
 
     function name() public view returns (string memory) {
