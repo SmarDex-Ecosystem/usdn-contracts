@@ -30,10 +30,10 @@ jobs:
         run: npm ci && forge install
 
       - name: Check gas snapshots
-        run: forge snapshot --no-match-contract TestSoladyMath --check
+        run: forge snapshot --no-match-test FFI --check
 
       - name: Run tests
-        run: forge test --no-match-contract TestSoladyMath --gas-report
+        run: forge test --no-match-test FFI --gas-report
   run-slither:
     runs-on: ubuntu-latest
     steps:

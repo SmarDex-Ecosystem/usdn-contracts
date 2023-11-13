@@ -8,7 +8,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
 contract TestSoladyMath is Test {
-    function testFuzzExpWad(int256 value) public {
+    function testFuzzFFIExpWad(int256 value) public {
         value = bound(value, -42_139_678_854_452_767_552, 135_305_999_368_893_231_588);
         string[] memory cmds = new string[](3);
         cmds[0] = "./test_utils/target/release/test_utils";
@@ -20,7 +20,7 @@ contract TestSoladyMath is Test {
         assertApproxEqRel(ref, test, 1); // 0.0000000000000001%
     }
 
-    function testFuzzLnWad(uint256 value) public {
+    function testFuzzFFILnWad(uint256 value) public {
         value = bound(value, TickMath.MIN_PRICE, TickMath.MAX_PRICE);
         string[] memory cmds = new string[](3);
         cmds[0] = "./test_utils/target/release/test_utils";
@@ -32,7 +32,7 @@ contract TestSoladyMath is Test {
         assertApproxEqRel(ref, test, 1000); // 0.0000000000001%
     }
 
-    function testFuzzDivUp(uint256 lhs, uint256 rhs) public {
+    function testFuzzFFIDivUp(uint256 lhs, uint256 rhs) public {
         lhs = bound(lhs, 0, 10_000_000_000_000_000_000_000_000_000_000_000_000);
         rhs = bound(rhs, 1, 10_000_000_000_000_000_000_000_000_000_000_000_000);
         vm.assume(rhs != 0);
