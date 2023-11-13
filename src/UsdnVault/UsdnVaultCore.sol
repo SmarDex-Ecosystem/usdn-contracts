@@ -25,7 +25,7 @@ import { TickMath } from "src/libraries/TickMath128.sol";
 import { TickBitmap } from "src/libraries/TickBitmap.sol";
 import { UsdnVaultStorage } from "./UsdnVaultStorage.sol";
 import { IUsdnVaultCore } from "src/interfaces/IUsdnVaultCore.sol";
-import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { IOracleMiddleware, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 
 /* --------------------------------- Errors --------------------------------- */
 
@@ -51,8 +51,9 @@ contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
     /// @notice Update balances according to the current price.
     /// @param priceData The price data.
     function updateBalances(bytes calldata priceData) external payable {
-        PriceInfo memory currentPrice =
-            oracleMiddleware.parseAndValidatePrice{ value: msg.value }(uint128(block.timestamp), 0, priceData);
+        PriceInfo memory currentPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+            uint128(block.timestamp), ProtocolAction.None, priceData
+        );
         _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
     }
 
