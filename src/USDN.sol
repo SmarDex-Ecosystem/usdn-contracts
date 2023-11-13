@@ -22,19 +22,25 @@ import { IUSDN } from "src/interfaces/IUSDN.sol";
  * Balances and total supply can only grow over time and never shrink.
  */
 contract USDN is IUSDN, Context, IERC20, IERC20Metadata, IERC20Errors, AccessControl, IERC20Permit, EIP712, Nonces {
+    // Role required to mint new shares.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
+    // Role required to adjust the multiplier.
     bytes32 public constant ADJUSTMENT_ROLE = keccak256("ADJUSTMENT_ROLE");
 
     bytes32 private constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
+    // Mapping from account to number of shares
     mapping(address account => uint256) private _shares;
 
+    // Mapping of allowances by owner and spender. This is in token units, not shares.
     mapping(address account => mapping(address spender => uint256)) private _allowances;
 
     uint8 public constant decimals = 18;
 
     uint256 private _totalShares;
+    // Multiplier used to convert between shares and tokens. This is a fixed-point number with 18 decimals.
     uint256 private _multiplier = 1e18;
     uint256 private constant MULTIPLIER_DIVISOR = 1e18;
 
