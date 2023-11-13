@@ -79,7 +79,7 @@ contract TestTickMath is TickMathFixture {
         console2.log("corresponding tick", tick);
         uint256 price2 = handler.getPriceAtTick(tick);
         console2.log("price", price2);
-        assertApproxEqRel(price, price2, 1e15); // within 0.1%
+        assertApproxEqRel(price, price2, 0.001 ether); // within 0.1%
     }
 
     function testFuzz_conversionImprecise(uint256 price) public {
@@ -88,7 +88,7 @@ contract TestTickMath is TickMathFixture {
         uint256 price2 = handler.getPriceAtTick(tick); // corresponding price (rounded down)
         int24 tick2 = handler.getTickAtPrice(price2); // convert back
         uint256 price3 = handler.getPriceAtTick(tick2); // to compare
-        assertApproxEqRel(price2, price3, 2e15); // within 0.2%
+        assertApproxEqRel(price2, price3, 0.002 ether); // within 0.2%
         assertLe(price2, price); // price2 <= price (since tick is rounded down)
     }
 }
