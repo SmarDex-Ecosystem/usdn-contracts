@@ -71,7 +71,13 @@ The environment provides the following tools:
 
 ### Tests
 
-To run tests, use the `forge test -vvv` command or `make test`.
+Compile the test utils by running the following inside the `test_utils` folder (requires Rust):
+
+```bash
+cargo build --release
+```
+
+To run tests, use the `forge test -vvv`.
 
 ### Deployment scripts
 
