@@ -44,12 +44,10 @@ contract USDN is IUSDN, Context, IERC20, IERC20Metadata, IERC20Errors, AccessCon
     uint256 private _multiplier = 1e18;
     uint256 private constant MULTIPLIER_DIVISOR = 1e18;
 
-    string private _name;
-    string private _symbol;
+    string private constant NAME = "Ultimate Synthetic Delta Neutral";
+    string private constant SYMBOL = "USDN";
 
-    constructor(string memory name_, string memory symbol_, address minter, address adjustment) EIP712(name_, "1") {
-        _name = name_;
-        _symbol = symbol_;
+    constructor(address minter, address adjustment) EIP712(NAME, "1") {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         if (minter != address(0)) {
             _grantRole(MINTER_ROLE, minter);
@@ -63,16 +61,16 @@ contract USDN is IUSDN, Context, IERC20, IERC20Metadata, IERC20Errors, AccessCon
      * @notice Name of the token.
      * @return name the name string
      */
-    function name() public view returns (string memory) {
-        return _name;
+    function name() public pure returns (string memory) {
+        return NAME;
     }
 
     /**
      * @notice Symbol of the token.
      * @return symbol the symbol string
      */
-    function symbol() public view returns (string memory) {
-        return _symbol;
+    function symbol() public pure returns (string memory) {
+        return SYMBOL;
     }
 
     /**

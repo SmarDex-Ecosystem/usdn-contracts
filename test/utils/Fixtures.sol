@@ -3,7 +3,8 @@ pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
 
-import "./Constants.sol";
+import "test/utils/Constants.sol";
+import { USDN } from "src/USDN.sol";
 
 /**
  * @title BaseFixture
@@ -76,5 +77,17 @@ contract TickMathFixture is BaseFixture {
         uint256 _max = uint256(int256(max) + type(int24).max);
         uint256 _bound = _bound(_x, _min, _max);
         return int24(int256(_bound) - int256(type(int24).max));
+    }
+}
+
+/**
+ * @title USDNTokenFixture
+ * @dev Utils for testing USDN.sol
+ */
+contract USDNTokenFixture is BaseFixture {
+    USDN public usdn;
+
+    function setUp() public virtual {
+        usdn = new USDN(address(0), address(0));
     }
 }
