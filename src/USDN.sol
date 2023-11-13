@@ -176,7 +176,8 @@ contract USDN is IUSDN, Context, IERC20, IERC20Metadata, IERC20Errors, AccessCon
 
     /**
      * @dev Transfer a `value` amount of tokens from `from` to `to`, or alternatively mint (or burn) if `from` or `to`
-     * is the zero address.
+     * is the zero address. Overflow checks are required because the total supply of tokens could exceed the maximum
+     * total number of shares (uint256).
      * @dev Emits a {Transfer} event.
      * @param from the source address
      * @param to the destination address
@@ -185,29 +186,19 @@ contract USDN is IUSDN, Context, IERC20, IERC20Metadata, IERC20Errors, AccessCon
     function _update(address from, address to, uint256 value) internal {
         uint256 _sharesValue = value * MULTIPLIER_DIVISOR / _multiplier;
         if (from == address(0)) {
-            // Overflow check required: The rest of the code assumes that totalSupply never overflows
             _totalShares += _sharesValue;
         } else {
             uint256 fromBalance = _shares[from];
             if (fromBalance < _sharesValue) {
                 revert ERC20InsufficientBalance(from, fromBalance, _sharesValue);
             }
-            unchecked {
-                // Overflow not possible: value <= fromBalance <= totalSupply.
-                _shares[from] = fromBalance - _sharesValue;
-            }
+            _shares[from] = fromBalance - _sharesValue;
         }
 
         if (to == address(0)) {
-            unchecked {
-                // Overflow not possible: value <= totalSupply or value <= fromBalance <= totalSupply.
-                _totalShares -= _sharesValue;
-            }
+            _totalShares -= _sharesValue;
         } else {
-            unchecked {
-                // Overflow not possible: balance + value is at most totalSupply, which we know fits into a uint256.
-                _shares[to] += _sharesValue;
-            }
+            _shares[to] += _sharesValue;
         }
 
         emit Transfer(from, to, value);
