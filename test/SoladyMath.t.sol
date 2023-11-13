@@ -9,7 +9,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 
 contract TestSoladyMath is Test {
     function testFuzzFFIExpWad(int256 value) public {
-        value = bound(value, -42_139_678_854_452_767_552, 135_305_999_368_893_231_588);
+        value = bound(value, -42_139_678_854_452_767_552, 135_305_999_368_893_231_588); // acceptable values for solady
         string[] memory cmds = new string[](3);
         cmds[0] = "./test_utils/target/release/test_utils";
         cmds[1] = "exp-wad";
@@ -33,6 +33,7 @@ contract TestSoladyMath is Test {
     }
 
     function testFuzzFFIDivUp(uint256 lhs, uint256 rhs) public {
+        // rust implementation only has 38 digits left of decimal point max
         lhs = bound(lhs, 0, 10_000_000_000_000_000_000_000_000_000_000_000_000);
         rhs = bound(rhs, 1, 10_000_000_000_000_000_000_000_000_000_000_000_000);
         vm.assume(rhs != 0);
