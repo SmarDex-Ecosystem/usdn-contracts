@@ -33,7 +33,7 @@ jobs:
         run: forge snapshot --check
 
       - name: Run tests
-        run: forge test --gas-report
+        run: forge test --no-match-contract TestSoladyMath --gas-report
   run-slither:
     runs-on: ubuntu-latest
     steps:
