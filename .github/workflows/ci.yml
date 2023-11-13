@@ -30,7 +30,7 @@ jobs:
         run: npm ci && forge install
 
       - name: Check gas snapshots
-        run: forge snapshot --check
+        run: forge snapshot --no-match-contract TestSoladyMath --check
 
       - name: Run tests
         run: forge test --no-match-contract TestSoladyMath --gas-report

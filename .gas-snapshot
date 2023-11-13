@@ -1,6 +1,6 @@
-TestTickMath:testFuzz_conversion(int24) (runs: 256, μ: 17096, ~: 17374)
+TestTickMath:testFuzz_conversion(int24) (runs: 256, μ: 17097, ~: 17374)
 TestTickMath:testFuzz_conversionImprecise(uint256) (runs: 256, μ: 12167, ~: 12285)
-TestTickMath:testFuzz_conversionReverse(uint256) (runs: 256, μ: 15233, ~: 15301)
+TestTickMath:testFuzz_conversionReverse(uint256) (runs: 256, μ: 15236, ~: 15301)
 TestTickMath:test_lnBase() (gas: 839)
 TestTickMath:test_maxPrice() (gas: 3654)
 TestTickMath:test_minPrice() (gas: 1977)
