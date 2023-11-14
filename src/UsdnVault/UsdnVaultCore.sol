@@ -41,8 +41,11 @@ contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
         UsdnVaultStorage(_asset, _oracleMiddleware, _tickSpacing)
     { }
 
-    /// @notice Update balances according to the current price.
-    /// @param priceData The price data.
+    /* -------------------------------------------------------------------------- */
+    /*                             External functions                             */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IUsdnVaultCore
     function updateBalances(bytes calldata priceData) external payable {
         PriceInfo memory currentPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint128(block.timestamp), ProtocolAction.None, priceData
@@ -50,22 +53,18 @@ contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
         _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
     }
 
-    /// @notice PNL of long side since last price update.
-    /// @dev The number is formatted with the same number of decimals as the price feed.
-    /// @return pnl PNL of long side since last price update with same number of decimals as price feed.
-    function pnlLong(uint128 price) public view returns (int256 pnl) {
-        int256 priceDiff = int256(uint256(price)) - int256(uint256(lastPrice));
-        pnl = (int256(totalExpo) * priceDiff) / int256(10 ** assetDecimals); // same decimals as price feed
-    }
+    /* -------------------------------------------------------------------------- */
+    /*                              Public functions                              */
+    /* -------------------------------------------------------------------------- */
 
-    /// @notice How much of the long balance needs to be transferred to short balance on next action.
-    /// @dev A negative number means that some of the short balance needs to be transferred to the long balance.
+    /* --------------------------------- Funding -------------------------------- */
+
+    /// @inheritdoc IUsdnVaultCore
     function fundingAsset(uint128 currentPrice, uint128 timestamp) public view returns (int256 fund) {
         fund = (-funding(currentPrice, timestamp) * longTradingExpo(currentPrice)) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
-    /// @notice Funding rate.
-    /// @dev For each % of difference between longTradingExpo and shortTradingExpo, the funding rate is 0.03% per day.
+    /// @inheritdoc IUsdnVaultCore
     function funding(uint128 currentPrice, uint128 timestamp) public view returns (int256 fund) {
         if (timestamp < lastUpdateTimestamp) revert TimestampTooOld();
 
@@ -76,24 +75,43 @@ contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
         fund = ((longExpo - shortExpo) * fundingRatePerSecond * secondsElapsed * 100) / relative;
     }
 
-    /// @notice Trading exposure of long side.
-    /// @param currentPrice The current price.
-    /// @return expo Trading exposure of long side.
+    /// @inheritdoc IUsdnVaultCore
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available)
+    {
+        available = longAssetAvailable(currentPrice) - fundingAsset(currentPrice, timestamp);
+    }
+
+    /// @inheritdoc IUsdnVaultCore
+    function shortAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available)
+    {
+        available = shortAssetAvailable(currentPrice) + fundingAsset(currentPrice, timestamp);
+    }
+
+    /* -------------------------------- Positions ------------------------------- */
+
+    /// @inheritdoc IUsdnVaultCore
+    function pnlLong(uint128 price) public view returns (int256 pnl) {
+        int256 priceDiff = int256(uint256(price)) - int256(uint256(lastPrice));
+        pnl = (int256(totalExpo) * priceDiff) / int256(10 ** assetDecimals); // same decimals as price feed
+    }
+    /// @inheritdoc IUsdnVaultCore
+
     function longTradingExpo(uint128 currentPrice) public view returns (int256 expo) {
         expo = int256(totalExpo) - longAssetAvailable(currentPrice);
     }
 
-    /// @notice Trading exposure of short side.
-    /// @param currentPrice The current price.
-    /// @return expo Trading exposure of short side.
+    /// @inheritdoc IUsdnVaultCore
     function shortTradingExpo(uint128 currentPrice) public view returns (int256 expo) {
         expo = shortAssetAvailable(currentPrice);
     }
 
-    /// @notice Asset available for long side.
-    ///         Note: doesn't take into account the funding rate
-    /// @param currentPrice The current price.
-    /// @return available Asset available for long side.
+    /// @inheritdoc IUsdnVaultCore
     function longAssetAvailable(uint128 currentPrice) public view returns (int256 available) {
         // Cast to int256 to optimize gas usage
         int256 _totalExpo = int256(totalExpo);
@@ -107,13 +125,54 @@ contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
         available = _balanceLong + pnlAsset;
     }
 
-    /// @notice Asset available for short side.
-    ///        Note: doesn't take into account the funding rate
-    /// @param currentPrice The current price.
-    /// @return available Asset available for short side.
+    /// @inheritdoc IUsdnVaultCore
     function shortAssetAvailable(uint128 currentPrice) public view returns (int256 available) {
         available = int256(balanceShort + balanceLong) - longAssetAvailable(currentPrice);
     }
+
+    /* ---------------------------------- Ticks --------------------------------- */
+
+    /// @inheritdoc IUsdnVaultCore
+    function findMaxInitializedTick(int24 searchStart) public view returns (int24 tick) {
+        tick = searchStart + 1;
+        uint256 i;
+        do {
+            unchecked {
+                ++i;
+            }
+            (int24 next, bool initialized) = tickBitmap.nextInitializedTickWithinOneWord(tick - 1, tickSpacing, true);
+            tick = next;
+            if (!initialized) {
+                // could not find a populated tick within 256 bits, continue looking
+                continue;
+            } else {
+                break;
+            }
+        } while (true);
+    }
+
+    /// @inheritdoc IUsdnVaultCore
+    function countInitializedTicks() public view returns (uint256 count) {
+        int24 tick = maxInitializedTick + 1;
+        do {
+            (int24 next, bool initialized) = tickBitmap.nextInitializedTickWithinOneWord(tick - 1, tickSpacing, true);
+            tick = next;
+            if (tick <= TickMath.MIN_TICK) {
+                break;
+            }
+            if (!initialized) {
+                // could not find a populated tick within 256 bits, continue looking
+                continue;
+            }
+            unchecked {
+                ++count;
+            }
+        } while (true);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal functions                             */
+    /* -------------------------------------------------------------------------- */
 
     /// @dev Apply PNL and funding to balances.
     /// @param currentPrice The current price.
@@ -150,70 +209,5 @@ contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
     /// @return toMint The amount of USDP to mint.
     function _calcMintUsdp(uint256 amount, uint128 currentPrice) internal view returns (uint256 toMint) {
         toMint = (amount * currentPrice) / 10 ** (assetDecimals + priceFeedDecimals - usdn.decimals());
-    }
-
-    /// @inheritdoc IUsdnVaultCore
-    function findMaxInitializedTick(int24 searchStart) public view returns (int24 tick) {
-        tick = searchStart + 1;
-        uint256 i;
-        do {
-            unchecked {
-                ++i;
-            }
-            (int24 next, bool initialized) = tickBitmap.nextInitializedTickWithinOneWord(tick - 1, tickSpacing, true);
-            tick = next;
-            if (!initialized) {
-                // could not find a populated tick within 256 bits, continue looking
-                continue;
-            } else {
-                break;
-            }
-        } while (true);
-    }
-
-    /// @notice Get the number of initialized ticks.
-    /// @return count The number of initialized ticks.
-    function countInitializedTicks() public view returns (uint256 count) {
-        int24 tick = maxInitializedTick + 1;
-        do {
-            (int24 next, bool initialized) = tickBitmap.nextInitializedTickWithinOneWord(tick - 1, tickSpacing, true);
-            tick = next;
-            if (tick <= TickMath.MIN_TICK) {
-                break;
-            }
-            if (!initialized) {
-                // could not find a populated tick within 256 bits, continue looking
-                continue;
-            }
-            unchecked {
-                ++count;
-            }
-        } while (true);
-    }
-
-    /// @notice Asset available for long side with funding rate.
-    ///         Note: take into account the funding rate
-    /// @param currentPrice The current price.
-    /// @param timestamp The timestamp.
-    /// @return available Asset available for long side with funding rate.
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 available)
-    {
-        available = longAssetAvailable(currentPrice) - fundingAsset(currentPrice, timestamp);
-    }
-
-    /// @notice Asset available for short side with funding rate.
-    ///         Note: take into account the funding rate
-    /// @param currentPrice The current price.
-    /// @param timestamp The timestamp.
-    /// @return available Asset available for short side with funding rate.
-    function shortAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 available)
-    {
-        available = shortAssetAvailable(currentPrice) + fundingAsset(currentPrice, timestamp);
     }
 }

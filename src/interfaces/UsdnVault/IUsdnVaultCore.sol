@@ -6,14 +6,11 @@ pragma solidity 0.8.20;
 /// @author @yahiru
 /// @author @beeb
 interface IUsdnVaultCore {
-    /// @notice Update balances according to the current price.
-    /// @param priceData The price data.
-    function updateBalances(bytes calldata priceData) external payable;
+    /* -------------------------------------------------------------------------- */
+    /*                               Perps features                               */
+    /* -------------------------------------------------------------------------- */
 
-    /// @notice PNL of long side since last price update.
-    /// @dev The number is formatted with the same number of decimals as the price feed.
-    /// @return pnl PNL of long side since last price update with same number of decimals as price feed.
-    function pnlLong(uint128 price) external view returns (int256 pnl);
+    /* --------------------------------- Funding -------------------------------- */
 
     /// @notice How much of the long balance needs to be transferred to short balance on next action.
     /// @dev A negative number means that some of the short balance needs to be transferred to the long balance.
@@ -22,6 +19,37 @@ interface IUsdnVaultCore {
     /// @notice Funding rate.
     /// @dev For each % of difference between longTradingExpo and shortTradingExpo, the funding rate is 0.03% per day.
     function funding(uint128 currentPrice, uint128 timestamp) external view returns (int256 fund);
+
+    /// @notice Asset available for long side with funding rate.
+    ///         Note: take into account the funding rate
+    /// @param currentPrice The current price.
+    /// @param timestamp The timestamp.
+    /// @return available Asset available for long side with funding rate.
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (int256 available);
+
+    /// @notice Asset available for short side with funding rate.
+    ///         Note: take into account the funding rate
+    /// @param currentPrice The current price.
+    /// @param timestamp The timestamp.
+    /// @return available Asset available for short side with funding rate.
+    function shortAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (int256 available);
+
+    /* -------------------------------- Positions ------------------------------- */
+
+    /// @notice Update balances according to the current price.
+    /// @param priceData The price data.
+    function updateBalances(bytes calldata priceData) external payable;
+
+    /// @notice PNL of long side since last price update.
+    /// @dev The number is formatted with the same number of decimals as the price feed.
+    /// @return pnl PNL of long side since last price update with same number of decimals as price feed.
+    function pnlLong(uint128 price) external view returns (int256 pnl);
 
     /// @notice Trading exposure of long side.
     /// @param currentPrice The current price.
@@ -45,8 +73,16 @@ interface IUsdnVaultCore {
     /// @return available Asset available for short side.
     function shortAssetAvailable(uint128 currentPrice) external view returns (int256 available);
 
+    /* -------------------------------------------------------------------------- */
+    /*                               Ticks features                               */
+    /* -------------------------------------------------------------------------- */
+
     /// @notice Get the value of a long position.
     /// @param searchStart The tick to start searching from.
     /// @return tick The max initialized tick.
     function findMaxInitializedTick(int24 searchStart) external view returns (int24 tick);
+
+    /// @notice Get the number of initialized ticks.
+    /// @return count The number of initialized ticks.
+    function countInitializedTicks() external view returns (uint256 count);
 }
