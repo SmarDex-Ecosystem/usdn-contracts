@@ -4,8 +4,8 @@ pragma solidity 0.8.20;
 import "forge-std/Test.sol";
 
 import "test/utils/Constants.sol";
-import { IUSDNEvents, IUSDNErrors } from "src/interfaces/IUSDN.sol";
-import { USDN } from "src/USDN.sol";
+import { IUsdnEvents, IUsdnErrors } from "src/interfaces/IUsdn.sol";
+import { Usdn } from "src/Usdn.sol";
 
 /**
  * @title BaseFixture
@@ -82,16 +82,16 @@ contract TickMathFixture is BaseFixture {
 }
 
 /**
- * @title USDNTokenFixture
- * @dev Utils for testing USDN.sol
+ * @title UsdnTokenFixture
+ * @dev Utils for testing Usdn.sol
  */
-contract USDNTokenFixture is BaseFixture, IUSDNEvents, IUSDNErrors {
+contract UsdnTokenFixture is BaseFixture, IUsdnEvents, IUsdnErrors {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
-    USDN public usdn;
+    Usdn public usdn;
 
     function setUp() public virtual {
-        usdn = new USDN(address(0), address(0));
+        usdn = new Usdn(address(0), address(0));
     }
 }

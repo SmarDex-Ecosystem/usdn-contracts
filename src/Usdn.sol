@@ -11,7 +11,7 @@ import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
 
-import { IUSDN, IUSDNEvents, IUSDNErrors } from "src/interfaces/IUSDN.sol";
+import { IUsdn, IUsdnEvents, IUsdnErrors } from "src/interfaces/IUsdn.sol";
 
 /**
  * @dev Base implementation of the ERC-20 interface by OpenZeppelin, adapted to support growable balances.
@@ -21,10 +21,10 @@ import { IUSDN, IUSDNEvents, IUSDNErrors } from "src/interfaces/IUSDN.sol";
  *
  * Balances and total supply can only grow over time and never shrink.
  */
-contract USDN is
-    IUSDN,
-    IUSDNEvents,
-    IUSDNErrors,
+contract Usdn is
+    IUsdn,
+    IUsdnEvents,
+    IUsdnErrors,
     Context,
     IERC20,
     IERC20Metadata,
@@ -53,7 +53,7 @@ contract USDN is
     // Mapping of allowances by owner and spender. This is in token units, not shares.
     mapping(address account => mapping(address spender => uint256)) private _allowances;
 
-    uint8 public constant override(IUSDN, IERC20Metadata) decimals = 18;
+    uint8 public constant override(IUsdn, IERC20Metadata) decimals = 18;
 
     uint256 private _totalShares;
     // Multiplier used to convert between shares and tokens. This is a fixed-point number with 18 decimals.
@@ -77,28 +77,28 @@ contract USDN is
     /*                            ERC-20 view functions                           */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUSDN
-    function name() external pure override(IUSDN, IERC20Metadata) returns (string memory) {
+    /// @inheritdoc IUsdn
+    function name() external pure override(IUsdn, IERC20Metadata) returns (string memory) {
         return NAME;
     }
 
-    /// @inheritdoc IUSDN
-    function symbol() external pure override(IUSDN, IERC20Metadata) returns (string memory) {
+    /// @inheritdoc IUsdn
+    function symbol() external pure override(IUsdn, IERC20Metadata) returns (string memory) {
         return SYMBOL;
     }
 
-    /// @inheritdoc IUSDN
-    function totalSupply() external view override(IUSDN, IERC20) returns (uint256) {
+    /// @inheritdoc IUsdn
+    function totalSupply() external view override(IUsdn, IERC20) returns (uint256) {
         return totalShares() * _multiplier / MULTIPLIER_DIVISOR;
     }
 
-    /// @inheritdoc IUSDN
-    function balanceOf(address account) public view override(IUSDN, IERC20) returns (uint256) {
+    /// @inheritdoc IUsdn
+    function balanceOf(address account) public view override(IUsdn, IERC20) returns (uint256) {
         return sharesOf(account) * _multiplier / MULTIPLIER_DIVISOR;
     }
 
-    /// @inheritdoc IUSDN
-    function allowance(address owner, address spender) public view override(IUSDN, IERC20) returns (uint256) {
+    /// @inheritdoc IUsdn
+    function allowance(address owner, address spender) public view override(IUsdn, IERC20) returns (uint256) {
         return _allowances[owner][spender];
     }
 
@@ -106,13 +106,13 @@ contract USDN is
     /*                            Permit view functions                           */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUSDN
-    function nonces(address owner) public view override(IUSDN, IERC20Permit, Nonces) returns (uint256) {
+    /// @inheritdoc IUsdn
+    function nonces(address owner) public view override(IUsdn, IERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
     }
 
-    /// @inheritdoc IUSDN
-    function DOMAIN_SEPARATOR() external view override(IUSDN, IERC20Permit) returns (bytes32) {
+    /// @inheritdoc IUsdn
+    function DOMAIN_SEPARATOR() external view override(IUsdn, IERC20Permit) returns (bytes32) {
         return _domainSeparatorV4();
     }
 
@@ -120,12 +120,12 @@ contract USDN is
     /*                        Special token view functions                        */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUSDN
+    /// @inheritdoc IUsdn
     function totalShares() public view returns (uint256) {
         return _totalShares;
     }
 
-    /// @inheritdoc IUSDN
+    /// @inheritdoc IUsdn
     function sharesOf(address account) public view returns (uint256) {
         return _shares[account];
     }
@@ -134,22 +134,22 @@ contract USDN is
     /*                              ERC-20 functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUSDN
-    function approve(address spender, uint256 value) external override(IUSDN, IERC20) returns (bool) {
+    /// @inheritdoc IUsdn
+    function approve(address spender, uint256 value) external override(IUsdn, IERC20) returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, value);
         return true;
     }
 
-    /// @inheritdoc IUSDN
-    function transfer(address to, uint256 value) external override(IUSDN, IERC20) returns (bool) {
+    /// @inheritdoc IUsdn
+    function transfer(address to, uint256 value) external override(IUsdn, IERC20) returns (bool) {
         address owner = _msgSender();
         _transfer(owner, to, value);
         return true;
     }
 
-    /// @inheritdoc IUSDN
-    function transferFrom(address from, address to, uint256 value) external override(IUSDN, IERC20) returns (bool) {
+    /// @inheritdoc IUsdn
+    function transferFrom(address from, address to, uint256 value) external override(IUsdn, IERC20) returns (bool) {
         address spender = _msgSender();
         _spendAllowance(from, spender, value);
         _transfer(from, to, value);
@@ -160,10 +160,10 @@ contract USDN is
     /*                                   Permit                                   */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUSDN
+    /// @inheritdoc IUsdn
     function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
         external
-        override(IUSDN, IERC20Permit)
+        override(IUsdn, IERC20Permit)
     {
         if (block.timestamp > deadline) {
             revert ERC2612ExpiredSignature(deadline);
@@ -185,12 +185,12 @@ contract USDN is
     /*                           Special token functions                          */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUSDN
+    /// @inheritdoc IUsdn
     function burn(uint256 value) external {
         _burn(_msgSender(), value);
     }
 
-    /// @inheritdoc IUSDN
+    /// @inheritdoc IUsdn
     function burnFrom(address account, uint256 value) external {
         _spendAllowance(account, _msgSender(), value);
         _burn(account, value);
@@ -200,12 +200,12 @@ contract USDN is
     /*                            Privileged functions                            */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUSDN
+    /// @inheritdoc IUsdn
     function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
         _mint(to, amount);
     }
 
-    /// @inheritdoc IUSDN
+    /// @inheritdoc IUsdn
     function adjustMultiplier(uint256 multiplier) external onlyRole(ADJUSTMENT_ROLE) {
         if (multiplier <= _multiplier) {
             // Multiplier can only be increased

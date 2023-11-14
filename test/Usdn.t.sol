@@ -4,10 +4,10 @@ pragma solidity 0.8.20;
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
-import { USDNTokenFixture, USER_1 } from "test/utils/Fixtures.sol";
+import { UsdnTokenFixture, USER_1 } from "test/utils/Fixtures.sol";
 import { SigUtils } from "test/utils/SigUtils.sol";
 
-contract TestUSDNMint is USDNTokenFixture {
+contract TestUsdnMint is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
     }
@@ -48,7 +48,7 @@ contract TestUSDNMint is USDNTokenFixture {
     }
 }
 
-contract TestUSDNAdjust is USDNTokenFixture {
+contract TestUsdnAdjust is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
     }
@@ -82,7 +82,7 @@ contract TestUSDNAdjust is USDNTokenFixture {
     }
 }
 
-contract TestUSDNBurn is USDNTokenFixture {
+contract TestUsdnBurn is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
@@ -155,7 +155,7 @@ contract TestUSDNBurn is USDNTokenFixture {
     }
 }
 
-contract TestUSDNPermit is USDNTokenFixture {
+contract TestUsdnPermit is UsdnTokenFixture {
     SigUtils internal sigUtils;
     uint256 internal userPrivateKey;
     address internal user;
