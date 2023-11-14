@@ -196,7 +196,13 @@ contract USDN is
      * @param value the amount of tokens to transfer, is internally converted to shares
      */
     function _update(address from, address to, uint256 value) internal {
-        uint256 _sharesValue = value * MULTIPLIER_DIVISOR / _multiplier;
+        uint256 _sharesValue;
+        if (value == balanceOf(from)) {
+            // Transfer all shares, avoids rounding errors
+            _sharesValue = _shares[from];
+        } else {
+            _sharesValue = value * MULTIPLIER_DIVISOR / _multiplier;
+        }
         if (from == address(0)) {
             _totalShares += _sharesValue;
         } else {

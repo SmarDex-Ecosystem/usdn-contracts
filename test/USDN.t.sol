@@ -82,3 +82,32 @@ contract TestUSDNAdjust is USDNTokenFixture {
         usdn.adjustMultiplier(0.5 ether);
     }
 }
+
+contract TestUSDNBurn is USDNTokenFixture {
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    function setUp() public override {
+        super.setUp();
+    }
+
+    function test_burn() public {
+        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
+        usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
+        usdn.mint(USER_1, 100 ether);
+        usdn.adjustMultiplier(1.1 ether);
+        assertEq(usdn.balanceOf(USER_1), 110 ether);
+        assertEq(usdn.sharesOf(USER_1), 100 ether);
+
+        vm.expectEmit(true, true, true, false, address(usdn));
+        emit Transfer(USER_1, address(0), 100 ether); // expected event
+        vm.startPrank(USER_1);
+        usdn.burn(10 ether);
+        assertEq(usdn.balanceOf(USER_1), 100 ether);
+        assertEq(usdn.sharesOf(USER_1), 90_909_090_909_090_909_091);
+
+        usdn.burn(100 ether);
+        assertEq(usdn.balanceOf(USER_1), 0);
+        assertEq(usdn.sharesOf(USER_1), 0);
+        vm.stopPrank();
+    }
+}
