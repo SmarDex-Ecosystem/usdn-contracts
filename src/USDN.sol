@@ -186,12 +186,12 @@ contract USDN is
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUSDN
-    function burn(uint256 value) public {
+    function burn(uint256 value) external {
         _burn(_msgSender(), value);
     }
 
     /// @inheritdoc IUSDN
-    function burnFrom(address account, uint256 value) public {
+    function burnFrom(address account, uint256 value) external {
         _spendAllowance(account, _msgSender(), value);
         _burn(account, value);
     }
@@ -201,12 +201,12 @@ contract USDN is
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUSDN
-    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
+    function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
         _mint(to, amount);
     }
 
     /// @inheritdoc IUSDN
-    function adjustMultiplier(uint256 multiplier) public onlyRole(ADJUSTMENT_ROLE) {
+    function adjustMultiplier(uint256 multiplier) external onlyRole(ADJUSTMENT_ROLE) {
         if (multiplier <= _multiplier) {
             // Multiplier can only be increased
             revert InvalidMultiplier(multiplier);
