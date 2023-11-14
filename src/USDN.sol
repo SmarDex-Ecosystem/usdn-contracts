@@ -34,6 +34,10 @@ contract USDN is
     EIP712,
     Nonces
 {
+    /* -------------------------------------------------------------------------- */
+    /*                           Variables and constants                          */
+    /* -------------------------------------------------------------------------- */
+
     // Role required to mint new shares.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -58,6 +62,10 @@ contract USDN is
 
     string private constant NAME = "Ultimate Synthetic Delta Neutral";
     string private constant SYMBOL = "USDN";
+
+    /* -------------------------------------------------------------------------- */
+    /*                          Basic and view functions                          */
+    /* -------------------------------------------------------------------------- */
 
     constructor(address minter, address adjustment) EIP712(NAME, "1") {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -113,18 +121,6 @@ contract USDN is
     }
 
     /**
-     * @notice Move a `value` amount of tokens from the caller to `to`.
-     * @dev Emits a {Transfer} event.
-     * @param to the destination address
-     * @param value the amount of tokens to send, is internally converted to shares
-     */
-    function transfer(address to, uint256 value) public returns (bool) {
-        address owner = _msgSender();
-        _transfer(owner, to, value);
-        return true;
-    }
-
-    /**
      * @notice Get the remaining number of tokens that `spender` will be allowed to spend on behalf of `owner` through
      * `transferFrom`. This is zero by default.
      * @param owner the account that owns the tokens
@@ -134,6 +130,31 @@ contract USDN is
     function allowance(address owner, address spender) public view returns (uint256) {
         return _allowances[owner][spender];
     }
+
+    /**
+     * @notice Return the current nonce for `owner`. This value must be included whenever a signature is generated for
+     * {permit}.
+     *
+     * Every successful call to {permit} increases the nonce of `owner` by one. This prevents a signature from being
+     * used multiple times.
+     * @param owner the account to query
+     * @return nonce the current nonce for `owner`
+     */
+    function nonces(address owner) public view override(IERC20Permit, Nonces) returns (uint256) {
+        return super.nonces(owner);
+    }
+
+    /**
+     * @dev The domain separator used in the encoding of the signature for {permit}, as defined by EIP-712.
+     * @return domainSeparator the domain separator
+     */
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparatorV4();
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                              ERC-20 functions                              */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Set `value` as the allowance of `spender` over the caller's tokens.
@@ -153,6 +174,18 @@ contract USDN is
     }
 
     /**
+     * @notice Move a `value` amount of tokens from the caller to `to`.
+     * @dev Emits a {Transfer} event.
+     * @param to the destination address
+     * @param value the amount of tokens to send, is internally converted to shares
+     */
+    function transfer(address to, uint256 value) public returns (bool) {
+        address owner = _msgSender();
+        _transfer(owner, to, value);
+        return true;
+    }
+
+    /**
      * @notice Move a `value` amount of tokens from `from` to `to` using the allowance mechanism. `value` is then
      * deducted from the caller's allowance.
      * @dev Emits a {Transfer} event.
@@ -168,141 +201,9 @@ contract USDN is
         return true;
     }
 
-    /**
-     * @dev Move a `value` amount of tokens from `from` to `to`.
-     * @dev Emits a {Transfer} event.
-     * @param from the source address
-     * @param to the destination address
-     * @param value the amount of tokens to send, is internally converted to shares
-     */
-    function _transfer(address from, address to, uint256 value) internal {
-        if (from == address(0)) {
-            revert ERC20InvalidSender(address(0));
-        }
-        if (to == address(0)) {
-            revert ERC20InvalidReceiver(address(0));
-        }
-
-        _update(from, to, value);
-    }
-
-    /**
-     * @dev Transfer a `value` amount of tokens from `from` to `to`, or alternatively mint (or burn) if `from` or `to`
-     * is the zero address. Overflow checks are required because the total supply of tokens could exceed the maximum
-     * total number of shares (uint256).
-     * @dev Emits a {Transfer} event.
-     * @param from the source address
-     * @param to the destination address
-     * @param value the amount of tokens to transfer, is internally converted to shares
-     */
-    function _update(address from, address to, uint256 value) internal {
-        uint256 fromBalance = balanceOf(from);
-        uint256 _sharesValue;
-        if (value == fromBalance) {
-            // Transfer all shares, avoids rounding errors
-            _sharesValue = _shares[from];
-        } else {
-            _sharesValue = value * MULTIPLIER_DIVISOR / _multiplier;
-        }
-        if (from == address(0)) {
-            _totalShares += _sharesValue;
-        } else {
-            uint256 fromShares = _shares[from];
-            if (fromShares < _sharesValue) {
-                revert ERC20InsufficientBalance(from, fromBalance, value);
-            }
-            _shares[from] = fromShares - _sharesValue;
-        }
-
-        if (to == address(0)) {
-            _totalShares -= _sharesValue;
-        } else {
-            _shares[to] += _sharesValue;
-        }
-
-        emit Transfer(from, to, value);
-    }
-
-    /**
-     * @dev Create a `value` amount of tokens and assign them to `account`, by transferring it from the zero address.
-     * @dev Emits a {Transfer} event with the zero address as `from`.
-     * @param account the account to receive the tokens
-     * @param value the amount of tokens to mint, is internally converted to shares
-     */
-    function _mint(address account, uint256 value) internal {
-        if (account == address(0)) {
-            revert ERC20InvalidReceiver(address(0));
-        }
-        _update(address(0), account, value);
-    }
-
-    /**
-     * @dev Destroy a `value` amount of tokens from `account`, by transferring it to the zero address, lowering the
-     * total supply.
-     * @dev Emits a {Transfer} event with the zero address as `to`.
-     * @param account the account to burn the tokens from
-     * @param value the amount of tokens to burn, is internally converted to shares
-     */
-    function _burn(address account, uint256 value) internal {
-        if (account == address(0)) {
-            revert ERC20InvalidSender(address(0));
-        }
-        _update(account, address(0), value);
-    }
-
-    /**
-     * @dev Set `value` as the allowance of `spender` over the `owner`'s tokens.
-     * @dev Emits an {Approval} event.
-     * @param owner the account that owns the tokens
-     * @param spender the account that will spend the tokens
-     * @param value the amount of tokens to allow
-     */
-    function _approve(address owner, address spender, uint256 value) internal {
-        _approve(owner, spender, value, true);
-    }
-
-    /**
-     * @dev Variant of {_approve} with an optional flag to enable or disable the emission of the {Approval} event.
-     * Used without event emission in {_spendAllowance} and {_transferFrom}.
-     * @dev Emits an {Approval} event if `emitEvent` is true.
-     * @param owner the account that owns the tokens
-     * @param spender the account that will spend the tokens
-     * @param value the amount of tokens to allow
-     * @param emitEvent whether to emit the {Approval} event
-     */
-    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal {
-        if (owner == address(0)) {
-            revert ERC20InvalidApprover(address(0));
-        }
-        if (spender == address(0)) {
-            revert ERC20InvalidSpender(address(0));
-        }
-        _allowances[owner][spender] = value;
-        if (emitEvent) {
-            emit Approval(owner, spender, value);
-        }
-    }
-
-    /**
-     * @dev Update allowance of `owner` to `spender`, based on spent `value`.
-     *
-     * Does not update the allowance value in case of infinite allowance.
-     * Revert if not enough allowance is available.
-     * @param owner the account that owns the tokens
-     * @param spender the account that spent the tokens
-     * @param value the amount of tokens spent
-     */
-    function _spendAllowance(address owner, address spender, uint256 value) internal {
-        uint256 currentAllowance = allowance(owner, spender);
-        if (currentAllowance != type(uint256).max) {
-            if (currentAllowance < value) {
-                revert ERC20InsufficientAllowance(spender, currentAllowance, value);
-            }
-            unchecked {
-                _approve(owner, spender, currentAllowance - value, false);
-            }
-        }
-    }
+    /* -------------------------------------------------------------------------- */
+    /*                           Special token functions                          */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Destroy a `value` amount of tokens from the caller, lowering the total supply.
@@ -361,26 +262,9 @@ contract USDN is
         _approve(owner, spender, value);
     }
 
-    /**
-     * @notice Return the current nonce for `owner`. This value must be included whenever a signature is generated for
-     * {permit}.
-     *
-     * Every successful call to {permit} increases the nonce of `owner` by one. This prevents a signature from being
-     * used multiple times.
-     * @param owner the account to query
-     * @return nonce the current nonce for `owner`
-     */
-    function nonces(address owner) public view override(IERC20Permit, Nonces) returns (uint256) {
-        return super.nonces(owner);
-    }
-
-    /**
-     * @dev The domain separator used in the encoding of the signature for {permit}, as defined by EIP-712.
-     * @return domainSeparator the domain separator
-     */
-    function DOMAIN_SEPARATOR() external view returns (bytes32) {
-        return _domainSeparatorV4();
-    }
+    /* -------------------------------------------------------------------------- */
+    /*                            Privileged functions                            */
+    /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUSDN
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
@@ -395,5 +279,145 @@ contract USDN is
         }
         emit MultiplierAdjusted(_multiplier, multiplier);
         _multiplier = multiplier;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal functions                             */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @dev Set `value` as the allowance of `spender` over the `owner`'s tokens.
+     * @dev Emits an {Approval} event.
+     * @param owner the account that owns the tokens
+     * @param spender the account that will spend the tokens
+     * @param value the amount of tokens to allow
+     */
+    function _approve(address owner, address spender, uint256 value) internal {
+        _approve(owner, spender, value, true);
+    }
+
+    /**
+     * @dev Variant of {_approve} with an optional flag to enable or disable the emission of the {Approval} event.
+     * Used without event emission in {_spendAllowance} and {_transferFrom}.
+     * @dev Emits an {Approval} event if `emitEvent` is true.
+     * @param owner the account that owns the tokens
+     * @param spender the account that will spend the tokens
+     * @param value the amount of tokens to allow
+     * @param emitEvent whether to emit the {Approval} event
+     */
+    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal {
+        if (owner == address(0)) {
+            revert ERC20InvalidApprover(address(0));
+        }
+        if (spender == address(0)) {
+            revert ERC20InvalidSpender(address(0));
+        }
+        _allowances[owner][spender] = value;
+        if (emitEvent) {
+            emit Approval(owner, spender, value);
+        }
+    }
+
+    /**
+     * @dev Update allowance of `owner` to `spender`, based on spent `value`.
+     *
+     * Does not update the allowance value in case of infinite allowance.
+     * Revert if not enough allowance is available.
+     * @param owner the account that owns the tokens
+     * @param spender the account that spent the tokens
+     * @param value the amount of tokens spent
+     */
+    function _spendAllowance(address owner, address spender, uint256 value) internal {
+        uint256 currentAllowance = allowance(owner, spender);
+        if (currentAllowance != type(uint256).max) {
+            if (currentAllowance < value) {
+                revert ERC20InsufficientAllowance(spender, currentAllowance, value);
+            }
+            unchecked {
+                _approve(owner, spender, currentAllowance - value, false);
+            }
+        }
+    }
+
+    /**
+     * @dev Create a `value` amount of tokens and assign them to `account`, by transferring it from the zero address.
+     * @dev Emits a {Transfer} event with the zero address as `from`.
+     * @param account the account to receive the tokens
+     * @param value the amount of tokens to mint, is internally converted to shares
+     */
+    function _mint(address account, uint256 value) internal {
+        if (account == address(0)) {
+            revert ERC20InvalidReceiver(address(0));
+        }
+        _update(address(0), account, value);
+    }
+
+    /**
+     * @dev Destroy a `value` amount of tokens from `account`, by transferring it to the zero address, lowering the
+     * total supply.
+     * @dev Emits a {Transfer} event with the zero address as `to`.
+     * @param account the account to burn the tokens from
+     * @param value the amount of tokens to burn, is internally converted to shares
+     */
+    function _burn(address account, uint256 value) internal {
+        if (account == address(0)) {
+            revert ERC20InvalidSender(address(0));
+        }
+        _update(account, address(0), value);
+    }
+
+    /**
+     * @dev Move a `value` amount of tokens from `from` to `to`.
+     * @dev Emits a {Transfer} event.
+     * @param from the source address
+     * @param to the destination address
+     * @param value the amount of tokens to send, is internally converted to shares
+     */
+    function _transfer(address from, address to, uint256 value) internal {
+        if (from == address(0)) {
+            revert ERC20InvalidSender(address(0));
+        }
+        if (to == address(0)) {
+            revert ERC20InvalidReceiver(address(0));
+        }
+
+        _update(from, to, value);
+    }
+
+    /**
+     * @dev Transfer a `value` amount of tokens from `from` to `to`, or alternatively mint (or burn) if `from` or `to`
+     * is the zero address. Overflow checks are required because the total supply of tokens could exceed the maximum
+     * total number of shares (uint256).
+     * @dev Emits a {Transfer} event.
+     * @param from the source address
+     * @param to the destination address
+     * @param value the amount of tokens to transfer, is internally converted to shares
+     */
+    function _update(address from, address to, uint256 value) internal {
+        uint256 fromBalance = balanceOf(from);
+        uint256 _sharesValue;
+        if (value == fromBalance) {
+            // Transfer all shares, avoids rounding errors
+            _sharesValue = _shares[from];
+        } else {
+            _sharesValue = value * MULTIPLIER_DIVISOR / _multiplier;
+        }
+        if (from == address(0)) {
+            _totalShares += _sharesValue;
+        } else {
+            uint256 fromShares = _shares[from];
+            if (fromShares < _sharesValue) {
+                revert ERC20InsufficientBalance(from, fromBalance, value);
+            }
+            _shares[from] = fromShares - _sharesValue;
+        }
+
+        if (to == address(0)) {
+            _totalShares -= _sharesValue;
+        } else {
+            _shares[to] += _sharesValue;
+        }
+
+        emit Transfer(from, to, value);
     }
 }
