@@ -196,8 +196,9 @@ contract USDN is
      * @param value the amount of tokens to transfer, is internally converted to shares
      */
     function _update(address from, address to, uint256 value) internal {
+        uint256 fromBalance = balanceOf(from);
         uint256 _sharesValue;
-        if (value == balanceOf(from)) {
+        if (value == fromBalance) {
             // Transfer all shares, avoids rounding errors
             _sharesValue = _shares[from];
         } else {
@@ -206,11 +207,11 @@ contract USDN is
         if (from == address(0)) {
             _totalShares += _sharesValue;
         } else {
-            uint256 fromBalance = _shares[from];
-            if (fromBalance < _sharesValue) {
-                revert ERC20InsufficientBalance(from, fromBalance, _sharesValue);
+            uint256 fromShares = _shares[from];
+            if (fromShares < _sharesValue) {
+                revert ERC20InsufficientBalance(from, fromBalance, value);
             }
-            _shares[from] = fromBalance - _sharesValue;
+            _shares[from] = fromShares - _sharesValue;
         }
 
         if (to == address(0)) {
