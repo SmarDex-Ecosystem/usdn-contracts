@@ -5,26 +5,19 @@ pragma solidity 0.8.20;
 /*                             External libraries                             */
 /* -------------------------------------------------------------------------- */
 
-/* -------------------------------- PaulRBerg ------------------------------- */
-
-import { SD59x18 } from "@prb/math/src/SD59x18.sol";
-
 /* ------------------------------ Open Zeppelin ----------------------------- */
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { ERC20, ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
 /* -------------------------------------------------------------------------- */
 /*                              Internal imports                              */
 /* -------------------------------------------------------------------------- */
 
-import { TickMath } from "src/libraries/TickMath128.sol";
 import { TickBitmap } from "src/libraries/TickBitmap.sol";
+import { TickMath } from "src/libraries/TickMath128.sol";
 import { UsdnVaultStorage } from "./UsdnVaultStorage.sol";
-import { IUsdnVaultCore } from "src/interfaces/IUsdnVaultCore.sol";
+import { IUsdnVaultCore } from "src/interfaces/UsdnVault/IUsdnVaultCore.sol";
 import { IOracleMiddleware, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 
 /* --------------------------------- Errors --------------------------------- */
@@ -142,5 +135,85 @@ contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
         balanceShort = uint256(newShortBalance);
         lastPrice = currentPrice;
         lastUpdateTimestamp = timestamp;
+    }
+
+    /// @dev Get the hash of a tick.
+    /// @param tick The tick.
+    /// @return The hash of the tick.
+    function _tickHash(int24 tick) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked(tick, tickVersion[tick]));
+    }
+
+    /// @dev Calculate the amount of USDP to mint for a deposit according to the current price.
+    /// @param amount The amount of asset to deposit.
+    /// @param currentPrice The current price.
+    /// @return toMint The amount of USDP to mint.
+    function _calcMintUsdp(uint256 amount, uint128 currentPrice) internal view returns (uint256 toMint) {
+        toMint = (amount * currentPrice) / 10 ** (assetDecimals + priceFeedDecimals - usdn.decimals());
+    }
+
+    /// @inheritdoc IUsdnVaultCore
+    function findMaxInitializedTick(int24 searchStart) public view returns (int24 tick) {
+        tick = searchStart + 1;
+        uint256 i;
+        do {
+            unchecked {
+                ++i;
+            }
+            (int24 next, bool initialized) = tickBitmap.nextInitializedTickWithinOneWord(tick - 1, tickSpacing, true);
+            tick = next;
+            if (!initialized) {
+                // could not find a populated tick within 256 bits, continue looking
+                continue;
+            } else {
+                break;
+            }
+        } while (true);
+    }
+
+    /// @notice Get the number of initialized ticks.
+    /// @return count The number of initialized ticks.
+    function countInitializedTicks() public view returns (uint256 count) {
+        int24 tick = maxInitializedTick + 1;
+        do {
+            (int24 next, bool initialized) = tickBitmap.nextInitializedTickWithinOneWord(tick - 1, tickSpacing, true);
+            tick = next;
+            if (tick <= TickMath.MIN_TICK) {
+                break;
+            }
+            if (!initialized) {
+                // could not find a populated tick within 256 bits, continue looking
+                continue;
+            }
+            unchecked {
+                ++count;
+            }
+        } while (true);
+    }
+
+    /// @notice Asset available for long side with funding rate.
+    ///         Note: take into account the funding rate
+    /// @param currentPrice The current price.
+    /// @param timestamp The timestamp.
+    /// @return available Asset available for long side with funding rate.
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available)
+    {
+        available = longAssetAvailable(currentPrice) - fundingAsset(currentPrice, timestamp);
+    }
+
+    /// @notice Asset available for short side with funding rate.
+    ///         Note: take into account the funding rate
+    /// @param currentPrice The current price.
+    /// @param timestamp The timestamp.
+    /// @return available Asset available for short side with funding rate.
+    function shortAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available)
+    {
+        available = shortAssetAvailable(currentPrice) + fundingAsset(currentPrice, timestamp);
     }
 }

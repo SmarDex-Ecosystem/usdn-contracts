@@ -23,7 +23,7 @@ import { ERC20, ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensio
 
 import { TickMath } from "src/libraries/TickMath128.sol";
 import { TickBitmap } from "src/libraries/TickBitmap.sol";
-import { IUsdnVault, Position } from "src/interfaces/IUsdnVault.sol";
+import { IUsdnVault, Position } from "src/interfaces/UsdnVault/IUsdnVault.sol";
 import { UsdnVaultCore } from "./UsdnVaultCore.sol";
 import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 

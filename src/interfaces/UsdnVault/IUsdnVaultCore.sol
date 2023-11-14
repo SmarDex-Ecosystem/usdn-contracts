@@ -44,4 +44,9 @@ interface IUsdnVaultCore {
     /// @param currentPrice The current price.
     /// @return available Asset available for short side.
     function shortAssetAvailable(uint128 currentPrice) external view returns (int256 available);
+
+    /// @notice Get the value of a long position.
+    /// @param searchStart The tick to start searching from.
+    /// @return tick The max initialized tick.
+    function findMaxInitializedTick(int24 searchStart) external view returns (int24 tick);
 }
