@@ -63,10 +63,6 @@ contract USDN is
     string private constant NAME = "Ultimate Synthetic Delta Neutral";
     string private constant SYMBOL = "USDN";
 
-    /* -------------------------------------------------------------------------- */
-    /*                          Basic and view functions                          */
-    /* -------------------------------------------------------------------------- */
-
     constructor(address minter, address adjustment) EIP712(NAME, "1") {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         if (minter != address(0)) {
@@ -76,6 +72,10 @@ contract USDN is
             _grantRole(ADJUSTMENT_ROLE, adjustment);
         }
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                            ERC-20 view functions                           */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Name of the token.
@@ -110,16 +110,6 @@ contract USDN is
         return sharesOf(account) * _multiplier / MULTIPLIER_DIVISOR;
     }
 
-    /// @inheritdoc IUSDN
-    function totalShares() public view returns (uint256) {
-        return _totalShares;
-    }
-
-    /// @inheritdoc IUSDN
-    function sharesOf(address account) public view returns (uint256) {
-        return _shares[account];
-    }
-
     /**
      * @notice Get the remaining number of tokens that `spender` will be allowed to spend on behalf of `owner` through
      * `transferFrom`. This is zero by default.
@@ -130,6 +120,10 @@ contract USDN is
     function allowance(address owner, address spender) public view returns (uint256) {
         return _allowances[owner][spender];
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                            Permit view functions                           */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Return the current nonce for `owner`. This value must be included whenever a signature is generated for
@@ -150,6 +144,20 @@ contract USDN is
      */
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                        Special token view functions                        */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IUSDN
+    function totalShares() public view returns (uint256) {
+        return _totalShares;
+    }
+
+    /// @inheritdoc IUSDN
+    function sharesOf(address account) public view returns (uint256) {
+        return _shares[account];
     }
 
     /* -------------------------------------------------------------------------- */
@@ -202,28 +210,8 @@ contract USDN is
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                           Special token functions                          */
+    /*                                   Permit                                   */
     /* -------------------------------------------------------------------------- */
-
-    /**
-     * @notice Destroy a `value` amount of tokens from the caller, lowering the total supply.
-     * @dev Emits a {Transfer} event with the zero address as `to`.
-     * @param value the amount of tokens to burn, is internally converted to shares
-     */
-    function burn(uint256 value) public {
-        _burn(_msgSender(), value);
-    }
-
-    /**
-     * @notice Destroy a `value` amount of tokens from `account`, deducting from the caller's allowance, lowering the
-     * total supply.
-     * @param account the account to burn the tokens from
-     * @param value the amount of tokens to burn, is internally converted to shares
-     */
-    function burnFrom(address account, uint256 value) public {
-        _spendAllowance(account, _msgSender(), value);
-        _burn(account, value);
-    }
 
     /**
      * @notice Set `value` as the allowance of `spender` over `owner`'s tokens, given `owner`'s signed approval.
@@ -260,6 +248,30 @@ contract USDN is
         }
 
         _approve(owner, spender, value);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                           Special token functions                          */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Destroy a `value` amount of tokens from the caller, lowering the total supply.
+     * @dev Emits a {Transfer} event with the zero address as `to`.
+     * @param value the amount of tokens to burn, is internally converted to shares
+     */
+    function burn(uint256 value) public {
+        _burn(_msgSender(), value);
+    }
+
+    /**
+     * @notice Destroy a `value` amount of tokens from `account`, deducting from the caller's allowance, lowering the
+     * total supply.
+     * @param account the account to burn the tokens from
+     * @param value the amount of tokens to burn, is internally converted to shares
+     */
+    function burnFrom(address account, uint256 value) public {
+        _spendAllowance(account, _msgSender(), value);
+        _burn(account, value);
     }
 
     /* -------------------------------------------------------------------------- */
