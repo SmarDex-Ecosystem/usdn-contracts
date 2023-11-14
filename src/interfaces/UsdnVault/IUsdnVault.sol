@@ -26,16 +26,16 @@ struct PendingPositionMetadata {
     uint168 index;
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                  Interface                                 */
+/* -------------------------------------------------------------------------- */
+
 /// @title USDN Vault
 /// @notice This contract is the USDN Vault.
 /// @dev This contract is used to manage the long and short positions.
 /// @author @yahiru
 /// @author @beeb
 interface IUsdnVault {
-    /* -------------------------------------------------------------------------- */
-    /*                            Only owner functions                            */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice Initialize the vault.
     /// @dev To be called once the vault is authorized to transfer the asset.
     function initialize(uint256 _depositShort, uint96 _depositLong, uint128 _currentPrice) external;
