@@ -14,12 +14,17 @@ import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
 import { IUsdn, IUsdnEvents, IUsdnErrors } from "src/interfaces/IUsdn.sol";
 
 /**
+ * @title USDN token contract
+ * @notice The USDN token supports the USDN Protocol and is minted when assets are deposited into the vault. When assets
+ * are withdrawn from the vault, tokens are burned. The total supply and balances are increased periodically by
+ * adjusting a multiplier, so that the price of the token doesn't grow too far past 1 USD.
  * @dev Base implementation of the ERC-20 interface by OpenZeppelin, adapted to support growable balances.
  *
  * Unlike a normal ERC-20, we record balances as a number of shares. The balance is then computed by multiplying the
  * shares by a factor >= 1. This allows us to grow the total supply without having to update all balances.
  *
  * Balances and total supply can only grow over time and never shrink.
+ * @author @beeb
  */
 contract Usdn is
     IUsdn,
