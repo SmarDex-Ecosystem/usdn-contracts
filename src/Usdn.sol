@@ -15,6 +15,7 @@ import { IUsdn, IUsdnEvents, IUsdnErrors } from "src/interfaces/IUsdn.sol";
 
 /**
  * @title USDN token contract
+ * @author @beeb
  * @notice The USDN token supports the USDN Protocol and is minted when assets are deposited into the vault. When assets
  * are withdrawn from the vault, tokens are burned. The total supply and balances are increased periodically by
  * adjusting a multiplier, so that the price of the token doesn't grow too far past 1 USD.
@@ -24,7 +25,6 @@ import { IUsdn, IUsdnEvents, IUsdnErrors } from "src/interfaces/IUsdn.sol";
  * shares by a factor >= 1. This allows us to grow the total supply without having to update all balances.
  *
  * Balances and total supply can only grow over time and never shrink.
- * @author @beeb
  */
 contract Usdn is
     IUsdn,
@@ -228,7 +228,7 @@ contract Usdn is
 
     /**
      * @dev Set `value` as the allowance of `spender` over the `owner`'s tokens.
-     * @dev Emits an {Approval} event.
+     * Emits an {Approval} event.
      * @param owner the account that owns the tokens
      * @param spender the account that will spend the tokens
      * @param value the amount of tokens to allow
@@ -240,7 +240,7 @@ contract Usdn is
     /**
      * @dev Variant of {_approve} with an optional flag to enable or disable the emission of the {Approval} event.
      * Used without event emission in {_spendAllowance} and {_transferFrom}.
-     * @dev Emits an {Approval} event if `emitEvent` is true.
+     * Emits an {Approval} event if `emitEvent` is true.
      * @param owner the account that owns the tokens
      * @param spender the account that will spend the tokens
      * @param value the amount of tokens to allow
@@ -282,7 +282,7 @@ contract Usdn is
 
     /**
      * @dev Create a `value` amount of tokens and assign them to `account`, by transferring it from the zero address.
-     * @dev Emits a {Transfer} event with the zero address as `from`.
+     * Emits a {Transfer} event with the zero address as `from`.
      * @param account the account to receive the tokens
      * @param value the amount of tokens to mint, is internally converted to shares
      */
@@ -296,7 +296,7 @@ contract Usdn is
     /**
      * @dev Destroy a `value` amount of tokens from `account`, by transferring it to the zero address, lowering the
      * total supply.
-     * @dev Emits a {Transfer} event with the zero address as `to`.
+     * Emits a {Transfer} event with the zero address as `to`.
      * @param account the account to burn the tokens from
      * @param value the amount of tokens to burn, is internally converted to shares
      */
@@ -309,7 +309,7 @@ contract Usdn is
 
     /**
      * @dev Move a `value` amount of tokens from `from` to `to`.
-     * @dev Emits a {Transfer} event.
+     * Emits a {Transfer} event.
      * @param from the source address
      * @param to the destination address
      * @param value the amount of tokens to send, is internally converted to shares
@@ -329,7 +329,7 @@ contract Usdn is
      * @dev Transfer a `value` amount of tokens from `from` to `to`, or alternatively mint (or burn) if `from` or `to`
      * is the zero address. Overflow checks are required because the total supply of tokens could exceed the maximum
      * total number of shares (uint256).
-     * @dev Emits a {Transfer} event.
+     * Emits a {Transfer} event.
      * @param from the source address
      * @param to the destination address
      * @param value the amount of tokens to transfer, is internally converted to shares

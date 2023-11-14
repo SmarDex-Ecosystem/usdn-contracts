@@ -37,9 +37,9 @@ interface IUsdnErrors {
 
 /**
  * @title USDN token interface
+ * @author @beeb
  * @notice Implements the ERC-20 token standard as well as the EIP-2612 permit extension. Additional functions related
  * to the specifics of this token are also included.
- * @author @beeb
  */
 interface IUsdn {
     /**
@@ -112,7 +112,8 @@ interface IUsdn {
      * old and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this race
      * condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
      * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @dev Emits an {Approval} event.
+     *
+     * Emits an {Approval} event.
      * @param spender the account that will spend the tokens
      * @param value the amount of tokens to allow, is internally converted to shares
      * @return success true if the operation succeeded
@@ -148,7 +149,8 @@ interface IUsdn {
      *  - `deadline` must be a timestamp in the future.
      *  - `v`, `r` and `s` must be a valid `secp256k1` signature from `owner` over the EIP712-formatted function args.
      *  - the signature must use `owner`'s current nonce (see {nonces})
-     * @dev Emits an {Approval} event.
+     *
+     * Emits an {Approval} event.
      * @param owner the account that owns the tokens
      * @param spender the account that will spend the tokens
      * @param value the amount of tokens to allow
