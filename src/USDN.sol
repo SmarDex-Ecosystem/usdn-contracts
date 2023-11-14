@@ -11,7 +11,7 @@ import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
 
-import { IUSDN } from "src/interfaces/IUSDN.sol";
+import { IUSDN, IUSDNEvents, IUSDNErrors } from "src/interfaces/IUSDN.sol";
 
 /**
  * @dev Base implementation of the ERC-20 interface by OpenZeppelin, adapted to support growable balances.
@@ -21,7 +21,19 @@ import { IUSDN } from "src/interfaces/IUSDN.sol";
  *
  * Balances and total supply can only grow over time and never shrink.
  */
-contract USDN is IUSDN, Context, IERC20, IERC20Metadata, IERC20Errors, AccessControl, IERC20Permit, EIP712, Nonces {
+contract USDN is
+    IUSDN,
+    IUSDNEvents,
+    IUSDNErrors,
+    Context,
+    IERC20,
+    IERC20Metadata,
+    IERC20Errors,
+    AccessControl,
+    IERC20Permit,
+    EIP712,
+    Nonces
+{
     // Role required to mint new shares.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 

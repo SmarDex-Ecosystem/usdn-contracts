@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import "forge-std/Test.sol";
 
 import "test/utils/Constants.sol";
+import { IUSDNEvents, IUSDNErrors } from "src/interfaces/IUSDN.sol";
 import { USDN } from "src/USDN.sol";
 
 /**
@@ -84,7 +85,7 @@ contract TickMathFixture is BaseFixture {
  * @title USDNTokenFixture
  * @dev Utils for testing USDN.sol
  */
-contract USDNTokenFixture is BaseFixture {
+contract USDNTokenFixture is BaseFixture, IUSDNEvents, IUSDNErrors {
     USDN public usdn;
 
     function setUp() public virtual {

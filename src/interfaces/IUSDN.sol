@@ -3,17 +3,16 @@ pragma solidity 0.8.20;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/**
- * @dev Interface for the functions of the USDN token which are not part of the ERC-20 standard.
- */
-interface IUSDN {
+interface IUSDNEvents {
     /**
      * @notice Emitted when the multiplier is adjusted.
      * @param old_multiplier multiplier before adjustment
      * @param new_multiplier multiplier after adjustment
      */
     event MultiplierAdjusted(uint256 old_multiplier, uint256 new_multiplier);
+}
 
+interface IUSDNErrors {
     /**
      * @dev Indicates that the provided multiplier is invalid. This is usually because the new value is smaller or
      * equal to the current multiplier.
@@ -30,7 +29,12 @@ interface IUSDN {
      * @dev Mismatched signature.
      */
     error ERC2612InvalidSigner(address signer, address owner);
+}
 
+/**
+ * @dev Interface for the functions of the USDN token which are not part of the ERC-20 standard.
+ */
+interface IUSDN {
     /**
      * @notice Total number of shares in existence.
      * @return shares the number of shares
