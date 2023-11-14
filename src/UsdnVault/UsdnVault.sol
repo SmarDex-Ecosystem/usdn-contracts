@@ -5,10 +5,6 @@ pragma solidity 0.8.20;
 /*                             External libraries                             */
 /* -------------------------------------------------------------------------- */
 
-/* -------------------------------- PaulRBerg ------------------------------- */
-
-import { SD59x18 } from "@prb/math/src/SD59x18.sol";
-
 /* ------------------------------ Open Zeppelin ----------------------------- */
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
