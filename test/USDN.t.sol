@@ -55,10 +55,14 @@ contract TestUSDNAdjust is USDNTokenFixture {
     }
 
     function test_adjustMultiplier() public {
+        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
+        usdn.mint(USER_1, 100 ether);
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
         vm.expectEmit(true, true, false, false, address(usdn));
         emit MultiplierAdjusted(1 ether, 1 ether + 1); // expected event
         usdn.adjustMultiplier(1 ether + 1);
+        assertEq(usdn.sharesOf(USER_1), 100 ether);
+        assertEq(usdn.balanceOf(USER_1), 100 ether + 100);
     }
 
     function test_adjustMultiplierGuards() public {
