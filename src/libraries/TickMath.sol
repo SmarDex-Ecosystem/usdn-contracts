@@ -10,6 +10,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
  * batched liquidations.
  * @dev The formula for calculating the price from a tick is: price = 1.001^(tick)
  * @dev The formula for calculating the tick from a price is: tick = log_1.001(price)
+ * @author @beeb
  */
 library TickMath {
     /// @dev Indicates that the provided tick is out of bounds.
