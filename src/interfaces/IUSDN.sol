@@ -20,14 +20,10 @@ interface IUSDNErrors {
      */
     error InvalidMultiplier(uint256 multiplier);
 
-    /**
-     * @dev Permit deadline has expired.
-     */
+    /// @dev Permit deadline has expired.
     error ERC2612ExpiredSignature(uint256 deadline);
 
-    /**
-     * @dev Mismatched signature.
-     */
+    /// @dev Mismatched signature.
     error ERC2612InvalidSigner(address signer, address owner);
 }
 
@@ -189,13 +185,9 @@ interface IUSDN {
      */
     function DOMAIN_SEPARATOR() external view returns (bytes32 domainSeparator);
 
-    /**
-     * @dev Minter role signature.
-     */
+    /// @dev Minter role signature.
     function MINTER_ROLE() external view returns (bytes32);
 
-    /**
-     * @dev Adjustment role signature.
-     */
+    /// @dev Adjustment role signature.
     function ADJUSTMENT_ROLE() external view returns (bytes32);
 }
