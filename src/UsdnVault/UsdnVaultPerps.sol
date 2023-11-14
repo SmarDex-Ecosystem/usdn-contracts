@@ -186,8 +186,8 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     }
 
     /// @inheritdoc IUsdnVaultPerps
-    function usdpPrice(uint128 currentPrice) external view returns (uint256 usdp) {
-        usdp = uint256(
+    function usdnPrice(uint128 currentPrice) external view returns (uint256 usdn) {
+        usdn = uint256(
             (shortAssetAvailable(currentPrice) + fundingAsset(currentPrice, uint128(block.timestamp)))
                 * int256(uint256(currentPrice)) * int256(10) ** usdn.decimals()
         ) / (usdn.totalSupply() * 10 ** assetDecimals);
@@ -435,7 +435,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     }
 
     /// @notice Commit a short exit.
-    /// @param amount The amount of USDP to burn.
+    /// @param amount The amount of USDN to burn.
     /// @param _currentOraclePriceData The oracle data to retrive the current price.
     function _withdraw(uint128 amount, bytes calldata _currentOraclePriceData) private {
         if (amount == 0) revert ZeroAmount();
@@ -505,8 +505,8 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         if (_short.leverage > 0) revert InvalidPendingPosition();
 
         _applyPnlAndFunding(_currentPrice.price, _currentPrice.timestamp);
-        uint256 usdpToMint = _calcMintUsdp(_short.amount, _currentPrice.price);
-        usdn.mint(msg.sender, usdpToMint);
+        uint256 usdnToMint = _calcMintUsdp(_short.amount, _currentPrice.price);
+        usdn.mint(msg.sender, usdnToMint);
 
         balanceShort += _short.amount;
     }
@@ -528,7 +528,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         if (available < 0) {
             available = 0;
         }
-        // assetToTransfer = amountUsdp * usdpPrice / assetPrice = amountUsdp * assetAvailable / totalSupply
+        // assetToTransfer = amountUsdp * usdnPrice / assetPrice = amountUsdp * assetAvailable / totalSupply
         uint256 assetToTransfer = (_short.amount * uint256(available)) / _totalSupply;
         balanceShort -= assetToTransfer;
         usdn.burnFrom(msg.sender, _short.amount); // checks that balance is sufficient

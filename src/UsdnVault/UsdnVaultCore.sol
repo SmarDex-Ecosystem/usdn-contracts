@@ -203,10 +203,10 @@ contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
         return keccak256(abi.encodePacked(tick, tickVersion[tick]));
     }
 
-    /// @dev Calculate the amount of USDP to mint for a deposit according to the current price.
+    /// @dev Calculate the amount of USDN to mint for a deposit according to the current price.
     /// @param amount The amount of asset to deposit.
     /// @param currentPrice The current price.
-    /// @return toMint The amount of USDP to mint.
+    /// @return toMint The amount of USDN to mint.
     function _calcMintUsdp(uint256 amount, uint128 currentPrice) internal view returns (uint256 toMint) {
         toMint = (amount * currentPrice) / 10 ** (assetDecimals + priceFeedDecimals - usdn.decimals());
     }

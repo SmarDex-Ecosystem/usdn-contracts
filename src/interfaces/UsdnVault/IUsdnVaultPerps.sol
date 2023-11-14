@@ -104,12 +104,12 @@ interface IUsdnVaultPerps {
     /* ------------------------------- Short exit ------------------------------- */
 
     /// @notice Commit a short exit.
-    /// @param amount The amount of USDP to burn.
+    /// @param amount The amount of USDN to burn.
     /// @param _currentOraclePriceData The oracle data to retrive the current price.
     function withdraw(uint128 amount, bytes calldata _currentOraclePriceData) external payable;
 
     /// @notice Commit a short exit.
-    /// @param amount The amount of USDP to burn.
+    /// @param amount The amount of USDN to burn.
     /// @param _currentOraclePriceData The oracle data to retrive the current price.
     /// @param _previousActionPriceData The oracle data to retrive the previous action price.
     function withdraw(uint128 amount, bytes calldata _currentOraclePriceData, bytes calldata _previousActionPriceData)
@@ -178,8 +178,8 @@ interface IUsdnVaultPerps {
         pure
         returns (int256 pnl);
 
-    /// @notice Price of USDP for informational purposes
+    /// @notice Price of USDN for informational purposes
     /// @dev The number is formatted with the same number of decimals as the price feed.
-    /// @return usdp Price of USDP with same number of decimals as price feed.
-    function usdpPrice(uint128 currentPrice) external view returns (uint256 usdp);
+    /// @return usdn Price of USDN with same number of decimals as price feed.
+    function usdnPrice(uint128 currentPrice) external view returns (uint256 usdn);
 }

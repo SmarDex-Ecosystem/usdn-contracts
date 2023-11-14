@@ -73,7 +73,7 @@ contract UsdnVault is IUsdnVault, UsdnVaultPerps, Ownable, Initializable {
         lastUpdateTimestamp = uint128(block.timestamp);
 
         {
-            uint256 usdpToMint = _calcMintUsdp(_depositShort, _currentPrice);
+            uint256 usdnToMint = _calcMintUsdp(_depositShort, _currentPrice);
 
             // Initialize default positions
             Position memory initialLong = Position({
@@ -97,7 +97,7 @@ contract UsdnVault is IUsdnVault, UsdnVaultPerps, Ownable, Initializable {
             tickBitmap.flipTick(tick, tickSpacing);
             maxInitializedTick = tick;
 
-            usdn.mint(address(0xdead), usdpToMint);
+            usdn.mint(address(0xdead), usdnToMint);
         }
 
         uint256 balanceBefore = asset.balanceOf(address(this));
