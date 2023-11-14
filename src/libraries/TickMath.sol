@@ -12,14 +12,10 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
  * @dev The formula for calculating the tick from a price is: tick = log_1.001(price)
  */
 library TickMath {
-    /**
-     * @dev Indicates that the provided tick is out of bounds.
-     */
+    /// @dev Indicates that the provided tick is out of bounds.
     error InvalidTick();
 
-    /**
-     * @dev Indicates that the provided price is out of bounds.
-     */
+    /// @dev Indicates that the provided price is out of bounds.
     error InvalidPrice();
 
     // The minimum price we want to resolve is 1000 wei, which equates to 1.001^-34_556
