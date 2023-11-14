@@ -186,8 +186,8 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     }
 
     /// @inheritdoc IUsdnVaultPerps
-    function usdnPrice(uint128 currentPrice) external view returns (uint256 usdn) {
-        usdn = uint256(
+    function usdnPrice(uint128 currentPrice) external view returns (uint256 price) {
+        price = uint256(
             (shortAssetAvailable(currentPrice) + fundingAsset(currentPrice, uint128(block.timestamp)))
                 * int256(uint256(currentPrice)) * int256(10) ** usdn.decimals()
         ) / (usdn.totalSupply() * 10 ** assetDecimals);
