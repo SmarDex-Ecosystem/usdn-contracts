@@ -5,10 +5,9 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 import { USDNTokenFixture, USER_1 } from "test/utils/Fixtures.sol";
+import { SigUtils } from "test/utils/SigUtils.sol";
 
 contract TestUSDNMint is USDNTokenFixture {
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
     function setUp() public override {
         super.setUp();
     }
@@ -84,8 +83,6 @@ contract TestUSDNAdjust is USDNTokenFixture {
 }
 
 contract TestUSDNBurn is USDNTokenFixture {
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
     function setUp() public override {
         super.setUp();
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
@@ -155,5 +152,47 @@ contract TestUSDNBurn is USDNTokenFixture {
             abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, USER_1, 100 ether, 150 ether)
         );
         usdn.burnFrom(USER_1, 150 ether);
+    }
+}
+
+contract TestUSDNPermit is USDNTokenFixture {
+    SigUtils internal sigUtils;
+    uint256 internal userPrivateKey;
+    address internal user;
+
+    function setUp() public override {
+        super.setUp();
+        sigUtils = new SigUtils(usdn.DOMAIN_SEPARATOR());
+        userPrivateKey = 0xA11CE;
+        user = vm.addr(userPrivateKey);
+    }
+
+    function test_permit() public {
+        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
+        usdn.mint(user, 100 ether);
+
+        uint256 nonce = usdn.nonces(user);
+
+        SigUtils.Permit memory permit = SigUtils.Permit({
+            owner: user,
+            spender: address(this),
+            value: 100 ether,
+            nonce: nonce,
+            deadline: type(uint256).max
+        });
+        bytes32 digest = sigUtils.getTypedDataHash(permit);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, digest);
+
+        vm.expectEmit(true, true, true, false, address(usdn));
+        emit Approval(user, address(this), 100 ether); // expected event
+        usdn.permit(user, address(this), 100 ether, type(uint256).max, v, r, s);
+        assertEq(usdn.allowance(user, address(this)), 100 ether);
+        assertEq(usdn.nonces(user), nonce + 1);
+
+        // transfer from
+        vm.expectEmit(true, true, true, false, address(usdn));
+        emit Transfer(user, USER_1, 100 ether); // expected event
+        usdn.transferFrom(user, USER_1, 100 ether);
+        assertEq(usdn.allowance(user, address(this)), 0);
     }
 }
