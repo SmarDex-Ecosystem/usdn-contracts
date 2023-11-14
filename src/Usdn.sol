@@ -43,12 +43,13 @@ contract Usdn is
     /*                           Variables and constants                          */
     /* -------------------------------------------------------------------------- */
 
-    // Role required to mint new shares.
+    /// @inheritdoc IUsdn
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    // Role required to adjust the multiplier.
+    /// @inheritdoc IUsdn
     bytes32 public constant ADJUSTMENT_ROLE = keccak256("ADJUSTMENT_ROLE");
 
+    // EIP-712 typehash for the permit method.
     bytes32 private constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
@@ -58,6 +59,7 @@ contract Usdn is
     // Mapping of allowances by owner and spender. This is in token units, not shares.
     mapping(address account => mapping(address spender => uint256)) private _allowances;
 
+    /// @inheritdoc IUsdn
     uint8 public constant override(IUsdn, IERC20Metadata) decimals = 18;
 
     uint256 private _totalShares;
