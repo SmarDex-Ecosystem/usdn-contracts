@@ -144,11 +144,6 @@ interface IUsdnVaultPerps {
     /// @return len The long positions count.
     function getLongPositionsLength(int24 tick) external view returns (uint256 len);
 
-    /// @notice Price of USDP for informational purposes
-    /// @dev The number is formatted with the same number of decimals as the price feed.
-    /// @return usdp Price of USDP with same number of decimals as price feed.
-    function usdpPrice(uint128 currentPrice) external view returns (uint256 usdp);
-
     /// @notice Get the liquidation price of a long position.
     /// @param startPrice The start price of the position.
     /// @param leverage The leverage of the position.
@@ -182,4 +177,9 @@ interface IUsdnVaultPerps {
         external
         pure
         returns (int256 pnl);
+
+    /// @notice Price of USDP for informational purposes
+    /// @dev The number is formatted with the same number of decimals as the price feed.
+    /// @return usdp Price of USDP with same number of decimals as price feed.
+    function usdpPrice(uint128 currentPrice) external view returns (uint256 usdp);
 }
