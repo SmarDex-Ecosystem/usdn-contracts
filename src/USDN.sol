@@ -254,21 +254,12 @@ contract USDN is
     /*                           Special token functions                          */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice Destroy a `value` amount of tokens from the caller, lowering the total supply.
-     * @dev Emits a {Transfer} event with the zero address as `to`.
-     * @param value the amount of tokens to burn, is internally converted to shares
-     */
+    /// @inheritdoc IUSDN
     function burn(uint256 value) public {
         _burn(_msgSender(), value);
     }
 
-    /**
-     * @notice Destroy a `value` amount of tokens from `account`, deducting from the caller's allowance, lowering the
-     * total supply.
-     * @param account the account to burn the tokens from
-     * @param value the amount of tokens to burn, is internally converted to shares
-     */
+    /// @inheritdoc IUSDN
     function burnFrom(address account, uint256 value) public {
         _spendAllowance(account, _msgSender(), value);
         _burn(account, value);

@@ -57,6 +57,21 @@ interface IUSDN {
     function mint(address to, uint256 amount) external;
 
     /**
+     * @notice Destroy a `value` amount of tokens from the caller, lowering the total supply.
+     * @dev Emits a {Transfer} event with the zero address as `to`.
+     * @param value the amount of tokens to burn, is internally converted to shares
+     */
+    function burn(uint256 value) external;
+
+    /**
+     * @notice Destroy a `value` amount of tokens from `account`, deducting from the caller's allowance, lowering the
+     * total supply.
+     * @param account the account to burn the tokens from
+     * @param value the amount of tokens to burn, is internally converted to shares
+     */
+    function burnFrom(address account, uint256 value) external;
+
+    /**
      * @notice Restricted function to increase the global multiplier, which effectively grows all balances and the total
      * supply.
      * @param multiplier the new multiplier, must be greater than the current one
