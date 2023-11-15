@@ -56,7 +56,6 @@ The environment provides the following tools:
 - foundry
 - solc v0.8.20
 - slither
-- GNU make
 - Node 18
 
 ## Usage
@@ -69,12 +68,18 @@ Compile the test utils by running the following inside the `test_utils` folder (
 cargo build --release
 ```
 
-To run tests, use the `forge test -vvv`.
+To run tests, use `forge test -vvv` or `npm run test`.
+
+### Snapshots
+
+The CI checks that there was no unintended regression in gas usage. To do so, it relies on the `.gas-snapshot` file
+which records gas usage for all tests. When tests have changed, a new snapshot should be generated with the
+`npm run snapshot` command and commited to the repo.
 
 ### Deployment scripts
 
-Each deployment script should be added as a command calling `forge script` in the `Makefile`, passing the appropriate
-arguments, and then called with `make <command>`.
+Each deployment script should be added as a command calling `forge script` in the `package.json`, passing the
+appropriate arguments, and then called with `npm run <command>`.
 
 Common arguments to `forge script` are described in
 [the documentation](https://book.getfoundry.sh/reference/forge/forge-script#forge-script).

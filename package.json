@@ -7,7 +7,11 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fuzz)\"",
+    "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test FFI",
+    "cov": "forge coverage --no-match-test FFI",
+    "test": "forge test -vvv"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.0.0",
