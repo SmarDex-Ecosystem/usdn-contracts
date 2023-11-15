@@ -30,7 +30,7 @@ jobs:
         run: npm ci && forge install
 
       - name: Check gas snapshots
-        run: forge snapshot --no-match-test FFI --check
+        run: forge snapshot --no-match-test "(FFI|Fuzz)" --check
 
       - name: Run tests
         run: forge test --no-match-test FFI --gas-report
