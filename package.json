@@ -9,6 +9,7 @@
   "scripts": {
     "prepare": "husky install",
     "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fuzz)\"",
+    "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fuzz)\" --check",
     "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test FFI",
     "cov": "forge coverage --no-match-test FFI",
     "test": "forge test -vvv"
