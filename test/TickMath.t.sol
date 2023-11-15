@@ -9,6 +9,14 @@ import { TickMathFixture } from "test/utils/Fixtures.sol";
 import { TickMathHandler } from "test/handlers/TickMathHandler.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
+/**
+ * @dev Tests for the TickMath library.
+ *
+ * The tests cover the values of the library constants, the conversion between ticks and prices, and the fuzzing of the
+ * conversion functions.
+ *
+ * The fuzzing tests cover the full range of possible inputs for the conversion functions.
+ */
 contract TestTickMath is TickMathFixture {
     TickMathHandler handler;
 

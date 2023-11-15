@@ -7,6 +7,21 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { TickMath } from "src/libraries/TickMath.sol";
 
+/**
+ * @dev Test the Solady math library against a reference implementation in Rust using decimal-rs.
+ *
+ * The Rust implementation is in the test_utils folder/crate and should be compiled beforehand.
+ *
+ * Run the following command in the test_utils folder:
+ *
+ * ```bash
+ * cargo build --release
+ * ```
+ *
+ * We expect a small error in the math results due to the different precision of the two libraries, but it's in an
+ * acceptable range (see comments in the tests below).
+ *
+ */
 contract TestSoladyMath is Test {
     function testFuzzFFIExpWad(int256 value) public {
         value = bound(value, -42_139_678_854_452_767_552, 135_305_999_368_893_231_588); // acceptable values for solady
