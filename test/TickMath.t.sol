@@ -68,7 +68,6 @@ contract TestTickMath is TickMathFixture {
 
     function testFuzz_conversion(int24 tick) public {
         tick = bound_int24(tick, TickMath.MIN_TICK, TickMath.MAX_TICK);
-        console2.log("input tick", tick);
         uint256 price = handler.getPriceAtTick(tick);
         console2.log("corresponding price", price);
         // Conversion from price to tick can lose precision, so to check equality we need to use the precise method
@@ -81,8 +80,7 @@ contract TestTickMath is TickMathFixture {
 
     /// Conversion from price to tick can lose precision, so we use `getClosestTickAtPrice` and assert approximately
     function testFuzz_conversionReverse(uint256 price) public {
-        price = _bound(price, TickMath.MIN_PRICE, TickMath.MAX_PRICE);
-        console2.log("input price", price);
+        price = bound(price, TickMath.MIN_PRICE, TickMath.MAX_PRICE);
         int24 tick = handler.getClosestTickAtPrice(price);
         console2.log("corresponding tick", tick);
         uint256 price2 = handler.getPriceAtTick(tick);
