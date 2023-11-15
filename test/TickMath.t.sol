@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-
 import { console2 } from "forge-std/Test.sol";
+
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { TickMathFixture } from "test/utils/Fixtures.sol";
 import { TickMathHandler } from "test/handlers/TickMathHandler.sol";
+
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
