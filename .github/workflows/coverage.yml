@@ -5,6 +5,9 @@ on:
 env:
   FOUNDRY_PROFILE: ci
 
+permissions:
+  pull-requests: write
+
 jobs:
   coverage:
     runs-on: ubuntu-latest
