@@ -5,11 +5,13 @@ import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 import { SigUtils } from "test/utils/SigUtils.sol";
 
+/// Test the `permit` function.
 contract TestUsdnPermit is UsdnTokenFixture {
     SigUtils internal sigUtils;
     uint256 internal userPrivateKey;
     address internal user;
 
+    /// We need a user for which we know the private key
     function setUp() public override {
         super.setUp();
         sigUtils = new SigUtils(usdn.DOMAIN_SEPARATOR());
@@ -17,6 +19,11 @@ contract TestUsdnPermit is UsdnTokenFixture {
         user = vm.addr(userPrivateKey);
     }
 
+    /**
+     * Test that a permit can be redeemed by the token to increase the allowance of a contract.
+     *
+     * A `transferFrom` call is then make to ensure proper allowance management.
+     */
     function test_permit() public {
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         usdn.mint(user, 100 ether);
@@ -43,6 +50,7 @@ contract TestUsdnPermit is UsdnTokenFixture {
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(user, USER_1, 100 ether); // expected event
         usdn.transferFrom(user, USER_1, 100 ether);
+
         assertEq(usdn.allowance(user, address(this)), 0);
     }
 }

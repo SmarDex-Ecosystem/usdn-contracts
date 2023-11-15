@@ -11,6 +11,7 @@ import { IUsdnEvents, IUsdnErrors } from "src/interfaces/IUsdn.sol";
  * @dev Utils for testing Usdn.sol
  */
 contract UsdnTokenFixture is BaseFixture, IUsdnEvents, IUsdnErrors {
+    /// Events coming from the OpenZeppelin IERC20
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
