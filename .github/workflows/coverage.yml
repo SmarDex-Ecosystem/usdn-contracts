@@ -1,0 +1,50 @@
+name: Coverage report
+on:
+  pull_request:
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Install deps
+        run: npm ci && forge install
+
+      - name: Generate coverage report
+        run: npm run coverage && mv lcov.info lcov_base.info
+
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install deps
+        run: npm ci && forge install
+
+      - name: Generate coverage report
+        run: npm run coverage
+
+      - name: Post coverage report
+        uses: JoA-MoS/lcov-reporter-action@v1.0.0-alpha.4
+        with:
+          lcov-file: lcov.info
+          lcov-base: lcov_base.info
+          delete-old-comments: true
