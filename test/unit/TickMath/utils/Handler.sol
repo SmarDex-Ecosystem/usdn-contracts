@@ -5,7 +5,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
  * @title TickMathHandler
- * @dev Wrapper to get gas usage report
+ * @dev Wrapper to get gas usage report and coverage report
  */
 contract TickMathHandler {
     mapping(int24 => int24) a;
