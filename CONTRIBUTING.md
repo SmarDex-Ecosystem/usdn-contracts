@@ -86,4 +86,43 @@ Fuzzing tests take one or more parameters which will be fuzzed and should be nam
 
 ### NatSpec
 
-For tests, a special set of NatSpec keywords are used to describe the test context and content.
+For tests, a special set of NatSpec keywords are used to describe the test context and content, similar to what
+[Gherkin](https://cucumber.io/docs/gherkin/reference/) does.
+
+The main keywords of Gherkin can be used as `@custom:` NatSpec entries:
+
+- `@custom:feature`
+- `@custom:background`
+- `@custom:scenario`
+- `@custom:given`
+- `@custom:when`
+- `@custom:then`
+- `@custom:and`
+- `@custom:but`
+
+Here is an example `ContractName.someFunction.t.sol` file implementing those:
+
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.20;
+
+// imports
+
+/**
+ * @custom:feature Test the `transfer` function of some ERC-20 token
+ * @custom:background Given the token is not paused
+ */
+contract TestMyTokenTransfer is MyTokenFixture {
+    /**
+     * @custom:scenario A user transfers tokens normally
+     * @custom:given The user has 100 tokens
+     * @custom:when The user tries to transfer 50 tokens to the contract
+     * @custom:then The `Transfer` event should be emitted with the same contract address and amount
+     * @custom:and The balance of the user should decrease by 50 tokens
+     * @custom:and The balance of the contract should increase by 50 tokens
+     */
+    function test_transfer() public {
+        // ...
+    }
+}
+```
