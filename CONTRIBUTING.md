@@ -61,6 +61,29 @@ Each fixture can implement the `setUp()` function to perform its setup. Test con
 override that method with their own `function setUp() public override { super.setUp(); }` which should call the parent
 setup function.
 
+### Test files
+
+Inside the contract sub-folder, test files should be named `ContractName.function.t.sol` where `function` is the name
+of the function being tested. For very small functions, they can be grouped in a single file/contract named accordingly.
+
+The contract name inside that file should be `TestContractNameMethod`.
+
+Fuzzing tests should be separated in their own file and contract, potentially breaking it down into several files by
+fuzzed function if necessary.
+
+In general, favor multiple small contracts over one big monolith, so that solidity compilation can be better
+parallelized.
+
+### Test names
+
+Tests are functions with a `public` visibility, that start with the keyword `test`.
+
+Positive tests are named `test_somethingHappens()`.
+
+Tests that should revert are named `test_RevertWhen_somethingHappens()`.
+
+Fuzzing tests take one or more parameters which will be fuzzed and should be named `testFuzz_something(uint256 p)`.
+
 ### NatSpec
 
 For tests, a special set of NatSpec keywords are used to describe the test context and content.
