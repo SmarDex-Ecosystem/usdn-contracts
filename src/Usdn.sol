@@ -318,6 +318,7 @@ contract Usdn is
      */
     function _transfer(address from, address to, uint256 value) internal {
         if (from == address(0)) {
+            // this should never happen, because all calling sites check for this
             revert ERC20InvalidSender(address(0));
         }
         if (to == address(0)) {
