@@ -12,7 +12,7 @@
     "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fuzz)\" --check",
     "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test FFI",
     "cov": "forge coverage --no-match-test FFI",
-    "cov:html": "forge coverage --no-match-test FFI && genhtml -o .coverage lcov.info",
+    "cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info",
     "test": "forge test -vvv"
   },
   "devDependencies": {

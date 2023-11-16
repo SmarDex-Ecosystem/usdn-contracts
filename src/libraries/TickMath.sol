@@ -13,6 +13,9 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
  * The formula for calculating the tick from a price is: tick = log_1.001(price)
  */
 library TickMath {
+    /// @dev Indicates that the provided tick spacing is invalid (zero).
+    error InvalidTickSpacing();
+
     /// @dev Indicates that the provided tick is out of bounds.
     error InvalidTick();
 
@@ -39,6 +42,7 @@ library TickMath {
      * @return tick_ the largest tick that can be used
      */
     function maxUsableTick(int24 tickSpacing) internal pure returns (int24 tick_) {
+        if (tickSpacing == 0) revert InvalidTickSpacing();
         unchecked {
             // we want to round, so divide before multiply is desired
             // slither-disable-next-line divide-before-multiply
@@ -52,6 +56,7 @@ library TickMath {
      * @return tick_ the smallest tick that can be used
      */
     function minUsableTick(int24 tickSpacing) internal pure returns (int24 tick_) {
+        if (tickSpacing == 0) revert InvalidTickSpacing();
         unchecked {
             // we want to round, so divide before multiply is desired
             // slither-disable-next-line divide-before-multiply
@@ -129,6 +134,7 @@ library TickMath {
             t2 = t1 + 1;
             if (t2 > MAX_TICK) {
                 // avoid invalid ticks
+                // note: this condition never hits with the current MAX_TICK value, but we keep it for safety
                 return t1;
             }
         }

@@ -63,9 +63,9 @@ contract TestTickMathConcrete is TickMathFixture {
 
     /// Check that the maxUsableTick and minUsableTick functions revert when the tickSpacing is zero.
     function test_RevertWhen_tickSpacingIsZero() public {
-        vm.expectRevert();
+        vm.expectRevert(TickMath.InvalidTickSpacing.selector);
         handler.maxUsableTick(0);
-        vm.expectRevert();
+        vm.expectRevert(TickMath.InvalidTickSpacing.selector);
         handler.minUsableTick(0);
     }
 }
