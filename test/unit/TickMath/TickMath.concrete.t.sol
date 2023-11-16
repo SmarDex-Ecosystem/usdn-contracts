@@ -43,29 +43,29 @@ contract TestTickMathConcrete is TickMathFixture {
 
     /// Check that the `getPriceAtTick` function reverts when the tick is out of bounds.
     function test_RevertWhen_tickIsOutOfBounds() public {
-        vm.expectRevert(TickMath.InvalidTick.selector);
+        vm.expectRevert(TickMath.TickMathInvalidTick.selector);
         handler.getPriceAtTick(-34_557);
-        vm.expectRevert(TickMath.InvalidTick.selector);
+        vm.expectRevert(TickMath.TickMathInvalidTick.selector);
         handler.getPriceAtTick(98_001);
     }
 
     /// Check that the `getTickAtPrice` and `getClosestTickAtPrice` functions revert when the price is out of bounds.
     function test_RevertWhen_priceIsOutOfBounds() public {
-        vm.expectRevert(TickMath.InvalidPrice.selector);
+        vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
         handler.getTickAtPrice(999);
-        vm.expectRevert(TickMath.InvalidPrice.selector);
+        vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
         handler.getTickAtPrice(3_464_120_361_320_951_603_222_457_022_263_209_963_088_421_212_476_539_374_818_920);
-        vm.expectRevert(TickMath.InvalidPrice.selector);
+        vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
         handler.getClosestTickAtPrice(0);
-        vm.expectRevert(TickMath.InvalidPrice.selector);
+        vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
         handler.getClosestTickAtPrice(3_464_120_361_320_951_603_222_457_022_263_209_963_088_421_212_476_539_374_818_920);
     }
 
     /// Check that the maxUsableTick and minUsableTick functions revert when the tickSpacing is zero.
     function test_RevertWhen_tickSpacingIsZero() public {
-        vm.expectRevert(TickMath.InvalidTickSpacing.selector);
+        vm.expectRevert(TickMath.TickMathInvalidTickSpacing.selector);
         handler.maxUsableTick(0);
-        vm.expectRevert(TickMath.InvalidTickSpacing.selector);
+        vm.expectRevert(TickMath.TickMathInvalidTickSpacing.selector);
         handler.minUsableTick(0);
     }
 }
