@@ -100,7 +100,7 @@ The main keywords of Gherkin can be used as `@custom:` NatSpec entries:
 - `@custom:and`
 - `@custom:but`
 
-Here is an example `ContractName.someFunction.t.sol` file implementing those:
+Here is an example `MyToken.transfer.t.sol` file implementing those:
 
 ```solidity
 // SPDX-License-Identifier: UNLICENSED
