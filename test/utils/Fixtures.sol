@@ -63,4 +63,8 @@ contract BaseFixture is Test {
         vm.label(BASE_WETH, "WETH");
         vm.label(BASE_SDEX, "SDEX");
     }
+
+    // force ignore from coverage report
+    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
+    function test() public virtual { }
 }

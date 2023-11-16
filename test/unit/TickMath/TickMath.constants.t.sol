@@ -19,17 +19,17 @@ contract TestTickMathConstants is TickMathFixture {
 
     /// Check that the `MIN_TICK` corresponds to the `MIN_PRICE` and vice-versa
     function test_minPrice() public {
-        uint256 minPrice = TickMath.getPriceAtTick(TickMath.MIN_TICK);
+        uint256 minPrice = handler.getPriceAtTick(TickMath.MIN_TICK);
         assertEq(minPrice, TickMath.MIN_PRICE);
-        int24 tick = TickMath.getClosestTickAtPrice(TickMath.MIN_PRICE);
+        int24 tick = handler.getClosestTickAtPrice(TickMath.MIN_PRICE);
         assertEq(tick, TickMath.MIN_TICK);
     }
 
     /// Check that the `MAX_TICK` corresponds to the `MAX_PRICE` and vice-versa
     function test_maxPrice() public {
-        uint256 maxPrice = TickMath.getPriceAtTick(TickMath.MAX_TICK);
+        uint256 maxPrice = handler.getPriceAtTick(TickMath.MAX_TICK);
         assertEq(maxPrice, TickMath.MAX_PRICE);
-        int24 tick = TickMath.getClosestTickAtPrice(TickMath.MAX_PRICE);
+        int24 tick = handler.getClosestTickAtPrice(TickMath.MAX_PRICE);
         assertEq(tick, TickMath.MAX_TICK);
     }
 }
