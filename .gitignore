@@ -4,7 +4,7 @@ out/
 # Private files
 .env
 
-# Cahce
+# Cache
 cache/
 
 # Dependencies
@@ -13,3 +13,7 @@ node_modules/
 # devenv
 .devenv
 .direnv
+
+# coverage
+.coverage/
+lcov.info

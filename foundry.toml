@@ -16,6 +16,7 @@ libs = ["node_modules", "lib"]
 line_length = 120
 bracket_spacing = true
 wrap_comments = true
+number_underscore = "thousands"
 
 # ---------------------------------------------------------------------------- #
 #                                 Local profile                                #
@@ -75,7 +76,10 @@ dictionary_weight = 40
 #                                  Remappings                                  #
 # ---------------------------------------------------------------------------- #
 
-remappings = ["@openzeppelin/=node_modules/@openzeppelin/"]
+remappings = [
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "solady/src/=node_modules/solady/src/",
+]
 
 # ---------------------------------------------------------------------------- #
 #                                  Deployments                                 #

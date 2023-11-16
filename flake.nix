@@ -34,7 +34,6 @@
                 solc_0_8_20
                 (solc.mkDefault pkgs solc_0_8_20)
                 slither-analyzer
-                gnumake
               ];
               dotenv.enable = true;
               languages.javascript.enable = true;

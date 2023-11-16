@@ -1,16 +1,8 @@
 <img align="right" width="150" height="150" top="100" src="https://github.com/foundry-rs/.github/blob/main/profile/logo.png">
 
-# <h1 align="center"> Real Estate Executive - Foundry Template</h1>
+# <h1 align="center">Ultimate Synthetic Delta Neutral - USDN</h1>
 
-**Welcome to the template repository, specifically designed to help you create new Foundry projects quickly while
-Adhering to Real Estate Executive's standards.**
-
-![Github Actions](https://github.com/petra-foundation/foundry-template/workflows/CI/badge.svg)
-
-## How to Get Started
-
-Click "Use this template" on [GitHub](https://github.com/petra-foundation/foundry-template) to create a new repository
-with this repo as the initial state.
+![Github Actions](https://github.com/Blockchain-RA2-Tech/usdn-contracts/workflows/CI/badge.svg)
 
 ## Installation
 
@@ -64,19 +56,30 @@ The environment provides the following tools:
 - foundry
 - solc v0.8.20
 - slither
-- GNU make
 - Node 18
 
 ## Usage
 
 ### Tests
 
-To run tests, use the `forge test -vvv` command or `make test`.
+Compile the test utils by running the following inside the `test_utils` folder (requires Rust):
+
+```bash
+cargo build --release
+```
+
+To run tests, use `forge test -vvv` or `npm run test`.
+
+### Snapshots
+
+The CI checks that there was no unintended regression in gas usage. To do so, it relies on the `.gas-snapshot` file
+which records gas usage for all tests. When tests have changed, a new snapshot should be generated with the
+`npm run snapshot` command and commited to the repo.
 
 ### Deployment scripts
 
-Each deployment script should be added as a command calling `forge script` in the `Makefile`, passing the appropriate
-arguments, and then called with `make <command>`.
+Each deployment script should be added as a command calling `forge script` in the `package.json`, passing the
+appropriate arguments, and then called with `npm run <command>`.
 
 Common arguments to `forge script` are described in
 [the documentation](https://book.getfoundry.sh/reference/forge/forge-script#forge-script).
@@ -106,6 +109,7 @@ Foundry comes with a built-in code formatter that we configured like this (defau
 line_length = 120 # Max line lenght
 bracket_spacing = true # Spacing the brakets in the code
 wrap_comments = true # use max line length for comments aswell
+number_underscore = "thousands" # add underscore separators in large numbers
 ```
 
 ### Husky

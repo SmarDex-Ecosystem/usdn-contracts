@@ -7,10 +7,17 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fuzz)\"",
+    "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fuzz)\" --check",
+    "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test FFI",
+    "cov": "forge coverage --no-match-test FFI",
+    "cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info",
+    "test": "forge test -vvv"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.0.0",
-    "husky": "^8.0.3"
+    "husky": "^8.0.3",
+    "solady": "^0.0.138"
   }
 }
