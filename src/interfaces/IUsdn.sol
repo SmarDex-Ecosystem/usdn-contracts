@@ -26,7 +26,7 @@ interface IUsdnErrors {
      * equal to the current multiplier.
      * @param multiplier invalid multiplier
      */
-    error InvalidMultiplier(uint256 multiplier);
+    error UsdnInvalidMultiplier(uint256 multiplier);
 
     /// @dev Permit deadline has expired.
     error ERC2612ExpiredSignature(uint256 deadline);

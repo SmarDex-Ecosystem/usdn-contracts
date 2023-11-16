@@ -216,7 +216,7 @@ contract Usdn is
     function adjustMultiplier(uint256 multiplier) external onlyRole(ADJUSTMENT_ROLE) {
         if (multiplier <= _multiplier) {
             // Multiplier can only be increased
-            revert InvalidMultiplier(multiplier);
+            revert UsdnInvalidMultiplier(multiplier);
         }
         emit MultiplierAdjusted(_multiplier, multiplier);
         _multiplier = multiplier;

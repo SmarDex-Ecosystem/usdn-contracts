@@ -43,10 +43,10 @@ contract TestUsdnAdjust is UsdnTokenFixture {
     function test_RevertWhen_invalidMultiplier() public {
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
 
-        vm.expectRevert(abi.encodeWithSelector(InvalidMultiplier.selector, 1 ether));
+        vm.expectRevert(abi.encodeWithSelector(UsdnInvalidMultiplier.selector, 1 ether));
         usdn.adjustMultiplier(1 ether);
 
-        vm.expectRevert(abi.encodeWithSelector(InvalidMultiplier.selector, 0.5 ether));
+        vm.expectRevert(abi.encodeWithSelector(UsdnInvalidMultiplier.selector, 0.5 ether));
         usdn.adjustMultiplier(0.5 ether);
     }
 }
