@@ -20,4 +20,8 @@ contract UsdnTokenFixture is BaseFixture, IUsdnEvents, IUsdnErrors {
     function setUp() public virtual {
         usdn = new Usdn(address(0), address(0));
     }
+
+    // force ignore from coverage report
+    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
+    function test() public override { }
 }
