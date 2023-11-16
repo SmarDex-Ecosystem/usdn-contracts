@@ -248,6 +248,7 @@ contract Usdn is
      */
     function _approve(address owner, address spender, uint256 value, bool emitEvent) internal {
         if (owner == address(0)) {
+            // this should never happen, because all calling sites check for this
             revert ERC20InvalidApprover(address(0));
         }
         if (spender == address(0)) {
@@ -302,6 +303,7 @@ contract Usdn is
      */
     function _burn(address account, uint256 value) internal {
         if (account == address(0)) {
+            // this should never happen, because all calling sites check for this
             revert ERC20InvalidSender(address(0));
         }
         _update(account, address(0), value);
