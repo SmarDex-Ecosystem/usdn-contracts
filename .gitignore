@@ -15,4 +15,5 @@ node_modules/
 .direnv
 
 # coverage
+.coverage/
 lcov.info
