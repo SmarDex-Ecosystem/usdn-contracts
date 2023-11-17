@@ -241,8 +241,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     /// @param maxIter The maximum number of iterations.
     /// @return liquidated The number of liquidated positions.
     function _liquidate(uint128 currentPrice, uint256 maxIter) internal returns (uint256 liquidated) {
-        int24 currentTick =
-            TickMath.getClosestTickAtPrice(TickMath.fromDecimal(int256(uint256(currentPrice)), priceFeedDecimals));
+        int24 currentTick = TickMath.getClosestTickAtPrice(uint256(currentPrice));
         int24 tick = maxInitializedTick + 1;
         uint256 i;
         do {
@@ -577,10 +576,10 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         // calculate liquidation price from leverage and current price
         uint128 liquidationPrice = getLiquidationPrice(_currentPrice.price, _long.leverage);
 
-        tick = TickMath.getTickAtPrice(TickMath.fromDecimal(int256(uint256(liquidationPrice)), priceFeedDecimals));
+        tick = TickMath.getTickAtPrice(uint256(liquidationPrice));
         tick = (tick / tickSpacing) * tickSpacing;
         // calculate real leverage from tick and corresponding price
-        liquidationPrice = uint128(uint256(TickMath.toDecimal(TickMath.getPriceAtTick(tick), priceFeedDecimals)));
+        liquidationPrice = uint128(TickMath.getPriceAtTick(tick));
         uint40 leverage = getLeverage(_currentPrice.price, liquidationPrice);
 
         if (_firstTime) balanceLong += _long.amount;

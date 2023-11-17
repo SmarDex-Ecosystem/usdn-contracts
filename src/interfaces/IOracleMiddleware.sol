@@ -45,6 +45,7 @@ enum ProtocolAction {
     None,
     Deposit,
     Withdraw,
+    ValidateWithdraw,
     OpenPosition,
     ValidateOpenPosition,
     ClosePosition,
