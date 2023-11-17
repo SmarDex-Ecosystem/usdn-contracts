@@ -13,7 +13,7 @@
     "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test FFI",
     "cov": "forge coverage --no-match-test FFI",
     "cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info",
-    "test": "forge test -vvv"
+    "test": "forge test -vvv --ffi"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.0.0",

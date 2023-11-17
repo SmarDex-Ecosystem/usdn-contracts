@@ -68,7 +68,7 @@ Compile the test utils by running the following inside the `test_utils` folder (
 cargo build --release
 ```
 
-To run tests, use `forge test -vvv` or `npm run test`.
+To run tests, use `forge test -vvv --ffi` or `npm run test`.
 
 ### Snapshots
 
