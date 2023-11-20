@@ -6,7 +6,10 @@ import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
-/// Test ERC-20 functions.
+/**
+ * @custom:feature The ERC-20 functions of `USDN`
+ * @custom:background Given a user with 100 tokens
+ */
 contract TestUsdnErc20 is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
@@ -14,14 +17,40 @@ contract TestUsdnErc20 is UsdnTokenFixture {
         usdn.mint(USER_1, 100 ether);
     }
 
+    /**
+     * @custom:scenario Retrieving the name
+     * @custom:when The name is retrieved
+     * @custom:then The name is equal to "Ultimate Synthetic Delta Neutral"
+     */
     function test_name() public {
         assertEq(usdn.name(), "Ultimate Synthetic Delta Neutral");
     }
 
+    /**
+     * @custom:scenario Retrieving the symbol
+     * @custom:when The symbol is retrieved
+     * @custom:then The symbol is equal to "USDN"
+     */
     function test_symbol() public {
         assertEq(usdn.symbol(), "USDN");
     }
 
+    /**
+     * @custom:scenario Retrieving the decimals
+     * @custom:when The decimals are retrieved
+     * @custom:then The decimals are equal to 18
+     */
+    function test_decimals() public {
+        assertEq(usdn.decimals(), 18);
+    }
+
+    /**
+     * @custom:scenario Approving a spender
+     * @custom:when The spender is approved to spend 50 tokens
+     * @custom:then The `Approval` event is emitted with the user as the owner, this contract as the spender and amount
+     * 50 tokens
+     * @custom:and The allowance of the user for this contract is 50 tokens
+     */
     function test_approve() public {
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Approval(USER_1, address(this), 50 ether); // expected event
@@ -31,12 +60,25 @@ contract TestUsdnErc20 is UsdnTokenFixture {
         assertEq(usdn.allowance(USER_1, address(this)), 50 ether);
     }
 
+    /**
+     * @custom:scenario Approving the zero address
+     * @custom:when The zero address is approved to spend 50 tokens
+     * @custom:then The transaction reverts with the `ERC20InvalidSpender` error
+     */
     function test_RevertWhen_approveZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidSpender.selector, address(0)));
         vm.prank(USER_1);
         usdn.approve(address(0), 50 ether);
     }
 
+    /**
+     * @custom:scenario Transferring tokens
+     * @custom:when 50 tokens are transferred to this contract
+     * @custom:then The `Transfer` event is emitted with the user as the sender, this contract as the recipient and
+     * amount 50
+     * @custom:and The user's balance is decreased by 50
+     * @custom:and This contract's balance is increased by 50
+     */
     function test_transfer() public {
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(USER_1, address(this), 50 ether); // expected event
@@ -47,12 +89,26 @@ contract TestUsdnErc20 is UsdnTokenFixture {
         assertEq(usdn.balanceOf(address(this)), 50 ether);
     }
 
+    /**
+     * @custom:scenario Transferring tokens to the zero address
+     * @custom:when 50 tokens are transferred to the zero address
+     * @custom:then The transaction reverts with the `ERC20InvalidReceiver` error
+     */
     function test_RevertWhen_transferToZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
         vm.prank(USER_1);
         usdn.transfer(address(0), 50 ether);
     }
 
+    /**
+     * @custom:scenario Transferring tokens from a user with allowance
+     * @custom:given An approved amount of 50 tokens
+     * @custom:when 50 tokens are transferred from the user to this contract
+     * @custom:then The `Transfer` event is emitted with the user as the sender, this contract as the recipient and
+     * amount 50
+     * @custom:and The user's balance is decreased by 50
+     * @custom:and This contract's balance is increased by 50
+     */
     function test_transferFrom() public {
         vm.prank(USER_1);
         usdn.approve(address(this), 50 ether);
@@ -65,6 +121,12 @@ contract TestUsdnErc20 is UsdnTokenFixture {
         assertEq(usdn.balanceOf(address(this)), 50 ether);
     }
 
+    /**
+     * @custom:scenario Transferring tokens from a user with allowance to the zero address
+     * @custom:given An approved amount of 50 tokens
+     * @custom:when 50 tokens are transferred from the user to the zero address
+     * @custom:then The transaction reverts with the `ERC20InvalidReceiver` error
+     */
     function test_RevertWhen_transferFromToZeroAddress() public {
         vm.prank(USER_1);
         usdn.approve(address(this), 50 ether);

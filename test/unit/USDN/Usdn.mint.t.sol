@@ -7,13 +7,27 @@ import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
-/// Test the `mint` function.
+/**
+ * @custom:feature The `mint` function of `USDN`
+ * @custom:background Given this contract has no role at the start
+ * @custom:and The multiplier is 1
+ */
 contract TestUsdnMint is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
     }
 
-    /// Test that minting results in the correct event and changes in supply and balances.
+    /**
+     * @custom:scenario Minting tokens
+     * @custom:given This contract has the `MINTER_ROLE`
+     * @custom:when 100 tokens are minted to a user
+     * @custom:then The `Transfer` event is emitted with the zero address as the sender, the user as the recipient and
+     * amount 100
+     * @custom:and The user's balance is 100
+     * @custom:and The user's shares are 100
+     * @custom:and The total supply is 100
+     * @custom:and The total shares are 100
+     */
     function test_mint() public {
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
 
@@ -27,7 +41,18 @@ contract TestUsdnMint is UsdnTokenFixture {
         assertEq(usdn.totalShares(), 100 ether);
     }
 
-    /// Test that minting with a multiplier results in the correct event and changes in supply and balances.
+    /**
+     * @custom:scenario Minting tokens with a multiplier
+     * @custom:given This contract has the `MINTER_ROLE` and `ADJUSTMENT_ROLE`
+     * @custom:when The multiplier is adjusted to 2
+     * @custom:and 100 tokens are minted to a user
+     * @custom:then The `Transfer` event is emitted with the zero address as the sender, the user as the recipient and
+     * amount 100
+     * @custom:and The user's balance is 100
+     * @custom:and The user's shares are 50
+     * @custom:and The total supply is 100
+     * @custom:and The total shares are 50
+     */
     function test_mintWithMultiplier() public {
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
@@ -44,7 +69,12 @@ contract TestUsdnMint is UsdnTokenFixture {
         assertEq(usdn.totalShares(), 50 ether);
     }
 
-    /// Test that only the `MINTER_ROLE` can call `mint`.
+    /**
+     * @custom:scenario An unauthorized account tries to mint tokens
+     * @custom:given This contract has no role
+     * @custom:when 100 tokens are minted to a user
+     * @custom:then The transaction reverts with the `AccessControlUnauthorizedAccount` error
+     */
     function test_RevertWhen_unauthorized() public {
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -54,7 +84,12 @@ contract TestUsdnMint is UsdnTokenFixture {
         usdn.mint(USER_1, 100 ether);
     }
 
-    /// Test that minting to the zero address reverts.
+    /**
+     * @custom:scenario Minting tokens to the zero address
+     * @custom:given This contract has the `MINTER_ROLE`
+     * @custom:when 100 tokens are minted to the zero address
+     * @custom:then The transaction reverts with the `ERC20InvalidReceiver` error
+     */
     function test_RevertWhen_mintToZeroAddress() public {
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
