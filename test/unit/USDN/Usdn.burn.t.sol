@@ -22,7 +22,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
 
     /**
      * @custom:scenario Burning a portion of the balance
-     * @custom:given A a multiplier of 2
+     * @custom:given A multiplier of 2
      * @custom:and A user with 200 USDN
      * @custom:when 50 USDN are burned
      * @custom:then The `Transfer` event is emitted with the user as the sender, the zero address as the recipient and
@@ -50,7 +50,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
 
     /**
      * @custom:scenario Burning the entire balance
-     * @custom:given A a multiplier of 1.1
+     * @custom:given A multiplier of 1.1
      * @custom:and A user with 110 USDN
      * @custom:when 110 USDN are burned
      * @custom:then The `Transfer` event is emitted with the user as the sender, the zero address as the recipient and
@@ -76,7 +76,6 @@ contract TestUsdnBurn is UsdnTokenFixture {
         assertEq(usdn.totalShares(), 0);
     }
 
-    /// Check that burning an amount larger than the balance reverts.
     /**
      * @custom:scenario Burning more than the balance
      * @custom:when 101 USDN are burned
@@ -90,7 +89,13 @@ contract TestUsdnBurn is UsdnTokenFixture {
         usdn.burn(101 ether);
     }
 
-    /// Check that burning an amount larger than the balance reverts (when multiplier > 1).
+    /**
+     * @custom:scenario Burning more than the balance
+     * @custom:given A multiplier of 2
+     * @custom:and A user with 200 USDN
+     * @custom:when 201 USDN are burned
+     * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
+     */
     function test_RevertWhen_burnInsufficientBalanceWithMultiplier() public {
         usdn.adjustMultiplier(2 ether);
         assertEq(usdn.balanceOf(USER_1), 200 ether);
@@ -102,7 +107,17 @@ contract TestUsdnBurn is UsdnTokenFixture {
         usdn.burn(201 ether);
     }
 
-    /// Check that burning from a user results in the correct event and changes in supply and balances.
+    /**
+     * @custom:scenario Burning from a user with allowance
+     * @custom:given An approved amount of 50 USDN
+     * @custom:and A multiplier of 2
+     * @custom:and A user with 200 USDN
+     * @custom:when 50 USDN are burned from the user
+     * @custom:then The `Transfer` event is emitted with the user as the sender, this contract as the recipient and
+     * amount 50
+     * @custom:and The user's balance is decreased by 50
+     * @custom:and The allowance is decreased by 50
+     */
     function test_burnFrom() public {
         vm.prank(USER_1);
         usdn.approve(address(this), 50 ether);
@@ -113,9 +128,17 @@ contract TestUsdnBurn is UsdnTokenFixture {
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(USER_1, address(0), 50 ether); // expected event
         usdn.burnFrom(USER_1, 50 ether);
+
+        assertEq(usdn.balanceOf(USER_1), 150 ether);
+        assertEq(usdn.allowance(USER_1, address(this)), 0);
     }
 
-    /// Check that burning from a user more than the allowance reverts.
+    /**
+     * @custom:scenario Burning from a user with insufficient allowance
+     * @custom:given An approved amount of 50 USDN
+     * @custom:when 51 USDN are burned from the user
+     * @custom:then The transaction reverts with the `ERC20InsufficientAllowance` error
+     */
     function test_RevertWhen_burnFromInsufficientAllowance() public {
         vm.prank(USER_1);
         usdn.approve(address(this), 50 ether);
@@ -126,7 +149,12 @@ contract TestUsdnBurn is UsdnTokenFixture {
         usdn.burnFrom(USER_1, 51 ether);
     }
 
-    /// Check that burning from a user more than their balance reverts.
+    /**
+     * @custom:scenario Burning from a user with insufficient balance
+     * @custom:given An approved amount of max
+     * @custom:when 150 USDN are burned from the user
+     * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
+     */
     function test_RevertWhen_burnFromInsufficientBalance() public {
         vm.prank(USER_1);
         usdn.approve(address(this), type(uint256).max);
