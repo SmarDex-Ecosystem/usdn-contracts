@@ -27,9 +27,57 @@ contract UsdnVaultFixture is BaseFixture {
         ERC20 _usdn = new USDN();
         usdn = IUsdn(address(_usdn));
 
+        // Deploy a mocked oracle middleware
         oracleMiddleware = new OracleMiddleware();
 
+        // Deploy the UsdnVault
         usdnVault = new UsdnVault(usdn, IERC20Metadata(WSTETH), oracleMiddleware, 10);
+
+        // Open an initial position
+        openAndValidateLong(10 ether, 2);
+
+        // Assertions
+        assertEq(usdn.totalSupply(), 0);
+    }
+
+    /// @notice Open a long position and validate it with 20 seconds of delay
+    /// @param amount The amount of asset to deposit.
+    /// @param liquidationPrice The desired liquidation price.
+    /// @return tick The tick containing the position.
+    /// @return index The position index in the tick.
+    function openAndValidateLong(uint96 amount, uint128 liquidationPrice)
+        internal
+        returns (int24 tick, uint256 index)
+    {
+        // Compute price data
+        bytes memory priceData = abi.encode(uint128(amount));
+        (tick, index) = usdnVault.openLong(amount, liquidationPrice, priceData);
+
+        // Wait 20 seconds
+        vm.warp(block.timestamp + 20 seconds);
+
+        // Validate the position
+        usdnVault.validateLong(tick, index, priceData);
+    }
+
+    /// @notice Open a long position and validate it with 20 seconds of delay
+    /// @param amount The amount of asset to deposit.
+    /// @param leverage The desired liquidation price.
+    /// @return tick The tick containing the position.
+    /// @return index The position index in the tick.
+    function openAndValidateLongWithLeverage(uint96 amount, uint128 leverage)
+        internal
+        returns (int24 tick, uint256 index)
+    {
+        // Compute price data
+        bytes memory priceData = abi.encode(uint128(amount));
+        (tick, index) = usdnVault.openLong(amount, amount - amount / leverage, priceData);
+
+        // Wait 20 seconds
+        vm.warp(block.timestamp + 20 seconds);
+
+        // Validate the position
+        usdnVault.validateLong(tick, index, priceData);
     }
 
     // force ignore from coverage report

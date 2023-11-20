@@ -28,6 +28,9 @@ interface IUsdnVaultPerps {
     /// @notice Commit a long entry.
     /// @param _deposit The amount of asset to deposit.
     /// @param _liquidationPrice The desired liquidation price.
+    /// @param _currentOraclePriceData The oracle data to retrive the current price.
+    /// @return tick The tick containing the position.
+    /// @return index The position index in the tick.
     function openLong(uint96 _deposit, uint128 _liquidationPrice, bytes calldata _currentOraclePriceData)
         external
         payable
@@ -37,6 +40,9 @@ interface IUsdnVaultPerps {
     /// @param _deposit The amount of asset to deposit.
     /// @param _liquidationPrice The desired liquidation price.
     /// @param _previousActionPriceData The oracle data to retrive the previous action price.
+    /// @param _currentOraclePriceData The oracle data to retrive the current price.
+    /// @return tick The tick containing the position.
+    /// @return index The position index in the tick.
     function openLong(
         uint96 _deposit,
         uint128 _liquidationPrice,
