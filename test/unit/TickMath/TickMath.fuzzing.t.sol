@@ -38,10 +38,6 @@ contract TestTickMathFuzzing is TickMathFixture {
     }
 
     /**
-     * Conversion from price to tick loses precision due to the discretization. Here we assess that a back-and-forth
-     * conversion doesn't give a result that is more than 1 tick off (i.e. 0.1% of the price).
-     */
-    /**
      * @custom:scenario Converting a price to a tick and back to a price (fuzzed)
      * @custom:given A valid price
      * @custom:when The closest tick for the price is retrieved

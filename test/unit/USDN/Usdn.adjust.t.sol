@@ -6,13 +6,26 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
-/// Test the `adjustMultiplier` function.
+/**
+ * @custom:feature The `adjustMultiplier` function of `USDN`
+ * @custom:background Given the current multiplier is 1
+ */
 contract TestUsdnAdjust is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
     }
 
-    /// Test that the multiplier adjustment results in the correct changes in supply and balances.
+    /**
+     * @custom:scenario Adjusting the multiplier
+     * @custom:given A user with 100 USDN
+     * @custom:and This contract has the `ADJUSTMENT_ROLE`
+     * @custom:when The multiplier is adjusted to 1.000000000000000001
+     * @custom:then The `MultiplierAdjusted` event is emitted with the old and new multiplier
+     * @custom:and The user's shares are unchanged
+     * @custom:and The user's balance is multiplied by the new multiplier
+     * @custom:and The total shares are unchanged
+     * @custom:and The total supply is multiplied by the new multiplier
+     */
     function test_adjustMultiplier() public {
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
@@ -29,7 +42,12 @@ contract TestUsdnAdjust is UsdnTokenFixture {
         assertEq(usdn.totalSupply(), 100 ether + 100);
     }
 
-    /// Test that only the `ADJUSTMENT_ROLE` can call `adjustMultiplier`.
+    /**
+     * @custom:scenario An unauthorized account tries to adjust the multiplier
+     * @custom:given This contract has no role
+     * @custom:when The multiplier is adjusted to 2
+     * @custom:then The transaction reverts with the `AccessControlUnauthorizedAccount` error
+     */
     function test_RevertWhen_unauthorized() public {
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -39,7 +57,13 @@ contract TestUsdnAdjust is UsdnTokenFixture {
         usdn.adjustMultiplier(2 ether);
     }
 
-    /// Test that the multiplier cannot be set to a value lower or equal to the current value (1e18).
+    /**
+     * @custom:scenario The multiplier is adjusted to the same value or smaller
+     * @custom:given This contract has the `ADJUSTMENT_ROLE`
+     * @custom:when The multiplier is adjusted to 1
+     * @custom:or The multiplier is adjusted to 0.5
+     * @custom:then The transaction reverts with the `UsdnInvalidMultiplier` error
+     */
     function test_RevertWhen_invalidMultiplier() public {
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
 

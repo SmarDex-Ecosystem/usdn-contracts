@@ -6,9 +6,13 @@ import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
-/// Test the `burn` and `burnFrom` functions.
+/**
+ * @custom:feature The `adjustMultiplier` function of `USDN`
+ * @custom:background Given a user with 100 tokens
+ * @custom:and The contract has the `MINTER_ROLE` and `ADJUSTMENT_ROLE`
+ * @custom:and The multiplier is 1
+ */
 contract TestUsdnBurn is UsdnTokenFixture {
-    /// User starts with 100 tokens balance (multiplier is 1)
     function setUp() public override {
         super.setUp();
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
@@ -16,24 +20,46 @@ contract TestUsdnBurn is UsdnTokenFixture {
         usdn.mint(USER_1, 100 ether);
     }
 
-    /// Check that burning a portion of the balance results in the correct event and changes in supply and balances.
+    /**
+     * @custom:scenario Burning a portion of the balance
+     * @custom:given A a multiplier of 2
+     * @custom:and A user with 200 USDN
+     * @custom:when 50 USDN are burned
+     * @custom:then The `Transfer` event is emitted with the user as the sender, the zero address as the recipient and
+     * amount 50
+     * @custom:and The user's balance is decreased by 50
+     * @custom:and The user's shares are decreased by 25
+     * @custom:and The total supply is decreased by 50
+     * @custom:and The total shares are decreased by 25
+     */
     function test_burnPartial() public {
-        usdn.adjustMultiplier(1.1 ether);
-        assertEq(usdn.balanceOf(USER_1), 110 ether);
+        usdn.adjustMultiplier(2 ether);
+        assertEq(usdn.balanceOf(USER_1), 200 ether);
         assertEq(usdn.sharesOf(USER_1), 100 ether);
 
         vm.expectEmit(true, true, true, false, address(usdn));
-        emit Transfer(USER_1, address(0), 10 ether); // expected event
+        emit Transfer(USER_1, address(0), 50 ether); // expected event
         vm.prank(USER_1);
-        usdn.burn(10 ether);
+        usdn.burn(50 ether);
 
-        assertEq(usdn.balanceOf(USER_1), 100 ether);
-        assertEq(usdn.sharesOf(USER_1), 90_909_090_909_090_909_091);
-        assertEq(usdn.totalSupply(), 100 ether);
-        assertEq(usdn.totalShares(), 90_909_090_909_090_909_091);
+        assertEq(usdn.balanceOf(USER_1), 150 ether);
+        assertEq(usdn.sharesOf(USER_1), 75 ether);
+        assertEq(usdn.totalSupply(), 150 ether);
+        assertEq(usdn.totalShares(), 75 ether);
     }
 
-    /// Check that burning the entire balance results in the correct event and changes in supply and balances.
+    /**
+     * @custom:scenario Burning the entire balance
+     * @custom:given A a multiplier of 1.1
+     * @custom:and A user with 110 USDN
+     * @custom:when 110 USDN are burned
+     * @custom:then The `Transfer` event is emitted with the user as the sender, the zero address as the recipient and
+     * amount 110
+     * @custom:and The user's balance is zero
+     * @custom:and The user's shares are zero
+     * @custom:and The total supply is zero
+     * @custom:and The total shares are zero
+     */
     function test_burnAll() public {
         usdn.adjustMultiplier(1.1 ether);
         assertEq(usdn.balanceOf(USER_1), 110 ether);
@@ -51,6 +77,11 @@ contract TestUsdnBurn is UsdnTokenFixture {
     }
 
     /// Check that burning an amount larger than the balance reverts.
+    /**
+     * @custom:scenario Burning more than the balance
+     * @custom:when 101 USDN are burned
+     * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
+     */
     function test_RevertWhen_burnInsufficientBalance() public {
         vm.expectRevert(
             abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, USER_1, 100 ether, 101 ether)
