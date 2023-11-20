@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import "forge-std/console.sol";
-
 /* -------------------------------------------------------------------------- */
 /*                             External libraries                             */
 /* -------------------------------------------------------------------------- */
@@ -104,7 +102,8 @@ contract UsdnVaultStorage {
     /// @param _asset The asset ERC20 contract.
     /// @param _oracleMiddleware The oracle middleware contract.
     /// @param _tickSpacing The positions tick spacing.
-    constructor(IERC20Metadata _asset, IOracleMiddleware _oracleMiddleware, int24 _tickSpacing) {
+    constructor(IUsdn _usdn, IERC20Metadata _asset, IOracleMiddleware _oracleMiddleware, int24 _tickSpacing) {
+        usdn = _usdn;
         asset = _asset;
         assetDecimals = _asset.decimals();
         oracleMiddleware = _oracleMiddleware;

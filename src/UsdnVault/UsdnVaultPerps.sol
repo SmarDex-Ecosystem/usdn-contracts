@@ -19,7 +19,8 @@ import { UsdnVaultCore } from "./UsdnVaultCore.sol";
 import { IOracleMiddleware, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 import { IUsdnVaultPerps } from "../interfaces/UsdnVault/IUsdnVaultPerps.sol";
 import { Position } from "../interfaces/UsdnVault/IUsdnVault.sol";
-import { TickMath } from "src/libraries/TickMath128.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
+import { IUsdn } from "src/interfaces/IUsdn.sol";
 
 import {
     AccessDenied,
@@ -45,8 +46,8 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     /// @param _asset The asset ERC20 contract.
     /// @param _oracleMiddleware The oracle middleware contract.
     /// @param _tickSpacing The positions tick spacing.
-    constructor(IERC20Metadata _asset, IOracleMiddleware _oracleMiddleware, int24 _tickSpacing)
-        UsdnVaultCore(_asset, _oracleMiddleware, _tickSpacing)
+    constructor(IUsdn _usdn, IERC20Metadata _asset, IOracleMiddleware _oracleMiddleware, int24 _tickSpacing)
+        UsdnVaultCore(_usdn, _asset, _oracleMiddleware, _tickSpacing)
     { }
 
     /* -------------------------------------------------------------------------- */
@@ -69,19 +70,24 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     /* ------------------------------ Long features ----------------------------- */
 
     /// @inheritdoc IUsdnVaultPerps
-    function openLong(uint96 _amount, uint128 _liquidationPrice) external payable returns (int24, uint256) {
-        return _openLong(_amount, _liquidationPrice);
-    }
-
-    /// @inheritdoc IUsdnVaultPerps
-    function openLong(uint96 _amount, uint128 _liquidationPrice, bytes calldata _previousActionPriceData)
+    function openLong(uint96 _amount, uint128 _liquidationPrice, bytes calldata _currentOraclePriceData)
         external
         payable
         returns (int24, uint256)
     {
+        return _openLong(_amount, _liquidationPrice, _currentOraclePriceData);
+    }
+
+    /// @inheritdoc IUsdnVaultPerps
+    function openLong(
+        uint96 _amount,
+        uint128 _liquidationPrice,
+        bytes calldata _currentOraclePriceData,
+        bytes calldata _previousActionPriceData
+    ) external payable returns (int24, uint256) {
         _validatePreviousActionPrice(_previousActionPriceData);
 
-        return _openLong(_amount, _liquidationPrice);
+        return _openLong(_amount, _liquidationPrice, _currentOraclePriceData);
     }
 
     /// @inheritdoc IUsdnVaultPerps
@@ -306,19 +312,16 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     /// @notice Commit a long entry.
     /// @param _amount The amount of asset to deposit.
     /// @param _liquidationPrice The desired liquidation price.
-    function _openLong(uint96 _amount, uint128 _liquidationPrice) private returns (int24, uint256) {
+    function _openLong(uint96 _amount, uint128 _liquidationPrice, bytes calldata _currentOraclePriceData)
+        private
+        returns (int24, uint256)
+    {
         if (_amount == 0) revert ZeroAmount();
-
-        uint256 balanceBefore = asset.balanceOf(address(this));
-        asset.safeTransferFrom(msg.sender, address(this), _amount);
-        if (asset.balanceOf(address(this)) != balanceBefore + _amount) {
-            revert IncompleteTransfer(asset.balanceOf(address(this)), balanceBefore + _amount);
-        }
 
         uint40 _timestamp = uint40(block.timestamp);
 
         PriceInfo memory _currentPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value - _amount }(
-            _timestamp, ProtocolAction.OpenPosition, abi.encode()
+            _timestamp, ProtocolAction.OpenPosition, _currentOraclePriceData
         );
 
         uint256 _desiredLeverage = getLeverage(_currentPrice.price, _liquidationPrice);
@@ -336,7 +339,14 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
             startPrice: 0
         });
 
-        return _validateLongEntry(_long, _currentPrice);
+        uint256 balanceBefore = asset.balanceOf(address(this));
+        asset.safeTransferFrom(msg.sender, address(this), _amount);
+
+        if (asset.balanceOf(address(this)) != balanceBefore + _amount) {
+            revert IncompleteTransfer(asset.balanceOf(address(this)), balanceBefore + _amount);
+        }
+
+        return _validateLongEntry(_long, _currentPrice, true);
     }
 
     /// @notice Commit a long exit.
@@ -369,7 +379,9 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         if (_long.validated) revert InvalidPendingPosition();
 
         PriceInfo memory _finalPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint128(block.timestamp), ProtocolAction.OpenPosition, _finalOraclePriceData
+            uint128(block.timestamp),
+            _long.isExit ? ProtocolAction.ValidateClosePosition : ProtocolAction.ValidateOpenPosition,
+            _finalOraclePriceData
         );
 
         /// @dev Update storage
@@ -407,12 +419,6 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     function _deposit(uint128 amount, bytes calldata _currentOraclePriceData) private {
         if (amount == 0) revert ZeroAmount();
 
-        uint256 balanceBefore = asset.balanceOf(address(this));
-        asset.safeTransferFrom(msg.sender, address(this), amount);
-        if (asset.balanceOf(address(this)) != balanceBefore + amount) {
-            revert IncompleteTransfer(asset.balanceOf(address(this)), balanceBefore + amount);
-        }
-
         uint40 _timestamp = uint40(block.timestamp);
 
         PriceInfo memory _currentPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value - amount }(
@@ -432,6 +438,12 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         pendingShortPositions[msg.sender] = _short;
 
         _validateShortEntry(_short, _currentPrice);
+
+        uint256 balanceBefore = asset.balanceOf(address(this));
+        asset.safeTransferFrom(msg.sender, address(this), amount);
+        if (asset.balanceOf(address(this)) != balanceBefore + amount) {
+            revert IncompleteTransfer(asset.balanceOf(address(this)), balanceBefore + amount);
+        }
     }
 
     /// @notice Commit a short exit.
@@ -469,7 +481,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         if (_short.validated) revert InvalidPendingPosition();
 
         PriceInfo memory _finalPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint128(block.timestamp), ProtocolAction.Withdraw, _finalOraclePriceData
+            uint128(block.timestamp), ProtocolAction.ValidateWithdraw, _finalOraclePriceData
         );
 
         // Update the position price
@@ -546,16 +558,6 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     /// @dev Validate a long entry.
     /// @param _long The long position.
     /// @param _currentPrice The price corresponding to the position timestamp.
-    function _validateLongEntry(Position memory _long, PriceInfo memory _currentPrice)
-        private
-        returns (int24 tick, uint256 index)
-    {
-        return _validateLongEntry(_long, _currentPrice, true);
-    }
-
-    /// @dev Validate a long entry.
-    /// @param _long The long position.
-    /// @param _currentPrice The price corresponding to the position timestamp.
     /// @param _firstTime Whether this is the first time the position is treated.
     function _validateLongEntry(Position memory _long, PriceInfo memory _currentPrice, bool _firstTime)
         private
@@ -572,7 +574,9 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
 
         _applyPnlAndFunding(_currentPrice.price, _currentPrice.timestamp);
 
+        // calculate liquidation price from leverage and current price
         uint128 liquidationPrice = getLiquidationPrice(_currentPrice.price, _long.leverage);
+
         tick = TickMath.getTickAtPrice(TickMath.fromDecimal(int256(uint256(liquidationPrice)), priceFeedDecimals));
         tick = (tick / tickSpacing) * tickSpacing;
         // calculate real leverage from tick and corresponding price

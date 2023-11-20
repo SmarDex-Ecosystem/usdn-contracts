@@ -15,6 +15,7 @@ error ZeroAmount();
 /* -------------------------------------------------------------------------- */
 
 error FundingRateInvalid();
+error InvalidOracleMiddleware();
 error IncompleteTransfer(uint256 amount, uint256 expected);
 error InvalidFees();
 error InvalidPriceData();

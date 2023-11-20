@@ -17,15 +17,17 @@ import { ERC20, ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensio
 /*                              Internal imports                              */
 /* -------------------------------------------------------------------------- */
 
-import { TickMath } from "src/libraries/TickMath128.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 import { TickBitmap } from "src/libraries/TickBitmap.sol";
 import { IUsdnVault, Position } from "src/interfaces/UsdnVault/IUsdnVault.sol";
 import { UsdnVaultPerps } from "./UsdnVaultPerps.sol";
 import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { IUsdn } from "src/interfaces/IUsdn.sol";
 
 import {
     ZeroAmount,
     IncompleteTransfer,
+    InvalidOracleMiddleware,
     FundingRateInvalid,
     MinLeverageInvalid,
     MaxLeverageInvalid
@@ -44,9 +46,9 @@ contract UsdnVault is IUsdnVault, UsdnVaultPerps, Ownable, Initializable {
     /// @param _asset The asset ERC20 contract.
     /// @param _oracleMiddleware The oracle middleware contract.
     /// @param _tickSpacing The positions tick spacing.
-    constructor(IERC20Metadata _asset, IOracleMiddleware _oracleMiddleware, int24 _tickSpacing)
+    constructor(IUsdn _usdn, IERC20Metadata _asset, IOracleMiddleware _oracleMiddleware, int24 _tickSpacing)
         Ownable(msg.sender)
-        UsdnVaultPerps(_asset, _oracleMiddleware, _tickSpacing)
+        UsdnVaultPerps(_usdn, _asset, _oracleMiddleware, _tickSpacing)
     { }
 
     /// @notice Initialize the vault.
@@ -133,7 +135,7 @@ contract UsdnVault is IUsdnVault, UsdnVaultPerps, Ownable, Initializable {
     /// @notice Set the oracle middleware address.
     /// @param _oracleMiddleware The new oracle middleware address.
     function setOracleMiddleware(address _oracleMiddleware) external onlyOwner {
-        // FIXME: check that this is a contract
+        if (_oracleMiddleware.code.length == 0) revert InvalidOracleMiddleware();
         oracleMiddleware = IOracleMiddleware(_oracleMiddleware);
     }
 }
