@@ -17,8 +17,7 @@ contract TestUsdnPermit is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
         sigUtils = new SigUtils(usdn.DOMAIN_SEPARATOR());
-        userPrivateKey = 0xA11CE;
-        user = vm.addr(userPrivateKey);
+        (user, userPrivateKey) = makeAddrAndKey("alice");
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         usdn.mint(user, 100 ether);
     }
@@ -86,8 +85,8 @@ contract TestUsdnPermit is UsdnTokenFixture {
             deadline: type(uint256).max
         });
         bytes32 digest = sigUtils.getTypedDataHash(permit);
-        address bob = vm.addr(0xB0B);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(0xB0B, digest);
+        (address bob, uint256 bobPrivateKey) = makeAddrAndKey("bob");
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(bobPrivateKey, digest);
 
         vm.expectRevert(abi.encodeWithSelector(ERC2612InvalidSigner.selector, bob, user));
         usdn.permit(user, address(this), 100 ether, type(uint256).max, v, r, s);
