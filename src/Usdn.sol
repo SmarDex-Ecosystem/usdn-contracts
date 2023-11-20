@@ -72,13 +72,13 @@ contract Usdn is
     string private constant NAME = "Ultimate Synthetic Delta Neutral";
     string private constant SYMBOL = "USDN";
 
-    constructor(address minter, address adjustment) EIP712(NAME, "1") {
+    constructor(address _minter, address _adjuster) EIP712(NAME, "1") {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
-        if (minter != address(0)) {
-            _grantRole(MINTER_ROLE, minter);
+        if (_minter != address(0)) {
+            _grantRole(MINTER_ROLE, _minter);
         }
-        if (adjustment != address(0)) {
-            _grantRole(ADJUSTMENT_ROLE, adjustment);
+        if (_adjuster != address(0)) {
+            _grantRole(ADJUSTMENT_ROLE, _adjuster);
         }
     }
 
