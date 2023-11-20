@@ -54,17 +54,19 @@ contract Usdn is
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
     // Mapping from account to number of shares
-    mapping(address account => uint256) private _shares;
+    mapping(address account => uint256) private shares;
 
     // Mapping of allowances by owner and spender. This is in token units, not shares.
-    mapping(address account => mapping(address spender => uint256)) private _allowances;
+    mapping(address account => mapping(address spender => uint256)) private allowances;
 
     /// @inheritdoc IUsdn
     uint8 public constant override(IUsdn, IERC20Metadata) decimals = 18;
 
-    uint256 private _totalShares;
+    /// @inheritdoc IUsdn
+    uint256 public totalShares;
+
     // Multiplier used to convert between shares and tokens. This is a fixed-point number with 18 decimals.
-    uint256 private _multiplier = 1e18;
+    uint256 private multiplier = 1e18;
     uint256 private constant MULTIPLIER_DIVISOR = 1e18;
 
     string private constant NAME = "Ultimate Synthetic Delta Neutral";
@@ -96,17 +98,17 @@ contract Usdn is
 
     /// @inheritdoc IUsdn
     function totalSupply() external view override(IUsdn, IERC20) returns (uint256) {
-        return totalShares() * _multiplier / MULTIPLIER_DIVISOR;
+        return totalShares * multiplier / MULTIPLIER_DIVISOR;
     }
 
     /// @inheritdoc IUsdn
-    function balanceOf(address account) public view override(IUsdn, IERC20) returns (uint256) {
-        return sharesOf(account) * _multiplier / MULTIPLIER_DIVISOR;
+    function balanceOf(address _account) public view override(IUsdn, IERC20) returns (uint256) {
+        return sharesOf(_account) * multiplier / MULTIPLIER_DIVISOR;
     }
 
     /// @inheritdoc IUsdn
-    function allowance(address owner, address spender) public view override(IUsdn, IERC20) returns (uint256) {
-        return _allowances[owner][spender];
+    function allowance(address _owner, address _spender) public view override(IUsdn, IERC20) returns (uint256) {
+        return allowances[_owner][_spender];
     }
 
     /* -------------------------------------------------------------------------- */
@@ -128,13 +130,8 @@ contract Usdn is
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function totalShares() public view returns (uint256) {
-        return _totalShares;
-    }
-
-    /// @inheritdoc IUsdn
-    function sharesOf(address account) public view returns (uint256) {
-        return _shares[account];
+    function sharesOf(address _account) public view returns (uint256) {
+        return shares[_account];
     }
 
     /* -------------------------------------------------------------------------- */
@@ -142,24 +139,22 @@ contract Usdn is
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function approve(address spender, uint256 value) external override(IUsdn, IERC20) returns (bool) {
-        address owner = _msgSender();
-        _approve(owner, spender, value);
+    function approve(address _spender, uint256 _value) external override(IUsdn, IERC20) returns (bool) {
+        _approve(_msgSender(), _spender, _value);
         return true;
     }
 
     /// @inheritdoc IUsdn
-    function transfer(address to, uint256 value) external override(IUsdn, IERC20) returns (bool) {
-        address owner = _msgSender();
-        _transfer(owner, to, value);
+    function transfer(address _to, uint256 _value) external override(IUsdn, IERC20) returns (bool) {
+        _transfer(_msgSender(), _to, _value);
         return true;
     }
 
     /// @inheritdoc IUsdn
-    function transferFrom(address from, address to, uint256 value) external override(IUsdn, IERC20) returns (bool) {
-        address spender = _msgSender();
-        _spendAllowance(from, spender, value);
-        _transfer(from, to, value);
+    function transferFrom(address _from, address _to, uint256 _value) external override(IUsdn, IERC20) returns (bool) {
+        address _spender = _msgSender();
+        _spendAllowance(_from, _spender, _value);
+        _transfer(_from, _to, _value);
         return true;
     }
 
@@ -168,24 +163,30 @@ contract Usdn is
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
-        external
-        override(IUsdn, IERC20Permit)
-    {
-        if (block.timestamp > deadline) {
-            revert ERC2612ExpiredSignature(deadline);
+    function permit(
+        address _owner,
+        address _spender,
+        uint256 _value,
+        uint256 _deadline,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    ) external override(IUsdn, IERC20Permit) {
+        if (block.timestamp > _deadline) {
+            revert ERC2612ExpiredSignature(_deadline);
         }
 
-        bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, _useNonce(owner), deadline));
+        bytes32 _structHash =
+            keccak256(abi.encode(PERMIT_TYPEHASH, _owner, _spender, _value, _useNonce(_owner), _deadline));
 
-        bytes32 hash = _hashTypedDataV4(structHash);
+        bytes32 _hash = _hashTypedDataV4(_structHash);
 
-        address signer = ECDSA.recover(hash, v, r, s);
-        if (signer != owner) {
-            revert ERC2612InvalidSigner(signer, owner);
+        address _signer = ECDSA.recover(_hash, _v, _r, _s);
+        if (_signer != _owner) {
+            revert ERC2612InvalidSigner(_signer, _owner);
         }
 
-        _approve(owner, spender, value);
+        _approve(_owner, _spender, _value);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -193,14 +194,14 @@ contract Usdn is
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function burn(uint256 value) external {
-        _burn(_msgSender(), value);
+    function burn(uint256 _value) external {
+        _burn(_msgSender(), _value);
     }
 
     /// @inheritdoc IUsdn
-    function burnFrom(address account, uint256 value) external {
-        _spendAllowance(account, _msgSender(), value);
-        _burn(account, value);
+    function burnFrom(address _account, uint256 _value) external {
+        _spendAllowance(_account, _msgSender(), _value);
+        _burn(_account, _value);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -208,18 +209,18 @@ contract Usdn is
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
-        _mint(to, amount);
+    function mint(address _to, uint256 _amount) external onlyRole(MINTER_ROLE) {
+        _mint(_to, _amount);
     }
 
     /// @inheritdoc IUsdn
-    function adjustMultiplier(uint256 multiplier) external onlyRole(ADJUSTMENT_ROLE) {
-        if (multiplier <= _multiplier) {
+    function adjustMultiplier(uint256 _multiplier) external onlyRole(ADJUSTMENT_ROLE) {
+        if (_multiplier <= multiplier) {
             // Multiplier can only be increased
-            revert UsdnInvalidMultiplier(multiplier);
+            revert UsdnInvalidMultiplier(_multiplier);
         }
-        emit MultiplierAdjusted(_multiplier, multiplier);
-        _multiplier = multiplier;
+        emit MultiplierAdjusted(multiplier, _multiplier);
+        multiplier = _multiplier;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -229,34 +230,34 @@ contract Usdn is
     /**
      * @dev Set `value` as the allowance of `spender` over the `owner`'s tokens.
      * Emits an {Approval} event.
-     * @param owner the account that owns the tokens
-     * @param spender the account that will spend the tokens
-     * @param value the amount of tokens to allow
+     * @param _owner the account that owns the tokens
+     * @param _spender the account that will spend the tokens
+     * @param _value the amount of tokens to allow
      */
-    function _approve(address owner, address spender, uint256 value) internal {
-        _approve(owner, spender, value, true);
+    function _approve(address _owner, address _spender, uint256 _value) internal {
+        _approve(_owner, _spender, _value, true);
     }
 
     /**
      * @dev Variant of {_approve} with an optional flag to enable or disable the emission of the {Approval} event.
      * Used without event emission in {_spendAllowance} and {_transferFrom}.
      * Emits an {Approval} event if `emitEvent` is true.
-     * @param owner the account that owns the tokens
-     * @param spender the account that will spend the tokens
-     * @param value the amount of tokens to allow
-     * @param emitEvent whether to emit the {Approval} event
+     * @param _owner the account that owns the tokens
+     * @param _spender the account that will spend the tokens
+     * @param _value the amount of tokens to allow
+     * @param _emitEvent whether to emit the {Approval} event
      */
-    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal {
-        if (owner == address(0)) {
+    function _approve(address _owner, address _spender, uint256 _value, bool _emitEvent) internal {
+        if (_owner == address(0)) {
             // this should never happen, because all calling sites check for this
             revert ERC20InvalidApprover(address(0));
         }
-        if (spender == address(0)) {
+        if (_spender == address(0)) {
             revert ERC20InvalidSpender(address(0));
         }
-        _allowances[owner][spender] = value;
-        if (emitEvent) {
-            emit Approval(owner, spender, value);
+        allowances[_owner][_spender] = _value;
+        if (_emitEvent) {
+            emit Approval(_owner, _spender, _value);
         }
     }
 
@@ -265,18 +266,18 @@ contract Usdn is
      *
      * Does not update the allowance value in case of infinite allowance.
      * Revert if not enough allowance is available.
-     * @param owner the account that owns the tokens
-     * @param spender the account that spent the tokens
-     * @param value the amount of tokens spent
+     * @param _owner the account that owns the tokens
+     * @param _spender the account that spent the tokens
+     * @param _value the amount of tokens spent
      */
-    function _spendAllowance(address owner, address spender, uint256 value) internal {
-        uint256 currentAllowance = allowance(owner, spender);
-        if (currentAllowance != type(uint256).max) {
-            if (currentAllowance < value) {
-                revert ERC20InsufficientAllowance(spender, currentAllowance, value);
+    function _spendAllowance(address _owner, address _spender, uint256 _value) internal {
+        uint256 _currentAllowance = allowance(_owner, _spender);
+        if (_currentAllowance != type(uint256).max) {
+            if (_currentAllowance < _value) {
+                revert ERC20InsufficientAllowance(_spender, _currentAllowance, _value);
             }
             unchecked {
-                _approve(owner, spender, currentAllowance - value, false);
+                _approve(_owner, _spender, _currentAllowance - _value, false);
             }
         }
     }
@@ -284,48 +285,48 @@ contract Usdn is
     /**
      * @dev Create a `value` amount of tokens and assign them to `account`, by transferring it from the zero address.
      * Emits a {Transfer} event with the zero address as `from`.
-     * @param account the account to receive the tokens
-     * @param value the amount of tokens to mint, is internally converted to shares
+     * @param _account the account to receive the tokens
+     * @param _value the amount of tokens to mint, is internally converted to shares
      */
-    function _mint(address account, uint256 value) internal {
-        if (account == address(0)) {
+    function _mint(address _account, uint256 _value) internal {
+        if (_account == address(0)) {
             revert ERC20InvalidReceiver(address(0));
         }
-        _update(address(0), account, value);
+        _update(address(0), _account, _value);
     }
 
     /**
      * @dev Destroy a `value` amount of tokens from `account`, by transferring it to the zero address, lowering the
      * total supply.
      * Emits a {Transfer} event with the zero address as `to`.
-     * @param account the account to burn the tokens from
-     * @param value the amount of tokens to burn, is internally converted to shares
+     * @param _account the account to burn the tokens from
+     * @param _value the amount of tokens to burn, is internally converted to shares
      */
-    function _burn(address account, uint256 value) internal {
-        if (account == address(0)) {
+    function _burn(address _account, uint256 _value) internal {
+        if (_account == address(0)) {
             // this should never happen, because all calling sites check for this
             revert ERC20InvalidSender(address(0));
         }
-        _update(account, address(0), value);
+        _update(_account, address(0), _value);
     }
 
     /**
      * @dev Move a `value` amount of tokens from `from` to `to`.
      * Emits a {Transfer} event.
-     * @param from the source address
-     * @param to the destination address
-     * @param value the amount of tokens to send, is internally converted to shares
+     * @param _from the source address
+     * @param _to the destination address
+     * @param _value the amount of tokens to send, is internally converted to shares
      */
-    function _transfer(address from, address to, uint256 value) internal {
-        if (from == address(0)) {
+    function _transfer(address _from, address _to, uint256 _value) internal {
+        if (_from == address(0)) {
             // this should never happen, because all calling sites check for this
             revert ERC20InvalidSender(address(0));
         }
-        if (to == address(0)) {
+        if (_to == address(0)) {
             revert ERC20InvalidReceiver(address(0));
         }
 
-        _update(from, to, value);
+        _update(_from, _to, _value);
     }
 
     /**
@@ -333,35 +334,35 @@ contract Usdn is
      * is the zero address. Overflow checks are required because the total supply of tokens could exceed the maximum
      * total number of shares (uint256).
      * Emits a {Transfer} event.
-     * @param from the source address
-     * @param to the destination address
-     * @param value the amount of tokens to transfer, is internally converted to shares
+     * @param _from the source address
+     * @param _to the destination address
+     * @param _value the amount of tokens to transfer, is internally converted to shares
      */
-    function _update(address from, address to, uint256 value) internal {
-        uint256 fromBalance = balanceOf(from);
+    function _update(address _from, address _to, uint256 _value) internal {
+        uint256 _fromBalance = balanceOf(_from);
         uint256 _sharesValue;
-        if (value == fromBalance) {
+        if (_value == _fromBalance) {
             // Transfer all shares, avoids rounding errors
-            _sharesValue = _shares[from];
+            _sharesValue = shares[_from];
         } else {
-            _sharesValue = value * MULTIPLIER_DIVISOR / _multiplier;
+            _sharesValue = _value * MULTIPLIER_DIVISOR / multiplier;
         }
-        if (from == address(0)) {
-            _totalShares += _sharesValue;
+        if (_from == address(0)) {
+            totalShares += _sharesValue;
         } else {
-            uint256 fromShares = _shares[from];
-            if (fromShares < _sharesValue) {
-                revert ERC20InsufficientBalance(from, fromBalance, value);
+            uint256 _fromShares = shares[_from];
+            if (_fromShares < _sharesValue) {
+                revert ERC20InsufficientBalance(_from, _fromBalance, _value);
             }
-            _shares[from] = fromShares - _sharesValue;
+            shares[_from] = _fromShares - _sharesValue;
         }
 
-        if (to == address(0)) {
-            _totalShares -= _sharesValue;
+        if (_to == address(0)) {
+            totalShares -= _sharesValue;
         } else {
-            _shares[to] += _sharesValue;
+            shares[_to] += _sharesValue;
         }
 
-        emit Transfer(from, to, value);
+        emit Transfer(_from, _to, _value);
     }
 }
