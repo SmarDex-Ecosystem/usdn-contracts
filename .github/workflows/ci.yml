@@ -7,6 +7,7 @@ on:
 
 env:
   FOUNDRY_PROFILE: ci
+  URL_ETH_MAINNET: ${URL_ETH_MAINNET}
 
 jobs:
   run-ci:
