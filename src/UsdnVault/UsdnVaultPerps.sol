@@ -319,7 +319,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
 
         uint40 _timestamp = uint40(block.timestamp);
 
-        PriceInfo memory _currentPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value - _amount }(
+        PriceInfo memory _currentPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             _timestamp, ProtocolAction.OpenPosition, _currentOraclePriceData
         );
 
@@ -420,7 +420,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
 
         uint40 _timestamp = uint40(block.timestamp);
 
-        PriceInfo memory _currentPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value - amount }(
+        PriceInfo memory _currentPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             _timestamp, ProtocolAction.Deposit, _currentOraclePriceData
         );
 
@@ -580,11 +580,10 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         tick = (tick / tickSpacing) * tickSpacing;
         // calculate real leverage from tick and corresponding price
         liquidationPrice = uint128(TickMath.getPriceAtTick(tick));
-        uint40 leverage = getLeverage(_currentPrice.price, liquidationPrice);
 
         if (_firstTime) balanceLong += _long.amount;
 
-        uint256 addExpo = (_long.amount * leverage) / 10 ** LEVERAGE_DECIMALS;
+        uint256 addExpo = (_long.amount * _long.leverage) / 10 ** LEVERAGE_DECIMALS;
         totalExpo += addExpo;
         bytes32 tickHash = _tickHash(tick);
         totalExpoByTick[tickHash] += addExpo;
@@ -593,7 +592,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
             user: msg.sender,
             amount: _long.amount,
             startPrice: _currentPrice.price,
-            leverage: leverage,
+            leverage: _long.leverage,
             validated: _long.validated,
             isExit: false,
             timestamp: uint40(block.timestamp)

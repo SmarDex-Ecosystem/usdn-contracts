@@ -1,16 +1,22 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { BaseFixture } from "test/utils/Fixtures.sol";
-import { OracleMiddleware } from "./OracleMiddleware.sol";
-import { IUsdn } from "src/interfaces/IUsdn.sol";
-import { UsdnVault } from "src/UsdnVault/UsdnVault.sol";
 import { ERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import { BaseFixture } from "test/utils/Fixtures.sol";
+import { OracleMiddleware } from "test/unit/UsdnVault/utils/OracleMiddleware.sol";
 import "test/utils/Constants.sol";
 
+import { IUsdn } from "src/interfaces/IUsdn.sol";
+import { UsdnVault } from "src/UsdnVault/UsdnVault.sol";
+
+// TODO: Use the real USDN contract instead of this mock
 contract USDN is ERC20 {
     constructor() ERC20("Ultimate Synthetic Delta Neutral", "USDN") { }
+
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
 }
 
 /**
@@ -19,10 +25,12 @@ contract USDN is ERC20 {
  */
 contract UsdnVaultFixture is BaseFixture {
     IUsdn usdn;
+    IERC20Metadata asset;
     UsdnVault usdnVault;
     OracleMiddleware oracleMiddleware;
+    int24 tickSpacing = 10;
 
-    function setUp() public virtual {
+    function setUp() public virtual forkEthereum {
         // TODO: replace ERC20/USDN/IUsdn by Usdn
         ERC20 _usdn = new USDN();
         usdn = IUsdn(address(_usdn));
@@ -31,13 +39,15 @@ contract UsdnVaultFixture is BaseFixture {
         oracleMiddleware = new OracleMiddleware();
 
         // Deploy the UsdnVault
-        usdnVault = new UsdnVault(usdn, IERC20Metadata(WSTETH), oracleMiddleware, 10);
+        asset = IERC20Metadata(WSTETH);
+        usdnVault = new UsdnVault(usdn, asset, oracleMiddleware, tickSpacing);
+    }
 
-        // Open an initial position
-        openAndValidateLong(10 ether, 2);
-
-        // Assertions
-        assertEq(usdn.totalSupply(), 0);
+    function initialize() internal {
+        // Initialize UsdnVault
+        deal(WSTETH, address(this), 10_000 ether);
+        asset.approve(address(usdnVault), type(uint256).max);
+        usdnVault.initialize(10 ether, 8 ether, 2000 ether);
     }
 
     /// @notice Open a long position and validate it with 20 seconds of delay
@@ -51,13 +61,13 @@ contract UsdnVaultFixture is BaseFixture {
     {
         // Compute price data
         bytes memory priceData = abi.encode(uint128(amount));
-        (tick, index) = usdnVault.openLong(amount, liquidationPrice, priceData);
+        (tick, index) = usdnVault.openLong{ value: 1 }(amount, liquidationPrice, priceData);
 
         // Wait 20 seconds
         vm.warp(block.timestamp + 20 seconds);
 
         // Validate the position
-        usdnVault.validateLong(tick, index, priceData);
+        usdnVault.validateLong{ value: 1 }(tick, index, priceData);
     }
 
     /// @notice Open a long position and validate it with 20 seconds of delay
@@ -69,15 +79,7 @@ contract UsdnVaultFixture is BaseFixture {
         internal
         returns (int24 tick, uint256 index)
     {
-        // Compute price data
-        bytes memory priceData = abi.encode(uint128(amount));
-        (tick, index) = usdnVault.openLong(amount, amount - amount / leverage, priceData);
-
-        // Wait 20 seconds
-        vm.warp(block.timestamp + 20 seconds);
-
-        // Validate the position
-        usdnVault.validateLong(tick, index, priceData);
+        (tick, index) = openAndValidateLong(amount, amount - amount / leverage);
     }
 
     // force ignore from coverage report

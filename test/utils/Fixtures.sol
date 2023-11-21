@@ -10,7 +10,22 @@ import "test/utils/Constants.sol";
  * @dev Define labels for various accounts and contracts.
  */
 contract BaseFixture is Test {
+    // Forks
+    uint256 ethereumFork;
+
+    modifier forkEthereum() {
+        vm.selectFork(ethereumFork);
+        assertEq(vm.activeFork(), ethereumFork);
+        _;
+    }
+
     constructor() {
+        /* -------------------------------------------------------------------------- */
+        /*                                Create forks                                */
+        /* -------------------------------------------------------------------------- */
+
+        ethereumFork = vm.createFork(vm.envString("URL_ETH_MAINNET"));
+
         /* -------------------------------------------------------------------------- */
         /*                                  Accounts                                  */
         /* -------------------------------------------------------------------------- */
