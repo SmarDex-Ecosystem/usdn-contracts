@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { BaseFixture } from "test/utils/Fixtures.sol";
+import { UsdnHandler } from "test/unit/USDN/utils/Handler.sol";
 
 import { Usdn } from "src/Usdn.sol";
 import { IUsdnEvents, IUsdnErrors } from "src/interfaces/IUsdn.sol";
@@ -15,10 +16,10 @@ contract UsdnTokenFixture is BaseFixture, IUsdnEvents, IUsdnErrors {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
-    Usdn public usdn;
+    UsdnHandler public usdn;
 
     function setUp() public virtual {
-        usdn = new Usdn(address(0), address(0));
+        usdn = new UsdnHandler();
     }
 
     // force ignore from coverage report

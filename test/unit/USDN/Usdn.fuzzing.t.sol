@@ -12,11 +12,8 @@ import { USER_1 } from "test/utils/Constants.sol";
  * @custom:background Given TOKENS_MAX, a maximum amount of tokens that can exist
  */
 contract TestUsdnFuzzing is UsdnTokenFixture {
-    uint256 TOKENS_MAX;
-
     function setUp() public override {
         super.setUp();
-        TOKENS_MAX = (type(uint256).max / 10 ** usdn.decimalsOffset()) - 1;
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
     }
@@ -24,17 +21,17 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
     /**
      * @custom:scenario Convert an amount of tokens to the corresponding amount of shares, then back to tokens
      * @custom:given A multiplier between 1 and 1000
-     * @custom:and An amount of tokens between 0 and TOKENS_MAX
+     * @custom:and An amount of tokens between 0 and MAX_TOKENS
      * @custom:when The tokens are converted to shares and back to tokens
      * @custom:then The result is the same as the original amount of tokens
      * @param multiplier The multiplier to use
      * @param tokens The amount of tokens to convert
      */
     function testFuzz_convertBetweenTokensAndShares(uint256 multiplier, uint256 tokens) public {
-        multiplier = bound(multiplier, 1 ether, 1000 ether);
-        tokens = bound(tokens, 0, TOKENS_MAX);
+        multiplier = bound(multiplier, 1 gwei, 1 ether);
+        tokens = bound(tokens, 0, usdn.maxTokens());
 
-        if (multiplier > 1 ether) {
+        if (multiplier > 1 gwei) {
             usdn.adjustMultiplier(multiplier);
         }
 
@@ -47,7 +44,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
     /**
      * @custom:scenario Transfer an amount of tokens to a user and check the balance changes
      * @custom:given A multiplier between 1 and 1000
-     * @custom:and An amount of tokens between 0 and TOKENS_MAX
+     * @custom:and An amount of tokens between 0 and MAX_TOKENS
      * @custom:when The tokens are transferred to a user
      * @custom:then The balance of this contract is decreased by the amount of tokens
      * @custom:and The balance of the user is increased by the amount of tokens
@@ -56,14 +53,14 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @param transferAmount The amount of tokens to transfer
      */
     function testFuzz_balanceInvariant(uint256 multiplier, uint256 transferAmount) public {
-        multiplier = bound(multiplier, 1 ether, 1000 ether);
-        transferAmount = bound(transferAmount, 0, TOKENS_MAX);
+        multiplier = bound(multiplier, 1 gwei, 1 ether);
+        transferAmount = bound(transferAmount, 0, usdn.maxTokens());
 
-        if (multiplier > 1 ether) {
+        if (multiplier > 1 gwei) {
             usdn.adjustMultiplier(multiplier);
         }
 
-        usdn.mint(address(this), TOKENS_MAX);
+        usdn.mint(address(this), usdn.maxTokens());
         uint256 balanceBefore = usdn.balanceOf(address(this));
 
         vm.expectEmit(true, true, true, false, address(usdn));
@@ -83,12 +80,17 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @param multiplier The multiplier to use
      */
     function testFuzz_totalSupplyInvariant(uint256 multiplier) public {
-        multiplier = bound(multiplier, 1 ether, 1000 ether);
+        multiplier = bound(multiplier, 1 gwei, 1 ether);
+        if (multiplier > 1 gwei) {
+            usdn.adjustMultiplier(multiplier);
+        }
+
         uint256 totalHolders = 10;
         uint256[] memory balances = new uint256[](totalHolders);
         uint256 totalBalances;
         for (uint256 i = 0; i < totalHolders; i++) {
-            balances[i] = _bound(uint256(keccak256(abi.encodePacked(i + multiplier))), 0, TOKENS_MAX / totalHolders);
+            balances[i] =
+                _bound(uint256(keccak256(abi.encodePacked(i + multiplier))), 0, usdn.maxTokens() / totalHolders);
             totalBalances += balances[i];
             usdn.mint(address(uint160(i + 1)), balances[i]);
         }

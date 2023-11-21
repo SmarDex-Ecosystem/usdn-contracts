@@ -19,7 +19,7 @@ contract TestUsdnAdjust is UsdnTokenFixture {
      * @custom:scenario Adjusting the multiplier
      * @custom:given A user with 100 USDN
      * @custom:and This contract has the `ADJUSTMENT_ROLE`
-     * @custom:when The multiplier is adjusted to 1.000000000000000001
+     * @custom:when The multiplier is adjusted to 1.000000001
      * @custom:then The `MultiplierAdjusted` event is emitted with the old and new multiplier
      * @custom:and The user's shares are unchanged
      * @custom:and The user's balance is multiplied by the new multiplier
@@ -33,13 +33,13 @@ contract TestUsdnAdjust is UsdnTokenFixture {
         usdn.mint(USER_1, 100 ether);
 
         vm.expectEmit(true, true, false, false, address(usdn));
-        emit MultiplierAdjusted(1 ether, 1 ether + 1); // expected event
-        usdn.adjustMultiplier(1 ether + 1);
+        emit MultiplierAdjusted(1 gwei, 1 gwei + 1); // expected event
+        usdn.adjustMultiplier(1 gwei + 1);
 
         assertEq(usdn.sharesOf(USER_1), 100 ether * 10 ** usdn.decimalsOffset());
-        assertEq(usdn.balanceOf(USER_1), 100 ether + 100);
+        assertEq(usdn.balanceOf(USER_1), 100 ether + 100 gwei);
         assertEq(usdn.totalShares(), 100 ether * 10 ** usdn.decimalsOffset());
-        assertEq(usdn.totalSupply(), 100 ether + 100);
+        assertEq(usdn.totalSupply(), 100 ether + 100 gwei);
     }
 
     /**
@@ -54,7 +54,7 @@ contract TestUsdnAdjust is UsdnTokenFixture {
                 IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), usdn.ADJUSTMENT_ROLE()
             )
         );
-        usdn.adjustMultiplier(2 ether);
+        usdn.adjustMultiplier(2 gwei);
     }
 
     /**
@@ -67,10 +67,10 @@ contract TestUsdnAdjust is UsdnTokenFixture {
     function test_RevertWhen_invalidMultiplier() public {
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
 
-        vm.expectRevert(abi.encodeWithSelector(UsdnInvalidMultiplier.selector, 1 ether));
-        usdn.adjustMultiplier(1 ether);
+        vm.expectRevert(abi.encodeWithSelector(UsdnInvalidMultiplier.selector, 1 gwei));
+        usdn.adjustMultiplier(1 gwei);
 
-        vm.expectRevert(abi.encodeWithSelector(UsdnInvalidMultiplier.selector, 0.5 ether));
-        usdn.adjustMultiplier(0.5 ether);
+        vm.expectRevert(abi.encodeWithSelector(UsdnInvalidMultiplier.selector, 0.5 gwei));
+        usdn.adjustMultiplier(0.5 gwei);
     }
 }

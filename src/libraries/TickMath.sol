@@ -5,7 +5,6 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 /**
  * @title TickMath
- * @author @beeb
  * @notice Convert between prices and ticks, where each tick represents an increase in price of 0.1%. Ticks are
  * used instead of liquidation prices to limit the number of possible buckets where a position can land, and allows for
  * batched liquidations.

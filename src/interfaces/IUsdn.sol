@@ -7,7 +7,6 @@ import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 /**
  * @title Events for the USDN token contract
- * @author @beeb
  */
 interface IUsdnEvents {
     /**
@@ -20,7 +19,6 @@ interface IUsdnEvents {
 
 /**
  * @title Errors for the USDN token contract
- * @author @beeb
  */
 interface IUsdnErrors {
     /**
@@ -36,6 +34,12 @@ interface IUsdnErrors {
      */
     error UsdnMaxTokensExceeded(uint256 value);
 
+    /**
+     * @dev Indicates that the number of shares exceeds the maximum allowed value.
+     * @param value invalid shares value
+     */
+    //error UsdnMaxSharesExceeded(uint256 value);
+
     /// @dev Permit deadline has expired.
     error ERC2612ExpiredSignature(uint256 deadline);
 
@@ -45,7 +49,6 @@ interface IUsdnErrors {
 
 /**
  * @title USDN token interface
- * @author @beeb
  * @notice Implements the ERC-20 token standard as well as the EIP-2612 permit extension. Additional functions related
  * to the specifics of this token are included below.
  */
@@ -114,7 +117,4 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
 
     /// @dev Adjustment role signature.
     function ADJUSTMENT_ROLE() external pure returns (bytes32);
-
-    /// @dev The additional precision for shares compared to tokens.
-    function decimalsOffset() external pure returns (uint8);
 }

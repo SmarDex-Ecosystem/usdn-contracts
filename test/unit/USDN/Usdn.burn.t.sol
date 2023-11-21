@@ -33,7 +33,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * @custom:and The total shares are decreased by 25
      */
     function test_burnPartial() public {
-        usdn.adjustMultiplier(2 ether);
+        usdn.adjustMultiplier(2 gwei);
         assertEq(usdn.balanceOf(USER_1), 200 ether);
         assertEq(usdn.sharesOf(USER_1), 100 ether * 10 ** usdn.decimalsOffset());
 
@@ -61,7 +61,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * @custom:and The total shares are zero
      */
     function test_burnAll() public {
-        usdn.adjustMultiplier(1.1 ether);
+        usdn.adjustMultiplier(1.1 gwei);
         assertEq(usdn.balanceOf(USER_1), 110 ether);
         assertEq(usdn.sharesOf(USER_1), 100 ether * 10 ** usdn.decimalsOffset());
 
@@ -97,7 +97,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
      */
     function test_RevertWhen_burnInsufficientBalanceWithMultiplier() public {
-        usdn.adjustMultiplier(2 ether);
+        usdn.adjustMultiplier(2 gwei);
         assertEq(usdn.balanceOf(USER_1), 200 ether);
 
         vm.expectRevert(
@@ -122,7 +122,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
         vm.prank(USER_1);
         usdn.approve(address(this), 50 ether);
 
-        usdn.adjustMultiplier(2 ether);
+        usdn.adjustMultiplier(2 gwei);
         assertEq(usdn.allowance(USER_1, address(this)), 50 ether); // changing multiplier doesn't affect allowance
 
         vm.expectEmit(true, true, true, false, address(usdn));
@@ -163,5 +163,16 @@ contract TestUsdnBurn is UsdnTokenFixture {
             abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, USER_1, 100 ether, 150 ether)
         );
         usdn.burnFrom(USER_1, 150 ether);
+    }
+
+    /**
+     * @custom:scenario Burning from the zero address
+     * @custom:when 50 USDN are burned from the zero address
+     * @custom:then The transaction reverts with the `ERC20InvalidSender` error
+     * @dev This function is not available in the USDN contract, only in the test handler
+     */
+    function test_RevertWhen_burnFromZeroAddress() public {
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidSender.selector, address(0)));
+        usdn.burn(address(0), 50 ether);
     }
 }

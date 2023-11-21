@@ -13,7 +13,6 @@ import { IUsdn, IUsdnEvents, IUsdnErrors, IERC20, IERC20Metadata, IERC20Permit }
 
 /**
  * @title USDN token contract
- * @author @beeb
  * @notice The USDN token supports the USDN Protocol and is minted when assets are deposited into the vault. When assets
  * are withdrawn from the vault, tokens are burned. The total supply and balances are increased periodically by
  * adjusting a multiplier, so that the price of the token doesn't grow too far past 1 USD.
@@ -53,25 +52,29 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
     /// @inheritdoc IUsdn
     uint256 public totalShares;
 
-    /// @dev Multiplier used to convert between shares and tokens. This is a fixed-point number with 18 decimals.
-    uint256 private multiplier = 1e18;
+    /// @dev Multiplier used to convert between shares and tokens. This is a fixed-point number with 9 decimals.
+    uint256 internal multiplier = 1e9;
+
+    /// @dev The maximum multiplier that can be set. Corresponds to a 1B ratio between tokens and shares.
+    uint256 internal constant MAX_MULTIPLIER = 1e18;
 
     /**
-     * @inheritdoc IUsdn
-     * @dev This allows to prevent precision losses when converting from tokens to shares and back.
+     * @dev The additional precision for shares compared to tokens.
+     * This allows to prevent precision losses when converting from tokens to shares and back.
      */
-    uint8 public constant decimalsOffset = 4;
-
-    /**
-     * @dev The maximum number of tokens that can exist is limited due to the decimals offset used for the shares.
-     */
-    uint256 private constant MAX_TOKENS = (type(uint256).max / (10 ** decimalsOffset)) - 1;
+    uint8 internal constant DECIMALS_OFFSET = 4;
 
     /**
      * @dev Divisor used to convert between shares and tokens.
      * Due to the decimals offset, shares have more precision than tokens.
      */
-    uint256 private constant MULTIPLIER_DIVISOR = 10 ** (decimals + decimalsOffset);
+    uint256 internal constant MULTIPLIER_DIVISOR = 10 ** (9 + DECIMALS_OFFSET);
+
+    /**
+     * @dev The maximum number of tokens that can exist is limited due to the conversion to shares and the effect of
+     * the multiplier.
+     */
+    uint256 internal constant MAX_TOKENS = (type(uint256).max / 10 ** (9 - DECIMALS_OFFSET));
 
     string private constant NAME = "Ultimate Synthetic Delta Neutral";
     string private constant SYMBOL = "USDN";
@@ -208,10 +211,29 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
     }
 
     /// @inheritdoc IUsdn
+    function convertToTokens(uint256 _amountShares) public view returns (uint256 tokens_) {
+        uint256 _tokensDown = _amountShares.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
+        uint256 _tokensUp = _tokensDown + 1;
+        uint256 _sharesDown = _convertToShares(_tokensDown);
+        uint256 _sharesUp = _convertToShares(_tokensUp);
+        if (_sharesDown == _amountShares) {
+            tokens_ = _tokensDown;
+        } else if (_sharesUp == _amountShares) {
+            tokens_ = _tokensUp;
+        } else {
+            tokens_ = _amountShares - _sharesDown <= _sharesUp - _amountShares ? _tokensDown : _tokensUp;
+        }
+    }
+
+    /// @inheritdoc IUsdn
     function convertToShares(uint256 _amountTokens) public view returns (uint256 shares_) {
         if (_amountTokens > MAX_TOKENS) {
             revert UsdnMaxTokensExceeded(_amountTokens);
         }
+        shares_ = _convertToShares(_amountTokens);
+    }
+
+    function _convertToShares(uint256 _amountTokens) internal view returns (uint256 shares_) {
         uint256 _sharesDown = _amountTokens.mulDiv(MULTIPLIER_DIVISOR, multiplier, Math.Rounding.Floor);
         uint256 _sharesUp = _sharesDown + 1;
         uint256 _tokensDown = _sharesDown.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
@@ -222,21 +244,6 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
             shares_ = _sharesUp;
         } else {
             shares_ = _amountTokens - _tokensDown <= _tokensUp - _amountTokens ? _sharesDown : _sharesUp;
-        }
-    }
-
-    /// @inheritdoc IUsdn
-    function convertToTokens(uint256 _amountShares) public view returns (uint256 tokens_) {
-        uint256 _tokensDown = _amountShares.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
-        uint256 _tokensUp = _tokensDown + 1;
-        uint256 _sharesDown = convertToShares(_tokensDown);
-        uint256 _sharesUp = convertToShares(_tokensUp);
-        if (_sharesDown == _amountShares) {
-            tokens_ = _tokensDown;
-        } else if (_sharesUp == _amountShares) {
-            tokens_ = _tokensUp;
-        } else {
-            tokens_ = _amountShares - _sharesDown <= _sharesUp - _amountShares ? _tokensDown : _tokensUp;
         }
     }
 
@@ -251,6 +258,9 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
 
     /// @inheritdoc IUsdn
     function adjustMultiplier(uint256 _multiplier) external onlyRole(ADJUSTMENT_ROLE) {
+        if (_multiplier > MAX_MULTIPLIER) {
+            revert UsdnInvalidMultiplier(_multiplier);
+        }
         if (_multiplier <= multiplier) {
             // Multiplier can only be increased
             revert UsdnInvalidMultiplier(_multiplier);

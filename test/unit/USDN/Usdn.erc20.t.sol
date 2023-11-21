@@ -72,6 +72,17 @@ contract TestUsdnErc20 is UsdnTokenFixture {
     }
 
     /**
+     * @custom:scenario Approving with zero address as the owner
+     * @custom:when The zero address account wants to approve another address
+     * @custom:then The transaction reverts with the `ERC20InvalidApprover` error
+     * @dev This function is not available in the USDN contract, only in the test handler
+     */
+    function test_RevertWhen_approveFromZeroAddress() public {
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidApprover.selector, address(0)));
+        usdn.approve(address(0), USER_1, 50 ether);
+    }
+
+    /**
      * @custom:scenario Transferring tokens
      * @custom:when 50 tokens are transferred to this contract
      * @custom:then The `Transfer` event is emitted with the user as the sender, this contract as the recipient and
@@ -98,6 +109,17 @@ contract TestUsdnErc20 is UsdnTokenFixture {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
         vm.prank(USER_1);
         usdn.transfer(address(0), 50 ether);
+    }
+
+    /**
+     * @custom:scenario Transferring tokens from the zero address
+     * @custom:when 50 tokens are transferred from the zero address
+     * @custom:then The transaction reverts with the `ERC20InvalidSender` error
+     * @dev This function is not available in the USDN contract, only in the test handler
+     */
+    function test_RevertWhen_transferFromZeroAddress() public {
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidSender.selector, address(0)));
+        usdn.transfer(address(0), USER_1, 50 ether);
     }
 
     /**
