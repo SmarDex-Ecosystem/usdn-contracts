@@ -107,7 +107,7 @@ contract Usdn is IUsdn, Context, IERC20Errors, AccessControl, EIP712, Nonces {
     }
 
     /// @inheritdoc IERC20Permit
-    function DOMAIN_SEPARATOR() external view override returns (bytes32) {
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
     }
 
@@ -157,7 +157,7 @@ contract Usdn is IUsdn, Context, IERC20Errors, AccessControl, EIP712, Nonces {
         uint8 _v,
         bytes32 _r,
         bytes32 _s
-    ) external override {
+    ) external {
         if (block.timestamp > _deadline) {
             revert ERC2612ExpiredSignature(_deadline);
         }
