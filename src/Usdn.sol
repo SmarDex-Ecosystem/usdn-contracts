@@ -46,7 +46,7 @@ contract Usdn is IUsdn, Context, IERC20Errors, AccessControl, EIP712, Nonces {
     mapping(address account => mapping(address spender => uint256)) private allowances;
 
     /// @inheritdoc IERC20Metadata
-    uint8 public constant override decimals = 18;
+    uint8 public constant decimals = 18;
 
     /// @inheritdoc IUsdn
     uint256 public totalShares;
@@ -73,27 +73,27 @@ contract Usdn is IUsdn, Context, IERC20Errors, AccessControl, EIP712, Nonces {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IERC20Metadata
-    function name() external pure override returns (string memory) {
+    function name() external pure returns (string memory) {
         return NAME;
     }
 
     /// @inheritdoc IERC20Metadata
-    function symbol() external pure override returns (string memory) {
+    function symbol() external pure returns (string memory) {
         return SYMBOL;
     }
 
     /// @inheritdoc IERC20
-    function totalSupply() external view override returns (uint256) {
+    function totalSupply() external view returns (uint256) {
         return totalShares * multiplier / MULTIPLIER_DIVISOR;
     }
 
     /// @inheritdoc IERC20
-    function balanceOf(address _account) public view override returns (uint256) {
+    function balanceOf(address _account) public view returns (uint256) {
         return sharesOf(_account) * multiplier / MULTIPLIER_DIVISOR;
     }
 
     /// @inheritdoc IERC20
-    function allowance(address _owner, address _spender) public view override returns (uint256) {
+    function allowance(address _owner, address _spender) public view returns (uint256) {
         return allowances[_owner][_spender];
     }
 
@@ -125,19 +125,19 @@ contract Usdn is IUsdn, Context, IERC20Errors, AccessControl, EIP712, Nonces {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IERC20
-    function approve(address _spender, uint256 _value) external override returns (bool) {
+    function approve(address _spender, uint256 _value) external returns (bool) {
         _approve(_msgSender(), _spender, _value);
         return true;
     }
 
     /// @inheritdoc IERC20
-    function transfer(address _to, uint256 _value) external override returns (bool) {
+    function transfer(address _to, uint256 _value) external returns (bool) {
         _transfer(_msgSender(), _to, _value);
         return true;
     }
 
     /// @inheritdoc IERC20
-    function transferFrom(address _from, address _to, uint256 _value) external override returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool) {
         address _spender = _msgSender();
         _spendAllowance(_from, _spender, _value);
         _transfer(_from, _to, _value);
