@@ -15,6 +15,11 @@ contract TestUsdnConvertToShares is UsdnTokenFixture {
         super.setUp();
     }
 
+    /**
+     * @custom:scenario Converting tokens to shares when the number of tokens is too large
+     * @custom:when The `convertToShares` function is called with a value larger than MAX_TOKENS
+     * @custom:then The transaction reverts with `UsdnMaxTokensExceeded`
+     */
     function test_RevertWhen_tokenAmountOverflows() public {
         vm.expectRevert(abi.encodeWithSelector(UsdnMaxTokensExceeded.selector, type(uint256).max));
         usdn.convertToShares(type(uint256).max);
