@@ -41,7 +41,7 @@ interface IUsdnErrors {
  * @title USDN token interface
  * @author @beeb
  * @notice Implements the ERC-20 token standard as well as the EIP-2612 permit extension. Additional functions related
- * to the specifics of this token are also included.
+ * to the specifics of this token are included below.
  */
 interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnErrors {
     /**
