@@ -37,14 +37,14 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
     /// @inheritdoc IUsdn
     bytes32 public constant ADJUSTMENT_ROLE = keccak256("ADJUSTMENT_ROLE");
 
-    // EIP-712 typehash for the permit method.
+    /// @dev EIP-712 typehash for the permit method.
     bytes32 private constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
-    // Mapping from account to number of shares
+    /// @dev Mapping from account to number of shares
     mapping(address account => uint256) private shares;
 
-    // Mapping of allowances by owner and spender. This is in token units, not shares.
+    /// @dev Mapping of allowances by owner and spender. This is in token units, not shares.
     mapping(address account => mapping(address spender => uint256)) private allowances;
 
     /// @inheritdoc IERC20Metadata
@@ -53,7 +53,7 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
     /// @inheritdoc IUsdn
     uint256 public totalShares;
 
-    // Multiplier used to convert between shares and tokens. This is a fixed-point number with 18 decimals.
+    /// @dev Multiplier used to convert between shares and tokens. This is a fixed-point number with 18 decimals.
     uint256 private multiplier = 1e18;
 
     /**
@@ -64,8 +64,10 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
      */
     uint8 public constant decimalsOffset = 4;
 
-    // Divisor used to convert between shares and tokens. Due to the decimals offset, shares have more precision than
-    // tokens.
+    /**
+     * @dev Divisor used to convert between shares and tokens.
+     * Due to the decimals offset, shares have more precision than tokens.
+     */
     uint256 private constant MULTIPLIER_DIVISOR = 10 ** (decimals + decimalsOffset);
 
     string private constant NAME = "Ultimate Synthetic Delta Neutral";

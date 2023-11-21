@@ -82,6 +82,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
 
     /**
      * @notice Convert a number of tokens to the corresponding amount of shares.
+     * @dev The conversion always rounds to the nearest number of shares.
      * @param _amountTokens the amount of tokens to convert to shares
      * @return shares_ the corresponding amount of shares
      */
@@ -89,6 +90,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
 
     /**
      * @notice Convert a number of shares to the corresponding amount of tokens.
+     * @dev The conversion always rounds to the nearest number of tokens.
      * @param _amountShares the amount of shares to convert to tokens
      * @return tokens_ the corresponding amount of tokens
      */
