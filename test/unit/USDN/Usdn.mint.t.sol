@@ -36,9 +36,9 @@ contract TestUsdnMint is UsdnTokenFixture {
         usdn.mint(USER_1, 100 ether);
 
         assertEq(usdn.balanceOf(USER_1), 100 ether);
-        assertEq(usdn.sharesOf(USER_1), 100 ether);
+        assertEq(usdn.sharesOf(USER_1), 100 ether * 10 ** usdn.decimalsOffset());
         assertEq(usdn.totalSupply(), 100 ether);
-        assertEq(usdn.totalShares(), 100 ether);
+        assertEq(usdn.totalShares(), 100 ether * 10 ** usdn.decimalsOffset());
     }
 
     /**
@@ -64,9 +64,9 @@ contract TestUsdnMint is UsdnTokenFixture {
         usdn.mint(USER_1, 100 ether);
 
         assertEq(usdn.balanceOf(USER_1), 100 ether);
-        assertEq(usdn.sharesOf(USER_1), 50 ether);
+        assertEq(usdn.sharesOf(USER_1), 50 ether * 10 ** usdn.decimalsOffset());
         assertEq(usdn.totalSupply(), 100 ether);
-        assertEq(usdn.totalShares(), 50 ether);
+        assertEq(usdn.totalShares(), 50 ether * 10 ** usdn.decimalsOffset());
     }
 
     /**

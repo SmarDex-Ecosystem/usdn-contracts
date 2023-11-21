@@ -88,8 +88,11 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function adjustMultiplier(uint256 multiplier) external;
 
     /// @dev Minter role signature.
-    function MINTER_ROLE() external view returns (bytes32);
+    function MINTER_ROLE() external pure returns (bytes32);
 
     /// @dev Adjustment role signature.
-    function ADJUSTMENT_ROLE() external view returns (bytes32);
+    function ADJUSTMENT_ROLE() external pure returns (bytes32);
+
+    /// @dev The additional precision for shares compared to tokens.
+    function decimalsOffset() external pure returns (uint8);
 }

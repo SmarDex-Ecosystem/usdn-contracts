@@ -36,9 +36,9 @@ contract TestUsdnAdjust is UsdnTokenFixture {
         emit MultiplierAdjusted(1 ether, 1 ether + 1); // expected event
         usdn.adjustMultiplier(1 ether + 1);
 
-        assertEq(usdn.sharesOf(USER_1), 100 ether);
+        assertEq(usdn.sharesOf(USER_1), 100 ether * 10 ** usdn.decimalsOffset());
         assertEq(usdn.balanceOf(USER_1), 100 ether + 100);
-        assertEq(usdn.totalShares(), 100 ether);
+        assertEq(usdn.totalShares(), 100 ether * 10 ** usdn.decimalsOffset());
         assertEq(usdn.totalSupply(), 100 ether + 100);
     }
 

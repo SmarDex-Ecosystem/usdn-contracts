@@ -35,7 +35,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
     function test_burnPartial() public {
         usdn.adjustMultiplier(2 ether);
         assertEq(usdn.balanceOf(USER_1), 200 ether);
-        assertEq(usdn.sharesOf(USER_1), 100 ether);
+        assertEq(usdn.sharesOf(USER_1), 100 ether * 10 ** usdn.decimalsOffset());
 
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(USER_1, address(0), 50 ether); // expected event
@@ -43,9 +43,9 @@ contract TestUsdnBurn is UsdnTokenFixture {
         usdn.burn(50 ether);
 
         assertEq(usdn.balanceOf(USER_1), 150 ether);
-        assertEq(usdn.sharesOf(USER_1), 75 ether);
+        assertEq(usdn.sharesOf(USER_1), 75 ether * 10 ** usdn.decimalsOffset());
         assertEq(usdn.totalSupply(), 150 ether);
-        assertEq(usdn.totalShares(), 75 ether);
+        assertEq(usdn.totalShares(), 75 ether * 10 ** usdn.decimalsOffset());
     }
 
     /**
@@ -63,7 +63,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
     function test_burnAll() public {
         usdn.adjustMultiplier(1.1 ether);
         assertEq(usdn.balanceOf(USER_1), 110 ether);
-        assertEq(usdn.sharesOf(USER_1), 100 ether);
+        assertEq(usdn.sharesOf(USER_1), 100 ether * 10 ** usdn.decimalsOffset());
 
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(USER_1, address(0), 110 ether); // expected event

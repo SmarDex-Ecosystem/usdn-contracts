@@ -7,6 +7,7 @@ import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IUsdn, IUsdnEvents, IUsdnErrors, IERC20, IERC20Metadata, IERC20Permit } from "src/interfaces/IUsdn.sol";
 
@@ -24,6 +25,8 @@ import { IUsdn, IUsdnEvents, IUsdnErrors, IERC20, IERC20Metadata, IERC20Permit }
  * Balances and total supply can only grow over time and never shrink.
  */
 contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
+    using Math for uint256;
+
     /* -------------------------------------------------------------------------- */
     /*                           Variables and constants                          */
     /* -------------------------------------------------------------------------- */
@@ -52,7 +55,18 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
 
     // Multiplier used to convert between shares and tokens. This is a fixed-point number with 18 decimals.
     uint256 private multiplier = 1e18;
-    uint256 private constant MULTIPLIER_DIVISOR = 1e18;
+
+    /**
+     * @inheritdoc IUsdn
+     * @dev This allows to prevent precision losses when converting from tokens to shares and back.
+     * This means that the maximum number of tokens that can exist is `type(uint256).max / 10 ** decimalsOffset`.
+     * In practice, due to the rounding in the conversion functions, this number is 1 wei lower.
+     */
+    uint8 public constant decimalsOffset = 4;
+
+    // Divisor used to convert between shares and tokens. Due to the decimals offset, shares have more precision than
+    // tokens.
+    uint256 private constant MULTIPLIER_DIVISOR = 10 ** (decimals + decimalsOffset);
 
     string private constant NAME = "Ultimate Synthetic Delta Neutral";
     string private constant SYMBOL = "USDN";
@@ -83,12 +97,12 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
 
     /// @inheritdoc IERC20
     function totalSupply() external view returns (uint256) {
-        return totalShares * multiplier / MULTIPLIER_DIVISOR;
+        return convertToTokens(totalShares);
     }
 
     /// @inheritdoc IERC20
     function balanceOf(address _account) public view returns (uint256) {
-        return sharesOf(_account) * multiplier / MULTIPLIER_DIVISOR;
+        return convertToTokens(sharesOf(_account));
     }
 
     /// @inheritdoc IERC20
@@ -315,8 +329,7 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
 
     /**
      * @dev Transfer a `value` amount of tokens from `from` to `to`, or alternatively mint (or burn) if `from` or `to`
-     * is the zero address. Overflow checks are required because the total supply of tokens could exceed the maximum
-     * total number of shares (uint256).
+     * is the zero address.
      * Emits a {Transfer} event.
      * @param _from the source address
      * @param _to the destination address
@@ -324,14 +337,9 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
      */
     function _update(address _from, address _to, uint256 _value) internal {
         uint256 _fromBalance = balanceOf(_from);
-        uint256 _sharesValue;
-        if (_value == _fromBalance) {
-            // Transfer all shares, avoids rounding errors
-            _sharesValue = shares[_from];
-        } else {
-            _sharesValue = _value * MULTIPLIER_DIVISOR / multiplier;
-        }
+        uint256 _sharesValue = convertToShares(_value);
         if (_from == address(0)) {
+            // mint
             totalShares += _sharesValue;
         } else {
             uint256 _fromShares = shares[_from];
@@ -342,11 +350,40 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
         }
 
         if (_to == address(0)) {
+            // burn
             totalShares -= _sharesValue;
         } else {
             shares[_to] += _sharesValue;
         }
 
         emit Transfer(_from, _to, _value);
+    }
+
+    function convertToShares(uint256 _amountTokens) public view returns (uint256 shares_) {
+        uint256 _sharesDown = _amountTokens.mulDiv(MULTIPLIER_DIVISOR, multiplier, Math.Rounding.Floor);
+        uint256 _sharesUp = _sharesDown + 1;
+        uint256 _tokensDown = _sharesDown.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
+        uint256 _tokensUp = _sharesUp.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
+        if (_tokensDown == _amountTokens) {
+            shares_ = _sharesDown;
+        } else if (_tokensUp == _amountTokens) {
+            shares_ = _sharesUp;
+        } else {
+            shares_ = _amountTokens - _tokensDown <= _tokensUp - _amountTokens ? _sharesDown : _sharesUp;
+        }
+    }
+
+    function convertToTokens(uint256 _amountShares) public view returns (uint256 tokens_) {
+        uint256 _tokensDown = _amountShares.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
+        uint256 _tokensUp = _tokensDown + 1;
+        uint256 _sharesDown = convertToShares(_tokensDown);
+        uint256 _sharesUp = convertToShares(_tokensUp);
+        if (_sharesDown == _amountShares) {
+            tokens_ = _tokensDown;
+        } else if (_sharesUp == _amountShares) {
+            tokens_ = _tokensUp;
+        } else {
+            tokens_ = _amountShares - _sharesDown <= _sharesUp - _amountShares ? _tokensDown : _tokensUp;
+        }
     }
 }
