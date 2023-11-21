@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
@@ -24,7 +23,7 @@ import { IUsdn, IUsdnEvents, IUsdnErrors, IERC20, IERC20Metadata, IERC20Permit }
  *
  * Balances and total supply can only grow over time and never shrink.
  */
-contract Usdn is IUsdn, Context, IERC20Errors, AccessControl, EIP712, Nonces {
+contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
     /* -------------------------------------------------------------------------- */
     /*                           Variables and constants                          */
     /* -------------------------------------------------------------------------- */
@@ -59,7 +58,7 @@ contract Usdn is IUsdn, Context, IERC20Errors, AccessControl, EIP712, Nonces {
     string private constant SYMBOL = "USDN";
 
     constructor(address _minter, address _adjuster) EIP712(NAME, "1") {
-        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         if (_minter != address(0)) {
             _grantRole(MINTER_ROLE, _minter);
         }
@@ -126,19 +125,19 @@ contract Usdn is IUsdn, Context, IERC20Errors, AccessControl, EIP712, Nonces {
 
     /// @inheritdoc IERC20
     function approve(address _spender, uint256 _value) external returns (bool) {
-        _approve(_msgSender(), _spender, _value);
+        _approve(msg.sender, _spender, _value);
         return true;
     }
 
     /// @inheritdoc IERC20
     function transfer(address _to, uint256 _value) external returns (bool) {
-        _transfer(_msgSender(), _to, _value);
+        _transfer(msg.sender, _to, _value);
         return true;
     }
 
     /// @inheritdoc IERC20
     function transferFrom(address _from, address _to, uint256 _value) external returns (bool) {
-        address _spender = _msgSender();
+        address _spender = msg.sender;
         _spendAllowance(_from, _spender, _value);
         _transfer(_from, _to, _value);
         return true;
@@ -181,12 +180,12 @@ contract Usdn is IUsdn, Context, IERC20Errors, AccessControl, EIP712, Nonces {
 
     /// @inheritdoc IUsdn
     function burn(uint256 _value) external {
-        _burn(_msgSender(), _value);
+        _burn(msg.sender, _value);
     }
 
     /// @inheritdoc IUsdn
     function burnFrom(address _account, uint256 _value) external {
-        _spendAllowance(_account, _msgSender(), _value);
+        _spendAllowance(_account, msg.sender, _value);
         _burn(_account, _value);
     }
 
