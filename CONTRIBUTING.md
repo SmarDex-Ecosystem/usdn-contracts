@@ -32,6 +32,14 @@ import { TickMathFixture } from "test/unit/TickMath/utils/Fixtures.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 ```
 
+## Errors
+
+Since custom errors are not namespaced to a given contract, it could be difficult to identify where the error originates
+from. As such, all errors should be prefixed with the name of the contract that defines them. For interfaces, the errors
+are prefixed with the name of the interface.
+
+Examples: `UsdnInvalidMultiplier()`, `TickMathInvalidTick()`.
+
 ## Testing conventions
 
 When writing or modifying tests, please follow the following conventions:
