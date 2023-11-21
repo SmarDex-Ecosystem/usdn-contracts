@@ -24,7 +24,8 @@ contract BaseFixture is Test {
         /*                                Create forks                                */
         /* -------------------------------------------------------------------------- */
 
-        ethereumFork = vm.createFork(vm.envString("URL_ETH_MAINNET"));
+        string memory ethereumUrl = vm.rpcUrl("mainnet");
+        ethereumFork = vm.createFork(ethereumUrl);
 
         /* -------------------------------------------------------------------------- */
         /*                                  Accounts                                  */
