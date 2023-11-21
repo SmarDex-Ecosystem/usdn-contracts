@@ -202,6 +202,36 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
         _burn(_account, _value);
     }
 
+    /// @inheritdoc IUsdn
+    function convertToShares(uint256 _amountTokens) public view returns (uint256 shares_) {
+        uint256 _sharesDown = _amountTokens.mulDiv(MULTIPLIER_DIVISOR, multiplier, Math.Rounding.Floor);
+        uint256 _sharesUp = _sharesDown + 1;
+        uint256 _tokensDown = _sharesDown.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
+        uint256 _tokensUp = _sharesUp.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
+        if (_tokensDown == _amountTokens) {
+            shares_ = _sharesDown;
+        } else if (_tokensUp == _amountTokens) {
+            shares_ = _sharesUp;
+        } else {
+            shares_ = _amountTokens - _tokensDown <= _tokensUp - _amountTokens ? _sharesDown : _sharesUp;
+        }
+    }
+
+    /// @inheritdoc IUsdn
+    function convertToTokens(uint256 _amountShares) public view returns (uint256 tokens_) {
+        uint256 _tokensDown = _amountShares.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
+        uint256 _tokensUp = _tokensDown + 1;
+        uint256 _sharesDown = convertToShares(_tokensDown);
+        uint256 _sharesUp = convertToShares(_tokensUp);
+        if (_sharesDown == _amountShares) {
+            tokens_ = _tokensDown;
+        } else if (_sharesUp == _amountShares) {
+            tokens_ = _tokensUp;
+        } else {
+            tokens_ = _amountShares - _sharesDown <= _sharesUp - _amountShares ? _tokensDown : _tokensUp;
+        }
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                            Privileged functions                            */
     /* -------------------------------------------------------------------------- */
@@ -357,33 +387,5 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
         }
 
         emit Transfer(_from, _to, _value);
-    }
-
-    function convertToShares(uint256 _amountTokens) public view returns (uint256 shares_) {
-        uint256 _sharesDown = _amountTokens.mulDiv(MULTIPLIER_DIVISOR, multiplier, Math.Rounding.Floor);
-        uint256 _sharesUp = _sharesDown + 1;
-        uint256 _tokensDown = _sharesDown.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
-        uint256 _tokensUp = _sharesUp.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
-        if (_tokensDown == _amountTokens) {
-            shares_ = _sharesDown;
-        } else if (_tokensUp == _amountTokens) {
-            shares_ = _sharesUp;
-        } else {
-            shares_ = _amountTokens - _tokensDown <= _tokensUp - _amountTokens ? _sharesDown : _sharesUp;
-        }
-    }
-
-    function convertToTokens(uint256 _amountShares) public view returns (uint256 tokens_) {
-        uint256 _tokensDown = _amountShares.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
-        uint256 _tokensUp = _tokensDown + 1;
-        uint256 _sharesDown = convertToShares(_tokensDown);
-        uint256 _sharesUp = convertToShares(_tokensUp);
-        if (_sharesDown == _amountShares) {
-            tokens_ = _tokensDown;
-        } else if (_sharesUp == _amountShares) {
-            tokens_ = _tokensUp;
-        } else {
-            tokens_ = _amountShares - _sharesDown <= _sharesUp - _amountShares ? _tokensDown : _tokensUp;
-        }
     }
 }

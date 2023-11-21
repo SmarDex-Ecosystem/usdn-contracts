@@ -73,4 +73,25 @@ contract TestUsdnInvariants is UsdnTokenFixture {
         assertEq(usdn.balanceOf(address(this)), balanceBefore - transferAmount);
         assertEq(usdn.balanceOf(USER_1), transferAmount);
     }
+
+    /**
+     * @custom:scenario Check that the total supply is the sum of the balances of all holders
+     * @custom:given A multiplier between 1 and 1000
+     * @custom:and 10 holders with random balances
+     * @custom:when The total supply is queried
+     * @custom:then The result is the sum of the balances of all holders
+     * @param multiplier The multiplier to use
+     */
+    function testFuzz_totalSupplyInvariant(uint256 multiplier) public {
+        multiplier = bound(multiplier, 1 ether, 1000 ether);
+        uint256 totalHolders = 10;
+        uint256[] memory balances = new uint256[](totalHolders);
+        uint256 totalBalances;
+        for (uint256 i = 0; i < totalHolders; i++) {
+            balances[i] = _bound(uint256(keccak256(abi.encodePacked(i + multiplier))), 0, TOKENS_MAX / totalHolders);
+            totalBalances += balances[i];
+            usdn.mint(address(uint160(i + 1)), balances[i]);
+        }
+        assertEq(usdn.totalSupply(), totalBalances);
+    }
 }

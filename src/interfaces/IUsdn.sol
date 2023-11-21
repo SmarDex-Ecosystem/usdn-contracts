@@ -81,6 +81,20 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function mint(address to, uint256 amount) external;
 
     /**
+     * @notice Convert a number of tokens to the corresponding amount of shares.
+     * @param _amountTokens the amount of tokens to convert to shares
+     * @return shares_ the corresponding amount of shares
+     */
+    function convertToShares(uint256 _amountTokens) external view returns (uint256 shares_);
+
+    /**
+     * @notice Convert a number of shares to the corresponding amount of tokens.
+     * @param _amountShares the amount of shares to convert to tokens
+     * @return tokens_ the corresponding amount of tokens
+     */
+    function convertToTokens(uint256 _amountShares) external view returns (uint256 tokens_);
+
+    /**
      * @notice Restricted function to increase the global multiplier, which effectively grows all balances and the total
      * supply.
      * @param multiplier the new multiplier, must be greater than the current one
