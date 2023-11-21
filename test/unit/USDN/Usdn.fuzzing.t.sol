@@ -8,10 +8,10 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 
 /**
- * @custom:feature Invariants of the USDN token
+ * @custom:feature Fuzzing and invariants of the USDN token
  * @custom:background Given TOKENS_MAX, a maximum amount of tokens that can exist
  */
-contract TestUsdnInvariants is UsdnTokenFixture {
+contract TestUsdnFuzzing is UsdnTokenFixture {
     uint256 TOKENS_MAX;
 
     function setUp() public override {
