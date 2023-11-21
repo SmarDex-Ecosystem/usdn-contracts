@@ -137,8 +137,7 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
 
     /// @inheritdoc IERC20
     function transferFrom(address _from, address _to, uint256 _value) external returns (bool) {
-        address _spender = msg.sender;
-        _spendAllowance(_from, _spender, _value);
+        _spendAllowance(_from, msg.sender, _value);
         _transfer(_from, _to, _value);
         return true;
     }
