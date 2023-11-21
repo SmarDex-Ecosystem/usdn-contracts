@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
+import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
 
-import { IUsdn, IUsdnEvents, IUsdnErrors } from "src/interfaces/IUsdn.sol";
+import { IUsdn, IUsdnEvents, IUsdnErrors, IERC20, IERC20Metadata, IERC20Permit } from "src/interfaces/IUsdn.sol";
 
 /**
  * @title USDN token contract
@@ -26,19 +23,7 @@ import { IUsdn, IUsdnEvents, IUsdnErrors } from "src/interfaces/IUsdn.sol";
  *
  * Balances and total supply can only grow over time and never shrink.
  */
-contract Usdn is
-    IUsdn,
-    IUsdnEvents,
-    IUsdnErrors,
-    Context,
-    IERC20,
-    IERC20Metadata,
-    IERC20Errors,
-    AccessControl,
-    IERC20Permit,
-    EIP712,
-    Nonces
-{
+contract Usdn is IUsdn, IUsdnEvents, IUsdnErrors, Context, IERC20Errors, AccessControl, EIP712, Nonces {
     /* -------------------------------------------------------------------------- */
     /*                           Variables and constants                          */
     /* -------------------------------------------------------------------------- */
@@ -59,8 +44,8 @@ contract Usdn is
     // Mapping of allowances by owner and spender. This is in token units, not shares.
     mapping(address account => mapping(address spender => uint256)) private allowances;
 
-    /// @inheritdoc IUsdn
-    uint8 public constant override(IUsdn, IERC20Metadata) decimals = 18;
+    /// @inheritdoc IERC20Metadata
+    uint8 public constant override decimals = 18;
 
     /// @inheritdoc IUsdn
     uint256 public totalShares;
@@ -86,28 +71,28 @@ contract Usdn is
     /*                            ERC-20 view functions                           */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUsdn
-    function name() external pure override(IUsdn, IERC20Metadata) returns (string memory) {
+    /// @inheritdoc IERC20Metadata
+    function name() external pure override returns (string memory) {
         return NAME;
     }
 
-    /// @inheritdoc IUsdn
-    function symbol() external pure override(IUsdn, IERC20Metadata) returns (string memory) {
+    /// @inheritdoc IERC20Metadata
+    function symbol() external pure override returns (string memory) {
         return SYMBOL;
     }
 
-    /// @inheritdoc IUsdn
-    function totalSupply() external view override(IUsdn, IERC20) returns (uint256) {
+    /// @inheritdoc IERC20
+    function totalSupply() external view override returns (uint256) {
         return totalShares * multiplier / MULTIPLIER_DIVISOR;
     }
 
-    /// @inheritdoc IUsdn
-    function balanceOf(address _account) public view override(IUsdn, IERC20) returns (uint256) {
+    /// @inheritdoc IERC20
+    function balanceOf(address _account) public view override returns (uint256) {
         return sharesOf(_account) * multiplier / MULTIPLIER_DIVISOR;
     }
 
-    /// @inheritdoc IUsdn
-    function allowance(address _owner, address _spender) public view override(IUsdn, IERC20) returns (uint256) {
+    /// @inheritdoc IERC20
+    function allowance(address _owner, address _spender) public view override returns (uint256) {
         return allowances[_owner][_spender];
     }
 
@@ -115,13 +100,13 @@ contract Usdn is
     /*                            Permit view functions                           */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUsdn
-    function nonces(address owner) public view override(IUsdn, IERC20Permit, Nonces) returns (uint256) {
+    /// @inheritdoc IERC20Permit
+    function nonces(address owner) public view override(IERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
     }
 
-    /// @inheritdoc IUsdn
-    function DOMAIN_SEPARATOR() external view override(IUsdn, IERC20Permit) returns (bytes32) {
+    /// @inheritdoc IERC20Permit
+    function DOMAIN_SEPARATOR() external view override returns (bytes32) {
         return _domainSeparatorV4();
     }
 
@@ -138,20 +123,20 @@ contract Usdn is
     /*                              ERC-20 functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUsdn
-    function approve(address _spender, uint256 _value) external override(IUsdn, IERC20) returns (bool) {
+    /// @inheritdoc IERC20
+    function approve(address _spender, uint256 _value) external override returns (bool) {
         _approve(_msgSender(), _spender, _value);
         return true;
     }
 
-    /// @inheritdoc IUsdn
-    function transfer(address _to, uint256 _value) external override(IUsdn, IERC20) returns (bool) {
+    /// @inheritdoc IERC20
+    function transfer(address _to, uint256 _value) external override returns (bool) {
         _transfer(_msgSender(), _to, _value);
         return true;
     }
 
-    /// @inheritdoc IUsdn
-    function transferFrom(address _from, address _to, uint256 _value) external override(IUsdn, IERC20) returns (bool) {
+    /// @inheritdoc IERC20
+    function transferFrom(address _from, address _to, uint256 _value) external override returns (bool) {
         address _spender = _msgSender();
         _spendAllowance(_from, _spender, _value);
         _transfer(_from, _to, _value);
@@ -162,7 +147,7 @@ contract Usdn is
     /*                                   Permit                                   */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IUsdn
+    /// @inheritdoc IERC20Permit
     function permit(
         address _owner,
         address _spender,
@@ -171,7 +156,7 @@ contract Usdn is
         uint8 _v,
         bytes32 _r,
         bytes32 _s
-    ) external override(IUsdn, IERC20Permit) {
+    ) external override {
         if (block.timestamp > _deadline) {
             revert ERC2612ExpiredSignature(_deadline);
         }
