@@ -30,6 +30,12 @@ interface IUsdnErrors {
      */
     error UsdnInvalidMultiplier(uint256 multiplier);
 
+    /**
+     * @dev Indicates that the number of tokens exceeds the maximum allowed value.
+     * @param value invalid token value
+     */
+    error UsdnMaxTokensExceeded(uint256 value);
+
     /// @dev Permit deadline has expired.
     error ERC2612ExpiredSignature(uint256 deadline);
 

@@ -59,10 +59,13 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
     /**
      * @inheritdoc IUsdn
      * @dev This allows to prevent precision losses when converting from tokens to shares and back.
-     * This means that the maximum number of tokens that can exist is `type(uint256).max / 10 ** decimalsOffset`.
-     * In practice, due to the rounding in the conversion functions, this number is 1 wei lower.
      */
     uint8 public constant decimalsOffset = 4;
+
+    /**
+     * @dev The maximum number of tokens that can exist is limited due to the decimals offset used for the shares.
+     */
+    uint256 private constant MAX_TOKENS = (type(uint256).max / (10 ** decimalsOffset)) - 1;
 
     /**
      * @dev Divisor used to convert between shares and tokens.
@@ -206,6 +209,9 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
 
     /// @inheritdoc IUsdn
     function convertToShares(uint256 _amountTokens) public view returns (uint256 shares_) {
+        if (_amountTokens > MAX_TOKENS) {
+            revert UsdnMaxTokensExceeded(_amountTokens);
+        }
         uint256 _sharesDown = _amountTokens.mulDiv(MULTIPLIER_DIVISOR, multiplier, Math.Rounding.Floor);
         uint256 _sharesUp = _sharesDown + 1;
         uint256 _tokensDown = _sharesDown.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
