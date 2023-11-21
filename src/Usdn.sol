@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
+import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
@@ -23,7 +24,7 @@ import { IUsdn, IUsdnEvents, IUsdnErrors, IERC20, IERC20Metadata, IERC20Permit }
  *
  * Balances and total supply can only grow over time and never shrink.
  */
-contract Usdn is IUsdn, IUsdnEvents, IUsdnErrors, Context, IERC20Errors, AccessControl, EIP712, Nonces {
+contract Usdn is IUsdn, Context, IERC20Errors, AccessControl, EIP712, Nonces {
     /* -------------------------------------------------------------------------- */
     /*                           Variables and constants                          */
     /* -------------------------------------------------------------------------- */

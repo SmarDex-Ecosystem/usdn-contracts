@@ -43,7 +43,7 @@ interface IUsdnErrors {
  * @notice Implements the ERC-20 token standard as well as the EIP-2612 permit extension. Additional functions related
  * to the specifics of this token are also included.
  */
-interface IUsdn is IERC20, IERC20Metadata, IERC20Permit {
+interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnErrors {
     /**
      * @notice Total number of shares in existence.
      * @return shares the number of shares
