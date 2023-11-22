@@ -83,7 +83,7 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
      * When trying to mint MAX_TOKENS at multiplier 1e18, we get:
      * shares = MAX_TOKENS * 1e2 ~= 1.16e68
      */
-    uint256 internal constant MAX_TOKENS = (type(uint256).max / 10 ** DECIMALS_OFFSET);
+    uint256 internal constant MAX_TOKENS = (type(uint256).max / 10 ** DECIMALS_OFFSET) - 1;
 
     string private constant NAME = "Ultimate Synthetic Delta Neutral";
     string private constant SYMBOL = "USDN";
