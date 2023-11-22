@@ -16,6 +16,10 @@ contract UsdnTokenFixture is BaseFixture, IUsdnEvents, IUsdnErrors {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
+    /// Events coming from the ERC20Permit extension
+    error ERC2612ExpiredSignature(uint256 deadline);
+    error ERC2612InvalidSigner(address signer, address owner);
+
     UsdnHandler public usdn;
 
     function setUp() public virtual {

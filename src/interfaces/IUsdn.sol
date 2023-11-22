@@ -33,18 +33,6 @@ interface IUsdnErrors {
      * @param value invalid token value
      */
     error UsdnMaxTokensExceeded(uint256 value);
-
-    /**
-     * @dev Indicates that the number of shares exceeds the maximum allowed value.
-     * @param value invalid shares value
-     */
-    //error UsdnMaxSharesExceeded(uint256 value);
-
-    /// @dev Permit deadline has expired.
-    error ERC2612ExpiredSignature(uint256 deadline);
-
-    /// @dev Mismatched signature.
-    error ERC2612InvalidSigner(address signer, address owner);
 }
 
 /**
@@ -65,21 +53,6 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * @return shares the number of shares
      */
     function sharesOf(address account) external view returns (uint256 shares);
-
-    /**
-     * @notice Destroy a `value` amount of tokens from the caller, lowering the total supply.
-     * @dev Emits a {Transfer} event with the zero address as `to`.
-     * @param value the amount of tokens to burn, is internally converted to shares
-     */
-    function burn(uint256 value) external;
-
-    /**
-     * @notice Destroy a `value` amount of tokens from `account`, deducting from the caller's allowance, lowering the
-     * total supply.
-     * @param account the account to burn the tokens from
-     * @param value the amount of tokens to burn, is internally converted to shares
-     */
-    function burnFrom(address account, uint256 value) external;
 
     /**
      * @notice Restricted function to mint new shares, providing a token value.
