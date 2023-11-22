@@ -61,20 +61,37 @@ contract Usdn is IUsdn, IERC20Errors, AccessControl, EIP712, Nonces {
     /**
      * @dev The additional precision for shares compared to tokens.
      * This allows to prevent precision losses when converting from tokens to shares and back.
+     *
+     * Given offset is 11
+     * And multiplier is 1e9 (min):
+     * tokens = shares * multiplier / MULTIPLIER_DIVISOR = shares * 1e9 / 10**(9+11) = shares / 1e11
+     * shares = tokens * MULTIPLIER_DIVISOR / multiplier = tokens * 10**(9+11) / 1e9 = tokens * 1e11
+     *
+     * Given multiplier is 1e18 (max):
+     * tokens = shares * multiplier / MULTIPLIER_DIVISOR = shares * 1e18 / 10**(9+11) = shares / 1e2
+     * shares = tokens * MULTIPLIER_DIVISOR / multiplier = tokens * 10**(9+11) / 1e18 = tokens * 1e2
+     *
+     * We always have more precision in shares than in tokens, so we don't have rounding issues.
      */
-    uint8 internal constant DECIMALS_OFFSET = 4;
+    uint8 internal constant DECIMALS_OFFSET = 11;
 
     /**
      * @dev Divisor used to convert between shares and tokens.
-     * Due to the decimals offset, shares have more precision than tokens.
+     * Due to the decimals offset, shares have more precision than tokens even at MAX_MULTIPLIER.
      */
     uint256 internal constant MULTIPLIER_DIVISOR = 10 ** (9 + DECIMALS_OFFSET);
 
     /**
      * @dev The maximum number of tokens that can exist is limited due to the conversion to shares and the effect of
      * the multiplier.
+     *
+     * When trying to mint MAX_TOKENS at multiplier 1e9, we get:
+     * shares = MAX_TOKENS * 1e11 = type(uint256).max - 113_129_639_935 ~= 1.16e77
+     *
+     * When trying to mint MAX_TOKENS at multiplier 1e18, we get:
+     * shares = MAX_TOKENS * 1e2 ~= 1.16e68
      */
-    uint256 internal constant MAX_TOKENS = (type(uint256).max / 10 ** (9 - DECIMALS_OFFSET));
+    uint256 internal constant MAX_TOKENS = (type(uint256).max / 10 ** DECIMALS_OFFSET) - 1;
 
     string private constant NAME = "Ultimate Synthetic Delta Neutral";
     string private constant SYMBOL = "USDN";

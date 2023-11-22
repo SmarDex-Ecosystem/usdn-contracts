@@ -70,6 +70,24 @@ contract TestUsdnMint is UsdnTokenFixture {
     }
 
     /**
+     * @custom:scenario Minting maximum tokens at minimum multiplier then increasing multiplier to max value
+     * @custom:given This contract has the `MINTER_ROLE` and `ADJUSTMENT_ROLE`
+     * @custom:when MAX_TOKENS is minted at the minimum multiplier
+     * @custom:and The multiplier is adjusted to the maximum value
+     * @custom:then The user's balance is MAX_TOKENS * 1e9 and nothing reverts
+     */
+    function test_mintMaxAndIncreaseMultiplier() public {
+        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
+        usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
+
+        usdn.mint(USER_1, usdn.maxTokens());
+
+        usdn.adjustMultiplier(1 ether);
+
+        assertEq(usdn.balanceOf(USER_1), usdn.maxTokens() * 1e9);
+    }
+
+    /**
      * @custom:scenario An unauthorized account tries to mint tokens
      * @custom:given This contract has no role
      * @custom:when 100 tokens are minted to a user

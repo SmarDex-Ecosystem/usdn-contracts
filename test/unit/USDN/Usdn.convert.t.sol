@@ -7,12 +7,19 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
  * @custom:feature The `convertToShares` and `convertToTokens` functions of `USDN`
+ * @custom:background Given the multiplier is 1 at the start
  */
 contract TestUsdnConvert is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
     }
 
+    /**
+     * @custom:scenario Converting tokens to shares never reverts
+     * @custom:given The multiplier is 1 or 1B
+     * @custom:when The `convertToShares` function is called with MAX_TOKENS
+     * @custom:then The call does not revert
+     */
     function test_maxShares() public {
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
 
@@ -23,6 +30,13 @@ contract TestUsdnConvert is UsdnTokenFixture {
         usdn.convertToShares(usdn.maxTokens());
     }
 
+    /**
+     * @custom:scenario Converting shares to tokens never reverts
+     * @custom:given The multiplier is 1 or 1B
+     * @custom:and The number of shares to convert corresponds to MAX_TOKENS at the current multiplier
+     * @custom:when The `convertToTokens` function is called with the number of shares
+     * @custom:then The call does not revert
+     */
     function test_maxTokens() public {
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
 
