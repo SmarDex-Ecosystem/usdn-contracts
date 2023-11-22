@@ -73,4 +73,17 @@ contract TestUsdnAdjust is UsdnTokenFixture {
         vm.expectRevert(abi.encodeWithSelector(UsdnInvalidMultiplier.selector, 0.5 gwei));
         usdn.adjustMultiplier(0.5 gwei);
     }
+
+    /**
+     * @custom:scenario The multiplier is adjusted to a value that is too large
+     * @custom:given This contract has the `ADJUSTMENT_ROLE`
+     * @custom:when The multiplier is adjusted to 1e18 + 1
+     * @custom:then The transaction reverts with the `UsdnInvalidMultiplier` error
+     */
+    function test_RevertWhen_multiplierTooLarge() public {
+        usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnInvalidMultiplier.selector, 1 ether + 1));
+        usdn.adjustMultiplier(1 ether + 1);
+    }
 }

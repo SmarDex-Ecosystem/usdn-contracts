@@ -137,6 +137,7 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
         } else if (_sharesUp == _amountShares) {
             tokens_ = _tokensUp;
         } else {
+            // check which of the two values is closer to the original amount of shares
             tokens_ = _amountShares - _sharesDown <= _sharesUp - _amountShares ? _tokensDown : _tokensUp;
         }
     }
@@ -185,13 +186,14 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
         uint256 _sharesDown = _amountTokens.mulDiv(MULTIPLIER_DIVISOR, multiplier, Math.Rounding.Floor);
         uint256 _sharesUp = _sharesDown + 1;
         uint256 _tokensDown = _sharesDown.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
-        uint256 _tokensUp = _sharesUp.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
         if (_tokensDown == _amountTokens) {
             shares_ = _sharesDown;
-        } else if (_tokensUp == _amountTokens) {
-            shares_ = _sharesUp;
         } else {
-            shares_ = _amountTokens - _tokensDown <= _tokensUp - _amountTokens ? _sharesDown : _sharesUp;
+            // Since shares always have a greater precision than tokens, we can't have a value of tokens that would
+            // be converted to a value of shares between _sharesDown and _sharesUp.
+            // Hence, if the value of tokens is equal to _tokensDown, we return _sharesDown, otherwise we return
+            // _sharesUp.
+            shares_ = _sharesUp;
         }
     }
 
