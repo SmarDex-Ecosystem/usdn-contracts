@@ -52,7 +52,7 @@ Inside that folder, tests are organized in these sub-folders:
 
 - `unit`: for unit tests which use a single contract
 - `integration`: for integration tests where multiple contracts interact
-- `utils`: non-test utilities that are useful for any kind of test
+- `utils`: non-test utilities that can be useful for any kind of test
 
 ### Unit tests
 
