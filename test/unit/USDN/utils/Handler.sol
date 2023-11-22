@@ -10,34 +10,20 @@ import { Usdn } from "src/Usdn.sol";
 contract UsdnHandler is Usdn {
     constructor() Usdn(address(0), address(0)) { }
 
-    function multiplier_() external view returns (uint256) {
-        return multiplier;
-    }
-
-    function maxMultiplier() external pure returns (uint256) {
-        return MAX_MULTIPLIER;
-    }
-
     function decimalsOffset() external pure returns (uint8) {
         return DECIMALS_OFFSET;
-    }
-
-    function multiplierDivisor() external pure returns (uint256) {
-        return MULTIPLIER_DIVISOR;
     }
 
     function maxTokens() external pure returns (uint256) {
         return MAX_TOKENS;
     }
 
-    function approve(address _owner, address _spender, uint256 _value) external returns (bool) {
+    function approve(address _owner, address _spender, uint256 _value) external {
         _approve(_owner, _spender, _value);
-        return true;
     }
 
-    function transfer(address _from, address _to, uint256 _value) external returns (bool) {
+    function transfer(address _from, address _to, uint256 _value) external {
         _transfer(_from, _to, _value);
-        return true;
     }
 
     function burn(address _owner, uint256 _value) external {
