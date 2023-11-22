@@ -41,4 +41,4 @@ jobs:
           coverage-files: lcov.info
           artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          update-comment: false
+          update-comment: true
