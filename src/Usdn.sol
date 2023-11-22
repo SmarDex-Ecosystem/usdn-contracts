@@ -132,13 +132,11 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
         uint256 _tokensUp = _tokensDown + 1;
         uint256 _sharesDown = _convertToShares(_tokensDown);
         uint256 _sharesUp = _convertToShares(_tokensUp);
-        if (_sharesDown == _amountShares) {
+        // check which of the two values is closer to the original amount of shares
+        if (_amountShares - _sharesDown <= _sharesUp - _amountShares) {
             tokens_ = _tokensDown;
-        } else if (_sharesUp == _amountShares) {
-            tokens_ = _tokensUp;
         } else {
-            // check which of the two values is closer to the original amount of shares
-            tokens_ = _amountShares - _sharesDown <= _sharesUp - _amountShares ? _tokensDown : _tokensUp;
+            tokens_ = _tokensUp;
         }
     }
 
