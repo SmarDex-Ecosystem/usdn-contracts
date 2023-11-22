@@ -74,13 +74,16 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
      * @dev The maximum number of tokens that can exist is limited due to the conversion to shares and the effect of
      * the multiplier.
      *
+     * We subtract 1 from the theoretical value to avoid overflows in `Math.mulDiv` when converting the maximum number
+     * of shares into tokens, at a multiplier value of 1e9.
+     *
      * When trying to mint MAX_TOKENS at multiplier 1e9, we get:
      * shares = MAX_TOKENS * 1e11 = type(uint256).max - 113_129_639_935 ~= 1.16e77
      *
      * When trying to mint MAX_TOKENS at multiplier 1e18, we get:
      * shares = MAX_TOKENS * 1e2 ~= 1.16e68
      */
-    uint256 internal constant MAX_TOKENS = (type(uint256).max / 10 ** DECIMALS_OFFSET) - 1;
+    uint256 internal constant MAX_TOKENS = (type(uint256).max / 10 ** DECIMALS_OFFSET);
 
     string private constant NAME = "Ultimate Synthetic Delta Neutral";
     string private constant SYMBOL = "USDN";
