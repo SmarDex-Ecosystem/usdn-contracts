@@ -207,7 +207,6 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
      * @param _value the amount of tokens to transfer, is internally converted to shares
      */
     function _update(address _from, address _to, uint256 _value) internal override {
-        uint256 _fromBalance = balanceOf(_from);
         // Convert the value to shares, reverts with `UsdnMaxTokensExceeded()` if _value is too high.
         uint256 _sharesValue = convertToShares(_value);
 
@@ -217,7 +216,7 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
         } else {
             uint256 _fromShares = shares[_from];
             if (_fromShares < _sharesValue) {
-                revert ERC20InsufficientBalance(_from, _fromBalance, _value);
+                revert ERC20InsufficientBalance(_from, balanceOf(_from), _value);
             }
             unchecked {
                 // Overflow not possible: _sharesValue <= _fromShares <= totalShares.
