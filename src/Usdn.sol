@@ -208,23 +208,35 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
      */
     function _update(address _from, address _to, uint256 _value) internal override {
         uint256 _fromBalance = balanceOf(_from);
+        // Convert the value to shares, reverts with `UsdnMaxTokensExceeded()` if _value is too high.
         uint256 _sharesValue = convertToShares(_value);
+
         if (_from == address(0)) {
-            // mint
+            // Mint: Overflow check required, the rest of the code assumes that totalShares never overflows
             totalShares += _sharesValue;
         } else {
             uint256 _fromShares = shares[_from];
             if (_fromShares < _sharesValue) {
                 revert ERC20InsufficientBalance(_from, _fromBalance, _value);
             }
-            shares[_from] = _fromShares - _sharesValue;
+            unchecked {
+                // Overflow not possible: _sharesValue <= _fromShares <= totalShares.
+                shares[_from] = _fromShares - _sharesValue;
+            }
         }
 
         if (_to == address(0)) {
-            // burn
-            totalShares -= _sharesValue;
+            unchecked {
+                // Burn: Underflow not possible: _sharesValue <= totalShares or
+                // _sharesValue <= _fromShares <= totalShares.
+                totalShares -= _sharesValue;
+            }
         } else {
-            shares[_to] += _sharesValue;
+            unchecked {
+                // Overflow not possible: shares[_to] + _sharesValue is at most totalShares, which we know fits into a
+                // uint256.
+                shares[_to] += _sharesValue;
+            }
         }
 
         emit Transfer(_from, _to, _value);
