@@ -114,7 +114,7 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
 
     /**
      * @inheritdoc IERC20Permit
-     * @dev This function must be overriden to fix a solidity compiler error.
+     * @dev This function must be overridden to fix a solidity compiler error.
      */
     function nonces(address owner) public view override(IERC20Permit, ERC20Permit) returns (uint256) {
         return super.nonces(owner);
