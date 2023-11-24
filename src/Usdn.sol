@@ -6,7 +6,6 @@ import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IUsdn, IUsdnEvents, IUsdnErrors, IERC20, IERC20Permit } from "src/interfaces/IUsdn.sol";
 
@@ -23,8 +22,6 @@ import { IUsdn, IUsdnEvents, IUsdnErrors, IERC20, IERC20Permit } from "src/inter
  * Balances and total supply can only grow over time and never shrink.
  */
 contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
-    using Math for uint256;
-
     /* -------------------------------------------------------------------------- */
     /*                           Variables and constants                          */
     /* -------------------------------------------------------------------------- */
