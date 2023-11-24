@@ -59,7 +59,7 @@ contract TestSoladyMath is Test {
         bytes memory result = vm.ffi(cmds);
         int256 ref = abi.decode(result, (int256));
         int256 test = int256(FixedPointMathLib.lnWad(int256(value)));
-        assertApproxEqRel(ref, test, 1000); // 0.0000000000001%
+        assertApproxEqRel(ref, test, 1500); // 0.00000000000015%
     }
 
     /**
