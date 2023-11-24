@@ -101,7 +101,7 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
         uint256 _sharesDown = _tokensDown * divisor;
         // slither-disable-next-line divide-before-multiply
         uint256 _sharesUp = _tokensUp * divisor;
-        if (_amountShares - _sharesDown < _sharesUp - _amountShares) {
+        if (_amountShares - _sharesDown <= _sharesUp - _amountShares) {
             tokens_ = _tokensDown;
         } else {
             tokens_ = _tokensUp;
