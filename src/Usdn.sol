@@ -14,11 +14,11 @@ import { IUsdn, IUsdnEvents, IUsdnErrors, IERC20, IERC20Permit } from "src/inter
  * @title USDN token contract
  * @notice The USDN token supports the USDN Protocol and is minted when assets are deposited into the vault. When assets
  * are withdrawn from the vault, tokens are burned. The total supply and balances are increased periodically by
- * adjusting a multiplier, so that the price of the token doesn't grow too far past 1 USD.
+ * adjusting a global divisor, so that the price of the token doesn't grow too far past 1 USD.
  * @dev Base implementation of the ERC-20 interface by OpenZeppelin, adapted to support growable balances.
  *
- * Unlike a normal ERC-20, we record balances as a number of shares. The balance is then computed by multiplying the
- * shares by a factor >= 1. This allows us to grow the total supply without having to update all balances.
+ * Unlike a normal ERC-20, we record balances as a number of shares. The balance is then computed by dividing the
+ * shares by a divisor. This allows us to grow the total supply without having to update all balances.
  *
  * Balances and total supply can only grow over time and never shrink.
  */
@@ -41,49 +41,13 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
     /// @inheritdoc IUsdn
     uint256 public totalShares;
 
-    /// @dev Multiplier used to convert between shares and tokens. This is a fixed-point number with 9 decimals.
-    uint256 internal multiplier = 1e9;
+    /// @dev The maximum divisor that can be set. This is the initial value.
+    uint256 internal constant MAX_DIVISOR = 1e18;
+    /// @dev The minimum divisor that can be set. This corresponds to a growth of 1B times.
+    uint256 internal constant MIN_DIVISOR = 1e9;
 
-    /// @dev The maximum multiplier that can be set. Corresponds to a 1B ratio between tokens and shares.
-    uint256 internal constant MAX_MULTIPLIER = 1e18;
-
-    /**
-     * @dev The additional precision for shares compared to tokens.
-     * This allows to prevent precision losses when converting from tokens to shares and back.
-     *
-     * Given offset is 11
-     * And multiplier is 1e9 (min):
-     * tokens = shares * multiplier / MULTIPLIER_DIVISOR = shares * 1e9 / 10**(9+11) = shares / 1e11
-     * shares = tokens * MULTIPLIER_DIVISOR / multiplier = tokens * 10**(9+11) / 1e9 = tokens * 1e11
-     *
-     * Given multiplier is 1e18 (max):
-     * tokens = shares * multiplier / MULTIPLIER_DIVISOR = shares * 1e18 / 10**(9+11) = shares / 1e2
-     * shares = tokens * MULTIPLIER_DIVISOR / multiplier = tokens * 10**(9+11) / 1e18 = tokens * 1e2
-     *
-     * We always have more precision in shares than in tokens, so we don't have rounding issues.
-     */
-    uint8 internal constant DECIMALS_OFFSET = 11;
-
-    /**
-     * @dev Divisor used to convert between shares and tokens.
-     * Due to the decimals offset, shares have more precision than tokens even at MAX_MULTIPLIER.
-     */
-    uint256 internal constant MULTIPLIER_DIVISOR = 10 ** (9 + DECIMALS_OFFSET);
-
-    /**
-     * @dev The maximum number of tokens that can exist is limited due to the conversion to shares and the effect of
-     * the multiplier.
-     *
-     * We subtract 1 from the theoretical value to avoid overflows in `Math.mulDiv` when converting the maximum number
-     * of shares into tokens, at a multiplier value of 1e9.
-     *
-     * When trying to mint MAX_TOKENS at multiplier 1e9, we get:
-     * shares = MAX_TOKENS * 1e11 = type(uint256).max - 113_129_639_935 ~= 1.16e77
-     *
-     * When trying to mint MAX_TOKENS at multiplier 1e18, we get:
-     * shares = MAX_TOKENS * 1e2 ~= 1.16e68
-     */
-    uint256 internal constant MAX_TOKENS = (type(uint256).max / 10 ** DECIMALS_OFFSET) - 1;
+    /// @dev Divisor used to convert between shares and tokens.
+    uint256 internal divisor = MAX_DIVISOR;
 
     string private constant NAME = "Ultimate Synthetic Delta Neutral";
     string private constant SYMBOL = "USDN";
@@ -131,12 +95,14 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
 
     /// @inheritdoc IUsdn
     function convertToTokens(uint256 _amountShares) public view returns (uint256 tokens_) {
-        uint256 _tokensDown = _amountShares.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
+        uint256 _tokensDown = _amountShares / divisor;
+        if (_tokensDown >= maxTokens()) {
+            return _tokensDown;
+        }
         uint256 _tokensUp = _tokensDown + 1;
-        uint256 _sharesDown = _convertToShares(_tokensDown);
-        uint256 _sharesUp = _convertToShares(_tokensUp);
-        // check which of the two values is closer to the original amount of shares
-        if (_amountShares - _sharesDown <= _sharesUp - _amountShares) {
+        uint256 _sharesDown = _tokensDown * divisor;
+        uint256 _sharesUp = _tokensUp * divisor;
+        if (_amountShares - _sharesDown < _sharesUp - _amountShares) {
             tokens_ = _tokensDown;
         } else {
             tokens_ = _tokensUp;
@@ -145,10 +111,15 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
 
     /// @inheritdoc IUsdn
     function convertToShares(uint256 _amountTokens) public view returns (uint256 shares_) {
-        if (_amountTokens > MAX_TOKENS) {
+        if (_amountTokens > maxTokens()) {
             revert UsdnMaxTokensExceeded(_amountTokens);
         }
-        shares_ = _convertToShares(_amountTokens);
+        shares_ = _amountTokens * divisor;
+    }
+
+    /// @inheritdoc IUsdn
+    function maxTokens() public view returns (uint256) {
+        return type(uint256).max / divisor;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -161,42 +132,21 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
     }
 
     /// @inheritdoc IUsdn
-    function adjustMultiplier(uint256 _multiplier) external onlyRole(ADJUSTMENT_ROLE) {
-        if (_multiplier > MAX_MULTIPLIER) {
-            revert UsdnInvalidMultiplier(_multiplier);
+    function adjustDivisor(uint256 _divisor) external onlyRole(ADJUSTMENT_ROLE) {
+        if (_divisor >= divisor) {
+            // Divisor can only be decreased
+            revert UsdnInvalidDivisor(_divisor);
         }
-        if (_multiplier <= multiplier) {
-            // Multiplier can only be increased
-            revert UsdnInvalidMultiplier(_multiplier);
+        if (_divisor < MIN_DIVISOR) {
+            revert UsdnInvalidDivisor(_divisor);
         }
-        emit MultiplierAdjusted(multiplier, _multiplier);
-        multiplier = _multiplier;
+        emit DivisorAdjusted(divisor, _divisor);
+        divisor = _divisor;
     }
 
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
-
-    /**
-     * @dev Converts a number of tokens to the corresponding amount of shares.
-     * This internal function doesn't check the input value, it should be done by the caller if needed.
-     * @param _amountTokens the amount of tokens to convert to shares
-     * @return shares_ the corresponding amount of shares
-     */
-    function _convertToShares(uint256 _amountTokens) internal view returns (uint256 shares_) {
-        uint256 _sharesDown = _amountTokens.mulDiv(MULTIPLIER_DIVISOR, multiplier, Math.Rounding.Floor);
-        uint256 _sharesUp = _sharesDown + 1;
-        uint256 _tokensDown = _sharesDown.mulDiv(multiplier, MULTIPLIER_DIVISOR, Math.Rounding.Floor);
-        if (_tokensDown == _amountTokens) {
-            shares_ = _sharesDown;
-        } else {
-            // Since shares always have a greater precision than tokens, we can't have a value of tokens that would
-            // be converted to a value of shares between _sharesDown and _sharesUp.
-            // Hence, if the value of tokens is equal to _tokensDown, we return _sharesDown, otherwise we return
-            // _sharesUp.
-            shares_ = _sharesUp;
-        }
-    }
 
     /**
      * @dev Transfer a `value` amount of tokens from `from` to `to`, or alternatively mint (or burn) if `from` or `to`
@@ -209,33 +159,35 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
     function _update(address _from, address _to, uint256 _value) internal override {
         // Convert the value to shares, reverts with `UsdnMaxTokensExceeded()` if _value is too high.
         uint256 _sharesValue = convertToShares(_value);
+        uint256 _fromBalance = balanceOf(_from);
 
         if (_from == address(0)) {
             // Mint: Overflow check required, the rest of the code assumes that totalShares never overflows
             totalShares += _sharesValue;
         } else {
             uint256 _fromShares = shares[_from];
-            if (_fromShares < _sharesValue) {
-                revert ERC20InsufficientBalance(_from, balanceOf(_from), _value);
+            // Perform the balance check on the amount of tokens, since due to rounding errors, _sharesValue can be
+            // slightly larger than _fromShares.
+            if (_fromBalance < _value) {
+                revert ERC20InsufficientBalance(_from, _fromBalance, _value);
             }
-            unchecked {
-                // Overflow not possible: _sharesValue <= _fromShares <= totalShares.
-                shares[_from] = _fromShares - _sharesValue;
+            if (_sharesValue <= _fromShares) {
+                unchecked {
+                    shares[_from] = _fromShares - _sharesValue;
+                }
+            } else {
+                // Due to a rounding error, _sharesValue can be slightly larger than _fromShares. In this case, we
+                // simply set the balance to zero and adjust the transferred amount of shares.
+                shares[_from] = 0;
+                _sharesValue = _fromShares;
             }
         }
 
         if (_to == address(0)) {
-            unchecked {
-                // Burn: Underflow not possible: _sharesValue <= totalShares or
-                // _sharesValue <= _fromShares <= totalShares.
-                totalShares -= _sharesValue;
-            }
+            // Burn
+            totalShares -= _sharesValue;
         } else {
-            unchecked {
-                // Overflow not possible: shares[_to] + _sharesValue is at most totalShares, which we know fits into a
-                // uint256.
-                shares[_to] += _sharesValue;
-            }
+            shares[_to] += _sharesValue;
         }
 
         emit Transfer(_from, _to, _value);

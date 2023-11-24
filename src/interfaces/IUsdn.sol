@@ -10,11 +10,11 @@ import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IER
  */
 interface IUsdnEvents {
     /**
-     * @notice Emitted when the multiplier is adjusted.
-     * @param old_multiplier multiplier before adjustment
-     * @param new_multiplier multiplier after adjustment
+     * @notice Emitted when the divisor is adjusted.
+     * @param old_divisor divisor before adjustment
+     * @param new_divisor divisor after adjustment
      */
-    event MultiplierAdjusted(uint256 old_multiplier, uint256 new_multiplier);
+    event DivisorAdjusted(uint256 old_divisor, uint256 new_divisor);
 }
 
 /**
@@ -22,11 +22,11 @@ interface IUsdnEvents {
  */
 interface IUsdnErrors {
     /**
-     * @dev Indicates that the provided multiplier is invalid. This is usually because the new value is smaller or
-     * equal to the current multiplier.
-     * @param multiplier invalid multiplier
+     * @dev Indicates that the provided divisor is invalid. This is usually because the new value is larger or
+     * equal to the current divisor, or the new divisor is too small.
+     * @param divisor invalid divisor
      */
-    error UsdnInvalidMultiplier(uint256 multiplier);
+    error UsdnInvalidDivisor(uint256 divisor);
 
     /**
      * @dev Indicates that the number of tokens exceeds the maximum allowed value.
@@ -64,7 +64,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
 
     /**
      * @notice Convert a number of tokens to the corresponding amount of shares.
-     * @dev The conversion always rounds to the nearest number of shares.
+     * @dev The conversion reverts with `UsdnMaxTokensExceeded` if the corresponding amount of shares would overflow.
      * @param _amountTokens the amount of tokens to convert to shares
      * @return shares_ the corresponding amount of shares
      */
@@ -72,18 +72,26 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
 
     /**
      * @notice Convert a number of shares to the corresponding amount of tokens.
-     * @dev The conversion always rounds to the nearest number of tokens.
+     * @dev The conversion never overflows as we are performing a division. The conversion rounds to the nearest amount
+     * of tokens that minimizes the error when converting back to shares.
      * @param _amountShares the amount of shares to convert to tokens
      * @return tokens_ the corresponding amount of tokens
      */
     function convertToTokens(uint256 _amountShares) external view returns (uint256 tokens_);
 
     /**
-     * @notice Restricted function to increase the global multiplier, which effectively grows all balances and the total
-     * supply.
-     * @param multiplier the new multiplier, must be greater than the current one
+     * @notice View function returning the current maximum tokens supply, given the current divisor.
+     * @dev This function is used to check if a conversion operation would overflow.
+     * @return maxTokens_ the maximum number of tokens that can exist
      */
-    function adjustMultiplier(uint256 multiplier) external;
+    function maxTokens() external view returns (uint256 maxTokens_);
+
+    /**
+     * @notice Restricted function to decrease the global divisor, which effectively grows all balances and the total
+     * supply.
+     * @param divisor the new divisor, must be strictly smaller than the current one
+     */
+    function adjustDivisor(uint256 divisor) external;
 
     /// @dev Minter role signature.
     function MINTER_ROLE() external pure returns (bytes32);

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/Test.sol";
-
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
@@ -25,7 +23,7 @@ contract TestUsdnConvert is UsdnTokenFixture {
 
         usdn.convertToShares(usdn.maxTokens());
 
-        usdn.adjustMultiplier(1 ether);
+        usdn.adjustDivisor(usdn.minDivisor());
 
         usdn.convertToShares(usdn.maxTokens());
     }
@@ -43,7 +41,7 @@ contract TestUsdnConvert is UsdnTokenFixture {
         uint256 max_shares = usdn.convertToShares(usdn.maxTokens());
         uint256 tokens = usdn.convertToTokens(max_shares);
 
-        usdn.adjustMultiplier(1 ether);
+        usdn.adjustDivisor(usdn.minDivisor());
 
         max_shares = usdn.convertToShares(usdn.maxTokens());
         tokens = usdn.convertToTokens(max_shares);

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { console2 } from "forge-std/Test.sol";
+
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 import { USER_1 } from "test/utils/Constants.sol";
@@ -33,9 +35,9 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * @custom:and The total shares are decreased by 25
      */
     function test_burnPartial() public {
-        usdn.adjustMultiplier(2 gwei);
+        usdn.adjustDivisor(0.5 ether);
         assertEq(usdn.balanceOf(USER_1), 200 ether);
-        assertEq(usdn.sharesOf(USER_1), 100 ether * 10 ** usdn.decimalsOffset());
+        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.maxDivisor());
 
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(USER_1, address(0), 50 ether); // expected event
@@ -43,9 +45,9 @@ contract TestUsdnBurn is UsdnTokenFixture {
         usdn.burn(50 ether);
 
         assertEq(usdn.balanceOf(USER_1), 150 ether);
-        assertEq(usdn.sharesOf(USER_1), 75 ether * 10 ** usdn.decimalsOffset());
+        assertEq(usdn.sharesOf(USER_1), 75 ether * usdn.maxDivisor());
         assertEq(usdn.totalSupply(), 150 ether);
-        assertEq(usdn.totalShares(), 75 ether * 10 ** usdn.decimalsOffset());
+        assertEq(usdn.totalShares(), 75 ether * usdn.maxDivisor());
     }
 
     /**
@@ -61,19 +63,20 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * @custom:and The total shares are zero
      */
     function test_burnAll() public {
-        usdn.adjustMultiplier(1.1 gwei);
-        assertEq(usdn.balanceOf(USER_1), 110 ether);
-        assertEq(usdn.sharesOf(USER_1), 100 ether * 10 ** usdn.decimalsOffset());
+        usdn.adjustDivisor(0.9 ether);
+        assertEq(usdn.balanceOf(USER_1), 111_111_111_111_111_111_111);
+        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.maxDivisor());
 
         vm.expectEmit(true, true, true, false, address(usdn));
-        emit Transfer(USER_1, address(0), 110 ether); // expected event
+        emit Transfer(USER_1, address(0), 111_111_111_111_111_111_111); // expected event
         vm.prank(USER_1);
-        usdn.burn(110 ether);
+        usdn.burn(111_111_111_111_111_111_111);
 
         assertEq(usdn.balanceOf(USER_1), 0);
-        assertEq(usdn.sharesOf(USER_1), 0);
+        assertLe(usdn.sharesOf(USER_1), 1 ether); // rounding error
+        console2.log(usdn.sharesOf(USER_1));
         assertEq(usdn.totalSupply(), 0);
-        assertEq(usdn.totalShares(), 0);
+        assertLe(usdn.totalShares(), 1 ether); // rounding error
     }
 
     /**
@@ -97,7 +100,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
      */
     function test_RevertWhen_burnInsufficientBalanceWithMultiplier() public {
-        usdn.adjustMultiplier(2 gwei);
+        usdn.adjustDivisor(0.5 ether);
         assertEq(usdn.balanceOf(USER_1), 200 ether);
 
         vm.expectRevert(
@@ -122,7 +125,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
         vm.prank(USER_1);
         usdn.approve(address(this), 50 ether);
 
-        usdn.adjustMultiplier(2 gwei);
+        usdn.adjustDivisor(0.5 ether);
         assertEq(usdn.allowance(USER_1, address(this)), 50 ether); // changing multiplier doesn't affect allowance
 
         vm.expectEmit(true, true, true, false, address(usdn));

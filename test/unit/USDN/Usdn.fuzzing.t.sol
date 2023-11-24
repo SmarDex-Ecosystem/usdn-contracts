@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { Vm } from "forge-std/Vm.sol";
-import { console2 } from "forge-std/Test.sol";
 
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
@@ -24,15 +23,15 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @custom:and An amount of tokens between 0 and MAX_TOKENS
      * @custom:when The tokens are converted to shares and back to tokens
      * @custom:then The result is the same as the original amount of tokens
-     * @param multiplier The multiplier to use
+     * @param divisor The multiplier to use
      * @param tokens The amount of tokens to convert
      */
-    function testFuzz_convertBetweenTokensAndShares(uint256 multiplier, uint256 tokens) public {
-        multiplier = bound(multiplier, 1 gwei, 1 ether);
+    function testFuzz_convertBetweenTokensAndShares(uint256 divisor, uint256 tokens) public {
+        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
         tokens = bound(tokens, 0, usdn.maxTokens());
 
-        if (multiplier > 1 gwei) {
-            usdn.adjustMultiplier(multiplier);
+        if (divisor < usdn.maxDivisor()) {
+            usdn.adjustDivisor(divisor);
         }
 
         uint256 shares = usdn.convertToShares(tokens);
@@ -49,15 +48,15 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @custom:then The balance of this contract is decreased by the amount of tokens
      * @custom:and The balance of the user is increased by the amount of tokens
      * @custom:and The `Transfer` event is emitted with the correct amount
-     * @param multiplier The multiplier to use
+     * @param divisor The multiplier to use
      * @param transferAmount The amount of tokens to transfer
      */
-    function testFuzz_balanceInvariant(uint256 multiplier, uint256 transferAmount) public {
-        multiplier = bound(multiplier, 1 gwei, 1 ether);
+    function testFuzz_balanceInvariant(uint256 divisor, uint256 transferAmount) public {
+        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
         transferAmount = bound(transferAmount, 0, usdn.maxTokens());
 
-        if (multiplier > 1 gwei) {
-            usdn.adjustMultiplier(multiplier);
+        if (divisor < usdn.maxDivisor()) {
+            usdn.adjustDivisor(divisor);
         }
 
         usdn.mint(address(this), usdn.maxTokens());
@@ -80,17 +79,17 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @custom:then The balance of this contract is decreased by the amount of tokens
      * @custom:and The balance of the user is increased by the amount of tokens
      * @custom:and The `Transfer` event is emitted with the correct amount
-     * @param multiplier The multiplier to use
+     * @param divisor The multiplier to use
      * @param transferAmount The amount of tokens to transfer
      */
-    function testFuzz_balanceInvariantAfterMultiplier(uint256 multiplier, uint256 transferAmount) public {
-        multiplier = bound(multiplier, 1 gwei, 1 ether);
+    function testFuzz_balanceInvariantAfterMultiplier(uint256 divisor, uint256 transferAmount) public {
+        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
         transferAmount = bound(transferAmount, 0, usdn.maxTokens());
 
         usdn.mint(address(this), usdn.maxTokens());
 
-        if (multiplier > 1 gwei) {
-            usdn.adjustMultiplier(multiplier);
+        if (divisor < usdn.maxDivisor()) {
+            usdn.adjustDivisor(divisor);
         }
 
         uint256 balanceBefore = usdn.balanceOf(address(this));
@@ -109,20 +108,19 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @custom:and 10 holders with random balances
      * @custom:when The total supply is queried
      * @custom:then The result is the sum of the balances of all holders
-     * @param multiplier The multiplier to use
+     * @param divisor The multiplier to use
      */
-    function testFuzz_totalSupplyInvariant(uint256 multiplier) public {
-        multiplier = bound(multiplier, 1 gwei, 1 ether);
-        if (multiplier > 1 gwei) {
-            usdn.adjustMultiplier(multiplier);
+    function testFuzz_totalSupplyInvariant(uint256 divisor) public {
+        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
+        if (divisor < usdn.maxDivisor()) {
+            usdn.adjustDivisor(divisor);
         }
 
         uint256 totalHolders = 10;
         uint256[] memory balances = new uint256[](totalHolders);
         uint256 totalBalances;
         for (uint256 i = 0; i < totalHolders; i++) {
-            balances[i] =
-                _bound(uint256(keccak256(abi.encodePacked(i + multiplier))), 0, usdn.maxTokens() / totalHolders);
+            balances[i] = _bound(uint256(keccak256(abi.encodePacked(i + divisor))), 0, usdn.maxTokens() / totalHolders);
             totalBalances += balances[i];
             usdn.mint(address(uint160(i + 1)), balances[i]);
         }
@@ -136,22 +134,18 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @custom:when The tokens are burned after changing the multiplier
      * @custom:then The balance of this contract is 0
      * @custom:and The total supply is 0
-     * @param multiplier The multiplier to use
+     * @param divisor The multiplier to use
      * @param tokens The amount of tokens to mint and burn
      */
-    function testFuzz_totalBurn(uint256 multiplier, uint256 tokens) public {
-        multiplier = bound(multiplier, 1 gwei, 1 ether);
+    function testFuzz_totalBurn(uint256 divisor, uint256 tokens) public {
+        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
         tokens = bound(tokens, 0, usdn.maxTokens());
 
         usdn.mint(address(this), tokens);
-        console2.log("balance before multiplier  ", usdn.balanceOf(address(this)));
-        if (multiplier > 1 gwei) {
-            usdn.adjustMultiplier(multiplier);
+        if (divisor < usdn.maxDivisor()) {
+            usdn.adjustDivisor(divisor);
         }
-        console2.log("balance after multiplier   ", usdn.balanceOf(address(this)));
 
-        console2.log("user shares                ", usdn.sharesOf(address(this)));
-        console2.log("balance converted to shares", usdn.convertToShares(usdn.balanceOf(address(this))));
         usdn.burn(usdn.balanceOf(address(this)));
         assertEq(usdn.balanceOf(address(this)), 0);
         assertEq(usdn.totalSupply(), 0);

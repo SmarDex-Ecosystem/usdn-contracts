@@ -10,12 +10,12 @@ import { Usdn } from "src/Usdn.sol";
 contract UsdnHandler is Usdn {
     constructor() Usdn(address(0), address(0)) { }
 
-    function decimalsOffset() external pure returns (uint8) {
-        return DECIMALS_OFFSET;
+    function maxDivisor() external pure returns (uint256) {
+        return MAX_DIVISOR;
     }
 
-    function maxTokens() external pure returns (uint256) {
-        return MAX_TOKENS;
+    function minDivisor() external pure returns (uint256) {
+        return MIN_DIVISOR;
     }
 
     function approve(address _owner, address _spender, uint256 _value) external {
