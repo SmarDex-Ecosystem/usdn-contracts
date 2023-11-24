@@ -28,7 +28,7 @@ contract TestSoladyMath is Test {
      * @custom:scenario Fuzzing the `expWad` function
      * @custom:given A value between -42_139_678_854_452_767_552 and 135_305_999_368_893_231_588
      * @custom:when The `expWad` function is called with the value
-     * @custom:then The result is equal to the result of the Rust implementation within 0.0000000000000001%
+     * @custom:then The result is equal to the result of the Rust implementation within 0.000000000000007%
      * @param value The input to `expWad`
      */
     function testFuzzFFIExpWad(int256 value) public {
@@ -47,7 +47,7 @@ contract TestSoladyMath is Test {
      * @custom:scenario Fuzzing the `lnWad` function
      * @custom:given A value between `MIN_PRICE` and `MAX_PRICE` of `TickMath`
      * @custom:when The `lnWad` function is called with the value
-     * @custom:then The result is equal to the result of the Rust implementation within 0.0000000000001%
+     * @custom:then The result is equal to the result of the Rust implementation within 0.00000000000015%
      * @param value the input to `lnWad`
      */
     function testFuzzFFILnWad(uint256 value) public {
