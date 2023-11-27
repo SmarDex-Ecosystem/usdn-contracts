@@ -51,7 +51,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @param divisor The divisor to use
      * @param transferAmount The amount of tokens to transfer
      */
-    function testFuzz_balanceInvariant(uint256 divisor, uint256 transferAmount) public {
+    function testFuzz_balance(uint256 divisor, uint256 transferAmount) public {
         divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
         transferAmount = bound(transferAmount, 0, usdn.maxTokens());
 
@@ -82,7 +82,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @param divisor The divisor to use
      * @param transferAmount The amount of tokens to transfer
      */
-    function testFuzz_balanceInvariantAfterMultiplier(uint256 divisor, uint256 transferAmount) public {
+    function testFuzz_balanceAfterMultiplier(uint256 divisor, uint256 transferAmount) public {
         divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
         transferAmount = bound(transferAmount, 0, usdn.maxTokens());
 
@@ -110,7 +110,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @custom:then The result is the sum of the balances of all holders
      * @param divisor The divisor to use
      */
-    function testFuzz_totalSupplyInvariant(uint256 divisor) public {
+    function testFuzz_totalSupply(uint256 divisor) public {
         divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
         if (divisor < usdn.maxDivisor()) {
             usdn.adjustDivisor(divisor);
@@ -149,11 +149,41 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         usdn.burn(usdn.balanceOf(address(this)));
         assertEq(usdn.balanceOf(address(this)), 0);
         assertEq(usdn.totalSupply(), 0);
+    }
 
-        /* if (divisor > usdn.minDivisor()) {
+    /**
+     * @custom:scenario transfer part of balance, adjust divisor to MIN_DIVISOR, check that no shares have been created
+     * or lost.
+     * @custom:given MAX_TOKENS USDN are minted at MAX_DIVISOR
+     * @custom:and The divisor is adjusted to a value between MAX_DIVISOR and MIN_DIVISOR before transferring
+     * @custom:when A part of the balance is transferred
+     * @custom:and The divisor is adjusted to MIN_DIVISOR
+     * @custom:then There are no tokens created or lost
+     * @custom:and There are no shares created or lost
+     * @param divisor the divisor before the transfer
+     * @param tokens the amount of tokens to transfer
+     */
+    function testFuzz_partialTransfer(uint256 divisor, uint256 tokens) public {
+        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
+        tokens = bound(tokens, 0, usdn.maxTokens());
+
+        usdn.mint(address(this), usdn.maxTokens());
+        uint256 sharesBefore = usdn.sharesOf(address(this));
+        if (divisor < usdn.maxDivisor()) {
+            usdn.adjustDivisor(divisor);
+        }
+
+        uint256 balanceBefore = usdn.balanceOf(address(this));
+        usdn.transfer(USER_1, tokens);
+        assertEq(usdn.balanceOf(address(this)), balanceBefore - tokens);
+        assertEq(usdn.balanceOf(USER_1), tokens);
+        assertEq(usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), sharesBefore);
+
+        if (divisor != usdn.minDivisor()) {
             usdn.adjustDivisor(usdn.minDivisor());
         }
-        assertEq(usdn.balanceOf(address(this)), 0);
-        assertEq(usdn.totalSupply(), 0); */
+
+        assertEq(usdn.balanceOf(address(this)) + usdn.balanceOf(USER_1), usdn.totalSupply());
+        assertEq(usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), sharesBefore);
     }
 }

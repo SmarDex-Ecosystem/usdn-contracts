@@ -31,7 +31,7 @@ ffi = true
 runs = 10_000
 
 [profile.local.invariant]
-runs = 1000
+runs = 10_000
 depth = 15
 # call_override = true # makes invariant tests hang
 dictionary_weight = 80
@@ -49,7 +49,7 @@ ffi = true
 runs = 1_000_000
 
 [profile.heavy_fuzzing.invariant]
-runs = 100_000
+runs = 1_000_000
 depth = 30
 # call_override = true
 dictionary_weight = 80

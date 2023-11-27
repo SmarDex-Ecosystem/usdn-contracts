@@ -58,9 +58,10 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * @custom:then The `Transfer` event is emitted with the user as the sender, the zero address as the recipient and
      * amount 111.1
      * @custom:and The user's balance is zero
-     * @custom:and The user's shares are lower than 1e18
      * @custom:and The total supply is zero
-     * @custom:and The total shares are lower than 1e18
+     * @dev It's possible that there are remaining shares in the user balance and total supply, but they represent less
+     * than 1 USDN at the current divisor. This means that the user might not be able to burn the full balance of their
+     * tokens, they might have a fraction of a token left.
      */
     function test_burnAll() public {
         usdn.adjustDivisor(0.9 ether);
@@ -73,14 +74,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
         usdn.burn(111_111_111_111_111_111_111);
 
         assertEq(usdn.balanceOf(USER_1), 0);
-        assertLe(usdn.sharesOf(USER_1), 1 ether); // rounding error
-        console2.log(usdn.sharesOf(USER_1));
         assertEq(usdn.totalSupply(), 0);
-        assertLe(usdn.totalShares(), 1 ether); // rounding error
-
-        /* usdn.adjustDivisor(usdn.minDivisor());
-        assertEq(usdn.balanceOf(USER_1), 0);
-        assertEq(usdn.totalSupply(), 0); */
     }
 
     /**

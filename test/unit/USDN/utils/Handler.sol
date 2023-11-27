@@ -16,11 +16,11 @@ contract UsdnHandler is Usdn, Test {
     // current actor
     address internal currentActor;
 
-    // track theoretical balances
-    mapping(address account => uint256) public balances;
+    // track theoretical shares
+    mapping(address account => uint256) public shares;
 
     // track theorectical total supply
-    uint256 public totalSupplySum;
+    uint256 public totalSharesSum;
 
     constructor(address[] memory _actors) Usdn(address(0), address(0)) {
         actors = _actors;
@@ -67,37 +67,44 @@ contract UsdnHandler is Usdn, Test {
     }
 
     function mintTest(uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
-        if (totalSupplySum == maxTokens()) {
+        if (totalSupply() == maxTokens()) {
             return;
         }
         console.log("bound mint value");
-        value = bound(value, 1, maxTokens() - totalSupplySum);
-        totalSupplySum += value;
-        balances[currentActor] += value;
+        value = bound(value, 1, maxTokens() - totalSupply());
+        uint256 valueShares = value * divisor;
+        totalSharesSum += valueShares;
+        shares[currentActor] += valueShares;
         _mint(currentActor, value);
     }
 
     function burnTest(uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
-        if (balances[currentActor] == 0) {
+        if (balanceOf(currentActor) == 0) {
             return;
         }
         console.log("bound burn value");
-        value = bound(value, 1, balances[currentActor]);
-        totalSupplySum -= value;
-        balances[currentActor] -= value;
+        value = bound(value, 1, balanceOf(currentActor));
+        uint256 valueShares = value * divisor;
+        totalSharesSum -= valueShares;
+        shares[currentActor] -= valueShares;
         _burn(currentActor, value);
     }
 
     function transferTest(uint256 actorTo, uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
         console.log("bound 'to' actor ID");
         address to = actors[bound(actorTo, 0, actors.length - 1)];
-        if (balances[currentActor] == 0) {
+        if (balanceOf(currentActor) == 0) {
             return;
         }
         console.log("bound transfer value");
-        value = bound(value, 1, balances[currentActor]);
-        balances[currentActor] -= value;
-        balances[to] += value;
+        value = bound(value, 1, balanceOf(currentActor));
+        uint256 valueShares = value * divisor;
+        if (valueShares > shares[currentActor]) {
+            valueShares = shares[currentActor];
+        }
+
+        shares[currentActor] -= valueShares;
+        shares[to] += valueShares;
         _transfer(currentActor, to, value);
     }
 }

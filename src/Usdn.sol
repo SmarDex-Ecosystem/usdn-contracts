@@ -157,36 +157,40 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
      */
     function _update(address _from, address _to, uint256 _value) internal override {
         // Convert the value to shares, reverts with `UsdnMaxTokensExceeded()` if _value is too high.
-        uint256 _sharesValue = convertToShares(_value);
+        uint256 _valueShares = convertToShares(_value);
         uint256 _fromBalance = balanceOf(_from);
 
         if (_from == address(0)) {
             // Mint: Overflow check required, the rest of the code assumes that totalShares never overflows
-            totalShares += _sharesValue;
+            totalShares += _valueShares;
         } else {
             uint256 _fromShares = shares[_from];
-            // Perform the balance check on the amount of tokens, since due to rounding errors, _sharesValue can be
+            // Perform the balance check on the amount of tokens, since due to rounding errors, _valueShares can be
             // slightly larger than _fromShares.
             if (_fromBalance < _value) {
                 revert ERC20InsufficientBalance(_from, _fromBalance, _value);
             }
-            if (_sharesValue <= _fromShares) {
+            if (_valueShares <= _fromShares) {
                 unchecked {
-                    shares[_from] = _fromShares - _sharesValue;
+                    shares[_from] -= _valueShares;
                 }
             } else {
-                // Due to a rounding error, _sharesValue can be slightly larger than _fromShares. In this case, we
+                // Due to a rounding error, _valueShares can be slightly larger than _fromShares. In this case, we
                 // simply set the balance to zero and adjust the transferred amount of shares.
                 shares[_from] = 0;
-                _sharesValue = _fromShares;
+                _valueShares = _fromShares;
             }
         }
 
         if (_to == address(0)) {
             // Burn
-            totalShares -= _sharesValue;
+            unchecked {
+                totalShares -= _valueShares;
+            }
         } else {
-            shares[_to] += _sharesValue;
+            unchecked {
+                shares[_to] += _valueShares;
+            }
         }
 
         emit Transfer(_from, _to, _value);
