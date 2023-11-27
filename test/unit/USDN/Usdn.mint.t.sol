@@ -9,17 +9,17 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
  * @custom:feature The `mint` function of `USDN`
- * @custom:background Given this contract has no role at the start
+ * @custom:background Given this contract has the MINTER_ROLE
  * @custom:and The divisor is MAX_DIVISOR
  */
 contract TestUsdnMint is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
+        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
     }
 
     /**
      * @custom:scenario Minting tokens
-     * @custom:given This contract has the `MINTER_ROLE`
      * @custom:when 100 tokens are minted to a user
      * @custom:then The `Transfer` event is emitted with the zero address as the sender, the user as the recipient and
      * amount 100
@@ -29,8 +29,6 @@ contract TestUsdnMint is UsdnTokenFixture {
      * @custom:and The total shares are 100
      */
     function test_mint() public {
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(address(0), USER_1, 100 ether); // expected event
         usdn.mint(USER_1, 100 ether);
@@ -43,7 +41,7 @@ contract TestUsdnMint is UsdnTokenFixture {
 
     /**
      * @custom:scenario Minting tokens with a divisor
-     * @custom:given This contract has the `MINTER_ROLE` and `ADJUSTMENT_ROLE`
+     * @custom:given This contract has the `ADJUSTMENT_ROLE`
      * @custom:when The divisor is adjusted to 0.5x MAX_DIVISOR
      * @custom:and 100 tokens are minted to a user
      * @custom:then The `Transfer` event is emitted with the zero address as the sender, the user as the recipient and
@@ -54,7 +52,6 @@ contract TestUsdnMint is UsdnTokenFixture {
      * @custom:and The total shares are 50
      */
     function test_mintWithMultiplier() public {
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
 
         usdn.adjustDivisor(usdn.maxDivisor() / 2);
@@ -71,13 +68,12 @@ contract TestUsdnMint is UsdnTokenFixture {
 
     /**
      * @custom:scenario Minting maximum tokens at maximum divisor then decreasing divisor to min value
-     * @custom:given This contract has the `MINTER_ROLE` and `ADJUSTMENT_ROLE`
+     * @custom:given This contract has the `ADJUSTMENT_ROLE`
      * @custom:when MAX_TOKENS is minted at the max divisor
      * @custom:and The divisor is adjusted to the minimum value
      * @custom:then The user's balance is MAX_TOKENS * 1e9 and nothing reverts
      */
     function test_mintMaxAndIncreaseMultiplier() public {
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
 
         uint256 maxTokens = usdn.maxTokens();
@@ -95,6 +91,7 @@ contract TestUsdnMint is UsdnTokenFixture {
      * @custom:then The transaction reverts with the `AccessControlUnauthorizedAccount` error
      */
     function test_RevertWhen_unauthorized() public {
+        usdn.revokeRole(usdn.MINTER_ROLE(), address(this));
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), usdn.MINTER_ROLE()
@@ -105,12 +102,10 @@ contract TestUsdnMint is UsdnTokenFixture {
 
     /**
      * @custom:scenario Minting tokens to the zero address
-     * @custom:given This contract has the `MINTER_ROLE`
      * @custom:when 100 tokens are minted to the zero address
      * @custom:then The transaction reverts with the `ERC20InvalidReceiver` error
      */
     function test_RevertWhen_mintToZeroAddress() public {
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
         usdn.mint(address(0), 100 ether);
     }
