@@ -93,7 +93,8 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
     /// @inheritdoc IUsdn
     function convertToTokens(uint256 _amountShares) public view returns (uint256 tokens_) {
         uint256 _tokensDown = _amountShares / divisor;
-        if (_tokensDown >= maxTokens()) {
+        if (_tokensDown == maxTokens()) {
+            // early return, we can't have a token amount larger than maxTokens()
             return _tokensDown;
         }
         uint256 _tokensUp = _tokensDown + 1;

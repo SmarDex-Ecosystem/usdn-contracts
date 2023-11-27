@@ -57,7 +57,7 @@ contract TestUsdnMint is UsdnTokenFixture {
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
 
-        usdn.adjustDivisor(0.5 ether);
+        usdn.adjustDivisor(usdn.maxDivisor() / 2);
 
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(address(0), USER_1, 100 ether); // expected event

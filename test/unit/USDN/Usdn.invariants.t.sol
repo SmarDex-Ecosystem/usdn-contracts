@@ -46,7 +46,7 @@ contract TestUsdnInvariants is UsdnTokenFixture {
      */
     function invariant_sumOfSharesBalances() public displayBalancesAndShares {
         uint256 sum = usdn.shares(USER_1) + usdn.shares(USER_2) + usdn.shares(USER_3) + usdn.shares(USER_4);
-        assertEq(sum, usdn.totalShares());
+        assertEq(usdn.totalShares(), sum);
     }
 
     /**
