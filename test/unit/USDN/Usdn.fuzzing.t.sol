@@ -66,8 +66,8 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         emit Transfer(address(this), USER_1, transferAmount); // expected event
         usdn.transfer(USER_1, transferAmount);
 
-        assertEq(usdn.balanceOf(address(this)), balanceBefore - transferAmount);
-        assertEq(usdn.balanceOf(USER_1), transferAmount);
+        assertEq(usdn.balanceOf(address(this)), balanceBefore - transferAmount, "contract balance decrease");
+        assertEq(usdn.balanceOf(USER_1), transferAmount, "user balance increase");
     }
 
     /**
@@ -98,8 +98,8 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         emit Transfer(address(this), USER_1, transferAmount); // expected event
         usdn.transfer(USER_1, transferAmount);
 
-        assertEq(usdn.balanceOf(address(this)), balanceBefore - transferAmount);
-        assertEq(usdn.balanceOf(USER_1), transferAmount);
+        assertEq(usdn.balanceOf(address(this)), balanceBefore - transferAmount, "contract balance decrease");
+        assertEq(usdn.balanceOf(USER_1), transferAmount, "user balance increase");
     }
 
     /**
@@ -147,8 +147,8 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         }
 
         usdn.burn(usdn.balanceOf(address(this)));
-        assertEq(usdn.balanceOf(address(this)), 0);
-        assertEq(usdn.totalSupply(), 0);
+        assertEq(usdn.balanceOf(address(this)), 0, "contract balance");
+        assertEq(usdn.totalSupply(), 0, "total supply");
     }
 
     /**
@@ -175,15 +175,15 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
 
         uint256 balanceBefore = usdn.balanceOf(address(this));
         usdn.transfer(USER_1, tokens);
-        assertEq(usdn.balanceOf(address(this)), balanceBefore - tokens);
-        assertEq(usdn.balanceOf(USER_1), tokens);
-        assertEq(usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), sharesBefore);
+        assertEq(usdn.balanceOf(address(this)), balanceBefore - tokens, "contract balance decrease");
+        assertEq(usdn.balanceOf(USER_1), tokens, "user balance increase");
+        assertEq(usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), sharesBefore, "sum of the share balances");
 
         if (divisor != usdn.minDivisor()) {
             usdn.adjustDivisor(usdn.minDivisor());
         }
 
-        assertEq(usdn.balanceOf(address(this)) + usdn.balanceOf(USER_1), usdn.totalSupply());
-        assertEq(usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), sharesBefore);
+        assertEq(usdn.balanceOf(address(this)) + usdn.balanceOf(USER_1), usdn.totalSupply(), "total supply");
+        assertEq(usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), sharesBefore, "sum of the share balances after");
     }
 }

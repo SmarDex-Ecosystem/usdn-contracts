@@ -26,9 +26,9 @@ contract TestTickMathConstants is TickMathFixture {
      */
     function test_minPrice() public {
         uint256 minPrice = handler.getPriceAtTick(TickMath.MIN_TICK);
-        assertEq(minPrice, TickMath.MIN_PRICE);
+        assertEq(minPrice, TickMath.MIN_PRICE, "min price");
         int24 tick = handler.getClosestTickAtPrice(TickMath.MIN_PRICE);
-        assertEq(tick, TickMath.MIN_TICK);
+        assertEq(tick, TickMath.MIN_TICK, "min tick");
     }
 
     /**
@@ -39,8 +39,8 @@ contract TestTickMathConstants is TickMathFixture {
      */
     function test_maxPrice() public {
         uint256 maxPrice = handler.getPriceAtTick(TickMath.MAX_TICK);
-        assertEq(maxPrice, TickMath.MAX_PRICE);
+        assertEq(maxPrice, TickMath.MAX_PRICE, "max price");
         int24 tick = handler.getClosestTickAtPrice(TickMath.MAX_PRICE);
-        assertEq(tick, TickMath.MAX_TICK);
+        assertEq(tick, TickMath.MAX_TICK, "max tick");
     }
 }

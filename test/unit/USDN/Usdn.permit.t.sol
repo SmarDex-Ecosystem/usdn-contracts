@@ -57,8 +57,8 @@ contract TestUsdnPermit is UsdnTokenFixture {
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Approval(user, address(this), 100 ether); // expected event
         usdn.permit(user, address(this), 100 ether, type(uint256).max, v, r, s);
-        assertEq(usdn.allowance(user, address(this)), 100 ether);
-        assertEq(usdn.nonces(user), nonce + 1);
+        assertEq(usdn.allowance(user, address(this)), 100 ether, "allowance");
+        assertEq(usdn.nonces(user), nonce + 1, "nonce");
     }
 
     /**

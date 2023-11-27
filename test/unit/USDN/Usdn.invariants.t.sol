@@ -28,17 +28,17 @@ contract TestUsdnInvariants is UsdnTokenFixture {
      * @custom:scenario Check that the contract returns the expected number of shares for each user
      */
     function invariant_shares() public displayBalancesAndShares {
-        assertEq(usdn.sharesOf(USER_1), usdn.shares(USER_1));
-        assertEq(usdn.sharesOf(USER_2), usdn.shares(USER_2));
-        assertEq(usdn.sharesOf(USER_3), usdn.shares(USER_3));
-        assertEq(usdn.sharesOf(USER_4), usdn.shares(USER_4));
+        assertEq(usdn.sharesOf(USER_1), usdn.shares(USER_1), "shares of user 1");
+        assertEq(usdn.sharesOf(USER_2), usdn.shares(USER_2), "shares of user 2");
+        assertEq(usdn.sharesOf(USER_3), usdn.shares(USER_3), "shares of user 3");
+        assertEq(usdn.sharesOf(USER_4), usdn.shares(USER_4), "shares of user 4");
     }
 
     /**
      * @custom:scenario Check that the contract returns the expected number of total shares
      */
     function invariant_totalShares() public displayBalancesAndShares {
-        assertEq(usdn.totalShares(), usdn.totalSharesSum());
+        assertEq(usdn.totalShares(), usdn.totalSharesSum(), "total shares");
     }
 
     /**
@@ -46,7 +46,7 @@ contract TestUsdnInvariants is UsdnTokenFixture {
      */
     function invariant_sumOfSharesBalances() public displayBalancesAndShares {
         uint256 sum = usdn.shares(USER_1) + usdn.shares(USER_2) + usdn.shares(USER_3) + usdn.shares(USER_4);
-        assertEq(usdn.totalShares(), sum);
+        assertEq(usdn.totalShares(), sum, "sum of user shares vs total shares");
     }
 
     /**
@@ -56,7 +56,7 @@ contract TestUsdnInvariants is UsdnTokenFixture {
      */
     function invariant_totalSupply() public displayBalancesAndShares {
         uint256 sum = usdn.balanceOf(USER_1) + usdn.balanceOf(USER_2) + usdn.balanceOf(USER_3) + usdn.balanceOf(USER_4);
-        assertApproxEqAbs(sum, usdn.totalSupply(), 2);
+        assertApproxEqAbs(sum, usdn.totalSupply(), 2, "sum of user balances vs total supply");
     }
 
     modifier displayBalancesAndShares() {

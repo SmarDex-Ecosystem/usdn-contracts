@@ -36,18 +36,18 @@ contract TestUsdnBurn is UsdnTokenFixture {
      */
     function test_burnPartial() public {
         usdn.adjustDivisor(usdn.maxDivisor() / 2);
-        assertEq(usdn.balanceOf(USER_1), 200 ether);
-        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.maxDivisor());
+        assertEq(usdn.balanceOf(USER_1), 200 ether, "initial balance");
+        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.maxDivisor(), "initial shares");
 
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(USER_1, address(0), 50 ether); // expected event
         vm.prank(USER_1);
         usdn.burn(50 ether);
 
-        assertEq(usdn.balanceOf(USER_1), 150 ether);
-        assertEq(usdn.sharesOf(USER_1), 75 ether * usdn.maxDivisor());
-        assertEq(usdn.totalSupply(), 150 ether);
-        assertEq(usdn.totalShares(), 75 ether * usdn.maxDivisor());
+        assertEq(usdn.balanceOf(USER_1), 150 ether, "balance after burn");
+        assertEq(usdn.sharesOf(USER_1), 75 ether * usdn.maxDivisor(), "shares after burn");
+        assertEq(usdn.totalSupply(), 150 ether, "total supply after burn");
+        assertEq(usdn.totalShares(), 75 ether * usdn.maxDivisor(), "total shares after burn");
     }
 
     /**
@@ -65,16 +65,16 @@ contract TestUsdnBurn is UsdnTokenFixture {
      */
     function test_burnAll() public {
         usdn.adjustDivisor(9 * usdn.maxDivisor() / 10);
-        assertEq(usdn.balanceOf(USER_1), 111_111_111_111_111_111_111);
-        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.maxDivisor());
+        assertEq(usdn.balanceOf(USER_1), 111_111_111_111_111_111_111, "initial balance");
+        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.maxDivisor(), "initial shares");
 
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(USER_1, address(0), 111_111_111_111_111_111_111); // expected event
         vm.prank(USER_1);
         usdn.burn(111_111_111_111_111_111_111);
 
-        assertEq(usdn.balanceOf(USER_1), 0);
-        assertEq(usdn.totalSupply(), 0);
+        assertEq(usdn.balanceOf(USER_1), 0, "balance after burn");
+        assertEq(usdn.totalSupply(), 0, "total supply after burn");
     }
 
     /**
@@ -124,14 +124,15 @@ contract TestUsdnBurn is UsdnTokenFixture {
         usdn.approve(address(this), 50 ether);
 
         usdn.adjustDivisor(usdn.maxDivisor() / 2);
-        assertEq(usdn.allowance(USER_1, address(this)), 50 ether); // changing multiplier doesn't affect allowance
+        // changing multiplier doesn't affect allowance
+        assertEq(usdn.allowance(USER_1, address(this)), 50 ether, "initial allowance");
 
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(USER_1, address(0), 50 ether); // expected event
         usdn.burnFrom(USER_1, 50 ether);
 
-        assertEq(usdn.balanceOf(USER_1), 150 ether);
-        assertEq(usdn.allowance(USER_1, address(this)), 0);
+        assertEq(usdn.balanceOf(USER_1), 150 ether, "balance after burn");
+        assertEq(usdn.allowance(USER_1, address(this)), 0, "allowance after burn");
     }
 
     /**

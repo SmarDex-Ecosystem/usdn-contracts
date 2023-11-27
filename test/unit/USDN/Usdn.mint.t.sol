@@ -35,10 +35,10 @@ contract TestUsdnMint is UsdnTokenFixture {
         emit Transfer(address(0), USER_1, 100 ether); // expected event
         usdn.mint(USER_1, 100 ether);
 
-        assertEq(usdn.balanceOf(USER_1), 100 ether);
-        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.maxDivisor());
-        assertEq(usdn.totalSupply(), 100 ether);
-        assertEq(usdn.totalShares(), 100 ether * usdn.maxDivisor());
+        assertEq(usdn.balanceOf(USER_1), 100 ether, "balance of user");
+        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.maxDivisor(), "shares of user");
+        assertEq(usdn.totalSupply(), 100 ether, "total supply");
+        assertEq(usdn.totalShares(), 100 ether * usdn.maxDivisor(), "total shares");
     }
 
     /**
@@ -63,10 +63,10 @@ contract TestUsdnMint is UsdnTokenFixture {
         emit Transfer(address(0), USER_1, 100 ether); // expected event
         usdn.mint(USER_1, 100 ether);
 
-        assertEq(usdn.balanceOf(USER_1), 100 ether);
-        assertEq(usdn.sharesOf(USER_1), 50 ether * usdn.maxDivisor());
-        assertEq(usdn.totalSupply(), 100 ether);
-        assertEq(usdn.totalShares(), 50 ether * usdn.maxDivisor());
+        assertEq(usdn.balanceOf(USER_1), 100 ether, "balance of user");
+        assertEq(usdn.sharesOf(USER_1), 50 ether * usdn.maxDivisor(), "shares of user");
+        assertEq(usdn.totalSupply(), 100 ether, "total supply");
+        assertEq(usdn.totalShares(), 50 ether * usdn.maxDivisor(), "total shares");
     }
 
     /**

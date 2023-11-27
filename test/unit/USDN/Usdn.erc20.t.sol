@@ -96,8 +96,8 @@ contract TestUsdnErc20 is UsdnTokenFixture {
         vm.prank(USER_1);
         usdn.transfer(address(this), 50 ether);
 
-        assertEq(usdn.balanceOf(USER_1), 50 ether);
-        assertEq(usdn.balanceOf(address(this)), 50 ether);
+        assertEq(usdn.balanceOf(USER_1), 50 ether, "balance of user");
+        assertEq(usdn.balanceOf(address(this)), 50 ether, "balance of contract");
     }
 
     /**
@@ -139,8 +139,8 @@ contract TestUsdnErc20 is UsdnTokenFixture {
         emit Transfer(USER_1, address(this), 50 ether); // expected event
         usdn.transferFrom(USER_1, address(this), 50 ether);
 
-        assertEq(usdn.balanceOf(USER_1), 50 ether);
-        assertEq(usdn.balanceOf(address(this)), 50 ether);
+        assertEq(usdn.balanceOf(USER_1), 50 ether, "balance of user");
+        assertEq(usdn.balanceOf(address(this)), 50 ether, "balance of contract");
     }
 
     /**

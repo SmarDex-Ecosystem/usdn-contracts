@@ -21,8 +21,8 @@ contract TestTickMathConcrete is TickMathFixture {
      */
     function test_tickMinMax() public {
         int24 tickSpacing = 10_000;
-        assertEq(handler.minUsableTick(tickSpacing), -30_000);
-        assertEq(handler.maxUsableTick(tickSpacing), 90_000);
+        assertEq(handler.minUsableTick(tickSpacing), -30_000, "minUsableTick");
+        assertEq(handler.maxUsableTick(tickSpacing), 90_000, "maxUsableTick");
     }
 
     /**
@@ -33,8 +33,8 @@ contract TestTickMathConcrete is TickMathFixture {
      */
     function test_tickMinMaxNegative() public {
         int24 tickSpacing = -60; // should never happen but we're safe here
-        assertEq(handler.minUsableTick(tickSpacing), -34_500);
-        assertEq(handler.maxUsableTick(tickSpacing), 97_980);
+        assertEq(handler.minUsableTick(tickSpacing), -34_500, "minUsableTick");
+        assertEq(handler.maxUsableTick(tickSpacing), 97_980, "maxUsableTick");
     }
 
     /**
@@ -44,10 +44,12 @@ contract TestTickMathConcrete is TickMathFixture {
      * @custom:then The price is 904_882_630_897_776_127, 1.001 ether +- 1 wei, or 1_105_115_697_720_767_949
      */
     function test_tickToPrice() public {
-        assertEq(handler.getPriceAtTick(-100), 904_882_630_897_776_127); // Wolfram: 904_882_630_897_776_112
-        assertEq(handler.getPriceAtTick(0), 1 ether);
-        assertApproxEqAbs(handler.getPriceAtTick(1), 1.001 ether, 1); // We are one wei off here
-        assertEq(handler.getPriceAtTick(100), 1_105_115_697_720_767_949); // Wolfram: 1_105_115_697_720_767_968
+        // Exact value according to WolframAlpha: 904_882_630_897_776_112
+        assertEq(handler.getPriceAtTick(-100), 904_882_630_897_776_127, "price at tick -100");
+        assertEq(handler.getPriceAtTick(0), 1 ether, "price at tick 0");
+        assertApproxEqAbs(handler.getPriceAtTick(1), 1.001 ether, 1, "price at tick 1"); // We are one wei off here
+        // Exact value according to WolframAlpha: 1_105_115_697_720_767_968
+        assertEq(handler.getPriceAtTick(100), 1_105_115_697_720_767_949, "price at tick 100");
     }
 
     /**
@@ -57,9 +59,9 @@ contract TestTickMathConcrete is TickMathFixture {
      * @custom:then The closest tick is -100, 0 or 1
      */
     function test_priceToTick() public {
-        assertEq(handler.getClosestTickAtPrice(904_882_630_897_776_112), -100);
-        assertEq(handler.getClosestTickAtPrice(1 ether), 0);
-        assertEq(handler.getClosestTickAtPrice(1.001 ether), 1);
+        assertEq(handler.getClosestTickAtPrice(904_882_630_897_776_112), -100, "at tick -100");
+        assertEq(handler.getClosestTickAtPrice(1 ether), 0, "at tick 0");
+        assertEq(handler.getClosestTickAtPrice(1.001 ether), 1, "at tick 1");
     }
 
     /**

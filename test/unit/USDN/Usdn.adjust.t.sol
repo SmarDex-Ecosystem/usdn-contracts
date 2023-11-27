@@ -41,10 +41,10 @@ contract TestUsdnAdjust is UsdnTokenFixture {
         emit DivisorAdjusted(maxDivisor, maxDivisor - 1); // expected event
         usdn.adjustDivisor(maxDivisor - 1);
 
-        assertEq(usdn.sharesOf(USER_1), 100 ether * maxDivisor);
-        assertEq(usdn.balanceOf(USER_1), 100 ether + 100);
-        assertEq(usdn.totalShares(), 100 ether * maxDivisor);
-        assertEq(usdn.totalSupply(), 100 ether + 100);
+        assertEq(usdn.sharesOf(USER_1), 100 ether * maxDivisor, "shares of user");
+        assertEq(usdn.balanceOf(USER_1), 100 ether + 100, "balance of user");
+        assertEq(usdn.totalShares(), 100 ether * maxDivisor, "total shares");
+        assertEq(usdn.totalSupply(), 100 ether + 100, "total supply");
     }
 
     /**

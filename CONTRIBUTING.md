@@ -92,6 +92,8 @@ Tests that should revert are named `test_RevertWhen_somethingHappens()`.
 
 Fuzzing tests take one or more parameters which will be fuzzed and should be named `testFuzz_something(uint256 p)`.
 
+Invariant tests start with the keyword `invariant`: `invariant_totalSupply()`.
+
 ### NatSpec
 
 For tests, a special set of NatSpec keywords are used to describe the test context and content, similar to what
@@ -142,6 +144,8 @@ When using `assert*` statements in the tests, foundry allows to pass a third par
 In the case where there are multiple asserts in a single test, make use of this parameter to pass a unique string that
 can identify which assert failed (in case of failure).
 
+For invariant testing, use the third argument even if there is only one assert statement in the invariant definition.
+
 Example:
 
 ```solidity
@@ -149,5 +153,9 @@ function test_priceToTick() public {
     assertEq(handler.getClosestTickAtPrice(904_882_630_897_776_112), -100, "at tick -100");
     assertEq(handler.getClosestTickAtPrice(1 ether), 0, "at tick 0");
     assertEq(handler.getClosestTickAtPrice(1.001 ether), 1, "at tick 1");
+}
+
+function invariant_totalSupply() public {
+    assertEq(handler.totalSupply(), myContract.totalSupply(), "total supply");
 }
 ```

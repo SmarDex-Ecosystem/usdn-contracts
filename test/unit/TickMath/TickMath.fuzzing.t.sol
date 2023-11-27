@@ -33,8 +33,8 @@ contract TestTickMathFuzzing is TickMathFixture {
         int24 tick2 = handler.getClosestTickAtPrice(price);
         // The imprecise method should be within 1 tick of the precise method
         int24 tick3 = handler.getTickAtPrice(price);
-        assertEq(tick2, tick);
-        assertApproxEqAbs(tick3, tick, 1);
+        assertEq(tick2, tick, "closest tick vs original tick");
+        assertApproxEqAbs(tick3, tick, 1, "rounded down tick vs original tick");
     }
 
     /**
