@@ -24,12 +24,12 @@ contract TestUsdnAdjust is UsdnTokenFixture {
      * @custom:scenario Adjusting the divisor
      * @custom:given A user with 100 USDN
      * @custom:and This contract has the `ADJUSTMENT_ROLE`
-     * @custom:when The divisor is adjusted to MAX_DIVISOR - 1
+     * @custom:when The divisor is adjusted to MAX_DIVISOR / 10
      * @custom:then The `DivisorAdjusted` event is emitted with the old and new divisor
      * @custom:and The user's shares are unchanged
-     * @custom:and The user's balance is grown proportionally
+     * @custom:and The user's balance is grown proportionally (10 times)
      * @custom:and The total shares are unchanged
-     * @custom:and The total supply is grown proportionally
+     * @custom:and The total supply is grown proportionally (10 times)
      */
     function test_adjustDivisor() public {
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
@@ -38,13 +38,13 @@ contract TestUsdnAdjust is UsdnTokenFixture {
         usdn.mint(USER_1, 100 ether);
 
         vm.expectEmit(true, true, false, false, address(usdn));
-        emit DivisorAdjusted(maxDivisor, maxDivisor - 1); // expected event
-        usdn.adjustDivisor(maxDivisor - 1);
+        emit DivisorAdjusted(maxDivisor, maxDivisor / 10); // expected event
+        usdn.adjustDivisor(maxDivisor / 10);
 
         assertEq(usdn.sharesOf(USER_1), 100 ether * maxDivisor, "shares of user");
-        assertEq(usdn.balanceOf(USER_1), 100 ether + 100, "balance of user");
+        assertEq(usdn.balanceOf(USER_1), 100 ether * 10, "balance of user");
         assertEq(usdn.totalShares(), 100 ether * maxDivisor, "total shares");
-        assertEq(usdn.totalSupply(), 100 ether + 100, "total supply");
+        assertEq(usdn.totalSupply(), 100 ether * 10, "total supply");
     }
 
     /**
