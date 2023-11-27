@@ -28,11 +28,10 @@ contract UsdnVaultOpenLong is UsdnVaultFixture {
      * @custom:and The collateral amount is 2 ETH
      * @custom:and The liquidation price is 1000 USD
      * @custom:and The leverage is 2
-     * @custom:and The ETH price is 2000 USD when the long is opened
-     * @custom:and The ETH price is 2000 USD when the long is validated
+     * @custom:and The ETH price is 2000 USD and does not change
      * @custom:then The liquidation price is well calculated
-     * @custom:and The tick is 6910
-     * @custom:and The index in the tick is 0
+     * @custom:and The position tick is 6910
+     * @custom:and The position index in the tick is 0
      * @custom:and The balance of the vault is 2 ETH
      * @custom:and The balance of the vault in short remains unchanged
      * @custom:and The balance of the vault in long is 2 ETH
@@ -96,8 +95,8 @@ contract UsdnVaultOpenLong is UsdnVaultFixture {
      * @custom:and The ETH price is 2000 USD when the long is opened
      * @custom:and The ETH price is 2050 USD when the long is validated
      * @custom:then The liquidation price is well calculated
-     * @custom:and The tick is 6910
-     * @custom:and The index in the tick is 0
+     * @custom:and The position tick is 6910
+     * @custom:and The position index in the tick is 0
      * @custom:and The balance of the vault is 2 ETH
      * @custom:and The balance of the vault in short remains unchanged
      * @custom:and The balance of the vault in long is 2 ETH

@@ -424,7 +424,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
 
         pendingShortPositions[msg.sender] = _short;
 
-        _validateShortEntry(_short, _currentPrice);
+        _validateShortEntry(_short, _currentPrice, true);
 
         uint256 balanceBefore = asset.balanceOf(address(this));
         asset.safeTransferFrom(msg.sender, address(this), amount);
@@ -480,7 +480,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         if (_short.isExit) {
             _validateShortExit(_short, _finalPrice);
         } else {
-            _validateShortEntry(_short, _finalPrice);
+            _validateShortEntry(_short, _finalPrice, false);
         }
     }
 
@@ -495,7 +495,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     /// @dev Validate a short entry.
     /// @param _short The short position.
     /// @param _currentPrice The price corresponding to the position timestamp.
-    function _validateShortEntry(Position memory _short, PriceInfo memory _currentPrice) private {
+    function _validateShortEntry(Position memory _short, PriceInfo memory _currentPrice, bool firstTime) private {
         // Revert if position is empty
         if (_short.user == address(0)) return;
         // Revert if position is not an entry position
@@ -504,10 +504,13 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         if (_short.leverage > 0) revert InvalidPendingPosition();
 
         _applyPnlAndFunding(_currentPrice.price, _currentPrice.timestamp);
-        uint256 usdnToMint = _calcMintUsdp(_short.amount, _currentPrice.price);
-        usdn.mint(msg.sender, usdnToMint);
 
-        balanceShort += _short.amount;
+        if (!firstTime) {
+            uint256 usdnToMint = _calcMintUsdp(_short.amount, _currentPrice.price);
+            usdn.mint(msg.sender, usdnToMint);
+
+            balanceShort += _short.amount;
+        }
     }
 
     /// @dev Validate a short exit.
