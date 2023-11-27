@@ -71,7 +71,7 @@ contract TestUsdnMint is UsdnTokenFixture {
      * @custom:given This contract has the `ADJUSTMENT_ROLE`
      * @custom:when MAX_TOKENS is minted at the max divisor
      * @custom:and The divisor is adjusted to the minimum value
-     * @custom:then The user's balance is MAX_TOKENS * 1e9 and nothing reverts
+     * @custom:then The user's balance is MAX_TOKENS * MAX_DIVISOR / MIN_DIVISOR and nothing reverts
      */
     function test_mintMaxAndIncreaseMultiplier() public {
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
@@ -81,7 +81,7 @@ contract TestUsdnMint is UsdnTokenFixture {
 
         usdn.adjustDivisor(usdn.minDivisor());
 
-        assertEq(usdn.balanceOf(USER_1), maxTokens * 1e9);
+        assertEq(usdn.balanceOf(USER_1), maxTokens * usdn.maxDivisor() / usdn.minDivisor());
     }
 
     /**

@@ -40,7 +40,10 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
 
     /// @dev The maximum divisor that can be set. This is the initial value.
     uint256 internal constant MAX_DIVISOR = 1e18;
-    /// @dev The minimum divisor that can be set. This corresponds to a growth of 1B times.
+    /**
+     * @dev The minimum divisor that can be set. This corresponds to a growth of 1B times. Technically, 1e5 would still
+     * work
+     */
     uint256 internal constant MIN_DIVISOR = 1e9;
 
     /// @dev Divisor used to convert between shares and tokens.
