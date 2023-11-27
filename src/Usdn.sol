@@ -42,7 +42,7 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
     uint256 internal constant MAX_DIVISOR = 1e18;
     /**
      * @dev The minimum divisor that can be set. This corresponds to a growth of 1B times. Technically, 1e5 would still
-     * work
+     * work without precision errors.
      */
     uint256 internal constant MIN_DIVISOR = 1e9;
 
