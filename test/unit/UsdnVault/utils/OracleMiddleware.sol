@@ -23,7 +23,7 @@ contract OracleMiddleware is IOracleMiddleware {
         }
         uint128 _inputPrice = abi.decode(data, (uint128));
 
-        price.timestamp = targetTimestamp + 2;
+        price.timestamp = uint40(block.timestamp);
         price.price = _inputPrice;
     }
 

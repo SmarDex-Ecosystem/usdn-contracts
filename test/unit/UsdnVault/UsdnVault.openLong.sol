@@ -84,7 +84,7 @@ contract UsdnVaultOpenLong is UsdnVaultFixture {
         assertEq(usdnVault.totalExpo(), totalExpoBefore + collateralAmount * leverage);
         assertEq(usdnVault.lastPrice(), uint128(ethPrice));
         // Block.timestamp + oracle delay => see test/unit/UsdnVault/utils/OracleMiddleware.sol
-        assertEq(usdnVault.lastUpdateTimestamp(), block.timestamp + 2);
+        assertEq(usdnVault.lastUpdateTimestamp(), block.timestamp);
     }
 
     /**
@@ -156,5 +156,54 @@ contract UsdnVaultOpenLong is UsdnVaultFixture {
         assertEq(usdnVault.totalExpo(), totalExpoBefore + collateralAmount * 16 / 10);
         // Last price is the initial price because the position is validated at the same timestamp
         assertEq(usdnVault.lastPrice(), uint128(initialEthPrice));
+    }
+
+    /**
+     * @custom:scenario Create a long position
+     * @custom:when Time elapses between opening and validation
+     * @custom:and There is some funding rate applied
+     * @custom:then The long and short side balance are updated accordingly to the funding rate
+     */
+    function test_openLongWithFunding() external {
+        /* ------------------------- Test-specific constants ------------------------ */
+        uint256 initialEthPrice = 2000 ether;
+        uint256 finalEthPrice = 2050 ether;
+        bytes memory initialPriceData = abi.encode(uint128(initialEthPrice));
+        bytes memory finalPriceData = abi.encode(uint128(finalEthPrice));
+        uint96 collateralAmount = 10 ether;
+        uint128 liquidationPrice = uint128(initialEthPrice) - (uint128(initialEthPrice) / 16 * 10);
+        uint256 timeElapsedBeforeValidation = 20 seconds;
+
+        /* ----------------------------- Storage before ----------------------------- */
+        int256 shortBalanceBefore = usdnVault.shortAssetAvailable(uint128(initialEthPrice))
+            + usdnVault.fundingAsset(uint128(initialEthPrice), uint128(block.timestamp));
+        int256 longBalanceBefore = usdnVault.longAssetAvailable(uint128(initialEthPrice))
+            - usdnVault.fundingAsset(uint128(initialEthPrice), uint128(block.timestamp));
+        uint256 totalExpoBefore = usdnVault.totalExpo();
+
+        /* -------------------------- Open a long position -------------------------- */
+        (int24 tick, uint256 index) =
+            usdnVault.openLong{ value: 1 }(collateralAmount, liquidationPrice, initialPriceData);
+
+        // Wait 20 seconds to apply funding rates
+        vm.warp(block.timestamp + timeElapsedBeforeValidation);
+
+        // Validate the position
+        usdnVault.validateLong{ value: 1 }(tick, index, finalPriceData);
+
+        /* --------------------------------- Checks --------------------------------- */
+        assertEq(
+            asset.balanceOf(address(usdnVault)),
+            uint256(shortBalanceBefore + longBalanceBefore + int256(int96(collateralAmount)))
+        );
+        assertEq(
+            usdnVault.balanceLong(),
+            uint256(usdnVault.longAssetAvailableWithFunding(uint128(finalEthPrice), uint40(block.timestamp)))
+        );
+        assertEq(
+            usdnVault.balanceShort() + usdnVault.balanceLong(),
+            uint256(shortBalanceBefore + longBalanceBefore) + collateralAmount
+        );
+        assertEq(usdnVault.totalExpo(), totalExpoBefore + collateralAmount * 16 / 10);
     }
 }
