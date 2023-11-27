@@ -5,8 +5,7 @@ import { Position } from "./IUsdnVault.sol";
 
 /// @title USDN Vault Perps Interface
 /// @notice This interface is used to interact with the USDN Vault perps.
-/// @author @yahiru
-/// @author @beeb
+/// @author @Yashiru
 interface IUsdnVaultPerps {
     /* -------------------------------------------------------------------------- */
     /*                               Opened features                              */

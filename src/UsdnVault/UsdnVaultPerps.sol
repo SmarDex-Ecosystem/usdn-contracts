@@ -384,19 +384,6 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         );
 
         /// @dev Update storage
-        /// We update the start price only
-        /// The leverage has been calculated a the first tx, and should not be
-        /// updated. The liquidation price will be updated according to he new
-        /// price and the computed leverage.
-        ///   E.g.
-        ///     Tx1:
-        ///       - Price: 1000
-        ///       - liquidationPrice: 500
-        ///       => leverage = 2
-        ///     Tx2:
-        ///       - Price: 2000
-        ///       => liquidationPrice is now 1000
-        ///       => leverage still 2
         _storedLong.startPrice = _finalPrice.price;
         _storedLong.validated = true;
 
@@ -573,42 +560,46 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
 
         _applyPnlAndFunding(_currentPrice.price, _currentPrice.timestamp);
 
-        // calculate liquidation price from leverage and current price
-        uint128 liquidationPrice = getLiquidationPrice(_currentPrice.price, _long.leverage);
+        if (_firstTime) {
+            // calculate liquidation price from leverage and current price
+            uint128 liquidationPrice = getLiquidationPrice(_currentPrice.price, _long.leverage);
 
-        tick = TickMath.getTickAtPrice(uint256(liquidationPrice));
-        tick = (tick / tickSpacing) * tickSpacing;
-        // calculate real leverage from tick and corresponding price
-        liquidationPrice = uint128(TickMath.getPriceAtTick(tick));
+            tick = TickMath.getTickAtPrice(uint256(liquidationPrice));
+            tick = (tick / tickSpacing) * tickSpacing;
+            // calculate real leverage from tick and corresponding price
+            liquidationPrice = uint128(TickMath.getPriceAtTick(tick));
 
-        if (_firstTime) balanceLong += _long.amount;
+            balanceLong += _long.amount;
 
-        uint256 addExpo = (_long.amount * _long.leverage) / 10 ** LEVERAGE_DECIMALS;
-        totalExpo += addExpo;
-        bytes32 tickHash = _tickHash(tick);
-        totalExpoByTick[tickHash] += addExpo;
+            uint256 addExpo = (_long.amount * _long.leverage) / 10 ** LEVERAGE_DECIMALS;
+            totalExpo += addExpo;
+            bytes32 tickHash = _tickHash(tick);
+            totalExpoByTick[tickHash] += addExpo;
 
-        Position memory long = Position({
-            user: msg.sender,
-            amount: _long.amount,
-            startPrice: _currentPrice.price,
-            leverage: _long.leverage,
-            validated: _long.validated,
-            isExit: false,
-            timestamp: uint40(block.timestamp)
-        });
-        Position[] storage pos = longPositions[tickHash];
-        if (positionsInTick[tickHash] == 0) {
-            // first position in this tick
-            tickBitmap.flipTick(tick, tickSpacing);
+            Position memory long = Position({
+                user: msg.sender,
+                amount: _long.amount,
+                startPrice: _currentPrice.price,
+                leverage: _long.leverage,
+                validated: _long.validated,
+                isExit: false,
+                timestamp: uint40(block.timestamp)
+            });
+            Position[] storage pos = longPositions[tickHash];
+
+            if (positionsInTick[tickHash] == 0) {
+                // first position in this tick
+                tickBitmap.flipTick(tick, tickSpacing);
+            }
+            if (tick > maxInitializedTick) {
+                maxInitializedTick = tick;
+            }
+
+            pos.push(long);
+            index = pos.length - 1;
+            totalLongPositions += 1;
+            ++positionsInTick[tickHash];
         }
-        if (tick > maxInitializedTick) {
-            maxInitializedTick = tick;
-        }
-        pos.push(long);
-        index = pos.length - 1;
-        totalLongPositions += 1;
-        ++positionsInTick[tickHash];
     }
 
     /// @dev Validate a long exit.

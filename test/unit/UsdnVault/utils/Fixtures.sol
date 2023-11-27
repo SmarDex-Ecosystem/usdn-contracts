@@ -60,7 +60,7 @@ contract UsdnVaultFixture is BaseFixture {
         returns (int24 tick, uint256 index)
     {
         // Compute price data
-        bytes memory priceData = abi.encode(uint128(amount));
+        bytes memory priceData = abi.encode(uint128(2000 ether));
         (tick, index) = usdnVault.openLong{ value: 1 }(amount, liquidationPrice, priceData);
 
         // Wait 20 seconds

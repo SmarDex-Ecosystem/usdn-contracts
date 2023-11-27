@@ -3,8 +3,7 @@ pragma solidity 0.8.20;
 
 /// @title USDN Vault core features
 /// @notice This contract is the core of the USDN Vault.
-/// @author @yahiru
-/// @author @beeb
+/// @author @Yashiru
 interface IUsdnVaultCore {
     /* -------------------------------------------------------------------------- */
     /*                               Perps features                               */

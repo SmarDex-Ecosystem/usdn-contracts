@@ -33,8 +33,7 @@ struct PendingPositionMetadata {
 /// @title USDN Vault
 /// @notice This contract is the USDN Vault.
 /// @dev This contract is used to manage the long and short positions.
-/// @author @yahiru
-/// @author @beeb
+/// @author @Yashiru
 interface IUsdnVault {
     /// @notice Initialize the vault.
     /// @dev To be called once the vault is authorized to transfer the asset.
