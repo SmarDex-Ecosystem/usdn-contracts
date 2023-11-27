@@ -378,7 +378,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         if (_long.validated) revert InvalidPendingPosition();
 
         PriceInfo memory _finalPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint128(block.timestamp),
+            uint128(_long.timestamp),
             _long.isExit ? ProtocolAction.ValidateClosePosition : ProtocolAction.ValidateOpenPosition,
             _finalOraclePriceData
         );
@@ -386,6 +386,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         /// @dev Update storage
         _storedLong.startPrice = _finalPrice.price;
         _storedLong.validated = true;
+        _storedLong.timestamp = uint40(block.timestamp);
 
         // TODO: gas opti !
         //       this reassignment probably read the whole position data to copy
