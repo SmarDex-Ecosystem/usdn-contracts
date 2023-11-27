@@ -134,3 +134,20 @@ contract TestMyTokenTransfer is MyTokenFixture {
     }
 }
 ```
+
+### Expect statements
+
+When using `assert*` statements in the tests, foundry allows to pass a third parameter with a string of characters.
+
+In the case where there are multiple asserts in a single test, make use of this parameter to pass a unique string that
+can identify which assert failed (in case of failure).
+
+Example:
+
+```solidity
+function test_priceToTick() public {
+    assertEq(handler.getClosestTickAtPrice(904_882_630_897_776_112), -100, "at tick -100");
+    assertEq(handler.getClosestTickAtPrice(1 ether), 0, "at tick 0");
+    assertEq(handler.getClosestTickAtPrice(1.001 ether), 1, "at tick 1");
+}
+```
