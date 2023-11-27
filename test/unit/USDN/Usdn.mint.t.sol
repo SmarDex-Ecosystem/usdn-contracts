@@ -42,9 +42,9 @@ contract TestUsdnMint is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Minting tokens with a multiplier
+     * @custom:scenario Minting tokens with a divisor
      * @custom:given This contract has the `MINTER_ROLE` and `ADJUSTMENT_ROLE`
-     * @custom:when The multiplier is adjusted to 2
+     * @custom:when The divisor is adjusted to 0.5x MAX_DIVISOR
      * @custom:and 100 tokens are minted to a user
      * @custom:then The `Transfer` event is emitted with the zero address as the sender, the user as the recipient and
      * amount 100
@@ -70,10 +70,10 @@ contract TestUsdnMint is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Minting maximum tokens at minimum multiplier then increasing multiplier to max value
+     * @custom:scenario Minting maximum tokens at maximum divisor then decreasing divisor to min value
      * @custom:given This contract has the `MINTER_ROLE` and `ADJUSTMENT_ROLE`
-     * @custom:when MAX_TOKENS is minted at the minimum multiplier
-     * @custom:and The multiplier is adjusted to the maximum value
+     * @custom:when MAX_TOKENS is minted at the max divisor
+     * @custom:and The divisor is adjusted to the minimum value
      * @custom:then The user's balance is MAX_TOKENS * 1e9 and nothing reverts
      */
     function test_mintMaxAndIncreaseMultiplier() public {
