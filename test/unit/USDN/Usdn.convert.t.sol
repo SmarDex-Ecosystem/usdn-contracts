@@ -5,7 +5,7 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
  * @custom:feature The `convertToShares` and `convertToTokens` functions of `USDN`
- * @custom:background Given the multiplier is 1 at the start
+ * @custom:background Given the divisor is MAX_DIVISOR at the start
  */
 contract TestUsdnConvert is UsdnTokenFixture {
     function setUp() public override {
@@ -14,7 +14,7 @@ contract TestUsdnConvert is UsdnTokenFixture {
 
     /**
      * @custom:scenario Converting tokens to shares never reverts
-     * @custom:given The multiplier is 1 or 1B
+     * @custom:given The divisor is MAX_DIVISOR or MIN_DIVISOR
      * @custom:when The `convertToShares` function is called with MAX_TOKENS
      * @custom:then The call does not revert
      */
@@ -30,7 +30,7 @@ contract TestUsdnConvert is UsdnTokenFixture {
 
     /**
      * @custom:scenario Converting shares to tokens never reverts
-     * @custom:given The multiplier is 1 or 1B
+     * @custom:given The divisor is MAX_DIVISOR or MIN_DIVISOR
      * @custom:and The number of shares to convert corresponds to MAX_TOKENS at the current multiplier
      * @custom:when The `convertToTokens` function is called with the number of shares
      * @custom:then The call does not revert

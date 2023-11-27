@@ -10,7 +10,7 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 /**
  * @custom:feature The `mint` function of `USDN`
  * @custom:background Given this contract has no role at the start
- * @custom:and The multiplier is 1
+ * @custom:and The divisor is MAX_DIVISOR
  */
 contract TestUsdnMint is UsdnTokenFixture {
     function setUp() public override {

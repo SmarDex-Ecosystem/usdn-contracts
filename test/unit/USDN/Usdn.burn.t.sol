@@ -9,10 +9,10 @@ import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
- * @custom:feature The `adjustMultiplier` function of `USDN`
+ * @custom:feature The `burn` function of `USDN`
  * @custom:background Given a user with 100 tokens
  * @custom:and The contract has the `MINTER_ROLE` and `ADJUSTMENT_ROLE`
- * @custom:and The multiplier is 1
+ * @custom:and The divisor is MAX_DIVISOR
  */
 contract TestUsdnBurn is UsdnTokenFixture {
     function setUp() public override {
@@ -24,7 +24,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
 
     /**
      * @custom:scenario Burning a portion of the balance
-     * @custom:given A multiplier of 2
+     * @custom:given A divisor of 0.5x MAX_DIVISOR
      * @custom:and A user with 200 USDN
      * @custom:when 50 USDN are burned
      * @custom:then The `Transfer` event is emitted with the user as the sender, the zero address as the recipient and
@@ -52,15 +52,15 @@ contract TestUsdnBurn is UsdnTokenFixture {
 
     /**
      * @custom:scenario Burning the entire balance
-     * @custom:given A multiplier of 1.1
-     * @custom:and A user with 110 USDN
-     * @custom:when 110 USDN are burned
+     * @custom:given A divisor of 0.9x MAX_DIVISOR
+     * @custom:and A user with 111.1 USDN
+     * @custom:when 111.1 USDN are burned
      * @custom:then The `Transfer` event is emitted with the user as the sender, the zero address as the recipient and
-     * amount 110
+     * amount 111.1
      * @custom:and The user's balance is zero
-     * @custom:and The user's shares are zero
+     * @custom:and The user's shares are lower than 1e18
      * @custom:and The total supply is zero
-     * @custom:and The total shares are zero
+     * @custom:and The total shares are lower than 1e18
      */
     function test_burnAll() public {
         usdn.adjustDivisor(0.9 ether);
@@ -77,6 +77,10 @@ contract TestUsdnBurn is UsdnTokenFixture {
         console2.log(usdn.sharesOf(USER_1));
         assertEq(usdn.totalSupply(), 0);
         assertLe(usdn.totalShares(), 1 ether); // rounding error
+
+        /* usdn.adjustDivisor(usdn.minDivisor());
+        assertEq(usdn.balanceOf(USER_1), 0);
+        assertEq(usdn.totalSupply(), 0); */
     }
 
     /**
@@ -94,7 +98,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
 
     /**
      * @custom:scenario Burning more than the balance
-     * @custom:given A multiplier of 2
+     * @custom:given A divisor of 0.5x MAX_DIVISOR
      * @custom:and A user with 200 USDN
      * @custom:when 201 USDN are burned
      * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
@@ -113,7 +117,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
     /**
      * @custom:scenario Burning from a user with allowance
      * @custom:given An approved amount of 50 USDN
-     * @custom:and A multiplier of 2
+     * @custom:and A divisor of 0.5x MAX_DIVISOR
      * @custom:and A user with 200 USDN
      * @custom:when 50 USDN are burned from the user
      * @custom:then The `Transfer` event is emitted with the user as the sender, this contract as the recipient and

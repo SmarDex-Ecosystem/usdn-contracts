@@ -7,8 +7,8 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 
 /**
- * @custom:feature Fuzzing and invariants of the USDN token
- * @custom:background Given TOKENS_MAX, a maximum amount of tokens that can exist
+ * @custom:feature Fuzzing of the USDN token functions
+ * @custom:background Given MAX_TOKENS, a maximum amount of tokens that can exist
  */
 contract TestUsdnFuzzing is UsdnTokenFixture {
     function setUp() public override {
@@ -19,11 +19,11 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
 
     /**
      * @custom:scenario Convert an amount of tokens to the corresponding amount of shares, then back to tokens
-     * @custom:given A multiplier between 1 and 1B
+     * @custom:given A divisor between MAX_DIVISOR and MIN_DIVISOR
      * @custom:and An amount of tokens between 0 and MAX_TOKENS
      * @custom:when The tokens are converted to shares and back to tokens
      * @custom:then The result is the same as the original amount of tokens
-     * @param divisor The multiplier to use
+     * @param divisor The divisor to use
      * @param tokens The amount of tokens to convert
      */
     function testFuzz_convertBetweenTokensAndShares(uint256 divisor, uint256 tokens) public {
@@ -42,13 +42,13 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
 
     /**
      * @custom:scenario Transfer an amount of tokens to a user and check the balance changes
-     * @custom:given A multiplier between 1 and 1B
+     * @custom:given A divisor between MAX_DIVISOR and MIN_DIVISOR
      * @custom:and An amount of tokens between 0 and MAX_TOKENS
      * @custom:when The tokens are transferred to a user
      * @custom:then The balance of this contract is decreased by the amount of tokens
      * @custom:and The balance of the user is increased by the amount of tokens
      * @custom:and The `Transfer` event is emitted with the correct amount
-     * @param divisor The multiplier to use
+     * @param divisor The divisor to use
      * @param transferAmount The amount of tokens to transfer
      */
     function testFuzz_balanceInvariant(uint256 divisor, uint256 transferAmount) public {
@@ -71,15 +71,15 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Mint a balance, adjust multiplier and then transfer an amount of tokens to a user and check the
+     * @custom:scenario Mint a balance, adjust divisor and then transfer an amount of tokens to a user and check the
      * balance changes
-     * @custom:given A multiplier between 1 and 1B
+     * @custom:given A divisor between MAX_DIVISOR and MIN_DIVISOR
      * @custom:and An amount of tokens between 0 and MAX_TOKENS
-     * @custom:when The tokens are transferred to a user after changing the multiplier
+     * @custom:when The tokens are transferred to a user after changing the divisor
      * @custom:then The balance of this contract is decreased by the amount of tokens
      * @custom:and The balance of the user is increased by the amount of tokens
      * @custom:and The `Transfer` event is emitted with the correct amount
-     * @param divisor The multiplier to use
+     * @param divisor The divisor to use
      * @param transferAmount The amount of tokens to transfer
      */
     function testFuzz_balanceInvariantAfterMultiplier(uint256 divisor, uint256 transferAmount) public {
@@ -104,11 +104,11 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
 
     /**
      * @custom:scenario Check that the total supply is the sum of the balances of all holders
-     * @custom:given A multiplier between 1 and 1B
+     * @custom:given A divisor between MAX_DIVISOR and MIN_DIVISOR
      * @custom:and 10 holders with random balances
      * @custom:when The total supply is queried
      * @custom:then The result is the sum of the balances of all holders
-     * @param divisor The multiplier to use
+     * @param divisor The divisor to use
      */
     function testFuzz_totalSupplyInvariant(uint256 divisor) public {
         divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
@@ -128,13 +128,13 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Mint an amount of tokens, change the multiplier and then burn the full balance
-     * @custom:given A multiplier between 1 and 1B
+     * @custom:scenario Mint an amount of tokens, change the divisor and then burn the full balance
+     * @custom:given A divisor between MAX_DIVISOR and MIN_DIVISOR
      * @custom:and An amount of tokens between 0 and MAX_TOKENS
-     * @custom:when The tokens are burned after changing the multiplier
+     * @custom:when The tokens are burned after changing the divisor
      * @custom:then The balance of this contract is 0
      * @custom:and The total supply is 0
-     * @param divisor The multiplier to use
+     * @param divisor The divisor to use
      * @param tokens The amount of tokens to mint and burn
      */
     function testFuzz_totalBurn(uint256 divisor, uint256 tokens) public {
@@ -149,5 +149,11 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         usdn.burn(usdn.balanceOf(address(this)));
         assertEq(usdn.balanceOf(address(this)), 0);
         assertEq(usdn.totalSupply(), 0);
+
+        /* if (divisor > usdn.minDivisor()) {
+            usdn.adjustDivisor(usdn.minDivisor());
+        }
+        assertEq(usdn.balanceOf(address(this)), 0);
+        assertEq(usdn.totalSupply(), 0); */
     }
 }
