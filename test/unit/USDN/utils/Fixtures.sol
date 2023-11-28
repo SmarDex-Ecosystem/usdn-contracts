@@ -34,5 +34,5 @@ contract UsdnTokenFixture is BaseFixture, IUsdnEvents, IUsdnErrors {
 
     // force ignore from coverage report
     // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public override { }
+    function test() public virtual override { }
 }
