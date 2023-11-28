@@ -143,11 +143,6 @@ contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
         }
     }
 
-    /// @inheritdoc IUsdnVaultCore
-    function countInitializedTicks() public view returns (uint256 count) {
-        count = tickBitmap.popCount(0, type(uint256).max);
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
