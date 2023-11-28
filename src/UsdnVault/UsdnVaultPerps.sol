@@ -588,7 +588,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
 
             if (positionsInTick[tickHash] == 0) {
                 // first position in this tick
-                tickBitmap.unset(_tickToBitmapIndex(tick));
+                tickBitmap.set(_tickToBitmapIndex(tick));
             }
             if (tick > maxInitializedTick) {
                 maxInitializedTick = tick;
