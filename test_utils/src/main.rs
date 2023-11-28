@@ -1,10 +1,12 @@
+use std::ops::DivAssign;
+
 use alloy_primitives::{FixedBytes, I256, U256};
 use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
 use rug::{
     float::Round,
     ops::{DivRounding, MulAssignRound, Pow},
-    Assign, Float, Integer, Rational,
+    Float, Integer,
 };
 
 #[derive(Parser)]
@@ -49,35 +51,27 @@ fn main() -> Result<()> {
 
     match &cli.command {
         Commands::ExpWad { value } => {
-            let value: Integer = value.parse()?;
-            let value_dec: Rational = Rational::from((value, wad.clone()));
-            let mut value_float = Float::new(512);
-            value_float.assign(value_dec);
-            let mut res = value_float.exp();
+            let mut value = Float::with_val(512, Float::parse(value)?);
+            value.div_assign(&wad);
+            let mut res = value.exp();
             res.mul_assign_round(&wad, Round::Nearest);
             res.floor_mut();
             print_i256_hex(res)?;
         }
         Commands::LnWad { value } => {
-            let value: Integer = value.parse()?;
-            let value_dec: Rational = Rational::from((value, wad.clone()));
-            let mut value_float = Float::new(512);
-            value_float.assign(value_dec);
-            let mut res = value_float.ln();
+            let mut value = Float::with_val(512, Float::parse(value)?);
+            value.div_assign(&wad);
+            let mut res = value.ln();
             res.mul_assign_round(&wad, Round::Nearest);
             res.round_mut();
             print_i256_hex(res)?;
         }
         Commands::PowWad { base, exp } => {
-            let base: Integer = base.parse()?;
-            let exp: Integer = exp.parse()?;
-            let base_dec: Rational = Rational::from((base, wad.clone()));
-            let exp_dec: Rational = Rational::from((exp, wad.clone()));
-            let mut base_float = Float::new(512);
-            let mut exp_float = Float::new(512);
-            base_float.assign(base_dec);
-            exp_float.assign(exp_dec);
-            let mut res = base_float.pow(exp_float);
+            let mut base = Float::with_val(512, Float::parse(base)?);
+            base.div_assign(&wad);
+            let mut exp = Float::with_val(512, Float::parse(exp)?);
+            exp.div_assign(&wad);
+            let mut res = base.pow(exp);
             res.mul_assign_round(&wad, Round::Nearest);
             res.round_mut();
             print_i256_hex(res)?;
