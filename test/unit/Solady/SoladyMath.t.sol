@@ -40,7 +40,7 @@ contract TestSoladyMath is Test {
         bytes memory result = vm.ffi(cmds);
         int256 ref = abi.decode(result, (int256));
         int256 test = int256(FixedPointMathLib.expWad(value));
-        assertApproxEqRel(ref, test, 70); // 0.000000000000007%
+        assertApproxEqRel(test, ref, 70); // 0.000000000000007%
     }
 
     /**
@@ -59,7 +59,7 @@ contract TestSoladyMath is Test {
         bytes memory result = vm.ffi(cmds);
         int256 ref = abi.decode(result, (int256));
         int256 test = int256(FixedPointMathLib.lnWad(int256(value)));
-        assertApproxEqRel(ref, test, 3100); // 0.00000000000031%
+        assertApproxEqRel(test, ref, 3100); // 0.00000000000031%
     }
 
     /**
@@ -81,22 +81,19 @@ contract TestSoladyMath is Test {
         bytes memory result = vm.ffi(cmds);
         int256 ref = abi.decode(result, (int256));
         int256 test = int256(FixedPointMathLib.powWad(base, exp));
-        assertApproxEqRel(ref, test, 1_000_000); // 0.0000000001%
+        assertApproxEqRel(test, ref, 1_000_000); // 0.0000000001%
     }
 
     /**
      * @custom:scenario Fuzzing the `divUp` function
-     * @custom:given A left hand side between 0 and 10^38
-     * @custom:and A right hand side between 1 and 10^38
+     * @custom:given A left hand side between 0 and uint256 max
+     * @custom:and A right hand side between 1 and uint256 max
      * @custom:when The `divUp` function is called with the left hand side and right hand side
      * @custom:then The result is equal to the result of the Rust implementation
      * @param lhs the left hand side of the division
      * @param rhs the right hand side of the division
      */
     function testFuzzFFIDivUp(uint256 lhs, uint256 rhs) public {
-        // rust implementation only has 38 digits left of decimal point max
-        lhs = bound(lhs, 0, 10_000_000_000_000_000_000_000_000_000_000_000_000);
-        rhs = bound(rhs, 1, 10_000_000_000_000_000_000_000_000_000_000_000_000);
         vm.assume(rhs != 0);
         string[] memory cmds = new string[](4);
         cmds[0] = "./test_utils/target/release/test_utils";
@@ -106,6 +103,6 @@ contract TestSoladyMath is Test {
         bytes memory result = vm.ffi(cmds);
         uint256 ref = abi.decode(result, (uint256));
         uint256 test = FixedPointMathLib.divUp(lhs, rhs);
-        assertEq(ref, test);
+        assertEq(test, ref);
     }
 }

@@ -62,11 +62,14 @@ The environment provides the following tools:
 
 ### Tests
 
-Compile the test utils by running the following inside the `test_utils` folder (requires Rust):
+Compile the test utils by running the following inside the `test_utils` folder:
 
 ```bash
 cargo build --release
 ```
+
+This requires some dependencies to build (`diffutils`, `gcc` or `clang`, `m4`, `make`). Using the provided nix devShell
+should provide everything.
 
 To run tests, use `forge test -vvv` or `npm run test`.
 

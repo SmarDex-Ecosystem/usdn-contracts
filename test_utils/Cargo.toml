@@ -9,4 +9,4 @@ edition = "2021"
 alloy-primitives = "0.4"
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
-decimal-rs = "0.1"
+rug = "1"
