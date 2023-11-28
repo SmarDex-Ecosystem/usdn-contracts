@@ -175,6 +175,7 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
                 revert ERC20InsufficientBalance(_from, _fromBalance, _value);
             }
             if (_valueShares <= _fromShares) {
+                // Since _valueShares <= _fromShares, we can safely subtract _valueShares from _fromShares
                 unchecked {
                     shares[_from] -= _valueShares;
                 }
@@ -187,11 +188,13 @@ contract Usdn is ERC20, ERC20Burnable, AccessControl, ERC20Permit, IUsdn {
         }
 
         if (_to == address(0)) {
-            // Burn
+            // Burn: Since _valueShares <= _fromShares <= totalShares, we can safely subtract _valueShares from
+            // totalShares
             unchecked {
                 totalShares -= _valueShares;
             }
         } else {
+            // Since shares + _valueShares <= totalShares, we can safely add _valueShares to the user shares
             unchecked {
                 shares[_to] += _valueShares;
             }
