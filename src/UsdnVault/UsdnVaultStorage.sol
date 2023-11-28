@@ -9,12 +9,12 @@ pragma solidity 0.8.20;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 /* -------------------------------------------------------------------------- */
 /*                              Internal imports                              */
 /* -------------------------------------------------------------------------- */
 
-import { TickBitmap } from "src/libraries/TickBitmap.sol";
 import { Position } from "src/interfaces/UsdnVault/IUsdnVault.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
@@ -22,7 +22,7 @@ import { IUsdn } from "src/interfaces/IUsdn.sol";
 contract UsdnVaultStorage {
     // Safe ERC20 and Tick bitmap
     using SafeERC20 for IERC20Metadata;
-    using TickBitmap for mapping(int16 => uint256);
+    using LibBitmap for LibBitmap.Bitmap;
 
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
@@ -91,7 +91,7 @@ contract UsdnVaultStorage {
     mapping(bytes32 => uint256) public positionsInTick;
 
     /// @notice The tick bitmap.
-    mapping(int16 => uint256) public tickBitmap;
+    LibBitmap.Bitmap tickBitmap;
     /// @notice The maximum initialized tick.
     int24 public maxInitializedTick;
 

@@ -9,12 +9,12 @@ pragma solidity 0.8.20;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 /* -------------------------------------------------------------------------- */
 /*                              Internal imports                              */
 /* -------------------------------------------------------------------------- */
 
-import { TickBitmap } from "src/libraries/TickBitmap.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { UsdnVaultStorage } from "./UsdnVaultStorage.sol";
@@ -28,7 +28,7 @@ import { TimestampTooOld } from "src/utils/Errors.sol";
 contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
     // Safe ERC20 and Tick bitmap
     using SafeERC20 for IERC20Metadata;
-    using TickBitmap for mapping(int16 => uint256);
+    using LibBitmap for LibBitmap.Bitmap;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Constructor                                */
@@ -135,40 +135,17 @@ contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
 
     /// @inheritdoc IUsdnVaultCore
     function findMaxInitializedTick(int24 searchStart) public view returns (int24 tick) {
-        tick = searchStart + 1;
-        uint256 i;
-        do {
-            unchecked {
-                ++i;
-            }
-            (int24 next, bool initialized) = tickBitmap.nextInitializedTickWithinOneWord(tick - 1, tickSpacing, true);
-            tick = next;
-            if (!initialized) {
-                // could not find a populated tick within 256 bits, continue looking
-                continue;
-            } else {
-                break;
-            }
-        } while (true);
+        uint256 index = tickBitmap.findLastSet(_tickToBitmapIndex(searchStart));
+        if (index == LibBitmap.NOT_FOUND) {
+            tick = TickMath.minUsableTick(tickSpacing);
+        } else {
+            tick = _bitmapIndexToTick(index);
+        }
     }
 
     /// @inheritdoc IUsdnVaultCore
     function countInitializedTicks() public view returns (uint256 count) {
-        int24 tick = maxInitializedTick + 1;
-        do {
-            (int24 next, bool initialized) = tickBitmap.nextInitializedTickWithinOneWord(tick - 1, tickSpacing, true);
-            tick = next;
-            if (tick <= TickMath.MIN_TICK) {
-                break;
-            }
-            if (!initialized) {
-                // could not find a populated tick within 256 bits, continue looking
-                continue;
-            }
-            unchecked {
-                ++count;
-            }
-        } while (true);
+        count = tickBitmap.popCount(0, type(uint256).max);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -210,5 +187,23 @@ contract UsdnVaultCore is IUsdnVaultCore, UsdnVaultStorage {
     /// @return toMint The amount of USDN to mint.
     function _calcMintUsdp(uint256 amount, uint128 currentPrice) internal view returns (uint256 toMint) {
         toMint = (amount * currentPrice) / 10 ** (assetDecimals + priceFeedDecimals - usdn.decimals());
+    }
+
+    /// @dev Convert a signed tick to an unsigned index into the Bitmap
+    /// @param _tick The tick to convert, a multiple of `tickSpacing`
+    /// @return index_ The index into the Bitmap
+    function _tickToBitmapIndex(int24 _tick) internal view returns (uint256 index_) {
+        int24 _compactTick = _tick / tickSpacing;
+        // shift into positive and cast to uint256
+        index_ = uint256(int256(_compactTick) - int256(type(int24).min));
+    }
+
+    /// @dev Convert a Bitmap index to a signed tick
+    /// @param _index The index into the Bitmap
+    /// @return tick_ The tick corresponding to the index, a multiple of `tickSpacing`
+    function _bitmapIndexToTick(uint256 _index) internal view returns (int24 tick_) {
+        // cast to int256 and shift into negative
+        int24 _compactTick = int24(int256(_index) + int256(type(int24).min));
+        tick_ = _compactTick * tickSpacing;
     }
 }

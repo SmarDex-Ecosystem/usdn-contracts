@@ -9,12 +9,12 @@ pragma solidity 0.8.20;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 /* -------------------------------------------------------------------------- */
 /*                              Internal imports                              */
 /* -------------------------------------------------------------------------- */
 
-import { TickBitmap } from "src/libraries/TickBitmap.sol";
 import { UsdnVaultCore } from "./UsdnVaultCore.sol";
 import { IOracleMiddleware, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 import { IUsdnVaultPerps } from "../interfaces/UsdnVault/IUsdnVaultPerps.sol";
@@ -36,7 +36,7 @@ import {
 contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     // Safe ERC20 and Tick bitmap
     using SafeERC20 for IERC20Metadata;
-    using TickBitmap for mapping(int16 => uint256);
+    using LibBitmap for LibBitmap.Bitmap;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Constructor                                */
@@ -242,20 +242,20 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     /// @return liquidated The number of liquidated positions.
     function _liquidate(uint128 currentPrice, uint256 maxIter) internal returns (uint256 liquidated) {
         int24 currentTick = TickMath.getClosestTickAtPrice(uint256(currentPrice));
-        int24 tick = maxInitializedTick + 1;
+        int24 tick = maxInitializedTick;
         uint256 i;
         do {
             unchecked {
                 ++i;
             }
-            (int24 next, bool initialized) = tickBitmap.nextInitializedTickWithinOneWord(tick - 1, tickSpacing, true);
-            tick = next;
-            if (tick < currentTick) {
+            uint256 index = tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+            if (index == LibBitmap.NOT_FOUND) {
+                // no populated ticks left
                 break;
             }
-            if (!initialized) {
-                // could not find a populated tick within 256 bits, continue looking
-                continue;
+            tick = _bitmapIndexToTick(index);
+            if (tick < currentTick) {
+                break;
             }
             // we have found a non-empty tick that needs to be liquidated
             bytes32 tickHash = _tickHash(tick);
@@ -269,7 +269,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
                 ++tickVersion[tick];
             }
 
-            tickBitmap.flipTick(tick, tickSpacing);
+            tickBitmap.unset(_tickToBitmapIndex(tick));
         } while (i < maxIter);
         if (liquidated > 0) {
             if (tick < currentTick) {
@@ -297,7 +297,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         Position[] storage pos = longPositions[_tickHash(tick)];
         delete pos[index];
         if (positionsInTick[tickHash] == 0) {
-            tickBitmap.flipTick(tick, tickSpacing);
+            tickBitmap.unset(_tickToBitmapIndex(tick));
         }
         totalLongPositions -= 1;
     }
@@ -588,7 +588,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
 
             if (positionsInTick[tickHash] == 0) {
                 // first position in this tick
-                tickBitmap.flipTick(tick, tickSpacing);
+                tickBitmap.unset(_tickToBitmapIndex(tick));
             }
             if (tick > maxInitializedTick) {
                 maxInitializedTick = tick;
