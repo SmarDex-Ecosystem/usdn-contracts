@@ -19,7 +19,6 @@
         pkgs = import nixpkgs {
           inherit system overlays;
         };
-        lib = pkgs.lib;
         toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         stdenv = if pkgs.stdenv.isLinux then pkgs.stdenvAdapters.useMoldLinker pkgs.stdenv else pkgs.stdenv;
       in
@@ -32,13 +31,9 @@
             pkgs.rust-analyzer-unwrapped
             toolchain
           ];
-          packages = with pkgs; [
-            diffutils
-            gnumake
-          ];
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
-          LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.gnum4 ];
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.gnum4 ];
         };
 
 
