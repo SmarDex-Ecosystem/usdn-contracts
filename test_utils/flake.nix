@@ -41,7 +41,7 @@
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
           LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.gnum4 ];
-          RUSTFLAGS = "-C link-arg=-fuse-ld=${pkgs.mold}/bin/mold";
+          RUSTFLAGS = lib.optionals pkgs.stdenv.isLinux "-C link-arg=-fuse-ld=${pkgs.mold}/bin/mold";
         };
 
 
