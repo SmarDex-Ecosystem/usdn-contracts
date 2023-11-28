@@ -356,14 +356,15 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         private
         returns (int24, uint256)
     {
-        Position memory _long = getLongPosition(_tick, _index);
-        _long.isExit = true;
+        Position storage _storedLong = longPositions[_tickHash(_tick)][_index];
+        _storedLong.isExit = true;
+        Position memory _long = _storedLong;
 
         PriceInfo memory _currentPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint40(block.timestamp), ProtocolAction.ClosePosition, _currentOraclePriceData
         );
 
-        return _validateLongExit(_long, _currentPrice, _tick, _index);
+        return _validateLongExit(_long, _currentPrice, _tick, _index, true);
     }
 
     /// @notice Validate a long position that has not benn validated yet.
@@ -383,19 +384,13 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
             _finalOraclePriceData
         );
 
-        /// @dev Update storage
-        _storedLong.startPrice = _finalPrice.price;
-        _storedLong.validated = true;
-        _storedLong.timestamp = uint40(block.timestamp);
-
-        // TODO: gas opti !
-        //       this reassignment probably read the whole position data to copy
-        //       it in memory, but this is not necessary.
-        _long = _storedLong;
-
         if (_long.isExit) {
             _validateLongExit(_long, _finalPrice, _tick, _index, false);
         } else {
+            /// @dev Update storage
+            _storedLong.startPrice = _finalPrice.price;
+            _storedLong.validated = true;
+            _storedLong.timestamp = uint40(block.timestamp);
             _validateLongEntry(_long, _finalPrice, false);
         }
     }
@@ -611,20 +606,6 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     /// @param _currentPrice The price corresponding to the position timestamp.
     /// @param _tick The tick containing the position.
     /// @param _index The position index in the tick.
-    /// @return tick The tick containing the position.
-    /// @return index The position index in the tick.
-    function _validateLongExit(Position memory _long, PriceInfo memory _currentPrice, int24 _tick, uint256 _index)
-        private
-        returns (int24 tick, uint256 index)
-    {
-        return _validateLongExit(_long, _currentPrice, _tick, _index, true);
-    }
-
-    /// @dev Validate a long exit.
-    /// @param _long The long position.
-    /// @param _currentPrice The price corresponding to the position timestamp.
-    /// @param _tick The tick containing the position.
-    /// @param _index The position index in the tick.
     /// @param _firstTime Whether this is the first time the position is treated.
     /// @return tick The tick containing the position.
     /// @return index The position index in the tick.
@@ -665,18 +646,23 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         if (value < 0) {
             value = 0;
         }
-        // FIXME: this is probably wrong
-        uint256 assetToTransfer = uint256(value * available) / totalExpo;
 
-        _removeLongPosition(tick, index, _long.amount, _long.leverage);
+        uint256 assetToTransfer = uint256(value) > uint256(available) ? uint256(available) : uint256(value);
 
-        uint256 balanceBefore = asset.balanceOf(address(this));
         if (assetToTransfer > 0 && !_firstTime) {
+            uint256 balanceBefore = asset.balanceOf(address(this));
             balanceLong -= assetToTransfer;
             asset.safeTransfer(msg.sender, assetToTransfer);
             if (asset.balanceOf(address(this)) != balanceBefore - assetToTransfer) {
                 revert IncompleteTransfer(asset.balanceOf(address(this)), balanceBefore - assetToTransfer);
             }
+
+            // Remove the position from storage
+            _removeLongPosition(tick, index, _long.amount, _long.leverage);
+        }
+
+        if (_firstTime) {
+            longPositions[_tickHash(tick)][index].validated = false;
         }
     }
 }

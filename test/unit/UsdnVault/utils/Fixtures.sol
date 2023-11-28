@@ -53,33 +53,41 @@ contract UsdnVaultFixture is BaseFixture {
     /// @notice Open a long position and validate it with 20 seconds of delay
     /// @param amount The amount of asset to deposit.
     /// @param liquidationPrice The desired liquidation price.
+    /// @param ethPrice The ETH price used for opening and validation.
     /// @return tick The tick containing the position.
     /// @return index The position index in the tick.
-    function openAndValidateLong(uint96 amount, uint128 liquidationPrice)
+    function openAndValidateLong(uint96 amount, uint128 liquidationPrice, uint256 ethPrice)
         internal
-        returns (int24 tick, uint256 index)
+        returns (int24, uint256)
     {
-        // Compute price data
-        bytes memory priceData = abi.encode(uint128(2000 ether));
-        (tick, index) = usdnVault.openLong{ value: 1 }(amount, liquidationPrice, priceData);
+        return openAndValidateLong(amount, liquidationPrice, ethPrice, ethPrice);
+    }
+
+    /// @notice Open a long position and validate it with 20 seconds of delay
+    /// @param amount The amount of asset to deposit.
+    /// @param liquidationPrice The desired liquidation price.
+    /// @param openingEthPrice The ETH price used for opening.
+    /// @param validatedEthPrice The ETH price used for validation.
+    /// @return tick The tick containing the position.
+    /// @return index The position index in the tick.
+    function openAndValidateLong(
+        uint96 amount,
+        uint128 liquidationPrice,
+        uint256 openingEthPrice,
+        uint256 validatedEthPrice
+    ) internal returns (int24 tick, uint256 index) {
+        // Compute prices data
+        bytes memory openingPriceData = abi.encode(uint128(openingEthPrice));
+        bytes memory validatedPriceData = abi.encode(uint128(validatedEthPrice));
+
+        // Open a long position
+        (tick, index) = usdnVault.openLong{ value: 1 }(amount, liquidationPrice, openingPriceData);
 
         // Wait 20 seconds
         vm.warp(block.timestamp + 20 seconds);
 
         // Validate the position
-        usdnVault.validateLong{ value: 1 }(tick, index, priceData);
-    }
-
-    /// @notice Open a long position and validate it with 20 seconds of delay
-    /// @param amount The amount of asset to deposit.
-    /// @param leverage The desired liquidation price.
-    /// @return tick The tick containing the position.
-    /// @return index The position index in the tick.
-    function openAndValidateLongWithLeverage(uint96 amount, uint128 leverage)
-        internal
-        returns (int24 tick, uint256 index)
-    {
-        (tick, index) = openAndValidateLong(amount, amount - amount / leverage);
+        usdnVault.validateLong{ value: 1 }(tick, index, validatedPriceData);
     }
 
     // force ignore from coverage report

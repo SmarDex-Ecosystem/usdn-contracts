@@ -42,26 +42,26 @@ contract UsdnVaultOpenLong is UsdnVaultFixture {
      * @custom:and The last update timestamp is now + oracle min delay
      */
     function test_openLong() external {
-        // Test-specific constants
+        /* ------------------------- Test-specific constants ------------------------ */
         uint256 ethPrice = 2000 ether;
         bytes memory priceData = abi.encode(uint128(ethPrice));
         uint96 collateralAmount = 2 ether;
         uint128 liquidationPrice = uint128(ethPrice) / 2; // x2 leverage
         uint256 leverage = 2;
 
-        // Storage before
+        /* ----------------------------- Storage before ----------------------------- */
         int256 shortBalanceBefore = usdnVault.shortAssetAvailable(uint128(ethPrice))
             + usdnVault.fundingAsset(uint128(ethPrice), uint128(block.timestamp));
         int256 longBalanceBefore = usdnVault.longAssetAvailable(uint128(ethPrice))
             - usdnVault.fundingAsset(uint128(ethPrice), uint128(block.timestamp));
         uint256 totalExpoBefore = usdnVault.totalExpo();
 
-        // Open a long position
+        /* -------------------------- Open a long position -------------------------- */
         (int24 tick, uint256 index) = usdnVault.openLong{ value: 1 }(collateralAmount, liquidationPrice, priceData);
         // Validate the position
         usdnVault.validateLong{ value: 1 }(tick, index, priceData);
 
-        // Check storage after
+        /* --------------------------- Check storage after -------------------------- */
         assertEq(usdnVault.getLiquidationPrice(uint128(ethPrice), uint40(2 gwei)), ethPrice - (ethPrice / 2));
         assertEq(tick, 6910);
         assertEq(index, 0);
@@ -82,7 +82,6 @@ contract UsdnVaultOpenLong is UsdnVaultFixture {
 
         assertEq(usdnVault.totalExpo(), totalExpoBefore + collateralAmount * leverage);
         assertEq(usdnVault.lastPrice(), uint128(ethPrice));
-        // Block.timestamp + oracle delay => see test/unit/UsdnVault/utils/OracleMiddleware.sol
         assertEq(usdnVault.lastUpdateTimestamp(), block.timestamp);
     }
 
@@ -107,7 +106,7 @@ contract UsdnVaultOpenLong is UsdnVaultFixture {
      * @custom:and The last update timestamp is now + oracle min delay
      */
     function test_openLongWithFloatLeverage() external {
-        // Test-specific constants
+        /* ------------------------- Test-specific constants ------------------------ */
         uint256 initialEthPrice = 2000 ether;
         uint256 finalEthPrice = 2050 ether;
         bytes memory initialPriceData = abi.encode(uint128(initialEthPrice));
@@ -116,21 +115,20 @@ contract UsdnVaultOpenLong is UsdnVaultFixture {
         uint128 liquidationPrice = uint128(initialEthPrice) - (uint128(initialEthPrice) / 16 * 10); // x1.6 leverage
         uint256 leverage = 1.6 gwei;
 
-        // Storage before
+        /* ----------------------------- Storage before ----------------------------- */
         int256 shortBalanceBefore = usdnVault.shortAssetAvailable(uint128(initialEthPrice))
             + usdnVault.fundingAsset(uint128(initialEthPrice), uint128(block.timestamp));
         int256 longBalanceBefore = usdnVault.longAssetAvailable(uint128(initialEthPrice))
             - usdnVault.fundingAsset(uint128(initialEthPrice), uint128(block.timestamp));
         uint256 totalExpoBefore = usdnVault.totalExpo();
 
-        // Open a long position
+        /* -------------------------- Open a long position -------------------------- */
         (int24 tick, uint256 index) =
             usdnVault.openLong{ value: 1 }(collateralAmount, liquidationPrice, initialPriceData);
-
         // Validate the position
         usdnVault.validateLong{ value: 1 }(tick, index, finalPriceData);
 
-        // Check storage after
+        /* --------------------------- Check storage after -------------------------- */
         assertEq(
             usdnVault.getLiquidationPrice(uint128(finalEthPrice), uint40(leverage)),
             finalEthPrice - (finalEthPrice / 16 * 10)

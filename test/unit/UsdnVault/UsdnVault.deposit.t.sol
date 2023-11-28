@@ -13,7 +13,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 import "test/utils/Constants.sol";
 
 /**
- * @custom:feature Test the short position opening of the UsdnVault
+ * @custom:feature Test the short position opening (deposit) of the UsdnVault
  * @custom:background Given the UsdnVault is deployed by address(this)
  */
 contract UsdnVaultDeposit is UsdnVaultFixture {
