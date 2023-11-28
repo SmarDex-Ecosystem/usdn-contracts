@@ -21,14 +21,12 @@
         };
         lib = pkgs.lib;
         toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+        stdenv = if pkgs.stdenv.isLinux then pkgs.stdenvAdapters.useMoldLinker pkgs.stdenv else pkgs.stdenv;
       in
       {
-        devShells.default = pkgs.mkShell {
+        devShells.default = pkgs.mkShell.override { inherit stdenv; } {
           nativeBuildInputs = with pkgs; [
-            pkg-config
-            clang
             gnum4
-            (lib.optionals pkgs.stdenv.isLinux pkgs.mold)
           ];
           buildInputs = [
             pkgs.rust-analyzer-unwrapped
@@ -41,7 +39,6 @@
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
           LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.gnum4 ];
-          RUSTFLAGS = lib.optionals pkgs.stdenv.isLinux "-C link-arg=-fuse-ld=${pkgs.mold}/bin/mold";
         };
 
 
