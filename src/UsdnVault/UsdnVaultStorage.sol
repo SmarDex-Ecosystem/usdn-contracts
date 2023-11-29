@@ -53,7 +53,7 @@ contract UsdnVaultStorage {
     /* -------------------------------------------------------------------------- */
 
     /// @notice The USDN ERC20 contract.
-    IUsdn public usdn;
+    IUsdn public immutable usdn;
 
     /// @notice The oracle middleware contract.
     IOracleMiddleware public oracleMiddleware;
