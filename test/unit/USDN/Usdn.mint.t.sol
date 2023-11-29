@@ -109,4 +109,16 @@ contract TestUsdnMint is UsdnTokenFixture {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
         usdn.mint(address(0), 100 ether);
     }
+
+    /**
+     * @custom:scenario Minting tokens that would overflow the total supply of shares
+     * @custom:given The max amount of tokens has already been minted
+     * @custom:when 1 additional wei of token is minted
+     * @custom:then The transaction reverts with the `UsdnTotalBalanceOverflow` error
+     */
+    function test_RevertWhen_mintOverflowTotal() public {
+        usdn.mint(address(this), usdn.maxTokens());
+        vm.expectRevert(UsdnTotalBalanceOverflow.selector);
+        usdn.mint(address(this), 1);
+    }
 }

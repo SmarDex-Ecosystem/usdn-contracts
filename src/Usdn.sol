@@ -165,8 +165,15 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
         uint256 _fromBalance = balanceOf(_from);
 
         if (_from == address(0)) {
-            // Mint: Overflow check required, the rest of the code assumes that totalShares never overflows
-            totalShares += _valueShares;
+            // Mint
+            unchecked {
+                uint256 _res = totalShares + _valueShares;
+                // Overflow check required, the rest of the code assumes that totalShares never overflows
+                if (_res < totalShares) {
+                    revert UsdnTotalBalanceOverflow();
+                }
+                totalShares = _res;
+            }
         } else {
             uint256 _fromShares = shares[_from];
             // Perform the balance check on the amount of tokens, since due to rounding errors, _valueShares can be

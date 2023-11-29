@@ -33,6 +33,9 @@ interface IUsdnErrors {
      * @param value invalid token value
      */
     error UsdnMaxTokensExceeded(uint256 value);
+
+    /// @dev Indicates that the newly minted tokens would make the total supply of shares overflow uint256
+    error UsdnTotalBalanceOverflow();
 }
 
 /**
