@@ -170,7 +170,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
                 uint256 _res = totalShares + _valueShares;
                 // Overflow check required, the rest of the code assumes that totalShares never overflows
                 if (_res < totalShares) {
-                    revert UsdnTotalBalanceOverflow();
+                    revert UsdnTotalSupplyOverflow();
                 }
                 totalShares = _res;
             }

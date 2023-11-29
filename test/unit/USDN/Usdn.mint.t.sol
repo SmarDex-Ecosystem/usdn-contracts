@@ -114,12 +114,12 @@ contract TestUsdnMint is UsdnTokenFixture {
      * @custom:scenario Minting tokens that would overflow the total supply of shares
      * @custom:given The max amount of tokens has already been minted
      * @custom:when max amount of additional tokens are minted
-     * @custom:then The transaction reverts with the `UsdnTotalBalanceOverflow` error
+     * @custom:then The transaction reverts with the `UsdnTotalSupplyOverflow` error
      */
     function test_RevertWhen_mintOverflowTotal() public {
         uint256 max = usdn.maxTokens();
         usdn.mint(address(this), max);
-        vm.expectRevert(UsdnTotalBalanceOverflow.selector);
+        vm.expectRevert(UsdnTotalSupplyOverflow.selector);
         usdn.mint(address(this), max);
     }
 }
