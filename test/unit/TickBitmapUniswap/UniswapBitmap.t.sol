@@ -5,7 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { UniswapBitmapHandler } from "test/unit/TickBitmapUniswap/utils/Handler.sol";
 
-contract TestSoladyBitmap is Test {
+contract TestUniswapBitmap is Test {
     UniswapBitmapHandler bitmap;
 
     function setUp() public {
