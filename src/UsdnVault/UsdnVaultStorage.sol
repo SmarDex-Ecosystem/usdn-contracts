@@ -47,13 +47,12 @@ contract UsdnVaultStorage {
     uint8 public immutable assetDecimals;
     /// @notice The price feed decimals.
     uint8 public immutable priceFeedDecimals;
+    /// @notice The USDN ERC20 contract.
+    IUsdn public immutable usdn;
 
     /* -------------------------------------------------------------------------- */
     /*                                   Storage                                  */
     /* -------------------------------------------------------------------------- */
-
-    /// @notice The USDN ERC20 contract.
-    IUsdn public immutable usdn;
 
     /// @notice The oracle middleware contract.
     IOracleMiddleware public oracleMiddleware;
