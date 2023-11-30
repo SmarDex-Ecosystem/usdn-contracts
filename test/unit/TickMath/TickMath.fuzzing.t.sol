@@ -9,15 +9,21 @@ import { TickMathFixture } from "test/unit/TickMath/utils/Fixtures.sol";
 
 import { TickMath } from "src/libraries/TickMath.sol";
 
-/// Fuzzing tests for conversions between tick and price
+/// @custom:feature Fuzzing tests for conversion functions in `TickMath`
 contract TestTickMathFuzzing is TickMathFixture {
     function setUp() public override {
         super.setUp();
     }
 
     /**
-     * Check that the conversion from tick to price and back to tick doesn't lose precision with
-     * `getClosestTickAtPrice`. When using `getTickAtPrice` the tick is rounded down, so it is at most 1 tick off.
+     * @custom:scenario Converting a tick to a price and back to a tick (fuzzed)
+     * @custom:given A valid tick
+     * @custom:when The price at the tick is retrieved
+     * @custom:and The closest tick for the corresponding price is retrieved
+     * @custom:and The rounded down tick for the corresponding price is retrieved
+     * @custom:then The closest tick is equal to the original tick
+     * @custom:and The rounded down tick is within 1 tick of the original tick
+     * @param tick The tick to convert to a price and back to a tick
      */
     function testFuzz_conversion(int24 tick) public {
         tick = bound_int24(tick, TickMath.MIN_TICK, TickMath.MAX_TICK);
@@ -27,13 +33,17 @@ contract TestTickMathFuzzing is TickMathFixture {
         int24 tick2 = handler.getClosestTickAtPrice(price);
         // The imprecise method should be within 1 tick of the precise method
         int24 tick3 = handler.getTickAtPrice(price);
-        assertEq(tick2, tick);
-        assertApproxEqAbs(tick3, tick, 1);
+        assertEq(tick2, tick, "closest tick vs original tick");
+        assertApproxEqAbs(tick3, tick, 1, "rounded down tick vs original tick");
     }
 
     /**
-     * Conversion from price to tick loses precision due to the discretization. Here we assess that a back-and-forth
-     * conversion doesn't give a result that is more than 1 tick off (i.e. 0.1% of the price).
+     * @custom:scenario Converting a price to a tick and back to a price (fuzzed)
+     * @custom:given A valid price
+     * @custom:when The closest tick for the price is retrieved
+     * @custom:and The price at the corresponding tick is retrieved
+     * @custom:then The price is equal to the original price within 0.1%
+     * @param price The price to convert to a tick and back to a price
      */
     function testFuzz_conversionReverse(uint256 price) public {
         price = bound(price, TickMath.MIN_PRICE, TickMath.MAX_PRICE);

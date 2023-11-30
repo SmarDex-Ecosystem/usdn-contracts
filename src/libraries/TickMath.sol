@@ -8,9 +8,8 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
  * @notice Convert between prices and ticks, where each tick represents an increase in price of 0.1%. Ticks are
  * used instead of liquidation prices to limit the number of possible buckets where a position can land, and allows for
  * batched liquidations.
- * @dev The formula for calculating the price from a tick is: price = 1.001^(tick)
- * @dev The formula for calculating the tick from a price is: tick = log_1.001(price)
- * @author @beeb
+ * @dev The formula for calculating the price from a tick is: price = 1.001^(tick).
+ * The formula for calculating the tick from a price is: tick = log_1.001(price)
  */
 library TickMath {
     /// @dev Indicates that the provided tick spacing is invalid (zero).

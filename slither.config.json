@@ -4,6 +4,6 @@
   "exclude_medium": false,
   "exclude_high": false,
   "disable_color": false,
-  "filter_paths": "(lib/|test/|script/|examples/|Example.*|.*Test.*|.t.sol|.s.sol|.script.sol)",
+  "filter_paths": "(node_modules/|lib/|test/|script/|examples/|Example.*|.*Test.*|.t.sol|.s.sol|.script.sol)",
   "legacy_ast": false
 }

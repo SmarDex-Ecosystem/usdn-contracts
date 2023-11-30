@@ -4,16 +4,18 @@
   "description": "Template repository for creating a new Foundry project quickly and in accordance with the Real Estate Executive standards",
   "repository": "git@github.com:petra-foundation/foundry-template.git",
   "author": "",
-  "license": "MIT",
+  "license": "BUSL-1.1",
   "private": true,
   "scripts": {
     "prepare": "husky install",
-    "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fuzz)\"",
-    "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fuzz)\" --check",
+    "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test FFI",
+    "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test FFI --check",
     "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test FFI",
     "cov": "forge coverage --no-match-test FFI",
-    "cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info",
-    "test": "forge test -vvv"
+    "cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info && open .coverage/index.html",
+    "test": "forge test -vvv",
+    "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\"",
+    "slither": "slither ."
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.0.0",

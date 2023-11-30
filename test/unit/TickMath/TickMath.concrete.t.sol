@@ -1,47 +1,75 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/Test.sol";
-
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { TickMathFixture } from "test/unit/TickMath/utils/Fixtures.sol";
 
 import { TickMath } from "src/libraries/TickMath.sol";
 
-/// Deterministic tests, general conversions
+/// @custom:feature Test helper and conversion functions in `TickMath`
 contract TestTickMathConcrete is TickMathFixture {
     function setUp() public override {
         super.setUp();
     }
 
-    /// Check that the min and max usable tick takes `tickSpacing` into account
+    /**
+     * @custom:scenario Retrieving the min and max usable ticks for positive tick spacing
+     * @custom:given A tick spacing of 10_000
+     * @custom:when The min and max usable ticks are retrieved
+     * @custom:then The min usable tick is -30_000 and the max usable tick is 90_000
+     */
     function test_tickMinMax() public {
         int24 tickSpacing = 10_000;
-        assertEq(handler.minUsableTick(tickSpacing), -30_000);
-        assertEq(handler.maxUsableTick(tickSpacing), 90_000);
-
-        tickSpacing = -60; // should never happen but we're safe here
-        assertEq(handler.minUsableTick(tickSpacing), -34_500);
-        assertEq(handler.maxUsableTick(tickSpacing), 97_980);
+        assertEq(handler.minUsableTick(tickSpacing), -30_000, "minUsableTick");
+        assertEq(handler.maxUsableTick(tickSpacing), 90_000, "maxUsableTick");
     }
 
-    /// Check the conversion from tick to price for some values (fuzzing takes care of the rest).
+    /**
+     * @custom:scenario Retrieving the min and max usable ticks for negative tick spacing
+     * @custom:given A tick spacing of -60
+     * @custom:when The min and max usable ticks are retrieved
+     * @custom:then The min usable tick is -34_500 and the max usable tick is 97_980
+     */
+    function test_tickMinMaxNegative() public {
+        int24 tickSpacing = -60; // should never happen but we're safe here
+        assertEq(handler.minUsableTick(tickSpacing), -34_500, "minUsableTick");
+        assertEq(handler.maxUsableTick(tickSpacing), 97_980, "maxUsableTick");
+    }
+
+    /**
+     * @custom:scenario Converting a tick to a price (some values, rest is fuzzed)
+     * @custom:given A tick of -100, 0 or 100
+     * @custom:when The price at the tick is retrieved
+     * @custom:then The price is 904_882_630_897_776_127, 1.001 ether +- 1 wei, or 1_105_115_697_720_767_949
+     */
     function test_tickToPrice() public {
-        assertEq(handler.getPriceAtTick(-100), 904_882_630_897_776_127); // Wolfram: 904_882_630_897_776_112
-        assertEq(handler.getPriceAtTick(0), 1 ether);
-        assertApproxEqAbs(handler.getPriceAtTick(1), 1.001 ether, 1); // We are one wei off here
-        assertEq(handler.getPriceAtTick(100), 1_105_115_697_720_767_949); // Wolfram: 1_105_115_697_720_767_968
+        // Exact value according to WolframAlpha: 904_882_630_897_776_112
+        assertEq(handler.getPriceAtTick(-100), 904_882_630_897_776_127, "price at tick -100");
+        assertEq(handler.getPriceAtTick(0), 1 ether, "price at tick 0");
+        assertApproxEqAbs(handler.getPriceAtTick(1), 1.001 ether, 1, "price at tick 1"); // We are one wei off here
+        // Exact value according to WolframAlpha: 1_105_115_697_720_767_968
+        assertEq(handler.getPriceAtTick(100), 1_105_115_697_720_767_949, "price at tick 100");
     }
 
-    /// Check the conversion from price to tick for some values (fuzzing takes care of the rest).
+    /**
+     * @custom:scenario Converting a price to a tick (some values, rest is fuzzed)
+     * @custom:given A price of 904_882_630_897_776_112, 1 ether or 1.001 ether
+     * @custom:when The closest tick for the price is retrieved
+     * @custom:then The closest tick is -100, 0 or 1
+     */
     function test_priceToTick() public {
-        assertEq(handler.getClosestTickAtPrice(904_882_630_897_776_112), -100);
-        assertEq(handler.getClosestTickAtPrice(1 ether), 0);
-        assertEq(handler.getClosestTickAtPrice(1.001 ether), 1);
+        assertEq(handler.getClosestTickAtPrice(904_882_630_897_776_112), -100, "at tick -100");
+        assertEq(handler.getClosestTickAtPrice(1 ether), 0, "at tick 0");
+        assertEq(handler.getClosestTickAtPrice(1.001 ether), 1, "at tick 1");
     }
 
-    /// Check that the `getPriceAtTick` function reverts when the tick is out of bounds.
+    /**
+     * @custom:scenario An invalid ticks is provided to `getPriceAtTick`
+     * @custom:given A tick of -34_557 or 98_001
+     * @custom:when The price at the tick is retrieved
+     * @custom:then The call reverts with `TickMathInvalidTick()`
+     */
     function test_RevertWhen_tickIsOutOfBounds() public {
         vm.expectRevert(TickMath.TickMathInvalidTick.selector);
         handler.getPriceAtTick(-34_557);
@@ -49,19 +77,38 @@ contract TestTickMathConcrete is TickMathFixture {
         handler.getPriceAtTick(98_001);
     }
 
-    /// Check that the `getTickAtPrice` and `getClosestTickAtPrice` functions revert when the price is out of bounds.
+    /**
+     * @custom:scenario An invalid price is provided to `getTickAtPrice`
+     * @custom:given A price of MIN_PRICE - 1 or MAX_PRICE + 1
+     * @custom:when The tick for the price is retrieved with `getTickAtPrice`
+     * @custom:then The call reverts with `TickMathInvalidPrice()`
+     */
     function test_RevertWhen_priceIsOutOfBounds() public {
         vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
         handler.getTickAtPrice(999);
         vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
         handler.getTickAtPrice(3_464_120_361_320_951_603_222_457_022_263_209_963_088_421_212_476_539_374_818_920);
+    }
+
+    /**
+     * @custom:scenario An invalid price is provided to `getClosestTickAtPrice`
+     * @custom:given A price of MIN_PRICE - 1 or MAX_PRICE + 1
+     * @custom:when The tick for the price is retrieved with `getClosestTickAtPrice`
+     * @custom:then The call reverts with `TickMathInvalidPrice()`
+     */
+    function test_RevertWhen_priceIsOutOfBoundsClosest() public {
         vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
-        handler.getClosestTickAtPrice(0);
+        handler.getClosestTickAtPrice(999);
         vm.expectRevert(TickMath.TickMathInvalidPrice.selector);
         handler.getClosestTickAtPrice(3_464_120_361_320_951_603_222_457_022_263_209_963_088_421_212_476_539_374_818_920);
     }
 
-    /// Check that the maxUsableTick and minUsableTick functions revert when the tickSpacing is zero.
+    /**
+     * @custom:scenario An invalid tick spacing is provided
+     * @custom:given A tick spacing of 0
+     * @custom:when The min or max usable tick is retrieved
+     * @custom:then The call reverts with `TickMathInvalidTickSpacing()`
+     */
     function test_RevertWhen_tickSpacingIsZero() public {
         vm.expectRevert(TickMath.TickMathInvalidTickSpacing.selector);
         handler.maxUsableTick(0);
