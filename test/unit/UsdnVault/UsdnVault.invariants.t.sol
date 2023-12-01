@@ -18,6 +18,7 @@ contract TestUsdnInvariants is UsdnVaultFixture {
         targetContract(address(usdnVault));
 
         bytes4[] memory selectors = new bytes4[](3);
+        // selectors[0] = usdnVault.yyy.selector;
         selectors[0] = usdnVault.openLongTest.selector;
         selectors[1] = usdnVault.closeLongTest.selector;
         selectors[2] = usdnVault.validateLongTest.selector;
@@ -27,6 +28,7 @@ contract TestUsdnInvariants is UsdnVaultFixture {
 
     /// @custom:scenario Check that the contract returns the expected number of shares for each user
     function invariant_balanceLong() public displayLongBalances {
+        // getLongBalance();
         assertEq(true, true);
     }
 

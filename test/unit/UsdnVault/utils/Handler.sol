@@ -54,6 +54,10 @@ contract UsdnVaultHandler is UsdnVault, Test {
         actors = _actors;
     }
 
+    function yyy() public pure returns (bool) {
+        return true;
+    }
+
     function openLongTest(
         uint96 _deposit,
         uint128 _liquidationPrice,

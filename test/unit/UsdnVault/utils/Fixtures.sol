@@ -12,6 +12,8 @@ import "test/utils/Constants.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { UsdnVault } from "src/UsdnVault/UsdnVault.sol";
 
+import { console2 } from "forge-std/Test.sol";
+
 // TODO: Use the real USDN contract instead of this mock
 contract USDN is ERC20 {
     constructor() ERC20("Ultimate Synthetic Delta Neutral", "USDN") { }
@@ -32,7 +34,9 @@ contract UsdnVaultFixture is BaseFixture {
     OracleMiddleware oracleMiddleware;
     int24 tickSpacing = 10;
 
-    function setUp() public virtual forkEthereum {
+    function setUp() public virtual {
+        copyAssetCode(WSTETH);
+
         // TODO: replace ERC20/USDN/IUsdn by Usdn
         ERC20 _usdn = new USDN();
         usdn = IUsdn(address(_usdn));
@@ -97,6 +101,18 @@ contract UsdnVaultFixture is BaseFixture {
 
         // Validate the position
         usdnVault.validateLong{ value: 1 }(tick, index, validatedPriceData);
+    }
+
+    function copyAssetCode(address _asset) internal {
+        string[] memory cmds = new string[](5);
+        cmds[0] = "cast";
+        cmds[1] = "code";
+        cmds[2] = "--rpc-url";
+        cmds[3] = vm.envString("URL_ETH_MAINNET");
+        cmds[4] = vm.toString(_asset);
+        bytes memory assetBytecode = vm.ffi(cmds);
+
+        vm.etch(_asset, assetBytecode);
     }
 
     // force ignore from coverage report
