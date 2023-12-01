@@ -9,6 +9,8 @@ import { UsdnVault } from "src/UsdnVault/UsdnVault.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 
+import { console2 } from "forge-std/Test.sol";
+
 /**
  * @title UsdnHandler
  * @dev Wrapper to test internal functions and access internal constants, as well as perform invariant testing
@@ -66,6 +68,7 @@ contract UsdnVaultHandler is UsdnVault, Test {
         uint256 actorIndexSeed,
         uint8 time
     ) public {
+        console2.log("openLongTestWithValue", uint256(_deposit));
         UsdnVaultHandler(address(this)).openLongTest{ value: 1 }(
             _deposit, _liquidationPrice, _assetPrice1, _assetPrice2, actorIndexSeed, time
         );

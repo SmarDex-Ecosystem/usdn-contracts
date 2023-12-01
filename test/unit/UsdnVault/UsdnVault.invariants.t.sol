@@ -30,26 +30,20 @@ contract TestUsdnInvariants is UsdnVaultFixture {
 
     /// @custom:scenario Check that the contract returns the expected number of shares for each user
     function invariant_balanceLong() public displayLongBalances {
-        getLongBalance();
-        assertEq(true, true);
+        assertEq(computedLongBalance(), usdnVault.balanceLong());
     }
 
     /* -------------------------------------------------------------------------- */
     /*                              Private functions                             */
     /* -------------------------------------------------------------------------- */
 
-    function getLongBalance() private {
+    function computedLongBalance() private returns (uint256){
         (,,,,, uint256 amount1,,,,,) = usdnVault.positionsTest(USER_1);
         (,,,,, uint256 amount2,,,,,) = usdnVault.positionsTest(USER_2);
         (,,,,, uint256 amount3,,,,,) = usdnVault.positionsTest(USER_3);
         (,,,,, uint256 amount4,,,,,) = usdnVault.positionsTest(USER_4);
 
-        console2.log("USER_1 balance", amount1);
-        console2.log("USER_2 balance", amount2);
-        console2.log("USER_3 balance", amount3);
-        console2.log("USER_4 balance", amount4);
-
-        console2.log("Vault long balance", usdnVault.balanceLong());
+        return amount1 + amount2 + amount3 + amount4;
     }
 
     /* -------------------------------------------------------------------------- */
