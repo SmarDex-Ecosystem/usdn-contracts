@@ -25,7 +25,7 @@ contract UsdnVaultHandler is UsdnVault, Test {
         uint128 amount;
         uint128 startPrice;
         // Additional data for invariant testing
-        uint24 tick;
+        int24 tick;
         uint256 index;
         bool waitingForEntry;
         bool waitingForExit;
@@ -54,9 +54,44 @@ contract UsdnVaultHandler is UsdnVault, Test {
         actors = _actors;
     }
 
-    function yyy() public pure returns (bool) {
-        return true;
+    /* -------------------------------------------------------------------------- */
+    /*                         Function with value on call                        */
+    /* -------------------------------------------------------------------------- */
+
+    function openLongTestWithValue(
+        uint96 _deposit,
+        uint128 _liquidationPrice,
+        bytes calldata _assetPrice1,
+        bytes calldata _assetPrice2,
+        uint256 actorIndexSeed,
+        uint8 time
+    ) public {
+        UsdnVaultHandler(address(this)).openLongTest{ value: 1 }(
+            _deposit, _liquidationPrice, _assetPrice1, _assetPrice2, actorIndexSeed, time
+        );
     }
+
+    function closeLongTestWithValue(
+        bytes calldata _assetPrice1,
+        bytes calldata _assetPrice2,
+        uint256 actorIndexSeed,
+        uint8 time
+    ) public {
+        UsdnVaultHandler(address(this)).closeLongTest{ value: 1 }(_assetPrice1, _assetPrice2, actorIndexSeed, time);
+    }
+
+    function validateLongTestWithValue(
+        bytes calldata _assetPrice1,
+        bytes calldata _assetPrice2,
+        uint256 actorIndexSeed,
+        uint8 time
+    ) public {
+        UsdnVaultHandler(address(this)).validateLongTest{ value: 1 }(_assetPrice1, _assetPrice2, actorIndexSeed, time);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                  Functions                                 */
+    /* -------------------------------------------------------------------------- */
 
     function openLongTest(
         uint96 _deposit,
@@ -79,30 +114,25 @@ contract UsdnVaultHandler is UsdnVault, Test {
         lastActionIndex = index_;
     }
 
-    function closeLongTest(
-        int24 _tick,
-        uint256 _index,
-        bytes calldata _assetPrice1,
-        bytes calldata _assetPrice2,
-        uint256 actorIndexSeed,
-        uint8 time
-    ) public payable useActor(actorIndexSeed) advanceTime(time) returns (int24 tick_, uint256 index_) {
+    function closeLongTest(bytes calldata _assetPrice1, bytes calldata _assetPrice2, uint256 actorIndexSeed, uint8 time)
+        public
+        payable
+        useActor(actorIndexSeed)
+        advanceTime(time)
+    {
         // Validate last pending position if exists
         if (lastActionTick != 0 && lastActionIndex != 0) {
             _validateLong(lastActionTick, lastActionIndex, _assetPrice2);
         }
 
         // Close a long position
-        _closeLong(_tick, _index, _assetPrice1);
-
-        // Save last pending position for future validation
-        lastActionTick = tick_;
-        lastActionIndex = index_;
+        HandlerPosition memory position = positionsTest[currentActor];
+        if (position.validated == true) {
+            _closeLong(position.tick, position.index, _assetPrice1);
+        }
     }
 
     function validateLongTest(
-        int24 _tick,
-        uint256 _index,
         bytes calldata _assetPrice1,
         bytes calldata _assetPrice2,
         uint256 actorIndexSeed,
@@ -114,11 +144,10 @@ contract UsdnVaultHandler is UsdnVault, Test {
         }
 
         // Validate a long position
-        _validateLong(_tick, _index, _assetPrice1);
-
-        // Clear last pending position
-        lastActionTick = 0;
-        lastActionIndex = 0;
+        HandlerPosition memory position = positionsTest[currentActor];
+        if (position.validated == true) {
+            _closeLong(position.tick, position.index, _assetPrice1);
+        }
     }
 
     /* -------------------------------------------------------------------------- */

@@ -15,20 +15,22 @@ contract TestUsdnInvariants is UsdnVaultFixture {
     function setUp() public override {
         super.setUp();
 
+        vm.deal(address(usdnVault), type(uint256).max);
+        vm.deal(address(this), type(uint256).max);
+
         targetContract(address(usdnVault));
 
         bytes4[] memory selectors = new bytes4[](3);
-        // selectors[0] = usdnVault.yyy.selector;
-        selectors[0] = usdnVault.openLongTest.selector;
-        selectors[1] = usdnVault.closeLongTest.selector;
-        selectors[2] = usdnVault.validateLongTest.selector;
+        selectors[0] = usdnVault.openLongTestWithValue.selector;
+        selectors[1] = usdnVault.closeLongTestWithValue.selector;
+        selectors[2] = usdnVault.validateLongTestWithValue.selector;
 
         targetSelector(FuzzSelector({ addr: address(usdnVault), selectors: selectors }));
     }
 
     /// @custom:scenario Check that the contract returns the expected number of shares for each user
     function invariant_balanceLong() public displayLongBalances {
-        // getLongBalance();
+        getLongBalance();
         assertEq(true, true);
     }
 
