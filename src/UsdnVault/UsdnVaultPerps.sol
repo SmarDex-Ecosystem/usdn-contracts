@@ -312,7 +312,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     /// @param _amount The amount of asset to deposit.
     /// @param _liquidationPrice The desired liquidation price.
     function _openLong(uint96 _amount, uint128 _liquidationPrice, bytes calldata _currentOraclePriceData)
-        private
+        internal
         returns (int24, uint256)
     {
         if (_amount == 0) revert ZeroAmount();
@@ -351,9 +351,9 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
     /// @notice Commit a long exit.
     /// @param _tick The tick containing the position.
     /// @param _index The position index in the tick.
-    /// @param _currentOraclePriceData The oracle data to retrive the current price.
+    /// @param _currentOraclePriceData The oracle data to retrieve the current price.
     function _closeLong(int24 _tick, uint256 _index, bytes calldata _currentOraclePriceData)
-        private
+        internal
         returns (int24, uint256)
     {
         Position storage _storedLong = longPositions[_tickHash(_tick)][_index];
@@ -367,11 +367,11 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         return _validateLongExit(_long, _currentPrice, _tick, _index, true);
     }
 
-    /// @notice Validate a long position that has not benn validated yet.
+    /// @notice Validate a long position that has not been validated yet.
     /// @param _tick The tick containing the position.
     /// @param _index The position index in the tick.
-    /// @param _finalOraclePriceData The oracle data to retrive the final validated price.
-    function _validateLong(int24 _tick, uint256 _index, bytes calldata _finalOraclePriceData) private {
+    /// @param _finalOraclePriceData The oracle data to retrieve the final validated price.
+    function _validateLong(int24 _tick, uint256 _index, bytes calldata _finalOraclePriceData) internal {
         Position storage _storedLong = longPositions[_tickHash(_tick)][_index];
         Position memory _long = _storedLong;
 
@@ -397,7 +397,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
 
     /// @notice Commit a short entry.
     /// @param amount The amount of asset to deposit.
-    /// @param _currentOraclePriceData The oracle data to retrive the current price.
+    /// @param _currentOraclePriceData The oracle data to retrieve the current price.
     function _deposit(uint128 amount, bytes calldata _currentOraclePriceData) private {
         if (amount == 0) revert ZeroAmount();
 
@@ -430,7 +430,7 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
 
     /// @notice Commit a short exit.
     /// @param amount The amount of USDN to burn.
-    /// @param _currentOraclePriceData The oracle data to retrive the current price.
+    /// @param _currentOraclePriceData The oracle data to retrieve the current price.
     function _withdraw(uint128 amount, bytes calldata _currentOraclePriceData) private {
         if (amount == 0) revert ZeroAmount();
 
@@ -455,8 +455,8 @@ contract UsdnVaultPerps is IUsdnVaultPerps, UsdnVaultCore {
         _validateShortExit(_short, _currentPrice);
     }
 
-    /// @notice Validate a short position that has not benn validated yet.
-    /// @param _finalOraclePriceData The oracle data to retrive the final validated price.
+    /// @notice Validate a short position that has not been validated yet.
+    /// @param _finalOraclePriceData The oracle data to retrieve the final validated price.
     function _validateShort(bytes calldata _finalOraclePriceData) private {
         Position memory _short = pendingShortPositions[msg.sender];
 

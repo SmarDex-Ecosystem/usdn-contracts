@@ -33,7 +33,6 @@ runs = 10_000
 [profile.local.invariant]
 runs = 10_000
 depth = 15
-call_override = true
 dictionary_weight = 80
 
 # ---------------------------------------------------------------------------- #
@@ -51,7 +50,6 @@ runs = 1_000_000
 [profile.heavy_fuzzing.invariant]
 runs = 1_000_000
 depth = 30
-call_override = true
 dictionary_weight = 80
 
 # ---------------------------------------------------------------------------- #
@@ -69,7 +67,6 @@ runs = 256
 [profile.ci.invariant]
 runs = 256
 depth = 5
-call_override = false
 dictionary_weight = 40
 
 # ---------------------------------------------------------------------------- #
