@@ -66,6 +66,19 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function mint(address to, uint256 amount) external;
 
     /**
+     * @notice Destroy a `value` amount of tokens from the caller, reducing the total supply.
+     * @param value amount of tokens to burn, is internally converted to the proper shares amounts
+     */
+    function burn(uint256 value) external;
+
+    /**
+     * @notice Destroy a `value` amount of tokens from `account`, deducting from the caller's allowance.
+     * @param account account to burn tokens from
+     * @param value amount of tokens to burn, is internally converted to the proper shares amounts
+     */
+    function burnFrom(address account, uint256 value) external;
+
+    /**
      * @notice Convert a number of tokens to the corresponding amount of shares.
      * @dev The conversion reverts with `UsdnMaxTokensExceeded` if the corresponding amount of shares would overflow.
      * @param _amountTokens the amount of tokens to convert to shares
