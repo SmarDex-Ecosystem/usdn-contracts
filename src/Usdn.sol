@@ -85,6 +85,20 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /* -------------------------------------------------------------------------- */
+    /*                            ERC-20 base functions                           */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IUsdn
+    function burn(uint256 _amount) public override(ERC20Burnable, IUsdn) {
+        super.burn(_amount);
+    }
+
+    /// @inheritdoc IUsdn
+    function burnFrom(address _account, uint256 _amount) public override(ERC20Burnable, IUsdn) {
+        super.burnFrom(_account, _amount);
+    }
+
+    /* -------------------------------------------------------------------------- */
     /*                           Special token functions                          */
     /* -------------------------------------------------------------------------- */
 
