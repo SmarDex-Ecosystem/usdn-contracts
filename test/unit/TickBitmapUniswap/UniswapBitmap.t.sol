@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { UniswapBitmapHandler } from "test/unit/TickBitmapUniswap/utils/Handler.sol";
 
+/// @dev Test some functions of the library to check gas consumption
 contract TestUniswapBitmap is Test {
     UniswapBitmapHandler bitmap;
 
@@ -12,6 +13,7 @@ contract TestUniswapBitmap is Test {
         bitmap = new UniswapBitmapHandler();
     }
 
+    /// @dev Test set and unset functions
     function test_setUnset() public {
         for (int24 i; i < 100; ++i) {
             bitmap.set(i * 10);
@@ -21,6 +23,7 @@ contract TestUniswapBitmap is Test {
         }
     }
 
+    /// @dev Test find function
     function test_find() public {
         bitmap.set(0);
         bitmap.set(10);

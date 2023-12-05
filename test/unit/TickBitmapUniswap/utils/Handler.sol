@@ -5,6 +5,7 @@ import { console2 } from "forge-std/Test.sol";
 
 import { TickBitmap } from "test/unit/TickBitmapUniswap/libraries/TickBitmap.sol";
 
+/// @dev Handler for gas usage checks
 contract UniswapBitmapHandler {
     using TickBitmap for mapping(int16 => uint256);
 

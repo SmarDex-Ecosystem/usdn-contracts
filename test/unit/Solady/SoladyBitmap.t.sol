@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { BitmapHandler } from "test/unit/Solady/utils/Handler.sol";
 
+/// @dev test some functions of the library to check gas consumption
 contract TestSoladyBitmap is Test {
     BitmapHandler bitmap;
 
@@ -12,6 +13,7 @@ contract TestSoladyBitmap is Test {
         bitmap = new BitmapHandler();
     }
 
+    /// @dev Test set and unset functions
     function test_setUnset() public {
         for (int24 i; i < 100; ++i) {
             bitmap.set(i * 10);
@@ -21,6 +23,7 @@ contract TestSoladyBitmap is Test {
         }
     }
 
+    /// @dev test find function
     function test_find() public {
         bitmap.set(0);
         bitmap.set(10);

@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
+/// @dev Handler for gas usage checks
 contract BitmapHandler {
     using LibBitmap for LibBitmap.Bitmap;
 
