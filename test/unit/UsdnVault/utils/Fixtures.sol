@@ -3,7 +3,9 @@ pragma solidity 0.8.20;
 
 import { ERC20, IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
+import { UsdnVaultHandler } from "test/unit/UsdnVault/utils/Handler.sol";
 import { OracleMiddleware } from "test/unit/UsdnVault/utils/OracleMiddleware.sol";
 import "test/utils/Constants.sol";
 
@@ -29,7 +31,7 @@ contract WstETH is ERC20 {
 contract UsdnVaultFixture is BaseFixture {
     IUsdn usdn;
     IERC20Metadata asset;
-    UsdnVault usdnVault;
+    UsdnVaultHandler usdnVault;
     OracleMiddleware oracleMiddleware;
     int24 tickSpacing = 10;
 
@@ -45,7 +47,14 @@ contract UsdnVaultFixture is BaseFixture {
 
         // Deploy the UsdnVault
         asset = IERC20Metadata(address(_wstETH));
-        usdnVault = new UsdnVault(usdn, asset, oracleMiddleware, tickSpacing);
+
+        address[] memory _actors = new address[](4);
+        _actors[0] = USER_1;
+        _actors[1] = USER_2;
+        _actors[2] = USER_3;
+        _actors[3] = USER_4;
+
+        usdnVault = new UsdnVaultHandler(usdn, asset, oracleMiddleware, tickSpacing, _actors);
     }
 
     function initialize() internal {
@@ -97,5 +106,5 @@ contract UsdnVaultFixture is BaseFixture {
 
     // force ignore from coverage report
     // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public override { }
+    function test() public virtual override { }
 }
