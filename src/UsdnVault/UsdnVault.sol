@@ -5,20 +5,20 @@ pragma solidity 0.8.20;
 /*                             External libraries                             */
 /* -------------------------------------------------------------------------- */
 
-/* ------------------------------ Open Zeppelin ----------------------------- */
+/* --------------------------- External libraries --------------------------- */
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { ERC20, ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 /* -------------------------------------------------------------------------- */
 /*                              Internal imports                              */
 /* -------------------------------------------------------------------------- */
 
 import { TickMath } from "src/libraries/TickMath.sol";
-import { TickBitmap } from "src/libraries/TickBitmap.sol";
 import { IUsdnVault, Position } from "src/interfaces/UsdnVault/IUsdnVault.sol";
 import { UsdnVaultPerps } from "./UsdnVaultPerps.sol";
 import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
@@ -36,7 +36,7 @@ import {
 contract UsdnVault is IUsdnVault, UsdnVaultPerps, Ownable, Initializable {
     // Safe ERC20 and Tick bitmap
     using SafeERC20 for IERC20Metadata;
-    using TickBitmap for mapping(int16 => uint256);
+    using LibBitmap for LibBitmap.Bitmap;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Constructor                                */
@@ -92,7 +92,7 @@ contract UsdnVault is IUsdnVault, UsdnVaultPerps, Ownable, Initializable {
             ++positionsInTick[tickHash];
 
             totalLongPositions += 1;
-            tickBitmap.flipTick(tick, tickSpacing);
+            tickBitmap.set(_tickToBitmapIndex(tick));
             maxInitializedTick = tick;
 
             usdn.mint(address(0xdead), usdnToMint);

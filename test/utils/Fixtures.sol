@@ -19,6 +19,7 @@ contract BaseFixture is Test {
         _;
     }
 
+    // Requires networking, only use if really needed
     modifier forkEthereum() {
         enableEthereumFork();
         _;

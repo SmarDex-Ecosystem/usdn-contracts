@@ -37,7 +37,7 @@ contract TestUsdnInvariants is UsdnVaultFixture {
     /*                              Private functions                             */
     /* -------------------------------------------------------------------------- */
 
-    function computedLongBalance() private returns (uint256){
+    function computedLongBalance() private returns (uint256) {
         (,,,,, uint256 amount1,,,,,) = usdnVault.positionsTest(USER_1);
         (,,,,, uint256 amount2,,,,,) = usdnVault.positionsTest(USER_2);
         (,,,,, uint256 amount3,,,,,) = usdnVault.positionsTest(USER_3);

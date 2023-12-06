@@ -3,12 +3,6 @@ pragma solidity ^0.8.20;
 
 import { BitMath } from "./BitMath.sol";
 
-/**
- * @title BitMath
- * @author Uniswap
- * @notice Library pulled from the Uniswap v4 repository https://github.com/Uniswap/v4-core
- */
-
 /// @title Packed tick initialized state library
 /// @notice Stores a packed mapping of tick index to its initialized state
 /// @dev The mapping uses int16 for keys since ticks are represented as int24 and there are 256 (2^8) values per word.

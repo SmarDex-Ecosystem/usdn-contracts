@@ -23,6 +23,10 @@ contract USDN is ERC20 {
     }
 }
 
+contract WstETH is ERC20 {
+    constructor() ERC20("Wrapped liquid staked Ether 2.0", "wstETH") { }
+}
+
 /**
  * @title UsdnVaultFixture
  * @dev Utils for testing UsdnVault
@@ -35,17 +39,17 @@ contract UsdnVaultFixture is BaseFixture {
     int24 tickSpacing = 10;
 
     function setUp() public virtual {
-        copyAssetCode(WSTETH);
-
-        // TODO: replace ERC20/USDN/IUsdn by Usdn
+        // TODO: Deploy the real USDN token once the source code is available
         ERC20 _usdn = new USDN();
         usdn = IUsdn(address(_usdn));
+
+        WstETH _wstETH = new WstETH();
 
         // Deploy a mocked oracle middleware
         oracleMiddleware = new OracleMiddleware();
 
         // Deploy the UsdnVault
-        asset = IERC20Metadata(WSTETH);
+        asset = IERC20Metadata(address(_wstETH));
 
         address[] memory _actors = new address[](4);
         _actors[0] = USER_1;
@@ -58,7 +62,7 @@ contract UsdnVaultFixture is BaseFixture {
 
     function initialize() internal {
         // Initialize UsdnVault
-        deal(WSTETH, address(this), 10_000 ether);
+        deal(address(asset), address(this), 10_000 ether);
         asset.approve(address(usdnVault), type(uint256).max);
         usdnVault.initialize(10 ether, 8 ether, 2000 ether);
     }
@@ -101,18 +105,6 @@ contract UsdnVaultFixture is BaseFixture {
 
         // Validate the position
         usdnVault.validateLong{ value: 1 }(tick, index, validatedPriceData);
-    }
-
-    function copyAssetCode(address _asset) internal {
-        string[] memory cmds = new string[](5);
-        cmds[0] = "cast";
-        cmds[1] = "code";
-        cmds[2] = "--rpc-url";
-        cmds[3] = vm.envString("URL_ETH_MAINNET");
-        cmds[4] = vm.toString(_asset);
-        bytes memory assetBytecode = vm.ffi(cmds);
-
-        vm.etch(_asset, assetBytecode);
     }
 
     // force ignore from coverage report

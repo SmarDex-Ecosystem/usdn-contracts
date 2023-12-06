@@ -80,8 +80,4 @@ interface IUsdnVaultCore {
     /// @param searchStart The tick to start searching from.
     /// @return tick The max initialized tick.
     function findMaxInitializedTick(int24 searchStart) external view returns (int24 tick);
-
-    /// @notice Get the number of initialized ticks.
-    /// @return count The number of initialized ticks.
-    function countInitializedTicks() external view returns (uint256 count);
 }

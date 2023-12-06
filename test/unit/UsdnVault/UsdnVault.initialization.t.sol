@@ -34,7 +34,7 @@ contract UsdnVaultConcrete is UsdnVaultFixture {
      */
     function test_deployment() public {
         assertEq(address(usdnVault.usdn()), address(usdn));
-        assertEq(address(usdnVault.asset()), WSTETH);
+        assertEq(address(usdnVault.asset()), address(asset));
         assertEq(usdnVault.assetDecimals(), usdn.decimals());
         assertEq(address(usdnVault.oracleMiddleware()), address(oracleMiddleware));
         assertEq(usdnVault.priceFeedDecimals(), oracleMiddleware.decimals());
