@@ -10,13 +10,16 @@ import "test/utils/Constants.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { UsdnVault } from "src/UsdnVault/UsdnVault.sol";
 
-// TODO: Use the real USDN contract instead of this mock
 contract USDN is ERC20 {
     constructor() ERC20("Ultimate Synthetic Delta Neutral", "USDN") { }
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
     }
+}
+
+contract WstETH is ERC20 {
+    constructor() ERC20("Wrapped liquid staked Ether 2.0", "wstETH") { }
 }
 
 /**
@@ -30,22 +33,24 @@ contract UsdnVaultFixture is BaseFixture {
     OracleMiddleware oracleMiddleware;
     int24 tickSpacing = 10;
 
-    function setUp() public virtual forkEthereum {
-        // TODO: replace ERC20/USDN/IUsdn by Usdn
+    function setUp() public virtual {
+        // TODO: Deploy the real USDN token once the source code is available
         ERC20 _usdn = new USDN();
         usdn = IUsdn(address(_usdn));
+
+        WstETH _wstETH = new WstETH();
 
         // Deploy a mocked oracle middleware
         oracleMiddleware = new OracleMiddleware();
 
         // Deploy the UsdnVault
-        asset = IERC20Metadata(WSTETH);
+        asset = IERC20Metadata(address(_wstETH));
         usdnVault = new UsdnVault(usdn, asset, oracleMiddleware, tickSpacing);
     }
 
     function initialize() internal {
         // Initialize UsdnVault
-        deal(WSTETH, address(this), 10_000 ether);
+        deal(address(asset), address(this), 10_000 ether);
         asset.approve(address(usdnVault), type(uint256).max);
         usdnVault.initialize(10 ether, 8 ether, 2000 ether);
     }

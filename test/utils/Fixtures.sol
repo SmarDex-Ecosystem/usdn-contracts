@@ -13,6 +13,7 @@ contract BaseFixture is Test {
     // Forks
     uint256 ethereumFork;
 
+    // Requires FFI and networking, only use if really needed
     modifier forkEthereum() {
         vm.selectFork(ethereumFork);
         assertEq(vm.activeFork(), ethereumFork);
