@@ -12,6 +12,9 @@ import "test/utils/Constants.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { UsdnVault } from "src/UsdnVault/UsdnVault.sol";
 
+import { console2 } from "forge-std/Test.sol";
+
+// TODO: Use the real USDN contract instead of this mock
 contract USDN is ERC20 {
     constructor() ERC20("Ultimate Synthetic Delta Neutral", "USDN") { }
 

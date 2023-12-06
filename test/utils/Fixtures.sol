@@ -13,10 +13,15 @@ contract BaseFixture is Test {
     // Forks
     uint256 ethereumFork;
 
-    // Requires FFI and networking, only use if really needed
+    modifier disableFork() {
+        vm.selectFork(0);
+        assertEq(vm.activeFork(), 0);
+        _;
+    }
+
+    // Requires networking, only use if really needed
     modifier forkEthereum() {
-        vm.selectFork(ethereumFork);
-        assertEq(vm.activeFork(), ethereumFork);
+        enableEthereumFork();
         _;
     }
 
@@ -79,6 +84,11 @@ contract BaseFixture is Test {
         vm.label(BASE_USDBC, "USDbC");
         vm.label(BASE_WETH, "WETH");
         vm.label(BASE_SDEX, "SDEX");
+    }
+
+    function enableEthereumFork() internal {
+        vm.selectFork(ethereumFork);
+        assertEq(vm.activeFork(), ethereumFork);
     }
 
     // force ignore from coverage report
