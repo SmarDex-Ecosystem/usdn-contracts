@@ -54,6 +54,7 @@ abstract contract UsdnProtocolStorage {
 
     /**
      * @notice Constructor.
+     * @param _usdn The USDN ERC20 contract.
      * @param _asset The asset ERC20 contract (wstETH).
      * @param _oracleMiddleware The oracle middleware contract.
      * @param _tickSpacing The positions tick spacing.
