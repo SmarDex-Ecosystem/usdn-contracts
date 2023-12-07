@@ -51,16 +51,22 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
             _deposit.timestamp, ProtocolAction.ValidateDeposit, _depositPriceData
         );
 
-        delete pendingVaultActions[msg.sender]; // remove the pending action
-        pendingActionsHead++; // mark the action as validated
+        _validateDeposit(msg.sender, _deposit.amount, _depositPrice.price, _depositPrice.timestamp);
+    }
+
+    function _validateDeposit(address _user, uint128 _amount, uint128 _depositPrice, uint128 _depositTimestamp)
+        internal
+    {
+        delete pendingVaultActions[_user]; // remove the pending action
+        // TODO: remove from pendingActions, how???
 
         // adjust balances
-        _applyPnlAndFunding(_depositPrice.price, _depositPrice.timestamp);
+        _applyPnlAndFunding(_depositPrice, _depositTimestamp);
 
-        uint256 _usdnToMint = _calcMintUsdn(_deposit.amount, _depositPrice.price);
+        uint256 _usdnToMint = _calcMintUsdn(_amount, _depositPrice);
         usdn.mint(msg.sender, _usdnToMint);
 
-        balanceVault += _deposit.amount;
+        balanceVault += _amount;
     }
 
     /**

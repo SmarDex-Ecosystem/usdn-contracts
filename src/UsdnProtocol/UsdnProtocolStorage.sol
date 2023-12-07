@@ -52,8 +52,8 @@ abstract contract UsdnProtocolStorage {
     /// @notice The pending deposit/withdraw actions (1 pending per address max).
     mapping(address => Position) public pendingVaultActions;
 
+    // FIXME: this is not suitable...
     PendingAction[] public pendingActions;
-    uint256 public pendingActionsHead;
 
     /**
      * @notice Constructor.

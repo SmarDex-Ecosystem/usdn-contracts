@@ -68,7 +68,10 @@ struct PendingAction {
 /*                                   Events                                   */
 /* -------------------------------------------------------------------------- */
 
-interface IUsdnProtocolEvents { }
+interface IUsdnProtocolEvents {
+    event InitiatedDeposit(address indexed user, uint256 amount);
+    event ValidatedDeposit(address indexed user, uint256 amount, uint256 usdnToMint);
+}
 
 /* -------------------------------------------------------------------------- */
 /*                                   Errors                                   */
