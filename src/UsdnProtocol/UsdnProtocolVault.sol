@@ -32,7 +32,7 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
 
         pendingActions.push(_pendingAction);
 
-        _transferFromAndCheckBalance(msg.sender, _amount);
+        _retrieveAssetsAndCheckBalance(msg.sender, _amount);
     }
 
     function validateDeposit(bytes calldata _depositPriceData, bytes calldata _previousActionPriceData)

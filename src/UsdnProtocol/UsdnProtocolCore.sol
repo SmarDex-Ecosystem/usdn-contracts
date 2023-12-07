@@ -10,7 +10,7 @@ import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocol.s
 abstract contract UsdnProtocolCore is IUsdnProtocolErrors, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
 
-    function _transferFromAndCheckBalance(address _from, uint256 _amount) internal {
+    function _retrieveAssetsAndCheckBalance(address _from, uint256 _amount) internal {
         uint256 _balanceBefore = asset.balanceOf(address(this));
         asset.safeTransferFrom(_from, address(this), _amount);
         if (asset.balanceOf(address(this)) != _balanceBefore + _amount) {
