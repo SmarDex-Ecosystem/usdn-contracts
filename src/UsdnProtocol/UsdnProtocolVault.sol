@@ -6,33 +6,31 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { Position, ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocolCore } from "src/UsdnProtocol/UsdnProtocolCore.sol";
 import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { DoubleEndedQueue } from "src/libraries/Deque.sol";
 
 abstract contract UsdnProtocolVault is UsdnProtocolCore {
+    using DoubleEndedQueue for DoubleEndedQueue.Deque;
+
     function initiateDeposit(uint128 _amount, bytes calldata _previousActionPriceData) external payable {
         if (_amount == 0) revert UsdnProtocolZeroAmount();
-        if (pendingVaultActions[msg.sender].amount > 0) revert UsdnProtocolPendingAction();
+        if (pendingVaultActions[msg.sender] > 0) revert UsdnProtocolPendingAction();
 
         // TODO: validate previous action if needed, using the provided price update
         _previousActionPriceData;
 
         uint40 _timestamp = uint40(block.timestamp);
 
-        Position memory _tempDeposit = Position({
+        PendingAction memory _pendingAction = PendingAction({
+            action: ProtocolAction.InitiateDeposit,
+            timestamp: _timestamp,
             user: msg.sender,
+            tick: 0,
             amount: _amount,
-            startPrice: 0,
-            leverage: 0,
-            validated: false,
-            isExit: false,
-            timestamp: _timestamp
+            index: 0
         });
 
-        pendingVaultActions[msg.sender] = _tempDeposit;
-
-        PendingAction memory _pendingAction =
-            PendingAction({ action: ProtocolAction.InitiateDeposit, user: msg.sender, timestamp: _timestamp });
-
-        pendingActions.push(_pendingAction);
+        uint128 _rawIndex = pendingActionsQueue.pushBack(_pendingAction);
+        pendingVaultActions[msg.sender] = uint256(_rawIndex) + 1; // shift by one so that zero means no pending action
 
         _retrieveAssetsAndCheckBalance(msg.sender, _amount);
     }
@@ -41,8 +39,11 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         external
         payable
     {
-        Position memory _deposit = pendingVaultActions[msg.sender];
-        if (_deposit.amount == 0) revert UsdnProtocolNoPendingAction();
+        uint256 _pendingActionIndex = pendingVaultActions[msg.sender];
+        if (_pendingActionIndex == 0) revert UsdnProtocolNoPendingAction();
+
+        uint128 _rawIndex = uint128(_pendingActionIndex - 1);
+        PendingAction memory _deposit = pendingActionsQueue.atRaw(_rawIndex);
 
         // TODO: validate previous action if needed, using the provided price update
         _previousActionPriceData;
@@ -51,14 +52,18 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
             _deposit.timestamp, ProtocolAction.ValidateDeposit, _depositPriceData
         );
 
-        _validateDeposit(msg.sender, _deposit.amount, _depositPrice.price, _depositPrice.timestamp);
+        _validateDeposit(msg.sender, _deposit.amount, _depositPrice.price, _depositPrice.timestamp, _rawIndex);
     }
 
-    function _validateDeposit(address _user, uint128 _amount, uint128 _depositPrice, uint128 _depositTimestamp)
-        internal
-    {
-        delete pendingVaultActions[_user]; // remove the pending action
-        // TODO: remove from pendingActions, how???
+    function _validateDeposit(
+        address _user,
+        uint128 _amount,
+        uint128 _depositPrice,
+        uint128 _depositTimestamp,
+        uint128 _queueIndex
+    ) internal {
+        pendingActionsQueue.clearAt(_queueIndex);
+        delete pendingVaultActions[_user]; // remove the pending action ref
 
         // adjust balances
         _applyPnlAndFunding(_depositPrice, _depositTimestamp);

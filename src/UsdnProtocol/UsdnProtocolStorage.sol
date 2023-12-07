@@ -6,6 +6,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { DoubleEndedQueue } from "src/libraries/Deque.sol";
 
 abstract contract UsdnProtocolStorage {
     /* ------------------------------- Immutables ------------------------------- */
@@ -49,11 +50,15 @@ abstract contract UsdnProtocolStorage {
     /// @notice The last timestamp of balances update.
     uint128 public lastUpdateTimestamp;
 
-    /// @notice The pending deposit/withdraw actions (1 pending per address max).
-    mapping(address => Position) public pendingVaultActions;
+    /**
+     * @notice The pending deposit/withdraw actions by user (1 per user max).
+     * @dev The value stored is an index into the `pendingActionsQueue` deque (shifted by one). The value 0 means no
+     * pending action. Since the deque uses uint128 indices, the highest index will still fit here when adding one.
+     */
+    mapping(address => uint256) public pendingVaultActions;
 
-    // FIXME: this is not suitable...
-    PendingAction[] public pendingActions;
+    /// @notice The pending actions queue.
+    DoubleEndedQueue.Deque public pendingActionsQueue;
 
     /**
      * @notice Constructor.
