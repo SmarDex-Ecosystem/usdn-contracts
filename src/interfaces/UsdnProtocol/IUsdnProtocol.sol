@@ -89,4 +89,6 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the user has no pending action
     error UsdnProtocolNoPendingAction();
+
+    error UsdnProtocolInvalidPendingAction();
 }

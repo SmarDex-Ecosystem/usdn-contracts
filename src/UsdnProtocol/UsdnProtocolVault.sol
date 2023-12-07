@@ -45,6 +45,9 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         uint128 _rawIndex = uint128(_pendingActionIndex - 1);
         PendingAction memory _deposit = pendingActionsQueue.atRaw(_rawIndex);
 
+        // sanity check
+        if (_deposit.action != ProtocolAction.InitiateDeposit) revert UsdnProtocolInvalidPendingAction();
+
         // TODO: validate previous action if needed, using the provided price update
         _previousActionPriceData;
 
@@ -62,8 +65,9 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         uint128 _depositTimestamp,
         uint128 _queueIndex
     ) internal {
+        // remove the pending action
         pendingActionsQueue.clearAt(_queueIndex);
-        delete pendingVaultActions[_user]; // remove the pending action ref
+        delete pendingVaultActions[_user];
 
         // adjust balances
         _applyPnlAndFunding(_depositPrice, _depositTimestamp);
