@@ -29,6 +29,9 @@ abstract contract UsdnProtocolStorage {
     /// @notice The USDN ERC20 contract.
     IUsdn public immutable usdn;
 
+    /// @notice The decimals of the USDN token.
+    uint8 public immutable usdnDecimals;
+
     /* --------------------------------- Storage -------------------------------- */
 
     /// @notice The oracle middleware contract.
@@ -61,6 +64,7 @@ abstract contract UsdnProtocolStorage {
      */
     constructor(IUsdn _usdn, IERC20Metadata _asset, IOracleMiddleware _oracleMiddleware, int24 _tickSpacing) {
         usdn = _usdn;
+        usdnDecimals = _usdn.decimals();
         asset = _asset;
         assetDecimals = _asset.decimals();
         oracleMiddleware = _oracleMiddleware;

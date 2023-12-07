@@ -61,7 +61,12 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         balanceVault += _deposit.amount;
     }
 
+    /**
+     * @notice Calculates the amount of USDN to mint for a given amount of asset according to its current price.
+     * @param _amount The amount of asset that were deposited.
+     * @param _currentPrice The current price of the asset.
+     */
     function _calcMintUsdn(uint256 _amount, uint128 _currentPrice) internal view returns (uint256 toMint_) {
-        toMint_ = (_amount * _currentPrice) / 10 ** (assetDecimals + priceFeedDecimals - usdn.decimals());
+        toMint_ = (_amount * _currentPrice) / 10 ** (assetDecimals + priceFeedDecimals - usdnDecimals);
     }
 }
