@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+/**
+ * @title Oracle Middleware interface
+ * @notice The oracle middleware is a contract that is called by the USDN protocol to validate price data. Using a
+ * middleware allows the protocol to later upgrade to a new oracle logic without having modify the vault contract.
+ */
 interface IOracleMiddleware {
     /**
      * @notice Parses and validates price data.
