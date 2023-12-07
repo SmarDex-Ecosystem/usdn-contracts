@@ -149,7 +149,10 @@ library DoubleEndedQueue {
     }
 
     function clearAt(Deque storage deque, uint128 rawIndex) internal {
-        delete deque._data[rawIndex];
+        // TODO: perform the wraparound check
+        if (rawIndex == deque._begin) popFront(deque);
+        else if (rawIndex == deque._end - 1) popBack(deque);
+        else delete deque._data[rawIndex];
     }
 
     /**

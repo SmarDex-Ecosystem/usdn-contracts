@@ -68,8 +68,6 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         // remove the pending action
         pendingActionsQueue.clearAt(_queueIndex);
         delete pendingVaultActions[_user];
-        // TODO: if the queue index is equal to the front of the queue, we need to pop it so that the front pointer
-        // gets updated. maybe do it in clearAt directly?
 
         // adjust balances
         _applyPnlAndFunding(_depositPrice, _depositTimestamp);
