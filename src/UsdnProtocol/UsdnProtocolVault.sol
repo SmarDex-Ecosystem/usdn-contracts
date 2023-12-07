@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { Position, ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocolCore } from "src/UsdnProtocol/UsdnProtocolCore.sol";
 import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
@@ -67,6 +69,8 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
      * @param _currentPrice The current price of the asset.
      */
     function _calcMintUsdn(uint256 _amount, uint128 _currentPrice) internal view returns (uint256 toMint_) {
-        toMint_ = (_amount * _currentPrice) / 10 ** (assetDecimals + priceFeedDecimals - usdnDecimals);
+        toMint_ = FixedPointMathLib.fullMulDiv(
+            _amount, _currentPrice, 10 ** (assetDecimals + priceFeedDecimals - usdnDecimals)
+        );
     }
 }
