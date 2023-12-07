@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+
 /**
  * @title Oracle Middleware interface
  * @notice The oracle middleware is a contract that is called by the USDN protocol to validate price data. Using a
@@ -33,33 +35,6 @@ interface IOracleMiddleware {
 /* -------------------------------------------------------------------------- */
 /*                     Oracle middleware struct and enums                     */
 /* -------------------------------------------------------------------------- */
-
-/**
- * @notice The type of action for which the price is requested.
- * @dev The middleware may use this to alter the validation of the price or the returned price.
- * @param None No particular action.
- * @param Deposit The price is requested for a deposit action.
- * @param ValidateDeposit The price is requested to validate a deposit action.
- * @param Withdraw The price is requested for a withdraw action.
- * @param ValidateWithdraw The price is requested to validate a withdraw action.
- * @param OpenPosition The price is requested for an open position action.
- * @param ValidateOpenPosition The price is requested to validate an open position action.
- * @param ClosePosition The price is requested for a close position action.
- * @param ValidateClosePosition The price is requested tovalidate a close position action.
- * @param Liquidation The price is requested for a liquidation action.
- */
-enum ProtocolAction {
-    None,
-    Deposit,
-    ValidateDeposit,
-    Withdraw,
-    ValidateWithdraw,
-    OpenPosition,
-    ValidateOpenPosition,
-    ClosePosition,
-    ValidateClosePosition,
-    Liquidation
-}
 
 /**
  * @notice The price and timestamp returned by the oracle middleware.

@@ -1,21 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-/* --------------------------- External libraries --------------------------- */
-
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-/* ---------------------------- Internal imports ---------------------------- */
 
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
-contract UsdnProtocolStorage {
-    // Safe ERC20 wrapper.
-    using SafeERC20 for IERC20Metadata;
-
+abstract contract UsdnProtocolStorage {
     /* ------------------------------- Immutables ------------------------------- */
 
     /**
@@ -54,13 +46,18 @@ contract UsdnProtocolStorage {
     /// @notice The last timestamp of balances update.
     uint128 public lastUpdateTimestamp;
 
-    /// @notice The pending deposit/withdraw position (1 pending per address max).
-    mapping(address => Position) public pendingShortPositions;
+    /// @notice The pending deposit/withdraw actions (1 pending per address max).
+    mapping(address => Position) public pendingVaultActions;
 
-    /// @notice Constructor.
-    /// @param _asset The asset ERC20 contract (wstETH).
-    /// @param _oracleMiddleware The oracle middleware contract.
-    /// @param _tickSpacing The positions tick spacing.
+    PendingAction[] public pendingActions;
+    uint256 public pendingActionsHead;
+
+    /**
+     * @notice Constructor.
+     * @param _asset The asset ERC20 contract (wstETH).
+     * @param _oracleMiddleware The oracle middleware contract.
+     * @param _tickSpacing The positions tick spacing.
+     */
     constructor(IUsdn _usdn, IERC20Metadata _asset, IOracleMiddleware _oracleMiddleware, int24 _tickSpacing) {
         usdn = _usdn;
         asset = _asset;
