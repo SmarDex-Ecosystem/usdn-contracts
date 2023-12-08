@@ -5,10 +5,9 @@ pragma solidity ^0.8.20;
 import { ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
- * @dev A sequence of items with the ability to efficiently push and pop items (i.e. insert and remove) on both ends of
- * the sequence (called front and back). Among other access patterns, it can be used to implement efficient LIFO and
- * FIFO queues. Storage use is optimized, and all operations are O(1) constant time. This includes {clear}, given that
- * the existing queue contents are left in storage.
+ * @notice A sequence of items with the ability to efficiently push and pop items (i.e. insert and remove) on both ends
+ * of the sequence (called front and back).
+ * @dev Storage use is optimized, and all operations are O(1) constant time.
  *
  * The struct is called `Deque` and holds `PendingAction`s. This data structure can only be used in storage, and not in
  * memory.
@@ -18,19 +17,13 @@ import { ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdn
  * ```
  */
 library DoubleEndedQueue {
-    /**
-     * @dev An operation (e.g. {front}) couldn't be completed due to the queue being empty.
-     */
+    /// @dev Indicates that an operation (e.g. {front}) couldn't be completed due to the queue being empty.
     error QueueEmpty();
 
-    /**
-     * @dev A push operation couldn't be completed due to the queue being full.
-     */
+    /// @dev Indicates that a push operation couldn't be completed due to the queue being full.
     error QueueFull();
 
-    /**
-     * @dev An operation (e.g. {at}) couldn't be completed due to an index being out of bounds.
-     */
+    /// @dev Indicates that an operation (e.g. {atRaw}) couldn't be completed due to an index being out of bounds.
     error QueueOutOfBounds();
 
     /**
@@ -50,8 +43,10 @@ library DoubleEndedQueue {
 
     /**
      * @dev Inserts an item at the end of the queue.
-     *
      * Reverts with {QueueFull} if the queue is full.
+     * @param deque The queue.
+     * @param value The item to insert.
+     * @return backIndex_ The raw index of the inserted item.
      */
     function pushBack(Deque storage deque, PendingAction memory value) internal returns (uint128 backIndex_) {
         unchecked {
@@ -64,8 +59,9 @@ library DoubleEndedQueue {
 
     /**
      * @dev Removes the item at the end of the queue and returns it.
-     *
      * Reverts with {QueueEmpty} if the queue is empty.
+     * @param deque The queue.
+     * @return value_ The removed item.
      */
     function popBack(Deque storage deque) internal returns (PendingAction memory value_) {
         unchecked {
@@ -80,8 +76,9 @@ library DoubleEndedQueue {
 
     /**
      * @dev Inserts an item at the beginning of the queue.
-     *
      * Reverts with {QueueFull} if the queue is full.
+     * @param deque The queue.
+     * @param value The item to insert.
      */
     function pushFront(Deque storage deque, PendingAction memory value) internal {
         unchecked {
@@ -94,8 +91,9 @@ library DoubleEndedQueue {
 
     /**
      * @dev Removes the item at the beginning of the queue and returns it.
-     *
      * Reverts with `QueueEmpty` if the queue is empty.
+     * @param deque The queue.
+     * @return value_ The removed item.
      */
     function popFront(Deque storage deque) internal returns (PendingAction memory value_) {
         unchecked {
@@ -109,8 +107,9 @@ library DoubleEndedQueue {
 
     /**
      * @dev Returns the item at the beginning of the queue.
-     *
      * Reverts with `QueueEmpty` if the queue is empty.
+     * @param deque The queue.
+     * @return value_ The item at the front of the queue.
      */
     function front(Deque storage deque) internal view returns (PendingAction memory value_) {
         if (empty(deque)) revert QueueEmpty();
@@ -119,8 +118,9 @@ library DoubleEndedQueue {
 
     /**
      * @dev Returns the item at the end of the queue.
-     *
      * Reverts with `QueueEmpty` if the queue is empty.
+     * @param deque The queue.
+     * @return value_ The item at the back of the queue.
      */
     function back(Deque storage deque) internal view returns (PendingAction memory value_) {
         if (empty(deque)) revert QueueEmpty();
@@ -132,8 +132,10 @@ library DoubleEndedQueue {
     /**
      * @dev Return the item at a position in the queue given by `index`, with the first item at 0 and last item at
      * `length(deque) - 1`.
-     *
      * Reverts with `QueueOutOfBounds` if the index is out of bounds.
+     * @param deque The queue.
+     * @param index The index of the item to return.
+     * @return value_ The item at the given index.
      */
     function at(Deque storage deque, uint256 index) internal view returns (PendingAction memory value_) {
         if (index >= length(deque)) revert QueueOutOfBounds();
@@ -146,8 +148,10 @@ library DoubleEndedQueue {
     /**
      * @dev Return the item at a position in the queue given by `rawIndex`, indexing into the underlying storage array
      * directly.
-     *
      * Reverts with `QueueOutOfBounds` if the index is out of bounds.
+     * @param deque The queue.
+     * @param rawIndex The index of the item to return.
+     * @return value_ The item at the given index.
      */
     function atRaw(Deque storage deque, uint128 rawIndex) internal view returns (PendingAction memory value_) {
         if (deque._begin > deque._end) {
@@ -163,30 +167,41 @@ library DoubleEndedQueue {
      * @dev Deletes the item at a position in the queue given by `rawIndex`, indexing into the underlying storage array
      * directly. If clearing the front or back item, then the bounds are updated. Otherwise, the values are simply set
      * to zero and the queue's begin and end indices are not updated.
+     * @param deque The queue.
+     * @param rawIndex The index of the item to delete.
      */
     function clearAt(Deque storage deque, uint128 rawIndex) internal {
         uint128 backIndex = deque._end;
         unchecked {
             backIndex--;
         }
-        if (rawIndex == deque._begin) popFront(deque);
-        else if (rawIndex == backIndex) popBack(deque);
-        else delete deque._data[rawIndex];
+        if (rawIndex == deque._begin) {
+            popFront(deque); // reverts if empty
+        } else if (rawIndex == backIndex) {
+            popBack(deque); // reverts if empty
+        } else {
+            // we don't really care to revert if this is not a valid index, since we're just clearing it
+            delete deque._data[rawIndex];
+        }
     }
 
     /**
      * @dev Returns the number of items in the queue.
+     * @param deque The queue.
+     * @return length_ The number of items in the queue.
      */
-    function length(Deque storage deque) internal view returns (uint256) {
+    function length(Deque storage deque) internal view returns (uint256 length_) {
         unchecked {
-            return uint256(deque._end - deque._begin);
+            length_ = uint256(deque._end - deque._begin);
         }
     }
 
     /**
      * @dev Returns true if the queue is empty.
+     * @param deque The queue.
+     * @return empty_ True if the queue is empty.
      */
-    function empty(Deque storage deque) internal view returns (bool) {
-        return deque._end == deque._begin;
+    function empty(Deque storage deque) internal view returns (bool empty_) {
+        empty_ = deque._end == deque._begin;
     }
 }

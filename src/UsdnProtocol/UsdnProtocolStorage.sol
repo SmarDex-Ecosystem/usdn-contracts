@@ -52,7 +52,7 @@ abstract contract UsdnProtocolStorage {
 
     /**
      * @notice The pending deposit/withdraw actions by user (1 per user max).
-     * @dev The value stored is an index into the `pendingActionsQueue` deque (shifted by one). The value 0 means no
+     * @dev The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
      * pending action. Since the deque uses uint128 indices, the highest index will still fit here when adding one.
      */
     mapping(address => uint256) public pendingVaultActions;
