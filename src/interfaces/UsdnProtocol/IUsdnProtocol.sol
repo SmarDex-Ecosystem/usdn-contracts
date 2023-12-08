@@ -27,16 +27,17 @@ struct Position {
 }
 
 /**
- * @notice The type of action for which the price is requested.
+ * @notice All possible action types for the protocol.
+ * @dev This is used for pending actions and to interact with the oracle middleware.
  * @param None No particular action.
- * @param InitiateDeposit The price is requested for a deposit action.
- * @param ValidateDeposit The price is requested to validate a deposit action.
- * @param InitiateWithdraw The price is requested for a withdraw action.
- * @param ValidateWithdraw The price is requested to validate a withdraw action.
- * @param InitiateOpenPosition The price is requested for an open position action.
- * @param ValidateOpenPosition The price is requested to validate an open position action.
- * @param InitiateClosePosition The price is requested for a close position action.
- * @param ValidateClosePosition The price is requested tovalidate a close position action.
+ * @param InitiateDeposit Initiating a deposit action.
+ * @param ValidateDeposit Validating a deposit action.
+ * @param InitiateWithdraw Initiating a withdraw action.
+ * @param ValidateWithdraw Validating a withdraw action.
+ * @param InitiateOpenPosition Initiating an open position action.
+ * @param ValidateOpenPosition Validating an open position action.
+ * @param InitiateClosePosition Initiating a close position action.
+ * @param ValidateClosePosition Validating a close position action.
  * @param Liquidation The price is requested for a liquidation action.
  */
 enum ProtocolAction {
