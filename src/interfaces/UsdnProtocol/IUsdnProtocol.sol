@@ -68,10 +68,19 @@ struct PendingAction {
 /* -------------------------------------------------------------------------- */
 
 interface IUsdnProtocolEvents {
-    /// @notice Emitted when a user initiates a deposit.
+    /**
+     * @notice Emitted when a user initiates a deposit.
+     * @param user The user address.
+     * @param amount The amount of asset that were deposited.
+     */
     event InitiatedDeposit(address indexed user, uint256 amount);
 
-    /// @notice Emitted when a user validates a deposit.
+    /**
+     * @notice Emitted when a user validates a deposit.
+     * @param user The user address.
+     * @param amount The amount of asset that were deposited.
+     * @param usdnToMint The amount of USDN that were minted.
+     */
     event ValidatedDeposit(address indexed user, uint256 amount, uint256 usdnToMint);
 }
 
