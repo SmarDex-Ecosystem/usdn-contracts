@@ -6,8 +6,8 @@ pragma solidity 0.8.20;
 /* -------------------------------------------------------------------------- */
 
 /**
- * @notice Information about a user position (vault deposit or long).
- * @dev 64 bytes packed struct (512 bits). In case of a vault deposit, the leverage value is zero.
+ * @notice Information about a long user position.
+ * @dev 64 bytes packed struct (512 bits)
  * @param leverage The leverage of the position (0 for vault deposits).
  * @param timestamp The timestamp of the position start.
  * @param isExit Whether the position is an exit position (true) or an entry position (false).
@@ -17,12 +17,12 @@ pragma solidity 0.8.20;
  * @param startPrice The price of the asset at the position opening.
  */
 struct Position {
-    uint40 leverage; // 5 bytes. Max 1_099_511_627_775 (1_099 with 9 decimals), zero for vault deposits
+    uint40 leverage; // 5 bytes. Max 1_099_511_627_775 (1_099 with 9 decimals)
     uint40 timestamp; // 5 bytes. Max 1_099_511_627_775 (36812-02-20 01:36:15)
     bool isExit; // 1 byte
     bool validated; // 1 byte
     address user; // 20 bytes
-    uint128 amount; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 wstETH or USDN
+    uint128 amount; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 wstETH
     uint128 startPrice; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 USD/wstETH
 }
 
