@@ -60,8 +60,7 @@ struct PendingAction {
     uint40 timestamp; // 5 bytes
     address user; // 20 bytes
     int24 tick; // 3 bytes, tick for open/close long
-    uint128 amount; // 16 bytes, amount for deposit/withdraw
-    uint128 index; // 16 bytes, index in the tick for open/close long
+    uint256 amountOrIndex; // 32 bytes, amount for deposit/withdraw, or index inside the tick for open/close long
 }
 
 /* -------------------------------------------------------------------------- */

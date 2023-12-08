@@ -20,9 +20,8 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
             action: ProtocolAction.InitiateDeposit,
             timestamp: _timestamp,
             user: msg.sender,
-            tick: 0,
-            amount: _amount,
-            index: 0
+            tick: 0, // unused
+            amountOrIndex: _amount
         });
 
         _addPendingAction(msg.sender, _pendingAction);
@@ -53,10 +52,10 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         // adjust balances
         _applyPnlAndFunding(_depositPrice.price, _depositPrice.timestamp);
 
-        uint256 _usdnToMint = _calcMintUsdn(_deposit.amount, _depositPrice.price);
+        uint256 _usdnToMint = _calcMintUsdn(_deposit.amountOrIndex, _depositPrice.price);
         usdn.mint(_user, _usdnToMint);
 
-        balanceVault += _deposit.amount;
+        balanceVault += _deposit.amountOrIndex;
     }
 
     /**
