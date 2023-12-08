@@ -5,10 +5,10 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
-import { IUsdnProtocolErrors, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolErrors, IUsdnProtocolEvents, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { DoubleEndedQueue } from "src/libraries/Deque.sol";
 
-abstract contract UsdnProtocolCore is IUsdnProtocolErrors, UsdnProtocolStorage {
+abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
@@ -36,7 +36,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, UsdnProtocolStorage {
         // Add the action to the queue
         uint128 _rawIndex = pendingActionsQueue.pushBack(_action);
         // Store the index shifted by one, so that zero means no pending action
-        pendingActions[_user] = _rawIndex + 1;
+        pendingActions[_user] = uint256(_rawIndex) + 1;
     }
 
     function _getAndClearPendingAction(address _user) internal returns (PendingAction memory action_) {
@@ -55,6 +55,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, UsdnProtocolStorage {
         if (pendingActionsQueue.empty()) return action_;
 
         PendingAction memory _candidate = pendingActionsQueue.front();
+        // TODO: handle case when first is zero-valued (iterate until non-zero)
         if (_candidate.timestamp + validationDeadline < block.timestamp) {
             return _candidate;
         }

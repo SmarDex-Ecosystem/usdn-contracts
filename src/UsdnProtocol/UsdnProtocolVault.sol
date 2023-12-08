@@ -27,6 +27,8 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         _addPendingAction(msg.sender, _pendingAction);
 
         _retrieveAssetsAndCheckBalance(msg.sender, _amount);
+
+        emit InitiatedDeposit(msg.sender, _amount);
     }
 
     function validateDeposit(bytes calldata _depositPriceData, bytes calldata _previousActionPriceData)
@@ -56,6 +58,8 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         usdn.mint(_user, _usdnToMint);
 
         balanceVault += _deposit.amountOrIndex;
+
+        emit ValidatedDeposit(_user, _deposit.amountOrIndex, _usdnToMint);
     }
 
     /**

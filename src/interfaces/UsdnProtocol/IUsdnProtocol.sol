@@ -68,7 +68,10 @@ struct PendingAction {
 /* -------------------------------------------------------------------------- */
 
 interface IUsdnProtocolEvents {
+    /// @notice Emitted when a user initiates a deposit.
     event InitiatedDeposit(address indexed user, uint256 amount);
+
+    /// @notice Emitted when a user validates a deposit.
     event ValidatedDeposit(address indexed user, uint256 amount, uint256 usdnToMint);
 }
 
@@ -89,5 +92,6 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the user has no pending action
     error UsdnProtocolNoPendingAction();
 
+    /// @dev Indicates that the user has a pending action but its action type is not the expected one
     error UsdnProtocolInvalidPendingAction();
 }
