@@ -135,7 +135,6 @@ library DoubleEndedQueue {
      *
      * Reverts with `QueueOutOfBounds` if the index is out of bounds.
      */
-    // TODO: maybe remove this method and rename atRaw
     function at(Deque storage deque, uint256 index) internal view returns (PendingAction memory value_) {
         if (index >= length(deque)) revert QueueOutOfBounds();
         // By construction, length is a uint128, so the check above ensures that index can be safely downcast to uint128
@@ -144,26 +143,35 @@ library DoubleEndedQueue {
         }
     }
 
+    /**
+     * @dev Return the item at a position in the queue given by `rawIndex`, indexing into the underlying storage array
+     * directly.
+     *
+     * Reverts with `QueueOutOfBounds` if the index is out of bounds.
+     */
     function atRaw(Deque storage deque, uint128 rawIndex) internal view returns (PendingAction memory value_) {
+        if (deque._begin > deque._end) {
+            // here the values are split at the beginning and end of the range, so invalid indices are in the middle
+            if (rawIndex < deque._begin && rawIndex >= deque._end) revert QueueOutOfBounds();
+        } else if (rawIndex < deque._begin || rawIndex >= deque._end) {
+            revert QueueOutOfBounds();
+        }
         value_ = deque._data[rawIndex];
     }
 
-    function clearAt(Deque storage deque, uint128 rawIndex) internal {
-        // TODO: perform the wraparound check
-        if (rawIndex == deque._begin) popFront(deque);
-        else if (rawIndex == deque._end - 1) popBack(deque);
-        else delete deque._data[rawIndex];
-    }
-
     /**
-     * @dev Resets the queue back to being empty.
-     *
-     * NOTE: The current items are left behind in storage. This does not affect the functioning of the queue, but misses
-     * out on potential gas refunds.
+     * @dev Deletes the item at a position in the queue given by `rawIndex`, indexing into the underlying storage array
+     * directly. If clearing the front or back item, then the bounds are updated. Otherwise, the values are simply set
+     * to zero and the queue's begin and end indices are not updated.
      */
-    function clear(Deque storage deque) internal {
-        deque._begin = 0;
-        deque._end = 0;
+    function clearAt(Deque storage deque, uint128 rawIndex) internal {
+        uint128 backIndex = deque._end;
+        unchecked {
+            backIndex--;
+        }
+        if (rawIndex == deque._begin) popFront(deque);
+        else if (rawIndex == backIndex) popBack(deque);
+        else delete deque._data[rawIndex];
     }
 
     /**
