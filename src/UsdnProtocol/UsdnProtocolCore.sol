@@ -5,10 +5,12 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
-import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolErrors, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { DoubleEndedQueue } from "src/libraries/Deque.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolErrors, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
+    using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     function _retrieveAssetsAndCheckBalance(address _from, uint256 _amount) internal {
         uint256 _balanceBefore = asset.balanceOf(address(this));
@@ -27,5 +29,25 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, UsdnProtocolStorage {
         _currentPrice;
         balanceVault = balanceVault;
         // TODO: apply PnL and funding
+    }
+
+    function _addPendingAction(address _user, PendingAction memory _action) internal {
+        if (pendingActions[_user] > 0) revert UsdnProtocolPendingAction();
+        // Add the action to the queue
+        uint128 _rawIndex = pendingActionsQueue.pushBack(_action);
+        // Store the index shifted by one, so that zero means no pending action
+        pendingActions[_user] = _rawIndex + 1;
+    }
+
+    function _getAndClearPendingAction(address _user) internal returns (PendingAction memory action_) {
+        uint256 _pendingActionIndex = pendingActions[_user];
+        if (_pendingActionIndex == 0) revert UsdnProtocolNoPendingAction();
+
+        uint128 _rawIndex = uint128(_pendingActionIndex - 1);
+        action_ = pendingActionsQueue.atRaw(_rawIndex);
+
+        // remove the pending action
+        pendingActionsQueue.clearAt(_rawIndex);
+        delete pendingActions[_user];
     }
 }
