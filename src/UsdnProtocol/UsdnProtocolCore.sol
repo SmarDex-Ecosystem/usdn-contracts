@@ -50,4 +50,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, UsdnProtocolStorage {
         pendingActionsQueue.clearAt(_rawIndex);
         delete pendingActions[_user];
     }
+
+    function getActionablePendingAction() public view returns (PendingAction memory action_) {
+        if (pendingActionsQueue.empty()) return action_;
+
+        PendingAction memory _candidate = pendingActionsQueue.front();
+        if (_candidate.timestamp + validationDeadline < block.timestamp) {
+            return _candidate;
+        }
+    }
 }
