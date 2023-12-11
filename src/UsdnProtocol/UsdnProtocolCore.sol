@@ -12,6 +12,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     using SafeERC20 for IERC20Metadata;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
+    uint256 constant QUEUE_MAX_ITER = 10;
+
     function _retrieveAssetsAndCheckBalance(address _from, uint256 _amount) internal {
         uint256 _balanceBefore = asset.balanceOf(address(this));
         asset.safeTransferFrom(_from, address(this), _amount);
@@ -51,13 +53,26 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         delete pendingActions[_user];
     }
 
-    function getActionablePendingAction() public view returns (PendingAction memory action_) {
+    function getActionablePendingAction() public returns (PendingAction memory action_) {
         if (pendingActionsQueue.empty()) return action_;
 
-        PendingAction memory _candidate = pendingActionsQueue.front();
-        // TODO: handle case when first is zero-valued (iterate until non-zero)
-        if (_candidate.timestamp + validationDeadline < block.timestamp) {
-            return _candidate;
-        }
+        uint256 i = 0;
+        do {
+            PendingAction memory _candidate = pendingActionsQueue.front();
+            if (_candidate.timestamp == 0) {
+                // remove the stale pending action
+                pendingActionsQueue.popFront();
+                // if the queue is empty, return
+                if (pendingActionsQueue.empty()) return action_;
+                // otherwise, try the next one
+                continue;
+            } else if (_candidate.timestamp + validationDeadline < block.timestamp) {
+                // we found an actionable pending action
+                return _candidate;
+            } else {
+                // the first pending action is not actionable
+                return action_;
+            }
+        } while (++i < QUEUE_MAX_ITER);
     }
 }
