@@ -55,6 +55,11 @@ enum ProtocolAction {
 
 /**
  * @notice A pending deposit action.
+ * @param action The action type (Initiate...).
+ * @param timestamp The timestamp of the initiate action.
+ * @param user The user address.
+ * @param tick The tick for open/close long (zero for vault actions).
+ * @param amountOrIndex The amount for deposit/withdraw, or index inside the tick for open/close long.
  */
 struct PendingAction {
     ProtocolAction action; // 1 byte
