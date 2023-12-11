@@ -6,7 +6,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { IUsdnProtocolErrors, IUsdnProtocolEvents, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { DoubleEndedQueue } from "src/libraries/Deque.sol";
+import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;

@@ -6,7 +6,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { DoubleEndedQueue } from "src/libraries/Deque.sol";
+import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 abstract contract UsdnProtocolStorage {
     /* ------------------------------- Immutables ------------------------------- */
