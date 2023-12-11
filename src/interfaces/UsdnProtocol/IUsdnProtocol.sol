@@ -32,8 +32,8 @@ struct Position {
  * @param None No particular action.
  * @param InitiateDeposit Initiating a deposit action.
  * @param ValidateDeposit Validating a deposit action.
- * @param InitiateWithdraw Initiating a withdraw action.
- * @param ValidateWithdraw Validating a withdraw action.
+ * @param InitiateWithdrawal Initiating a withdraw action.
+ * @param ValidateWithdrawal Validating a withdraw action.
  * @param InitiateOpenPosition Initiating an open position action.
  * @param ValidateOpenPosition Validating an open position action.
  * @param InitiateClosePosition Initiating a close position action.
@@ -44,8 +44,8 @@ enum ProtocolAction {
     None,
     InitiateDeposit,
     ValidateDeposit,
-    InitiateWithdraw,
-    ValidateWithdraw,
+    InitiateWithdrawal,
+    ValidateWithdrawal,
     InitiateOpenPosition,
     ValidateOpenPosition,
     InitiateClosePosition,
@@ -79,10 +79,25 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user validates a deposit.
      * @param user The user address.
-     * @param amount The amount of asset that were deposited.
-     * @param usdnToMint The amount of USDN that were minted.
+     * @param amountDeposited The amount of asset that were deposited.
+     * @param usdnMinted The amount of USDN that were minted.
      */
-    event ValidatedDeposit(address indexed user, uint256 amount, uint256 usdnToMint);
+    event ValidatedDeposit(address indexed user, uint256 amountDeposited, uint256 usdnMinted);
+
+    /**
+     * @notice Emitted when a user initiates a withdrawal.
+     * @param user The user address.
+     * @param usdnAmount The amount of USDN that will be burned.
+     */
+    event InitiatedWithdrawal(address indexed user, uint256 usdnAmount);
+
+    /**
+     * @notice Emitted when a user validates a withdrawal.
+     * @param user The user address.
+     * @param amountWithdrawn The amount of asset that were withdrawn.
+     * @param usdnBurned The amount of USDN that were burned.
+     */
+    event ValidatedWithdrawal(address indexed user, uint256 amountWithdrawn, uint256 usdnBurned);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -94,7 +109,7 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolZeroAmount();
 
     /// @dev Indicates that the the token transfer didn't yield the expected balance change
-    error UsdnProtocolIncompleteTransfer(uint256 effectiveBalance, uint256 expectedBalance);
+    error UsdnProtocolIncompleteTransfer(address to, uint256 effectiveBalance, uint256 expectedBalance);
 
     /// @dev Indicates that the user already has a pending action
     error UsdnProtocolPendingAction();
@@ -104,4 +119,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the user has a pending action but its action type is not the expected one
     error UsdnProtocolInvalidPendingAction();
+
+    /// @dev Indicates that the total supply of USDN would fall too low after a withdrawal
+    error UsdnProtocolMinTotalSupply();
 }

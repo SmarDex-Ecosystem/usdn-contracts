@@ -44,6 +44,9 @@ abstract contract UsdnProtocolStorage {
     /// @notice The balance of deposits (with `asset` decimals).
     uint256 public balanceVault;
 
+    /// @notice The balance of long positions (with `asset` decimals).
+    uint256 public balanceLong;
+
     /// @notice The last price of the asset on last balances update (price feed decimals).
     uint128 public lastPrice;
 

@@ -18,8 +18,28 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         uint256 _balanceBefore = asset.balanceOf(address(this));
         asset.safeTransferFrom(_from, address(this), _amount);
         if (asset.balanceOf(address(this)) != _balanceBefore + _amount) {
-            revert UsdnProtocolIncompleteTransfer(asset.balanceOf(address(this)), _balanceBefore + _amount);
+            revert UsdnProtocolIncompleteTransfer(
+                address(this), asset.balanceOf(address(this)), _balanceBefore + _amount
+            );
         }
+    }
+
+    function _distributeAssetsAndCheckBalance(address _to, uint256 _amount) internal {
+        uint256 _balanceBefore = asset.balanceOf(_to);
+        if (_amount > 0) {
+            asset.safeTransfer(_to, _amount);
+            if (asset.balanceOf(_to) != _balanceBefore + _amount) {
+                revert UsdnProtocolIncompleteTransfer(_to, asset.balanceOf(_to), _balanceBefore + _amount);
+            }
+        }
+    }
+
+    function longAssetAvailable(uint128 _currentPrice) public view returns (int256 available_) {
+        // TODO
+    }
+
+    function vaultAssetAvailable(uint128 _currentPrice) public view returns (int256 available_) {
+        available_ = int256(balanceVault + balanceLong) - longAssetAvailable(_currentPrice);
     }
 
     function _applyPnlAndFunding(uint128 _currentPrice, uint128 _timestamp) internal {
@@ -32,6 +52,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         balanceVault = balanceVault;
         // TODO: apply PnL and funding
     }
+
+    /* -------------------------- Pending actions queue ------------------------- */
 
     function _addPendingAction(address _user, PendingAction memory _action) internal {
         if (pendingActions[_user] > 0) revert UsdnProtocolPendingAction();
