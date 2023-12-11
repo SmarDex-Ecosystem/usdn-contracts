@@ -71,6 +71,16 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         emit InitiatedWithdrawal(msg.sender, _usdnAmount);
     }
 
+    function validateWithdrawal(bytes calldata _withdrawalPriceData, bytes calldata _previousActionPriceData)
+        external
+        payable
+    {
+        // TODO: validate previous action if needed, using the provided price update
+        _previousActionPriceData;
+
+        _validateWithdrawal(msg.sender, _withdrawalPriceData);
+    }
+
     function _validateDeposit(address _user, bytes calldata _priceData) internal {
         PendingAction memory _deposit = _getAndClearPendingAction(_user);
 
