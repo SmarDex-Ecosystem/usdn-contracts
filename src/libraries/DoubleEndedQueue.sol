@@ -80,13 +80,14 @@ library DoubleEndedQueue {
      * TODO: remove?
      * @param deque The queue.
      * @param value The item to insert.
+     * @return frontIndex_ The raw index of the inserted item.
      */
-    function pushFront(Deque storage deque, PendingAction memory value) internal {
+    function pushFront(Deque storage deque, PendingAction memory value) internal returns (uint128 frontIndex_) {
         unchecked {
-            uint128 frontIndex = deque._begin - 1;
-            if (frontIndex == deque._end) revert QueueFull();
-            deque._data[frontIndex] = value;
-            deque._begin = frontIndex;
+            frontIndex_ = deque._begin - 1;
+            if (frontIndex_ == deque._end) revert QueueFull();
+            deque._data[frontIndex_] = value;
+            deque._begin = frontIndex_;
         }
     }
 
