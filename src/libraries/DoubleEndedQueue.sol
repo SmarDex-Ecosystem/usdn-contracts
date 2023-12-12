@@ -77,7 +77,6 @@ library DoubleEndedQueue {
     /**
      * @dev Inserts an item at the beginning of the queue.
      * Reverts with {QueueFull} if the queue is full.
-     * TODO: remove?
      * @param deque The queue.
      * @param value The item to insert.
      * @return frontIndex_ The raw index of the inserted item.
@@ -121,7 +120,6 @@ library DoubleEndedQueue {
     /**
      * @dev Returns the item at the end of the queue.
      * Reverts with `QueueEmpty` if the queue is empty.
-     * TODO: remove?
      * @param deque The queue.
      * @return value_ The item at the back of the queue.
      */
@@ -136,7 +134,6 @@ library DoubleEndedQueue {
      * @dev Return the item at a position in the queue given by `index`, with the first item at 0 and last item at
      * `length(deque) - 1`.
      * Reverts with `QueueOutOfBounds` if the index is out of bounds.
-     * TODO: remove?
      * @param deque The queue.
      * @param index The index of the item to return.
      * @return value_ The item at the given index.
