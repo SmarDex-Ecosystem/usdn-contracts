@@ -21,5 +21,8 @@
     "@openzeppelin/contracts": "^5.0.0",
     "husky": "^8.0.3",
     "solady": "^0.0.138"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^0.8.0"
   }
 }
