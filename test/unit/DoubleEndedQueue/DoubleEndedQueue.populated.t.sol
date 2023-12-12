@@ -10,7 +10,7 @@ import { DoubleEndedQueue, ProtocolAction, PendingAction } from "src/libraries/D
 
 /**
  * @custom:feature Test functions in `DoubleEndedQueue`
- * @custom:background Given the deque is empty
+ * @custom:background Given the deque has 3 elements
  */
 contract TestDequePopulated is DequeFixture {
     PendingAction action1 = PendingAction(ProtocolAction.InitiateWithdrawal, 69, USER_1, 0, 1 ether);
@@ -28,33 +28,64 @@ contract TestDequePopulated is DequeFixture {
         rawIndex3 = handler.pushBack(action3);
     }
 
+    /**
+     * @custom:scenario View functions should handle populated list fine
+     * @custom:when Calling `empty` and `length`
+     * @custom:then Returns `false` and `3`
+     */
     function test_view() public {
         assertEq(handler.empty(), false);
         assertEq(handler.length(), 3);
     }
 
+    /**
+     * @custom:scenario Accessing the front item
+     * @custom:when Calling `front`
+     * @custom:then Returns the front item
+     */
     function test_accessFront() public {
         PendingAction memory front = handler.front();
         _assertActionsEqual(front, action1);
     }
 
+    /**
+     * @custom:scenario Accessing the back item
+     * @custom:when Calling `back`
+     * @custom:then Returns the back item
+     */
     function test_accessBack() public {
         PendingAction memory back = handler.back();
         _assertActionsEqual(back, action3);
     }
 
+    /**
+     * @custom:scenario Accessing items at a given index
+     * @custom:when Calling `at` with one of the indices
+     * @custom:then Returns the item at the given index
+     */
     function test_accessAt() public {
         _assertActionsEqual(handler.at(0), action1);
         _assertActionsEqual(handler.at(1), action2);
         _assertActionsEqual(handler.at(2), action3);
     }
 
+    /**
+     * @custom:scenario Accessing items at a given raw index
+     * @custom:when Calling `atRaw` with one of the raw indices
+     * @custom:then Returns the item at the given raw index
+     */
     function test_accessAtRaw() public {
         _assertActionsEqual(handler.atRaw(rawIndex1), action1);
         _assertActionsEqual(handler.atRaw(rawIndex2), action2);
         _assertActionsEqual(handler.atRaw(rawIndex3), action3);
     }
 
+    /**
+     * @custom:scenario Accessing items at a given index
+     * @custom:given The index is out of bounds
+     * @custom:when Calling `at` with an out of bounds index
+     * @custom:then It should revert with `QueueOutOfBounds`
+     */
     function test_RevertWhen_OOB() public {
         vm.expectRevert(DoubleEndedQueue.QueueOutOfBounds.selector);
         handler.at(3);
@@ -62,6 +93,14 @@ contract TestDequePopulated is DequeFixture {
         handler.atRaw(3);
     }
 
+    /**
+     * @custom:scenario Pushing an item to the front of the queue
+     * @custom:when Calling `pushFront` with an item
+     * @custom:then The length should increase by 1
+     * @custom:and The item should be inserted at the front and gettable with `front` or its (raw) index
+     * @custom:and The indices of the other items should be shifted one up
+     * @custom:and The raw indices of the other items should not change
+     */
     function test_pushFront() public {
         PendingAction memory action = PendingAction(ProtocolAction.InitiateClosePosition, 1, USER_1, 1, 1);
         uint128 rawIndex = handler.pushFront(action);
@@ -70,6 +109,8 @@ contract TestDequePopulated is DequeFixture {
             expectedRawIndex = rawIndex1 - 1;
         }
         assertEq(rawIndex, expectedRawIndex);
+        assertEq(handler.length(), 4);
+        _assertActionsEqual(handler.front(), action);
         _assertActionsEqual(handler.at(0), action);
         _assertActionsEqual(handler.atRaw(rawIndex), action);
         _assertActionsEqual(handler.at(1), action1);
@@ -80,6 +121,14 @@ contract TestDequePopulated is DequeFixture {
         _assertActionsEqual(handler.atRaw(rawIndex3), action3);
     }
 
+    /**
+     * @custom:scenario Pushing an item to the back of the queue
+     * @custom:when Calling `pushBack` with an item
+     * @custom:then The length should increase by 1
+     * @custom:and The item should be inserted at the back and gettable with `back` or its (raw) index
+     * @custom:and The indices of the other items should not change
+     * @custom:and The raw indices of the other items should not change
+     */
     function test_pushBack() public {
         PendingAction memory action = PendingAction(ProtocolAction.InitiateClosePosition, 1, USER_1, 1, 1);
         uint128 rawIndex = handler.pushBack(action);
@@ -88,6 +137,8 @@ contract TestDequePopulated is DequeFixture {
             expectedRawIndex = rawIndex3 + 1;
         }
         assertEq(rawIndex, expectedRawIndex);
+        assertEq(handler.length(), 4);
+        _assertActionsEqual(handler.back(), action);
         _assertActionsEqual(handler.at(3), action);
         _assertActionsEqual(handler.atRaw(rawIndex), action);
         _assertActionsEqual(handler.at(0), action1);
@@ -98,8 +149,17 @@ contract TestDequePopulated is DequeFixture {
         _assertActionsEqual(handler.atRaw(rawIndex3), action3);
     }
 
+    /**
+     * @custom:scenario Popping an item from the front of the queue
+     * @custom:when Calling `popFront`
+     * @custom:then The length should decrease by 1
+     * @custom:and The correct item should be returned
+     * @custom:and The indices of the other items should be shifted one down
+     * @custom:and The raw indices of the other items should not change
+     */
     function test_popFront() public {
         PendingAction memory action = handler.popFront();
+        assertEq(handler.length(), 2);
         _assertActionsEqual(action, action1);
         _assertActionsEqual(handler.at(0), action2);
         _assertActionsEqual(handler.atRaw(rawIndex2), action2);
@@ -107,8 +167,17 @@ contract TestDequePopulated is DequeFixture {
         _assertActionsEqual(handler.atRaw(rawIndex3), action3);
     }
 
+    /**
+     * @custom:scenario Popping an item from the back of the queue
+     * @custom:when Calling `popBack`
+     * @custom:then The length should decrease by 1
+     * @custom:and The correct item should be returned
+     * @custom:and The indices of the other items should not change
+     * @custom:and The raw indices of the other items should not change
+     */
     function test_popBack() public {
         PendingAction memory action = handler.popBack();
+        assertEq(handler.length(), 2);
         _assertActionsEqual(action, action3);
         _assertActionsEqual(handler.at(0), action1);
         _assertActionsEqual(handler.atRaw(rawIndex1), action1);
@@ -116,24 +185,49 @@ contract TestDequePopulated is DequeFixture {
         _assertActionsEqual(handler.atRaw(rawIndex2), action2);
     }
 
+    /**
+     * @custom:scenario Clearing the item at the front of the queue
+     * @custom:when Calling `clearAt` with the raw index of the front item
+     * @custom:then The length should decrease by 1
+     * @custom:and The indices of the other items should be shifted one down
+     * @custom:and The raw indices of the other items should not change
+     */
     function test_clearAtFront() public {
         handler.clearAt(rawIndex1); // does a popFront
+        assertEq(handler.length(), 2);
         _assertActionsEqual(handler.at(0), action2);
         _assertActionsEqual(handler.atRaw(rawIndex2), action2);
         _assertActionsEqual(handler.at(1), action3);
         _assertActionsEqual(handler.atRaw(rawIndex3), action3);
     }
 
+    /**
+     * @custom:scenario Clearing the item at the back of the queue
+     * @custom:when Calling `clearAt` with the raw index of the back item
+     * @custom:then The length should decrease by 1
+     * @custom:and The indices of the other items should not change
+     * @custom:and The raw indices of the other items should not change
+     */
     function test_clearAtBack() public {
         handler.clearAt(rawIndex3); // does a popBack
+        assertEq(handler.length(), 2);
         _assertActionsEqual(handler.at(0), action1);
         _assertActionsEqual(handler.atRaw(rawIndex1), action1);
         _assertActionsEqual(handler.at(1), action2);
         _assertActionsEqual(handler.atRaw(rawIndex2), action2);
     }
 
+    /**
+     * @custom:scenario Clearing an item at the middle of the queue
+     * @custom:when Calling `clearAt` with the raw index of a middle item
+     * @custom:then The length should not change
+     * @custom:and The indices of the other items should not change
+     * @custom:and The raw indices of the other items should not change
+     * @custom:and The item should be reset to zero values
+     */
     function test_clearAtMiddle() public {
         handler.clearAt(rawIndex2);
+        assertEq(handler.length(), 3);
         _assertActionsEqual(handler.at(0), action1);
         _assertActionsEqual(handler.atRaw(rawIndex1), action1);
         _assertActionsEqual(handler.at(2), action3);
@@ -146,6 +240,12 @@ contract TestDequePopulated is DequeFixture {
         assertEq(clearedAction.amountOrIndex, 0);
     }
 
+    /**
+     * @custom:scenario Clearing all items in the queue
+     * @custom:when Calling `clearAt` with the raw index of each item
+     * @custom:then The length should decrease to 0
+     * @custom:and The queue should be empty
+     */
     function test_clearAll() public {
         handler.clearAt(rawIndex1);
         handler.clearAt(rawIndex2);
