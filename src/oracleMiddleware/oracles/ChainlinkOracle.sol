@@ -11,18 +11,18 @@ import { AggregatorInterface } from "@chainlink/contracts/src/v0.8/interfaces/Ag
  */
 contract ChainlinkOracle {
     /// @notice Chainlink price feed aggregator contract
-    AggregatorV3Interface immutable priceFeed;
+    AggregatorV3Interface immutable _priceFeed;
 
-    constructor(address _priceFeed) {
-        priceFeed = AggregatorV3Interface(_priceFeed);
+    constructor(address priceFeed) {
+        _priceFeed = AggregatorV3Interface(priceFeed);
     }
 
     /**
      * @notice Get the price of the asset from Chainlink
      * @return price_ The price of the asset
      */
-    function getPrice() public view returns (uint256 price_) {
-        (, int256 _price,,,) = priceFeed.latestRoundData();
+    function getChainlinkPrice() public view returns (uint256 price_) {
+        (, int256 _price,,,) = _priceFeed.latestRoundData();
         price_ = uint256(_price);
     }
 
@@ -31,16 +31,16 @@ contract ChainlinkOracle {
      * @param _decimals The number of decimals to format the price to
      * @return formattedPrice_ The formatted price of the asset
      */
-    function getFormattedPrice(uint256 _decimals) public view returns (uint256 formattedPrice_) {
-        uint256 chainlinkDecimals = priceFeed.decimals();
-        formattedPrice_ = getPrice() * (10 ** _decimals) / (10 ** chainlinkDecimals);
+    function getFormattedChainlinkPrice(uint256 _decimals) public view returns (uint256 formattedPrice_) {
+        uint256 chainlinkDecimals = _priceFeed.decimals();
+        formattedPrice_ = getChainlinkPrice() * (10 ** _decimals) / (10 ** chainlinkDecimals);
     }
 
     /**
      * @notice Get the number of decimals of the asset from Chainlink
      * @return decimals_ The number of decimals of the asset
      */
-    function decimals() public view returns (uint256) {
-        return priceFeed.decimals();
+    function chainlinkOracleDecimals() public view returns (uint256) {
+        return _priceFeed.decimals();
     }
 }

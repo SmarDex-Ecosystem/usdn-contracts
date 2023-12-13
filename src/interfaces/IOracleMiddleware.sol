@@ -26,7 +26,7 @@ interface IOracleMiddleware {
         returns (PriceInfo memory);
 
     /// @notice Returns the number of decimals for the price (constant)
-    function decimals() external view returns (uint8);
+    function decimals() external pure returns (uint8);
 
     /// @notice Returns the ETH cost of one price validation for the given action
     function validationCost(ProtocolAction action) external returns (uint256);

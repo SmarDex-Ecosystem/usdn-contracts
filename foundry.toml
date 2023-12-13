@@ -79,6 +79,7 @@ dictionary_weight = 40
 remappings = [
     "@chainlink/=node_modules/@chainlink/",
     "@openzeppelin/=node_modules/@openzeppelin/",
+    "@pythnetwork=node_modules/@pythnetwork/",
     "solady/src/=node_modules/solady/src/",
 ]
 

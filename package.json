@@ -23,6 +23,7 @@
     "solady": "^0.0.138"
   },
   "dependencies": {
-    "@chainlink/contracts": "^0.8.0"
+    "@chainlink/contracts": "^0.8.0",
+    "@pythnetwork/pyth-sdk-solidity": "^2.3.0"
   }
 }
