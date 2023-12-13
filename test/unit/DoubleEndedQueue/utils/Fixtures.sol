@@ -17,7 +17,12 @@ contract DequeFixture is BaseFixture {
         handler = new DequeHandler();
     }
 
-    /// @dev Helper function to assert two `PendingAction` are equal
+    /**
+     * @dev Helper function to assert two `PendingAction` are equal.
+     * Reverts if not equal.
+     * @param a First `PendingAction`
+     * @param b Second `PendingAction`
+     */
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b) internal {
         assertTrue(a.action == b.action);
         assertEq(a.timestamp, b.timestamp);
