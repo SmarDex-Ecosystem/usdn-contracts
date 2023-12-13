@@ -14,91 +14,91 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     uint256 constant QUEUE_MAX_ITER = 10;
 
-    function _retrieveAssetsAndCheckBalance(address _from, uint256 _amount) internal {
-        uint256 _balanceBefore = asset.balanceOf(address(this));
-        asset.safeTransferFrom(_from, address(this), _amount);
-        if (asset.balanceOf(address(this)) != _balanceBefore + _amount) {
+    function _retrieveAssetsAndCheckBalance(address from, uint256 amount) internal {
+        uint256 balanceBefore = _asset.balanceOf(address(this));
+        _asset.safeTransferFrom(from, address(this), amount);
+        if (_asset.balanceOf(address(this)) != balanceBefore + amount) {
             revert UsdnProtocolIncompleteTransfer(
-                address(this), asset.balanceOf(address(this)), _balanceBefore + _amount
+                address(this), _asset.balanceOf(address(this)), balanceBefore + amount
             );
         }
     }
 
-    function _distributeAssetsAndCheckBalance(address _to, uint256 _amount) internal {
-        uint256 _balanceBefore = asset.balanceOf(_to);
-        if (_amount > 0) {
-            asset.safeTransfer(_to, _amount);
-            if (asset.balanceOf(_to) != _balanceBefore + _amount) {
-                revert UsdnProtocolIncompleteTransfer(_to, asset.balanceOf(_to), _balanceBefore + _amount);
+    function _distributeAssetsAndCheckBalance(address to, uint256 amount) internal {
+        uint256 balanceBefore = _asset.balanceOf(to);
+        if (amount > 0) {
+            _asset.safeTransfer(to, amount);
+            if (_asset.balanceOf(to) != balanceBefore + amount) {
+                revert UsdnProtocolIncompleteTransfer(to, _asset.balanceOf(to), balanceBefore + amount);
             }
         }
     }
 
-    function longAssetAvailable(uint128 _currentPrice) public view returns (int256 available_) {
+    function longAssetAvailable(uint128 currentPrice) public view returns (int256 available_) {
         // TODO
     }
 
-    function vaultAssetAvailable(uint128 _currentPrice) public view returns (int256 available_) {
-        available_ = int256(balanceVault + balanceLong) - longAssetAvailable(_currentPrice);
+    function vaultAssetAvailable(uint128 currentPrice) public view returns (int256 available_) {
+        available_ = int256(_balanceVault + _balanceLong) - longAssetAvailable(currentPrice);
     }
 
-    function _applyPnlAndFunding(uint128 _currentPrice, uint128 _timestamp) internal {
+    function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) internal {
         // If the price is not fresh, do nothing
-        if (_timestamp <= lastUpdateTimestamp) {
+        if (timestamp <= _lastUpdateTimestamp) {
             return;
         }
         // silence unused variable and visibility warnings
-        _currentPrice;
-        balanceVault = balanceVault;
+        currentPrice;
+        _balanceVault = _balanceVault;
         // TODO: apply PnL and funding
     }
 
     /* -------------------------- Pending actions queue ------------------------- */
 
-    function _addPendingAction(address _user, PendingAction memory _action) internal {
-        if (pendingActions[_user] > 0) {
+    function _addPendingAction(address user, PendingAction memory action) internal {
+        if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
         }
         // Add the action to the queue
-        uint128 _rawIndex = pendingActionsQueue.pushBack(_action);
+        uint128 rawIndex = _pendingActionsQueue.pushBack(action);
         // Store the index shifted by one, so that zero means no pending action
-        pendingActions[_user] = uint256(_rawIndex) + 1;
+        _pendingActions[user] = uint256(rawIndex) + 1;
     }
 
-    function _getAndClearPendingAction(address _user) internal returns (PendingAction memory action_) {
-        uint256 _pendingActionIndex = pendingActions[_user];
-        if (_pendingActionIndex == 0) {
+    function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
+        uint256 pendingActionIndex = _pendingActions[user];
+        if (pendingActionIndex == 0) {
             revert UsdnProtocolNoPendingAction();
         }
 
-        uint128 _rawIndex = uint128(_pendingActionIndex - 1);
-        action_ = pendingActionsQueue.atRaw(_rawIndex);
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        action_ = _pendingActionsQueue.atRaw(rawIndex);
 
         // remove the pending action
-        pendingActionsQueue.clearAt(_rawIndex);
-        delete pendingActions[_user];
+        _pendingActionsQueue.clearAt(rawIndex);
+        delete _pendingActions[user];
     }
 
     function getActionablePendingAction() public returns (PendingAction memory action_) {
-        if (pendingActionsQueue.empty()) {
+        if (_pendingActionsQueue.empty()) {
             return action_;
         }
 
         uint256 i = 0;
         do {
-            PendingAction memory _candidate = pendingActionsQueue.front();
-            if (_candidate.timestamp == 0) {
+            PendingAction memory candidate = _pendingActionsQueue.front();
+            if (candidate.timestamp == 0) {
                 // remove the stale pending action
-                pendingActionsQueue.popFront();
+                _pendingActionsQueue.popFront();
                 // if the queue is empty, return
-                if (pendingActionsQueue.empty()) {
+                if (_pendingActionsQueue.empty()) {
                     return action_;
                 }
                 // otherwise, try the next one
                 continue;
-            } else if (_candidate.timestamp + validationDeadline < block.timestamp) {
+            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
-                return _candidate;
+                return candidate;
             } else {
                 // the first pending action is not actionable
                 return action_;

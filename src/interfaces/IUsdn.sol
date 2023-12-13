@@ -81,19 +81,19 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /**
      * @notice Convert a number of tokens to the corresponding amount of shares.
      * @dev The conversion reverts with `UsdnMaxTokensExceeded` if the corresponding amount of shares would overflow.
-     * @param _amountTokens the amount of tokens to convert to shares
+     * @param amountTokens the amount of tokens to convert to shares
      * @return shares_ the corresponding amount of shares
      */
-    function convertToShares(uint256 _amountTokens) external view returns (uint256 shares_);
+    function convertToShares(uint256 amountTokens) external view returns (uint256 shares_);
 
     /**
      * @notice Convert a number of shares to the corresponding amount of tokens.
      * @dev The conversion never overflows as we are performing a division. The conversion rounds to the nearest amount
      * of tokens that minimizes the error when converting back to shares.
-     * @param _amountShares the amount of shares to convert to tokens
+     * @param amountShares the amount of shares to convert to tokens
      * @return tokens_ the corresponding amount of tokens
      */
-    function convertToTokens(uint256 _amountShares) external view returns (uint256 tokens_);
+    function convertToTokens(uint256 amountShares) external view returns (uint256 tokens_);
 
     /**
      * @notice View function returning the current maximum tokens supply, given the current divisor.

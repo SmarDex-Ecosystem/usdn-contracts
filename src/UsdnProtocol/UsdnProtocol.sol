@@ -13,13 +13,13 @@ import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 contract UsdnProtocol is UsdnProtocolLong, Ownable, Initializable {
     /**
      * @notice Constructor.
-     * @param _usdn The USDN ERC20 contract.
-     * @param _asset The asset ERC20 contract (wstETH).
-     * @param _oracleMiddleware The oracle middleware contract.
-     * @param _tickSpacing The positions tick spacing.
+     * @param usdn The USDN ERC20 contract.
+     * @param asset The asset ERC20 contract (wstETH).
+     * @param oracleMiddleware The oracle middleware contract.
+     * @param tickSpacing The positions tick spacing.
      */
-    constructor(IUsdn _usdn, IERC20Metadata _asset, IOracleMiddleware _oracleMiddleware, int24 _tickSpacing)
+    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
         Ownable(msg.sender)
-        UsdnProtocolStorage(_usdn, _asset, _oracleMiddleware, _tickSpacing)
+        UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing)
     { }
 }
