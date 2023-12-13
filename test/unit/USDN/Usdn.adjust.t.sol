@@ -21,6 +21,15 @@ contract TestUsdnAdjust is UsdnTokenFixture {
     }
 
     /**
+     * @custom:scenario Getting the divisor
+     * @custom:when The `divisor` function is called
+     * @custom:then The result is MAX_DIVISOR
+     */
+    function test_getDivisor() public {
+        assertEq(usdn.divisor(), maxDivisor);
+    }
+
+    /**
      * @custom:scenario Adjusting the divisor
      * @custom:given A user with 100 USDN
      * @custom:and This contract has the `ADJUSTMENT_ROLE`
