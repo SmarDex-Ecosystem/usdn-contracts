@@ -56,7 +56,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     /* -------------------------- Pending actions queue ------------------------- */
 
     function _addPendingAction(address _user, PendingAction memory _action) internal {
-        if (pendingActions[_user] > 0) revert UsdnProtocolPendingAction();
+        if (pendingActions[_user] > 0) {
+            revert UsdnProtocolPendingAction();
+        }
         // Add the action to the queue
         uint128 _rawIndex = pendingActionsQueue.pushBack(_action);
         // Store the index shifted by one, so that zero means no pending action
@@ -65,7 +67,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     function _getAndClearPendingAction(address _user) internal returns (PendingAction memory action_) {
         uint256 _pendingActionIndex = pendingActions[_user];
-        if (_pendingActionIndex == 0) revert UsdnProtocolNoPendingAction();
+        if (_pendingActionIndex == 0) {
+            revert UsdnProtocolNoPendingAction();
+        }
 
         uint128 _rawIndex = uint128(_pendingActionIndex - 1);
         action_ = pendingActionsQueue.atRaw(_rawIndex);
@@ -76,7 +80,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     }
 
     function getActionablePendingAction() public returns (PendingAction memory action_) {
-        if (pendingActionsQueue.empty()) return action_;
+        if (pendingActionsQueue.empty()) {
+            return action_;
+        }
 
         uint256 i = 0;
         do {
@@ -85,7 +91,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
                 // remove the stale pending action
                 pendingActionsQueue.popFront();
                 // if the queue is empty, return
-                if (pendingActionsQueue.empty()) return action_;
+                if (pendingActionsQueue.empty()) {
+                    return action_;
+                }
                 // otherwise, try the next one
                 continue;
             } else if (_candidate.timestamp + validationDeadline < block.timestamp) {

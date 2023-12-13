@@ -41,7 +41,9 @@ library TickMath {
      * @return tick_ the largest tick that can be used
      */
     function maxUsableTick(int24 tickSpacing) internal pure returns (int24 tick_) {
-        if (tickSpacing == 0) revert TickMathInvalidTickSpacing();
+        if (tickSpacing == 0) {
+            revert TickMathInvalidTickSpacing();
+        }
         unchecked {
             // we want to round, so divide before multiply is desired
             // slither-disable-next-line divide-before-multiply
@@ -55,7 +57,9 @@ library TickMath {
      * @return tick_ the smallest tick that can be used
      */
     function minUsableTick(int24 tickSpacing) internal pure returns (int24 tick_) {
-        if (tickSpacing == 0) revert TickMathInvalidTickSpacing();
+        if (tickSpacing == 0) {
+            revert TickMathInvalidTickSpacing();
+        }
         unchecked {
             // we want to round, so divide before multiply is desired
             // slither-disable-next-line divide-before-multiply
@@ -70,8 +74,12 @@ library TickMath {
      * @return price_ the corresponding price
      */
     function getPriceAtTick(int24 tick) internal pure returns (uint256 price_) {
-        if (tick > MAX_TICK) revert TickMathInvalidTick();
-        if (tick < MIN_TICK) revert TickMathInvalidTick();
+        if (tick > MAX_TICK) {
+            revert TickMathInvalidTick();
+        }
+        if (tick < MIN_TICK) {
+            revert TickMathInvalidTick();
+        }
         price_ = uint256(FixedPointMathLib.expWad(tick * LN_BASE));
     }
 
@@ -82,8 +90,12 @@ library TickMath {
      * @return tick_ the largest tick which price is less than or equal to the given price
      */
     function getTickAtPrice(uint256 price) internal pure returns (int24 tick_) {
-        if (price < MIN_PRICE) revert TickMathInvalidPrice();
-        if (price > MAX_PRICE) revert TickMathInvalidPrice();
+        if (price < MIN_PRICE) {
+            revert TickMathInvalidPrice();
+        }
+        if (price > MAX_PRICE) {
+            revert TickMathInvalidPrice();
+        }
 
         int256 ln = FixedPointMathLib.lnWad(int256(price));
         if (ln == 0) {
@@ -108,8 +120,12 @@ library TickMath {
      * @return tick_ the closest tick to the given price
      */
     function getClosestTickAtPrice(uint256 price) internal pure returns (int24 tick_) {
-        if (price < MIN_PRICE) revert TickMathInvalidPrice();
-        if (price > MAX_PRICE) revert TickMathInvalidPrice();
+        if (price < MIN_PRICE) {
+            revert TickMathInvalidPrice();
+        }
+        if (price > MAX_PRICE) {
+            revert TickMathInvalidPrice();
+        }
 
         int256 ln = FixedPointMathLib.lnWad(int256(price));
         // rounded up and down

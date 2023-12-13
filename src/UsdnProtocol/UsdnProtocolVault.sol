@@ -15,7 +15,9 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
     uint256 constant MIN_USDN_SUPPLY = 1000;
 
     function initiateDeposit(uint128 _amount, bytes calldata _previousActionPriceData) external payable {
-        if (_amount == 0) revert UsdnProtocolZeroAmount();
+        if (_amount == 0) {
+            revert UsdnProtocolZeroAmount();
+        }
 
         // TODO: validate previous action if needed, using the provided price update
         _previousActionPriceData;
@@ -48,7 +50,9 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
     }
 
     function initiateWithdrawal(uint128 _usdnAmount, bytes calldata _previousActionPriceData) external payable {
-        if (_usdnAmount == 0) revert UsdnProtocolZeroAmount();
+        if (_usdnAmount == 0) {
+            revert UsdnProtocolZeroAmount();
+        }
 
         // TODO: validate previous action if needed, using the provided price update
         _previousActionPriceData;
@@ -85,7 +89,9 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         PendingAction memory _deposit = _getAndClearPendingAction(_user);
 
         // check type of action
-        if (_deposit.action != ProtocolAction.InitiateDeposit) revert UsdnProtocolInvalidPendingAction();
+        if (_deposit.action != ProtocolAction.InitiateDeposit) {
+            revert UsdnProtocolInvalidPendingAction();
+        }
 
         PriceInfo memory _depositPrice = oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             _deposit.timestamp, ProtocolAction.ValidateDeposit, _priceData
@@ -106,7 +112,9 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         PendingAction memory _withdrawal = _getAndClearPendingAction(_user);
 
         // check type of action
-        if (_withdrawal.action != ProtocolAction.InitiateWithdrawal) revert UsdnProtocolInvalidPendingAction();
+        if (_withdrawal.action != ProtocolAction.InitiateWithdrawal) {
+            revert UsdnProtocolInvalidPendingAction();
+        }
 
         // check supply
         uint256 _totalSupply = usdn.totalSupply();
