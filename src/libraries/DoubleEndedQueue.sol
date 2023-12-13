@@ -51,7 +51,9 @@ library DoubleEndedQueue {
     function pushBack(Deque storage deque, PendingAction memory value) internal returns (uint128 backIndex_) {
         unchecked {
             backIndex_ = deque._end;
-            if (backIndex_ + 1 == deque._begin) revert QueueFull();
+            if (backIndex_ + 1 == deque._begin) {
+                revert QueueFull();
+            }
             deque._data[backIndex_] = value;
             deque._end = backIndex_ + 1;
         }
@@ -66,7 +68,9 @@ library DoubleEndedQueue {
     function popBack(Deque storage deque) internal returns (PendingAction memory value_) {
         unchecked {
             uint128 backIndex = deque._end;
-            if (backIndex == deque._begin) revert QueueEmpty();
+            if (backIndex == deque._begin) {
+                revert QueueEmpty();
+            }
             --backIndex;
             value_ = deque._data[backIndex];
             delete deque._data[backIndex];
@@ -84,7 +88,9 @@ library DoubleEndedQueue {
     function pushFront(Deque storage deque, PendingAction memory value) internal returns (uint128 frontIndex_) {
         unchecked {
             frontIndex_ = deque._begin - 1;
-            if (frontIndex_ == deque._end) revert QueueFull();
+            if (frontIndex_ == deque._end) {
+                revert QueueFull();
+            }
             deque._data[frontIndex_] = value;
             deque._begin = frontIndex_;
         }
@@ -99,7 +105,9 @@ library DoubleEndedQueue {
     function popFront(Deque storage deque) internal returns (PendingAction memory value_) {
         unchecked {
             uint128 frontIndex = deque._begin;
-            if (frontIndex == deque._end) revert QueueEmpty();
+            if (frontIndex == deque._end) {
+                revert QueueEmpty();
+            }
             value_ = deque._data[frontIndex];
             delete deque._data[frontIndex];
             deque._begin = frontIndex + 1;
@@ -113,7 +121,9 @@ library DoubleEndedQueue {
      * @return value_ The item at the front of the queue.
      */
     function front(Deque storage deque) internal view returns (PendingAction memory value_) {
-        if (empty(deque)) revert QueueEmpty();
+        if (empty(deque)) {
+            revert QueueEmpty();
+        }
         value_ = deque._data[deque._begin];
     }
 
@@ -124,7 +134,9 @@ library DoubleEndedQueue {
      * @return value_ The item at the back of the queue.
      */
     function back(Deque storage deque) internal view returns (PendingAction memory value_) {
-        if (empty(deque)) revert QueueEmpty();
+        if (empty(deque)) {
+            revert QueueEmpty();
+        }
         unchecked {
             value_ = deque._data[deque._end - 1];
         }
@@ -139,7 +151,9 @@ library DoubleEndedQueue {
      * @return value_ The item at the given index.
      */
     function at(Deque storage deque, uint256 index) internal view returns (PendingAction memory value_) {
-        if (index >= length(deque)) revert QueueOutOfBounds();
+        if (index >= length(deque)) {
+            revert QueueOutOfBounds();
+        }
         // By construction, length is a uint128, so the check above ensures that index can be safely downcast to uint128
         unchecked {
             value_ = deque._data[deque._begin + uint128(index)];
