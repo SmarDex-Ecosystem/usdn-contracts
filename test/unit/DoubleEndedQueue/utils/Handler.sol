@@ -5,7 +5,9 @@ import { DoubleEndedQueue, PendingAction } from "src/libraries/DoubleEndedQueue.
 
 /**
  * @title DequeHandler
- * @dev Wrapper to get gas usage report and coverage report
+ * @dev Wrapper to get gas usage report and coverage report.
+ * Note that having `using DoubleEndedQueue for DoubleEndedQueue.Deque` and calling `queue.something()` does not make
+ * the calls appear in coverage report.
  */
 contract DequeHandler {
     DoubleEndedQueue.Deque queue;
