@@ -23,7 +23,7 @@ import { IUsdn, IERC20, IERC20Permit } from "src/interfaces/IUsdn.sol";
  */
 contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
-    /*                           Variables and constants                          */
+    /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
@@ -32,33 +32,38 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @inheritdoc IUsdn
     bytes32 public constant ADJUSTMENT_ROLE = keccak256("ADJUSTMENT_ROLE");
 
-    /// @dev Mapping from account to number of shares
-    mapping(address account => uint256) private shares;
-
-    /// @inheritdoc IUsdn
-    uint256 public totalShares;
-
     /// @dev The maximum divisor that can be set. This is the initial value.
-    uint256 internal constant MAX_DIVISOR = 1e18;
+    uint256 public constant MAX_DIVISOR = 1e18;
+
     /**
      * @dev The minimum divisor that can be set. This corresponds to a growth of 1B times. Technically, 1e5 would still
      * work without precision errors.
      */
-    uint256 internal constant MIN_DIVISOR = 1e9;
+    uint256 public constant MIN_DIVISOR = 1e9;
+
+    string internal constant NAME = "Ultimate Synthetic Delta Neutral";
+    string internal constant SYMBOL = "USDN";
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Storage variables                             */
+    /* -------------------------------------------------------------------------- */
+
+    /// @dev Mapping from account to number of shares
+    mapping(address account => uint256) internal _shares;
+
+    /// @dev Sum of all the shares
+    uint256 internal _totalShares;
 
     /// @dev Divisor used to convert between shares and tokens.
-    uint256 internal divisor = MAX_DIVISOR;
+    uint256 internal _divisor = MAX_DIVISOR;
 
-    string private constant NAME = "Ultimate Synthetic Delta Neutral";
-    string private constant SYMBOL = "USDN";
-
-    constructor(address _minter, address _adjuster) ERC20(NAME, SYMBOL) ERC20Permit(NAME) {
+    constructor(address minter, address adjuster) ERC20(NAME, SYMBOL) ERC20Permit(NAME) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        if (_minter != address(0)) {
-            _grantRole(MINTER_ROLE, _minter);
+        if (minter != address(0)) {
+            _grantRole(MINTER_ROLE, minter);
         }
-        if (_adjuster != address(0)) {
-            _grantRole(ADJUSTMENT_ROLE, _adjuster);
+        if (adjuster != address(0)) {
+            _grantRole(ADJUSTMENT_ROLE, adjuster);
         }
     }
 
@@ -68,12 +73,12 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
 
     /// @inheritdoc IERC20
     function totalSupply() public view override(ERC20, IERC20) returns (uint256) {
-        return convertToTokens(totalShares);
+        return convertToTokens(_totalShares);
     }
 
     /// @inheritdoc IERC20
-    function balanceOf(address _account) public view override(ERC20, IERC20) returns (uint256) {
-        return convertToTokens(sharesOf(_account));
+    function balanceOf(address account) public view override(ERC20, IERC20) returns (uint256) {
+        return convertToTokens(sharesOf(account));
     }
 
     /**
@@ -89,13 +94,13 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function burn(uint256 _amount) public override(ERC20Burnable, IUsdn) {
-        super.burn(_amount);
+    function burn(uint256 amount) public override(ERC20Burnable, IUsdn) {
+        super.burn(amount);
     }
 
     /// @inheritdoc IUsdn
-    function burnFrom(address _account, uint256 _amount) public override(ERC20Burnable, IUsdn) {
-        super.burnFrom(_account, _amount);
+    function burnFrom(address account, uint256 amount) public override(ERC20Burnable, IUsdn) {
+        super.burnFrom(account, amount);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -103,40 +108,50 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function sharesOf(address _account) public view returns (uint256) {
-        return shares[_account];
+    function sharesOf(address account) public view returns (uint256) {
+        return _shares[account];
     }
 
     /// @inheritdoc IUsdn
-    function convertToTokens(uint256 _amountShares) public view returns (uint256 tokens_) {
-        uint256 _tokensDown = _amountShares / divisor;
-        if (_tokensDown == maxTokens()) {
+    function totalShares() external view returns (uint256) {
+        return _totalShares;
+    }
+
+    /// @inheritdoc IUsdn
+    function convertToTokens(uint256 amountShares) public view returns (uint256 tokens_) {
+        uint256 tokensDown = amountShares / _divisor;
+        if (tokensDown == maxTokens()) {
             // early return, we can't have a token amount larger than maxTokens()
-            return _tokensDown;
+            return tokensDown;
         }
-        uint256 _tokensUp = _tokensDown + 1;
+        uint256 tokensUp = tokensDown + 1;
         // slither-disable-next-line divide-before-multiply
-        uint256 _sharesDown = _tokensDown * divisor;
+        uint256 sharesDown = tokensDown * _divisor;
         // slither-disable-next-line divide-before-multiply
-        uint256 _sharesUp = _tokensUp * divisor;
-        if (_amountShares - _sharesDown <= _sharesUp - _amountShares) {
-            tokens_ = _tokensDown;
+        uint256 sharesUp = tokensUp * _divisor;
+        if (amountShares - sharesDown <= sharesUp - amountShares) {
+            tokens_ = tokensDown;
         } else {
-            tokens_ = _tokensUp;
+            tokens_ = tokensUp;
         }
     }
 
     /// @inheritdoc IUsdn
-    function convertToShares(uint256 _amountTokens) public view returns (uint256 shares_) {
-        if (_amountTokens > maxTokens()) {
-            revert UsdnMaxTokensExceeded(_amountTokens);
+    function convertToShares(uint256 amountTokens) public view returns (uint256 shares_) {
+        if (amountTokens > maxTokens()) {
+            revert UsdnMaxTokensExceeded(amountTokens);
         }
-        shares_ = _amountTokens * divisor;
+        shares_ = amountTokens * _divisor;
+    }
+
+    /// @inheritdoc IUsdn
+    function divisor() external view returns (uint256) {
+        return _divisor;
     }
 
     /// @inheritdoc IUsdn
     function maxTokens() public view returns (uint256) {
-        return type(uint256).max / divisor;
+        return type(uint256).max / _divisor;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -144,21 +159,21 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdn
-    function mint(address _to, uint256 _amount) external onlyRole(MINTER_ROLE) {
-        _mint(_to, _amount);
+    function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
+        _mint(to, amount);
     }
 
     /// @inheritdoc IUsdn
-    function adjustDivisor(uint256 _divisor) external onlyRole(ADJUSTMENT_ROLE) {
-        if (_divisor >= divisor) {
+    function adjustDivisor(uint256 newDivisor) external onlyRole(ADJUSTMENT_ROLE) {
+        if (newDivisor >= _divisor) {
             // Divisor can only be decreased
-            revert UsdnInvalidDivisor(_divisor);
+            revert UsdnInvalidDivisor(newDivisor);
         }
-        if (_divisor < MIN_DIVISOR) {
-            revert UsdnInvalidDivisor(_divisor);
+        if (newDivisor < MIN_DIVISOR) {
+            revert UsdnInvalidDivisor(newDivisor);
         }
-        emit DivisorAdjusted(divisor, _divisor);
-        divisor = _divisor;
+        emit DivisorAdjusted(_divisor, newDivisor);
+        _divisor = newDivisor;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -169,58 +184,58 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @dev Transfer a `value` amount of tokens from `from` to `to`, or alternatively mint (or burn) if `from` or `to`
      * is the zero address.
      * Emits a {Transfer} event.
-     * @param _from the source address
-     * @param _to the destination address
-     * @param _value the amount of tokens to transfer, is internally converted to shares
+     * @param from the source address
+     * @param to the destination address
+     * @param value the amount of tokens to transfer, is internally converted to shares
      */
-    function _update(address _from, address _to, uint256 _value) internal override {
-        // Convert the value to shares, reverts with `UsdnMaxTokensExceeded()` if _value is too high.
-        uint256 _valueShares = convertToShares(_value);
-        uint256 _fromBalance = balanceOf(_from);
+    function _update(address from, address to, uint256 value) internal override {
+        // Convert the value to shares, reverts with `UsdnMaxTokensExceeded()` if value is too high.
+        uint256 valueShares = convertToShares(value);
+        uint256 fromBalance = balanceOf(from);
 
-        if (_from == address(0)) {
+        if (from == address(0)) {
             // Mint
             unchecked {
-                uint256 _res = totalShares + _valueShares;
+                uint256 res = _totalShares + valueShares;
                 // Overflow check required, the rest of the code assumes that totalShares never overflows
-                if (_res < totalShares) {
+                if (res < _totalShares) {
                     revert UsdnTotalSupplyOverflow();
                 }
-                totalShares = _res;
+                _totalShares = res;
             }
         } else {
-            uint256 _fromShares = shares[_from];
-            // Perform the balance check on the amount of tokens, since due to rounding errors, _valueShares can be
-            // slightly larger than _fromShares.
-            if (_fromBalance < _value) {
-                revert ERC20InsufficientBalance(_from, _fromBalance, _value);
+            uint256 fromShares = _shares[from];
+            // Perform the balance check on the amount of tokens, since due to rounding errors, valueShares can be
+            // slightly larger than fromShares.
+            if (fromBalance < value) {
+                revert ERC20InsufficientBalance(from, fromBalance, value);
             }
-            if (_valueShares <= _fromShares) {
-                // Since _valueShares <= _fromShares, we can safely subtract _valueShares from _fromShares
+            if (valueShares <= fromShares) {
+                // Since valueShares <= fromShares, we can safely subtract valueShares from fromShares
                 unchecked {
-                    shares[_from] -= _valueShares;
+                    _shares[from] -= valueShares;
                 }
             } else {
-                // Due to a rounding error, _valueShares can be slightly larger than _fromShares. In this case, we
+                // Due to a rounding error, valueShares can be slightly larger than fromShares. In this case, we
                 // simply set the balance to zero and adjust the transferred amount of shares.
-                shares[_from] = 0;
-                _valueShares = _fromShares;
+                _shares[from] = 0;
+                valueShares = fromShares;
             }
         }
 
-        if (_to == address(0)) {
-            // Burn: Since _valueShares <= _fromShares <= totalShares, we can safely subtract _valueShares from
+        if (to == address(0)) {
+            // Burn: Since valueShares <= fromShares <= totalShares, we can safely subtract valueShares from
             // totalShares
             unchecked {
-                totalShares -= _valueShares;
+                _totalShares -= valueShares;
             }
         } else {
-            // Since shares + _valueShares <= totalShares, we can safely add _valueShares to the user shares
+            // Since shares + valueShares <= totalShares, we can safely add valueShares to the user shares
             unchecked {
-                shares[_to] += _valueShares;
+                _shares[to] += valueShares;
             }
         }
 
-        emit Transfer(_from, _to, _value);
+        emit Transfer(from, to, value);
     }
 }

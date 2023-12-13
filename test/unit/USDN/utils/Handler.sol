@@ -14,7 +14,7 @@ contract UsdnHandler is Usdn, Test {
     address[] public actors;
 
     // current actor
-    address internal currentActor;
+    address internal _currentActor;
 
     // track theoretical shares
     mapping(address account => uint256) public shares;
@@ -24,14 +24,6 @@ contract UsdnHandler is Usdn, Test {
 
     constructor(address[] memory _actors) Usdn(address(0), address(0)) {
         actors = _actors;
-    }
-
-    function maxDivisor() external pure returns (uint256) {
-        return MAX_DIVISOR;
-    }
-
-    function minDivisor() external pure returns (uint256) {
-        return MIN_DIVISOR;
     }
 
     function approve(address _owner, address _spender, uint256 _value) external {
@@ -50,20 +42,20 @@ contract UsdnHandler is Usdn, Test {
 
     modifier useActor(uint256 actorIndexSeed) {
         console.log("bound actor ID");
-        currentActor = actors[bound(actorIndexSeed, 0, actors.length - 1)];
-        vm.startPrank(currentActor);
+        _currentActor = actors[bound(actorIndexSeed, 0, actors.length - 1)];
+        vm.startPrank(_currentActor);
         _;
         vm.stopPrank();
     }
 
-    function adjustDivisorTest(uint256 _divisor) external {
-        if (divisor == MIN_DIVISOR) {
+    function adjustDivisorTest(uint256 newDivisor) external {
+        if (_divisor == MIN_DIVISOR) {
             return;
         }
         console.log("bound divisor");
-        _divisor = bound(_divisor, MIN_DIVISOR, divisor - 1);
-        emit DivisorAdjusted(divisor, _divisor);
-        divisor = _divisor;
+        newDivisor = bound(newDivisor, MIN_DIVISOR, _divisor - 1);
+        emit DivisorAdjusted(_divisor, newDivisor);
+        _divisor = newDivisor;
     }
 
     function mintTest(uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
@@ -72,39 +64,39 @@ contract UsdnHandler is Usdn, Test {
         }
         console.log("bound mint value");
         value = bound(value, 1, maxTokens() - totalSupply());
-        uint256 valueShares = value * divisor;
+        uint256 valueShares = value * _divisor;
         totalSharesSum += valueShares;
-        shares[currentActor] += valueShares;
-        _mint(currentActor, value);
+        shares[_currentActor] += valueShares;
+        _mint(_currentActor, value);
     }
 
     function burnTest(uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
-        if (balanceOf(currentActor) == 0) {
+        if (balanceOf(_currentActor) == 0) {
             return;
         }
         console.log("bound burn value");
-        value = bound(value, 1, balanceOf(currentActor));
-        uint256 valueShares = value * divisor;
+        value = bound(value, 1, balanceOf(_currentActor));
+        uint256 valueShares = value * _divisor;
         totalSharesSum -= valueShares;
-        shares[currentActor] -= valueShares;
-        _burn(currentActor, value);
+        shares[_currentActor] -= valueShares;
+        _burn(_currentActor, value);
     }
 
     function transferTest(uint256 actorTo, uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
         console.log("bound 'to' actor ID");
         address to = actors[bound(actorTo, 0, actors.length - 1)];
-        if (balanceOf(currentActor) == 0) {
+        if (balanceOf(_currentActor) == 0) {
             return;
         }
         console.log("bound transfer value");
-        value = bound(value, 1, balanceOf(currentActor));
-        uint256 valueShares = value * divisor;
-        if (valueShares > shares[currentActor]) {
-            valueShares = shares[currentActor];
+        value = bound(value, 1, balanceOf(_currentActor));
+        uint256 valueShares = value * _divisor;
+        if (valueShares > shares[_currentActor]) {
+            valueShares = shares[_currentActor];
         }
 
-        shares[currentActor] -= valueShares;
+        shares[_currentActor] -= valueShares;
         shares[to] += valueShares;
-        _transfer(currentActor, to, value);
+        _transfer(_currentActor, to, value);
     }
 }

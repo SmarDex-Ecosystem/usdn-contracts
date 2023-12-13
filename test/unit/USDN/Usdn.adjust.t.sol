@@ -16,8 +16,8 @@ contract TestUsdnAdjust is UsdnTokenFixture {
 
     function setUp() public override {
         super.setUp();
-        maxDivisor = usdn.maxDivisor();
-        minDivisor = usdn.minDivisor();
+        maxDivisor = usdn.MAX_DIVISOR();
+        minDivisor = usdn.MIN_DIVISOR();
     }
 
     /**

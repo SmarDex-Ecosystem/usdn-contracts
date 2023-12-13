@@ -34,9 +34,9 @@ contract TestUsdnMint is UsdnTokenFixture {
         usdn.mint(USER_1, 100 ether);
 
         assertEq(usdn.balanceOf(USER_1), 100 ether, "balance of user");
-        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.maxDivisor(), "shares of user");
+        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.MAX_DIVISOR(), "shares of user");
         assertEq(usdn.totalSupply(), 100 ether, "total supply");
-        assertEq(usdn.totalShares(), 100 ether * usdn.maxDivisor(), "total shares");
+        assertEq(usdn.totalShares(), 100 ether * usdn.MAX_DIVISOR(), "total shares");
     }
 
     /**
@@ -54,16 +54,16 @@ contract TestUsdnMint is UsdnTokenFixture {
     function test_mintWithMultiplier() public {
         usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
 
-        usdn.adjustDivisor(usdn.maxDivisor() / 2);
+        usdn.adjustDivisor(usdn.MAX_DIVISOR() / 2);
 
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(address(0), USER_1, 100 ether); // expected event
         usdn.mint(USER_1, 100 ether);
 
         assertEq(usdn.balanceOf(USER_1), 100 ether, "balance of user");
-        assertEq(usdn.sharesOf(USER_1), 50 ether * usdn.maxDivisor(), "shares of user");
+        assertEq(usdn.sharesOf(USER_1), 50 ether * usdn.MAX_DIVISOR(), "shares of user");
         assertEq(usdn.totalSupply(), 100 ether, "total supply");
-        assertEq(usdn.totalShares(), 50 ether * usdn.maxDivisor(), "total shares");
+        assertEq(usdn.totalShares(), 50 ether * usdn.MAX_DIVISOR(), "total shares");
     }
 
     /**
@@ -79,9 +79,9 @@ contract TestUsdnMint is UsdnTokenFixture {
         uint256 maxTokens = usdn.maxTokens();
         usdn.mint(USER_1, maxTokens);
 
-        usdn.adjustDivisor(usdn.minDivisor());
+        usdn.adjustDivisor(usdn.MIN_DIVISOR());
 
-        assertEq(usdn.balanceOf(USER_1), maxTokens * usdn.maxDivisor() / usdn.minDivisor());
+        assertEq(usdn.balanceOf(USER_1), maxTokens * usdn.MAX_DIVISOR() / usdn.MIN_DIVISOR());
     }
 
     /**

@@ -11,10 +11,10 @@ import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IER
 interface IUsdnEvents {
     /**
      * @notice Emitted when the divisor is adjusted.
-     * @param old_divisor divisor before adjustment
-     * @param new_divisor divisor after adjustment
+     * @param oldDivisor divisor before adjustment
+     * @param newDivisor divisor after adjustment
      */
-    event DivisorAdjusted(uint256 old_divisor, uint256 new_divisor);
+    event DivisorAdjusted(uint256 oldDivisor, uint256 newDivisor);
 }
 
 /**
@@ -109,9 +109,22 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      */
     function adjustDivisor(uint256 divisor) external;
 
+    /* -------------------------------------------------------------------------- */
+    /*                             Dev view functions                             */
+    /* -------------------------------------------------------------------------- */
+
+    /// @dev The current values of the divisor that converts between tokens and shares.
+    function divisor() external view returns (uint256);
+
     /// @dev Minter role signature.
     function MINTER_ROLE() external pure returns (bytes32);
 
     /// @dev Adjustment role signature.
     function ADJUSTMENT_ROLE() external pure returns (bytes32);
+
+    /// @dev Maximum value of the divisor, which is also the intitial value.
+    function MAX_DIVISOR() external pure returns (uint256);
+
+    /// @dev Minimum acceptable value of the divisor.
+    function MIN_DIVISOR() external pure returns (uint256);
 }
