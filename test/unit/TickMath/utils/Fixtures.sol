@@ -9,7 +9,7 @@ import { TickMathHandler } from "test/unit/TickMath/utils/Handler.sol";
  * @dev Utils for testing TickMath.sol
  */
 contract TickMathFixture is BaseFixture {
-    TickMathHandler handler; // wrapper to get gas usage report
+    TickMathHandler public handler; // wrapper to get gas usage report
 
     function setUp() public virtual {
         handler = new TickMathHandler();

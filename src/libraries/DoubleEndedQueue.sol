@@ -51,7 +51,9 @@ library DoubleEndedQueue {
     function pushBack(Deque storage deque, PendingAction memory value) internal returns (uint128 backIndex_) {
         unchecked {
             backIndex_ = deque._end;
-            if (backIndex_ + 1 == deque._begin) revert QueueFull();
+            if (backIndex_ + 1 == deque._begin) {
+                revert QueueFull();
+            }
             deque._data[backIndex_] = value;
             deque._end = backIndex_ + 1;
         }
@@ -66,7 +68,9 @@ library DoubleEndedQueue {
     function popBack(Deque storage deque) internal returns (PendingAction memory value_) {
         unchecked {
             uint128 backIndex = deque._end;
-            if (backIndex == deque._begin) revert QueueEmpty();
+            if (backIndex == deque._begin) {
+                revert QueueEmpty();
+            }
             --backIndex;
             value_ = deque._data[backIndex];
             delete deque._data[backIndex];
@@ -77,16 +81,18 @@ library DoubleEndedQueue {
     /**
      * @dev Inserts an item at the beginning of the queue.
      * Reverts with {QueueFull} if the queue is full.
-     * TODO: remove?
      * @param deque The queue.
      * @param value The item to insert.
+     * @return frontIndex_ The raw index of the inserted item.
      */
-    function pushFront(Deque storage deque, PendingAction memory value) internal {
+    function pushFront(Deque storage deque, PendingAction memory value) internal returns (uint128 frontIndex_) {
         unchecked {
-            uint128 frontIndex = deque._begin - 1;
-            if (frontIndex == deque._end) revert QueueFull();
-            deque._data[frontIndex] = value;
-            deque._begin = frontIndex;
+            frontIndex_ = deque._begin - 1;
+            if (frontIndex_ == deque._end) {
+                revert QueueFull();
+            }
+            deque._data[frontIndex_] = value;
+            deque._begin = frontIndex_;
         }
     }
 
@@ -99,7 +105,9 @@ library DoubleEndedQueue {
     function popFront(Deque storage deque) internal returns (PendingAction memory value_) {
         unchecked {
             uint128 frontIndex = deque._begin;
-            if (frontIndex == deque._end) revert QueueEmpty();
+            if (frontIndex == deque._end) {
+                revert QueueEmpty();
+            }
             value_ = deque._data[frontIndex];
             delete deque._data[frontIndex];
             deque._begin = frontIndex + 1;
@@ -113,19 +121,22 @@ library DoubleEndedQueue {
      * @return value_ The item at the front of the queue.
      */
     function front(Deque storage deque) internal view returns (PendingAction memory value_) {
-        if (empty(deque)) revert QueueEmpty();
+        if (empty(deque)) {
+            revert QueueEmpty();
+        }
         value_ = deque._data[deque._begin];
     }
 
     /**
      * @dev Returns the item at the end of the queue.
      * Reverts with `QueueEmpty` if the queue is empty.
-     * TODO: remove?
      * @param deque The queue.
      * @return value_ The item at the back of the queue.
      */
     function back(Deque storage deque) internal view returns (PendingAction memory value_) {
-        if (empty(deque)) revert QueueEmpty();
+        if (empty(deque)) {
+            revert QueueEmpty();
+        }
         unchecked {
             value_ = deque._data[deque._end - 1];
         }
@@ -135,13 +146,14 @@ library DoubleEndedQueue {
      * @dev Return the item at a position in the queue given by `index`, with the first item at 0 and last item at
      * `length(deque) - 1`.
      * Reverts with `QueueOutOfBounds` if the index is out of bounds.
-     * TODO: remove?
      * @param deque The queue.
      * @param index The index of the item to return.
      * @return value_ The item at the given index.
      */
     function at(Deque storage deque, uint256 index) internal view returns (PendingAction memory value_) {
-        if (index >= length(deque)) revert QueueOutOfBounds();
+        if (index >= length(deque)) {
+            revert QueueOutOfBounds();
+        }
         // By construction, length is a uint128, so the check above ensures that index can be safely downcast to uint128
         unchecked {
             value_ = deque._data[deque._begin + uint128(index)];
