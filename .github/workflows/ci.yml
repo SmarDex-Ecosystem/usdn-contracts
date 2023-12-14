@@ -58,4 +58,5 @@ jobs:
         run: pip3 install slither-analyzer
 
       - name: Run slither
-        run: npm run slither
+        run: |
+          slither --fail-none --json - . | jq '.results.detectors[] | "::warning file=\( .elements[0].source_mapping.filename_relative ),col=\( .elements[0].source_mapping.starting_column ),endColumn=\( .elements[0].source_mapping.ending_column ),line=\( .elements[0].source_mapping.lines[0] )\( if .elements[0].source_mapping.lines[0] == .elements[0].source_mapping.lines[-1] then "" else ",endLine=" + "\( .elements[0].source_mapping.lines[-1] )" end )::\( .description )"' | xargs -n1 echo
