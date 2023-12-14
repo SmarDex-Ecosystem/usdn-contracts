@@ -27,10 +27,10 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @param tokens The amount of tokens to convert
      */
     function testFuzz_convertBetweenTokensAndShares(uint256 divisor, uint256 tokens) public {
-        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
+        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         tokens = bound(tokens, 0, usdn.maxTokens());
 
-        if (divisor < usdn.maxDivisor()) {
+        if (divisor < usdn.MAX_DIVISOR()) {
             usdn.adjustDivisor(divisor);
         }
 
@@ -52,10 +52,10 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @param transferAmount The amount of tokens to transfer
      */
     function testFuzz_balance(uint256 divisor, uint256 transferAmount) public {
-        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
+        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         transferAmount = bound(transferAmount, 0, usdn.maxTokens());
 
-        if (divisor < usdn.maxDivisor()) {
+        if (divisor < usdn.MAX_DIVISOR()) {
             usdn.adjustDivisor(divisor);
         }
 
@@ -83,12 +83,12 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @param transferAmount The amount of tokens to transfer
      */
     function testFuzz_balanceAfterMultiplier(uint256 divisor, uint256 transferAmount) public {
-        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
+        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         transferAmount = bound(transferAmount, 0, usdn.maxTokens());
 
         usdn.mint(address(this), usdn.maxTokens());
 
-        if (divisor < usdn.maxDivisor()) {
+        if (divisor < usdn.MAX_DIVISOR()) {
             usdn.adjustDivisor(divisor);
         }
 
@@ -111,8 +111,8 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @param divisor The divisor to use
      */
     function testFuzz_totalSupply(uint256 divisor) public {
-        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
-        if (divisor < usdn.maxDivisor()) {
+        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
+        if (divisor < usdn.MAX_DIVISOR()) {
             usdn.adjustDivisor(divisor);
         }
 
@@ -138,11 +138,11 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @param tokens The amount of tokens to mint and burn
      */
     function testFuzz_totalBurn(uint256 divisor, uint256 tokens) public {
-        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
-        tokens = bound(tokens, 0, usdn.maxTokens());
+        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
+        tokens = bound(tokens, 0, usdn.MAX_DIVISOR());
 
         usdn.mint(address(this), tokens);
-        if (divisor < usdn.maxDivisor()) {
+        if (divisor < usdn.MAX_DIVISOR()) {
             usdn.adjustDivisor(divisor);
         }
 
@@ -164,12 +164,12 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @param tokens the amount of tokens to transfer
      */
     function testFuzz_partialTransfer(uint256 divisor, uint256 tokens) public {
-        divisor = bound(divisor, usdn.minDivisor(), usdn.maxDivisor());
+        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         tokens = bound(tokens, 0, usdn.maxTokens());
 
         usdn.mint(address(this), usdn.maxTokens());
         uint256 sharesBefore = usdn.sharesOf(address(this));
-        if (divisor < usdn.maxDivisor()) {
+        if (divisor < usdn.MAX_DIVISOR()) {
             usdn.adjustDivisor(divisor);
         }
 
@@ -179,8 +179,8 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         assertEq(usdn.balanceOf(USER_1), tokens, "user balance increase");
         assertEq(usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), sharesBefore, "sum of the share balances");
 
-        if (divisor != usdn.minDivisor()) {
-            usdn.adjustDivisor(usdn.minDivisor());
+        if (divisor != usdn.MIN_DIVISOR()) {
+            usdn.adjustDivisor(usdn.MIN_DIVISOR());
         }
 
         assertEq(usdn.balanceOf(address(this)) + usdn.balanceOf(USER_1), usdn.totalSupply(), "total supply");
