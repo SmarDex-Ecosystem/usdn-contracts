@@ -10,7 +10,7 @@ import { DoubleEndedQueue, PendingAction } from "src/libraries/DoubleEndedQueue.
  * the calls appear in coverage report.
  */
 contract DequeHandler {
-    DoubleEndedQueue.Deque queue;
+    DoubleEndedQueue.Deque public queue;
 
     function pushBack(PendingAction memory value) public returns (uint128) {
         return DoubleEndedQueue.pushBack(queue, value);

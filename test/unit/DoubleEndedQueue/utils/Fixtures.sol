@@ -11,7 +11,7 @@ import { PendingAction } from "src/libraries/DoubleEndedQueue.sol";
  * @dev Utils for testing DoubleEndedQueue.sol
  */
 contract DequeFixture is BaseFixture {
-    DequeHandler handler; // wrapper to get gas usage report
+    DequeHandler public handler; // wrapper to get gas usage report
 
     function setUp() public virtual {
         handler = new DequeHandler();

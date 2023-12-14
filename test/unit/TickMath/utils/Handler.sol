@@ -8,7 +8,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
  * @dev Wrapper to get gas usage report and coverage report
  */
 contract TickMathHandler {
-    mapping(int24 => int24) a;
+    mapping(int24 => int24) public a;
 
     function maxUsableTick(int24 tickSpacing) external pure returns (int24) {
         return TickMath.maxUsableTick(tickSpacing);

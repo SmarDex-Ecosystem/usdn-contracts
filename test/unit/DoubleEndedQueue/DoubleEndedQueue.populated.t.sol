@@ -13,12 +13,12 @@ import { DoubleEndedQueue, ProtocolAction, PendingAction } from "src/libraries/D
  * @custom:background Given the deque has 3 elements
  */
 contract TestDequePopulated is DequeFixture {
-    PendingAction action1 = PendingAction(ProtocolAction.InitiateWithdrawal, 69, USER_1, 0, 1 ether);
-    PendingAction action2 = PendingAction(ProtocolAction.InitiateDeposit, 420, USER_1, -42, 1000 ether);
-    PendingAction action3 = PendingAction(ProtocolAction.InitiateOpenPosition, 42, USER_1, 0, 10);
-    uint128 rawIndex1;
-    uint128 rawIndex2;
-    uint128 rawIndex3;
+    PendingAction public action1 = PendingAction(ProtocolAction.InitiateWithdrawal, 69, USER_1, 0, 1 ether);
+    PendingAction public action2 = PendingAction(ProtocolAction.InitiateDeposit, 420, USER_1, -42, 1000 ether);
+    PendingAction public action3 = PendingAction(ProtocolAction.InitiateOpenPosition, 42, USER_1, 0, 10);
+    uint128 public rawIndex1;
+    uint128 public rawIndex2;
+    uint128 public rawIndex3;
 
     function setUp() public override {
         super.setUp();
