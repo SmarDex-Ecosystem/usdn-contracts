@@ -113,7 +113,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /*                             Dev view functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @dev The current values of the divisor that converts between tokens and shares.
+    /// @dev The current value of the divisor that converts between tokens and shares.
     function divisor() external view returns (uint256);
 
     /// @dev Minter role signature.
