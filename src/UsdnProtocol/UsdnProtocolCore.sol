@@ -67,6 +67,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
         uint256 pendingActionIndex = _pendingActions[user];
+        // slither-disable-next-line dangerous-strict-equalities
         if (pendingActionIndex == 0) {
             revert UsdnProtocolNoPendingAction();
         }
@@ -89,6 +90,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             PendingAction memory candidate = _pendingActionsQueue.front();
             if (candidate.timestamp == 0) {
                 // remove the stale pending action
+                // slither-disable-next-line unused-return
                 _pendingActionsQueue.popFront();
                 // if the queue is empty, return
                 if (_pendingActionsQueue.empty()) {
