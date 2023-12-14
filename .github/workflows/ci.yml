@@ -59,4 +59,4 @@ jobs:
 
       - name: Run slither
         run: |
-          slither --fail-none --json - . | jq '.results.detectors[] | "::\( if .impact == "High" then "error" elif .impact == "Medium" then "warning" else "notice" end ) file=\( .elements[0].source_mapping.filename_relative ),col=\( .elements[0].source_mapping.starting_column ),endColumn=\( .elements[0].source_mapping.ending_column ),line=\( .elements[0].source_mapping.lines[0] )\( if .elements[0].source_mapping.lines[0] == .elements[0].source_mapping.lines[-1] then "" else ",endLine=" + "\( .elements[0].source_mapping.lines[-1] )" end )::\( .description )"' | xargs -n1 echo
+          slither --fail-none --json - . | jq '.results.detectors[] | .elements[0].source_mapping as $src | "::\( if .impact == "High" then "error" elif .impact == "Medium" then "warning" else "notice" end ) file=\( $src.filename_relative ),col=\( $src.starting_column ),endColumn=\( $src.ending_column ),line=\( $src.lines[0] )\( if $src.lines[0] == $src.lines[-1] then "" else ",endLine=" + "\( $src.lines[-1] )" end )::\( .description )"' | xargs -n1 echo
