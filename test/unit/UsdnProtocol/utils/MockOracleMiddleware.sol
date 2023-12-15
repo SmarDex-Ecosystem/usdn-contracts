@@ -9,8 +9,15 @@ contract MockOracleMiddleware is IOracleMiddleware {
         payable
         returns (PriceInfo memory)
     {
+        // TODO: return different timestamp depending on action?
         uint128 priceValue = abi.decode(data, (uint128));
-        PriceInfo memory price = PriceInfo({ price: priceValue, timestamp: targetTimestamp - 12 });
+        uint128 ts = targetTimestamp;
+        if (ts >= 12) {
+            ts = ts - 12;
+        } else {
+            ts = 0;
+        }
+        PriceInfo memory price = PriceInfo({ price: priceValue, timestamp: ts });
         return price;
     }
 

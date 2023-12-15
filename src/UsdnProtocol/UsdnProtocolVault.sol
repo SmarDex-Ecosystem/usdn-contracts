@@ -27,11 +27,9 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         // TODO: validate previous action if needed, using the provided price update
         previousActionPriceData;
 
-        uint40 timestamp = uint40(block.timestamp);
-
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateDeposit,
-            timestamp: timestamp,
+            timestamp: uint40(block.timestamp),
             user: msg.sender,
             tick: 0, // unused
             amountOrIndex: amount
@@ -97,7 +95,15 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         if (deposit.action != ProtocolAction.InitiateDeposit) {
             revert UsdnProtocolInvalidPendingAction();
         }
+        // sanity check
+        if (deposit.user != user) {
+            revert UsdnProtocolInvalidPendingAction();
+        }
 
+        _validateDepositWithAction(deposit, priceData);
+    }
+
+    function _validateDepositWithAction(PendingAction memory deposit, bytes calldata priceData) internal {
         PriceInfo memory depositPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             deposit.timestamp, ProtocolAction.ValidateDeposit, priceData
         );
@@ -106,11 +112,11 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         _applyPnlAndFunding(depositPrice.price, depositPrice.timestamp);
 
         uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice.price);
-        _usdn.mint(user, usdnToMint);
+        _usdn.mint(deposit.user, usdnToMint);
 
         _balanceVault += deposit.amountOrIndex;
 
-        emit ValidatedDeposit(user, deposit.amountOrIndex, usdnToMint);
+        emit ValidatedDeposit(deposit.user, deposit.amountOrIndex, usdnToMint);
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
