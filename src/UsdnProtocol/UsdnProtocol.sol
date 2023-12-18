@@ -7,11 +7,11 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
-import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
+import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 
-contract UsdnProtocol is UsdnProtocolLong, Ownable, Initializable {
+contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
     /**
      * @notice Constructor.
      * @param usdn The USDN ERC20 contract.

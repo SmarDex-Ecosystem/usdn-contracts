@@ -35,8 +35,4 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(usdn.balanceOf(address(this)), 20_000 ether);
         assertEq(usdn.totalSupply(), 20_000 ether);
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public virtual override { }
 }
