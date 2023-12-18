@@ -4,6 +4,8 @@ pragma solidity 0.8.20;
 import { IOracleMiddleware, ProtocolAction, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware {
+    uint256 public constant validationDelay = 24 seconds;
+
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction, bytes calldata data)
         external
         payable
@@ -12,8 +14,8 @@ contract MockOracleMiddleware is IOracleMiddleware {
         // TODO: return different timestamp depending on action?
         uint128 priceValue = abi.decode(data, (uint128));
         uint128 ts = targetTimestamp;
-        if (ts >= 12) {
-            ts = ts - 12;
+        if (ts >= validationDelay) {
+            ts = ts - uint128(validationDelay); // simulate that we got the price 24 seconds ago
         } else {
             ts = 0;
         }

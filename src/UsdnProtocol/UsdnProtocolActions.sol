@@ -19,6 +19,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
      */
     uint256 constant MIN_USDN_SUPPLY = 1000;
 
+    /**
+     * @notice Initiate a deposit of assets into the vault.
+     * @dev This function is payable, and the amount of ETH sent is used to pay for low-latency price validation.
+     * @param amount The amount of wstETH to deposit.
+     * @param previousActionPriceData The price data of an actionable pending action.
+     */
     function initiateDeposit(uint128 amount, bytes calldata previousActionPriceData) external payable {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
