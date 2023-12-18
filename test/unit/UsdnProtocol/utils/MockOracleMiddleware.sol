@@ -4,8 +4,10 @@ pragma solidity 0.8.20;
 import { IOracleMiddleware, ProtocolAction, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware {
+    /// @inheritdoc IOracleMiddleware
     uint256 public constant validationDelay = 24 seconds;
 
+    /// @inheritdoc IOracleMiddleware
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction, bytes calldata data)
         external
         payable
@@ -23,10 +25,12 @@ contract MockOracleMiddleware is IOracleMiddleware {
         return price;
     }
 
+    /// @inheritdoc IOracleMiddleware
     function decimals() external pure returns (uint8) {
         return 18;
     }
 
+    /// @inheritdoc IOracleMiddleware
     function validationCost(ProtocolAction) external pure returns (uint256) {
         return 1;
     }

@@ -12,8 +12,8 @@ interface IOracleMiddleware {
     /**
      * @notice Parses and validates price data.
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
-     * @param targetTimestamp The timestamp for which the price is requested. The middleware may use this to validate
-     * whether the price is fresh enough.
+     * @param targetTimestamp The target timestamp for validating the price data. For validation actions, this is the
+     * timestamp of the initiation.
      * @param action Type of action for which the price is requested. The middleware may use this to alter the
      * validation of the price or the returned price.
      * @param data Price data, the format varies from middleware to middleware and can be different depending on the
