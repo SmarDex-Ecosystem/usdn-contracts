@@ -26,6 +26,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
 
     function initialize(uint256 depositAmount, uint128 longAmount, bytes calldata currentPriceData)
         external
+        payable
         initializer
     {
         if (depositAmount == 0) {
@@ -40,15 +41,17 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
         // TODO: perform inclusion of a long position
 
         PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.InitiateWithdrawal,
-            timestamp: uint40(block.timestamp),
-            user: msg.sender,
+            action: ProtocolAction.InitiateDeposit,
+            timestamp: 0, // not needed since we have a special ProtocolAction for init
+            user: address(0xdead), // Take the minted USDN immediately out of circulation
             tick: 0, // unused
             amountOrIndex: depositAmount
         });
 
+        // Transfer the wstETH for the deposit
         _retrieveAssetsAndCheckBalance(msg.sender, depositAmount);
         emit InitiatedDeposit(msg.sender, depositAmount);
-        _validateDepositWithAction(pendingAction, currentPriceData);
+        // Mint USDN to the "dead" address
+        _validateDepositWithAction(pendingAction, currentPriceData, true); // last parameter = initializing
     }
 }

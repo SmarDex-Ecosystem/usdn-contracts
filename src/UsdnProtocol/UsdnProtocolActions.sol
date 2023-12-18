@@ -96,13 +96,17 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        _validateDepositWithAction(deposit, priceData);
+        _validateDepositWithAction(deposit, priceData, false);
     }
 
-    function _validateDepositWithAction(PendingAction memory deposit, bytes calldata priceData) internal {
-        PriceInfo memory depositPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            deposit.timestamp, ProtocolAction.ValidateDeposit, priceData
-        );
+    function _validateDepositWithAction(PendingAction memory deposit, bytes calldata priceData, bool initializing)
+        internal
+    {
+        // During initialization, we might want to use a different oracle, so we have a special action
+        ProtocolAction action = initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateDeposit;
+
+        PriceInfo memory depositPrice =
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(deposit.timestamp, action, priceData);
 
         // adjust balances
         _applyPnlAndFunding(depositPrice.price, depositPrice.timestamp);
@@ -166,7 +170,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             // no pending action
             return;
         } else if (pending.action == ProtocolAction.InitiateDeposit) {
-            _validateDepositWithAction(pending, priceData);
+            _validateDepositWithAction(pending, priceData, false);
         } else if (pending.action == ProtocolAction.InitiateWithdrawal) {
             _validateWithdrawalWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.InitiateOpenPosition) {
