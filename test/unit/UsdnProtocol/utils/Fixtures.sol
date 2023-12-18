@@ -32,7 +32,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
     function test_setUp() public {
         assertEq(wstETH.balanceOf(address(protocol)), 10 ether);
-        assertEq(usdn.balanceOf(address(0xdead)), 20_000 ether);
+        assertEq(usdn.balanceOf(address(0xdead)), protocol.MIN_USDN_SUPPLY());
+        assertEq(usdn.balanceOf(address(this)), 20_000 ether - protocol.MIN_USDN_SUPPLY());
         assertEq(usdn.totalSupply(), 20_000 ether);
     }
 }

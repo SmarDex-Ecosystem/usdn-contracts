@@ -126,7 +126,4 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the user has a pending action but its action type is not the expected one
     error UsdnProtocolInvalidPendingAction();
-
-    /// @dev Indicates that the total supply of USDN would fall too low after a withdrawal
-    error UsdnProtocolMinTotalSupply();
 }

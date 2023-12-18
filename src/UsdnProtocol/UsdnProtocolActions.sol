@@ -14,10 +14,9 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
     /**
      * @dev The minimum total supply of USDN that we allow.
-     * This should never be a problem, because the first deposit's USDN (on initialize) is sent to the dead address and
-     * cannot be recovered.
+     * Upon the first deposit, this amount is sent to the dead address and cannot be later recovered.
      */
-    uint256 constant MIN_USDN_SUPPLY = 1000;
+    uint256 public constant MIN_USDN_SUPPLY = 1000;
 
     /**
      * @notice Initiate a deposit of assets into the vault.
@@ -115,12 +114,20 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // adjust balances
         _applyPnlAndFunding(depositPrice.price, depositPrice.timestamp);
 
-        uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice.price);
-        _usdn.mint(deposit.user, usdnToMint);
-
         _balanceVault += deposit.amountOrIndex;
 
-        emit ValidatedDeposit(deposit.user, deposit.amountOrIndex, usdnToMint);
+        uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice.price);
+        if (initializing) {
+            // we mint the minimum amount of USDN to the dead address, so that the total supply never falls to zero
+            _usdn.mint(address(0xdead), MIN_USDN_SUPPLY);
+            uint256 mintToUser = usdnToMint - MIN_USDN_SUPPLY;
+            _usdn.mint(deposit.user, mintToUser);
+            emit ValidatedDeposit(address(0xdead), 0, MIN_USDN_SUPPLY);
+            emit ValidatedDeposit(deposit.user, deposit.amountOrIndex, mintToUser);
+        } else {
+            _usdn.mint(deposit.user, usdnToMint);
+            emit ValidatedDeposit(deposit.user, deposit.amountOrIndex, usdnToMint);
+        }
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
@@ -139,12 +146,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function _validateWithdrawalWithAction(PendingAction memory withdrawal, bytes calldata priceData) internal {
-        // check supply
-        uint256 totalSupply = _usdn.totalSupply();
-        if (totalSupply - withdrawal.amountOrIndex < MIN_USDN_SUPPLY) {
-            revert UsdnProtocolMinTotalSupply(); // totalSupply cannot fall too low
-        }
-
         PriceInfo memory withdrawalPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             withdrawal.timestamp, ProtocolAction.ValidateWithdrawal, priceData
         );
@@ -157,7 +158,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             available = 0; // clamp to zero
         }
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
-        uint256 assetToTransfer = (withdrawal.amountOrIndex * uint256(available)) / totalSupply;
+        uint256 assetToTransfer = (withdrawal.amountOrIndex * uint256(available)) / _usdn.totalSupply();
         _balanceVault -= assetToTransfer;
         // we have the USDN in the contract already
         _usdn.burn(withdrawal.amountOrIndex);

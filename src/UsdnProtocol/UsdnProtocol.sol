@@ -43,7 +43,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateDeposit,
             timestamp: 0, // not needed since we have a special ProtocolAction for init
-            user: address(0xdead), // Take the minted USDN immediately out of circulation
+            user: msg.sender,
             tick: 0, // unused
             amountOrIndex: depositAmount
         });
