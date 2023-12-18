@@ -57,11 +57,9 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         _executePendingAction(previousActionPriceData);
 
-        uint40 timestamp = uint40(block.timestamp);
-
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateWithdrawal,
-            timestamp: timestamp,
+            timestamp: uint40(block.timestamp),
             user: msg.sender,
             tick: 0, // unused
             amountOrIndex: usdnAmount
