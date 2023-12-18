@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import { AggregatorInterface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorInterface.sol";
+import { PriceInfo } from "../../interfaces/IOracleMiddleware.sol";
 
 /**
  * @title ChainlinkOracle contract
@@ -21,9 +22,9 @@ contract ChainlinkOracle {
      * @notice Get the price of the asset from Chainlink
      * @return price_ The price of the asset
      */
-    function getChainlinkPrice() public view returns (uint256 price_) {
-        (, int256 _price,,,) = _priceFeed.latestRoundData();
-        price_ = uint256(_price);
+    function getChainlinkPrice() public view returns (PriceInfo memory price_) {
+        (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
+        price_ = PriceInfo(uint128(int128(price)), uint64(timestamp));
     }
 
     /**
@@ -31,9 +32,10 @@ contract ChainlinkOracle {
      * @param _decimals The number of decimals to format the price to
      * @return formattedPrice_ The formatted price of the asset
      */
-    function getFormattedChainlinkPrice(uint256 _decimals) public view returns (uint256 formattedPrice_) {
+    function getFormattedChainlinkPrice(uint256 _decimals) public view returns (PriceInfo memory formattedPrice_) {
         uint256 chainlinkDecimals = _priceFeed.decimals();
-        formattedPrice_ = getChainlinkPrice() * (10 ** _decimals) / (10 ** chainlinkDecimals);
+        formattedPrice_ = getChainlinkPrice();
+        formattedPrice_.price = uint128(uint256(formattedPrice_.price) * (10 ** _decimals) / (10 ** chainlinkDecimals));
     }
 
     /**

@@ -12,8 +12,8 @@ interface IOracleMiddleware {
     /**
      * @notice Parses and validates price data.
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
-     * @param targetTimestamp The timestamp for which the price is requested. The middleware may use this to validate
-     * whether the price is fresh enough.
+     * @param targetTimestamp The target timestamp for validating the price data. For validation actions, this is the
+     * timestamp of the initiation.
      * @param action Type of action for which the price is requested. The middleware may use this to alter the
      * validation of the price or the returned price.
      * @param data Price data, the format varies from middleware to middleware and can be different depending on the
@@ -25,11 +25,31 @@ interface IOracleMiddleware {
         payable
         returns (PriceInfo memory);
 
+    /**
+     * @notice Returns the delay (in seconds) between the moment an action is initiated and the timestamp of the
+     * price data used to validate that action.
+     */
+    function validationDelay() external returns (uint256);
+
     /// @notice Returns the number of decimals for the price (constant)
     function decimals() external pure returns (uint8);
 
     /// @notice Returns the ETH cost of one price validation for the given action
     function validationCost(ProtocolAction action) external returns (uint256);
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                   Errors                                   */
+/* -------------------------------------------------------------------------- */
+
+/// @notice The oracle middleware errors.
+interface IOracleMiddlewareErrors {
+    /// @notice The price request does not respect the minimum validation delay
+    error OracleMiddlewarePriceRequestTooEarly();
+    /// @notice The requested price is outside the valid price range
+    error OracleMiddlewareWrongPriceTimestamp(uint64 min, uint64 max, uint64 result);
+    /// @notice The requested action is not supported by the middleware
+    error OracleMiddlewareUnsupportedAction(ProtocolAction action);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -45,4 +65,14 @@ interface IOracleMiddleware {
 struct PriceInfo {
     uint128 price;
     uint128 timestamp;
+}
+
+/**
+ * @notice Enum representing the confidence interval of a Pyth price.
+ * Used by the middleware determine which price to use in a confidence interval.
+ */
+enum ConfidenceInterval {
+    up,
+    down,
+    none
 }

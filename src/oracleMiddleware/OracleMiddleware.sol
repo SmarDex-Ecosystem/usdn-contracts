@@ -1,12 +1,28 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { IOracleMiddleware, PriceInfo } from "../interfaces/IOracleMiddleware.sol";
-import { ProtocolAction } from "../interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { PythOracle } from "./oracles/PythOracle.sol";
-import { ChainlinkOracle } from "./oracles/ChainlinkOracle.sol";
+import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle {
+import { PythOracle } from "src/oracleMiddleware/oracles/PythOracle.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { ChainlinkOracle } from "src/oracleMiddleware/oracles/ChainlinkOracle.sol";
+import {
+    IOracleMiddleware,
+    IOracleMiddlewareErrors,
+    PriceInfo,
+    ConfidenceInterval
+} from "src/interfaces/IOracleMiddleware.sol";
+
+/**
+ * @title OracleMiddleware contract
+ * @notice This contract is used to get the price of an asset from different price oracle.
+ * It is used by the USDN protocol to get the price of the USDN underlying asset.
+ * @dev This contract is a middleware between the USDN protocol and the price oracles.
+ * @author Yashiru
+ */
+contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOracle, ChainlinkOracle {
+    uint256 public validationDelay = 24 seconds;
+
     uint8 constant DECIMALS = 8;
 
     constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed)
@@ -34,52 +50,60 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle {
         payable
         returns (PriceInfo memory result_)
     {
+        // TODO: Try optimising this (maybe a if (... || ... || ...) ...)
+        // TODO: Validate each ConfidanceInterval
         if (action == ProtocolAction.None) {
-            result_ = getPriceForNoneAction();
-        } else if (action == ProtocolAction.InitiateDeposit) {
-            result_ = getPriceForInitiateDepositAction();
+            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
         } else if (action == ProtocolAction.ValidateDeposit) {
-            result_ = getPriceForValidateDepositAction();
-        } else if (action == ProtocolAction.InitiateWithdrawal) {
-            result_ = getPriceForInitiateWithdrawalAction();
+            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
         } else if (action == ProtocolAction.ValidateWithdrawal) {
-            result_ = getPriceForValidateWithdrawalAction();
-        } else if (action == ProtocolAction.InitiateOpenPosition) {
-            result_ = getPriceForInitiateOpenPositionAction();
+            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.up);
         } else if (action == ProtocolAction.ValidateOpenPosition) {
-            result_ = getPriceForValidateOpenPositionAction();
-        } else if (action == ProtocolAction.InitiateClosePosition) {
-            result_ = getPriceForInitiateClosePositionAction();
+            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.up);
         } else if (action == ProtocolAction.ValidateClosePosition) {
-            result_ = getPriceForValidateClosePositionAction();
+            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
         } else if (action == ProtocolAction.Liquidation) {
-            result_ = getPriceForLiquidationAction();
+            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
+        } else if (action == ProtocolAction.InitiateDeposit) {
+            result_ = getChainlinkOnChainPrice();
+        } else if (action == ProtocolAction.InitiateWithdrawal) {
+            result_ = getChainlinkOnChainPrice();
+        } else if (action == ProtocolAction.InitiateOpenPosition) {
+            result_ = getChainlinkOnChainPrice();
+        } else if (action == ProtocolAction.InitiateClosePosition) {
+            result_ = getChainlinkOnChainPrice();
+        } else {
+            // TODO: check if solidity already does this check thanks to the enum
+            revert OracleMiddlewareUnsupportedAction(action);
         }
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                  Price retrieval for each possible action                  */
+    /*                      Factorised price retrival methods                     */
     /* -------------------------------------------------------------------------- */
 
-    function getPriceForNoneAction() private returns (PriceInfo memory) { }
+    function getPythOrChainlinkDatastreamPrice(bytes calldata data, uint64 targetTimestamp, ConfidenceInterval conf)
+        private
+        returns (PriceInfo memory price_)
+    {
+        // Fetch the price from Pyth, return a price at -1 if it fails
+        PythStructs.Price memory pythPrice = getFormattedPythPrice(data, targetTimestamp, DECIMALS);
 
-    function getPriceForInitiateDepositAction() private returns (PriceInfo memory) { }
+        if (pythPrice.price != -1) {
+            // Apply the confidence interval
+            // TODO: optimize ternary
+            price_.price = conf == ConfidenceInterval.down
+                ? uint64(pythPrice.price) - pythPrice.conf
+                : conf == ConfidenceInterval.up ? uint64(pythPrice.price) + pythPrice.conf : uint64(pythPrice.price);
+            price_.timestamp = uint128(pythPrice.publishTime);
+        } else {
+            // TODO: Use Chainlink data stream when Pyth fails
+        }
+    }
 
-    function getPriceForValidateDepositAction() private returns (PriceInfo memory) { }
-
-    function getPriceForInitiateWithdrawalAction() private returns (PriceInfo memory) { }
-
-    function getPriceForValidateWithdrawalAction() private returns (PriceInfo memory) { }
-
-    function getPriceForInitiateOpenPositionAction() private returns (PriceInfo memory) { }
-
-    function getPriceForValidateOpenPositionAction() private returns (PriceInfo memory) { }
-
-    function getPriceForInitiateClosePositionAction() private returns (PriceInfo memory) { }
-
-    function getPriceForValidateClosePositionAction() private returns (PriceInfo memory) { }
-
-    function getPriceForLiquidationAction() private returns (PriceInfo memory) { }
+    function getChainlinkOnChainPrice() private view returns (PriceInfo memory) {
+        return getFormattedChainlinkPrice(DECIMALS);
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                              Generic features                              */

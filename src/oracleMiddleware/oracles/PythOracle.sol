@@ -4,6 +4,8 @@ pragma solidity ^0.8.20;
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
+import { ConfidenceInterval } from "src/interfaces/IOracleMiddleware.sol";
+
 /**
  * @title PythOracle contract
  * @author @yashiru
@@ -13,12 +15,12 @@ import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 contract PythOracle {
     uint256 private constant DECIMALS = 8;
 
-    bytes32 private _priceID;
-    IPyth private _pyth;
+    bytes32 private immutable priceID;
+    IPyth private immutable pyth;
 
-    constructor(address pythContract, bytes32 priceID) {
-        _pyth = IPyth(pythContract);
-        _priceID = priceID;
+    constructor(address _pyth, bytes32 _priceID) {
+        pyth = IPyth(_pyth);
+        priceID = _priceID;
     }
 
     /**
@@ -26,19 +28,25 @@ contract PythOracle {
      * @param priceUpdateData The data required to update the price feed
      * @return price_ The price of the asset
      */
-    function getPythPrice(bytes[] calldata priceUpdateData) public payable returns (PythStructs.Price memory) {
-        // Update the prices to the latest available values and pay the required fee for it. The `priceUpdateData` data
-        // should be retrieved from our off-chain Price Service API using the `pyth-evm-js` package.
-        // See section "How Pyth Works on EVM Chains" below for more information.
-        uint256 fee = _pyth.getUpdateFee(priceUpdateData);
-        _pyth.updatePriceFeeds{ value: fee }(priceUpdateData);
+    function getPythPrice(bytes calldata priceUpdateData, uint64 targetTimestamp)
+        public
+        payable
+        returns (PythStructs.Price memory)
+    {
+        // Parse the price feed update and get the price feed
+        bytes32[] memory priceIds = new bytes32[](1);
+        priceIds[0] = priceID;
 
-        // Read the current value of _priceID, aborting the transaction if the price has not been updated recently.
-        // Every chain has a default recency threshold which can be retrieved by calling the getValidTimePeriod()
-        // function on the contract.
-        // Please see IPyth.sol for variants of this function that support configurable recency thresholds and other
-        // useful features.
-        return _pyth.getPrice(_priceID);
+        bytes[] memory priceUpdateDatas = new bytes[](1);
+        priceUpdateDatas[0] = priceUpdateData;
+
+        try pyth.parsePriceFeedUpdatesUnique(priceUpdateDatas, priceIds, targetTimestamp, type(uint64).max) returns (
+            PythStructs.PriceFeed[] memory priceFeeds
+        ) {
+            return priceFeeds[0].price;
+        } catch {
+            return PythStructs.Price(-1, 0, 0, 0);
+        }
     }
 
     /**
@@ -46,12 +54,12 @@ contract PythOracle {
      * @param priceUpdateData The data required to update the price feed
      * @param _decimals The number of decimals to format the price to
      */
-    function getFormattedPythPrice(bytes[] calldata priceUpdateData, uint256 _decimals)
+    function getFormattedPythPrice(bytes calldata priceUpdateData, uint64 targetTimestamp, uint256 _decimals)
         public
         payable
         returns (PythStructs.Price memory pythPrice)
     {
-        pythPrice = getPythPrice(priceUpdateData); // * (10 ** _decimals) / (10 ** DECIMALS);
+        pythPrice = getPythPrice(priceUpdateData, targetTimestamp); // * (10 ** _decimals) / (10 ** DECIMALS);
         pythPrice.price = pythPrice.price * int64(uint64((10 ** _decimals) / (10 ** DECIMALS)));
     }
 
