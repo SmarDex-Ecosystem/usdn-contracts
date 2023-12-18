@@ -17,21 +17,21 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     Usdn public usdn;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
-    UsdnProtocolHandler public vault;
+    UsdnProtocolHandler public protocol;
 
     function setUp() public virtual {
         vm.warp(1_702_633_533);
         usdn = new Usdn(address(0), address(0));
         wstETH = new WstETH();
         oracleMiddleware = new MockOracleMiddleware();
-        vault = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 10);
-        usdn.grantRole(usdn.MINTER_ROLE(), address(vault));
-        wstETH.approve(address(vault), type(uint256).max);
-        vault.initialize(10 ether, 1, abi.encode(uint128(2000 ether)));
+        protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 10);
+        usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
+        wstETH.approve(address(protocol), type(uint256).max);
+        protocol.initialize(10 ether, 1, abi.encode(uint128(2000 ether)));
     }
 
     function test_setUp() public {
-        assertEq(wstETH.balanceOf(address(vault)), 10 ether);
+        assertEq(wstETH.balanceOf(address(protocol)), 10 ether);
         assertEq(usdn.balanceOf(address(this)), 20_000 ether);
         assertEq(usdn.totalSupply(), 20_000 ether);
     }

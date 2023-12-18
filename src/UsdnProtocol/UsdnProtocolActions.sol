@@ -122,10 +122,18 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         if (withdrawal.action != ProtocolAction.InitiateWithdrawal) {
             revert UsdnProtocolInvalidPendingAction();
         }
+        // sanity check
+        if (withdrawal.user != user) {
+            revert UsdnProtocolInvalidPendingAction();
+        }
 
+        _validateWithdrawalWithAction(withdrawal, priceData);
+    }
+
+    function _validateWithdrawalWithAction(PendingAction memory withdrawal, bytes calldata priceData) internal {
         // check supply
         uint256 totalSupply = _usdn.totalSupply();
-        if (totalSupply - withdrawal.amountOrIndex < 1000) {
+        if (totalSupply - withdrawal.amountOrIndex < MIN_USDN_SUPPLY) {
             revert UsdnProtocolMinTotalSupply(); // totalSupply cannot fall too low
         }
 
@@ -147,9 +155,9 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _usdn.burn(withdrawal.amountOrIndex);
 
         // send the asset to the user
-        _distributeAssetsAndCheckBalance(user, assetToTransfer);
+        _distributeAssetsAndCheckBalance(withdrawal.user, assetToTransfer);
 
-        emit ValidatedWithdrawal(user, assetToTransfer, withdrawal.amountOrIndex);
+        emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amountOrIndex);
     }
 
     function _executePendingAction(bytes calldata priceData) internal {
@@ -160,7 +168,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         } else if (pending.action == ProtocolAction.InitiateDeposit) {
             _validateDepositWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.InitiateWithdrawal) {
-            // TODO
+            _validateWithdrawalWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.InitiateOpenPosition) {
             // TODO
         } else if (pending.action == ProtocolAction.InitiateClosePosition) {

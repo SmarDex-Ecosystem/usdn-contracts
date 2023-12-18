@@ -7,4 +7,6 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function setUp() public override {
         super.setUp();
     }
+
+    function test_deposit() public { }
 }
