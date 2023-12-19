@@ -57,6 +57,21 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         value_ = int256(uint256(amount)) + positionPnl(currentPrice, startPrice, amount, leverage);
     }
 
+    function _entryPriceWithLiquidationPenalty(uint128 price) internal view returns (uint128 entryPrice_) {
+        entryPrice_ = uint128(price * (PERCENTAGE_DIVISOR + _liquidationPenalty) / PERCENTAGE_DIVISOR);
+    }
+
+    function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
+        maxLiquidationPrice_ = uint128(price * (PERCENTAGE_DIVISOR - _safetyMargin) / PERCENTAGE_DIVISOR);
+    }
+
+    function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {
+        uint128 maxLiquidationPrice = _maxLiquidationPriceWithSafetyMargin(currentPrice);
+        if (liquidationPrice < maxLiquidationPrice) {
+            revert UsdnProtocolLiquidationPriceSafetyMargin(liquidationPrice, maxLiquidationPrice);
+        }
+    }
+
     function _getTickForPrice(uint128 price) internal view returns (int24 tick_) {
         tick_ = TickMath.getTickAtPrice(uint256(price));
         tick_ = (tick_ / _tickSpacing) * _tickSpacing;

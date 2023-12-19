@@ -105,9 +105,34 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user initiates the opening of a long position.
      * @param user The user address.
-     * @param amount The amount of asset deposited as collateral.
+     * @param position The position that was opened (pending validation).
+     * @param tick The tick containing the position.
+     * @param index The index of the position inside the tick array.
      */
-    event InitiatedOpenLong(address indexed user, uint256 amount);
+    event InitiatedOpenLong(address indexed user, Position position, int24 tick, uint256 index);
+
+    /**
+     * @notice Emitted when a user validates the opening of a long position.
+     * @param user The user address.
+     * @param position The position that was opened (final).
+     * @param tick The tick containing the position.
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
+     * @param index The index of the position inside the tick array.
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
+     * @param liquidationPrice The liquidation price of the position (final).
+     */
+    event ValidatedOpenLong(
+        address indexed user, Position position, int24 tick, uint256 index, uint128 liquidationPrice
+    );
+
+    /**
+     * @notice Emitted when a position was moved from one tick to another.
+     * @param oldTick The old tick of the position.
+     * @param oldIndex The old index of the position inside the tick array.
+     * @param newTick The new tick containing the position.
+     * @param newIndex The new index of the position inside the `newTick` array.
+     */
+    event LiquidationPriceChanged(int24 indexed oldTick, uint256 indexed oldIndex, int24 newTick, uint256 newIndex);
 }
 
 /* -------------------------------------------------------------------------- */

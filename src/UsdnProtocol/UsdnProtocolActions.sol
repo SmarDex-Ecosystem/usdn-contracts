@@ -101,19 +101,26 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         _executePendingAction(previousActionPriceData);
 
-        uint40 timestamp = uint40(block.timestamp);
         // find tick corresponding to the liquidation price (rounds down)
         tick_ = _getTickForPrice(liquidationPrice);
         // calculate effective liquidation price once we have the tick (lower than or equal to the desired liq price)
         liquidationPrice = _getPriceForTick(tick_);
 
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            timestamp, ProtocolAction.InitiateOpenPosition, currentPriceData
-        );
+        uint128 entryPrice;
+        {
+            PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                uint40(block.timestamp), ProtocolAction.InitiateOpenPosition, currentPriceData
+            );
 
-        // Apply liquidation penalty
-        uint128 entryPrice =
-            uint128(currentPrice.price * (PERCENTAGE_DIVISOR + _liquidationPenalty) / PERCENTAGE_DIVISOR);
+            // Safety margin (liquidation price must be at least x% below current price)
+            _checkSafetyMargin(currentPrice.price, liquidationPrice);
+
+            // FIXME: use neutral price here!
+            _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+
+            // Apply liquidation penalty
+            entryPrice = _entryPriceWithLiquidationPenalty(currentPrice.price);
+        }
 
         uint40 leverage = getLeverage(entryPrice, liquidationPrice); // reverts if liquidationPrice >= entryPrice
         if (leverage < _minLeverage) {
@@ -123,17 +130,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolLeverageTooHigh();
         }
 
-        // Safety margin (liquidation price must be at least x% below entry price)
-        {
-            uint128 maxLiquidationPrice =
-                uint128(currentPrice.price * (PERCENTAGE_DIVISOR - _safetyMargin) / PERCENTAGE_DIVISOR);
-            if (liquidationPrice < maxLiquidationPrice) {
-                revert UsdnProtocolLiquidationPriceSafetyMargin(liquidationPrice, maxLiquidationPrice);
-            }
-        }
-
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
-
         // Adjust state
         _balanceLong += amount;
         bytes32 tickHash = _tickHash(tick_);
@@ -141,8 +137,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             uint256 addExpo = (amount * leverage) / 10 ** LEVERAGE_DECIMALS;
             _totalExpo += addExpo;
             _totalExpoByTick[tickHash] += addExpo;
+            _totalLongPositions += 1;
         }
-        _totalLongPositions += 1;
 
         // Register position
         {
@@ -151,9 +147,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
                 amount: amount,
                 startPrice: entryPrice,
                 leverage: leverage,
-                timestamp: timestamp
+                timestamp: uint40(block.timestamp)
             });
-            Position[] storage pos = _longPositions[tickHash];
+            Position[] storage tickArray = _longPositions[tickHash];
+            index_ = tickArray.length;
             if (_positionsInTick[tickHash] == 0) {
                 // first position in this tick
                 _tickBitmap.set(_tickToBitmapIndex(tick_));
@@ -162,27 +159,25 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
                 // keep track of max initialized tick
                 _maxInitializedTick = tick_;
             }
-            pos.push(long);
+            tickArray.push(long);
             ++_positionsInTick[tickHash];
-            index_ = pos.length - 1;
+            emit InitiatedOpenLong(msg.sender, long, tick_, index_);
         }
 
         // Register pending action
         {
             PendingAction memory pendingAction = PendingAction({
                 action: ProtocolAction.InitiateOpenPosition,
-                timestamp: timestamp,
+                timestamp: uint40(block.timestamp),
                 user: msg.sender,
                 tick: tick_,
-                amountOrIndex: amount
+                amountOrIndex: index_
             });
 
             _addPendingAction(msg.sender, pendingAction);
         }
 
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
-
-        emit InitiatedOpenLong(msg.sender, amount);
     }
 
     function validateOpenPosition(bytes calldata openPriceData, bytes calldata previousActionPriceData)
@@ -219,6 +214,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(deposit.timestamp, action, priceData);
 
         // adjust balances
+        // FIXME: use neutral price here!
         _applyPnlAndFunding(depositPrice.price, depositPrice.timestamp);
 
         _balanceVault += deposit.amountOrIndex;
@@ -258,6 +254,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         );
 
         // adjust balances
+        // FIXME: use neutral price here!
         _applyPnlAndFunding(withdrawalPrice.price, withdrawalPrice.timestamp);
 
         int256 available = _vaultAssetAvailable(withdrawalPrice.price);
@@ -288,11 +285,47 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        _validateOpenPositionWithAction(open, priceData);
+        _validateOpenPositionWithAction(open, priceData, false);
     }
 
-    function _validateOpenPositionWithAction(PendingAction memory open, bytes calldata priceData) internal {
-        // TODO
+    function _validateOpenPositionWithAction(PendingAction memory long, bytes calldata priceData, bool initializing)
+        internal
+    {
+        // During initialization, we might want to use a different oracle, so we have a special action
+        ProtocolAction action = initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateOpenPosition;
+        int24 tick = long.tick;
+        uint256 index = long.amountOrIndex;
+
+        PriceInfo memory price =
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(long.timestamp, action, priceData);
+
+        uint128 liquidationPrice = _getPriceForTick(tick);
+
+        // TODO: check if can be liquidated according to the provided price
+        // If not, then price.price > liquidationPrice
+
+        // adjust balances
+        // FIXME: use neutral price here!
+        _applyPnlAndFunding(price.price, price.timestamp);
+
+        // Apply liquidation penalty
+        uint128 entryPrice = _entryPriceWithLiquidationPenalty(price.price);
+
+        uint40 leverage = getLeverage(entryPrice, liquidationPrice); // reverts if liquidationPrice >= entryPrice
+        // Leverage is always greater than 1 (liquidationPrice is positive).
+        // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
+        if (leverage > _maxLeverage) {
+            // TODO: We should adjust liquidation price to have a leverage of _maxLeverage
+            // Update the `tick`, `index` and `liquidationPrice` variables.
+            // Emit LiquidationPriceChanged.
+        }
+
+        // Adjust position parameters
+        Position storage pos = _longPositions[_tickHash(tick)][index];
+        pos.leverage = leverage;
+        pos.startPrice = entryPrice;
+
+        emit ValidatedOpenLong(long.user, pos, tick, index, liquidationPrice);
     }
 
     function _executePendingAction(bytes calldata priceData) internal {
@@ -305,7 +338,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         } else if (pending.action == ProtocolAction.InitiateWithdrawal) {
             _validateWithdrawalWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.InitiateOpenPosition) {
-            _validateOpenPositionWithAction(pending, priceData);
+            _validateOpenPositionWithAction(pending, priceData, false);
         } else if (pending.action == ProtocolAction.InitiateClosePosition) {
             // TODO
         }
