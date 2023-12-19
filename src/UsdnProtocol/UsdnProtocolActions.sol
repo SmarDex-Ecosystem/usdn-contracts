@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { Position, ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
@@ -11,6 +12,7 @@ import { IUsdn } from "src/interfaces/IUsdn.sol";
 
 abstract contract UsdnProtocolActions is UsdnProtocolLong {
     using SafeERC20 for IUsdn;
+    using LibBitmap for LibBitmap.Bitmap;
 
     /**
      * @dev The minimum total supply of USDN that we allow.
@@ -85,6 +87,113 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
 
         _validateWithdrawal(msg.sender, withdrawalPriceData);
+    }
+
+    function initiateOpenLong(
+        uint96 amount,
+        uint128 liquidationPrice,
+        bytes calldata currentPriceData,
+        bytes calldata previousActionPriceData
+    ) external payable returns (int24 tick_, uint256 index_) {
+        if (amount == 0) {
+            revert UsdnProtocolZeroAmount();
+        }
+
+        _executePendingAction(previousActionPriceData);
+
+        uint40 timestamp = uint40(block.timestamp);
+        // find tick corresponding to the liquidation price (rounds down)
+        tick_ = _getTickForPrice(liquidationPrice);
+        // calculate effective liquidation price once we have the tick (lower than or equal to the desired liq price)
+        liquidationPrice = _getPriceForTick(tick_);
+
+        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+            timestamp, ProtocolAction.InitiateOpenPosition, currentPriceData
+        );
+
+        // Apply liquidation penalty
+        uint128 entryPrice =
+            uint128(currentPrice.price * (PERCENTAGE_DIVISOR + _liquidationPenalty) / PERCENTAGE_DIVISOR);
+
+        uint40 leverage = getLeverage(entryPrice, liquidationPrice); // reverts if liquidationPrice >= entryPrice
+        if (leverage < _minLeverage) {
+            revert UsdnProtocolLeverageTooLow();
+        }
+        if (leverage > _maxLeverage) {
+            revert UsdnProtocolLeverageTooHigh();
+        }
+
+        // Safety margin (liquidation price must be at least x% below entry price)
+        {
+            uint128 maxLiquidationPrice =
+                uint128(currentPrice.price * (PERCENTAGE_DIVISOR - _safetyMargin) / PERCENTAGE_DIVISOR);
+            if (liquidationPrice < maxLiquidationPrice) {
+                revert UsdnProtocolLiquidationPriceSafetyMargin(liquidationPrice, maxLiquidationPrice);
+            }
+        }
+
+        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+
+        // Adjust state
+        _balanceLong += amount;
+        bytes32 tickHash = _tickHash(tick_);
+        {
+            uint256 addExpo = (amount * leverage) / 10 ** LEVERAGE_DECIMALS;
+            _totalExpo += addExpo;
+            _totalExpoByTick[tickHash] += addExpo;
+        }
+        _totalLongPositions += 1;
+
+        // Register position
+        {
+            Position memory long = Position({
+                user: msg.sender,
+                amount: amount,
+                startPrice: entryPrice,
+                leverage: leverage,
+                validated: false,
+                isExit: false,
+                timestamp: timestamp
+            });
+            Position[] storage pos = _longPositions[tickHash];
+            if (_positionsInTick[tickHash] == 0) {
+                // first position in this tick
+                _tickBitmap.set(_tickToBitmapIndex(tick_));
+            }
+            if (tick_ > _maxInitializedTick) {
+                // keep track of max initialized tick
+                _maxInitializedTick = tick_;
+            }
+            pos.push(long);
+            ++_positionsInTick[tickHash];
+            index_ = pos.length - 1;
+        }
+
+        // Register pending action
+        {
+            PendingAction memory pendingAction = PendingAction({
+                action: ProtocolAction.InitiateOpenPosition,
+                timestamp: timestamp,
+                user: msg.sender,
+                tick: tick_,
+                amountOrIndex: amount
+            });
+
+            _addPendingAction(msg.sender, pendingAction);
+        }
+
+        _retrieveAssetsAndCheckBalance(msg.sender, amount);
+
+        emit InitiatedOpenLong(msg.sender, amount);
+    }
+
+    function validateOpenPosition(bytes calldata openPriceData, bytes calldata previousActionPriceData)
+        external
+        payable
+    {
+        _executePendingAction(previousActionPriceData);
+
+        _validateOpenPosition(msg.sender, openPriceData);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
@@ -169,6 +278,25 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amountOrIndex);
     }
 
+    function _validateOpenPosition(address user, bytes calldata priceData) internal {
+        PendingAction memory open = _getAndClearPendingAction(user);
+
+        // check type of action
+        if (open.action != ProtocolAction.InitiateOpenPosition) {
+            revert UsdnProtocolInvalidPendingAction();
+        }
+        // sanity check
+        if (open.user != user) {
+            revert UsdnProtocolInvalidPendingAction();
+        }
+
+        _validateOpenPositionWithAction(open, priceData);
+    }
+
+    function _validateOpenPositionWithAction(PendingAction memory open, bytes calldata priceData) internal {
+        // TODO
+    }
+
     function _executePendingAction(bytes calldata priceData) internal {
         PendingAction memory pending = getActionablePendingAction(0); // use default maxIter
         if (pending.action == ProtocolAction.None) {
@@ -179,7 +307,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         } else if (pending.action == ProtocolAction.InitiateWithdrawal) {
             _validateWithdrawalWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.InitiateOpenPosition) {
-            // TODO
+            _validateOpenPositionWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.InitiateClosePosition) {
             // TODO
         }

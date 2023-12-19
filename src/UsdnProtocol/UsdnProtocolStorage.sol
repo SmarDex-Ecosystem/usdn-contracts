@@ -11,7 +11,10 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 abstract contract UsdnProtocolStorage {
     using LibBitmap for LibBitmap.Bitmap;
-    /* ----------------------- Immutables and constants --------------------------*/
+
+    /* -------------------------------------------------------------------------- */
+    /*                                  Constants                                 */
+    /* -------------------------------------------------------------------------- */
 
     /// @notice The number of decimals for leverage values
     uint8 public constant LEVERAGE_DECIMALS = 9;
@@ -21,6 +24,16 @@ abstract contract UsdnProtocolStorage {
 
     /// @notice The number of seconds in a day
     uint256 public constant SECONDS_PER_DAY = 60 * 60 * 24;
+
+    /**
+     * @notice Divisor for the percentage values (liquidation penalty, safety margin)
+     * @dev Example: 200 -> 2%
+     */
+    uint256 public constant PERCENTAGE_DIVISOR = 10_000;
+
+    /* -------------------------------------------------------------------------- */
+    /*                                 Immutables                                 */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice The liquidation tick spacing for storing long positions.
@@ -44,7 +57,9 @@ abstract contract UsdnProtocolStorage {
     /// @notice The decimals of the USDN token.
     uint8 internal immutable _usdnDecimals;
 
-    /* --------------------------------- Storage -------------------------------- */
+    /* -------------------------------------------------------------------------- */
+    /*                                 Parameters                                 */
+    /* -------------------------------------------------------------------------- */
 
     /// @notice The oracle middleware contract.
     IOracleMiddleware internal _oracleMiddleware;
@@ -61,20 +76,46 @@ abstract contract UsdnProtocolStorage {
     /// @notice The funding rate per second
     int256 internal _fundingRatePerSecond = 3_472_222_222; // 18 decimals (0.03% daily -> 0.0000003472% per second)
 
-    /// @notice The balance of deposits (with asset decimals)
-    uint256 internal _balanceVault;
+    /// @notice The liquidation penalty
+    uint256 internal _liquidationPenalty = 200; // divisor is 10_000 -> 2%
 
-    /// @notice The balance of long positions (with asset decimals)
-    uint256 internal _balanceLong;
+    /// @notice Safety margin for the liquidation price of newly open positions
+    uint256 internal _safetyMargin = 200; // divisor is 10_000 -> 2%
 
-    /// @notice The total exposure (with asset decimals)
-    uint256 internal _totalExpo;
+    /* -------------------------------------------------------------------------- */
+    /*                                    State                                   */
+    /* -------------------------------------------------------------------------- */
 
     /// @notice The price of the asset during the last balances update (with price feed decimals)
     uint128 internal _lastPrice;
 
     /// @notice The timestamp of the last balances update
     uint128 internal _lastUpdateTimestamp;
+
+    /* -------------------------- Pending actions queue ------------------------- */
+
+    /**
+     * @notice The pending actions by user (1 per user max).
+     * @dev The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
+     * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one.
+     */
+    mapping(address => uint256) internal _pendingActions;
+
+    /// @notice The pending actions queue.
+    DoubleEndedQueue.Deque internal _pendingActionsQueue;
+
+    /* ---------------------------------- Vault --------------------------------- */
+
+    /// @notice The balance of deposits (with asset decimals)
+    uint256 internal _balanceVault;
+
+    /* ----------------------------- Long positions ----------------------------- */
+
+    /// @notice The balance of long positions (with asset decimals)
+    uint256 internal _balanceLong;
+
+    /// @notice The total exposure (with asset decimals)
+    uint256 internal _totalExpo;
 
     /// @notice The liquidation price tick versions
     mapping(int24 => uint256) internal _tickVersion;
@@ -96,16 +137,6 @@ abstract contract UsdnProtocolStorage {
 
     /// @notice The bitmap used to quickly find populated ticks
     LibBitmap.Bitmap internal _tickBitmap;
-
-    /**
-     * @notice The pending actions by user (1 per user max).
-     * @dev The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
-     * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one.
-     */
-    mapping(address => uint256) internal _pendingActions;
-
-    /// @notice The pending actions queue.
-    DoubleEndedQueue.Deque internal _pendingActionsQueue;
 
     /**
      * @notice Constructor.

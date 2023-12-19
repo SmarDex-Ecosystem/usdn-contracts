@@ -33,6 +33,9 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
 
     /// @dev This does not take into account the liquidation penalty.
     function getLeverage(uint128 startPrice, uint128 liquidationPrice) public pure returns (uint40 leverage_) {
+        if (startPrice <= liquidationPrice) {
+            revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
+        }
         leverage_ = uint40((uint128(10) ** LEVERAGE_DECIMALS * startPrice) / (startPrice - liquidationPrice));
     }
 
@@ -52,6 +55,15 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         returns (int256 value_)
     {
         value_ = int256(uint256(amount)) + positionPnl(currentPrice, startPrice, amount, leverage);
+    }
+
+    function _getTickForPrice(uint128 price) internal view returns (int24 tick_) {
+        tick_ = TickMath.getTickAtPrice(uint256(price));
+        tick_ = (tick_ / _tickSpacing) * _tickSpacing;
+    }
+
+    function _getPriceForTick(int24 tick) internal pure returns (uint128 price_) {
+        price_ = uint128(TickMath.getPriceAtTick(tick));
     }
 
     /**

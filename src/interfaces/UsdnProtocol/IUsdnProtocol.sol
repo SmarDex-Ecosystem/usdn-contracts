@@ -105,6 +105,13 @@ interface IUsdnProtocolEvents {
      * @param usdnBurned The amount of USDN that were burned.
      */
     event ValidatedWithdrawal(address indexed user, uint256 amountWithdrawn, uint256 usdnBurned);
+
+    /**
+     * @notice Emitted when a user initiates the opening of a long position.
+     * @param user The user address.
+     * @param amount The amount of asset deposited as collateral.
+     */
+    event InitiatedOpenLong(address indexed user, uint256 amount);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -129,4 +136,16 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided timestamp is too old (pre-dates the last balances update)
     error UsdnProtocolTimestampTooOld();
+
+    /// @dev Indicates that the provided collateral and liquidation price result in a leverage that is too low
+    error UsdnProtocolLeverageTooLow();
+
+    /// @dev Indicates that the provided collateral and liquidation price result in a leverage that is too high
+    error UsdnProtocolLeverageTooHigh();
+
+    /// @dev Indicates that the liquidation price is higher than or equal to the start price
+    error UsdnProtocolInvalidLiquidationPrice(uint128 liquidationPrice, uint128 startPrice);
+
+    /// @dev Indicates that the liquidation price exceeds the safety margin
+    error UsdnProtocolLiquidationPriceSafetyMargin(uint128 liquidationPrice, uint128 maxLiquidationPrice);
 }
