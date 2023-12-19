@@ -52,7 +52,7 @@ contract TestOracleMiddlewareGetPrice is OracleMiddlewareBaseFixture {
         PriceInfo memory price = oracleMiddleware.parseAndValidatePrice(
             uint128(block.timestamp - 24 seconds), ProtocolAction.ValidateWithdrawal, abi.encode("data")
         );
-        assertEq(price.price, ETH_PRICE - ETH_CONF, "Wrong price for ValidateWithdrawal action");
+        assertEq(price.price, ETH_PRICE, "Wrong price for ValidateWithdrawal action");
     }
 
     function test_getPriceForInitiateOpenPositionAction() public {

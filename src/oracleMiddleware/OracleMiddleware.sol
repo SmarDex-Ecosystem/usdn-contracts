@@ -50,32 +50,42 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         payable
         returns (PriceInfo memory result_)
     {
-        // TODO: Try optimising this (maybe a if (... || ... || ...) ...)
-        // TODO: Validate each ConfidanceInterval
+        // TODO: Validate each ConfidanceInterval \w Eric/paul
         if (action == ProtocolAction.None) {
             result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
         } else if (action == ProtocolAction.Initialize) {
+            // There is no reason to use the confidence interval here
             result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
         } else if (action == ProtocolAction.ValidateDeposit) {
+            // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
+            // of price inaccuracies
             result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
         } else if (action == ProtocolAction.ValidateWithdrawal) {
-            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
+            // There is no reason to use the confidence interval here
+            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
         } else if (action == ProtocolAction.ValidateOpenPosition) {
+            // Use the highest price in the confidence interval to ensure a minimum benefit for the user in case
+            // of price inaccuracies
             result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.up);
         } else if (action == ProtocolAction.ValidateClosePosition) {
+            // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
+            // of price inaccuracies
             result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
         } else if (action == ProtocolAction.Liquidation) {
+            // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
+            // of price inaccuracies
             result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
         } else if (action == ProtocolAction.InitiateDeposit) {
+            // Never used by the USDN protocol
             result_ = getChainlinkOnChainPrice();
         } else if (action == ProtocolAction.InitiateWithdrawal) {
+            // Never used by the USDN protocol
             result_ = getChainlinkOnChainPrice();
         } else if (action == ProtocolAction.InitiateOpenPosition) {
             result_ = getChainlinkOnChainPrice();
         } else if (action == ProtocolAction.InitiateClosePosition) {
             result_ = getChainlinkOnChainPrice();
         } else {
-            // TODO: check if solidity already does this check thanks to the enum
             revert OracleMiddlewareUnsupportedAction(action);
         }
     }
@@ -92,7 +102,6 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         PythStructs.Price memory pythPrice = getFormattedPythPrice(data, targetTimestamp, DECIMALS);
 
         if (pythPrice.price != -1) {
-            // Apply the confidence interval
             // TODO: optimize ternary
             price_.price = conf == ConfidenceInterval.down
                 ? uint64(pythPrice.price) - pythPrice.conf
@@ -117,5 +126,47 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     }
 
     /// @notice Returns the ETH cost of one price validation for the given action
-    function validationCost(ProtocolAction action) external returns (uint256) { }
+    function validationCost(ProtocolAction action) external returns (uint256) {
+        // TODO: Validate each ConfidanceInterval
+        if (action == ProtocolAction.None) {
+            /// Fix me: what to do ?
+            /// Compute chainLink data stream or pyth ?
+            /// Param to chose manually ?
+        } else if (action == ProtocolAction.Initialize) {
+            /// Fix me: what to do ?
+            /// Compute chainLink data stream or pyth ?
+            /// Param to chose manually ?
+        } else if (action == ProtocolAction.ValidateDeposit) {
+            /// Fix me: what to do ?
+            /// Compute chainLink data stream or pyth ?
+            /// Param to chose manually ?
+        } else if (action == ProtocolAction.ValidateWithdrawal) {
+            /// Fix me: what to do ?
+            /// Compute chainLink data stream or pyth ?
+            /// Param to chose manually ?
+        } else if (action == ProtocolAction.ValidateOpenPosition) {
+            /// Fix me: what to do ?
+            /// Compute chainLink data stream or pyth ?
+            /// Param to chose manually ?
+        } else if (action == ProtocolAction.ValidateClosePosition) {
+            /// Fix me: what to do ?
+            /// Compute chainLink data stream or pyth ?
+            /// Param to chose manually ?
+        } else if (action == ProtocolAction.Liquidation) {
+            /// Fix me: what to do ?
+            /// Compute chainLink data stream or pyth ?
+            /// Param to chose manually ?
+        } else if (action == ProtocolAction.InitiateDeposit) {
+            return 0;
+        } else if (action == ProtocolAction.InitiateWithdrawal) {
+            return 0;
+        } else if (action == ProtocolAction.InitiateOpenPosition) {
+            return 0;
+        } else if (action == ProtocolAction.InitiateClosePosition) {
+            return 0;
+        } else {
+            // TODO: check if solidity already does this check thanks to the enum
+            revert OracleMiddlewareUnsupportedAction(action);
+        }
+    }
 }
