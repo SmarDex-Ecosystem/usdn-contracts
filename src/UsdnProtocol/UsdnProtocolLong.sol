@@ -27,6 +27,33 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         }
     }
 
+    function getLiquidationPrice(uint128 startPrice, uint40 leverage) public pure returns (uint128 price_) {
+        price_ = startPrice - ((uint128(10) ** LEVERAGE_DECIMALS * startPrice) / leverage);
+    }
+
+    /// @dev This does not take into account the liquidation penalty.
+    function getLeverage(uint128 startPrice, uint128 liquidationPrice) public pure returns (uint40 leverage_) {
+        leverage_ = uint40((uint128(10) ** LEVERAGE_DECIMALS * startPrice) / (startPrice - liquidationPrice));
+    }
+
+    function positionPnl(uint128 currentPrice, uint128 startPrice, uint128 amount, uint40 leverage)
+        public
+        pure
+        returns (int256 pnl_)
+    {
+        int256 priceDiff = int256(uint256(currentPrice)) - int256(uint256(startPrice));
+        pnl_ = (int256(uint256(amount)) * priceDiff * int256(uint256(leverage)))
+            / (int256(uint256(startPrice)) * int256(10) ** LEVERAGE_DECIMALS);
+    }
+
+    function positionValue(uint128 currentPrice, uint128 startPrice, uint128 amount, uint40 leverage)
+        public
+        pure
+        returns (int256 value_)
+    {
+        value_ = int256(uint256(amount)) + positionPnl(currentPrice, startPrice, amount, leverage);
+    }
+
     /**
      * @dev Convert a signed tick to an unsigned index into the Bitmap
      * @param tick The tick to convert, a multiple of `tickSpacing`
