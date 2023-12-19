@@ -10,8 +10,6 @@ pragma solidity 0.8.20;
  * @dev 64 bytes packed struct (512 bits)
  * @param leverage The leverage of the position (0 for vault deposits).
  * @param timestamp The timestamp of the position start.
- * @param isExit Whether the position is an exit position (true) or an entry position (false).
- * @param validated Whether the position has been validated by the user (true) or is pending (false).
  * @param user The user address.
  * @param amount The amount of the position.
  * @param startPrice The price of the asset at the position opening.
@@ -19,8 +17,6 @@ pragma solidity 0.8.20;
 struct Position {
     uint40 leverage; // 5 bytes. Max 1_099_511_627_775 (1_099 with 9 decimals)
     uint40 timestamp; // 5 bytes. Max 1_099_511_627_775 (36812-02-20 01:36:15)
-    bool isExit; // 1 byte
-    bool validated; // 1 byte
     address user; // 20 bytes
     uint128 amount; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 wstETH
     uint128 startPrice; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 USD/wstETH

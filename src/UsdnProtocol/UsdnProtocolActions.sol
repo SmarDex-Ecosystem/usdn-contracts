@@ -151,8 +151,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
                 amount: amount,
                 startPrice: entryPrice,
                 leverage: leverage,
-                validated: false,
-                isExit: false,
                 timestamp: timestamp
             });
             Position[] storage pos = _longPositions[tickHash];
