@@ -35,9 +35,9 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * @custom:and The total shares are decreased by 25
      */
     function test_burnPartial() public {
-        usdn.adjustDivisor(usdn.maxDivisor() / 2);
+        usdn.adjustDivisor(usdn.MAX_DIVISOR() / 2);
         assertEq(usdn.balanceOf(USER_1), 200 ether, "initial balance");
-        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.maxDivisor(), "initial shares");
+        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.MAX_DIVISOR(), "initial shares");
 
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(USER_1, address(0), 50 ether); // expected event
@@ -45,9 +45,9 @@ contract TestUsdnBurn is UsdnTokenFixture {
         usdn.burn(50 ether);
 
         assertEq(usdn.balanceOf(USER_1), 150 ether, "balance after burn");
-        assertEq(usdn.sharesOf(USER_1), 75 ether * usdn.maxDivisor(), "shares after burn");
+        assertEq(usdn.sharesOf(USER_1), 75 ether * usdn.MAX_DIVISOR(), "shares after burn");
         assertEq(usdn.totalSupply(), 150 ether, "total supply after burn");
-        assertEq(usdn.totalShares(), 75 ether * usdn.maxDivisor(), "total shares after burn");
+        assertEq(usdn.totalShares(), 75 ether * usdn.MAX_DIVISOR(), "total shares after burn");
     }
 
     /**
@@ -64,9 +64,9 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * tokens, they might have a fraction of a token left.
      */
     function test_burnAll() public {
-        usdn.adjustDivisor(9 * usdn.maxDivisor() / 10);
+        usdn.adjustDivisor(9 * usdn.MAX_DIVISOR() / 10);
         assertEq(usdn.balanceOf(USER_1), 111_111_111_111_111_111_111, "initial balance");
-        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.maxDivisor(), "initial shares");
+        assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.MAX_DIVISOR(), "initial shares");
 
         vm.expectEmit(true, true, true, false, address(usdn));
         emit Transfer(USER_1, address(0), 111_111_111_111_111_111_111); // expected event
@@ -98,7 +98,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
      */
     function test_RevertWhen_burnInsufficientBalanceWithMultiplier() public {
-        usdn.adjustDivisor(usdn.maxDivisor() / 2);
+        usdn.adjustDivisor(usdn.MAX_DIVISOR() / 2);
         assertEq(usdn.balanceOf(USER_1), 200 ether);
 
         vm.expectRevert(
@@ -123,7 +123,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
         vm.prank(USER_1);
         usdn.approve(address(this), 50 ether);
 
-        usdn.adjustDivisor(usdn.maxDivisor() / 2);
+        usdn.adjustDivisor(usdn.MAX_DIVISOR() / 2);
         // changing multiplier doesn't affect allowance
         assertEq(usdn.allowance(USER_1, address(this)), 50 ether, "initial allowance");
 

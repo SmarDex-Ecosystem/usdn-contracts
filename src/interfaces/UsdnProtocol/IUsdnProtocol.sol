@@ -30,6 +30,7 @@ struct Position {
  * @notice All possible action types for the protocol.
  * @dev This is used for pending actions and to interact with the oracle middleware.
  * @param None No particular action.
+ * @param Initialize The contract is being initialized.
  * @param InitiateDeposit Initiating a deposit action.
  * @param ValidateDeposit Validating a deposit action.
  * @param InitiateWithdrawal Initiating a withdraw action.
@@ -42,6 +43,7 @@ struct Position {
  */
 enum ProtocolAction {
     None,
+    Initialize,
     InitiateDeposit,
     ValidateDeposit,
     InitiateWithdrawal,
@@ -124,7 +126,4 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the user has a pending action but its action type is not the expected one
     error UsdnProtocolInvalidPendingAction();
-
-    /// @dev Indicates that the total supply of USDN would fall too low after a withdrawal
-    error UsdnProtocolMinTotalSupply();
 }

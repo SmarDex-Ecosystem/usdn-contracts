@@ -23,7 +23,7 @@ contract TestUsdnConvert is UsdnTokenFixture {
 
         usdn.convertToShares(usdn.maxTokens());
 
-        usdn.adjustDivisor(usdn.minDivisor());
+        usdn.adjustDivisor(usdn.MIN_DIVISOR());
 
         usdn.convertToShares(usdn.maxTokens());
     }
@@ -41,7 +41,7 @@ contract TestUsdnConvert is UsdnTokenFixture {
         uint256 max_shares = usdn.convertToShares(usdn.maxTokens());
         uint256 tokens = usdn.convertToTokens(max_shares);
 
-        usdn.adjustDivisor(usdn.minDivisor());
+        usdn.adjustDivisor(usdn.MIN_DIVISOR());
 
         max_shares = usdn.convertToShares(usdn.maxTokens());
         tokens = usdn.convertToTokens(max_shares);
