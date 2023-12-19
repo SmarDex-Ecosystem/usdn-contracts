@@ -12,7 +12,7 @@ import { PriceInfo } from "../../interfaces/IOracleMiddleware.sol";
  */
 contract ChainlinkOracle {
     /// @notice Chainlink price feed aggregator contract
-    AggregatorV3Interface immutable _priceFeed;
+    AggregatorV3Interface public immutable _priceFeed;
 
     constructor(address priceFeed) {
         _priceFeed = AggregatorV3Interface(priceFeed);

@@ -15,12 +15,12 @@ import { ConfidenceInterval } from "src/interfaces/IOracleMiddleware.sol";
 contract PythOracle {
     uint256 private constant DECIMALS = 8;
 
-    bytes32 private immutable priceID;
-    IPyth private immutable pyth;
+    bytes32 public immutable _priceID;
+    IPyth public immutable _pyth;
 
-    constructor(address _pyth, bytes32 _priceID) {
-        pyth = IPyth(_pyth);
-        priceID = _priceID;
+    constructor(address pyth, bytes32 priceID) {
+        _pyth = IPyth(pyth);
+        _priceID = priceID;
     }
 
     /**
@@ -35,12 +35,12 @@ contract PythOracle {
     {
         // Parse the price feed update and get the price feed
         bytes32[] memory priceIds = new bytes32[](1);
-        priceIds[0] = priceID;
+        priceIds[0] = _priceID;
 
         bytes[] memory priceUpdateDatas = new bytes[](1);
         priceUpdateDatas[0] = priceUpdateData;
 
-        try pyth.parsePriceFeedUpdatesUnique(priceUpdateDatas, priceIds, targetTimestamp, type(uint64).max) returns (
+        try _pyth.parsePriceFeedUpdatesUnique(priceUpdateDatas, priceIds, targetTimestamp, type(uint64).max) returns (
             PythStructs.PriceFeed[] memory priceFeeds
         ) {
             return priceFeeds[0].price;

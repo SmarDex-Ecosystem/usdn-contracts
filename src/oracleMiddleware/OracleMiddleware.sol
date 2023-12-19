@@ -54,10 +54,12 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         // TODO: Validate each ConfidanceInterval
         if (action == ProtocolAction.None) {
             result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
+        } else if (action == ProtocolAction.Initialize) {
+            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
         } else if (action == ProtocolAction.ValidateDeposit) {
             result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
         } else if (action == ProtocolAction.ValidateWithdrawal) {
-            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.up);
+            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
         } else if (action == ProtocolAction.ValidateOpenPosition) {
             result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.up);
         } else if (action == ProtocolAction.ValidateClosePosition) {
