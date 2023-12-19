@@ -59,7 +59,7 @@ abstract contract UsdnProtocolStorage {
     uint256 internal _validationDeadline = 60 minutes;
 
     /// @notice The funding rate per second
-    uint256 internal _fundingRatePerSecond = 3_472_222_222; // 18 decimals (0.03% daily -> 0.0000003472% per second)
+    int256 internal _fundingRatePerSecond = 3_472_222_222; // 18 decimals (0.03% daily -> 0.0000003472% per second)
 
     /// @notice The balance of deposits (with asset decimals)
     uint256 internal _balanceVault;
@@ -100,7 +100,7 @@ abstract contract UsdnProtocolStorage {
     /**
      * @notice The pending actions by user (1 per user max).
      * @dev The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
-     * pending action. Since the deque uses uint128 indices, the highest index will still fit here when adding one.
+     * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one.
      */
     mapping(address => uint256) internal _pendingActions;
 

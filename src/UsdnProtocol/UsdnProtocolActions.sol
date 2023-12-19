@@ -153,7 +153,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // adjust balances
         _applyPnlAndFunding(withdrawalPrice.price, withdrawalPrice.timestamp);
 
-        int256 available = vaultAssetAvailable(withdrawalPrice.price);
+        int256 available = _vaultAssetAvailable(withdrawalPrice.price);
         if (available < 0) {
             available = 0; // clamp to zero
         }
@@ -170,7 +170,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function _executePendingAction(bytes calldata priceData) internal {
-        PendingAction memory pending = getActionablePendingAction();
+        PendingAction memory pending = getActionablePendingAction(0); // use default maxIter
         if (pending.action == ProtocolAction.None) {
             // no pending action
             return;
