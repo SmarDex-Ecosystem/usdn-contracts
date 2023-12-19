@@ -3,11 +3,20 @@ pragma solidity 0.8.20;
 
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
+import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
 abstract contract UsdnProtocolLong is UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
+
+    function getLongPosition(int24 tick, uint256 index) public view returns (Position memory pos_) {
+        pos_ = _longPositions[_tickHash(tick)][index];
+    }
+
+    function getLongPositionsLength(int24 tick) external view returns (uint256 len_) {
+        len_ = _positionsInTick[_tickHash(tick)];
+    }
 
     function findMaxInitializedTick(int24 searchStart) public view returns (int24 tick_) {
         uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(searchStart));
@@ -38,5 +47,9 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         // cast to int256 and shift into negative
         int24 compactTick = int24(int256(index) + int256(type(int24).min));
         tick_ = compactTick * _tickSpacing;
+    }
+
+    function _tickHash(int24 tick) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked(tick, _tickVersion[tick]));
     }
 }
