@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import {
@@ -11,12 +12,14 @@ import {
     ProtocolAction,
     PendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
+    using LibBitmap for LibBitmap.Bitmap;
 
     uint256 constant DEFAULT_QUEUE_MAX_ITER = 10;
 
