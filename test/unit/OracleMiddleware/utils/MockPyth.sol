@@ -3,12 +3,16 @@ pragma solidity 0.8.20;
 
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
+import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
+
 /**
  * @title MockPyth contract
  * @dev This contract is used to test the OracleMiddleware contract.
  */
 contract MockPyth {
     uint64 public lastPublishTime;
+    int64 public price = int64(uint64(ETH_PRICE));
+    uint64 public conf = uint64(ETH_CONF);
 
     constructor() {
         lastPublishTime = uint64(block.timestamp);
@@ -38,7 +42,7 @@ contract MockPyth {
 
         priceFeeds = new PythStructs.PriceFeed[](priceIds.length);
         PythStructs.Price memory price =
-            PythStructs.Price({ price: 2000 gwei, conf: 20 gwei, expo: 8, publishTime: lastPublishTime });
+            PythStructs.Price({ price: (price), conf: conf, expo: 8, publishTime: lastPublishTime });
 
         for (uint256 i; i < priceIds.length;) {
             priceFeeds[i] = PythStructs.PriceFeed({ id: bytes32(priceIds[i]), price: price, emaPrice: price });
