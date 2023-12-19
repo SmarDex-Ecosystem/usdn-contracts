@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
@@ -9,7 +10,17 @@ import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtoc
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 abstract contract UsdnProtocolStorage {
-    /* ------------------------------- Immutables ------------------------------- */
+    using LibBitmap for LibBitmap.Bitmap;
+    /* ----------------------- Immutables and constants --------------------------*/
+
+    /// @notice The number of decimals for leverage values
+    uint8 public constant LEVERAGE_DECIMALS = 9;
+
+    /// @notice The number of decimals for funding rate values
+    uint8 public constant FUNDING_RATE_DECIMALS = 18;
+
+    /// @notice The number of seconds in a day
+    uint256 public constant SECONDS_PER_DAY = 60 * 60 * 24;
 
     /**
      * @notice The liquidation tick spacing for storing long positions.
@@ -38,20 +49,53 @@ abstract contract UsdnProtocolStorage {
     /// @notice The oracle middleware contract.
     IOracleMiddleware internal _oracleMiddleware;
 
-    /// @notice The deadline for a user to confirm their own action.
+    /// @notice The minimum leverage for a position
+    uint256 internal _minLeverage = 1 * 10 ** LEVERAGE_DECIMALS + 1;
+
+    /// @notice The maximum leverage for a position
+    uint256 internal _maxLeverage = 10 * 10 ** LEVERAGE_DECIMALS;
+
+    /// @notice The deadline for a user to confirm their own action
     uint256 internal _validationDeadline = 60 minutes;
 
-    /// @notice The balance of deposits (with `asset` decimals).
+    /// @notice The funding rate per second
+    uint256 internal _fundingRatePerSecond = 3_472_222_222; // 18 decimals (0.03% daily -> 0.0000003472% per second)
+
+    /// @notice The balance of deposits (with asset decimals)
     uint256 internal _balanceVault;
 
-    /// @notice The balance of long positions (with `asset` decimals).
+    /// @notice The balance of long positions (with asset decimals)
     uint256 internal _balanceLong;
 
-    /// @notice The last price of the asset on last balances update (price feed decimals).
+    /// @notice The total exposure (with asset decimals)
+    uint256 internal _totalExpo;
+
+    /// @notice The price of the asset during the last balances update (with price feed decimals)
     uint128 internal _lastPrice;
 
-    /// @notice The last timestamp of balances update.
+    /// @notice The timestamp of the last balances update
     uint128 internal _lastUpdateTimestamp;
+
+    /// @notice The liquidation price tick versions
+    mapping(int24 => uint256) internal _tickVersion;
+
+    /// @notice The long positions per versioned tick (liquidation price)
+    mapping(bytes32 => Position[]) internal _longPositions;
+
+    /// @notice Cache of the total exposure per versioned tick
+    mapping(bytes32 => uint256) internal _totalExpoByTick;
+
+    /// @notice Cache of the number of positions per tick
+    mapping(bytes32 => uint256) internal _positionsInTick;
+
+    /// @notice Cached value of the maximum initialized tick
+    int24 internal _maxInitializedTick;
+
+    /// @notice Cache of the total long positions count
+    uint256 internal _totalLongPositions;
+
+    /// @notice The bitmap used to quickly find populated ticks
+    LibBitmap.Bitmap internal _tickBitmap;
 
     /**
      * @notice The pending actions by user (1 per user max).
