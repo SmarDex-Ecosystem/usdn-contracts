@@ -426,7 +426,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         } else if (pending.action == ProtocolAction.InitiateOpenPosition) {
             _validateOpenPositionWithAction(pending, priceData, false);
         } else if (pending.action == ProtocolAction.InitiateClosePosition) {
-            // TODO
+            _validateClosePositionWithAction(pending, priceData);
         }
     }
 }
