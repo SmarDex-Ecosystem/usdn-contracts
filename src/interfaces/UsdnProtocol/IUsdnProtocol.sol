@@ -109,7 +109,7 @@ interface IUsdnProtocolEvents {
      * @param tick The tick containing the position.
      * @param index The index of the position inside the tick array.
      */
-    event InitiatedOpenLong(address indexed user, Position position, int24 tick, uint256 index);
+    event InitiatedOpenPosition(address indexed user, Position position, int24 tick, uint256 index);
 
     /**
      * @notice Emitted when a user validates the opening of a long position.
@@ -121,7 +121,7 @@ interface IUsdnProtocolEvents {
      * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
      * @param liquidationPrice The liquidation price of the position (final).
      */
-    event ValidatedOpenLong(
+    event ValidatedOpenPosition(
         address indexed user, Position position, int24 tick, uint256 index, uint128 liquidationPrice
     );
 
@@ -133,6 +133,14 @@ interface IUsdnProtocolEvents {
      * @param newIndex The new index of the position inside the `newTick` array.
      */
     event LiquidationPriceChanged(int24 indexed oldTick, uint256 indexed oldIndex, int24 newTick, uint256 newIndex);
+
+    /**
+     * @notice Emitted when a user initiates the closing of a long position.
+     * @param user The user address.
+     * @param tick The tick containing the position.
+     * @param index The index of the position inside the tick array.
+     */
+    event InitiatedClosePosition(address indexed user, int24 tick, uint256 index);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -142,6 +150,9 @@ interface IUsdnProtocolEvents {
 interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();
+
+    /// @dev Indicates that the user is not allowed to perform an action
+    error UsdnProtocolUnauthorized();
 
     /// @dev Indicates that the the token transfer didn't yield the expected balance change
     error UsdnProtocolIncompleteTransfer(address to, uint256 effectiveBalance, uint256 expectedBalance);

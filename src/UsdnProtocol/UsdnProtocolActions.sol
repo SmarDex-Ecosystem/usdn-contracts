@@ -89,7 +89,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _validateWithdrawal(msg.sender, withdrawalPriceData);
     }
 
-    function initiateOpenLong(
+    function initiateOpenPosition(
         uint96 amount,
         uint128 liquidationPrice,
         bytes calldata currentPriceData,
@@ -148,7 +148,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _addPendingAction(msg.sender, pendingAction);
 
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
-        emit InitiatedOpenLong(msg.sender, long, tick_, index_);
+        emit InitiatedOpenPosition(msg.sender, long, tick_, index_);
     }
 
     function validateOpenPosition(bytes calldata openPriceData, bytes calldata previousActionPriceData)
@@ -158,6 +158,33 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
 
         _validateOpenPosition(msg.sender, openPriceData);
+    }
+
+    function initiateClosePosition(
+        int24 tick,
+        uint256 index,
+        bytes calldata currentPriceData,
+        bytes calldata previousActionPriceData
+    ) external payable {
+        // check if the position belongs to the user
+        Position memory pos = getLongPosition(tick, index);
+        if (pos.user != msg.sender) {
+            revert UsdnProtocolUnauthorized();
+        }
+
+        _executePendingAction(previousActionPriceData);
+
+        PendingAction memory pendingAction = PendingAction({
+            action: ProtocolAction.InitiateClosePosition,
+            timestamp: uint40(block.timestamp),
+            user: msg.sender,
+            tick: tick,
+            amountOrIndex: index
+        });
+
+        _addPendingAction(msg.sender, pendingAction);
+
+        emit InitiatedClosePosition(msg.sender, tick, index);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
@@ -296,7 +323,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         pos.leverage = leverage;
         pos.startPrice = entryPrice;
 
-        emit ValidatedOpenLong(long.user, pos, tick, index, liquidationPrice);
+        emit ValidatedOpenPosition(long.user, pos, tick, index, liquidationPrice);
     }
 
     function _executePendingAction(bytes calldata priceData) internal {
