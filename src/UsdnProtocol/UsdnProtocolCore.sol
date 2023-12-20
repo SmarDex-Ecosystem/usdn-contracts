@@ -120,10 +120,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         if (timestamp <= _lastUpdateTimestamp) {
             return;
         }
-        // silence unused variable and visibility warnings
-        currentPrice;
-        _balanceVault = _balanceVault;
-        // TODO: apply PnL and funding
+        uint256 totalBalance = _balanceLong + _balanceVault;
+        int256 newLongBalance = _longAssetAvailable(currentPrice) - fundingAsset(currentPrice, timestamp);
+        if (newLongBalance < 0) {
+            newLongBalance = 0;
+        }
+        int256 newVaultBalance = int256(totalBalance) - newLongBalance;
+        if (newVaultBalance < 0) {
+            newVaultBalance = 0;
+        }
+        _balanceLong = uint256(newLongBalance);
+        _balanceVault = uint256(newVaultBalance);
+        _lastPrice = currentPrice;
+        _lastUpdateTimestamp = timestamp;
     }
 
     function _retrieveAssetsAndCheckBalance(address from, uint256 amount) internal {
@@ -137,12 +146,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     }
 
     function _distributeAssetsAndCheckBalance(address to, uint256 amount) internal {
+        if (amount == 0) {
+            return;
+        }
         uint256 balanceBefore = _asset.balanceOf(to);
-        if (amount > 0) {
-            _asset.safeTransfer(to, amount);
-            if (_asset.balanceOf(to) != balanceBefore + amount) {
-                revert UsdnProtocolIncompleteTransfer(to, _asset.balanceOf(to), balanceBefore + amount);
-            }
+        _asset.safeTransfer(to, amount);
+        if (_asset.balanceOf(to) != balanceBefore + amount) {
+            revert UsdnProtocolIncompleteTransfer(to, _asset.balanceOf(to), balanceBefore + amount);
         }
     }
 

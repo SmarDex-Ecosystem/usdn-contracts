@@ -83,6 +83,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         ++_positionsInTick[tickHash];
         ++_totalLongPositions;
 
+        // Add to tick array
         Position[] storage tickArray = _longPositions[tickHash];
         index_ = tickArray.length;
         if (_positionsInTick[tickHash] == 1) {
@@ -94,6 +95,25 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
             _maxInitializedTick = tick;
         }
         tickArray.push(long);
+    }
+
+    function _removePosition(int24 tick, uint256 index, Position memory long) internal {
+        bytes32 tickHash = _tickHash(tick);
+
+        // Adjust state
+        uint256 removeExpo = (long.amount * long.leverage) / 10 ** LEVERAGE_DECIMALS;
+        _totalExpo -= removeExpo;
+        _totalExpoByTick[tickHash] -= removeExpo;
+        --_positionsInTick[tickHash];
+        --_totalLongPositions;
+
+        // Remove from tick array (set to zero to avoid shifting indices)
+        Position[] storage tickArray = _longPositions[tickHash];
+        delete tickArray[index];
+        if (_positionsInTick[tickHash] == 0) {
+            // we removed the last position in the tick
+            _tickBitmap.unset(_tickToBitmapIndex(tick));
+        }
     }
 
     function _getEffectiveTickForPrice(uint128 price) internal view returns (int24 tick_) {

@@ -141,6 +141,18 @@ interface IUsdnProtocolEvents {
      * @param index The index of the position inside the tick array.
      */
     event InitiatedClosePosition(address indexed user, int24 tick, uint256 index);
+
+    /**
+     * @notice Emitted when a user validates the closing of a long position
+     * @param user The user address.
+     * @param tick The tick that was containing the position.
+     * @param index The index that the position had inside the tick array.
+     * @param amountReceived The amount of asset that were sent to the user.
+     * @param profit The profit that the user made.
+     */
+    event ValidatedClosePosition(
+        address indexed user, int24 tick, uint256 index, uint256 amountReceived, int256 profit
+    );
 }
 
 /* -------------------------------------------------------------------------- */

@@ -389,7 +389,29 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // FIXME: use neutral price here!
         _applyPnlAndFunding(price.price, price.timestamp);
 
+        Position memory pos = getLongPosition(tick, index);
+
         // TODO: check if can be liquidated according to the provided price
+
+        int256 available = _longAssetAvailable(_lastPrice);
+        if (available < 0) {
+            available = 0;
+        }
+
+        int256 value = positionValue(price.price, pos.startPrice, pos.amount, pos.leverage);
+        if (value < 0) {
+            value = 0;
+        }
+        uint256 assetToTransfer = uint256(value) > uint256(available) ? uint256(available) : uint256(value);
+
+        // remove the position for the protocol and adjust state
+        _balanceLong -= assetToTransfer;
+        _removePosition(tick, index, pos);
+
+        // send the asset to the user
+        _distributeAssetsAndCheckBalance(pos.user, assetToTransfer);
+
+        emit ValidatedClosePosition(pos.user, tick, index, assetToTransfer, int256(assetToTransfer) - value);
     }
 
     function _executePendingAction(bytes calldata priceData) internal {
