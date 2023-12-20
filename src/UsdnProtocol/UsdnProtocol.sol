@@ -60,7 +60,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
             _retrieveAssetsAndCheckBalance(msg.sender, depositAmount);
 
             emit InitiatedDeposit(msg.sender, depositAmount);
-            // Mint USDN to the "dead" address
+            // Mint USDN
             _validateDepositWithAction(pendingAction, currentPriceData, true); // last parameter = initializing
         }
 
