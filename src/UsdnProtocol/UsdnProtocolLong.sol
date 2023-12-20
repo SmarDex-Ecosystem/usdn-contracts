@@ -72,12 +72,36 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         }
     }
 
-    function _getTickForPrice(uint128 price) internal view returns (int24 tick_) {
+    function _saveNewPosition(int24 tick, Position memory long) internal returns (uint256 index_) {
+        bytes32 tickHash = _tickHash(tick);
+
+        // Adjust state
+        _balanceLong += long.amount;
+        uint256 addExpo = (long.amount * long.leverage) / 10 ** LEVERAGE_DECIMALS;
+        _totalExpo += addExpo;
+        _totalExpoByTick[tickHash] += addExpo;
+        ++_positionsInTick[tickHash];
+        ++_totalLongPositions;
+
+        Position[] storage tickArray = _longPositions[tickHash];
+        index_ = tickArray.length;
+        if (_positionsInTick[tickHash] == 1) {
+            // first position in this tick, we need to reflect that it is populated
+            _tickBitmap.set(_tickToBitmapIndex(tick));
+        }
+        if (tick > _maxInitializedTick) {
+            // keep track of max initialized tick
+            _maxInitializedTick = tick;
+        }
+        tickArray.push(long);
+    }
+
+    function _getEffectiveTickForPrice(uint128 price) internal view returns (int24 tick_) {
         tick_ = TickMath.getTickAtPrice(uint256(price));
         tick_ = (tick_ / _tickSpacing) * _tickSpacing;
     }
 
-    function _getPriceForTick(int24 tick) internal pure returns (uint128 price_) {
+    function _getEffectivePriceForTick(int24 tick) internal pure returns (uint128 price_) {
         price_ = uint128(TickMath.getPriceAtTick(tick));
     }
 
