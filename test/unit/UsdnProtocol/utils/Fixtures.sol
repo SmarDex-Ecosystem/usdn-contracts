@@ -27,11 +27,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 10);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initialize(10 ether, 1, abi.encode(uint128(2000 ether)));
+        protocol.initialize(10 ether, 10 ether, abi.encode(uint128(2000 ether)));
     }
 
     function test_setUp() public {
-        assertEq(wstETH.balanceOf(address(protocol)), 10 ether);
+        assertEq(wstETH.balanceOf(address(protocol)), 20 ether);
         assertEq(usdn.balanceOf(address(0xdead)), protocol.MIN_USDN_SUPPLY());
         assertEq(usdn.balanceOf(address(this)), 20_000 ether - protocol.MIN_USDN_SUPPLY());
         assertEq(usdn.totalSupply(), 20_000 ether);

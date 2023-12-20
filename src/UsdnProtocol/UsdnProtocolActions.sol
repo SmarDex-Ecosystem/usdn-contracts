@@ -317,19 +317,16 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        _validateOpenPositionWithAction(open, priceData, false);
+        _validateOpenPositionWithAction(open, priceData);
     }
 
-    function _validateOpenPositionWithAction(PendingAction memory long, bytes calldata priceData, bool initializing)
-        internal
-    {
-        // During initialization, we might want to use a different oracle, so we have a special action
-        ProtocolAction action = initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateOpenPosition;
+    function _validateOpenPositionWithAction(PendingAction memory long, bytes calldata priceData) internal {
         int24 tick = long.tick;
         uint256 index = long.amountOrIndex;
 
-        PriceInfo memory price =
-            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(long.timestamp, action, priceData);
+        PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+            long.timestamp, ProtocolAction.ValidateOpenPosition, priceData
+        );
 
         uint128 liquidationPrice = _getEffectivePriceForTick(tick);
 
@@ -424,7 +421,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         } else if (pending.action == ProtocolAction.InitiateWithdrawal) {
             _validateWithdrawalWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.InitiateOpenPosition) {
-            _validateOpenPositionWithAction(pending, priceData, false);
+            _validateOpenPositionWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.InitiateClosePosition) {
             _validateClosePositionWithAction(pending, priceData);
         }
