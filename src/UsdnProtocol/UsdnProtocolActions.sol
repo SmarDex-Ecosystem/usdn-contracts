@@ -24,14 +24,24 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
      * @notice Initiate a deposit of assets into the vault.
      * @dev This function is payable, and the amount of ETH sent is used to pay for low-latency price validation.
      * @param amount The amount of wstETH to deposit.
+     * @param currentPriceData The latest price data
      * @param previousActionPriceData The price data of an actionable pending action.
      */
-    function initiateDeposit(uint128 amount, bytes calldata previousActionPriceData) external payable {
+    function initiateDeposit(uint128 amount, bytes calldata currentPriceData, bytes calldata previousActionPriceData)
+        external
+        payable
+    {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
 
         _executePendingAction(previousActionPriceData);
+
+        // TODO: perform liquidation of other pos with currentPrice
+        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+            uint40(block.timestamp), ProtocolAction.InitiateDeposit, currentPriceData
+        );
+        currentPrice;
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateDeposit,
@@ -57,12 +67,22 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _validateDeposit(msg.sender, depositPriceData);
     }
 
-    function initiateWithdrawal(uint128 usdnAmount, bytes calldata previousActionPriceData) external payable {
+    function initiateWithdrawal(
+        uint128 usdnAmount,
+        bytes calldata currentPriceData,
+        bytes calldata previousActionPriceData
+    ) external payable {
         if (usdnAmount == 0) {
             revert UsdnProtocolZeroAmount();
         }
 
         _executePendingAction(previousActionPriceData);
+
+        // TODO: perform liquidation of other pos with currentPrice
+        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+            uint40(block.timestamp), ProtocolAction.InitiateWithdrawal, currentPriceData
+        );
+        currentPrice;
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateWithdrawal,
@@ -109,6 +129,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint40(block.timestamp), ProtocolAction.InitiateOpenPosition, currentPriceData
         );
+
+        // TODO: perform liquidation of other pos with currentPrice
 
         // Apply liquidation penalty
         uint128 entryPrice = _entryPriceWithLiquidationPenalty(currentPrice.price);
@@ -173,6 +195,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         }
 
         _executePendingAction(previousActionPriceData);
+
+        // TODO: perform liquidation of other pos with currentPrice
+        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+            uint40(block.timestamp), ProtocolAction.InitiateClosePosition, currentPriceData
+        );
+        currentPrice;
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateClosePosition,
