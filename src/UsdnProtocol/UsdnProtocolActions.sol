@@ -35,13 +35,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolZeroAmount();
         }
 
-        _executePendingAction(previousActionPriceData);
-
-        // TODO: perform liquidation of other pos with currentPrice
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint40(block.timestamp), ProtocolAction.InitiateDeposit, currentPriceData
         );
-        currentPrice;
+
+        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        _executePendingAction(previousActionPriceData);
+        // TODO: perform liquidation of other pos with currentPrice
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateDeposit,
@@ -76,13 +76,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolZeroAmount();
         }
 
-        _executePendingAction(previousActionPriceData);
-
-        // TODO: perform liquidation of other pos with currentPrice
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint40(block.timestamp), ProtocolAction.InitiateWithdrawal, currentPriceData
         );
-        currentPrice;
+
+        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        // TODO: perform liquidation of other pos with currentPrice
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateWithdrawal,
@@ -98,6 +97,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _usdn.safeTransferFrom(msg.sender, address(this), usdnAmount);
 
         emit InitiatedWithdrawal(msg.sender, usdnAmount);
+        _executePendingAction(previousActionPriceData);
     }
 
     function validateWithdrawal(bytes calldata withdrawalPriceData, bytes calldata previousActionPriceData)
@@ -119,8 +119,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolZeroAmount();
         }
 
-        _executePendingAction(previousActionPriceData);
-
         // find tick corresponding to the liquidation price (rounds down)
         tick_ = _getEffectiveTickForPrice(liquidationPrice);
         // calculate effective liquidation price once we have the tick (lower than or equal to the desired liq price)
@@ -129,6 +127,9 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint40(block.timestamp), ProtocolAction.InitiateOpenPosition, currentPriceData
         );
+
+        // FIXME: use neutral price here!
+        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
 
         // TODO: perform liquidation of other pos with currentPrice
 
@@ -145,9 +146,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // Liquidation price must be at least x% below current price
         _checkSafetyMargin(currentPrice.price, liquidationPrice);
-
-        // FIXME: use neutral price here!
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
 
         // Register position and adjust contract state
         Position memory long = Position({
@@ -171,15 +169,15 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
         emit InitiatedOpenPosition(msg.sender, long, tick_, index_);
+        _executePendingAction(previousActionPriceData);
     }
 
     function validateOpenPosition(bytes calldata openPriceData, bytes calldata previousActionPriceData)
         external
         payable
     {
-        _executePendingAction(previousActionPriceData);
-
         _validateOpenPosition(msg.sender, openPriceData);
+        _executePendingAction(previousActionPriceData);
     }
 
     function initiateClosePosition(
@@ -194,13 +192,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolUnauthorized();
         }
 
-        _executePendingAction(previousActionPriceData);
-
-        // TODO: perform liquidation of other pos with currentPrice
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint40(block.timestamp), ProtocolAction.InitiateClosePosition, currentPriceData
         );
-        currentPrice;
+
+        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        // TODO: perform liquidation of other pos with currentPrice
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateClosePosition,
@@ -213,6 +210,15 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _addPendingAction(msg.sender, pendingAction);
 
         emit InitiatedClosePosition(msg.sender, tick, index);
+        _executePendingAction(previousActionPriceData);
+    }
+
+    function validateClosePosition(bytes calldata closePriceData, bytes calldata previousActionPriceData)
+        external
+        payable
+    {
+        _validateClosePosition(msg.sender, closePriceData);
+        _executePendingAction(previousActionPriceData);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
@@ -327,12 +333,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         uint128 liquidationPrice = _getEffectivePriceForTick(tick);
 
-        // TODO: check if can be liquidated according to the provided price
-        // If not, then price.price > liquidationPrice
-
         // adjust balances
         // FIXME: use neutral price here!
         _applyPnlAndFunding(price.price, price.timestamp);
+
+        // TODO: check if can be liquidated according to the provided price
+        // If not, then price.price > liquidationPrice
 
         // Apply liquidation penalty
         uint128 entryPrice = _entryPriceWithLiquidationPenalty(price.price);
@@ -352,6 +358,38 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         pos.startPrice = entryPrice;
 
         emit ValidatedOpenPosition(long.user, pos, tick, index, liquidationPrice);
+    }
+
+    function _validateClosePosition(address user, bytes calldata priceData) internal {
+        PendingAction memory close = _getAndClearPendingAction(user);
+
+        // check type of action
+        if (close.action != ProtocolAction.InitiateClosePosition) {
+            revert UsdnProtocolInvalidPendingAction();
+        }
+        // sanity check
+        if (close.user != user) {
+            revert UsdnProtocolInvalidPendingAction();
+        }
+
+        _validateClosePositionWithAction(close, priceData);
+    }
+
+    function _validateClosePositionWithAction(PendingAction memory long, bytes calldata priceData) internal {
+        int24 tick = long.tick;
+        uint256 index = long.amountOrIndex;
+
+        PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+            long.timestamp, ProtocolAction.ValidateClosePosition, priceData
+        );
+
+        uint128 liquidationPrice = _getEffectivePriceForTick(tick);
+
+        // adjust balances
+        // FIXME: use neutral price here!
+        _applyPnlAndFunding(price.price, price.timestamp);
+
+        // TODO: check if can be liquidated according to the provided price
     }
 
     function _executePendingAction(bytes calldata priceData) internal {
