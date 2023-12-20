@@ -40,7 +40,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         );
 
         _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
-        _executePendingAction(previousActionPriceData);
         // TODO: perform liquidation of other pos with currentPrice
 
         PendingAction memory pendingAction = PendingAction({
@@ -56,15 +55,15 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
 
         emit InitiatedDeposit(msg.sender, amount);
+        _executePendingAction(previousActionPriceData);
     }
 
     function validateDeposit(bytes calldata depositPriceData, bytes calldata previousActionPriceData)
         external
         payable
     {
-        _executePendingAction(previousActionPriceData);
-
         _validateDeposit(msg.sender, depositPriceData);
+        _executePendingAction(previousActionPriceData);
     }
 
     function initiateWithdrawal(
@@ -104,9 +103,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         external
         payable
     {
-        _executePendingAction(previousActionPriceData);
-
         _validateWithdrawal(msg.sender, withdrawalPriceData);
+        _executePendingAction(previousActionPriceData);
     }
 
     function initiateOpenPosition(
