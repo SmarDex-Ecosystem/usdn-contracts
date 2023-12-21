@@ -2,10 +2,9 @@
 out/
 dist/
 
-# Dry-run deployment artifacts
-broadcast/*.sol/*/dry-run
-# Non-latest deployment artifacts
-broadcast/*.sol/*/run-[0-9]*.json
+# Non-mainnet deployment artifacts
+broadcast/*.sol/**/*.json
+!broadcast/*.sol/1/run-*.json
 
 # Private files
 .env
