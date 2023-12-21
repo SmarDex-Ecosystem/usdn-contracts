@@ -143,16 +143,20 @@ abstract contract UsdnProtocolStorage {
      * @param usdn The USDN ERC20 contract.
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
-     * @param tickSpacing The positions tick spacing.
+     * @param tickSpacing_ The positions tick spacing.
      */
-    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing) {
+    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing_) {
         _usdn = usdn;
         _usdnDecimals = usdn.decimals();
         _asset = asset;
         _assetDecimals = asset.decimals();
         _oracleMiddleware = oracleMiddleware;
         _priceFeedDecimals = oracleMiddleware.decimals();
-        _tickSpacing = tickSpacing;
+        _tickSpacing = tickSpacing_;
+    }
+
+    function tickSpacing() external view returns (int24) {
+        return _tickSpacing;
     }
 
     // TODO: add view functions for all storage items that need to be public

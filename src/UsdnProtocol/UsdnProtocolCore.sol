@@ -18,6 +18,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     using SafeERC20 for IERC20Metadata;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
+    /// @notice The address that holds the minimum supply of USDN and first minimum long position.
+    address public constant DEAD_ADDRESS = address(0xdead);
+
     uint256 constant DEFAULT_QUEUE_MAX_ITER = 10;
 
     /* -------------------------- Public view functions ------------------------- */

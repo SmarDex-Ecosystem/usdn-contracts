@@ -27,13 +27,15 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 10);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initialize(10 ether, 10 ether, abi.encode(uint128(2000 ether)));
+        protocol.initialize(10 ether, 10 ether, 2 gwei, abi.encode(uint128(2000 ether)));
     }
 
     function test_setUp() public {
+        assertGt(protocol.tickSpacing(), 1); // we want to test all functions for a tickSpacing > 1
         assertEq(wstETH.balanceOf(address(protocol)), 20 ether);
-        assertEq(usdn.balanceOf(address(0xdead)), protocol.MIN_USDN_SUPPLY());
+        assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY());
         assertEq(usdn.balanceOf(address(this)), 20_000 ether - protocol.MIN_USDN_SUPPLY());
         assertEq(usdn.totalSupply(), 20_000 ether);
+        // TODO: check that both long positions exist
     }
 }

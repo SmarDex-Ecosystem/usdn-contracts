@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
@@ -118,7 +119,18 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
 
     function _getEffectiveTickForPrice(uint128 price) internal view returns (int24 tick_) {
         tick_ = TickMath.getTickAtPrice(uint256(price));
-        tick_ = (tick_ / _tickSpacing) * _tickSpacing;
+        // round down to the next valid tick according to _tickSpacing (towards negative infinity)
+        if (tick_ < 0) {
+            // we round up the inverse number (positive) then invert it -> round towards negative infinity
+            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(_tickSpacing)))))
+                * _tickSpacing;
+            // avoid invalid ticks
+            if (tick_ < TickMath.MIN_TICK) {
+                tick_ = TickMath.MIN_TICK;
+            }
+        } else {
+            tick_ = (tick_ / _tickSpacing) * _tickSpacing;
+        }
     }
 
     function _getEffectivePriceForTick(int24 tick) internal pure returns (uint128 price_) {

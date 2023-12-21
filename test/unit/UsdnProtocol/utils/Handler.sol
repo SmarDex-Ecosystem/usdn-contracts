@@ -17,4 +17,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
         UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing)
     { }
+
+    function getEffectiveTickForPrice(uint128 price) public view returns (int24) {
+        return _getEffectiveTickForPrice(price);
+    }
+
+    function getEffectivePriceForTick(int24 tick) public pure returns (uint128) {
+        return _getEffectivePriceForTick(tick);
+    }
 }

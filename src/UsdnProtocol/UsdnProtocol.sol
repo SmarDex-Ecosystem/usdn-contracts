@@ -13,6 +13,12 @@ import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.s
 import { TickMath } from "src/libraries/TickMath.sol";
 
 contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
+    /// @dev The minimum amount of wstETH for the intialization deposit and long.
+    uint256 internal constant MIN_INIT_DEPOSIT = 1 ether;
+
+    /// @dev The amount of collateral for the first "dead" long position.
+    uint128 internal constant FIRST_LONG_AMOUNT = 1000;
+
     /**
      * @notice Constructor.
      * @param usdn The USDN ERC20 contract.
@@ -25,16 +31,17 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
         UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing)
     { }
 
-    function initialize(uint256 depositAmount, uint128 longAmount, bytes calldata currentPriceData)
-        external
-        payable
-        initializer
-    {
-        if (depositAmount == 0) {
-            revert UsdnProtocolZeroAmount();
+    function initialize(
+        uint256 depositAmount,
+        uint128 longAmount,
+        uint128 longLiqPrice,
+        bytes calldata currentPriceData
+    ) external payable initializer {
+        if (depositAmount < MIN_INIT_DEPOSIT) {
+            revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
         }
-        if (longAmount == 0) {
-            revert UsdnProtocolZeroAmount();
+        if (longAmount < MIN_INIT_DEPOSIT) {
+            revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
         }
 
         uint40 timestamp = uint40(block.timestamp);
@@ -60,30 +67,33 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
             _retrieveAssetsAndCheckBalance(msg.sender, depositAmount);
 
             emit InitiatedDeposit(msg.sender, depositAmount);
-            // Mint USDN
+            // Mint USDN (a small amount is minted to the dead address)
             _validateDepositWithAction(pendingAction, currentPriceData, true); // last parameter = initializing
         }
 
-        // Create long position with min leverage
-        {
-            // Transfer the wstETH for the long
-            _retrieveAssetsAndCheckBalance(msg.sender, longAmount);
+        // Transfer the wstETH for the long
+        _retrieveAssetsAndCheckBalance(msg.sender, longAmount);
 
-            int24 tick = TickMath.minUsableTick(_tickSpacing);
-            uint128 liquidationPrice = _getEffectivePriceForTick(tick);
-            uint40 leverage = getLeverage(currentPrice.price, liquidationPrice);
-            Position memory long = Position({
-                user: msg.sender,
-                amount: longAmount,
-                startPrice: currentPrice.price,
-                leverage: leverage,
-                timestamp: timestamp
-            });
-            // Save the position and update the state
-            uint256 index = _saveNewPosition(tick, long);
+        // Create long positions with min leverage
+        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price, 0);
+        _createInitialPosition(msg.sender, longAmount - FIRST_LONG_AMOUNT, currentPrice.price, longLiqPrice);
+    }
 
-            emit InitiatedOpenPosition(msg.sender, long, tick, index);
-            emit ValidatedOpenPosition(long.user, long, tick, index, liquidationPrice);
-        }
+    function _createInitialPosition(address user, uint128 amount, uint128 price, uint128 liquidationPrice) internal {
+        int24 tick =
+            liquidationPrice == 0 ? TickMath.minUsableTick(_tickSpacing) : _getEffectiveTickForPrice(liquidationPrice);
+        liquidationPrice = _getEffectivePriceForTick(tick);
+        uint40 leverage = getLeverage(price, liquidationPrice);
+        Position memory long = Position({
+            user: user,
+            amount: amount,
+            startPrice: price,
+            leverage: leverage,
+            timestamp: uint40(block.timestamp)
+        });
+        // Save the position and update the state
+        uint256 index = _saveNewPosition(tick, long);
+        emit InitiatedOpenPosition(user, long, tick, index);
+        emit ValidatedOpenPosition(user, long, tick, index, liquidationPrice);
     }
 }

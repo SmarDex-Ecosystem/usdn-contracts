@@ -252,10 +252,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice.price);
         if (initializing) {
             // we mint the minimum amount of USDN to the dead address, so that the total supply never falls to zero
-            _usdn.mint(address(0xdead), MIN_USDN_SUPPLY);
+            _usdn.mint(DEAD_ADDRESS, MIN_USDN_SUPPLY);
             uint256 mintToUser = usdnToMint - MIN_USDN_SUPPLY;
             _usdn.mint(deposit.user, mintToUser);
-            emit ValidatedDeposit(address(0xdead), 0, MIN_USDN_SUPPLY);
+            emit ValidatedDeposit(DEAD_ADDRESS, 0, MIN_USDN_SUPPLY);
             emit ValidatedDeposit(deposit.user, deposit.amountOrIndex, mintToUser);
         } else {
             _usdn.mint(deposit.user, usdnToMint);

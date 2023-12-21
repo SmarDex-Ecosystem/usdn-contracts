@@ -163,6 +163,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();
 
+    /// @dev Indicates that the initilization deposit is too low
+    error UsdnProtocolMinInitAmount(uint256 minInitAmount);
+
     /// @dev Indicates that the user is not allowed to perform an action
     error UsdnProtocolUnauthorized();
 
