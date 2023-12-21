@@ -1,6 +1,11 @@
 # Builds
 out/
 
+# Dry-run deployment artifacts
+broadcast/*.sol/*/dry-run
+# Non-latest deployment artifacts
+broadcast/*.sol/*/run-[0-9]*.json
+
 # Private files
 .env
 
