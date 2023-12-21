@@ -132,9 +132,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // TODO: perform liquidation of other pos with currentPrice
 
         // Apply liquidation penalty
-        uint128 entryPrice = _entryPriceWithLiquidationPenalty(currentPrice.price);
-
-        uint40 leverage = getLeverage(entryPrice, liquidationPrice); // reverts if liquidationPrice >= entryPrice
+        // reverts if liquidationPrice >= entryPrice
+        uint40 leverage = getLeverageWithLiquidationPenalty(currentPrice.price, liquidationPrice);
         if (leverage < _minLeverage) {
             revert UsdnProtocolLeverageTooLow();
         }
@@ -149,7 +148,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         Position memory long = Position({
             user: msg.sender,
             amount: amount,
-            startPrice: entryPrice,
+            startPrice: currentPrice.price,
             leverage: leverage,
             timestamp: uint40(block.timestamp)
         });
@@ -332,13 +331,11 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // FIXME: use neutral price here!
         _applyPnlAndFunding(price.price, price.timestamp);
 
-        // TODO: check if can be liquidated according to the provided price
-        // If not, then price.price > liquidationPrice
+        // TODO: if would be liquidable right now, re-calculate a liquidation price based on the leverage
 
         // Apply liquidation penalty
-        uint128 entryPrice = _entryPriceWithLiquidationPenalty(price.price);
-
-        uint40 leverage = getLeverage(entryPrice, liquidationPrice); // reverts if liquidationPrice >= entryPrice
+        // reverts if liquidationPrice >= entryPrice
+        uint40 leverage = getLeverageWithLiquidationPenalty(price.price, liquidationPrice);
         // Leverage is always greater than 1 (liquidationPrice is positive).
         // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
         if (leverage > _maxLeverage) {
@@ -350,7 +347,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // Adjust position parameters
         Position storage pos = _longPositions[_tickHash(tick)][index];
         pos.leverage = leverage;
-        pos.startPrice = entryPrice;
+        pos.startPrice = price.price;
 
         emit ValidatedOpenPosition(long.user, pos, tick, index, liquidationPrice);
     }

@@ -83,7 +83,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
         int24 tick =
             liquidationPrice == 0 ? TickMath.minUsableTick(_tickSpacing) : _getEffectiveTickForPrice(liquidationPrice);
         liquidationPrice = _getEffectivePriceForTick(tick);
-        uint40 leverage = getLeverage(price, liquidationPrice);
+        uint40 leverage = _getLeverage(price, liquidationPrice); // no liquidation penalty
         Position memory long = Position({
             user: user,
             amount: amount,
