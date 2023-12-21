@@ -30,6 +30,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     function initiateDeposit(uint128 amount, bytes calldata currentPriceData, bytes calldata previousActionPriceData)
         external
         payable
+        initializedAndNonReentrant
     {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
@@ -61,6 +62,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     function validateDeposit(bytes calldata depositPriceData, bytes calldata previousActionPriceData)
         external
         payable
+        initializedAndNonReentrant
     {
         _validateDeposit(msg.sender, depositPriceData);
         _executePendingAction(previousActionPriceData);
@@ -70,7 +72,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint128 usdnAmount,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
-    ) external payable {
+    ) external payable initializedAndNonReentrant {
         if (usdnAmount == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -102,6 +104,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     function validateWithdrawal(bytes calldata withdrawalPriceData, bytes calldata previousActionPriceData)
         external
         payable
+        initializedAndNonReentrant
     {
         _validateWithdrawal(msg.sender, withdrawalPriceData);
         _executePendingAction(previousActionPriceData);
@@ -112,7 +115,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint128 liquidationPrice,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
-    ) external payable returns (int24 tick_, uint256 index_) {
+    ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 index_) {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -172,6 +175,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     function validateOpenPosition(bytes calldata openPriceData, bytes calldata previousActionPriceData)
         external
         payable
+        initializedAndNonReentrant
     {
         _validateOpenPosition(msg.sender, openPriceData);
         _executePendingAction(previousActionPriceData);
@@ -182,7 +186,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint256 index,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
-    ) external payable {
+    ) external payable initializedAndNonReentrant {
         // check if the position belongs to the user
         Position memory pos = getLongPosition(tick, index);
         if (pos.user != msg.sender) {
@@ -213,6 +217,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     function validateClosePosition(bytes calldata closePriceData, bytes calldata previousActionPriceData)
         external
         payable
+        initializedAndNonReentrant
     {
         _validateClosePosition(msg.sender, closePriceData);
         _executePendingAction(previousActionPriceData);

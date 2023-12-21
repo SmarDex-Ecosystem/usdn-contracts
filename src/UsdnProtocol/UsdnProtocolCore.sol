@@ -80,7 +80,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     /* ---------------------------- Public functions ---------------------------- */
 
-    function updateBalances(bytes calldata priceData) external payable {
+    function updateBalances(bytes calldata priceData) external payable initializedAndNonReentrant {
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint128(block.timestamp), ProtocolAction.None, priceData
         );

@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { PendingAction, ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
@@ -12,7 +11,7 @@ import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
-contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
+contract UsdnProtocol is UsdnProtocolActions, Ownable {
     /// @dev The minimum amount of wstETH for the intialization deposit and long.
     uint256 internal constant MIN_INIT_DEPOSIT = 1 ether;
 
@@ -31,6 +30,14 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
         UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing)
     { }
 
+    /**
+     * @notice Initialize the protocol.
+     * @dev This function can only be called once. Other public fonctions can only be called after the initialization.
+     * @param depositAmount The amount of wstETH to deposit.
+     * @param longAmount The amount of wstETH to use for the long.
+     * @param longLiqPrice The desired liquidation price of the long.
+     * @param currentPriceData The current price data.
+     */
     function initialize(
         uint256 depositAmount,
         uint128 longAmount,
