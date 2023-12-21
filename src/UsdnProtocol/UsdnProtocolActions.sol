@@ -331,7 +331,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // FIXME: use neutral price here!
         _applyPnlAndFunding(price.price, price.timestamp);
 
-        // TODO: if would be liquidable right now, re-calculate a liquidation price based on the leverage
+        // TODO: if price <= liquidationPrice, re-calculate a liquidation price based on the leverage so that the
+        // position remains solvent. Emit LiquidationPriceChanged.
 
         // Apply liquidation penalty
         // reverts if liquidationPrice >= entryPrice
