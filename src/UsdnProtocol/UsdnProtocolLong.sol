@@ -125,8 +125,9 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
             tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(_tickSpacing)))))
                 * _tickSpacing;
             // avoid invalid ticks
-            if (tick_ < TickMath.MIN_TICK) {
-                tick_ = TickMath.MIN_TICK;
+            int24 minTick = TickMath.minUsableTick(_tickSpacing);
+            if (tick_ < minTick) {
+                tick_ = minTick;
             }
         } else {
             tick_ = (tick_ / _tickSpacing) * _tickSpacing;
