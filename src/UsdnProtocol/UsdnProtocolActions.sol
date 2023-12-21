@@ -390,6 +390,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         Position memory pos = getLongPosition(tick, index);
 
         // TODO: check if can be liquidated according to the provided price
+        liquidationPrice;
 
         int256 available = _longAssetAvailable(_lastPrice);
         if (available < 0) {
