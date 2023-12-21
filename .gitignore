@@ -1,5 +1,6 @@
 # Builds
 out/
+dist/
 
 # Dry-run deployment artifacts
 broadcast/*.sol/*/dry-run
