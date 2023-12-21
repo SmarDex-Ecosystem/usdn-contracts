@@ -32,7 +32,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
 
     /**
      * @notice Initialize the protocol.
-     * @dev This function can only be called once. Other public fonctions can only be called after the initialization.
+     * @dev This function can only be called once. Other external fonctions can only be called after the initialization.
      * @param depositAmount The amount of wstETH to deposit.
      * @param longAmount The amount of wstETH to use for the long.
      * @param longLiqPrice The desired liquidation price of the long.
