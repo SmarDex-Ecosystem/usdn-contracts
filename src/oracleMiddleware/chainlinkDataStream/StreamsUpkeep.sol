@@ -7,11 +7,9 @@ import { ILogAutomation, Log } from "@chainlink/contracts/src/v0.8/automation/in
 import { IERC20 } from
     "@chainlink/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/interfaces/IERC20.sol";
 
-import { Common } from "test/unit/OracleMiddleware/utils/chainlinkDataStream/adaptedLibraries/Common.sol";
-import { IRewardManager } from
-    "test/unit/OracleMiddleware/utils/chainlinkDataStream/adaptedLibraries/IRewardManager.sol";
-import { IVerifierFeeManager } from
-    "test/unit/OracleMiddleware/utils/chainlinkDataStream/adaptedLibraries/IVerifierFeeManager.sol";
+import { Common } from "src/oracleMiddleware/chainlinkDataStream/adaptedLibraries/Common.sol";
+import { IRewardManager } from "src/oracleMiddleware/chainlinkDataStream/adaptedLibraries/IRewardManager.sol";
+import { IVerifierFeeManager } from "src/oracleMiddleware/chainlinkDataStream/adaptedLibraries/IVerifierFeeManager.sol";
 
 /**
  * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE FOR DEMONSTRATION PURPOSES.
