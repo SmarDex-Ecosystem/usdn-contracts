@@ -4,6 +4,7 @@ import { basename } from "path";
 import { Command } from "commander";
 
 const ABI_EXPORT_PATH = "./dist/abi";
+const BYTECODE_EXPORT_PATH = "./dist/bytecode";
 
 const program = new Command();
 
@@ -30,12 +31,17 @@ if (existsSync(ABI_EXPORT_PATH))
   rmSync(ABI_EXPORT_PATH, { recursive: true, force: true });
 mkdirSync(ABI_EXPORT_PATH, { recursive: true });
 
+if (existsSync(BYTECODE_EXPORT_PATH))
+  rmSync(BYTECODE_EXPORT_PATH, { recursive: true, force: true });
+mkdirSync(BYTECODE_EXPORT_PATH, { recursive: true });
+
 let indexContent = "";
 
 for (const name of solFiles) {
   try {
     const file = readFileSync(`./out/${name}.sol/${name}.json`);
     const artifact = JSON.parse(file.toString());
+    const { bytecode: { object: bytes } } = artifact;
 
     const fileContent = `export const ${name}Abi = ${JSON.stringify(
       artifact.abi,
@@ -44,6 +50,7 @@ for (const name of solFiles) {
     )} as const;\n`;
 
     writeFileSync(`${ABI_EXPORT_PATH}/${name}.ts`, fileContent);
+    writeFileSync(`${BYTECODE_EXPORT_PATH}/${name}.bytecode`, bytes);
     indexContent += `export * from './${name}';\n`;
   } catch {
     // Could be normal, if a solidity file does not contain a contract (only an interface)

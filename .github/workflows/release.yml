@@ -7,6 +7,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    types:
+      - closed
 
 permissions:
   id-token: write # Required for requesting AWS JWT
@@ -16,7 +19,7 @@ permissions:
 jobs:
   bump-version-and-create-pr:
     runs-on: ubuntu-latest
-
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,6 +37,7 @@ jobs:
           git commit -am "ci(release): bump version"
 
       - name: Create Pull Request
+        id: create-pr
         uses: peter-evans/create-pull-request@v5
         with:
           title: Bump version
@@ -44,10 +48,16 @@ jobs:
           delete-branch: true
           branch: release/patch
 
-  publish-to-codeartifact:
-    needs: bump-version-and-create-pr
-    runs-on: ubuntu-latest
+      - name: Set env variable
+        run: echo "BUMP_DONE=1" >> $GITHUB_ENV
 
+  publish-to-codeartifact:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      contains(github.head_ref, 'release/patch') &&
+      github.event.pull_request.merged
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
