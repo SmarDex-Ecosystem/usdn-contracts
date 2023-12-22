@@ -26,9 +26,6 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm ci
-
       - name: Commit and push version bump
         run: |
           git config user.name "GitHub Actions"
@@ -55,10 +52,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
+      
+      - name: Install dependencies
+        run: npm ci && forge install
+
+      - name: Export ABI
+        run: npm run exportAbi
 
       - name: Configure AWS credentials
         uses: backend-ra2-tech/composite-workflows/aws-login@main
@@ -77,4 +85,3 @@ jobs:
           NEW_VERSION: "${{ steps.get-version.outputs.value }}"  
         run: |
            npm publish
-
