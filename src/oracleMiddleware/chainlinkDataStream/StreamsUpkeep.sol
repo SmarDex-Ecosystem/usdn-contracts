@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
 import { StreamsLookupCompatibleInterface } from
@@ -7,92 +7,37 @@ import { ILogAutomation, Log } from "@chainlink/contracts/src/v0.8/automation/in
 import { IERC20 } from
     "@chainlink/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/interfaces/IERC20.sol";
 
-import { Common } from "src/oracleMiddleware/chainlinkDataStream/adaptedLibraries/Common.sol";
-import { IRewardManager } from "src/oracleMiddleware/chainlinkDataStream/adaptedLibraries/IRewardManager.sol";
-import { IVerifierFeeManager } from "src/oracleMiddleware/chainlinkDataStream/adaptedLibraries/IVerifierFeeManager.sol";
+import { Common } from "src/oracleMiddleware/chainlinkDataStream/externalLibraries/Common.sol";
+import { IRewardManager } from "src/oracleMiddleware/chainlinkDataStream/externalLibraries/IRewardManager.sol";
+import { IStreamUpkeep, IVerifierProxy, IFeeManager } from "src/oracleMiddleware/chainlinkDataStream/IStreamUpkeep.sol";
 
-/**
- * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE FOR DEMONSTRATION PURPOSES.
- * DO NOT USE THIS CODE IN PRODUCTION.
- */
-
-// Custom interfaces for IVerifierProxy and IFeeManager
-interface IVerifierProxy {
-    function verify(bytes calldata payload, bytes calldata parameterPayload)
-        external
-        payable
-        returns (bytes memory verifierResponse);
-
-    function s_feeManager() external view returns (IVerifierFeeManager);
-}
-
-interface IFeeManager {
-    function getFeeAndReward(address subscriber, bytes memory unverifiedReport, address quoteAddress)
-        external
-        returns (Common.Asset memory, Common.Asset memory, uint256);
-
-    function i_linkAddress() external view returns (address);
-
-    function i_nativeAddress() external view returns (address);
-
-    function i_rewardManager() external view returns (address);
-}
-
-contract StreamsUpkeep is ILogAutomation, StreamsLookupCompatibleInterface {
-    struct BasicReport {
-        bytes32 feedId; // The feed ID the report has data for
-        uint32 validFromTimestamp; // Earliest timestamp for which price is applicable
-        uint32 observationsTimestamp; // Latest timestamp for which price is applicable
-        uint192 nativeFee; // Base cost to validate a transaction using the report, denominated in the chain’s native
-            // token (WETH/ETH)
-        uint192 linkFee; // Base cost to validate a transaction using the report, denominated in LINK
-        uint32 expiresAt; // Latest timestamp where the report can be verified on-chain
-        int192 price; // DON consensus median price, carried to 8 decimal places
-    }
-
-    struct PremiumReport {
-        bytes32 feedId; // The feed ID the report has data for
-        uint32 validFromTimestamp; // Earliest timestamp for which price is applicable
-        uint32 observationsTimestamp; // Latest timestamp for which price is applicable
-        uint192 nativeFee; // Base cost to validate a transaction using the report, denominated in the chain’s native
-            // token (WETH/ETH)
-        uint192 linkFee; // Base cost to validate a transaction using the report, denominated in LINK
-        uint32 expiresAt; // Latest timestamp where the report can be verified on-chain
-        int192 price; // DON consensus median price, carried to 8 decimal places
-        int192 bid; // Simulated price impact of a buy order up to the X% depth of liquidity utilisation
-        int192 ask; // Simulated price impact of a sell order up to the X% depth of liquidity utilisation
-    }
-
-    struct Quote {
-        address quoteAddress;
-    }
-
+contract StreamsUpkeep is IStreamUpkeep, ILogAutomation, StreamsLookupCompatibleInterface {
     event PriceUpdate(int192 indexed price);
 
-    IVerifierProxy public verifier;
+    IVerifierProxy public _verifier;
 
-    address public FEE_ADDRESS;
+    // WETH fee address
     string public constant DATASTREAMS_FEEDLABEL = "feedIDs";
     string public constant DATASTREAMS_QUERYLABEL = "timestamp";
-    int192 public last_retrieved_price;
+    int192 public _last_retrieved_price;
+    address public _feeAddress;
 
-    // This example reads the ID for the basic ETH/USD price report on Arbitrum Sepolia.
-    // Find a complete list of IDs at https://docs.chain.link/data-streams/stream-ids
-    string[] public feedIds = ["0x00027bbaff688c906a3e20a34fe951715d1018d262a5b66e38eda027a674cd1b"];
+    string[] public _feedIds;
 
-    constructor(address _verifier) {
-        verifier = IVerifierProxy(_verifier);
+    constructor(address verifier, address feeAddress, string[] memory feedIds) {
+        _verifier = IVerifierProxy(verifier);
+        _feedIds = feedIds;
+        _feeAddress = feeAddress;
     }
 
     // This function uses revert to convey call information.
     // See https://eips.ethereum.org/EIPS/eip-3668#rationale for details.
-    function checkLog(Log calldata log, bytes memory) external returns (bool upkeepNeeded, bytes memory performData) {
-        revert StreamsLookup(DATASTREAMS_FEEDLABEL, feedIds, DATASTREAMS_QUERYLABEL, log.timestamp, "");
+    function checkLog(Log calldata log, bytes memory) external view returns (bool, bytes memory) {
+        revert StreamsLookup(DATASTREAMS_FEEDLABEL, _feedIds, DATASTREAMS_QUERYLABEL, log.timestamp, "");
     }
 
     // The Data Streams report bytes is passed here.
     // extraData is context data from feed lookup process.
-    // Your contract may include logic to further process this data.
     // This method is intended only to be simulated off-chain by Automation.
     // The data returned will then be passed by Automation into performUpkeep
     function checkCallback(bytes[] calldata values, bytes calldata extraData)
@@ -115,7 +60,7 @@ contract StreamsUpkeep is ILogAutomation, StreamsLookupCompatibleInterface {
             abi.decode(unverifiedReport, (bytes32[3], bytes));
 
         // Report verification fees
-        IFeeManager feeManager = IFeeManager(address(verifier.s_feeManager()));
+        IFeeManager feeManager = IFeeManager(address(_verifier.s_feeManager()));
         IRewardManager rewardManager = IRewardManager(address(feeManager.i_rewardManager()));
 
         address feeTokenAddress = feeManager.i_linkAddress();
@@ -125,7 +70,7 @@ contract StreamsUpkeep is ILogAutomation, StreamsLookupCompatibleInterface {
         IERC20(feeTokenAddress).approve(address(rewardManager), fee.amount);
 
         // Verify the report
-        bytes memory verifiedReportData = verifier.verify(unverifiedReport, abi.encode(feeTokenAddress));
+        bytes memory verifiedReportData = _verifier.verify(unverifiedReport, abi.encode(feeTokenAddress));
 
         // Decode verified report data into BasicReport struct
         BasicReport memory verifiedReport = abi.decode(verifiedReportData, (BasicReport));
@@ -134,7 +79,7 @@ contract StreamsUpkeep is ILogAutomation, StreamsLookupCompatibleInterface {
         emit PriceUpdate(verifiedReport.price);
 
         // Store the price from the report
-        last_retrieved_price = verifiedReport.price;
+        _last_retrieved_price = verifiedReport.price;
     }
 
     fallback() external payable { }

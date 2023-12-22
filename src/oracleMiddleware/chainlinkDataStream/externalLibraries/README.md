@@ -11,3 +11,7 @@ e.g. `pragma solidity 0.8.16;`.
  - `@chainlink/contracts/src/v0.8/libraries/Common.sol` - adapted to use `pragma solidity 0.8.20;`
  - `@chainlink/contracts/src/v0.8/llo-feeds/interfaces/IRewardManager.sol` - adapted to use `pragma solidity 0.8.20;`
  - `@chainlink/contracts/src/v0.8/llo-feeds/interfaces/IVerifierFeeManager.sol` - adapted to use `pragma solidity 0.8.20;`
+
+## Licenses
+
+All the original libraries are licensed under the MIT license so we can re-license them under BUSL-1.1.
