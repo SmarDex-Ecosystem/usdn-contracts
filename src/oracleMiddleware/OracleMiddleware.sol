@@ -12,6 +12,8 @@ import {
     PriceInfo,
     ConfidenceInterval
 } from "src/interfaces/IOracleMiddleware.sol";
+import { ChainlinkDataSteamsLogEmitter } from
+    "src/oracleMiddleware/chainlinkDataStream/ChainlinkDataSteamsLogEmitter.sol";
 
 /**
  * @title OracleMiddleware contract
@@ -20,7 +22,13 @@ import {
  * @dev This contract is a middleware between the USDN protocol and the price oracles.
  * @author Yashiru
  */
-contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOracle, ChainlinkOracle {
+contract OracleMiddleware is
+    IOracleMiddleware,
+    IOracleMiddlewareErrors,
+    PythOracle,
+    ChainlinkOracle,
+    ChainlinkDataSteamsLogEmitter
+{
     uint256 public validationDelay = 24 seconds;
 
     uint8 constant DECIMALS = 8;
@@ -48,43 +56,43 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         external
         payable
-        returns (PriceInfo memory result_)
+        returns (PriceInfo memory)
     {
-        // TODO: Validate each ConfidanceInterval \w Eric/paul
+        // TODO: Validate each ConfidenceInterval \w Eric/paul
         if (action == ProtocolAction.None) {
-            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
+            return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
         } else if (action == ProtocolAction.Initialize) {
             // There is no reason to use the confidence interval here
-            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
+            return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
         } else if (action == ProtocolAction.ValidateDeposit) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies
-            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
+            return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
         } else if (action == ProtocolAction.ValidateWithdrawal) {
             // There is no reason to use the confidence interval here
-            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
+            return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.none);
         } else if (action == ProtocolAction.ValidateOpenPosition) {
             // Use the highest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies
-            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.up);
+            return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.up);
         } else if (action == ProtocolAction.ValidateClosePosition) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies
-            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
+            return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
         } else if (action == ProtocolAction.Liquidation) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies
-            result_ = getPythOrChainlinkDatastreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
+            return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.down);
         } else if (action == ProtocolAction.InitiateDeposit) {
             // Never used by the USDN protocol
-            result_ = getChainlinkOnChainPrice();
+            return getChainlinkOnChainPrice();
         } else if (action == ProtocolAction.InitiateWithdrawal) {
             // Never used by the USDN protocol
-            result_ = getChainlinkOnChainPrice();
+            return getChainlinkOnChainPrice();
         } else if (action == ProtocolAction.InitiateOpenPosition) {
-            result_ = getChainlinkOnChainPrice();
+            return getChainlinkOnChainPrice();
         } else if (action == ProtocolAction.InitiateClosePosition) {
-            result_ = getChainlinkOnChainPrice();
+            return getChainlinkOnChainPrice();
         } else {
             revert OracleMiddlewareUnsupportedAction(action);
         }
@@ -94,7 +102,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     /*                      Factorised price retrival methods                     */
     /* -------------------------------------------------------------------------- */
 
-    function getPythOrChainlinkDatastreamPrice(bytes calldata data, uint64 targetTimestamp, ConfidenceInterval conf)
+    function getPythOrChainlinkDataStreamPrice(bytes calldata data, uint64 targetTimestamp, ConfidenceInterval conf)
         private
         returns (PriceInfo memory price_)
     {
@@ -108,7 +116,8 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
                 : conf == ConfidenceInterval.up ? uint64(pythPrice.price) + pythPrice.conf : uint64(pythPrice.price);
             price_.timestamp = uint128(pythPrice.publishTime);
         } else {
-            // TODO: Use Chainlink data stream when Pyth fails
+            emitChainlinkDataStreamsEvent();
+            return PriceInfo(0, 0);
         }
     }
 
