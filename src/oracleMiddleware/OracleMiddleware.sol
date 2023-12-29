@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
 import { PythOracle } from "src/oracleMiddleware/oracles/PythOracle.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { ProtocolAction, Oracle } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { ChainlinkOracle } from "src/oracleMiddleware/oracles/ChainlinkOracle.sol";
 import {
     IOracleMiddleware,
@@ -116,7 +116,19 @@ contract OracleMiddleware is
                 : conf == ConfidenceInterval.up ? uint64(pythPrice.price) + pythPrice.conf : uint64(pythPrice.price);
             price_.timestamp = uint128(pythPrice.publishTime);
         } else {
-            emitChainlinkDataStreamsEvent();
+            // TODO: pass data to chainlink to allow them to recall the contract with the information required to
+            //       validate the position price
+            emitChainlinkDataStreamsEvent(
+                abi.encodeWithSignature(
+                    "ValidatePendingPrice(int24,uint256,bytes)", // Possibly the data passed to chainlink
+                    0, // The tick of the position
+                    0, // The index of the position
+                    abi.encode() // More data to be passed
+                )
+            );
+
+            // Return 0,0 to allow the USDN protocol to make the actual action in pending
+            // until chain link data stream call the contract with the price
             return PriceInfo(0, 0);
         }
     }

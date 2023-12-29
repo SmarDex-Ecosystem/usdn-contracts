@@ -2,9 +2,9 @@
 pragma solidity >=0.8.20;
 
 contract ChainlinkDataSteamsLogEmitter {
-    event PriceRequiredFor();
+    event PriceRequiredFor(bytes data);
 
-    function emitChainlinkDataStreamsEvent() public {
-        emit PriceRequiredFor();
+    function emitChainlinkDataStreamsEvent(bytes memory data) public {
+        emit PriceRequiredFor(data);
     }
 }
