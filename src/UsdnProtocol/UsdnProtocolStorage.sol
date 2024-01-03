@@ -119,6 +119,7 @@ abstract contract UsdnProtocolStorage is InitializableReentrancyGuard {
     uint256 internal _totalExpo;
 
     /// @notice The liquidation price tick versions
+    // slither-disable-next-line uninitialized-state
     mapping(int24 => uint256) internal _tickVersion;
 
     /// @notice The long positions per versioned tick (liquidation price)

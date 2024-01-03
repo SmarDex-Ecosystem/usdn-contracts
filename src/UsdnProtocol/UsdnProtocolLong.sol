@@ -150,6 +150,8 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
                 tick_ = minTick;
             }
         } else {
+            // rounding is desirable here
+            // slither-disable-next-line divide-before-multiply
             tick_ = (tick_ / _tickSpacing) * _tickSpacing;
         }
     }

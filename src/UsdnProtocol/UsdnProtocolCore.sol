@@ -33,6 +33,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     function funding(uint128 currentPrice, uint128 timestamp) public view returns (int256 fund_) {
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
+            // slither-disable-next-line incorrect-equality
         } else if (timestamp == _lastUpdateTimestamp) {
             return 0;
         }
