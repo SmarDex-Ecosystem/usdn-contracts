@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -10,6 +11,8 @@ import { TickMath } from "src/libraries/TickMath.sol";
 
 abstract contract UsdnProtocolLong is UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
+    using SafeCast for uint256;
+    using SafeCast for int256;
 
     function minTick() public view returns (int24 tick_) {
         tick_ = TickMath.minUsableTick(_tickSpacing);
@@ -56,7 +59,8 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         // Apply liquidation penalty
         // theoretical liquidation price = 0.98 * desired liquidation price
         // TODO: check if unchecked math would be ok
-        liquidationPrice = uint128(liquidationPrice * (PERCENTAGE_DIVISOR - _liquidationPenalty) / PERCENTAGE_DIVISOR);
+        liquidationPrice =
+            (liquidationPrice * (PERCENTAGE_DIVISOR - _liquidationPenalty) / PERCENTAGE_DIVISOR).toUint128();
 
         leverage_ = _getLeverage(startPrice, liquidationPrice);
     }
@@ -99,7 +103,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     }
 
     function getEffectivePriceForTick(int24 tick) public pure returns (uint128 price_) {
-        price_ = uint128(TickMath.getPriceAtTick(tick));
+        price_ = TickMath.getPriceAtTick(tick).toUint128();
     }
 
     /// @dev This does not take into account the liquidation penalty
@@ -110,7 +114,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
             revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
         }
 
-        leverage_ = uint40((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice));
+        leverage_ = ((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint40();
     }
 
     function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
@@ -186,7 +190,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
      */
     function _bitmapIndexToTick(uint256 index) internal view returns (int24 tick_) {
         // cast to int256 and shift into negative
-        int24 compactTick = int24(int256(index) + int256(type(int24).min));
+        int24 compactTick = (int256(index) + int256(type(int24).min)).toInt24();
         tick_ = compactTick * _tickSpacing;
     }
 

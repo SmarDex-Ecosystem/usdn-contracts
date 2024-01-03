@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import {
@@ -16,6 +17,7 @@ import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
+    using SafeCast for uint256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /// @notice The address that holds the minimum supply of USDN and first minimum long position.
@@ -27,7 +29,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     function pnlLong(uint128 price) public view returns (int256 pnl_) {
         int256 priceDiff = int256(uint256(price)) - int256(uint256(_lastPrice));
-        pnl_ = (int256(_totalExpo) * priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
+        pnl_ = (_totalExpo.toInt256() * priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
     }
 
     function funding(uint128 currentPrice, uint128 timestamp) public view returns (int256 fund_) {
@@ -73,7 +75,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     }
 
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
-        expo_ = int256(_totalExpo) - longAssetAvailableWithFunding(currentPrice, timestamp);
+        expo_ = _totalExpo.toInt256() - longAssetAvailableWithFunding(currentPrice, timestamp);
     }
 
     function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
@@ -97,10 +99,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     /// @dev Available at the time of the last balances update (without taking funding into account)
     function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        // Cast to int256 to optimize gas usage
-        int256 totalExpo = int256(_totalExpo);
-        // Cast to int256 to optimize gas usage
-        int256 balanceLong = int256(_balanceLong);
+        // Cast to int256 to check overflow and optimize gas usage
+        int256 totalExpo = _totalExpo.toInt256();
+        // Cast to int256 to check overflow and optimize gas usage
+        int256 balanceLong = _balanceLong.toInt256();
 
         // pnlAsset = (totalExpo - balanceLong) * pnlLong * 10^assetDecimals / (totalExpo * currentPrice)
         int256 pnlAsset = ((totalExpo - balanceLong) * pnlLong(currentPrice) * int256(10) ** _assetDecimals)
@@ -111,12 +113,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     /// @dev Available at the time of the last balances update (without taking funding into account)
     function _vaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        available_ = int256(_balanceVault + _balanceLong) - _longAssetAvailable(currentPrice);
+        available_ = (_balanceVault + _balanceLong).toInt256() - _longAssetAvailable(currentPrice);
     }
 
     /// @dev At the time of the last balances update (without taking funding into account)
     function _longTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
-        expo_ = int256(_totalExpo) - _longAssetAvailable(currentPrice);
+        expo_ = _totalExpo.toInt256() - _longAssetAvailable(currentPrice);
     }
 
     /// @dev At the time of the last balances update (without taking funding into account)
@@ -134,7 +136,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         if (newLongBalance < 0) {
             newLongBalance = 0;
         }
-        int256 newVaultBalance = int256(totalBalance) - newLongBalance;
+        int256 newVaultBalance = totalBalance.toInt256() - newLongBalance;
         if (newVaultBalance < 0) {
             newVaultBalance = 0;
         }

@@ -36,8 +36,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolZeroAmount();
         }
 
+        uint40 timestamp = uint40(block.timestamp);
+
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint40(block.timestamp), ProtocolAction.InitiateDeposit, currentPriceData
+            timestamp, ProtocolAction.InitiateDeposit, currentPriceData
         );
 
         _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
@@ -45,7 +47,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateDeposit,
-            timestamp: uint40(block.timestamp),
+            timestamp: timestamp,
             user: msg.sender,
             tick: 0, // unused
             amountOrIndex: amount
@@ -77,8 +79,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolZeroAmount();
         }
 
+        uint40 timestamp = uint40(block.timestamp);
+
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint40(block.timestamp), ProtocolAction.InitiateWithdrawal, currentPriceData
+            timestamp, ProtocolAction.InitiateWithdrawal, currentPriceData
         );
 
         _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
@@ -86,7 +90,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateWithdrawal,
-            timestamp: uint40(block.timestamp),
+            timestamp: timestamp,
             user: msg.sender,
             tick: 0, // unused
             amountOrIndex: usdnAmount
@@ -123,8 +127,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // calculate effective liquidation price
         liquidationPrice_ = getEffectivePriceForTick(tick);
 
+        uint40 timestamp = uint40(block.timestamp);
+
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint40(block.timestamp), ProtocolAction.InitiateOpenPosition, currentPriceData
+            timestamp, ProtocolAction.InitiateOpenPosition, currentPriceData
         );
 
         // FIXME: use neutral price here!
@@ -151,14 +157,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             amount: amount,
             startPrice: currentPrice.price,
             leverage: leverage,
-            timestamp: uint40(block.timestamp)
+            timestamp: timestamp
         });
         index_ = _saveNewPosition(tick, long);
 
         // Register pending action
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateOpenPosition,
-            timestamp: uint40(block.timestamp),
+            timestamp: timestamp,
             user: msg.sender,
             tick: tick,
             amountOrIndex: index_
@@ -191,8 +197,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolUnauthorized();
         }
 
+        uint40 timestamp = uint40(block.timestamp);
+
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint40(block.timestamp), ProtocolAction.InitiateClosePosition, currentPriceData
+            timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
         );
 
         _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
@@ -200,7 +208,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateClosePosition,
-            timestamp: uint40(block.timestamp),
+            timestamp: timestamp,
             user: msg.sender,
             tick: tick,
             amountOrIndex: index

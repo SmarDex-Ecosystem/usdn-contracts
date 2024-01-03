@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolCore } from "src/UsdnProtocol/UsdnProtocolCore.sol";
 
 abstract contract UsdnProtocolVault is UsdnProtocolCore {
+    using SafeCast for int256;
+
     function usdnPrice(uint128 currentPrice) public view returns (uint256 price_) {
-        price_ = uint256(
-            vaultAssetAvailableWithFunding(currentPrice, uint128(block.timestamp)) * int256(uint256(currentPrice))
-                * int256(10) ** _usdnDecimals
+        price_ = (
+            vaultAssetAvailableWithFunding(currentPrice, uint128(block.timestamp)).toUint256() * uint256(currentPrice)
+                * 10 ** _usdnDecimals
         ) / (_usdn.totalSupply() * 10 ** _assetDecimals);
     }
 
