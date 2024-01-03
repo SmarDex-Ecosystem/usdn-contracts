@@ -26,8 +26,6 @@ jobs:
         
       - name: Checking if push is from a bump patch
         id: is-from-bump-patch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [[ "$(git show -s --format=%s)" == *release/patch* ]]; then
             echo "result=true" >> "$GITHUB_OUTPUT"
