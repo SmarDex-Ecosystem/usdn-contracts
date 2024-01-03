@@ -1,5 +1,10 @@
 # Builds
 out/
+dist/
+
+# Non-mainnet deployment artifacts
+broadcast/*.sol/**/*.json
+!broadcast/*.sol/1/run-*.json
 
 # Private files
 .env
