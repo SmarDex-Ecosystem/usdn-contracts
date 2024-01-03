@@ -35,15 +35,14 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
      * @dev This function can only be called once. Other external functions can only be called after the initialization.
      * @param depositAmount The amount of wstETH to deposit.
      * @param longAmount The amount of wstETH to use for the long.
-     * @param longLiqPrice The desired liquidation price of the long.
+     * @param longTick The desired tick corresponding to the liquidation price of the long.
      * @param currentPriceData The current price data.
      */
-    function initialize(
-        uint256 depositAmount,
-        uint128 longAmount,
-        uint128 longLiqPrice,
-        bytes calldata currentPriceData
-    ) external payable initializer {
+    function initialize(uint256 depositAmount, uint128 longAmount, int24 longTick, bytes calldata currentPriceData)
+        external
+        payable
+        initializer
+    {
         if (depositAmount < MIN_INIT_DEPOSIT) {
             revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
         }
@@ -80,14 +79,12 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
         _retrieveAssetsAndCheckBalance(msg.sender, longAmount);
 
         // Create long positions with min leverage
-        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price, 0);
-        _createInitialPosition(msg.sender, longAmount - FIRST_LONG_AMOUNT, currentPrice.price, longLiqPrice);
+        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price, minTick());
+        _createInitialPosition(msg.sender, longAmount - FIRST_LONG_AMOUNT, currentPrice.price, longTick);
     }
 
-    function _createInitialPosition(address user, uint128 amount, uint128 price, uint128 liquidationPrice) internal {
-        int24 tick =
-            liquidationPrice == 0 ? TickMath.minUsableTick(_tickSpacing) : _getEffectiveTickForPrice(liquidationPrice);
-        liquidationPrice = _getEffectivePriceForTick(tick);
+    function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
+        uint128 liquidationPrice = getEffectivePriceForTick(tick);
         uint40 leverage = _getLeverage(price, liquidationPrice); // no liquidation penalty
         Position memory long = Position({
             user: user,

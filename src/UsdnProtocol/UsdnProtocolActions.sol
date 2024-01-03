@@ -112,18 +112,16 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
     function initiateOpenPosition(
         uint96 amount,
-        uint128 liquidationPrice,
+        int24 tick,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
-    ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 index_) {
+    ) external payable initializedAndNonReentrant returns (uint128 liquidationPrice_, uint256 index_) {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
 
-        // find tick corresponding to the liquidation price (rounds down)
-        tick_ = _getEffectiveTickForPrice(liquidationPrice);
-        // calculate effective liquidation price once we have the tick (lower than or equal to the desired liq price)
-        liquidationPrice = _getEffectivePriceForTick(tick_);
+        // calculate effective liquidation price
+        liquidationPrice_ = getEffectivePriceForTick(tick);
 
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint40(block.timestamp), ProtocolAction.InitiateOpenPosition, currentPriceData
@@ -136,7 +134,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // Apply liquidation penalty
         // reverts if liquidationPrice >= entryPrice
-        uint40 leverage = getLeverageWithLiquidationPenalty(currentPrice.price, liquidationPrice);
+        uint40 leverage = getLeverageWithLiquidationPenalty(currentPrice.price, liquidationPrice_);
         if (leverage < _minLeverage) {
             revert UsdnProtocolLeverageTooLow();
         }
@@ -145,7 +143,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         }
 
         // Liquidation price must be at least x% below current price
-        _checkSafetyMargin(currentPrice.price, liquidationPrice);
+        _checkSafetyMargin(currentPrice.price, liquidationPrice_);
 
         // Register position and adjust contract state
         Position memory long = Position({
@@ -155,20 +153,20 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             leverage: leverage,
             timestamp: uint40(block.timestamp)
         });
-        index_ = _saveNewPosition(tick_, long);
+        index_ = _saveNewPosition(tick, long);
 
         // Register pending action
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateOpenPosition,
             timestamp: uint40(block.timestamp),
             user: msg.sender,
-            tick: tick_,
+            tick: tick,
             amountOrIndex: index_
         });
         _addPendingAction(msg.sender, pendingAction);
 
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
-        emit InitiatedOpenPosition(msg.sender, long, tick_, index_);
+        emit InitiatedOpenPosition(msg.sender, long, tick, index_);
         _executePendingAction(previousActionPriceData);
     }
 
@@ -330,7 +328,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             long.timestamp, ProtocolAction.ValidateOpenPosition, priceData
         );
 
-        uint128 liquidationPrice = _getEffectivePriceForTick(tick);
+        uint128 liquidationPrice = getEffectivePriceForTick(tick);
 
         // adjust balances
         // FIXME: use neutral price here!
@@ -381,7 +379,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             long.timestamp, ProtocolAction.ValidateClosePosition, priceData
         );
 
-        uint128 liquidationPrice = _getEffectivePriceForTick(tick);
+        uint128 liquidationPrice = getEffectivePriceForTick(tick);
 
         // adjust balances
         // FIXME: use neutral price here!

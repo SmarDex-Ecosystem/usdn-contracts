@@ -11,6 +11,14 @@ import { TickMath } from "src/libraries/TickMath.sol";
 abstract contract UsdnProtocolLong is UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
 
+    function minTick() public view returns (int24 tick_) {
+        tick_ = TickMath.minUsableTick(_tickSpacing);
+    }
+
+    function maxTick() public view returns (int24 tick_) {
+        tick_ = TickMath.maxUsableTick(_tickSpacing);
+    }
+
     function getLongPosition(int24 tick, uint256 index) public view returns (Position memory pos_) {
         pos_ = _longPositions[_tickHash(tick)][index];
     }
@@ -22,7 +30,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     function findMaxInitializedTick(int24 searchStart) public view returns (int24 tick_) {
         uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(searchStart));
         if (index == LibBitmap.NOT_FOUND) {
-            tick_ = TickMath.minUsableTick(_tickSpacing);
+            tick_ = minTick();
         } else {
             tick_ = _bitmapIndexToTick(index);
         }
@@ -69,6 +77,29 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         returns (int256 value_)
     {
         value_ = int256(uint256(amount)) + positionPnl(currentPrice, startPrice, amount, leverage);
+    }
+
+    function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
+        tick_ = TickMath.getTickAtPrice(uint256(price));
+        // round down to the next valid tick according to _tickSpacing (towards negative infinity)
+        if (tick_ < 0) {
+            // we round up the inverse number (positive) then invert it -> round towards negative infinity
+            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(_tickSpacing)))))
+                * _tickSpacing;
+            // avoid invalid ticks
+            int24 minUsableTick = minTick();
+            if (tick_ < minUsableTick) {
+                tick_ = minUsableTick;
+            }
+        } else {
+            // rounding is desirable here
+            // slither-disable-next-line divide-before-multiply
+            tick_ = (tick_ / _tickSpacing) * _tickSpacing;
+        }
+    }
+
+    function getEffectivePriceForTick(int24 tick) public pure returns (uint128 price_) {
+        price_ = uint128(TickMath.getPriceAtTick(tick));
     }
 
     /// @dev This does not take into account the liquidation penalty
@@ -135,29 +166,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
             // we removed the last position in the tick
             _tickBitmap.unset(_tickToBitmapIndex(tick));
         }
-    }
-
-    function _getEffectiveTickForPrice(uint128 price) internal view returns (int24 tick_) {
-        tick_ = TickMath.getTickAtPrice(uint256(price));
-        // round down to the next valid tick according to _tickSpacing (towards negative infinity)
-        if (tick_ < 0) {
-            // we round up the inverse number (positive) then invert it -> round towards negative infinity
-            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(_tickSpacing)))))
-                * _tickSpacing;
-            // avoid invalid ticks
-            int24 minTick = TickMath.minUsableTick(_tickSpacing);
-            if (tick_ < minTick) {
-                tick_ = minTick;
-            }
-        } else {
-            // rounding is desirable here
-            // slither-disable-next-line divide-before-multiply
-            tick_ = (tick_ / _tickSpacing) * _tickSpacing;
-        }
-    }
-
-    function _getEffectivePriceForTick(int24 tick) internal pure returns (uint128 price_) {
-        price_ = uint128(TickMath.getPriceAtTick(tick));
     }
 
     /**

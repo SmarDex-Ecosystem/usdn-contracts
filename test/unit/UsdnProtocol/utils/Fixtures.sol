@@ -27,7 +27,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 10);
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initialize(10 ether, 10 ether, 2 gwei, abi.encode(uint128(2000 ether)));
+        // leverage approx 2x
+        protocol.initialize(
+            10 ether, 10 ether, protocol.getEffectiveTickForPrice(1000 ether), abi.encode(uint128(2000 ether))
+        );
     }
 
     function test_setUp() public {
