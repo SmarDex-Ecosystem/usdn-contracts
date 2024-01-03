@@ -23,13 +23,26 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        
+      - name: Checking if push is from a bump patch
+        id: is-from-bump-patch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "$(git show -s --format=%s)" == *release/patch* ]]; then
+            echo "result=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up Node.js
+        if: steps.is-from-bump-patch.outputs.result == 'false'
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - name: Commit and push version bump
+        if: steps.is-from-bump-patch.outputs.result == 'false'
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
@@ -37,7 +50,7 @@ jobs:
           git commit -am "ci(release): bump version"
 
       - name: Create Pull Request
-        id: create-pr
+        if: steps.is-from-bump-patch.outputs.result == 'false'
         uses: peter-evans/create-pull-request@v5
         with:
           title: Bump version
@@ -47,9 +60,6 @@ jobs:
           commit-message: Bump version
           delete-branch: true
           branch: release/patch
-
-      - name: Set env variable
-        run: echo "BUMP_DONE=1" >> $GITHUB_ENV
 
   publish-to-codeartifact:
     runs-on: ubuntu-latest
