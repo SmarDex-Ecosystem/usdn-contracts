@@ -41,7 +41,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         // we want the expo at the last update, since we are now calculating the funding since the last update
         int256 vaultExpo = _vaultTradingExpo(currentPrice);
         int256 longExpo = _longTradingExpo(currentPrice);
-        int256 relative = vaultExpo > longExpo ? vaultExpo : longExpo;
+        int256 relative;
+        if (vaultExpo > longExpo) {
+            relative = vaultExpo;
+        } else {
+            relative = longExpo;
+        }
         fund_ = ((longExpo - vaultExpo) * _fundingRatePerSecond * secondsElapsed * 100) / relative;
     }
 

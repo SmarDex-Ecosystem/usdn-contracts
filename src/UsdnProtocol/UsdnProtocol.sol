@@ -12,11 +12,11 @@ import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.s
 import { TickMath } from "src/libraries/TickMath.sol";
 
 contract UsdnProtocol is UsdnProtocolActions, Ownable {
-    /// @dev The minimum amount of wstETH for the intialization deposit and long.
-    uint256 internal constant MIN_INIT_DEPOSIT = 1 ether;
+    /// @dev The minimum amount of wstETH for the initialization deposit and long.
+    uint256 public constant MIN_INIT_DEPOSIT = 1 ether;
 
     /// @dev The amount of collateral for the first "dead" long position.
-    uint128 internal constant FIRST_LONG_AMOUNT = 1000;
+    uint128 public constant FIRST_LONG_AMOUNT = 1000;
 
     /**
      * @notice Constructor.
@@ -32,7 +32,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
 
     /**
      * @notice Initialize the protocol.
-     * @dev This function can only be called once. Other external fonctions can only be called after the initialization.
+     * @dev This function can only be called once. Other external functions can only be called after the initialization.
      * @param depositAmount The amount of wstETH to deposit.
      * @param longAmount The amount of wstETH to use for the long.
      * @param longLiqPrice The desired liquidation price of the long.
@@ -51,12 +51,10 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
             revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
         }
 
-        uint40 timestamp = uint40(block.timestamp);
-
         PriceInfo memory currentPrice =
             _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(0, ProtocolAction.Initialize, currentPriceData);
         _lastPrice = currentPrice.price;
-        _lastUpdateTimestamp = timestamp;
+        _lastUpdateTimestamp = uint40(block.timestamp);
 
         // Create vault deposit
         {

@@ -22,10 +22,10 @@ abstract contract InitializableReentrancyGuard {
     /// @dev Unauthorized reentrant call.
     error InitializableReentrancyGuardReentrantCall();
 
-    /// @dev Contrat was not yet initialized.
+    /// @dev Contract was not yet initialized.
     error InitializableReentrancyGuardUninitialized();
 
-    /// @dev Contrat was already initialized.
+    /// @dev Contract was already initialized.
     error InitializableReentrancyGuardInvalidInitialization();
 
     constructor() {
