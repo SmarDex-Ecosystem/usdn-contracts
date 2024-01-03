@@ -12,12 +12,14 @@ import {
     ProtocolAction,
     PendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
+    using SignedMath for int256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /// @notice The address that holds the minimum supply of USDN and first minimum long position.
@@ -28,8 +30,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     /* -------------------------- Public view functions ------------------------- */
 
     function pnlLong(uint128 price) public view returns (int256 pnl_) {
-        int256 priceDiff = int256(uint256(price)) - int256(uint256(_lastPrice));
-        pnl_ = (_totalExpo.toInt256() * priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
+        int256 priceDiff = _int256(price) - _int256(_lastPrice);
+        pnl_ = _totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
     }
 
     function funding(uint128 currentPrice, uint128 timestamp) public view returns (int256 fund_) {
@@ -40,7 +42,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             return 0;
         }
 
-        int256 secondsElapsed = int256(uint256(timestamp - _lastUpdateTimestamp));
+        int256 secondsElapsed = _int256(timestamp - _lastUpdateTimestamp);
         // we want the expo at the last update, since we are now calculating the funding since the last update
         int256 vaultExpo = _vaultTradingExpo(currentPrice);
         int256 longExpo = _longTradingExpo(currentPrice);
@@ -50,12 +52,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         } else {
             relative = longExpo;
         }
-        fund_ = ((longExpo - vaultExpo) * _fundingRatePerSecond * secondsElapsed * 100) / relative;
+        fund_ = longExpo.safeSub(vaultExpo).safeMul(_fundingRatePerSecond * secondsElapsed * 100).safeDiv(relative);
     }
 
     function fundingAsset(uint128 currentPrice, uint128 timestamp) public view returns (int256 fund_) {
-        fund_ =
-            (-funding(currentPrice, timestamp) * _longTradingExpo(currentPrice)) / int256(10) ** FUNDING_RATE_DECIMALS;
+        fund_ = -funding(currentPrice, timestamp).safeMul(_longTradingExpo(currentPrice))
+            / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
@@ -63,7 +65,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         view
         returns (int256 available_)
     {
-        available_ = _longAssetAvailable(currentPrice) - fundingAsset(currentPrice, timestamp);
+        available_ = _longAssetAvailable(currentPrice).safeSub(fundingAsset(currentPrice, timestamp));
     }
 
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
@@ -71,11 +73,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         view
         returns (int256 available_)
     {
-        available_ = _vaultAssetAvailable(currentPrice) + fundingAsset(currentPrice, timestamp);
+        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundingAsset(currentPrice, timestamp));
     }
 
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
-        expo_ = _totalExpo.toInt256() - longAssetAvailableWithFunding(currentPrice, timestamp);
+        expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
     }
 
     function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
@@ -105,20 +107,22 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         int256 balanceLong = _balanceLong.toInt256();
 
         // pnlAsset = (totalExpo - balanceLong) * pnlLong * 10^assetDecimals / (totalExpo * currentPrice)
-        int256 pnlAsset = ((totalExpo - balanceLong) * pnlLong(currentPrice) * int256(10) ** _assetDecimals)
-            / (totalExpo * int256(uint256(currentPrice)));
+        int256 pnlAsset = totalExpo.safeSub(balanceLong).safeMul(pnlLong(currentPrice)).safeMul(
+            int256(10) ** _assetDecimals
+        ).safeDiv(totalExpo.safeMul(_int256(currentPrice)));
 
-        available_ = balanceLong + pnlAsset;
+        available_ = balanceLong.safeAdd(pnlAsset);
     }
 
     /// @dev Available at the time of the last balances update (without taking funding into account)
     function _vaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        available_ = (_balanceVault + _balanceLong).toInt256() - _longAssetAvailable(currentPrice);
+        available_ =
+            _balanceVault.toInt256().safeAdd(_balanceLong.toInt256()).safeSub(_longAssetAvailable(currentPrice));
     }
 
     /// @dev At the time of the last balances update (without taking funding into account)
     function _longTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
-        expo_ = _totalExpo.toInt256() - _longAssetAvailable(currentPrice);
+        expo_ = _totalExpo.toInt256().safeSub(_longAssetAvailable(currentPrice));
     }
 
     /// @dev At the time of the last balances update (without taking funding into account)
@@ -131,12 +135,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         if (timestamp <= _lastUpdateTimestamp) {
             return;
         }
-        uint256 totalBalance = _balanceLong + _balanceVault;
-        int256 newLongBalance = _longAssetAvailable(currentPrice) - fundingAsset(currentPrice, timestamp);
+        int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
+        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundingAsset(currentPrice, timestamp));
         if (newLongBalance < 0) {
             newLongBalance = 0;
         }
-        int256 newVaultBalance = totalBalance.toInt256() - newLongBalance;
+        int256 newVaultBalance = totalBalance.safeSub(newLongBalance);
         if (newVaultBalance < 0) {
             newVaultBalance = 0;
         }
@@ -149,10 +153,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     function _retrieveAssetsAndCheckBalance(address from, uint256 amount) internal {
         uint256 balanceBefore = _asset.balanceOf(address(this));
         _asset.safeTransferFrom(from, address(this), amount);
-        if (_asset.balanceOf(address(this)) != balanceBefore + amount) {
-            revert UsdnProtocolIncompleteTransfer(
-                address(this), _asset.balanceOf(address(this)), balanceBefore + amount
-            );
+        uint256 expectedBalance = balanceBefore + amount;
+        if (_asset.balanceOf(address(this)) != expectedBalance) {
+            revert UsdnProtocolIncompleteTransfer(address(this), _asset.balanceOf(address(this)), expectedBalance);
         }
     }
 
@@ -162,9 +165,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         }
         uint256 balanceBefore = _asset.balanceOf(to);
         _asset.safeTransfer(to, amount);
-        if (_asset.balanceOf(to) != balanceBefore + amount) {
-            revert UsdnProtocolIncompleteTransfer(to, _asset.balanceOf(to), balanceBefore + amount);
+        uint256 expectedBalance = balanceBefore + amount;
+        if (_asset.balanceOf(to) != expectedBalance) {
+            revert UsdnProtocolIncompleteTransfer(to, _asset.balanceOf(to), expectedBalance);
         }
+    }
+
+    function _int256(uint128 x) internal pure returns (int256) {
+        return int256(uint256(x));
     }
 
     /* -------------------------- Pending actions queue ------------------------- */

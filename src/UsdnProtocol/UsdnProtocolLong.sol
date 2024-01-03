@@ -8,11 +8,13 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
+import { SignedMath } from "src/libraries/SignedMath.sol";
 
 abstract contract UsdnProtocolLong is UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
+    using SignedMath for int256;
 
     function minTick() public view returns (int24 tick_) {
         tick_ = TickMath.minUsableTick(_tickSpacing);
@@ -70,9 +72,10 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         pure
         returns (int256 pnl_)
     {
-        int256 priceDiff = int256(uint256(currentPrice)) - int256(uint256(startPrice));
-        pnl_ = (int256(uint256(amount)) * priceDiff * int256(uint256(leverage)))
-            / (int256(uint256(startPrice)) * int256(10) ** LEVERAGE_DECIMALS);
+        int256 priceDiff = _int256(currentPrice).safeSub(_int256(startPrice));
+        pnl_ = _int256(amount).safeMul(priceDiff).safeMul(_int256(leverage)).safeDiv(
+            _int256(startPrice) * int256(10) ** LEVERAGE_DECIMALS
+        );
     }
 
     function positionValue(uint128 currentPrice, uint128 startPrice, uint128 amount, uint40 leverage)
@@ -80,7 +83,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         pure
         returns (int256 value_)
     {
-        value_ = int256(uint256(amount)) + positionPnl(currentPrice, startPrice, amount, leverage);
+        value_ = _int256(amount).safeAdd(positionPnl(currentPrice, startPrice, amount, leverage));
     }
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
@@ -133,7 +136,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
 
         // Adjust state
         _balanceLong += long.amount;
-        uint256 addExpo = (long.amount * long.leverage) / 10 ** LEVERAGE_DECIMALS;
+        uint256 addExpo = FixedPointMathLib.fullMulDiv(long.amount, long.leverage, 10 ** LEVERAGE_DECIMALS);
         _totalExpo += addExpo;
         _totalExpoByTick[tickHash] += addExpo;
         ++_positionsInTick[tickHash];
@@ -157,7 +160,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         bytes32 tickHash = _tickHash(tick);
 
         // Adjust state
-        uint256 removeExpo = (long.amount * long.leverage) / 10 ** LEVERAGE_DECIMALS;
+        uint256 removeExpo = FixedPointMathLib.fullMulDiv(long.amount, long.leverage, 10 ** LEVERAGE_DECIMALS);
         _totalExpo -= removeExpo;
         _totalExpoByTick[tickHash] -= removeExpo;
         --_positionsInTick[tickHash];

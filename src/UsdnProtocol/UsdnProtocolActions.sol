@@ -302,7 +302,9 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             available = 0; // clamp to zero
         }
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
-        uint256 assetToTransfer = (withdrawal.amountOrIndex * uint256(available)) / _usdn.totalSupply();
+        uint256 assetToTransfer =
+            FixedPointMathLib.fullMulDiv(withdrawal.amountOrIndex, uint256(available), _usdn.totalSupply());
+
         _balanceVault -= assetToTransfer;
         // we have the USDN in the contract already
         _usdn.burn(withdrawal.amountOrIndex);
@@ -407,7 +409,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         if (value < 0) {
             value = 0;
         }
-        uint256 assetToTransfer = uint256(value) > uint256(available) ? uint256(available) : uint256(value);
+        uint256 assetToTransfer;
+        if (value > available) {
+            assetToTransfer = uint256(available);
+        } else {
+            assetToTransfer = uint256(value);
+        }
 
         // remove the position for the protocol and adjust state
         _balanceLong -= assetToTransfer;
@@ -416,7 +423,9 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // send the asset to the user
         _distributeAssetsAndCheckBalance(pos.user, assetToTransfer);
 
-        emit ValidatedClosePosition(pos.user, tick, index, assetToTransfer, int256(assetToTransfer) - value);
+        emit ValidatedClosePosition(
+            pos.user, tick, index, assetToTransfer, int256(assetToTransfer) - _int256(pos.amount)
+        );
     }
 
     function _executePendingAction(bytes calldata priceData) internal {
