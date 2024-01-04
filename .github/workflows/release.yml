@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Checking if push is from a bump patch
         id: is-from-bump-patch
         run: |
@@ -58,6 +58,7 @@ jobs:
           commit-message: Bump version
           delete-branch: true
           branch: release/patch
+          branch-suffix: timestamp
 
   publish-to-codeartifact:
     runs-on: ubuntu-latest
@@ -79,7 +80,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-      
+
       - name: Install dependencies
         run: npm ci && forge install
 
@@ -94,12 +95,12 @@ jobs:
       - name: Get version from package.json
         id: get-version
         uses: notiz-dev/github-action-json-property@release
-        with: 
+        with:
           path: "./package.json"
           prop_path: "version"
 
       - name: Publish to CodeArtifact
         env:
-          NEW_VERSION: "${{ steps.get-version.outputs.value }}"  
+          NEW_VERSION: "${{ steps.get-version.outputs.value }}"
         run: |
-           npm publish
+          npm publish
