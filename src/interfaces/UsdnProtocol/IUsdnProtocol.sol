@@ -10,8 +10,6 @@ pragma solidity 0.8.20;
  * @dev 64 bytes packed struct (512 bits)
  * @param leverage The leverage of the position (0 for vault deposits).
  * @param timestamp The timestamp of the position start.
- * @param isExit Whether the position is an exit position (true) or an entry position (false).
- * @param validated Whether the position has been validated by the user (true) or is pending (false).
  * @param user The user address.
  * @param amount The amount of the position.
  * @param startPrice The price of the asset at the position opening.
@@ -19,8 +17,6 @@ pragma solidity 0.8.20;
 struct Position {
     uint40 leverage; // 5 bytes. Max 1_099_511_627_775 (1_099 with 9 decimals)
     uint40 timestamp; // 5 bytes. Max 1_099_511_627_775 (36812-02-20 01:36:15)
-    bool isExit; // 1 byte
-    bool validated; // 1 byte
     address user; // 20 bytes
     uint128 amount; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 wstETH
     uint128 startPrice; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 USD/wstETH
@@ -105,6 +101,58 @@ interface IUsdnProtocolEvents {
      * @param usdnBurned The amount of USDN that were burned.
      */
     event ValidatedWithdrawal(address indexed user, uint256 amountWithdrawn, uint256 usdnBurned);
+
+    /**
+     * @notice Emitted when a user initiates the opening of a long position.
+     * @param user The user address.
+     * @param position The position that was opened (pending validation).
+     * @param tick The tick containing the position.
+     * @param index The index of the position inside the tick array.
+     */
+    event InitiatedOpenPosition(address indexed user, Position position, int24 tick, uint256 index);
+
+    /**
+     * @notice Emitted when a user validates the opening of a long position.
+     * @param user The user address.
+     * @param position The position that was opened (final).
+     * @param tick The tick containing the position.
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
+     * @param index The index of the position inside the tick array.
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
+     * @param liquidationPrice The liquidation price of the position (final).
+     */
+    event ValidatedOpenPosition(
+        address indexed user, Position position, int24 tick, uint256 index, uint128 liquidationPrice
+    );
+
+    /**
+     * @notice Emitted when a position was moved from one tick to another.
+     * @param oldTick The old tick of the position.
+     * @param oldIndex The old index of the position inside the tick array.
+     * @param newTick The new tick containing the position.
+     * @param newIndex The new index of the position inside the `newTick` array.
+     */
+    event LiquidationPriceChanged(int24 indexed oldTick, uint256 indexed oldIndex, int24 newTick, uint256 newIndex);
+
+    /**
+     * @notice Emitted when a user initiates the closing of a long position.
+     * @param user The user address.
+     * @param tick The tick containing the position.
+     * @param index The index of the position inside the tick array.
+     */
+    event InitiatedClosePosition(address indexed user, int24 tick, uint256 index);
+
+    /**
+     * @notice Emitted when a user validates the closing of a long position
+     * @param user The user address.
+     * @param tick The tick that was containing the position.
+     * @param index The index that the position had inside the tick array.
+     * @param amountReceived The amount of asset that were sent to the user.
+     * @param profit The profit that the user made.
+     */
+    event ValidatedClosePosition(
+        address indexed user, int24 tick, uint256 index, uint256 amountReceived, int256 profit
+    );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -114,6 +162,12 @@ interface IUsdnProtocolEvents {
 interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();
+
+    /// @dev Indicates that the initilization deposit is too low
+    error UsdnProtocolMinInitAmount(uint256 minInitAmount);
+
+    /// @dev Indicates that the user is not allowed to perform an action
+    error UsdnProtocolUnauthorized();
 
     /// @dev Indicates that the the token transfer didn't yield the expected balance change
     error UsdnProtocolIncompleteTransfer(address to, uint256 effectiveBalance, uint256 expectedBalance);
@@ -126,4 +180,19 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the user has a pending action but its action type is not the expected one
     error UsdnProtocolInvalidPendingAction();
+
+    /// @dev Indicates that the provided timestamp is too old (pre-dates the last balances update)
+    error UsdnProtocolTimestampTooOld();
+
+    /// @dev Indicates that the provided collateral and liquidation price result in a leverage that is too low
+    error UsdnProtocolLeverageTooLow();
+
+    /// @dev Indicates that the provided collateral and liquidation price result in a leverage that is too high
+    error UsdnProtocolLeverageTooHigh();
+
+    /// @dev Indicates that the liquidation price is higher than or equal to the start price
+    error UsdnProtocolInvalidLiquidationPrice(uint128 liquidationPrice, uint128 startPrice);
+
+    /// @dev Indicates that the liquidation price exceeds the safety margin
+    error UsdnProtocolLiquidationPriceSafetyMargin(uint128 liquidationPrice, uint128 maxLiquidationPrice);
 }

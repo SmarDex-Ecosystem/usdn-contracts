@@ -2,16 +2,22 @@
 pragma solidity 0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { PendingAction, ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
-import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
+import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 
-contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
+contract UsdnProtocol is UsdnProtocolActions, Ownable {
+    /// @dev The minimum amount of wstETH for the initialization deposit and long.
+    uint256 public constant MIN_INIT_DEPOSIT = 1 ether;
+
+    /// @dev The amount of collateral for the first "dead" long position.
+    uint128 public constant FIRST_LONG_AMOUNT = 1000;
+
     /**
      * @notice Constructor.
      * @param usdn The USDN ERC20 contract.
@@ -24,34 +30,72 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable, Initializable {
         UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing)
     { }
 
-    function initialize(uint256 depositAmount, uint128 longAmount, bytes calldata currentPriceData)
+    /**
+     * @notice Initialize the protocol.
+     * @dev This function can only be called once. Other external functions can only be called after the initialization.
+     * @param depositAmount The amount of wstETH to deposit.
+     * @param longAmount The amount of wstETH to use for the long.
+     * @param longTick The desired tick corresponding to the liquidation price of the long.
+     * @param currentPriceData The current price data.
+     */
+    function initialize(uint256 depositAmount, uint128 longAmount, int24 longTick, bytes calldata currentPriceData)
         external
         payable
         initializer
     {
-        if (depositAmount == 0) {
-            revert UsdnProtocolZeroAmount();
+        if (depositAmount < MIN_INIT_DEPOSIT) {
+            revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
         }
-        if (longAmount == 0) {
-            revert UsdnProtocolZeroAmount();
+        if (longAmount < MIN_INIT_DEPOSIT) {
+            revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
         }
 
-        _balanceVault += depositAmount;
+        PriceInfo memory currentPrice =
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(0, ProtocolAction.Initialize, currentPriceData);
+        _lastPrice = currentPrice.price;
+        _lastUpdateTimestamp = uint40(block.timestamp);
 
-        // TODO: perform inclusion of a long position
+        // Create vault deposit
+        {
+            _balanceVault += depositAmount;
 
-        PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.InitiateDeposit,
-            timestamp: 0, // not needed since we have a special ProtocolAction for init
-            user: msg.sender,
-            tick: 0, // unused
-            amountOrIndex: depositAmount
+            PendingAction memory pendingAction = PendingAction({
+                action: ProtocolAction.InitiateDeposit,
+                timestamp: 0, // not needed since we have a special ProtocolAction for init
+                user: msg.sender,
+                tick: 0, // unused
+                amountOrIndex: depositAmount
+            });
+
+            // Transfer the wstETH for the deposit
+            _retrieveAssetsAndCheckBalance(msg.sender, depositAmount);
+
+            emit InitiatedDeposit(msg.sender, depositAmount);
+            // Mint USDN (a small amount is minted to the dead address)
+            _validateDepositWithAction(pendingAction, currentPriceData, true); // last parameter = initializing
+        }
+
+        // Transfer the wstETH for the long
+        _retrieveAssetsAndCheckBalance(msg.sender, longAmount);
+
+        // Create long positions with min leverage
+        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price, minTick());
+        _createInitialPosition(msg.sender, longAmount - FIRST_LONG_AMOUNT, currentPrice.price, longTick);
+    }
+
+    function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
+        uint128 liquidationPrice = getEffectivePriceForTick(tick);
+        uint40 leverage = _getLeverage(price, liquidationPrice); // no liquidation penalty
+        Position memory long = Position({
+            user: user,
+            amount: amount,
+            startPrice: price,
+            leverage: leverage,
+            timestamp: uint40(block.timestamp)
         });
-
-        // Transfer the wstETH for the deposit
-        _retrieveAssetsAndCheckBalance(msg.sender, depositAmount);
-        emit InitiatedDeposit(msg.sender, depositAmount);
-        // Mint USDN to the "dead" address
-        _validateDepositWithAction(pendingAction, currentPriceData, true); // last parameter = initializing
+        // Save the position and update the state
+        uint256 index = _saveNewPosition(tick, long);
+        emit InitiatedOpenPosition(user, long, tick, index);
+        emit ValidatedOpenPosition(user, long, tick, index, liquidationPrice);
     }
 }
