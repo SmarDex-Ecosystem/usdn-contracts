@@ -1,6 +1,6 @@
 {
   "name": "usdn-contracts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:Blockchain-RA2-Tech/usdn-contracts.git",
   "author": "RA2 Tech",
