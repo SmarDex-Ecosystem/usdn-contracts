@@ -15,6 +15,9 @@ library SignedMath {
     /// @dev Indicates that the signed mul operation overflowed.
     error SignedMathOverflowedMul(int256 lhs, int256 rhs);
 
+    /// @dev Indicates that the signed div operation overflowed.
+    error SignedMathOverflowedDiv(int256 lhs, int256 rhs);
+
     /// @dev Indicates that a division by zero occurred.
     error SignedMathDivideByZero(int256 lhs);
 
@@ -66,7 +69,13 @@ library SignedMath {
                 return 0;
             }
             res_ = lhs * rhs;
-            if (res_ / lhs != rhs) {
+            // There is a special case where the first condition below does not catch the overflow: `lhs = -1` and
+            // `rhs = type(int256).min`.
+            // In such a case, `res_` overflows and is equal to `type(int256).min`. Then, `res_ / lhs` also overflows
+            // and is equal to `type(int256).min`, so the condition does not catch it. We add an additional condition
+            // for this specific case. This is not a problem when lhs and rhs are swapped, because
+            // `res_ / type(int256).min` equals `1` which is not equal to `-1`.
+            if (res_ / lhs != rhs || (rhs == type(int256).min && lhs == -1)) {
                 revert SignedMathOverflowedMul(lhs, rhs);
             }
         }
@@ -82,6 +91,13 @@ library SignedMath {
         unchecked {
             if (rhs == 0) {
                 revert SignedMathDivideByZero(lhs);
+            }
+            // There is a special case where the division would overflow because
+            // `abs(type(int256).min) > type(int256).max`. So if `lhs = type(int256).min` and `rhs = -1`, the result
+            // would be `-type(int256).min` which does not fit in a `int256`. We add an additional condition for this
+            // specific case.
+            if (lhs == type(int256).min && rhs == -1) {
+                revert SignedMathOverflowedDiv(lhs, rhs);
             }
             res_ = lhs / rhs;
         }
