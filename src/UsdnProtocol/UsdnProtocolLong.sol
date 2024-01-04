@@ -72,9 +72,9 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         pure
         returns (int256 pnl_)
     {
-        int256 priceDiff = _int256(currentPrice).safeSub(_int256(startPrice));
-        pnl_ = _int256(amount).safeMul(priceDiff).safeMul(_int256(leverage)).safeDiv(
-            _int256(startPrice) * int256(10) ** LEVERAGE_DECIMALS
+        int256 priceDiff = _toInt256(currentPrice).safeSub(_toInt256(startPrice));
+        pnl_ = _toInt256(amount).safeMul(priceDiff).safeMul(_toInt256(leverage)).safeDiv(
+            _toInt256(startPrice) * int256(10) ** LEVERAGE_DECIMALS
         );
     }
 
@@ -83,7 +83,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         pure
         returns (int256 value_)
     {
-        value_ = _int256(amount).safeAdd(positionPnl(currentPrice, startPrice, amount, leverage));
+        value_ = _toInt256(amount).safeAdd(positionPnl(currentPrice, startPrice, amount, leverage));
     }
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {

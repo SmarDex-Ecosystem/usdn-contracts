@@ -424,7 +424,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _distributeAssetsAndCheckBalance(pos.user, assetToTransfer);
 
         emit ValidatedClosePosition(
-            pos.user, tick, index, assetToTransfer, int256(assetToTransfer) - _int256(pos.amount)
+            pos.user, tick, index, assetToTransfer, int256(assetToTransfer) - _toInt256(pos.amount)
         );
     }
 

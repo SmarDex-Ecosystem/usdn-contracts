@@ -30,7 +30,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     /* -------------------------- Public view functions ------------------------- */
 
     function pnlLong(uint128 price) public view returns (int256 pnl_) {
-        int256 priceDiff = _int256(price) - _int256(_lastPrice);
+        int256 priceDiff = _toInt256(price) - _toInt256(_lastPrice);
         pnl_ = _totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
     }
 
@@ -42,7 +42,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             return 0;
         }
 
-        int256 secondsElapsed = _int256(timestamp - _lastUpdateTimestamp);
+        int256 secondsElapsed = _toInt256(timestamp - _lastUpdateTimestamp);
         // we want the expo at the last update, since we are now calculating the funding since the last update
         int256 vaultExpo = _vaultTradingExpo(currentPrice);
         int256 longExpo = _longTradingExpo(currentPrice);
@@ -109,7 +109,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         // pnlAsset = (totalExpo - balanceLong) * pnlLong * 10^assetDecimals / (totalExpo * currentPrice)
         int256 pnlAsset = totalExpo.safeSub(balanceLong).safeMul(pnlLong(currentPrice)).safeMul(
             int256(10) ** _assetDecimals
-        ).safeDiv(totalExpo.safeMul(_int256(currentPrice)));
+        ).safeDiv(totalExpo.safeMul(_toInt256(currentPrice)));
 
         available_ = balanceLong.safeAdd(pnlAsset);
     }
@@ -171,7 +171,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         }
     }
 
-    function _int256(uint128 x) internal pure returns (int256) {
+    function _toInt256(uint128 x) internal pure returns (int256) {
         return int256(uint256(x));
     }
 
