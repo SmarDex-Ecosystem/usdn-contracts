@@ -1,6 +1,7 @@
 # <h1 align="center">Ultimate Synthetic Delta Neutral - USDN</h1>
 
-![Github Actions](https://github.com/Blockchain-RA2-Tech/usdn-contracts/workflows/CI/badge.svg)
+[![Main workflow](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/ci.yml)
+[![Release Workflow](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/release.yml/badge.svg)](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/release.yml)
 
 ## Installation
 
