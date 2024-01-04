@@ -1,9 +1,9 @@
 {
-  "name": "foundry-template",
+  "name": "usdn-contracts",
   "version": "0.1.0",
-  "description": "Template repository for creating a new Foundry project quickly and in accordance with the Real Estate Executive standards",
-  "repository": "git@github.com:petra-foundation/foundry-template.git",
-  "author": "",
+  "description": "Contracts for the USDN token and derivatives protocol",
+  "repository": "git@github.com:Blockchain-RA2-Tech/usdn-contracts.git",
+  "author": "RA2 Tech",
   "license": "BUSL-1.1",
   "private": true,
   "scripts": {
