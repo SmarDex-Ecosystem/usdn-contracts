@@ -196,5 +196,10 @@ contract TestSignedMathConcrete is SignedMathFixture {
         lhs = -42;
         vm.expectRevert(abi.encodeWithSelector(SignedMath.SignedMathDivideByZero.selector, lhs));
         handler.safeDiv(lhs, 0);
+
+        lhs = type(int256).min;
+        int256 rhs = -1;
+        vm.expectRevert(abi.encodeWithSelector(SignedMath.SignedMathOverflowedDiv.selector, lhs, rhs));
+        handler.safeDiv(lhs, rhs);
     }
 }
