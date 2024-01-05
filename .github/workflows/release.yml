@@ -2,7 +2,12 @@ on:
   push:
     branches:
       - main
-name: release-please
+name: Release Workflow
+
+permissions:
+  id-token: write # Required for requesting AWS JWT
+  contents: write # Required for actions/checkout and push commit
+  pull-requests: write # Required for creating pull-requests
 
 jobs:
   release-please:
@@ -40,9 +45,6 @@ jobs:
         uses: backend-ra2-tech/composite-workflows/aws-login@main
         with:
           aws-role-to-assume: github-workflow-oidc-codeartifacts-deploy
-        if: ${{ steps.release.outputs.release_created }}
-
-      - run: npm ci
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Publish to CodeArtifact
