@@ -12,7 +12,7 @@ import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 
 contract Deploy is Script {
     function run() external {
-        vm.startBroadcast();
+        vm.startBroadcast(vm.envAddress("DEPLOYER_ADDRESS"));
 
         // Deploy wstETH if needed
         address wstETHAddress = vm.envOr("WSTETH_ADDRESS", address(0));
