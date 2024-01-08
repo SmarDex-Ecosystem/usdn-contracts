@@ -6,7 +6,7 @@ import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
-import { IUsdnProtocolErrors, IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolErrors, IUsdnProtocolEvents, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { Usdn } from "src/Usdn.sol";
 
 /**
@@ -39,6 +39,17 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY());
         assertEq(usdn.balanceOf(address(this)), 20_000 ether - protocol.MIN_USDN_SUPPLY());
         assertEq(usdn.totalSupply(), 20_000 ether);
-        // TODO: check that both long positions exist
+        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0);
+        assertEq(defaultPos.leverage, 1_000_000_000);
+        assertEq(defaultPos.timestamp, block.timestamp);
+        assertEq(defaultPos.user, protocol.DEAD_ADDRESS());
+        assertEq(defaultPos.amount, protocol.FIRST_LONG_AMOUNT());
+        assertEq(defaultPos.startPrice, 2000 ether);
+        Position memory firstPos = protocol.getLongPosition(protocol.getEffectiveTickForPrice(1000 ether), 0);
+        assertEq(firstPos.leverage, 1_997_588_415);
+        assertEq(firstPos.timestamp, block.timestamp);
+        assertEq(firstPos.user, address(this));
+        assertEq(firstPos.amount, 10 ether - protocol.FIRST_LONG_AMOUNT());
+        assertEq(firstPos.startPrice, 2000 ether);
     }
 }
