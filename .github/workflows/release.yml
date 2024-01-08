@@ -22,7 +22,6 @@ jobs:
       - uses: google-github-actions/release-please-action@v4
         id: release
         with:
-          release-type: node
           token: ${{ steps.app-token.outputs.token }}
 
       - uses: actions/checkout@v4
