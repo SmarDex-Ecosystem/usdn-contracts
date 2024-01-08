@@ -5,6 +5,11 @@ import { IERC165 } from
     "@chainlink/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/interfaces/IERC165.sol";
 import { Common } from "./Common.sol";
 
+/**
+ * @title IRewardManager interface
+ * @author Chainlink
+ * @notice Interface for the RewardManager contract
+ */
 interface IVerifierFeeManager is IERC165 {
     /**
      * @notice Handles fees for a report from the subscriber and manages rewards

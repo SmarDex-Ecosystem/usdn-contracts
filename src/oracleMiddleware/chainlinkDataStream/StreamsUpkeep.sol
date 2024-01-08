@@ -11,6 +11,12 @@ import { Common } from "src/oracleMiddleware/chainlinkDataStream/externalLibrari
 import { IRewardManager } from "src/oracleMiddleware/chainlinkDataStream/externalLibraries/IRewardManager.sol";
 import { IStreamUpkeep, IVerifierProxy, IFeeManager } from "src/oracleMiddleware/chainlinkDataStream/IStreamUpkeep.sol";
 
+/**
+ * @title StreamsUpkeep contract
+ * @author Yashiru
+ * @notice This contract is used to get the price of an asset from Chainlink Data Streams.
+ *         It is used by the USDN protocol to get the price of the USDN underlying asset.
+ */
 contract StreamsUpkeep is IStreamUpkeep, ILogAutomation, StreamsLookupCompatibleInterface {
     event PriceUpdate(int192 indexed price);
 
@@ -30,16 +36,28 @@ contract StreamsUpkeep is IStreamUpkeep, ILogAutomation, StreamsLookupCompatible
         _feeAddress = feeAddress;
     }
 
-    // This function uses revert to convey call information.
-    // See https://eips.ethereum.org/EIPS/eip-3668#rationale for details.
+    /**
+     * @notice This function uses revert to convey call information.
+     *         See https://eips.ethereum.org/EIPS/eip-3668#rationale for details.
+     * @dev This function is intended to be simulated off-chain for gas efficiency.
+     * @param log The log emitted by the oracle contract.
+     * @return success True if the log is valid and the extraData is correct.
+     * @return extraData The data to be passed to checkCallback.
+     */
     function checkLog(Log calldata log, bytes memory) external view returns (bool, bytes memory) {
         revert StreamsLookup(DATASTREAMS_FEEDLABEL, _feedIds, DATASTREAMS_QUERYLABEL, log.timestamp, "");
     }
 
-    // The Data Streams report bytes is passed here.
-    // extraData is context data from feed lookup process.
-    // This method is intended only to be simulated off-chain by Automation.
-    // The data returned will then be passed by Automation into performUpkeep
+    /**
+     * @notice The Data Streams report bytes is passed here.
+     *         extraData is context data from feed lookup process.
+     *         This method is intended only to be simulated off-chain by Automation.
+     *         The data returned will then be passed by Automation into performUpkeep
+     * @param values The values returned by the lookup.
+     * @param extraData The context data returned by the lookup.
+     * @return success True if the callback succeeded.
+     * @return performData The data to be passed to performUpkeep.
+     */
     function checkCallback(bytes[] calldata values, bytes calldata extraData)
         external
         pure
@@ -48,7 +66,10 @@ contract StreamsUpkeep is IStreamUpkeep, ILogAutomation, StreamsLookupCompatible
         return (true, abi.encode(values, extraData));
     }
 
-    // function will be performed on-chain
+    /**
+     * @notice This function is called by CL Automation to perform upkeep on the contract.
+     * @param performData The data returned by checkCallback.
+     */
     function performUpkeep(bytes calldata performData) external {
         // Decode the performData bytes passed in by CL Automation.
         // This contains the data returned by your implementation in checkCallback().

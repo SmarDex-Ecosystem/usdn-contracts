@@ -5,35 +5,63 @@ import { Common } from "src/oracleMiddleware/chainlinkDataStream/externalLibrari
 import { IVerifierFeeManager } from "src/oracleMiddleware/chainlinkDataStream/externalLibraries/IVerifierFeeManager.sol";
 
 interface IStreamUpkeep {
+    /**
+     * @notice This struct represents the a basic priceFeed report from Chainlink data streams.
+     * @param feedId The feed ID the report has data for
+     * @param validFromTimestamp Earliest timestamp for which price is applicable
+     * @param observationsTimestamp Latest timestamp for which price is applicable
+     * @param nativeFee Base cost to validate a transaction using the report, denominated in the chain’s native token
+     * @param linkFee Base cost to validate a transaction using the report, denominated in LINK
+     * @param expiresAt Latest timestamp where the report can be verified on-chain
+     * @param price DON consensus median price, carried to 8 decimal places
+     */
     struct BasicReport {
-        bytes32 feedId; // The feed ID the report has data for
-        uint32 validFromTimestamp; // Earliest timestamp for which price is applicable
-        uint32 observationsTimestamp; // Latest timestamp for which price is applicable
-        uint192 nativeFee; // Base cost to validate a transaction using the report, denominated in the chain’s native
-            // token (WETH/ETH)
-        uint192 linkFee; // Base cost to validate a transaction using the report, denominated in LINK
-        uint32 expiresAt; // Latest timestamp where the report can be verified on-chain
-        int192 price; // DON consensus median price, carried to 8 decimal places
+        bytes32 feedId;
+        uint32 validFromTimestamp;
+        uint32 observationsTimestamp;
+        uint192 nativeFee;
+        uint192 linkFee;
+        uint32 expiresAt;
+        int192 price;
     }
 
+    /**
+     * @notice This struct represents the a premium priceFeed report from Chainlink data streams.
+     * @param feedId The feed ID the report has data for
+     * @param validFromTimestamp Earliest timestamp for which price is applicable
+     * @param observationsTimestamp Latest timestamp for which price is applicable
+     * @param nativeFee Base cost to validate a transaction using the report, denominated in the chain’s native token
+     * @param linkFee Base cost to validate a transaction using the report, denominated in LINK
+     * @param expiresAt Latest timestamp where the report can be verified on-chain
+     * @param price DON consensus median price, carried to 8 decimal places
+     * @param bid Simulated price impact of a buy order up to the X% depth of liquidity utilisation
+     * @param ask Simulated price impact of a sell order up to the X% depth of liquidity utilisation
+     */
     struct PremiumReport {
-        bytes32 feedId; // The feed ID the report has data for
-        uint32 validFromTimestamp; // Earliest timestamp for which price is applicable
-        uint32 observationsTimestamp; // Latest timestamp for which price is applicable
-        uint192 nativeFee; // Base cost to validate a transaction using the report, denominated in the chain’s native
-            // token (WETH/ETH)
-        uint192 linkFee; // Base cost to validate a transaction using the report, denominated in LINK
-        uint32 expiresAt; // Latest timestamp where the report can be verified on-chain
-        int192 price; // DON consensus median price, carried to 8 decimal places
-        int192 bid; // Simulated price impact of a buy order up to the X% depth of liquidity utilisation
-        int192 ask; // Simulated price impact of a sell order up to the X% depth of liquidity utilisation
+        bytes32 feedId;
+        uint32 validFromTimestamp;
+        uint32 observationsTimestamp;
+        uint192 nativeFee;
+        uint192 linkFee;
+        uint32 expiresAt;
+        int192 price;
+        int192 bid;
+        int192 ask;
     }
 
+    /**
+     * @notice This struct represents a quote from a Chainlink data streams.
+     */
     struct Quote {
         address quoteAddress;
     }
 }
 
+/**
+ * @title IVerifierFeeManager
+ * @author Yashiru
+ * @notice Custom interfaces for IVerifierProxy
+ */
 interface IVerifierProxy {
     function verify(bytes calldata payload, bytes calldata parameterPayload)
         external
@@ -43,6 +71,11 @@ interface IVerifierProxy {
     function s_feeManager() external view returns (IVerifierFeeManager);
 }
 
+/**
+ * @title IVerifierFeeManager
+ * @author Yashiru
+ * @notice Custom interfaces for IFeeManager
+ */
 interface IFeeManager {
     function getFeeAndReward(address subscriber, bytes memory unverifiedReport, address quoteAddress)
         external
