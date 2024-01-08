@@ -22,13 +22,7 @@ import { ChainlinkDataSteamsLogEmitter } from
  * @dev This contract is a middleware between the USDN protocol and the price oracles.
  * @author Yashiru
  */
-contract OracleMiddleware is
-    IOracleMiddleware,
-    IOracleMiddlewareErrors,
-    PythOracle,
-    ChainlinkOracle,
-    ChainlinkDataSteamsLogEmitter
-{
+contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOracle, ChainlinkOracle {
     uint256 public validationDelay = 24 seconds;
 
     uint8 constant DECIMALS = 8;
@@ -116,20 +110,7 @@ contract OracleMiddleware is
                 : conf == ConfidenceInterval.up ? uint64(pythPrice.price) + pythPrice.conf : uint64(pythPrice.price);
             price_.timestamp = uint128(pythPrice.publishTime);
         } else {
-            // TODO: pass data to chainlink to allow them to recall the contract with the information required to
-            //       validate the position price
-            emitChainlinkDataStreamsEvent(
-                abi.encodeWithSignature(
-                    "ValidatePendingPrice(int24,uint256,bytes)", // Possibly the data passed to chainlink
-                    0, // The tick of the position
-                    0, // The index of the position
-                    abi.encode() // More data to be passed
-                )
-            );
-
-            // Return 0,0 to allow the USDN protocol to make the actual action in pending
-            // until chain link data stream call the contract with the price
-            return PriceInfo(0, 0);
+            revert PyhtValidationFailed();
         }
     }
 

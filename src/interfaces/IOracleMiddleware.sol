@@ -50,6 +50,8 @@ interface IOracleMiddlewareErrors {
     error OracleMiddlewareWrongPriceTimestamp(uint64 min, uint64 max, uint64 result);
     /// @notice The requested action is not supported by the middleware
     error OracleMiddlewareUnsupportedAction(ProtocolAction action);
+    /// @notice The Pyth price validation failed
+    error PyhtValidationFailed();
 }
 
 /* -------------------------------------------------------------------------- */
