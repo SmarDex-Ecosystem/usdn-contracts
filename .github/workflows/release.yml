@@ -1,15 +1,8 @@
-#  This workflow is triggered on push to main branch.
-#  It will bump the version in package.json and create a pull request.
-#  When the pull request is merged, it will publish the package to CodeArtifact.
-name: Release Workflow
-
 on:
   push:
     branches:
       - main
-  pull_request:
-    types:
-      - closed
+name: Release Workflow
 
 permissions:
   id-token: write # Required for requesting AWS JWT
@@ -17,90 +10,43 @@ permissions:
   pull-requests: write # Required for creating pull-requests
 
 jobs:
-  bump-version-and-create-pr:
+  release-please:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Checking if push is from a bump patch
-        id: is-from-bump-patch
-        run: |
-          if [[ "$(git show -s --format=%s)" == *release/patch* ]]; then
-            echo "result=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "result=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Set up Node.js
-        if: steps.is-from-bump-patch.outputs.result == 'false'
-        uses: actions/setup-node@v4
+      - uses: google-github-actions/release-please-action@v4
+        id: release
         with:
-          node-version: 18
+          release-type: node
 
-      - name: Commit and push version bump
-        if: steps.is-from-bump-patch.outputs.result == 'false'
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          npm --no-git-tag-version version patch
-          git commit -am "ci(release): bump version"
-
-      - name: Create Pull Request
-        if: steps.is-from-bump-patch.outputs.result == 'false'
-        uses: peter-evans/create-pull-request@v5
-        with:
-          title: Bump version
-          body: |
-            Bump version in package.json.
-            Merging this pull request will publish the package to CodeArtifact.
-          commit-message: Bump version
-          delete-branch: true
-          branch: release/patch
-          branch-suffix: timestamp
-
-  publish-to-codeartifact:
-    runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'pull_request' &&
-      github.event.action == 'closed' &&
-      contains(github.head_ref, 'release/patch') &&
-      github.event.pull_request.merged
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Install dependencies
         run: npm ci && forge install
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Export ABI
         run: npm run exportAbi
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Configure AWS credentials
         uses: backend-ra2-tech/composite-workflows/aws-login@main
         with:
           aws-role-to-assume: github-workflow-oidc-codeartifacts-deploy
-
-      - name: Get version from package.json
-        id: get-version
-        uses: notiz-dev/github-action-json-property@release
-        with:
-          path: "./package.json"
-          prop_path: "version"
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Publish to CodeArtifact
-        env:
-          NEW_VERSION: "${{ steps.get-version.outputs.value }}"
-        run: |
-          npm publish
+        run: npm publish
+        if: ${{ steps.release.outputs.release_created }}
