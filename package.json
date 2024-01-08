@@ -1,5 +1,5 @@
 {
-  "name": "@usdn/contracts",
+  "name": "@usdn/usdn-contracts",
   "version": "0.1.2",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:Blockchain-RA2-Tech/usdn-contracts.git",
