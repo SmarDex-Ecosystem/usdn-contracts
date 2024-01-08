@@ -8,4 +8,8 @@ contract WstETH is ERC20, ERC20Permit {
     constructor() ERC20("Wrapped liquid staked Ether 2.0", "wstETH") ERC20Permit("Wrapped liquid staked Ether 2.0") {
         _mint(msg.sender, 4_000_000 * 10 ** decimals());
     }
+
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
 }
