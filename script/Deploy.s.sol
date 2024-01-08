@@ -49,12 +49,12 @@ contract Deploy is Script {
         UsdnProtocol protocol = new UsdnProtocol(usdn, wstETH, middleware, 10);
 
         // Grant USDN minter role to protocol and approve wstETH spending
-        usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
-        wstETH.approve(address(protocol), type(uint256).max);
-
-        // Initialize if needed
         uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
         uint256 longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
+        usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
+        wstETH.approve(address(protocol), depositAmount + longAmount);
+
+        // Initialize if needed
         if (depositAmount > 0 && longAmount > 0) {
             // TODO: change last parameter when final oracle middleware is available
             protocol.initialize(depositAmount, uint128(longAmount), protocol.minTick(), abi.encode(uint128(2000 ether)));
