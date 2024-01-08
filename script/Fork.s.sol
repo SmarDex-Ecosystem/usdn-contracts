@@ -9,16 +9,22 @@ contract Fork is Script {
     function run() external {
         vm.startBroadcast(vm.envAddress("DEPLOYER_ADDRESS"));
 
-        address payable wstETHAddress = payable(vm.envOr("WSTETH_ADDRESS", address(0)));
-        WstETH wstETH;
-        if (wstETHAddress != address(0)) {
-            wstETH = WstETH(wstETHAddress);
-        } else {
-            wstETH = new WstETH();
-            wstETHAddress = payable(address(wstETH));
+        // Get the address of the wstETH token
+        address payable wstETHAddress = payable(vm.envAddress("WSTETH_ADDRESS"));
+        WstETH wstETH = WstETH(wstETHAddress);
+
+        // Calculate the amount of ETH needed to mint the required amount of wstETH
+        uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
+        uint256 longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
+        uint256 stEthPerWstEth = wstETH.stEthPerToken();
+        // Add 1000 wei to account for rounding errors
+        uint256 ethAmount = (depositAmount + longAmount + 1000) * stEthPerWstEth / 1 ether;
+
+        // Mint wstETH
+        if (depositAmount + longAmount > 0) {
+            (bool result,) = address(wstETH).call{ value: ethAmount }(hex"");
+            require(result, "Fork: failed to mint wstETH");
         }
-        (bool result,) = address(wstETH).call{ value: 3 ether }(hex"");
-        require(result, "Fork: failed to mint wstETH");
 
         vm.stopBroadcast();
     }
