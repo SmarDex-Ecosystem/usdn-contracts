@@ -5,11 +5,11 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 /**
  * @title TickMath
- * @notice Convert between prices and ticks, where each tick represents an increase in price of 0.1%. Ticks are
+ * @notice Convert between prices and ticks, where each tick represents an increase in price of 0.01%. Ticks are
  * used instead of liquidation prices to limit the number of possible buckets where a position can land, and allows for
  * batched liquidations.
- * @dev The formula for calculating the price from a tick is: price = 1.001^(tick).
- * The formula for calculating the tick from a price is: tick = log_1.001(price)
+ * @dev The formula for calculating the price from a tick is: price = 1.0001^(tick).
+ * The formula for calculating the tick from a price is: tick = log_1.0001(price)
  */
 library TickMath {
     /// @dev Indicates that the provided tick spacing is invalid (zero).
@@ -21,19 +21,19 @@ library TickMath {
     /// @dev Indicates that the provided price is out of bounds.
     error TickMathInvalidPrice();
 
-    // The minimum price we want to resolve is 1000 wei, which equates to 1.001^-34_556
-    int24 internal constant MIN_TICK = -34_556;
+    // The minimum price we want to resolve is 10_000 wei (1e-14 USD), which equates to 1.0001^-322378
+    int24 internal constant MIN_TICK = -322_378;
 
     // The maximum tick is determined by limits of the libraries used for math and testing.
-    int24 internal constant MAX_TICK = 98_000;
+    int24 internal constant MAX_TICK = 980_000;
 
     // Min and max representable values for the price
-    uint256 internal constant MIN_PRICE = 1000;
+    uint256 internal constant MIN_PRICE = 10_000;
     uint256 internal constant MAX_PRICE =
-        3_464_120_361_320_951_603_222_457_022_263_209_963_088_421_212_476_539_374_818_919;
+        3_620_189_675_065_328_806_679_850_654_316_367_931_456_599_175_372_999_068_724_197;
 
-    // Pre-computed value for ln(1.001)
-    int256 internal constant LN_BASE = 999_500_333_083_533;
+    // Pre-computed value for ln(1.0001)
+    int256 internal constant LN_BASE = 99_995_000_333_308;
 
     /**
      * @notice Get the largest usable tick, given a tick spacing.
@@ -69,7 +69,7 @@ library TickMath {
 
     /**
      * @notice Get the price at a given tick
-     * @dev Calculates the price as 1.001^tick = e^(tick * ln(1.001))
+     * @dev Calculates the price as 1.0001^tick = e^(tick * ln(1.0001))
      * @param tick the tick
      * @return price_ the corresponding price
      */
@@ -85,7 +85,7 @@ library TickMath {
 
     /**
      * @notice Get the tick corresponding to a price, rounded down towards negative infinity.
-     * @dev log_1.001(price) = ln(price)/ln(1.001) gives the tick
+     * @dev log_1.0001(price) = ln(price)/ln(1.0001) gives the tick
      * @param price the price
      * @return tick_ the largest tick which price is less than or equal to the given price
      */
@@ -115,7 +115,7 @@ library TickMath {
 
     /**
      * @notice Get the tick closest to price
-     * @dev log_1.001(price) = ln(price)/ln(1.001) gives the tick
+     * @dev log_1.0001(price) = ln(price)/ln(1.0.01) gives the tick
      * @param price the price
      * @return tick_ the closest tick to the given price
      */
