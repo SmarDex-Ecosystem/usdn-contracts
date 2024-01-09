@@ -115,7 +115,7 @@ library TickMath {
 
     /**
      * @notice Get the tick closest to price
-     * @dev log_1.0001(price) = ln(price)/ln(1.0.01) gives the tick
+     * @dev log_1.0001(price) = ln(price)/ln(1.0001) gives the tick
      * @param price the price
      * @return tick_ the closest tick to the given price
      */
