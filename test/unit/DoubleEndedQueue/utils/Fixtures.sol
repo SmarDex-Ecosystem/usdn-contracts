@@ -23,12 +23,12 @@ contract DequeFixture is BaseFixture {
      * @param a First `PendingAction`
      * @param b Second `PendingAction`
      */
-    function _assertActionsEqual(PendingAction memory a, PendingAction memory b) internal {
-        assertTrue(a.action == b.action);
-        assertEq(a.timestamp, b.timestamp);
-        assertEq(a.user, b.user);
-        assertEq(a.tick, b.tick);
-        assertEq(a.amountOrIndex, b.amountOrIndex);
+    function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
+        assertTrue(a.action == b.action, string.concat(err, " - action type"));
+        assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
+        assertEq(a.user, b.user, string.concat(err, " - action user"));
+        assertEq(a.tick, b.tick, string.concat(err, " - action tick"));
+        assertEq(a.amountOrIndex, b.amountOrIndex, string.concat(err, " - amount or index"));
     }
 
     // force ignore from coverage report

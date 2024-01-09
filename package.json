@@ -1,11 +1,10 @@
 {
-  "name": "@usdn/contracts",
+  "name": "@usdn/usdn-contracts",
   "version": "0.1.2",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:Blockchain-RA2-Tech/usdn-contracts.git",
   "author": "RA2 Tech",
   "license": "BUSL-1.1",
-  "private": true,
   "scripts": {
     "prepare": "husky install",
     "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test FFI",
