@@ -141,7 +141,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // Apply liquidation penalty
         // reverts if liquidationPrice >= entryPrice
-        uint40 leverage = getLeverageWithLiquidationPenalty(uint128(currentPrice.price), liquidationPrice_);
+        uint40 leverage = getLeverageWithLiquidationPenalty(currentPrice.price.toUint128(), liquidationPrice_);
         if (leverage < _minLeverage) {
             revert UsdnProtocolLeverageTooLow();
         }
@@ -150,13 +150,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         }
 
         // Liquidation price must be at least x% below current price
-        _checkSafetyMargin(uint128(currentPrice.price), liquidationPrice_);
+        _checkSafetyMargin(currentPrice.price.toUint128(), liquidationPrice_);
 
         // Register position and adjust contract state
         Position memory long = Position({
             user: msg.sender,
             amount: amount,
-            startPrice: uint128(currentPrice.price),
+            startPrice: currentPrice.price.toUint128(),
             leverage: leverage,
             timestamp: timestamp
         });
@@ -259,7 +259,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         _balanceVault += deposit.amountOrIndex;
 
-        uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, uint128(depositPrice.price));
+        uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice.price.toUint128());
         if (initializing) {
             // we mint the minimum amount of USDN to the dead address, so that the total supply never falls to zero
             _usdn.mint(DEAD_ADDRESS, MIN_USDN_SUPPLY);
@@ -296,7 +296,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // adjust balances
         _applyPnlAndFunding(withdrawalPrice.neutralPrice.toUint128(), withdrawalPrice.timestamp.toUint128());
 
-        int256 available = _vaultAssetAvailable(uint128(withdrawalPrice.price));
+        int256 available = _vaultAssetAvailable(withdrawalPrice.price.toUint128());
         if (available < 0) {
             available = 0; // clamp to zero
         }
@@ -347,7 +347,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // Apply liquidation penalty
         // reverts if liquidationPrice >= entryPrice
-        uint40 leverage = getLeverageWithLiquidationPenalty(uint128(price.price), liquidationPrice);
+        uint40 leverage = getLeverageWithLiquidationPenalty(price.price.toUint128(), liquidationPrice);
         // Leverage is always greater than 1 (liquidationPrice is positive).
         // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
         if (leverage > _maxLeverage) {
@@ -359,7 +359,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // Adjust position parameters
         Position storage pos = _longPositions[_tickHash(tick)][index];
         pos.leverage = leverage;
-        pos.startPrice = uint128(price.price);
+        pos.startPrice = price.price.toUint128();
 
         emit ValidatedOpenPosition(long.user, pos, tick, index, liquidationPrice);
     }
@@ -402,7 +402,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             available = 0;
         }
 
-        int256 value = positionValue(uint128(price.price), pos.startPrice, pos.amount, pos.leverage);
+        int256 value = positionValue(price.price.toUint128(), pos.startPrice, pos.amount, pos.leverage);
         if (value < 0) {
             value = 0;
         }
