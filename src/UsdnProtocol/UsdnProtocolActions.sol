@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
@@ -12,6 +13,7 @@ import { IUsdn } from "src/interfaces/IUsdn.sol";
 
 abstract contract UsdnProtocolActions is UsdnProtocolLong {
     using SafeERC20 for IUsdn;
+    using SafeCast for uint256;
     using LibBitmap for LibBitmap.Bitmap;
 
     /**
@@ -42,7 +44,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateDeposit, currentPriceData
         );
 
-        _applyPnlAndFunding(uint128(currentPrice.neutralPrice), uint128(currentPrice.timestamp));
+        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
         // TODO: perform liquidation of other pos with currentPrice
 
         PendingAction memory pendingAction = PendingAction({
@@ -85,7 +87,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateWithdrawal, currentPriceData
         );
 
-        _applyPnlAndFunding(uint128(currentPrice.neutralPrice), uint128(currentPrice.timestamp));
+        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
         // TODO: perform liquidation of other pos with currentPrice
 
         PendingAction memory pendingAction = PendingAction({
@@ -133,7 +135,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateOpenPosition, currentPriceData
         );
 
-        _applyPnlAndFunding(uint128(currentPrice.neutralPrice), uint128(currentPrice.timestamp));
+        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
         // TODO: perform liquidation of other pos with currentPrice
 
@@ -202,7 +204,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
         );
 
-        _applyPnlAndFunding(uint128(currentPrice.neutralPrice), uint128(currentPrice.timestamp));
+        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
         // TODO: perform liquidation of other pos with currentPrice
 
         PendingAction memory pendingAction = PendingAction({
@@ -253,7 +255,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(deposit.timestamp, action, priceData);
 
         // adjust balances
-        _applyPnlAndFunding(uint128(depositPrice.neutralPrice), uint128(depositPrice.timestamp));
+        _applyPnlAndFunding(depositPrice.neutralPrice.toUint128(), depositPrice.timestamp.toUint128());
 
         _balanceVault += deposit.amountOrIndex;
 
@@ -292,7 +294,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         );
 
         // adjust balances
-        _applyPnlAndFunding(uint128(withdrawalPrice.neutralPrice), uint128(withdrawalPrice.timestamp));
+        _applyPnlAndFunding(withdrawalPrice.neutralPrice.toUint128(), withdrawalPrice.timestamp.toUint128());
 
         int256 available = _vaultAssetAvailable(uint128(withdrawalPrice.price));
         if (available < 0) {
@@ -338,7 +340,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
 
         // adjust balances
-        _applyPnlAndFunding(uint128(price.neutralPrice), uint128(price.timestamp));
+        _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
 
         // TODO: if price <= liquidationPrice, re-calculate a liquidation price based on the leverage so that the
         // position remains solvent. Emit LiquidationPriceChanged.
@@ -388,7 +390,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
 
         // adjust balances
-        _applyPnlAndFunding(uint128(price.neutralPrice), uint128(price.timestamp));
+        _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
 
         Position memory pos = getLongPosition(tick, index);
 
