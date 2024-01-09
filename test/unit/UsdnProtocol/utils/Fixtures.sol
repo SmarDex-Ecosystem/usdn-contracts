@@ -26,7 +26,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdn = new Usdn(address(0), address(0));
         wstETH = new WstETH();
         oracleMiddleware = new MockOracleMiddleware();
-        protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 10);
+        protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 100); // tick spacing 100 = 1%
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
@@ -49,7 +49,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(defaultPos.amount, protocol.FIRST_LONG_AMOUNT(), "default pos amount");
         assertEq(defaultPos.startPrice, 2000 ether, "default pos start price");
         Position memory firstPos = protocol.getLongPosition(protocol.getEffectiveTickForPrice(1000 ether), 0);
-        assertEq(firstPos.leverage, 1_997_588_415, "first pos leverage");
+        assertEq(firstPos.leverage, 1_983_994_053, "first pos leverage");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, 10 ether - protocol.FIRST_LONG_AMOUNT(), "first pos amount");

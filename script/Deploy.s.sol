@@ -45,8 +45,8 @@ contract Deploy is Script {
             usdnAddress = address(usdn);
         }
 
-        // Deploy the protocol with tick spacing 10 = 1%
-        UsdnProtocol protocol = new UsdnProtocol(usdn, wstETH, middleware, 10);
+        // Deploy the protocol with tick spacing 100 = 1%
+        UsdnProtocol protocol = new UsdnProtocol(usdn, wstETH, middleware, 100);
 
         // Grant USDN minter role to protocol and approve wstETH spending
         uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
