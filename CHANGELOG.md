@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.1.2...v0.1.3) (2024-01-09)
+
+
+### Features
+
+* script to setup fork ([#34](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/34)) ([26346f9](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/26346f9e35d8f0ba4edf5f4ad8cd79de88ce8b4a))
+
 ## [0.1.2](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.1.1...v0.1.2) (2024-01-08)
 
 
