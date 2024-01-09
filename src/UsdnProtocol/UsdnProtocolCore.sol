@@ -52,6 +52,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         } else {
             relative = longExpo;
         }
+        // avoid division by zero
+        if (relative == 0) {
+            return 0;
+        }
         fund_ = longExpo.safeSub(vaultExpo).safeMul(_fundingRatePerSecond * secondsElapsed * 100).safeDiv(relative);
     }
 
@@ -105,6 +109,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         int256 totalExpo = _totalExpo.toInt256();
         // Cast to int256 to check overflow and optimize gas usage
         int256 balanceLong = _balanceLong.toInt256();
+
+        // Avoid division by zero
+        if (totalExpo == 0) {
+            return 0;
+        }
 
         // pnlAsset = (totalExpo - balanceLong) * pnlLong * 10^assetDecimals / (totalExpo * currentPrice)
         int256 pnlAsset = totalExpo.safeSub(balanceLong).safeMul(pnlLong(currentPrice)).safeMul(

@@ -57,8 +57,6 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
 
         // Create vault deposit
         {
-            _balanceVault += depositAmount;
-
             PendingAction memory pendingAction = PendingAction({
                 action: ProtocolAction.InitiateDeposit,
                 timestamp: 0, // not needed since we have a special ProtocolAction for init

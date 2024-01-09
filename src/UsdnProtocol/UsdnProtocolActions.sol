@@ -257,9 +257,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // FIXME: use neutral price here!
         _applyPnlAndFunding(depositPrice.price, depositPrice.timestamp);
 
+        uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice.price);
+
         _balanceVault += deposit.amountOrIndex;
 
-        uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice.price);
         if (initializing) {
             // we mint the minimum amount of USDN to the dead address, so that the total supply never falls to zero
             _usdn.mint(DEAD_ADDRESS, MIN_USDN_SUPPLY);
