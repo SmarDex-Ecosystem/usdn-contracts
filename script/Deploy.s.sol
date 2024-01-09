@@ -15,13 +15,13 @@ contract Deploy is Script {
         vm.startBroadcast(vm.envAddress("DEPLOYER_ADDRESS"));
 
         // Deploy wstETH if needed
-        address wstETHAddress = vm.envOr("WSTETH_ADDRESS", address(0));
+        address payable wstETHAddress = payable(vm.envOr("WSTETH_ADDRESS", address(0)));
         WstETH wstETH;
         if (wstETHAddress != address(0)) {
             wstETH = WstETH(wstETHAddress);
         } else {
             wstETH = new WstETH();
-            wstETHAddress = address(wstETH);
+            wstETHAddress = payable(address(wstETH));
         }
 
         // Deploy Oracle middleware if needed
