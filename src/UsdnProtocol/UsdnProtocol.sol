@@ -49,6 +49,11 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
         if (longAmount < MIN_INIT_DEPOSIT) {
             revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
         }
+        // Since all USDN must be minted by the protocol, we check that the total supply is 0
+        IUsdn usdn = _usdn;
+        if (usdn.totalSupply() != 0) {
+            revert UsdnProtocolInvalidUsdn(address(usdn));
+        }
 
         PriceInfo memory currentPrice =
             _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(0, ProtocolAction.Initialize, currentPriceData);
