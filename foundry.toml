@@ -9,6 +9,9 @@ solc_version = "0.8.20"
 optimizer = true
 optimizer_runs = 20_000
 libs = ["node_modules", "lib"]
+
+# -------------------------------- Remappings -------------------------------- #
+
 remappings = [
     "@chainlink/=node_modules/@chainlink/",
     "@openzeppelin/=node_modules/@openzeppelin/",
@@ -84,19 +87,8 @@ dictionary_weight = 40
 
 [rpc_endpoints]
 mainnet = "${URL_ETH_MAINNET}"
-goerli = "${URL_GOERLI}"
-arbitrum = "${URL_ARBITRUM}"
-arbitrumtest = "${URL_GOERLI_ARBITRUM}"
-polygon = "${URL_POLYGON}"
-mumbai = "${URL_MUMBAI}"
-bsc = "${URL_BSC}"
-bsctest = "${URL_BSC_TESTNET}"
-base = "${URL_BASE}"
-basetest = "${URL_GOERLI_BASE}"
+sepolia = "${URL_SEPOLIA}"
+anvil = "${URL_ANVIL}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY}" }
-polygon = { key = "${POLYGONSCAN_API_KEY}" }
-bsc = { key = "${BSCSCAN_API_KEY}" }
-arbitrum = { key = "${ARBISCAN_API_KEY}" }
-base = { key = "${BASESCAN_API_KEY}" }

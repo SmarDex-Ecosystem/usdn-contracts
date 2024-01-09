@@ -34,8 +34,8 @@ contract TestDequePopulated is DequeFixture {
      * @custom:then Returns `false` and `3`
      */
     function test_view() public {
-        assertEq(handler.empty(), false);
-        assertEq(handler.length(), 3);
+        assertEq(handler.empty(), false, "empty");
+        assertEq(handler.length(), 3, "length");
     }
 
     /**
@@ -45,7 +45,7 @@ contract TestDequePopulated is DequeFixture {
      */
     function test_accessFront() public {
         PendingAction memory front = handler.front();
-        _assertActionsEqual(front, action1);
+        _assertActionsEqual(front, action1, "front");
     }
 
     /**
@@ -55,7 +55,7 @@ contract TestDequePopulated is DequeFixture {
      */
     function test_accessBack() public {
         PendingAction memory back = handler.back();
-        _assertActionsEqual(back, action3);
+        _assertActionsEqual(back, action3, "back");
     }
 
     /**
@@ -64,9 +64,9 @@ contract TestDequePopulated is DequeFixture {
      * @custom:then Returns the item at the given index
      */
     function test_accessAt() public {
-        _assertActionsEqual(handler.at(0), action1);
-        _assertActionsEqual(handler.at(1), action2);
-        _assertActionsEqual(handler.at(2), action3);
+        _assertActionsEqual(handler.at(0), action1, "action 1");
+        _assertActionsEqual(handler.at(1), action2, "action 2");
+        _assertActionsEqual(handler.at(2), action3, "action 3");
     }
 
     /**
@@ -75,9 +75,9 @@ contract TestDequePopulated is DequeFixture {
      * @custom:then Returns the item at the given raw index
      */
     function test_accessAtRaw() public {
-        _assertActionsEqual(handler.atRaw(rawIndex1), action1);
-        _assertActionsEqual(handler.atRaw(rawIndex2), action2);
-        _assertActionsEqual(handler.atRaw(rawIndex3), action3);
+        _assertActionsEqual(handler.atRaw(rawIndex1), action1, "action 1");
+        _assertActionsEqual(handler.atRaw(rawIndex2), action2, "action 2");
+        _assertActionsEqual(handler.atRaw(rawIndex3), action3, "action 3");
     }
 
     /**
@@ -110,15 +110,15 @@ contract TestDequePopulated is DequeFixture {
         }
         assertEq(rawIndex, expectedRawIndex);
         assertEq(handler.length(), 4);
-        _assertActionsEqual(handler.front(), action);
-        _assertActionsEqual(handler.at(0), action);
-        _assertActionsEqual(handler.atRaw(rawIndex), action);
-        _assertActionsEqual(handler.at(1), action1);
-        _assertActionsEqual(handler.atRaw(rawIndex1), action1);
-        _assertActionsEqual(handler.at(2), action2);
-        _assertActionsEqual(handler.atRaw(rawIndex2), action2);
-        _assertActionsEqual(handler.at(3), action3);
-        _assertActionsEqual(handler.atRaw(rawIndex3), action3);
+        _assertActionsEqual(handler.front(), action, "front");
+        _assertActionsEqual(handler.at(0), action, "at 0");
+        _assertActionsEqual(handler.atRaw(rawIndex), action, "at raw index");
+        _assertActionsEqual(handler.at(1), action1, "at 1");
+        _assertActionsEqual(handler.atRaw(rawIndex1), action1, "at raw index 1");
+        _assertActionsEqual(handler.at(2), action2, "at 2");
+        _assertActionsEqual(handler.atRaw(rawIndex2), action2, "at raw index 2");
+        _assertActionsEqual(handler.at(3), action3, "at 3");
+        _assertActionsEqual(handler.atRaw(rawIndex3), action3, "at raw index 3");
     }
 
     /**
@@ -138,15 +138,15 @@ contract TestDequePopulated is DequeFixture {
         }
         assertEq(rawIndex, expectedRawIndex);
         assertEq(handler.length(), 4);
-        _assertActionsEqual(handler.back(), action);
-        _assertActionsEqual(handler.at(3), action);
-        _assertActionsEqual(handler.atRaw(rawIndex), action);
-        _assertActionsEqual(handler.at(0), action1);
-        _assertActionsEqual(handler.atRaw(rawIndex1), action1);
-        _assertActionsEqual(handler.at(1), action2);
-        _assertActionsEqual(handler.atRaw(rawIndex2), action2);
-        _assertActionsEqual(handler.at(2), action3);
-        _assertActionsEqual(handler.atRaw(rawIndex3), action3);
+        _assertActionsEqual(handler.back(), action, "back");
+        _assertActionsEqual(handler.at(3), action, "at 3");
+        _assertActionsEqual(handler.atRaw(rawIndex), action, "at raw index");
+        _assertActionsEqual(handler.at(0), action1, "at 0");
+        _assertActionsEqual(handler.atRaw(rawIndex1), action1, "at raw index 1");
+        _assertActionsEqual(handler.at(1), action2, "at 1");
+        _assertActionsEqual(handler.atRaw(rawIndex2), action2, "at raw index 2");
+        _assertActionsEqual(handler.at(2), action3, "at 2");
+        _assertActionsEqual(handler.atRaw(rawIndex3), action3, "at raw index 3");
     }
 
     /**
@@ -160,11 +160,11 @@ contract TestDequePopulated is DequeFixture {
     function test_popFront() public {
         PendingAction memory action = handler.popFront();
         assertEq(handler.length(), 2);
-        _assertActionsEqual(action, action1);
-        _assertActionsEqual(handler.at(0), action2);
-        _assertActionsEqual(handler.atRaw(rawIndex2), action2);
-        _assertActionsEqual(handler.at(1), action3);
-        _assertActionsEqual(handler.atRaw(rawIndex3), action3);
+        _assertActionsEqual(action, action1, "action 1");
+        _assertActionsEqual(handler.at(0), action2, "at 0");
+        _assertActionsEqual(handler.atRaw(rawIndex2), action2, "at raw index 2");
+        _assertActionsEqual(handler.at(1), action3, "at 1");
+        _assertActionsEqual(handler.atRaw(rawIndex3), action3, "at raw index 3");
     }
 
     /**
@@ -178,11 +178,11 @@ contract TestDequePopulated is DequeFixture {
     function test_popBack() public {
         PendingAction memory action = handler.popBack();
         assertEq(handler.length(), 2);
-        _assertActionsEqual(action, action3);
-        _assertActionsEqual(handler.at(0), action1);
-        _assertActionsEqual(handler.atRaw(rawIndex1), action1);
-        _assertActionsEqual(handler.at(1), action2);
-        _assertActionsEqual(handler.atRaw(rawIndex2), action2);
+        _assertActionsEqual(action, action3, "action 3");
+        _assertActionsEqual(handler.at(0), action1, "at 0");
+        _assertActionsEqual(handler.atRaw(rawIndex1), action1, "at raw index 1");
+        _assertActionsEqual(handler.at(1), action2, "at 1");
+        _assertActionsEqual(handler.atRaw(rawIndex2), action2, "at raw index 2");
     }
 
     /**
@@ -195,10 +195,10 @@ contract TestDequePopulated is DequeFixture {
     function test_clearAtFront() public {
         handler.clearAt(rawIndex1); // does a popFront
         assertEq(handler.length(), 2);
-        _assertActionsEqual(handler.at(0), action2);
-        _assertActionsEqual(handler.atRaw(rawIndex2), action2);
-        _assertActionsEqual(handler.at(1), action3);
-        _assertActionsEqual(handler.atRaw(rawIndex3), action3);
+        _assertActionsEqual(handler.at(0), action2, "at 0");
+        _assertActionsEqual(handler.atRaw(rawIndex2), action2, "at raw index 2");
+        _assertActionsEqual(handler.at(1), action3, "at 1");
+        _assertActionsEqual(handler.atRaw(rawIndex3), action3, "at raw index 3");
     }
 
     /**
@@ -211,10 +211,10 @@ contract TestDequePopulated is DequeFixture {
     function test_clearAtBack() public {
         handler.clearAt(rawIndex3); // does a popBack
         assertEq(handler.length(), 2);
-        _assertActionsEqual(handler.at(0), action1);
-        _assertActionsEqual(handler.atRaw(rawIndex1), action1);
-        _assertActionsEqual(handler.at(1), action2);
-        _assertActionsEqual(handler.atRaw(rawIndex2), action2);
+        _assertActionsEqual(handler.at(0), action1, "at 0");
+        _assertActionsEqual(handler.atRaw(rawIndex1), action1, "at raw index 1");
+        _assertActionsEqual(handler.at(1), action2, "at 1");
+        _assertActionsEqual(handler.atRaw(rawIndex2), action2, "at raw index 2");
     }
 
     /**
@@ -228,10 +228,10 @@ contract TestDequePopulated is DequeFixture {
     function test_clearAtMiddle() public {
         handler.clearAt(rawIndex2);
         assertEq(handler.length(), 3);
-        _assertActionsEqual(handler.at(0), action1);
-        _assertActionsEqual(handler.atRaw(rawIndex1), action1);
-        _assertActionsEqual(handler.at(2), action3);
-        _assertActionsEqual(handler.atRaw(rawIndex3), action3);
+        _assertActionsEqual(handler.at(0), action1, "at 0");
+        _assertActionsEqual(handler.atRaw(rawIndex1), action1, "at raw index 1");
+        _assertActionsEqual(handler.at(2), action3, "at 2");
+        _assertActionsEqual(handler.atRaw(rawIndex3), action3, "at raw index 3");
         PendingAction memory clearedAction = handler.at(1);
         assertTrue(clearedAction.action == ProtocolAction.None);
         assertEq(clearedAction.timestamp, 0);

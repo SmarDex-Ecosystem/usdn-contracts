@@ -1,8 +1,7 @@
-<img align="right" width="150" height="150" top="100" src="https://github.com/foundry-rs/.github/blob/main/profile/logo.png">
-
 # <h1 align="center">Ultimate Synthetic Delta Neutral - USDN</h1>
 
-![Github Actions](https://github.com/Blockchain-RA2-Tech/usdn-contracts/workflows/CI/badge.svg)
+[![Main workflow](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/ci.yml)
+[![Release Workflow](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/release.yml/badge.svg)](https://github.com/Blockchain-RA2-Tech/usdn-contracts/actions/workflows/release.yml)
 
 ## Installation
 
@@ -117,16 +116,11 @@ number_underscore = "thousands" # add underscore separators in large numbers
 
 ### Husky
 
-The pre-commit configuration for Husky runs `forge fmt --check` to check the code formatting before each commit.
+The pre-commit configuration for Husky runs `forge fmt --check` to check the code formatting before each commit. It also
+checks the gas snapshot and prevents committing if it has changed.
 
 In order to setup the git pre-commit hook, run `npm install`.
 
 ### Slither
 
 Slither is integrated into a GitHub workflow and runs on every push to the master branch.
-
-## Future work
-
-### Tests skeleton generation
-
-[Bulloak](https://github.com/alexfertel/bulloak)

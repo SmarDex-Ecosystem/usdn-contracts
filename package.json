@@ -1,11 +1,10 @@
 {
-  "name": "foundry-template",
-  "version": "0.1.0",
-  "description": "Template repository for creating a new Foundry project quickly and in accordance with the Real Estate Executive standards",
-  "repository": "git@github.com:petra-foundation/foundry-template.git",
-  "author": "",
+  "name": "@usdn/usdn-contracts",
+  "version": "0.1.2",
+  "description": "Contracts for the USDN token and derivatives protocol",
+  "repository": "git@github.com:Blockchain-RA2-Tech/usdn-contracts.git",
+  "author": "RA2 Tech",
   "license": "BUSL-1.1",
-  "private": true,
   "scripts": {
     "prepare": "husky install",
     "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test FFI",
@@ -15,13 +14,22 @@
     "cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info && open .coverage/index.html",
     "test": "forge test -vvv",
     "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\"",
-    "slither": "slither ."
+    "slither": "slither .",
+    "exportAbi": "forge build && ts-node ./script/exportAbi.ts -g '{*.sol,!(libraries|interfaces)/**/*.sol}'",
+    "clean": "rm -rf dist && forge clean"
   },
+  "files": [
+    "dist",
+    "broadcast"
+  ],
   "devDependencies": {
     "@openzeppelin/contracts": "^5.0.0",
+    "commander": "^11.1.0",
+    "glob": "^10.3.10",
     "husky": "^8.0.3",
     "solady": "^0.0.138",
     "@chainlink/contracts": "^0.8.0",
-    "@pythnetwork/pyth-sdk-solidity": "^2.3.0"
+    "@pythnetwork/pyth-sdk-solidity": "^2.3.0",
+    "ts-node": "^10.9.2"
   }
 }
