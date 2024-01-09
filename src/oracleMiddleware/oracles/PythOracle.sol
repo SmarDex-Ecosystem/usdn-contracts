@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-import { ConfidenceInterval } from "src/interfaces/IOracleMiddleware.sol";
+import { ConfidenceInterval, FormattedPythPrice } from "src/interfaces/IOracleMiddleware.sol";
 
 /**
  * @title PythOracle contract
@@ -45,7 +45,12 @@ contract PythOracle {
         ) {
             return priceFeeds[0].price;
         } catch {
-            return PythStructs.Price(-1, 0, 0, 0);
+            return PythStructs.Price({
+                price: -1, // negative price to indicate error
+                conf: 0,
+                expo: 0,
+                publishTime: 0
+            });
         }
     }
 
@@ -57,10 +62,27 @@ contract PythOracle {
     function getFormattedPythPrice(bytes calldata priceUpdateData, uint64 targetTimestamp, uint256 _decimals)
         public
         payable
-        returns (PythStructs.Price memory pythPrice)
+        returns (FormattedPythPrice memory pythPrice_)
     {
-        pythPrice = getPythPrice(priceUpdateData, targetTimestamp); // * (10 ** _decimals) / (10 ** DECIMALS);
-        pythPrice.price = pythPrice.price * int64(uint64((10 ** _decimals) / (10 ** DECIMALS)));
+        PythStructs.Price memory pythPrice = getPythPrice(priceUpdateData, targetTimestamp);
+        pythPrice_ = FormattedPythPrice({
+            price: int256(uint256(uint64(pythPrice.price)) * 10 ** _decimals / 10 ** DECIMALS),
+            conf: uint256(uint256(uint64(pythPrice.conf)) * 10 ** _decimals / 10 ** DECIMALS),
+            expo: pythPrice.expo,
+            publishTime: uint128(pythPrice.publishTime)
+        });
+    }
+
+    /**
+     * @notice Get the price of the fee to update the price feed
+     * @param priceUpdateData The data required to update the price feed
+     * @return updateFee_ The price of the fee to update the price feed
+     */
+    function getPythUpdateFee(bytes calldata priceUpdateData) internal view returns (uint256) {
+        bytes[] memory priceUpdateDatas = new bytes[](1);
+        priceUpdateDatas[0] = priceUpdateData;
+
+        return _pyth.getUpdateFee(priceUpdateDatas);
     }
 
     /**

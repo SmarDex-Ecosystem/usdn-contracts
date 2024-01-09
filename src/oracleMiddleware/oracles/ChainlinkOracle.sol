@@ -24,7 +24,11 @@ contract ChainlinkOracle {
      */
     function getChainlinkPrice() public view returns (PriceInfo memory price_) {
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
-        price_ = PriceInfo(uint128(int128(price)), uint64(timestamp));
+        price_ = PriceInfo({
+            price: uint104(uint256(price)),
+            neutralPrice: uint104(uint256(price)),
+            timestamp: uint48(timestamp)
+        });
     }
 
     /**
@@ -35,7 +39,7 @@ contract ChainlinkOracle {
     function getFormattedChainlinkPrice(uint256 _decimals) public view returns (PriceInfo memory formattedPrice_) {
         uint256 chainlinkDecimals = _priceFeed.decimals();
         formattedPrice_ = getChainlinkPrice();
-        formattedPrice_.price = uint128(uint256(formattedPrice_.price) * (10 ** _decimals) / (10 ** chainlinkDecimals));
+        formattedPrice_.price = uint104(uint256(formattedPrice_.price) * (10 ** _decimals) / (10 ** chainlinkDecimals));
     }
 
     /**

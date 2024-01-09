@@ -9,6 +9,12 @@ solc_version = "0.8.20"
 optimizer = true
 optimizer_runs = 20_000
 libs = ["node_modules", "lib"]
+remappings = [
+    "@chainlink/=node_modules/@chainlink/",
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "@pythnetwork=node_modules/@pythnetwork/",
+    "solady/src/=node_modules/solady/src/",
+]
 
 # ---------------------------------- Format ---------------------------------- #
 
@@ -71,17 +77,6 @@ runs = 256
 depth = 5
 # call_override = false
 dictionary_weight = 40
-
-# ---------------------------------------------------------------------------- #
-#                                  Remappings                                  #
-# ---------------------------------------------------------------------------- #
-
-remappings = [
-    "@chainlink/=node_modules/@chainlink/",
-    "@openzeppelin/=node_modules/@openzeppelin/",
-    "@pythnetwork=node_modules/@pythnetwork/",
-    "solady/src/=node_modules/solady/src/",
-]
 
 # ---------------------------------------------------------------------------- #
 #                                  Deployments                                 #

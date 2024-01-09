@@ -27,25 +27,22 @@ contract MockPyth {
     }
 
     /// @notice Mock of the real parsePriceFeedUpdatesUnique function.
-    /// @param updateData Array of price update data.
     /// @param priceIds Array of price ids.
     /// @param minPublishTime minimum acceptable publishTime for the given `priceIds`.
-    /// @param maxPublishTime maximum acceptable publishTime for the given `priceIds`.
     /// @return priceFeeds Array of the price feeds corresponding to the given `priceIds` (with the same order).
-    function parsePriceFeedUpdatesUnique(
-        bytes[] calldata updateData,
-        bytes32[] calldata priceIds,
-        uint64 minPublishTime,
-        uint64 maxPublishTime
-    ) external payable returns (PythStructs.PriceFeed[] memory priceFeeds) {
+    function parsePriceFeedUpdatesUnique(bytes[] calldata, bytes32[] calldata priceIds, uint64 minPublishTime, uint64)
+        external
+        payable
+        returns (PythStructs.PriceFeed[] memory priceFeeds)
+    {
         lastPublishTime = minPublishTime;
 
         priceFeeds = new PythStructs.PriceFeed[](priceIds.length);
-        PythStructs.Price memory price =
-            PythStructs.Price({ price: (price), conf: conf, expo: 8, publishTime: lastPublishTime });
+        PythStructs.Price memory _price =
+            PythStructs.Price({ price: price, conf: conf, expo: 8, publishTime: lastPublishTime });
 
         for (uint256 i; i < priceIds.length;) {
-            priceFeeds[i] = PythStructs.PriceFeed({ id: bytes32(priceIds[i]), price: price, emaPrice: price });
+            priceFeeds[i] = PythStructs.PriceFeed({ id: bytes32(priceIds[i]), price: _price, emaPrice: _price });
 
             unchecked {
                 ++i;

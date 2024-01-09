@@ -34,8 +34,13 @@ interface IOracleMiddleware {
     /// @notice Returns the number of decimals for the price (constant)
     function decimals() external pure returns (uint8);
 
-    /// @notice Returns the ETH cost of one price validation for the given action
-    function validationCost(ProtocolAction action) external returns (uint256);
+    /**
+     * @notice Returns the ETH cost of one price validation for the given action
+     * @param data Pyth price data to be validated for which to get fee prices
+     * @param action Type of action for which the price is requested.
+     * @return The ETH cost of one price validation
+     */
+    function validationCost(bytes calldata data, ProtocolAction action) external returns (uint256);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -51,7 +56,7 @@ interface IOracleMiddlewareErrors {
     /// @notice The requested action is not supported by the middleware
     error OracleMiddlewareUnsupportedAction(ProtocolAction action);
     /// @notice The Pyth price validation failed
-    error PyhtValidationFailed();
+    error PythValidationFailed();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -65,8 +70,23 @@ interface IOracleMiddlewareErrors {
  * @param timestamp The timestamp of the price data.
  */
 struct PriceInfo {
-    uint128 price;
-    uint128 timestamp;
+    uint104 price; // max 20_282_409_603_651
+    uint104 neutralPrice; // max 20_282_409_603_651
+    uint48 timestamp;
+}
+
+/**
+ * @notice Struct representing a Pyth price with a int160 price.
+ * @param price The price of the asset
+ * @param conf The confidence interval around the price
+ * @param expo The price exponent
+ * @param publishTime Unix timestamp describing when the price was published
+ */
+struct FormattedPythPrice {
+    int256 price;
+    uint256 conf;
+    int128 expo;
+    uint128 publishTime;
 }
 
 /**
@@ -74,7 +94,7 @@ struct PriceInfo {
  * Used by the middleware determine which price to use in a confidence interval.
  */
 enum ConfidenceInterval {
-    up,
-    down,
-    none
+    UP,
+    DOWN,
+    NONE
 }
