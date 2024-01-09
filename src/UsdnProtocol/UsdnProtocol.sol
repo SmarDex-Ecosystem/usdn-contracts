@@ -52,7 +52,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
 
         PriceInfo memory currentPrice =
             _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(0, ProtocolAction.Initialize, currentPriceData);
-        _lastPrice = currentPrice.price;
+        _lastPrice = uint128(currentPrice.price);
         _lastUpdateTimestamp = uint40(block.timestamp);
 
         // Create vault deposit
@@ -79,8 +79,8 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
         _retrieveAssetsAndCheckBalance(msg.sender, longAmount);
 
         // Create long positions with min leverage
-        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price, minTick());
-        _createInitialPosition(msg.sender, longAmount - FIRST_LONG_AMOUNT, currentPrice.price, longTick);
+        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, uint128(currentPrice.price), minTick());
+        _createInitialPosition(msg.sender, longAmount - FIRST_LONG_AMOUNT, uint128(currentPrice.price), longTick);
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {

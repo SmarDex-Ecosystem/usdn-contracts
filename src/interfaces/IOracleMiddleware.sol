@@ -66,13 +66,14 @@ interface IOracleMiddlewareErrors {
 /**
  * @notice The price and timestamp returned by the oracle middleware.
  * @dev The timestamp is the timestamp of the price data, not the timestamp of the request.
+ * @dev Their is no need for optimisation here, the struct is only used in memory and not in storage.
  * @param price The validated asset price.
  * @param timestamp The timestamp of the price data.
  */
 struct PriceInfo {
-    uint104 price; // max 20_282_409_603_651
-    uint104 neutralPrice; // max 20_282_409_603_651
-    uint48 timestamp;
+    uint256 price;
+    uint256 neutralPrice;
+    uint256 timestamp;
 }
 
 /**
@@ -94,7 +95,21 @@ struct FormattedPythPrice {
  * Used by the middleware determine which price to use in a confidence interval.
  */
 enum ConfidenceInterval {
-    UP,
-    DOWN,
-    NONE
+    Up,
+    Down,
+    None
+}
+
+/**
+ * @notice All possible price oracles for the protocol.
+ * @param None No particular oracle.
+ * @param Pyth Pyth Network.
+ * @param ChainlinkDataStream Chainlink Data Stream.
+ * @param ChainlinkOnChain Chainlink On-Chain.
+ */
+enum Oracle {
+    None,
+    Pyth,
+    ChainlinkDataStream,
+    ChainlinkOnChain
 }

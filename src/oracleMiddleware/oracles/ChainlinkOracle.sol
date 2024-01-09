@@ -33,13 +33,14 @@ contract ChainlinkOracle {
 
     /**
      * @notice Get the price of the asset from Chainlink, formatted to the specified number of decimals
-     * @param _decimals The number of decimals to format the price to
+     * @param decimals The number of decimals to format the price to
      * @return formattedPrice_ The formatted price of the asset
      */
-    function getFormattedChainlinkPrice(uint256 _decimals) public view returns (PriceInfo memory formattedPrice_) {
+    function getFormattedChainlinkPrice(uint256 decimals) public view returns (PriceInfo memory formattedPrice_) {
         uint256 chainlinkDecimals = _priceFeed.decimals();
         formattedPrice_ = getChainlinkPrice();
-        formattedPrice_.price = uint104(uint256(formattedPrice_.price) * (10 ** _decimals) / (10 ** chainlinkDecimals));
+        formattedPrice_.price = uint104(uint256(formattedPrice_.price) * (10 ** decimals) / (10 ** chainlinkDecimals));
+        formattedPrice_.neutralPrice = formattedPrice_.price;
     }
 
     /**

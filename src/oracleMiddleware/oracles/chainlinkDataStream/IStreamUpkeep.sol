@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import { Common } from "src/oracleMiddleware/chainlinkDataStream/externalLibraries/Common.sol";
-import { IVerifierFeeManager } from "src/oracleMiddleware/chainlinkDataStream/externalLibraries/IVerifierFeeManager.sol";
+import { Common } from "src/oracleMiddleware/oracles/chainlinkDataStream/externalLibraries/Common.sol";
+import { IVerifierFeeManager } from
+    "src/oracleMiddleware/oracles/chainlinkDataStream/externalLibraries/IVerifierFeeManager.sol";
 
 interface IStreamUpkeep {
     /**

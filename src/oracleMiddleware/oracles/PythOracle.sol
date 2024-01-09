@@ -37,10 +37,10 @@ contract PythOracle {
         bytes32[] memory priceIds = new bytes32[](1);
         priceIds[0] = _priceID;
 
-        bytes[] memory priceUpdateDatas = new bytes[](1);
-        priceUpdateDatas[0] = priceUpdateData;
+        bytes[] memory pricesUpdateData = new bytes[](1);
+        pricesUpdateData[0] = priceUpdateData;
 
-        try _pyth.parsePriceFeedUpdatesUnique(priceUpdateDatas, priceIds, targetTimestamp, type(uint64).max) returns (
+        try _pyth.parsePriceFeedUpdatesUnique(pricesUpdateData, priceIds, targetTimestamp, type(uint64).max) returns (
             PythStructs.PriceFeed[] memory priceFeeds
         ) {
             return priceFeeds[0].price;
@@ -79,10 +79,10 @@ contract PythOracle {
      * @return updateFee_ The price of the fee to update the price feed
      */
     function getPythUpdateFee(bytes calldata priceUpdateData) internal view returns (uint256) {
-        bytes[] memory priceUpdateDatas = new bytes[](1);
-        priceUpdateDatas[0] = priceUpdateData;
+        bytes[] memory pricesUpdateData = new bytes[](1);
+        pricesUpdateData[0] = priceUpdateData;
 
-        return _pyth.getUpdateFee(priceUpdateDatas);
+        return _pyth.getUpdateFee(pricesUpdateData);
     }
 
     /**

@@ -7,9 +7,13 @@ import { ILogAutomation, Log } from "@chainlink/contracts/src/v0.8/automation/in
 import { IERC20 } from
     "@chainlink/contracts/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/contracts/interfaces/IERC20.sol";
 
-import { Common } from "src/oracleMiddleware/chainlinkDataStream/externalLibraries/Common.sol";
-import { IRewardManager } from "src/oracleMiddleware/chainlinkDataStream/externalLibraries/IRewardManager.sol";
-import { IStreamUpkeep, IVerifierProxy, IFeeManager } from "src/oracleMiddleware/chainlinkDataStream/IStreamUpkeep.sol";
+import { Common } from "src/oracleMiddleware/oracles/chainlinkDataStream/externalLibraries/Common.sol";
+import { IRewardManager } from "src/oracleMiddleware/oracles/chainlinkDataStream/externalLibraries/IRewardManager.sol";
+import {
+    IStreamUpkeep,
+    IVerifierProxy,
+    IFeeManager
+} from "src/oracleMiddleware/oracles/chainlinkDataStream/IStreamUpkeep.sol";
 
 /**
  * @title StreamsUpkeep contract
