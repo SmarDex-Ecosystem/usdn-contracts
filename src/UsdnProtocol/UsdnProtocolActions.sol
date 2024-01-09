@@ -42,7 +42,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateDeposit, currentPriceData
         );
 
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        _applyPnlAndFunding(currentPrice.neutralPrice, currentPrice.timestamp);
         // TODO: perform liquidation of other pos with currentPrice
 
         PendingAction memory pendingAction = PendingAction({
@@ -85,7 +85,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateWithdrawal, currentPriceData
         );
 
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        _applyPnlAndFunding(currentPrice.neutralPrice, currentPrice.timestamp);
         // TODO: perform liquidation of other pos with currentPrice
 
         PendingAction memory pendingAction = PendingAction({
@@ -134,7 +134,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         );
 
         // FIXME: use neutral price here!
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        _applyPnlAndFunding(currentPrice.neutralPrice, currentPrice.timestamp);
 
         // TODO: perform liquidation of other pos with currentPrice
 
@@ -203,7 +203,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
         );
 
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        _applyPnlAndFunding(currentPrice.neutralPrice, currentPrice.timestamp);
         // TODO: perform liquidation of other pos with currentPrice
 
         PendingAction memory pendingAction = PendingAction({
@@ -255,7 +255,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // adjust balances
         // FIXME: use neutral price here!
-        _applyPnlAndFunding(depositPrice.price, depositPrice.timestamp);
+        _applyPnlAndFunding(depositPrice.neutralPrice, depositPrice.timestamp);
 
         _balanceVault += deposit.amountOrIndex;
 
@@ -295,7 +295,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // adjust balances
         // FIXME: use neutral price here!
-        _applyPnlAndFunding(withdrawalPrice.price, withdrawalPrice.timestamp);
+        _applyPnlAndFunding(withdrawalPrice.neutralPrice, withdrawalPrice.timestamp);
 
         int256 available = _vaultAssetAvailable(withdrawalPrice.price);
         if (available < 0) {
@@ -342,7 +342,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // adjust balances
         // FIXME: use neutral price here!
-        _applyPnlAndFunding(price.price, price.timestamp);
+        _applyPnlAndFunding(price.neutralPrice, price.timestamp);
 
         // TODO: if price <= liquidationPrice, re-calculate a liquidation price based on the leverage so that the
         // position remains solvent. Emit LiquidationPriceChanged.
@@ -393,7 +393,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // adjust balances
         // FIXME: use neutral price here!
-        _applyPnlAndFunding(price.price, price.timestamp);
+        _applyPnlAndFunding(price.neutralPrice, price.timestamp);
 
         Position memory pos = getLongPosition(tick, index);
 
