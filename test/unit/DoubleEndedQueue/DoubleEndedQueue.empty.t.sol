@@ -20,8 +20,8 @@ contract TestDequeEmpty is DequeFixture {
      * @custom:then Returns `true` and `0`
      */
     function test_view() public {
-        assertEq(handler.empty(), true);
-        assertEq(handler.length(), 0);
+        assertEq(handler.empty(), true, "empty");
+        assertEq(handler.length(), 0, "length");
     }
 
     /**

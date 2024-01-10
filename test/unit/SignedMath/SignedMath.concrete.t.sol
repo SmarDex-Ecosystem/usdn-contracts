@@ -21,10 +21,10 @@ contract TestSignedMathConcrete is SignedMathFixture {
      * @custom:then Return the sum of the operands
      */
     function test_safeAdd() public {
-        assertEq(handler.safeAdd(42, 69), 111);
-        assertEq(handler.safeAdd(-42, 69), 27);
-        assertEq(handler.safeAdd(42, -69), -27);
-        assertEq(handler.safeAdd(-42, -69), -111);
+        assertEq(handler.safeAdd(42, 69), 111, "positive + positive");
+        assertEq(handler.safeAdd(-42, 69), 27, "negative + positive");
+        assertEq(handler.safeAdd(42, -69), -27, "positive + negative");
+        assertEq(handler.safeAdd(-42, -69), -111, "negative + negative");
     }
 
     /**
@@ -68,10 +68,10 @@ contract TestSignedMathConcrete is SignedMathFixture {
      * @custom:then Return the difference of the operands
      */
     function test_safeSub() public {
-        assertEq(handler.safeSub(42, 69), -27);
-        assertEq(handler.safeSub(-42, 69), -111);
-        assertEq(handler.safeSub(42, -69), 111);
-        assertEq(handler.safeSub(-42, -69), 27);
+        assertEq(handler.safeSub(42, 69), -27, "positive - positive");
+        assertEq(handler.safeSub(-42, 69), -111, "negative - positive");
+        assertEq(handler.safeSub(42, -69), 111, "positive - negative");
+        assertEq(handler.safeSub(-42, -69), 27, "negative - negative");
     }
 
     /**
@@ -115,11 +115,11 @@ contract TestSignedMathConcrete is SignedMathFixture {
      * @custom:then Return the product of the operands
      */
     function test_safeMul() public {
-        assertEq(handler.safeMul(42, 69), 2898);
-        assertEq(handler.safeMul(-42, 69), -2898);
-        assertEq(handler.safeMul(-42, -69), 2898);
-        assertEq(handler.safeMul(42, -69), -2898);
-        assertEq(handler.safeMul(0, 69), 0);
+        assertEq(handler.safeMul(42, 69), 2898, "positive * positive");
+        assertEq(handler.safeMul(-42, 69), -2898, "negative * positive");
+        assertEq(handler.safeMul(-42, -69), 2898, "negative * negative");
+        assertEq(handler.safeMul(42, -69), -2898, "positive * negative");
+        assertEq(handler.safeMul(0, 69), 0, "zero * positive");
     }
 
     /**
@@ -176,10 +176,10 @@ contract TestSignedMathConcrete is SignedMathFixture {
      * @custom:then Return the quotient of the operands
      */
     function test_safeDiv() public {
-        assertEq(handler.safeDiv(420, 69), 6);
-        assertEq(handler.safeDiv(-420, 69), -6);
-        assertEq(handler.safeDiv(420, -69), -6);
-        assertEq(handler.safeDiv(-420, -69), 6);
+        assertEq(handler.safeDiv(420, 69), 6, "positive / positive");
+        assertEq(handler.safeDiv(-420, 69), -6, "negative / positive");
+        assertEq(handler.safeDiv(420, -69), -6, "positive / negative");
+        assertEq(handler.safeDiv(-420, -69), 6, "negative / negative");
     }
 
     /**
