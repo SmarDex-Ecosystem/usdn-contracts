@@ -15,10 +15,15 @@ import { Usdn } from "src/Usdn.sol";
  * @dev Utils for testing the USDN Protocol
  */
 contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
+    uint128 public constant INITIAL_DEPOSIT = 10 ether;
+    uint128 public constant INITIAL_LONG = 10 ether;
+    uint128 public constant INITIAL_PRICE = 2000 ether; // 2000 USD per wstETH
+
     Usdn public usdn;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
     UsdnProtocolHandler public protocol;
+    uint256 public usdnInitialTotalSupply;
 
     function setUp() public virtual {
         vm.warp(1_704_092_400); // 2024-01-01 07:00:00 UTC
@@ -31,28 +36,33 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
         protocol.initialize(
-            10 ether, 10 ether, protocol.getEffectiveTickForPrice(1000 ether), abi.encode(uint128(2000 ether))
+            INITIAL_DEPOSIT,
+            INITIAL_LONG,
+            protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2),
+            abi.encode(INITIAL_PRICE)
         );
+        usdnInitialTotalSupply = usdn.totalSupply();
         vm.stopPrank();
     }
 
     function test_setUp() public {
         assertGt(protocol.tickSpacing(), 1, "tickSpacing"); // we want to test all functions for a tickSpacing > 1
-        assertEq(wstETH.balanceOf(address(protocol)), 20 ether, "wstETH protocol balance");
+        assertEq(wstETH.balanceOf(address(protocol)), INITIAL_DEPOSIT + INITIAL_LONG, "wstETH protocol balance");
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "usdn dead address balance");
-        assertEq(usdn.balanceOf(DEPLOYER), 20_000 ether - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
-        assertEq(usdn.totalSupply(), 20_000 ether, "usdn total supply");
+        uint256 usdnTotalSupply = uint256(INITIAL_DEPOSIT) * INITIAL_PRICE / 10 ** 18;
+        assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
+        assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0);
-        assertEq(defaultPos.leverage, 1_000_000_000, "default pos leverage");
+        assertEq(defaultPos.leverage, 1 gwei, "default pos leverage");
         assertEq(defaultPos.timestamp, block.timestamp, "default pos timestamp");
         assertEq(defaultPos.user, protocol.DEAD_ADDRESS(), "default pos user");
         assertEq(defaultPos.amount, protocol.FIRST_LONG_AMOUNT(), "default pos amount");
-        assertEq(defaultPos.startPrice, 2000 ether, "default pos start price");
-        Position memory firstPos = protocol.getLongPosition(protocol.getEffectiveTickForPrice(1000 ether), 0);
+        assertEq(defaultPos.startPrice, INITIAL_PRICE, "default pos start price");
+        Position memory firstPos = protocol.getLongPosition(protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2), 0);
         assertEq(firstPos.leverage, 1_983_994_053, "first pos leverage");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
-        assertEq(firstPos.amount, 10 ether - protocol.FIRST_LONG_AMOUNT(), "first pos amount");
-        assertEq(firstPos.startPrice, 2000 ether, "first pos start price");
+        assertEq(firstPos.amount, INITIAL_LONG - protocol.FIRST_LONG_AMOUNT(), "first pos amount");
+        assertEq(firstPos.startPrice, INITIAL_PRICE, "first pos start price");
     }
 }
