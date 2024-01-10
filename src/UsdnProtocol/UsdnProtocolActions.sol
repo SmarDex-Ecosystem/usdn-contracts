@@ -246,18 +246,23 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
     function _validateDepositWithAction(PendingAction memory deposit, bytes calldata priceData, bool initializing)
         internal
+        returns (PriceInfo memory depositPrice_)
     {
         // During initialization, we might want to use a different oracle, so we have a special action
         ProtocolAction action = initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateDeposit;
 
-        PriceInfo memory depositPrice =
+        depositPrice_ =
             _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(deposit.timestamp, action, priceData);
 
         // adjust balances
         // FIXME: use neutral price here!
-        _applyPnlAndFunding(depositPrice.price, depositPrice.timestamp);
+        if (!initializing) {
+            // There is no need to adjust balances during initialization.
+            // Also, during initialization, `_lastUpdateTimestamp` and `_lastPrice` are not updated yet.
+            _applyPnlAndFunding(depositPrice_.price, depositPrice_.timestamp);
+        }
 
-        uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice.price);
+        uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice_.price);
 
         _balanceVault += deposit.amountOrIndex;
 

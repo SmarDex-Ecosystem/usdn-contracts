@@ -55,12 +55,8 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
 
-        PriceInfo memory currentPrice =
-            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(0, ProtocolAction.Initialize, currentPriceData);
-        _lastPrice = currentPrice.price;
-        _lastUpdateTimestamp = uint40(block.timestamp);
-
         // Create vault deposit
+        PriceInfo memory currentPrice;
         {
             PendingAction memory pendingAction = PendingAction({
                 action: ProtocolAction.InitiateDeposit,
@@ -75,8 +71,12 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
 
             emit InitiatedDeposit(msg.sender, depositAmount);
             // Mint USDN (a small amount is minted to the dead address)
-            _validateDepositWithAction(pendingAction, currentPriceData, true); // last parameter = initializing
+            // last parameter = initializing
+            currentPrice = _validateDepositWithAction(pendingAction, currentPriceData, true);
         }
+
+        _lastUpdateTimestamp = uint40(block.timestamp);
+        _lastPrice = currentPrice.price;
 
         // Transfer the wstETH for the long
         _retrieveAssetsAndCheckBalance(msg.sender, longAmount);
