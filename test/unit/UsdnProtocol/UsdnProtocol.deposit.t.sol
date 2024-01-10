@@ -15,9 +15,8 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     }
 
     function test_initiateDeposit() public {
-        skip(3600);
         uint128 depositAmount = 1 ether;
-        bytes memory currentPrice = abi.encode(uint128(2500 ether));
+        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
         vm.expectEmit(true, true, false, false);
         emit InitiatedDeposit(address(this), depositAmount); // expected event
@@ -48,10 +47,28 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     }
 
     function test_RevertWhen_zeroAmount() public {
-        skip(3600);
-        bytes memory currentPrice = abi.encode(uint128(2500 ether));
-
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateDeposit(0, currentPrice, hex"");
+        protocol.initiateDeposit(0, abi.encode(uint128(2000 ether)), hex"");
+    }
+
+    function test_validateDeposit() public {
+        uint128 depositAmount = 1 ether;
+        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
+
+        protocol.initiateDeposit(depositAmount, currentPrice, hex"");
+
+        uint256 validationDelay = oracleMiddleware.validationDelay();
+        skip(validationDelay + 1);
+
+        uint128 assetPrice = 2100 ether;
+        currentPrice = abi.encode(assetPrice);
+
+        uint256 usdnPrice = protocol.usdnPrice(assetPrice, uint128(block.timestamp) - uint128(validationDelay));
+        assertEq(usdnPrice, 2_075_400_279_009_576_070, "usdn price");
+        uint256 mintedAmount = uint256(depositAmount) * assetPrice / usdnPrice;
+
+        vm.expectEmit(true, true, true, false);
+        emit ValidatedDeposit(address(this), depositAmount, mintedAmount); // expected event
+        protocol.validateDeposit(currentPrice, hex"");
     }
 }

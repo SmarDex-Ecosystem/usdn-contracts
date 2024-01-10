@@ -16,7 +16,7 @@ import { Usdn } from "src/Usdn.sol";
  */
 contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
     uint128 public constant INITIAL_DEPOSIT = 10 ether;
-    uint128 public constant INITIAL_LONG = 10 ether;
+    uint128 public constant INITIAL_LONG = 5 ether;
     uint128 public constant INITIAL_PRICE = 2000 ether; // 2000 USD per wstETH
 
     Usdn public usdn;

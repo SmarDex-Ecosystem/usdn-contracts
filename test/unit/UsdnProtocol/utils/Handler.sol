@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { console, Test } from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
@@ -19,11 +19,11 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing)
     { }
 
-    function getUserPendingAction(address user) external returns (PendingAction memory) {
-        return _getPendingAction(user, false); // do not clear
-    }
-
     function validationDeadline() external view returns (uint256) {
         return _validationDeadline;
+    }
+
+    function getUserPendingAction(address user) external returns (PendingAction memory) {
+        return _getPendingAction(user, false); // do not clear
     }
 }

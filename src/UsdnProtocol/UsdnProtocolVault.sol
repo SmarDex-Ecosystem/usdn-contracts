@@ -9,12 +9,16 @@ import { UsdnProtocolCore } from "src/UsdnProtocol/UsdnProtocolCore.sol";
 abstract contract UsdnProtocolVault is UsdnProtocolCore {
     using SafeCast for int256;
 
-    function usdnPrice(uint128 currentPrice) public view returns (uint256 price_) {
+    function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
         price_ = FixedPointMathLib.fullMulDiv(
-            vaultAssetAvailableWithFunding(currentPrice, uint128(block.timestamp)).toUint256(),
+            vaultAssetAvailableWithFunding(currentPrice, timestamp).toUint256(),
             uint256(currentPrice) * 10 ** _usdnDecimals,
             _usdn.totalSupply() * 10 ** _assetDecimals
         );
+    }
+
+    function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
+        price_ = usdnPrice(currentPrice, uint128(block.timestamp));
     }
 
     /**
