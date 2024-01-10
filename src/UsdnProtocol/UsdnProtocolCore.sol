@@ -111,6 +111,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         int256 balanceLong = _balanceLong.toInt256();
 
         // Avoid division by zero
+        // slither-disable-next-line incorrect-equality
         if (totalExpo == 0) {
             return 0;
         }
