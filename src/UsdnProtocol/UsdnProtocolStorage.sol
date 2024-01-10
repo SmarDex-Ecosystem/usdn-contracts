@@ -7,10 +7,10 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
-import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolErrors, Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
-abstract contract UsdnProtocolStorage is InitializableReentrancyGuard {
+abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReentrancyGuard {
     using LibBitmap for LibBitmap.Bitmap;
 
     /* -------------------------------------------------------------------------- */
@@ -148,6 +148,10 @@ abstract contract UsdnProtocolStorage is InitializableReentrancyGuard {
      * @param tickSpacing_ The positions tick spacing.
      */
     constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing_) {
+        // Since all USDN must be minted by the protocol, we check that the total supply is 0
+        if (usdn.totalSupply() != 0) {
+            revert UsdnProtocolInvalidUsdn(address(usdn));
+        }
         _usdn = usdn;
         _usdnDecimals = usdn.decimals();
         _asset = asset;
