@@ -22,13 +22,24 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
     }
 
     /**
-     * @notice Calculates the amount of USDN to mint for a given amount of asset according to its current price.
+     * @notice Calculates the amount of USDN to mint for a given amount of asset
      * @param amount The amount of asset that were deposited.
-     * @param currentPrice The current price of the asset.
+     * @param currentPrice The current price of the asset, this is required to account for any pending funding or PnL
+     * that wasn't reflected in the balances yet.
+     * @dev The amount of USDN to mint is calculated as follows:
+     * amountUsdn = amountAsset * priceAsset / priceUsdn,
+     * but since priceUsdn = vaultBalance * priceAsset / totalSupply, we can simplify to
+     * amountUsdn = amountAsset * totalSupply / vaultBalance.
+     * After we have just updated the balances, vaultAssetAvailableWithFunding is equal to _balanceVault.
      */
     function _calcMintUsdn(uint256 amount, uint128 currentPrice) internal view returns (uint256 toMint_) {
-        toMint_ = FixedPointMathLib.fullMulDiv(
-            amount, currentPrice, 10 ** (_assetDecimals + _priceFeedDecimals - _usdnDecimals)
-        );
+        if (_balanceVault == 0) {
+            // initialization, we consider the USDN price to be 1 USD
+            return FixedPointMathLib.fullMulDiv(
+                amount, currentPrice, 10 ** (_assetDecimals + _priceFeedDecimals - _usdnDecimals)
+            );
+        }
+        uint256 vaultBalance = vaultAssetAvailableWithFunding(currentPrice, uint128(block.timestamp)).toUint256();
+        toMint_ = FixedPointMathLib.fullMulDiv(amount, _usdn.totalSupply(), vaultBalance);
     }
 }

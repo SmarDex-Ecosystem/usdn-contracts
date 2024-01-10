@@ -64,7 +64,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         currentPrice = abi.encode(assetPrice);
 
         uint256 usdnPrice = protocol.usdnPrice(assetPrice, uint128(block.timestamp) - uint128(validationDelay));
-        assertEq(usdnPrice, 2_075_400_279_009_576_070, "usdn price");
+        assertEq(usdnPrice, 1_025_400_237_540_291_045, "usdn price");
         uint256 mintedAmount = uint256(depositAmount) * assetPrice / usdnPrice;
 
         vm.expectEmit(true, true, true, false);

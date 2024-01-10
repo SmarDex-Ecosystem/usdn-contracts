@@ -166,6 +166,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the initilization deposit is too low
     error UsdnProtocolMinInitAmount(uint256 minInitAmount);
 
+    /// @dev Indicates that the provided USDN contract has a total supply above zero at deployment
+    error UsdnProtocolInvalidUsdn(address usdnAddress);
+
     /// @dev Indicates that the user is not allowed to perform an action
     error UsdnProtocolUnauthorized();
 
