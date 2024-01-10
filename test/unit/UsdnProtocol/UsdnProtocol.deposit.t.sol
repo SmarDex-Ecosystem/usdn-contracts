@@ -40,5 +40,18 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
         assertEq(action.amountOrIndex, depositAmount, "action amount");
+
+        // the pending action should be actionable after the validation deadline
+        skip(protocol.validationDeadline() + 1);
+        action = protocol.getActionablePendingAction(0);
+        assertEq(action.user, address(this), "pending action user");
+    }
+
+    function test_RevertWhen_zeroAmount() public {
+        skip(3600);
+        bytes memory currentPrice = abi.encode(uint128(2500 ether));
+
+        vm.expectRevert(UsdnProtocolZeroAmount.selector);
+        protocol.initiateDeposit(0, currentPrice, hex"");
     }
 }

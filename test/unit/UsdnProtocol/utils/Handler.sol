@@ -22,4 +22,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function getUserPendingAction(address user) external returns (PendingAction memory) {
         return _getPendingAction(user, false); // do not clear
     }
+
+    function validationDeadline() external view returns (uint256) {
+        return _validationDeadline;
+    }
 }
