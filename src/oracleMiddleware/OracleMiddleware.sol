@@ -24,7 +24,7 @@ import {
 contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOracle, ChainlinkOracle {
     uint256 constant VALIDATION_DELAY = 24 seconds;
 
-    uint8 constant DECIMALS = 18;
+    uint8 private constant DECIMALS = 18;
 
     constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed)
         PythOracle(pythContract, pythPriceID)
@@ -96,9 +96,13 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
             getFormattedPythPrice(data, actionTimestamp + uint64(VALIDATION_DELAY), DECIMALS);
 
         if (pythPrice.price != -1) {
-            if (conf == ConfidenceInterval.Down) price_.price = uint256(pythPrice.price) - pythPrice.conf;
-            else if (conf == ConfidenceInterval.Up) price_.price = uint256(pythPrice.price) + pythPrice.conf;
-            else price_.price = uint256(pythPrice.price);
+            if (conf == ConfidenceInterval.Down) {
+                price_.price = uint256(pythPrice.price) - pythPrice.conf;
+            } else if (conf == ConfidenceInterval.Up) {
+                price_.price = uint256(pythPrice.price) + pythPrice.conf;
+            } else {
+                price_.price = uint256(pythPrice.price);
+            }
 
             price_.timestamp = pythPrice.publishTime;
             price_.neutralPrice = uint256(pythPrice.price);
@@ -120,6 +124,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     function validationDelay() external pure returns (uint256) {
         return VALIDATION_DELAY;
     }
+
     /// @notice Returns the number of decimals for the price (constant)
 
     function decimals() external pure returns (uint8) {

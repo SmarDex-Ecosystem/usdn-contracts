@@ -77,7 +77,7 @@ struct PriceInfo {
 }
 
 /**
- * @notice Struct representing a Pyth price with a int160 price.
+ * @notice Struct representing a Pyth price with a int256 price.
  * @param price The price of the asset
  * @param conf The confidence interval around the price
  * @param expo The price exponent
