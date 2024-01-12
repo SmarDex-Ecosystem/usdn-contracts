@@ -42,7 +42,7 @@ contract TestTickMathFuzzing is TickMathFixture {
      * @custom:given A valid price
      * @custom:when The closest tick for the price is retrieved
      * @custom:and The price at the corresponding tick is retrieved
-     * @custom:then The price is equal to the original price within 0.1%
+     * @custom:then The price is equal to the original price within 0.01%
      * @param price The price to convert to a tick and back to a price
      */
     function testFuzz_conversionReverse(uint256 price) public {
@@ -51,6 +51,6 @@ contract TestTickMathFuzzing is TickMathFixture {
         console2.log("corresponding tick", tick);
         uint256 price2 = handler.getPriceAtTick(tick);
         console2.log("price", price2);
-        assertApproxEqRel(price, price2, 0.001 ether); // within 0.1%
+        assertApproxEqRel(price, price2, 0.0001 ether); // within 0.01%
     }
 }

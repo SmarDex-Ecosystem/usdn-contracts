@@ -11,10 +11,10 @@ import { TickMath } from "src/libraries/TickMath.sol";
 contract TestTickMathConstants is TickMathFixture {
     /**
      * @custom:given The `LN_BASE` constant
-     * @custom:then The `LN_BASE` constant is equal to the natural log of 1.001
+     * @custom:then The `LN_BASE` constant is equal to the natural log of 1.0001
      */
     function test_lnBase() public {
-        int256 base = 1.001 ether;
+        int256 base = 1.0001 ether;
         assertEq(FixedPointMathLib.lnWad(base), TickMath.LN_BASE);
     }
 
