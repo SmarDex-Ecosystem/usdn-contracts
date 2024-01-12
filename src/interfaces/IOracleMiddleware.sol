@@ -57,6 +57,8 @@ interface IOracleMiddlewareErrors {
     error OracleMiddlewareUnsupportedAction(ProtocolAction action);
     /// @notice The Pyth price validation failed
     error PythValidationFailed();
+    /// @notice The oracle price is invalid
+    error WrongPrice(int256 price);
 }
 
 /* -------------------------------------------------------------------------- */

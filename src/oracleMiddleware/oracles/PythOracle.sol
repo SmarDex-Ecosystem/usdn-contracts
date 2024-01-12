@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-import { ConfidenceInterval, FormattedPythPrice } from "src/interfaces/IOracleMiddleware.sol";
+import { ConfidenceInterval, FormattedPythPrice, IOracleMiddlewareErrors } from "src/interfaces/IOracleMiddleware.sol";
 
 /**
  * @title PythOracle contract
@@ -12,7 +12,7 @@ import { ConfidenceInterval, FormattedPythPrice } from "src/interfaces/IOracleMi
  * @notice This contract is used to get the price of an asset from pyth. It is used by the USDN protocol to get the
  * price of the USDN underlying asset.
  */
-contract PythOracle {
+contract PythOracle is IOracleMiddlewareErrors {
     uint256 private constant DECIMALS = 8;
 
     bytes32 public immutable _priceID;
@@ -43,6 +43,7 @@ contract PythOracle {
         try _pyth.parsePriceFeedUpdatesUnique(pricesUpdateData, priceIds, targetTimestamp, type(uint64).max) returns (
             PythStructs.PriceFeed[] memory priceFeeds
         ) {
+            if (priceFeeds[0].price.price < 0) revert WrongPrice(priceFeeds[0].price.price);
             return priceFeeds[0].price;
         } catch {
             return PythStructs.Price({

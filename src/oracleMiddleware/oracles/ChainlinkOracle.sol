@@ -3,14 +3,14 @@ pragma solidity ^0.8.20;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import { AggregatorInterface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorInterface.sol";
-import { PriceInfo } from "../../interfaces/IOracleMiddleware.sol";
+import { PriceInfo, IOracleMiddlewareErrors } from "../../interfaces/IOracleMiddleware.sol";
 
 /**
  * @title ChainlinkOracle contract
  * @notice This contract is used to get the price of an asset from Chainlink. It is used by the USDN protocol to get the
  * price of the USDN underlying asset.
  */
-contract ChainlinkOracle {
+contract ChainlinkOracle is IOracleMiddlewareErrors {
     /// @notice Chainlink price feed aggregator contract
     AggregatorV3Interface public immutable _priceFeed;
 
@@ -24,6 +24,9 @@ contract ChainlinkOracle {
      */
     function getChainlinkPrice() public view returns (PriceInfo memory price_) {
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
+
+        if (price < 0) revert WrongPrice(price);
+
         price_ = PriceInfo({
             price: uint104(uint256(price)),
             neutralPrice: uint104(uint256(price)),
