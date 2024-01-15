@@ -23,6 +23,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     /// @notice The number of decimals for funding rate values
     uint8 public constant FUNDING_RATE_DECIMALS = 18;
 
+    uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
+
     /// @notice The number of seconds in a day
     uint256 public constant SECONDS_PER_DAY = 60 * 60 * 24;
 
@@ -92,6 +94,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
 
     /// @notice The timestamp of the last balances update
     uint128 internal _lastUpdateTimestamp;
+
+    /**
+     * @notice The multiplier for liquidation price calculations
+     * @dev This value reprensents 1 with 38 decimals (1e38) to have the same precision when the multiplier
+     * tends to 0 and high values (int256.max have 78 digits).
+     */
+    uint256 internal _liquidationMultiplier = 100_000_000_000_000_000_000_000_000_000_000_000_000;
 
     /* -------------------------- Pending actions queue ------------------------- */
 

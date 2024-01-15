@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import {
@@ -158,6 +159,28 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _balanceVault = uint256(newVaultBalance);
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
+
+        uint256 longTradingExpo = _totalExpo - _balanceLong;
+        int256 fund = funding(currentPrice, timestamp);
+
+        if (longTradingExpo >= _balanceVault) {
+            // newMultiplier = oldMultiplier * (1 + funding)
+            if (fund > 0) {
+                _liquidationMultiplier += _liquidationMultiplier * uint256(fund);
+            } else {
+                _liquidationMultiplier -= _liquidationMultiplier * uint256(-fund);
+            }
+        } else {
+            // newMultiplier = oldMultiplier * (1 + funding * (longTradingExpo / _balanceVault))
+            if (fund > 0) {
+                _liquidationMultiplier +=
+                    FixedPointMathLib.fullMulDiv(_liquidationMultiplier * uint256(fund), longTradingExpo, _balanceVault);
+            } else {
+                _liquidationMultiplier -= FixedPointMathLib.fullMulDiv(
+                    _liquidationMultiplier * uint256(-fund), longTradingExpo, _balanceVault
+                );
+            }
+        }
     }
 
     function _retrieveAssetsAndCheckBalance(address from, uint256 amount) internal {
