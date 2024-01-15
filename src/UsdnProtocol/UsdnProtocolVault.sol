@@ -23,6 +23,10 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
      * @param vaultBalance The balance of the vault
      * @param usdnTotalSupply The total supply of USDN
      * @param price The price of the asset (only used for initialization)
+     * @dev The amount of USDN to mint is calculated as follows:
+     * amountUsdn = amountAsset * priceAsset / priceUsdn,
+     * but since priceUsdn = vaultBalance * priceAsset / totalSupply, we can simplify to
+     * amountUsdn = amountAsset * totalSupply / vaultBalance.
      */
     function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint128 price)
         internal
