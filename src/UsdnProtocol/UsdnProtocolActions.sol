@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
@@ -12,6 +13,7 @@ import { IUsdn } from "src/interfaces/IUsdn.sol";
 
 abstract contract UsdnProtocolActions is UsdnProtocolLong {
     using SafeERC20 for IUsdn;
+    using SafeCast for uint256;
     using LibBitmap for LibBitmap.Bitmap;
 
     /**
@@ -50,7 +52,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp: timestamp,
             user: msg.sender,
             tick: 0, // unused
-            amountOrIndex: amount
+            amountOrIndex: amount,
+            assetPrice: _lastPrice,
+            totalExpo: _totalExpo,
+            balanceVault: _balanceVault,
+            balanceLong: _balanceLong,
+            usdnTotalSupply: _usdn.totalSupply(),
+            updateTimestamp: uint40(_lastUpdateTimestamp)
         });
 
         _addPendingAction(msg.sender, pendingAction);
@@ -93,7 +101,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp: timestamp,
             user: msg.sender,
             tick: 0, // unused
-            amountOrIndex: usdnAmount
+            amountOrIndex: usdnAmount,
+            assetPrice: _lastPrice,
+            totalExpo: _totalExpo,
+            balanceVault: _balanceVault,
+            balanceLong: _balanceLong,
+            usdnTotalSupply: _usdn.totalSupply(),
+            updateTimestamp: uint40(_lastUpdateTimestamp)
         });
 
         _addPendingAction(msg.sender, pendingAction);
@@ -167,7 +181,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp: timestamp,
             user: msg.sender,
             tick: tick,
-            amountOrIndex: index_
+            amountOrIndex: index_.toUint128(),
+            assetPrice: 0,
+            totalExpo: 0,
+            balanceVault: 0,
+            balanceLong: 0,
+            usdnTotalSupply: 0,
+            updateTimestamp: 0
         });
         _addPendingAction(msg.sender, pendingAction);
 
@@ -206,13 +226,27 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
         // TODO: perform liquidation of other pos with currentPrice
 
+        // TODO: what needs to be stored here so we can remove the position from the tick and calculate the profit
+        // in validateClosePosition?
+        // We will use the tick to calculate the liquidation price.
+        // We won't need the index anymore, so we can store the amount in fifth parameter.
+        // We can store the leverage in any of the other parameters (it's a uint40).
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateClosePosition,
             timestamp: timestamp,
             user: msg.sender,
             tick: tick,
-            amountOrIndex: index
+            amountOrIndex: index.toUint128(),
+            assetPrice: 0,
+            totalExpo: 0,
+            balanceVault: 0,
+            balanceLong: 0,
+            usdnTotalSupply: 0,
+            updateTimestamp: 0
         });
+
+        // TODO: remove position from the tick so that it can't be liquidated after 24s and stops impacting the PnL and
+        // funding calculations
 
         _addPendingAction(msg.sender, pendingAction);
 
