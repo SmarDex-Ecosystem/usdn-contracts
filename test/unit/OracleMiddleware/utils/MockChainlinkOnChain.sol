@@ -8,6 +8,8 @@ import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
  * @dev This contract is used to test the OracleMiddleware contract.
  */
 contract MockChainlinkOnChain {
+    bool private alwaysRevertOnCall;
+
     uint64 public lastPublishTime;
 
     constructor() {
@@ -23,6 +25,13 @@ contract MockChainlinkOnChain {
     }
 
     /**
+     * @notice Toggle the revert on call.
+     */
+    function toggleRevert() external {
+        alwaysRevertOnCall = !alwaysRevertOnCall;
+    }
+
+    /**
      * @notice Get the last publish time.
      * @return roundId The round id.
      * @return answer The actual asset price.
@@ -35,7 +44,7 @@ contract MockChainlinkOnChain {
         view
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        return (0, 2000 gwei, 0, lastPublishTime, 0);
+        return (0, alwaysRevertOnCall ? int256(-1) : int256(2000 gwei), 0, lastPublishTime, 0);
     }
 
     /**

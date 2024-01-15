@@ -42,9 +42,9 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
      * @return formattedPrice_ The formatted price of the asset
      */
     function getFormattedChainlinkPrice(uint256 decimals) internal view returns (PriceInfo memory formattedPrice_) {
-        uint256 chainlinkDecimals = _priceFeed.decimals();
+        uint256 oracleDecimal = _priceFeed.decimals();
         formattedPrice_ = getChainlinkPrice();
-        formattedPrice_.price = uint104(uint256(formattedPrice_.price) * (10 ** decimals) / (10 ** chainlinkDecimals));
+        formattedPrice_.price = uint104(uint256(formattedPrice_.price) * (10 ** decimals) / (10 ** oracleDecimal));
         formattedPrice_.neutralPrice = formattedPrice_.price;
     }
 
@@ -52,7 +52,7 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
      * @notice Get the number of decimals of the asset from Chainlink
      * @return decimals_ The number of decimals of the asset
      */
-    function chainlinkOracleDecimals() public view returns (uint256) {
+    function chainlinkDecimals() public view returns (uint256) {
         return _priceFeed.decimals();
     }
 }
