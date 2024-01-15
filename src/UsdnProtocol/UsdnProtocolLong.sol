@@ -87,9 +87,11 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     }
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
-        uint256 tickPrice =
+        // adjust price by liquidation multiplier
+        uint256 adjustedPrice =
             FixedPointMathLib.fullMulDiv(uint256(price), 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
-        tick_ = TickMath.getTickAtPrice(tickPrice);
+        tick_ = TickMath.getTickAtPrice(adjustedPrice);
+
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         if (tick_ < 0) {
             // we round up the inverse number (positive) then invert it -> round towards negative infinity
@@ -108,6 +110,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     }
 
     function getEffectivePriceForTick(int24 tick) public view returns (uint128 price_) {
+        // adjust price by liquidation multiplier
         price_ = FixedPointMathLib.fullMulDiv(
             TickMath.getPriceAtTick(tick), _liquidationMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
         ).toUint128();

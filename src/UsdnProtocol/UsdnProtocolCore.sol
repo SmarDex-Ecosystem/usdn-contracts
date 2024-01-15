@@ -160,10 +160,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
 
-        uint256 longTradingExpo = _totalExpo - _balanceLong;
+        uint256 longTradingExpo = _totalExpo - uint256(newLongBalance);
         int256 fund = funding(currentPrice, timestamp);
 
-        if (longTradingExpo >= _balanceVault) {
+        if (longTradingExpo >= uint256(newVaultBalance)) {
             // newMultiplier = oldMultiplier * (1 + funding)
             if (fund > 0) {
                 _liquidationMultiplier += _liquidationMultiplier * uint256(fund);
@@ -173,11 +173,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         } else {
             // newMultiplier = oldMultiplier * (1 + funding * (longTradingExpo / _balanceVault))
             if (fund > 0) {
-                _liquidationMultiplier +=
-                    FixedPointMathLib.fullMulDiv(_liquidationMultiplier * uint256(fund), longTradingExpo, _balanceVault);
+                _liquidationMultiplier += FixedPointMathLib.fullMulDiv(
+                    _liquidationMultiplier * uint256(fund), longTradingExpo, uint256(newVaultBalance)
+                );
             } else {
                 _liquidationMultiplier -= FixedPointMathLib.fullMulDiv(
-                    _liquidationMultiplier * uint256(-fund), longTradingExpo, _balanceVault
+                    _liquidationMultiplier * uint256(-fund), longTradingExpo, uint256(newVaultBalance)
                 );
             }
         }
