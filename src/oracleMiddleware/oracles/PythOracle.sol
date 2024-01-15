@@ -29,8 +29,7 @@ contract PythOracle is IOracleMiddlewareErrors {
      * @return price_ The price of the asset
      */
     function getPythPrice(bytes calldata priceUpdateData, uint64 targetTimestamp)
-        public
-        payable
+        internal
         returns (PythStructs.Price memory)
     {
         // Parse the price feed update and get the price feed
@@ -43,7 +42,9 @@ contract PythOracle is IOracleMiddlewareErrors {
         try _pyth.parsePriceFeedUpdatesUnique(pricesUpdateData, priceIds, targetTimestamp, type(uint64).max) returns (
             PythStructs.PriceFeed[] memory priceFeeds
         ) {
-            if (priceFeeds[0].price.price < 0) revert WrongPrice(priceFeeds[0].price.price);
+            if (priceFeeds[0].price.price < 0) {
+                revert WrongPrice(priceFeeds[0].price.price);
+            }
             return priceFeeds[0].price;
         } catch {
             return PythStructs.Price({
@@ -61,8 +62,7 @@ contract PythOracle is IOracleMiddlewareErrors {
      * @param _decimals The number of decimals to format the price to
      */
     function getFormattedPythPrice(bytes calldata priceUpdateData, uint64 targetTimestamp, uint256 _decimals)
-        public
-        payable
+        internal
         returns (FormattedPythPrice memory pythPrice_)
     {
         PythStructs.Price memory pythPrice = getPythPrice(priceUpdateData, targetTimestamp);

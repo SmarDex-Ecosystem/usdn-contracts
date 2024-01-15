@@ -83,6 +83,12 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     /*                     Factorised price retrieval methods                     */
     /* -------------------------------------------------------------------------- */
 
+    /**
+     * @dev Get the price from Pyth or Chainlink, depending on the data.
+     * @param data The data used to get the price.
+     * @param actionTimestamp The timestamp of the action corresponding to the price.
+     * @param conf The confidence interval to use.
+     */
     function getPythOrChainlinkDataStreamPrice(bytes calldata data, uint64 actionTimestamp, ConfidenceInterval conf)
         private
         returns (PriceInfo memory price_)
@@ -111,6 +117,9 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         }
     }
 
+    /**
+     * @dev Get the price from Chainlink onChain.
+     */
     function getChainlinkOnChainPrice() private view returns (PriceInfo memory) {
         return getFormattedChainlinkPrice(DECIMALS);
     }

@@ -26,6 +26,14 @@ contract MockPyth {
         lastPublishTime = uint64(_lastPublishTime);
     }
 
+    /**
+     * @notice Update manually the price.
+     * @param _price New price.
+     */
+    function updatePrice(int64 _price) external {
+        price = _price;
+    }
+
     /// @notice Mock of the real parsePriceFeedUpdatesUnique function.
     /// @param priceIds Array of price ids.
     /// @param minPublishTime minimum acceptable publishTime for the given `priceIds`.
