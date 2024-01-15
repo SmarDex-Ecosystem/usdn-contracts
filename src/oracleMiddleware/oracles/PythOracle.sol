@@ -66,6 +66,10 @@ contract PythOracle is IOracleMiddlewareErrors {
         returns (FormattedPythPrice memory pythPrice_)
     {
         PythStructs.Price memory pythPrice = getPythPrice(priceUpdateData, targetTimestamp);
+        if (pythPrice.price < 0) {
+            return FormattedPythPrice({ price: -1, conf: 0, expo: 0, publishTime: 0 });
+        }
+
         pythPrice_ = FormattedPythPrice({
             price: int256(uint256(uint64(pythPrice.price)) * 10 ** _decimals / 10 ** DECIMALS),
             conf: uint256(uint256(uint64(pythPrice.conf)) * 10 ** _decimals / 10 ** DECIMALS),

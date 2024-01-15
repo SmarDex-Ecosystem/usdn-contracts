@@ -74,8 +74,6 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
             return getChainlinkOnChainPrice();
         } else if (action == ProtocolAction.InitiateClosePosition) {
             return getChainlinkOnChainPrice();
-        } else {
-            revert OracleMiddlewareUnsupportedAction(action);
         }
     }
 

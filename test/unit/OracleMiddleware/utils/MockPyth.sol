@@ -10,6 +10,8 @@ import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.
  * @dev This contract is used to test the OracleMiddleware contract.
  */
 contract MockPyth {
+    bool private alwaysRevertOnCall;
+
     uint64 public lastPublishTime;
     int64 public price = int64(uint64(ETH_PRICE));
     uint64 public conf = uint64(ETH_CONF);
@@ -34,6 +36,13 @@ contract MockPyth {
         price = _price;
     }
 
+    /**
+     * @notice Toggle the revert on call.
+     */
+    function toggleRevert() external {
+        alwaysRevertOnCall = !alwaysRevertOnCall;
+    }
+
     /// @notice Mock of the real parsePriceFeedUpdatesUnique function.
     /// @param priceIds Array of price ids.
     /// @param minPublishTime minimum acceptable publishTime for the given `priceIds`.
@@ -43,6 +52,8 @@ contract MockPyth {
         payable
         returns (PythStructs.PriceFeed[] memory priceFeeds)
     {
+        require(!alwaysRevertOnCall, "MockPyth: always revert on call is enabled");
+
         lastPublishTime = minPublishTime;
 
         priceFeeds = new PythStructs.PriceFeed[](priceIds.length);

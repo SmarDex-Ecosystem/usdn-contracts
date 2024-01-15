@@ -32,7 +32,7 @@ interface IOracleMiddleware {
     function validationDelay() external returns (uint256);
 
     /// @notice Returns the number of decimals for the price (constant)
-    function decimals() external pure returns (uint8);
+    function decimals() external view returns (uint8);
 
     /**
      * @notice Returns the ETH cost of one price validation for the given action
