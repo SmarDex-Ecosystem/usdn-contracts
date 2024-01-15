@@ -68,9 +68,8 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
                 totalExpo: 0,
                 balanceVault: 0,
                 balanceLong: 0,
-                usdnTotalSupply: 0,
-                updateTimestamp: 0 // special case for init
-             });
+                usdnTotalSupply: 0
+            });
 
             // Transfer the wstETH for the deposit
             _retrieveAssetsAndCheckBalance(msg.sender, depositAmount);

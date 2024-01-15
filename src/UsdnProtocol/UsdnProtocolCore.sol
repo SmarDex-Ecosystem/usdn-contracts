@@ -29,11 +29,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     /* -------------------------- Public view functions ------------------------- */
 
-    function pnlLong(uint128 price) public view returns (int256 pnl_) {
-        int256 priceDiff = _toInt256(price) - _toInt256(_lastPrice);
-        pnl_ = _totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
-    }
-
     function funding(uint128 currentPrice, uint128 timestamp) public view returns (int256 fund_) {
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
@@ -103,25 +98,37 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     /* --------------------------  Internal functions --------------------------- */
 
-    /// @dev Available at the time of the last balances update (without taking funding into account)
-    function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        // Cast to int256 to check overflow and optimize gas usage
-        int256 totalExpo = _totalExpo.toInt256();
-        // Cast to int256 to check overflow and optimize gas usage
-        int256 balanceLong = _balanceLong.toInt256();
+    function _pnlLong(uint128 newPrice, uint128 oldPrice, uint256 totalExpo) internal view returns (int256 pnl_) {
+        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
+        pnl_ = totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
+    }
 
+    /// @dev Calculate new long balance taking into account unreflected PnL (but not funding)
+    function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
+        available_ = _longAssetAvailable(_totalExpo, _balanceLong, currentPrice, _lastPrice);
+    }
+
+    /// @dev Calculate new long balance taking into account unreflected PnL (but not funding)
+    function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
+        internal
+        view
+        returns (int256 available_)
+    {
         // Avoid division by zero
-        // slither-disable-next-line incorrect-equality
         if (totalExpo == 0) {
             return 0;
         }
 
-        // pnlAsset = (totalExpo - balanceLong) * pnlLong * 10^assetDecimals / (totalExpo * currentPrice)
-        int256 pnlAsset = totalExpo.safeSub(balanceLong).safeMul(pnlLong(currentPrice)).safeMul(
-            int256(10) ** _assetDecimals
-        ).safeDiv(totalExpo.safeMul(_toInt256(currentPrice)));
+        // Cast to int256 to check overflow and optimize gas usage
+        int256 totalExpoInt = totalExpo.toInt256();
+        int256 balanceLongInt = balanceLong.toInt256();
 
-        available_ = balanceLong.safeAdd(pnlAsset);
+        // pnlAsset = (totalExpo - balanceLong) * pnlLong * 10^assetDecimals / (totalExpo * price)
+        int256 pnlAsset = totalExpoInt.safeSub(balanceLongInt).safeMul(_pnlLong(newPrice, oldPrice, totalExpo)).safeMul(
+            int256(10) ** _assetDecimals
+        ).safeDiv(totalExpoInt.safeMul(_toInt256(newPrice)));
+
+        available_ = balanceLongInt.safeAdd(pnlAsset);
     }
 
     /// @dev Available at the time of the last balances update (without taking funding into account)
@@ -183,6 +190,27 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     function _toInt256(uint128 x) internal pure returns (int256) {
         return int256(uint256(x));
+    }
+
+    /**
+     *
+     * @param action pending action for a deposit/withdraw
+     * @param price asset price at which the vault balance must be estimated
+     */
+    function _extrapolateVaultBalance(PendingAction memory action, uint128 price)
+        internal
+        view
+        returns (int256 vaultBalance_)
+    {
+        int256 totalBalance = action.balanceLong.toInt256().safeAdd(action.balanceVault.toInt256());
+        int256 newLongBalance = _longAssetAvailable(action.totalExpo, action.balanceLong, price, action.assetPrice);
+        if (newLongBalance < 0) {
+            newLongBalance = 0;
+        }
+        vaultBalance_ = totalBalance.safeSub(newLongBalance);
+        if (vaultBalance_ < 0) {
+            vaultBalance_ = 0;
+        }
     }
 
     /* -------------------------- Pending actions queue ------------------------- */

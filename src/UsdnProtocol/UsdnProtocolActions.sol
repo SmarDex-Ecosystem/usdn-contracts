@@ -57,8 +57,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             totalExpo: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
-            usdnTotalSupply: _usdn.totalSupply(),
-            updateTimestamp: uint40(_lastUpdateTimestamp)
+            usdnTotalSupply: _usdn.totalSupply()
         });
 
         _addPendingAction(msg.sender, pendingAction);
@@ -106,8 +105,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             totalExpo: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
-            usdnTotalSupply: _usdn.totalSupply(),
-            updateTimestamp: uint40(_lastUpdateTimestamp)
+            usdnTotalSupply: _usdn.totalSupply()
         });
 
         _addPendingAction(msg.sender, pendingAction);
@@ -186,8 +184,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             totalExpo: 0,
             balanceVault: 0,
             balanceLong: 0,
-            usdnTotalSupply: 0,
-            updateTimestamp: 0
+            usdnTotalSupply: 0
         });
         _addPendingAction(msg.sender, pendingAction);
 
@@ -241,8 +238,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             totalExpo: 0,
             balanceVault: 0,
             balanceLong: 0,
-            usdnTotalSupply: 0,
-            updateTimestamp: 0
+            usdnTotalSupply: 0
         });
 
         // TODO: remove position from the tick so that it can't be liquidated after 24s and stops impacting the PnL and

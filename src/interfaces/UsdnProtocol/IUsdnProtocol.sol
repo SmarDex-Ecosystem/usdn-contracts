@@ -64,7 +64,6 @@ enum ProtocolAction {
  * @param balanceVault The balance of the vault at the time of last update (unused for open/close long).
  * @param balanceLong The balance of the long positions at the time of last update (unused for open/close long).
  * @param usdnTotalSupply The total supply of USDN at the time of the action (unused for open/close long).
- * @param updateTimestamp The timestamp of the last update (unused for open/close long).
  */
 struct PendingAction {
     ProtocolAction action; // 1 byte
@@ -73,11 +72,13 @@ struct PendingAction {
     int24 tick; // 3 bytes
     uint128 amountOrIndex; // 16 bytes
     uint128 assetPrice; // 16 bytes
+    // TODO: in practice, we often cast this to int256, so should we consider uint128 here?
     uint256 totalExpo; // 32 bytes
+    // TODO: in practice, we often cast this to int256, so should we consider uint128 here?
     uint256 balanceVault; // 32 bytes
+    // TODO: in practice, we often cast this to int256, so should we consider uint128 here?
     uint256 balanceLong; // 32 bytes
     uint256 usdnTotalSupply; // 32 bytes
-    uint40 updateTimestamp; // 5 bytes
 }
 
 /* -------------------------------------------------------------------------- */

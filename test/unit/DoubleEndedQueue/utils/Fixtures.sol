@@ -34,7 +34,6 @@ contract DequeFixture is BaseFixture {
         assertEq(a.balanceVault, b.balanceVault, string.concat(err, " - vault balance"));
         assertEq(a.balanceLong, b.balanceLong, string.concat(err, " - long balance"));
         assertEq(a.usdnTotalSupply, b.usdnTotalSupply, string.concat(err, " - USDN total supply"));
-        assertEq(a.updateTimestamp, b.updateTimestamp, string.concat(err, " - update timestamp"));
     }
 
     // force ignore from coverage report
