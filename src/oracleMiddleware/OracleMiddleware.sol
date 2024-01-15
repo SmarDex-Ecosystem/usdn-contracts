@@ -163,8 +163,6 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
             return 0;
         } else if (action == ProtocolAction.InitiateClosePosition) {
             return 0;
-        } else {
-            revert OracleMiddlewareUnsupportedAction(action);
         }
     }
 }

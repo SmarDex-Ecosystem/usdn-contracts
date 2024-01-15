@@ -68,4 +68,10 @@ contract MockPyth {
             }
         }
     }
+
+    /// @notice Mock of the real parsePriceFeedUpdatesUnique function.
+    /// @return price The fee to update the price.
+    function getUpdateFee(bytes[] calldata) external pure returns (uint256) {
+        return 1e18;
+    }
 }
