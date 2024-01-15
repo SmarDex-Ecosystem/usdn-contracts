@@ -292,7 +292,29 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             _applyPnlAndFunding(depositPrice_.price, depositPrice_.timestamp);
         }
 
-        uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice_.price);
+        // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
+        // action, or the current price provided for validation. We will use the lower of the two amounts to mint.
+
+        // During initialization, the deposit.assetPrice is zero, so we use the price provided for validation.
+        uint128 oldPrice = initializing ? depositPrice_.price : deposit.assetPrice;
+
+        // The last parameter (price) is only used during initialization
+        uint256 usdnToMint1 =
+            _calcMintUsdn(deposit.amountOrIndex, deposit.balanceVault, deposit.usdnTotalSupply, oldPrice);
+        uint256 usdnToMint2 = _calcMintUsdn(
+            deposit.amountOrIndex,
+            _extrapolateVaultBalance(
+                deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, depositPrice_.price, deposit.assetPrice
+            ),
+            deposit.usdnTotalSupply,
+            depositPrice_.price
+        );
+        uint256 usdnToMint;
+        if (usdnToMint1 < usdnToMint2) {
+            usdnToMint = usdnToMint1;
+        } else {
+            usdnToMint = usdnToMint2;
+        }
 
         _balanceVault += deposit.amountOrIndex;
 

@@ -193,24 +193,30 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     }
 
     /**
-     *
-     * @param action pending action for a deposit/withdraw
-     * @param price asset price at which the vault balance must be estimated
+     * @notice Extrapolate the vault balance due to changes in the price of the asset (PnL).
+     * @param totalExpo Total exposure
+     * @param balanceVault Vault balance
+     * @param balanceLong Long balance
+     * @param newPrice New price
+     * @param oldPrice Old price
      */
-    function _extrapolateVaultBalance(PendingAction memory action, uint128 price)
-        internal
-        view
-        returns (int256 vaultBalance_)
-    {
-        int256 totalBalance = action.balanceLong.toInt256().safeAdd(action.balanceVault.toInt256());
-        int256 newLongBalance = _longAssetAvailable(action.totalExpo, action.balanceLong, price, action.assetPrice);
+    function _extrapolateVaultBalance(
+        uint256 totalExpo,
+        uint256 balanceVault,
+        uint256 balanceLong,
+        uint128 newPrice,
+        uint128 oldPrice
+    ) internal view returns (uint256 vaultBalance_) {
+        int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
+        int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
         if (newLongBalance < 0) {
             newLongBalance = 0;
         }
-        vaultBalance_ = totalBalance.safeSub(newLongBalance);
-        if (vaultBalance_ < 0) {
-            vaultBalance_ = 0;
+        int256 vaultBalance = totalBalance.safeSub(newLongBalance);
+        if (vaultBalance < 0) {
+            vaultBalance = 0;
         }
+        vaultBalance_ = uint256(vaultBalance);
     }
 
     /* -------------------------- Pending actions queue ------------------------- */
