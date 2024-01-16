@@ -308,8 +308,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
                     deposit.totalExpo,
                     deposit.balanceVault,
                     deposit.balanceLong,
-                    depositPrice_.price,
-                    deposit.assetPrice
+                    depositPrice_.price, // new price
+                    deposit.assetPrice // old price
                 )
             ),
             deposit.usdnTotalSupply,
@@ -371,8 +371,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
-                withdrawalPrice.price,
-                withdrawal.assetPrice
+                withdrawalPrice.price, // new price
+                withdrawal.assetPrice // old price
             )
         );
         uint256 available;
