@@ -51,23 +51,42 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         protocol.initiateDeposit(0, abi.encode(uint128(2000 ether)), "");
     }
 
-    function test_validateDeposit() public {
+    function test_validateDepositPriceIncrease() public {
+        // price increases from $2000 to $2100 between initiation and validation
+        checkValidateDepositWithPrice(2000 ether, 2100 ether);
+    }
+
+    function test_validateDepositPriceDecrease() public {
+        // price decreases from $2000 to $1900 between initiation and validation
+        checkValidateDepositWithPrice(2000 ether, 1900 ether);
+    }
+
+    /**
+     * Create a deposit at price `initialPrice`, then validate it at price `assetPrice`, then check the emitted event
+     * and the resulting state.
+     * @param initialPrice price of the asset at the time of deposit initiation
+     * @param assetPrice price of the asset at the time of deposit validation
+     */
+    function checkValidateDepositWithPrice(uint128 initialPrice, uint128 assetPrice) internal {
         uint128 depositAmount = 1 ether;
-        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
+        bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");
-        uint256 vaultBalance = protocol.balanceVault(); // save for mint amount calculation
+        uint256 vaultBalance = protocol.balanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation
         uint256 validationDelay = oracleMiddleware.validationDelay();
         skip(validationDelay + 1);
 
         // set the effective price used for minting USDN
-        uint128 assetPrice = 2100 ether;
         currentPrice = abi.encode(assetPrice);
 
-        // theoretical minted amount (here the protocol uses the "old" balance at the time of the initiation because it
-        // yields fewer USDN)
+        // if price decreases, we need to use the new balance to calculate the minted amount
+        if (assetPrice < 2000 ether) {
+            vaultBalance = uint256(protocol.vaultAssetAvailable(assetPrice));
+        }
+
+        // theoretical minted amount
         uint256 mintedAmount = uint256(depositAmount) * usdn.totalSupply() / vaultBalance;
 
         vm.expectEmit(true, true, false, false);
