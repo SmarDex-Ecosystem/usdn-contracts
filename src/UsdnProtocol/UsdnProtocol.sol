@@ -38,7 +38,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
      * @param longTick The desired tick corresponding to the liquidation price of the long.
      * @param currentPriceData The current price data.
      */
-    function initialize(uint256 depositAmount, uint128 longAmount, int24 longTick, bytes calldata currentPriceData)
+    function initialize(uint128 depositAmount, uint128 longAmount, int24 longTick, bytes calldata currentPriceData)
         external
         payable
         initializer
@@ -63,7 +63,12 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
                 timestamp: 0, // not needed since we have a special ProtocolAction for init
                 user: msg.sender,
                 tick: 0, // unused
-                amountOrIndex: depositAmount
+                amountOrIndex: depositAmount,
+                assetPrice: 0, // special case for init
+                totalExpo: 0,
+                balanceVault: 0,
+                balanceLong: 0,
+                usdnTotalSupply: 0
             });
 
             // Transfer the wstETH for the deposit
