@@ -23,7 +23,7 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
 
     /**
      * @notice Calculates the amount of USDN to mint for a given amount of asset
-     * @param amount The amount of asset to mint USDN for
+     * @param amount The amount of asset to be converted into USDN
      * @param vaultBalance The balance of the vault (not used for initialization)
      * @param usdnTotalSupply The total supply of USDN (not used for initialization)
      * @param price The price of the asset (only used for initialization)
