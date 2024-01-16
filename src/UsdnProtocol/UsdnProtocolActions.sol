@@ -53,7 +53,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             user: msg.sender,
             tick: 0, // unused
             amountOrIndex: amount,
-            assetPrice: _lastPrice,
+            assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
             totalExpo: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
@@ -101,7 +101,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             user: msg.sender,
             tick: 0, // unused
             amountOrIndex: usdnAmount,
-            assetPrice: _lastPrice,
+            assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
             totalExpo: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
@@ -361,13 +361,30 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // FIXME: use neutral price here!
         _applyPnlAndFunding(withdrawalPrice.price, withdrawalPrice.timestamp);
 
-        int256 available = _vaultAssetAvailable(withdrawalPrice.price);
-        if (available < 0) {
-            available = 0; // clamp to zero
+        // We calculate the available balance of the vault side, either considering the asset price at the time of the
+        // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
+        // redeem the underlying asset share.
+
+        uint256 available1 = withdrawal.balanceVault;
+        uint256 available2 = uint256(
+            _vaultAssetAvailable(
+                withdrawal.totalExpo,
+                withdrawal.balanceVault,
+                withdrawal.balanceLong,
+                withdrawalPrice.price,
+                withdrawal.assetPrice
+            )
+        );
+        uint256 available;
+        if (available1 < available2) {
+            available = available1;
+        } else {
+            available = available2;
         }
+
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         uint256 assetToTransfer =
-            FixedPointMathLib.fullMulDiv(withdrawal.amountOrIndex, uint256(available), _usdn.totalSupply());
+            FixedPointMathLib.fullMulDiv(withdrawal.amountOrIndex, available, withdrawal.usdnTotalSupply);
 
         _balanceVault -= assetToTransfer;
         // we have the USDN in the contract already
