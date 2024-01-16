@@ -98,23 +98,41 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     /* --------------------------  Internal functions --------------------------- */
 
+    /**
+     * @notice Calculate the PnL of the long side, considering the overall total expo and change in price.
+     * @param newPrice The new price
+     * @param oldPrice The old price
+     * @param totalExpo The total exposure of the long side
+     */
     function _pnlLong(uint128 newPrice, uint128 oldPrice, uint256 totalExpo) internal view returns (int256 pnl_) {
         int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
         pnl_ = totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
     }
 
-    /// @dev Calculate new long balance taking into account unreflected PnL (but not funding)
+    /**
+     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
+     * @param currentPrice The current price
+     * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
+     * due to the price change to `currentPrice`.
+     */
     function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
         available_ = _longAssetAvailable(_totalExpo, _balanceLong, currentPrice, _lastPrice);
     }
 
-    /// @dev Calculate new long balance taking into account unreflected PnL (but not funding)
+    /**
+     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
+     * @param totalExpo The total exposure of the long side
+     * @param balanceLong The (old) balance of the long side
+     * @param newPrice The new price
+     * @param oldPrice The old price when the old balance was updated
+     */
     function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
         internal
         view
         returns (int256 available_)
     {
         // Avoid division by zero
+        // slither-disable-next-line incorrect-equality
         if (totalExpo == 0) {
             return 0;
         }
