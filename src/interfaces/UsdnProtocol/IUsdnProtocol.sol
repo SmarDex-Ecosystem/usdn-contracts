@@ -195,7 +195,4 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the liquidation price exceeds the safety margin
     error UsdnProtocolLiquidationPriceSafetyMargin(uint128 liquidationPrice, uint128 maxLiquidationPrice);
-
-    /// @dev Indicates that iteration count is above max iteration
-    error UsdnProtocolLiquidationIterationsTooHigh();
 }

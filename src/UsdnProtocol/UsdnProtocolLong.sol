@@ -201,7 +201,8 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         return keccak256(abi.encodePacked(tick, _tickVersion[tick]));
     }
 
-    function _liquidatePositions(uint128 currentPrice, uint256 maxIter) internal returns (uint256 liquidated) {
+    function _liquidatePositions(uint128 currentPrice, uint16 iteration) internal returns (uint256 liquidated_) {
+        // TODO: !!! need to change when the liquidation multiplier is added!
         int24 currentTick = TickMath.getClosestTickAtPrice(uint256(currentPrice));
         int24 tick = _maxInitializedTick;
 
@@ -226,15 +227,15 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
                 _totalExpo -= _totalExpoByTick[tickHash];
 
                 _totalLongPositions -= length;
-                liquidated += length;
+                liquidated_ += length;
 
                 ++_tickVersion[tick];
                 ++i;
             }
             _tickBitmap.unset(_tickToBitmapIndex(tick));
-        } while (i < maxIter);
+        } while (i < iteration);
 
-        if (liquidated != 0) {
+        if (liquidated_ != 0) {
             if (tick < currentTick) {
                 // all ticks above the current tick were liquidated
                 _maxInitializedTick = findMaxInitializedTick(currentTick);

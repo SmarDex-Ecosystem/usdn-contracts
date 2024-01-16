@@ -3,11 +3,11 @@ pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { console2, Test } from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
-import { IOracleMiddleware, ProtocolAction, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -16,6 +16,8 @@ import { IOracleMiddleware, ProtocolAction, PriceInfo } from "src/interfaces/IOr
 contract UsdnProtocolHandler is UsdnProtocol, Test {
     // initial wsteth price randomly setup at $2630
     uint128 public constant wstethInitialPrice = 2630 ether;
+    // default position amount
+    uint96 public constant refAmount = 20 ether;
     // initial block
     uint256 public immutable initialBlock;
     // previous long init
@@ -51,7 +53,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         // user memory
         address[] memory _users = new address[](_userCount);
 
-        for (uint256 i; i < _userCount;) {
+        for (uint256 i; i < _userCount; i++) {
             // user address from private key i + 1
             _users[i] = vm.addr(i + 1);
 
@@ -60,12 +62,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
             // fund wsteth
             vm.prank(_users[i]);
-            (bool success,) = _asset.call{ value: _initialBalance }(bytes(""));
+            (bool success,) = _asset.call{ value: _initialBalance }("");
             require(success, "swap asset error");
-
-            unchecked {
-                ++i;
-            }
         }
         // store users
         users = _users;
@@ -102,20 +100,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     // mock initiate open positions for x users
     // users must be created with createAndFundUsers()
-    function mockInitiateOpenPosition(uint256 refAmount, bool autoValidate, address[] memory _users)
-        external
-        returns (int24 _tick)
-    {
+    function mockInitiateOpenPosition(bool autoValidate, address[] memory _users) external returns (int24 _tick) {
         uint256 count = _users.length;
 
-        for (uint256 i; i < count;) {
+        for (uint256 i; i < count; i++) {
             address user = _users[i];
             vm.startPrank(user);
-            // random modulo to derivate from amount
-            // to simulate onchain behavior
             _asset.approve(address(this), type(uint256).max);
-            // set amount to invest according to a pseudo random number
-            uint128 toInvest = _psRandNum(refAmount, i, user);
 
             (uint128 currentPrice, bytes memory priceData) = getPriceInfo(block.number);
             // uint128 currentPriceUint = uint128(abi.decode(currentPrice, (uint256)));
@@ -125,16 +116,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
             _tick = getEffectiveTickForPrice(liquidationTargetPriceUint);
 
             // initiate open position
-            this.initiateOpenPosition(uint96(toInvest), _tick, priceData, "");
+            this.initiateOpenPosition(refAmount, _tick, priceData, "");
 
             // if auto validate true
             if (autoValidate) {
                 // auto validate open position
                 this.validateOpenPosition(priceData, priceData);
-            }
-
-            unchecked {
-                ++i;
             }
         }
 
@@ -142,32 +129,65 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         setPrevActionBlock(block.number);
     }
 
-    function getUsers() external view returns (address[] memory) {
-        address[] memory _users = new address[](users.length);
+    // users memory array
+    function getUsers(uint256 length) external view returns (address[] memory) {
+        require(length <= users.length, "wrong length");
+        address[] memory _users = new address[](length);
 
-        for (uint256 i; i < users.length;) {
+        for (uint256 i; i < length; i++) {
             _users[i] = users[i];
-
-            unchecked {
-                ++i;
-            }
         }
 
         return _users;
     }
 
+    // tick version
+    function tickVersion(int24 _tick) external view returns (uint256) {
+        return _tickVersion[_tick];
+    }
+
+    // total expo
+    function totalExpo() external view returns (uint256) {
+        return _totalExpo;
+    }
+
+    // tick hash
+    function tickHash(int24 tick) external view returns (bytes32) {
+        return _tickHash(tick);
+    }
+
+    // total expo by tick
+    function totalExpoByTick(int24 tick) external view returns (uint256) {
+        return _totalExpoByTick[_tickHash(tick)];
+    }
+
+    // long positions length
+    function longPositionsLength(int24 tick) external view returns (uint256) {
+        return _longPositions[_tickHash(tick)].length;
+    }
+
+    // positions in tick
+    function positionsInTick(int24 tick) external view returns (uint256) {
+        return _positionsInTick[_tickHash(tick)];
+    }
+
+    // max initialized tick
+    function maxInitializedTick() external view returns (int24) {
+        return _maxInitializedTick;
+    }
+
+    // total long position
+    function totalLongPositions() external view returns (uint256) {
+        return _totalLongPositions;
+    }
+
     // pseudo random number
     // range: 1, refAmount
-    function _psRandNum(uint256 refAmount, uint256 i, address user) private pure returns (uint128 _toInvest) {
+    function _psRandNum(uint256 i, address user) private pure returns (uint128 _toInvest) {
         // pseudo random number
         uint256 _random = uint256(keccak256(abi.encodePacked(i + 1, user)));
 
         // amount to invest according to random
         _toInvest = uint128((_random % refAmount) + 1);
-    }
-
-    // tick version
-    function tickVersion(int24 _tick) external view returns (uint256) {
-        return _tickVersion[_tick];
     }
 }

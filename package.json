@@ -7,15 +7,15 @@
   "license": "BUSL-1.1",
   "scripts": {
     "prepare": "husky install",
-    "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test FFI",
-    "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test FFI --check",
-    "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test FFI",
-    "cov": "forge coverage --no-match-test FFI",
+    "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --via-ir --no-match-test FFI",
+    "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --via-ir --no-match-test FFI --check",
+    "coverage": "FOUNDRY_PROFILE=ci forge coverage --via-ir --report lcov --no-match-test FFI",
+    "cov": "forge coverage --via-ir --no-match-test FFI",
     "cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info && open .coverage/index.html",
-    "test": "forge test -vvv",
-    "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\"",
+    "test": "forge test -vvv --via-ir",
+    "quicktest": "forge test -vvv --via-ir --no-match-test \"(FFI|Fuzz|invariant)\"",
     "slither": "slither .",
-    "exportAbi": "forge build && ts-node ./script/exportAbi.ts -g '{*.sol,!(libraries|interfaces)/**/*.sol}'",
+    "exportAbi": "forge build --via-ir && ts-node ./script/exportAbi.ts -g '{*.sol,!(libraries|interfaces)/**/*.sol}'",
     "clean": "rm -rf dist && forge clean"
   },
   "files": [
