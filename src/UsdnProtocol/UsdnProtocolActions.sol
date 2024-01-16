@@ -303,8 +303,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             _calcMintUsdn(deposit.amountOrIndex, deposit.balanceVault, deposit.usdnTotalSupply, oldPrice);
         uint256 usdnToMint2 = _calcMintUsdn(
             deposit.amountOrIndex,
-            _extrapolateVaultBalance(
-                deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, depositPrice_.price, deposit.assetPrice
+            uint256(
+                _vaultAssetAvailable(
+                    deposit.totalExpo,
+                    deposit.balanceVault,
+                    deposit.balanceLong,
+                    depositPrice_.price,
+                    deposit.assetPrice
+                )
             ),
             deposit.usdnTotalSupply,
             depositPrice_.price

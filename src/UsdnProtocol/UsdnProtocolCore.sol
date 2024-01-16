@@ -131,10 +131,31 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         available_ = balanceLongInt.safeAdd(pnlAsset);
     }
 
-    /// @dev Available at the time of the last balances update (without taking funding into account)
+    /**
+     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
+     * account).
+     * @param currentPrice Current price
+     */
     function _vaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        available_ =
-            _balanceVault.toInt256().safeAdd(_balanceLong.toInt256()).safeSub(_longAssetAvailable(currentPrice));
+        available_ = _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, currentPrice, _lastPrice);
+    }
+
+    function _vaultAssetAvailable(
+        uint256 totalExpo,
+        uint256 balanceVault,
+        uint256 balanceLong,
+        uint128 newPrice,
+        uint128 oldPrice
+    ) internal view returns (int256 available_) {
+        int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
+        int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
+        if (newLongBalance < 0) {
+            newLongBalance = 0;
+        }
+        available_ = totalBalance.safeSub(newLongBalance);
+        if (available_ < 0) {
+            available_ = 0;
+        }
     }
 
     /// @dev At the time of the last balances update (without taking funding into account)
@@ -190,33 +211,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     function _toInt256(uint128 x) internal pure returns (int256) {
         return int256(uint256(x));
-    }
-
-    /**
-     * @notice Extrapolate the vault balance due to changes in the price of the asset (PnL).
-     * @param totalExpo Total exposure
-     * @param balanceVault Vault balance
-     * @param balanceLong Long balance
-     * @param newPrice New price
-     * @param oldPrice Old price
-     */
-    function _extrapolateVaultBalance(
-        uint256 totalExpo,
-        uint256 balanceVault,
-        uint256 balanceLong,
-        uint128 newPrice,
-        uint128 oldPrice
-    ) internal view returns (uint256 vaultBalance_) {
-        int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
-        int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
-        if (newLongBalance < 0) {
-            newLongBalance = 0;
-        }
-        int256 vaultBalance = totalBalance.safeSub(newLongBalance);
-        if (vaultBalance < 0) {
-            vaultBalance = 0;
-        }
-        vaultBalance_ = uint256(vaultBalance);
     }
 
     /* -------------------------- Pending actions queue ------------------------- */
