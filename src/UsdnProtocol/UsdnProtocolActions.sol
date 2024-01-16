@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
@@ -12,6 +13,7 @@ import { IUsdn } from "src/interfaces/IUsdn.sol";
 
 abstract contract UsdnProtocolActions is UsdnProtocolLong {
     using SafeERC20 for IUsdn;
+    using SafeCast for uint256;
     using LibBitmap for LibBitmap.Bitmap;
 
     /**
@@ -50,7 +52,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp: timestamp,
             user: msg.sender,
             tick: 0, // unused
-            amountOrIndex: amount
+            amountOrIndex: amount,
+            assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
+            totalExpo: _totalExpo,
+            balanceVault: _balanceVault,
+            balanceLong: _balanceLong,
+            usdnTotalSupply: _usdn.totalSupply()
         });
 
         _addPendingAction(msg.sender, pendingAction);
@@ -93,7 +100,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp: timestamp,
             user: msg.sender,
             tick: 0, // unused
-            amountOrIndex: usdnAmount
+            amountOrIndex: usdnAmount,
+            assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
+            totalExpo: _totalExpo,
+            balanceVault: _balanceVault,
+            balanceLong: _balanceLong,
+            usdnTotalSupply: _usdn.totalSupply()
         });
 
         _addPendingAction(msg.sender, pendingAction);
@@ -167,7 +179,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp: timestamp,
             user: msg.sender,
             tick: tick,
-            amountOrIndex: index_
+            amountOrIndex: index_.toUint128(),
+            assetPrice: 0,
+            totalExpo: 0,
+            balanceVault: 0,
+            balanceLong: 0,
+            usdnTotalSupply: 0
         });
         _addPendingAction(msg.sender, pendingAction);
 
@@ -206,13 +223,26 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
         // TODO: perform liquidation of other pos with currentPrice
 
+        // TODO: what needs to be stored here so we can remove the position from the tick and calculate the profit
+        // in validateClosePosition?
+        // We will use the tick to calculate the liquidation price.
+        // We won't need the index anymore, so we can store the amount in fifth parameter.
+        // We can store the leverage in any of the other parameters (it's a uint40).
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateClosePosition,
             timestamp: timestamp,
             user: msg.sender,
             tick: tick,
-            amountOrIndex: index
+            amountOrIndex: index.toUint128(),
+            assetPrice: 0,
+            totalExpo: 0,
+            balanceVault: 0,
+            balanceLong: 0,
+            usdnTotalSupply: 0
         });
+
+        // TODO: remove position from the tick so that it can't be liquidated after 24s and stops impacting the PnL and
+        // funding calculations
 
         _addPendingAction(msg.sender, pendingAction);
 
@@ -262,7 +292,35 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             _applyPnlAndFunding(depositPrice_.price, depositPrice_.timestamp);
         }
 
-        uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice_.price);
+        // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
+        // action, or the current price provided for validation. We will use the lower of the two amounts to mint.
+
+        // During initialization, the deposit.assetPrice is zero, so we use the price provided for validation.
+        uint128 oldPrice = initializing ? depositPrice_.price : deposit.assetPrice;
+
+        // The last parameter (price) is only used during initialization
+        uint256 usdnToMint1 =
+            _calcMintUsdn(deposit.amountOrIndex, deposit.balanceVault, deposit.usdnTotalSupply, oldPrice);
+        uint256 usdnToMint2 = _calcMintUsdn(
+            deposit.amountOrIndex,
+            uint256(
+                _vaultAssetAvailable(
+                    deposit.totalExpo,
+                    deposit.balanceVault,
+                    deposit.balanceLong,
+                    depositPrice_.price, // new price
+                    deposit.assetPrice // old price
+                )
+            ),
+            deposit.usdnTotalSupply,
+            depositPrice_.price
+        );
+        uint256 usdnToMint;
+        if (usdnToMint1 <= usdnToMint2) {
+            usdnToMint = usdnToMint1;
+        } else {
+            usdnToMint = usdnToMint2;
+        }
 
         _balanceVault += deposit.amountOrIndex;
 
@@ -303,13 +361,30 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // FIXME: use neutral price here!
         _applyPnlAndFunding(withdrawalPrice.price, withdrawalPrice.timestamp);
 
-        int256 available = _vaultAssetAvailable(withdrawalPrice.price);
-        if (available < 0) {
-            available = 0; // clamp to zero
+        // We calculate the available balance of the vault side, either considering the asset price at the time of the
+        // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
+        // redeem the underlying asset share.
+
+        uint256 available1 = withdrawal.balanceVault;
+        uint256 available2 = uint256(
+            _vaultAssetAvailable(
+                withdrawal.totalExpo,
+                withdrawal.balanceVault,
+                withdrawal.balanceLong,
+                withdrawalPrice.price, // new price
+                withdrawal.assetPrice // old price
+            )
+        );
+        uint256 available;
+        if (available1 <= available2) {
+            available = available1;
+        } else {
+            available = available2;
         }
+
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         uint256 assetToTransfer =
-            FixedPointMathLib.fullMulDiv(withdrawal.amountOrIndex, uint256(available), _usdn.totalSupply());
+            FixedPointMathLib.fullMulDiv(withdrawal.amountOrIndex, available, withdrawal.usdnTotalSupply);
 
         _balanceVault -= assetToTransfer;
         // we have the USDN in the contract already
