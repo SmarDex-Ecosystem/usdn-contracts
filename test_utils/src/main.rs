@@ -150,14 +150,12 @@ fn print_pyth_response(response: HermesResponse) -> Result<()> {
         .iter()
         .map(|byte| format!("{:02X}", byte))
         .collect();
-    let vaa_bytes = format!(
-        "{:064x}{:064x}{}",
-        128,
-        decoded_vaa.len(),
-        vaa_raw_bytes
-    );
+    let vaa_bytes = format!("{:064x}{:064x}{}", 128, decoded_vaa.len(), vaa_raw_bytes);
 
-    println!("{}{:32x}{:064x}{}", price_bytes, conf_bytes,  response.price.publish_time, vaa_bytes);
+    println!(
+        "{}{:32x}{:064x}{}",
+        price_bytes, conf_bytes, response.price.publish_time, vaa_bytes
+    );
 
     Ok(())
 }
