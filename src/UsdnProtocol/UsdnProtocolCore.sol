@@ -158,6 +158,15 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         available_ = _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, currentPrice, _lastPrice);
     }
 
+    /**
+     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
+     * account).
+     * @param totalExpo the total expo
+     * @param balanceVault the (old) balance of the vault
+     * @param balanceLong the (old) balance of the long side
+     * @param newPrice the new price
+     * @param oldPrice the old price when the old balances were updated
+     */
     function _vaultAssetAvailable(
         uint256 totalExpo,
         uint256 balanceVault,
