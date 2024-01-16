@@ -316,7 +316,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             depositPrice_.price
         );
         uint256 usdnToMint;
-        if (usdnToMint1 < usdnToMint2) {
+        if (usdnToMint1 <= usdnToMint2) {
             usdnToMint = usdnToMint1;
         } else {
             usdnToMint = usdnToMint2;
@@ -376,7 +376,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             )
         );
         uint256 available;
-        if (available1 < available2) {
+        if (available1 <= available2) {
             available = available1;
         } else {
             available = available2;
