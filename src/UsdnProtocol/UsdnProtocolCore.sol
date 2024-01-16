@@ -141,7 +141,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         int256 totalExpoInt = totalExpo.toInt256();
         int256 balanceLongInt = balanceLong.toInt256();
 
-        // pnlAsset = (totalExpo - balanceLong) * pnlLong * 10^assetDecimals / (totalExpo * price)
+        // pnlAsset = ((totalExpo - balanceLong) * pnlLong * 10^assetDecimals) / (totalExpo * price)
         int256 pnlAsset = totalExpoInt.safeSub(balanceLongInt).safeMul(_pnlLong(newPrice, oldPrice, totalExpo)).safeMul(
             int256(10) ** _assetDecimals
         ).safeDiv(totalExpoInt.safeMul(_toInt256(newPrice)));
