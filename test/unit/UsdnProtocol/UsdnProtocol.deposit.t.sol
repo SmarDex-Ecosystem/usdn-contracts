@@ -20,7 +20,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit InitiatedDeposit(address(this), depositAmount); // expected event
-        protocol.initiateDeposit(depositAmount, currentPrice, hex"");
+        protocol.initiateDeposit(depositAmount, currentPrice, "");
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
         assertEq(
@@ -48,14 +48,15 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
     function test_RevertWhen_zeroAmount() public {
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateDeposit(0, abi.encode(uint128(2000 ether)), hex"");
+        protocol.initiateDeposit(0, abi.encode(uint128(2000 ether)), "");
     }
 
     function test_validateDeposit() public {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
-        protocol.initiateDeposit(depositAmount, currentPrice, hex"");
+        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        uint256 vaultBalance = protocol.balanceVault(); // save for mint amount calculation
 
         // wait the required delay between initiation and validation
         uint256 validationDelay = oracleMiddleware.validationDelay();
@@ -65,16 +66,15 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint128 assetPrice = 2100 ether;
         currentPrice = abi.encode(assetPrice);
 
-        // theoretical minted amount
-        uint256 usdnPrice = protocol.usdnPrice(assetPrice, uint128(block.timestamp) - uint128(validationDelay));
-        assertEq(usdnPrice, 1_025_400_237_540_291_045, "USDN price");
-        uint256 mintedAmount = uint256(depositAmount) * assetPrice / usdnPrice;
+        // theoretical minted amount (here the protocol uses the "old" balance at the time of the initiation because it
+        // yields fewer USDN)
+        uint256 mintedAmount = uint256(depositAmount) * usdn.totalSupply() / vaultBalance;
 
-        vm.expectEmit(true, true, false, false); // TODO: check all topics
+        vm.expectEmit(true, true, false, false);
         emit ValidatedDeposit(address(this), depositAmount, mintedAmount); // expected event
-        protocol.validateDeposit(currentPrice, hex"");
+        protocol.validateDeposit(currentPrice, "");
 
-        /* assertEq(usdn.balanceOf(address(this)), mintedAmount, "USDN user balance");
-        assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply"); */
+        assertEq(usdn.balanceOf(address(this)), mintedAmount, "USDN user balance");
+        assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply");
     }
 }
