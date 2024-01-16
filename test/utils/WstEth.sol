@@ -16,6 +16,6 @@ contract WstETH is ERC20, ERC20Permit {
 
     /// @dev Receive ETH and mint wstETH
     receive() external payable {
-        _mint(address(this), msg.value * 1 ether / stEthPerToken());
+        _mint(msg.sender, msg.value * 1 ether / stEthPerToken());
     }
 }
