@@ -32,6 +32,9 @@ abstract contract UsdnProtocolStorage is InitializableReentrancyGuard {
      */
     uint256 public constant PERCENTAGE_DIVISOR = 10_000;
 
+    /// @notice maximum tick liquidation by transaction
+    uint16 public constant MAX_LIQUIDATION_ITERATION = 10;
+
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
     /* -------------------------------------------------------------------------- */

@@ -15,7 +15,7 @@ import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
  */
 contract UsdnProtocolHandler is UsdnProtocol, Test {
     // initial wsteth price randomly setup at $2630
-    uint128 public constant wstethInitialPrice = 2630 ether;
+    uint128 public constant WSTETH_INITIAL_PRICE = 2630 ether;
     // default position amount
     uint96 public constant refAmount = 20 ether;
     // initial block
@@ -93,7 +93,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         // check correct diffBlocks
         require(diffBlocks < 100, "block number too far");
         // price = initial price - (n x diff block)%
-        price = uint128(wstethInitialPrice - (wstethInitialPrice * diffBlocks / 100));
+        price = uint128(WSTETH_INITIAL_PRICE - (WSTETH_INITIAL_PRICE * diffBlocks / 100));
         // encode price
         data = abi.encode(price);
     }
@@ -179,15 +179,5 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     // total long position
     function totalLongPositions() external view returns (uint256) {
         return _totalLongPositions;
-    }
-
-    // pseudo random number
-    // range: 1, refAmount
-    function _psRandNum(uint256 i, address user) private pure returns (uint128 _toInvest) {
-        // pseudo random number
-        uint256 _random = uint256(keccak256(abi.encodePacked(i + 1, user)));
-
-        // amount to invest according to random
-        _toInvest = uint128((_random % refAmount) + 1);
     }
 }

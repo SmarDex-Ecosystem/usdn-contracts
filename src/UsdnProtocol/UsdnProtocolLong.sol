@@ -202,6 +202,11 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     }
 
     function _liquidatePositions(uint128 currentPrice, uint16 iteration) internal returns (uint256 liquidated_) {
+        // max iteration limit
+        if (iteration > MAX_LIQUIDATION_ITERATION) {
+            iteration = MAX_LIQUIDATION_ITERATION;
+        }
+
         // TODO: !!! need to change when the liquidation multiplier is added!
         int24 currentTick = TickMath.getClosestTickAtPrice(uint256(currentPrice));
         int24 tick = _maxInitializedTick;
