@@ -284,7 +284,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _pendingActions[user] = uint256(rawIndex) + 1;
     }
 
-    function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
+    function _getPendingAction(address user, bool clear) internal returns (PendingAction memory action_) {
         uint256 pendingActionIndex = _pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
@@ -294,8 +294,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         uint128 rawIndex = uint128(pendingActionIndex - 1);
         action_ = _pendingActionsQueue.atRaw(rawIndex);
 
-        // remove the pending action
-        _pendingActionsQueue.clearAt(rawIndex);
-        delete _pendingActions[user];
+        if (clear) {
+            // remove the pending action
+            _pendingActionsQueue.clearAt(rawIndex);
+            delete _pendingActions[user];
+        }
     }
 }

@@ -52,7 +52,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
      * @custom:and The allowance of the user for this contract is 50 tokens
      */
     function test_approve() public {
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Approval(USER_1, address(this), 50 ether); // expected event
         vm.prank(USER_1);
         usdn.approve(address(this), 50 ether);
@@ -91,7 +91,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
      * @custom:and This contract's balance is increased by 50
      */
     function test_transfer() public {
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Transfer(USER_1, address(this), 50 ether); // expected event
         vm.prank(USER_1);
         usdn.transfer(address(this), 50 ether);
@@ -135,7 +135,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
         vm.prank(USER_1);
         usdn.approve(address(this), 50 ether);
 
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Transfer(USER_1, address(this), 50 ether); // expected event
         usdn.transferFrom(USER_1, address(this), 50 ether);
 
