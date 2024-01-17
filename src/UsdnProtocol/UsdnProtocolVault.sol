@@ -28,7 +28,7 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
      * but since priceUsdn = vaultBalance * priceAsset / totalSupply, we can simplify to
      * amountUsdn = amountAsset * totalSupply / vaultBalance.
      */
-    function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint128 price)
+    function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
         internal
         view
         returns (uint256 toMint_)
