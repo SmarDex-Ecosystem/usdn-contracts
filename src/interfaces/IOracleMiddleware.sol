@@ -25,17 +25,42 @@ interface IOracleMiddleware {
         payable
         returns (PriceInfo memory);
 
+    /**
+     * @notice Returns the delay (in seconds) between the moment an action is initiated and the timestamp of the
+     * price data used to validate that action.
+     */
+    function validationDelay() external returns (uint256);
+
     /// @notice Returns the number of decimals for the price (constant)
     function decimals() external view returns (uint8);
 
-    /// @notice Returns the ETH cost of one price validation for the given action
-    function validationCost(ProtocolAction action) external returns (uint256);
-
     /**
-     * @notice Returns the delay (in seconds) between the timestamp of initiating an action, and the timestamp of the
-     * price data that is used to validate the action.
+     * @notice Returns the ETH cost of one price validation for the given action
+     * @param data Pyth price data to be validated for which to get fee prices
+     * @param action Type of action for which the price is requested.
+     * @return The ETH cost of one price validation
      */
-    function validationDelay() external returns (uint256);
+    function validationCost(bytes calldata data, ProtocolAction action) external returns (uint256);
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                   Errors                                   */
+/* -------------------------------------------------------------------------- */
+
+/// @notice The oracle middleware errors.
+interface IOracleMiddlewareErrors {
+    /// @notice The price request does not respect the minimum validation delay
+    error OracleMiddlewarePriceRequestTooEarly();
+    /// @notice The requested price is outside the valid price range
+    error OracleMiddlewareWrongPriceTimestamp(uint64 min, uint64 max, uint64 result);
+    /// @notice The requested action is not supported by the middleware
+    error OracleMiddlewareUnsupportedAction(ProtocolAction action);
+    /// @notice The Pyth price validation failed
+    error PythValidationFailed();
+    /// @notice The oracle price is invalid
+    error WrongPrice(int256 price);
+    /// @notice The oracle price is invalid
+    error PriceTooOld(int256 price, uint256 timestamp);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -45,10 +70,50 @@ interface IOracleMiddleware {
 /**
  * @notice The price and timestamp returned by the oracle middleware.
  * @dev The timestamp is the timestamp of the price data, not the timestamp of the request.
+ * @dev Their is no need for optimisation here, the struct is only used in memory and not in storage.
  * @param price The validated asset price.
  * @param timestamp The timestamp of the price data.
  */
 struct PriceInfo {
-    uint128 price;
-    uint128 timestamp;
+    uint256 price;
+    uint256 neutralPrice;
+    uint256 timestamp;
+}
+
+/**
+ * @notice Struct representing a Pyth price with a int256 price.
+ * @param price The price of the asset
+ * @param conf The confidence interval around the price
+ * @param expo The price exponent
+ * @param publishTime Unix timestamp describing when the price was published
+ */
+struct FormattedPythPrice {
+    int256 price;
+    uint256 conf;
+    int128 expo;
+    uint128 publishTime;
+}
+
+/**
+ * @notice Enum representing the confidence interval of a Pyth price.
+ * Used by the middleware determine which price to use in a confidence interval.
+ */
+enum ConfidenceInterval {
+    Up,
+    Down,
+    None
+}
+
+/**
+ * @notice All possible price oracles for the protocol.
+ * @param None No particular oracle.
+ * @param Pyth Pyth Network.
+ * @param ChainlinkDataStream Chainlink Data Stream.
+ * @param ChainlinkOnChain Chainlink On-Chain.
+ */
+enum Oracle {
+    None,
+    Pyth,
+    ChainlinkDataStream,
+    ChainlinkOnChain
 }

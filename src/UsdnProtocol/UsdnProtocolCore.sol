@@ -93,7 +93,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint128(block.timestamp), ProtocolAction.None, priceData
         );
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
     }
 
     /* --------------------------  Internal functions --------------------------- */
