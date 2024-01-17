@@ -9,7 +9,7 @@ import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.
 import { PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 
 /**
- * @custom:feature The `descimals` function of `OracleMiddleware`
+ * @custom:feature The `decimals` function of `OracleMiddleware`
  */
 contract TestOracleMiddlewareDecimals is OracleMiddlewareBaseFixture {
     function setUp() public override {
