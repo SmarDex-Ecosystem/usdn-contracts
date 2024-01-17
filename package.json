@@ -18,6 +18,7 @@
     "exportAbi": "forge build && ts-node ./script/exportAbi.ts -g '{Usdn.sol,UsdnProtocol/UsdnProtocol.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
     "clean": "rm -rf dist && forge clean"
   },
+  "main": "dist/index.js",
   "files": [
     "dist",
     "broadcast"
