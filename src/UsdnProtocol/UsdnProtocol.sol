@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { PendingAction, ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
@@ -12,6 +13,8 @@ import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.s
 import { TickMath } from "src/libraries/TickMath.sol";
 
 contract UsdnProtocol is UsdnProtocolActions, Ownable {
+    using SafeCast for uint256;
+
     /// @dev The minimum amount of wstETH for the initialization deposit and long.
     uint256 public constant MIN_INIT_DEPOSIT = 1 ether;
 
@@ -81,14 +84,14 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
         }
 
         _lastUpdateTimestamp = uint40(block.timestamp);
-        _lastPrice = currentPrice.price;
+        _lastPrice = currentPrice.price.toUint128();
 
         // Transfer the wstETH for the long
         _retrieveAssetsAndCheckBalance(msg.sender, longAmount);
 
         // Create long positions with min leverage
-        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price, minTick());
-        _createInitialPosition(msg.sender, longAmount - FIRST_LONG_AMOUNT, currentPrice.price, longTick);
+        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), minTick());
+        _createInitialPosition(msg.sender, longAmount - FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), longTick);
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {

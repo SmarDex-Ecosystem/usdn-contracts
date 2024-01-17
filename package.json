@@ -24,7 +24,9 @@
     "broadcast"
   ],
   "devDependencies": {
+    "@chainlink/contracts": "^0.8.0",
     "@openzeppelin/contracts": "^5.0.0",
+    "@pythnetwork/pyth-sdk-solidity": "^2.3.0",
     "commander": "^11.1.0",
     "glob": "^10.3.10",
     "husky": "^8.0.3",
