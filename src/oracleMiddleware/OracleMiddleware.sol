@@ -23,6 +23,7 @@ import {
 contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOracle, ChainlinkOracle {
     uint256 constant VALIDATION_DELAY = 24 seconds;
 
+    // slither-disable-next-line shadowing-state
     uint8 private constant DECIMALS = 18;
 
     constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed)
