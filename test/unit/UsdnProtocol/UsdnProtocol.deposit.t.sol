@@ -97,7 +97,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The USDN total supply increases by 1949.518048270670876646 USDN
      */
     function test_validateDepositPriceDecrease() public {
-        checkValidateDepositWithPrice(2000 ether, 1900 ether, 1_949_518_048_270_670_876_646);
+        checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048270670876646 ether);
     }
 
     /**
