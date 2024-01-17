@@ -40,7 +40,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:when Protocol action is a value that is not supported
      * @custom:then The price is exactly 2000 USD
      */
-    function test_parseAndValidatePriceForUnsupportedAction() public {
+    function test_RevertWhen_parseAndValidatePriceWithUnsupportedAction() public {
         (bool success, bytes memory data) = address(oracleMiddleware).call(
             abi.encodeWithSelector(
                 oracleMiddleware.parseAndValidatePrice.selector,
@@ -312,7 +312,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:and The validationDelay is respected
      * @custom:then It reverts when validating price for all action using Pyth oracle
      */
-    function test_parseAndValidatePriceWhenPythValidationFailed() public {
+    function test_RevertWhen_parseAndValidatePriceWhilePythValidationFailed() public {
         // Update price to -1 USD in pyth oracle
         mockPyth.toggleRevert();
         uint256 timestamp = block.timestamp - oracleMiddleware.validationDelay();
@@ -384,7 +384,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:and The validationDelay is respected
      * @custom:then It reverts when validating price for all action using Pyth oracle
      */
-    function test_parseAndValidatePriceWhenValidationFailed() public {
+    function test_RevertWhen_parseAndValidatePriceWhileAllValidationFailed() public {
         // Update price to -1 USD in oracles
         mockPyth.toggleRevert();
         mockChainlinkOnChain.toggleRevert();

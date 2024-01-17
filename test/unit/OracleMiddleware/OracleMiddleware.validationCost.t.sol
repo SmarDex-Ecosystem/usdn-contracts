@@ -21,9 +21,9 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is a value that is not supported
-     * @custom:then Te validation cost is the same as pythOracle
+     * @custom:then The validation cost is the same as pythOracle
      */
-    function test_validationCostForUnsupportedAction() public {
+    function test_RevertWhen_validationCostWithUnsupportedAction() public {
         (bool success, bytes memory _data) = address(oracleMiddleware).call(
             abi.encodeWithSelector(oracleMiddleware.validationCost.selector, abi.encode("data"), 11)
         );
@@ -35,7 +35,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is 'None'
-     * @custom:then Te validation cost is the same as pythOracle
+     * @custom:then The validation cost is the same as pythOracle
      */
     function test_parseAndValidatePrice() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
@@ -46,7 +46,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is 'Initialize'
-     * @custom:then Te validation cost is the same as pythOracle
+     * @custom:then The validation cost is the same as pythOracle
      */
     function test_validationCostForInitializeAction() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Initialize);
@@ -57,7 +57,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is 'InitiateDeposit'
-     * @custom:then Te validation cost is 0 because it use chainlink onchain
+     * @custom:then The validation cost is 0 because it use chainlink onchain
      */
     function test_validationCostForInitiateDepositAction() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit);
@@ -68,7 +68,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is 'ValidateDeposit'
-     * @custom:then Te validation cost is the same as pythOracle
+     * @custom:then The validation cost is the same as pythOracle
      */
     function test_validationCostForValidateDepositAction() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateDeposit);
@@ -79,7 +79,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is 'InitiateWithdrawal'
-     * @custom:then Te validation cost is 0 because it use chainlink onchain
+     * @custom:then The validation cost is 0 because it use chainlink onchain
      */
     function test_validationCostForInitiateWithdrawalAction() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateWithdrawal);
@@ -90,7 +90,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is 'ValidateWithdrawal'
-     * @custom:then Te validation cost is the same as pythOracle
+     * @custom:then The validation cost is the same as pythOracle
      */
     function test_validationCostForValidateWithdrawalAction() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateWithdrawal);
@@ -101,7 +101,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is 'Initialize'
-     * @custom:then Te validation cost is 0 because it use chainlink onchain
+     * @custom:then The validation cost is 0 because it use chainlink onchain
      */
     function test_validationCostForInitiateOpenPositionAction() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateOpenPosition);
@@ -112,7 +112,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is 'ValidateOpenPosition'
-     * @custom:then Te validation cost is the same as pythOracle
+     * @custom:then The validation cost is the same as pythOracle
      */
     function test_validationCostForValidateOpenPositionAction() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateOpenPosition);
@@ -123,7 +123,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is 'InitiateClosePosition'
-     * @custom:then Te validation cost is 0 because it use chainlink onchain
+     * @custom:then The validation cost is 0 because it use chainlink onchain
      */
     function test_validationCostForInitiateClosePositionAction() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateClosePosition);
@@ -134,7 +134,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is 'ValidateClosePosition'
-     * @custom:then Te validation cost is the same as pythOracle
+     * @custom:then The validation cost is the same as pythOracle
      */
     function test_validationCostForValidateClosePositionAction() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateClosePosition);
@@ -145,7 +145,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     /**
      * @custom:scenario Call `validationCost` function
      * @custom:when Protocol action is 'Liquidation'
-     * @custom:then Te validation cost is the same as pythOracle
+     * @custom:then The validation cost is the same as pythOracle
      */
     function test_validationCostForLiquidationAction() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Liquidation);
