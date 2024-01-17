@@ -12,6 +12,16 @@ contract TestUsdnProtocolTicks is UsdnProtocolBaseFixture {
         super.setUp();
     }
 
+    /**
+     * @custom:scenario Convert a price to a tick while rounding towards negative infinity
+     * @custom:given A price between `TickMath.MIN_PRICE` and `uint128.max`
+     * @custom:when The effective tick for the price is calculated
+     * @custom:then The result is the closest valid tick towards negative infinity
+     * @custom:and The price corresponding to that tick is always lower than or equal to the input price
+     * @custom:and For larger prices, the next valid tick towards positive infinity would lead to a price that is
+     * higher than the input price
+     * @param price The price to convert to a tick
+     */
     function testFuzz_liqPrice(uint128 price) public {
         price = uint128(bound(uint256(price), TickMath.MIN_PRICE, type(uint128).max));
         int24 closestTickDown = TickMath.getTickAtPrice(price);
@@ -25,5 +35,14 @@ contract TestUsdnProtocolTicks is UsdnProtocolBaseFixture {
         price = uint128(FixedPointMathLib.max(uint256(price), uint256(TickMath.getPriceAtTick(protocol.minTick()))));
         uint128 effLiqPrice = protocol.getEffectivePriceForTick(tick);
         assertLe(effLiqPrice, price, "effLiqPrice <= price");
+        // for very small prices, the `getEffectiveTickForPrice` result might not be the best tick to use to represent
+        // the price due to rouding errors. But for all other prices, we can be sure that the next valid tick towards
+        // positive infinity would lead to a price that is too high.
+        if (price > 5_000_000) {
+            int24 nextTick = tick + protocol.tickSpacing(); // the next valid tick towards positive infinity
+            uint256 nextPrice = TickMath.getPriceAtTick(nextTick);
+            // this next tick would lead to a price that is higher than the initial price
+            assertLt(price, nextPrice, "price < nextPrice");
+        }
     }
 }
