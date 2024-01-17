@@ -445,4 +445,33 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
             uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data")
         );
     }
+
+    function test_RevertWhen_chainlinkPriceIsTooOld() public {
+        uint256 timestamp = block.timestamp - oracleMiddleware.validationDelay();
+
+        /* ------------ Doesn't revert when the timestamp is not too old ------------ */
+
+        mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 1 minutes);
+        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+
+        mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 30 minutes);
+        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+
+        mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 59 minutes);
+        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+
+        /* ------------------ Revert when the timestamp is too old ------------------ */
+
+        mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 3601 seconds);
+        vm.expectRevert(abi.encodeWithSelector(PriceTooOld.selector, ETH_PRICE, block.timestamp - 3601 seconds));
+        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+
+        mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 2 hours);
+        vm.expectRevert(abi.encodeWithSelector(PriceTooOld.selector, ETH_PRICE, block.timestamp - 2 hours));
+        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+
+        mockChainlinkOnChain.updateLastPublishTime(0);
+        vm.expectRevert(abi.encodeWithSelector(PriceTooOld.selector, ETH_PRICE, 0));
+        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+    }
 }
