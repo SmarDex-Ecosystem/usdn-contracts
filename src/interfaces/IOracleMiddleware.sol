@@ -59,6 +59,8 @@ interface IOracleMiddlewareErrors {
     error PythValidationFailed();
     /// @notice The oracle price is invalid
     error WrongPrice(int256 price);
+    /// @notice The oracle price is invalid
+    error PriceTooOld(int256 price, uint256 timestamp);
 }
 
 /* -------------------------------------------------------------------------- */

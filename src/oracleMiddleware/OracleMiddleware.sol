@@ -41,7 +41,6 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         payable
         returns (PriceInfo memory)
     {
-        // TODO: Validate each ConfidenceInterval \w Eric/paul
         if (action == ProtocolAction.None) {
             return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.Initialize) {

@@ -39,14 +39,14 @@ contract OracleMiddlewareBaseFixture is BaseFixture {
         PythStructs.PriceFeed[] memory priceFeeds = mockPyth.parsePriceFeedUpdatesUnique(updateData, priceIds, 1000, 0);
 
         assertEq(priceFeeds.length, 1);
-        assertEq(priceFeeds[0].price.price, 2000 gwei);
-        assertEq(priceFeeds[0].price.conf, 20 gwei);
+        assertEq(priceFeeds[0].price.price, 2000 * 1e8);
+        assertEq(priceFeeds[0].price.conf, 20 * 1e8);
         assertEq(priceFeeds[0].price.expo, 8);
         assertEq(priceFeeds[0].price.publishTime, 1000);
 
         /* ---------------------- Test chainlink on chain mock ---------------------- */
         (, int256 price,, uint256 updatedAt,) = mockChainlinkOnChain.latestRoundData();
-        assertEq(price, 2000 gwei);
+        assertEq(price, 2000 * 1e8);
         assertEq(updatedAt, block.timestamp);
     }
 }

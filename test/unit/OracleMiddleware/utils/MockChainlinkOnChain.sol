@@ -44,7 +44,7 @@ contract MockChainlinkOnChain {
         view
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        return (0, alwaysRevertOnCall ? int256(-1) : int256(2000 gwei), 0, lastPublishTime, 0);
+        return (0, alwaysRevertOnCall ? int256(-1) : int256(2000 * 1e8), 0, lastPublishTime, 0);
     }
 
     /**

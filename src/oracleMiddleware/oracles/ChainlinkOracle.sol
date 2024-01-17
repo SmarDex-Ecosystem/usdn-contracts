@@ -25,15 +25,15 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
     function getChainlinkPrice() internal view returns (PriceInfo memory price_) {
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
+        if (timestamp < block.timestamp - 1 hours) {
+            revert PriceTooOld(price, timestamp);
+        }
+
         if (price < 0) {
             revert WrongPrice(price);
         }
 
-        price_ = PriceInfo({
-            price: uint104(uint256(price)),
-            neutralPrice: uint104(uint256(price)),
-            timestamp: uint48(timestamp)
-        });
+        price_ = PriceInfo({ price: uint256(price), neutralPrice: uint256(price), timestamp: timestamp });
     }
 
     /**
@@ -44,7 +44,7 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
     function getFormattedChainlinkPrice(uint256 decimals) internal view returns (PriceInfo memory formattedPrice_) {
         uint256 oracleDecimal = _priceFeed.decimals();
         formattedPrice_ = getChainlinkPrice();
-        formattedPrice_.price = uint104(uint256(formattedPrice_.price) * (10 ** decimals) / (10 ** oracleDecimal));
+        formattedPrice_.price = uint256(formattedPrice_.price) * (10 ** decimals) / (10 ** oracleDecimal);
         formattedPrice_.neutralPrice = formattedPrice_.price;
     }
 
