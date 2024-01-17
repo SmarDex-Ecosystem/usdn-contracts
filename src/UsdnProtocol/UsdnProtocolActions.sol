@@ -42,9 +42,11 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateDeposit, currentPriceData
         );
 
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
-
-        _liquidatePositions(currentPrice.price, _liquidationIteration);
+        bool priceUpdated = _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        // liquidate if pnl applied
+        if (priceUpdated) {
+            _liquidatePositions(currentPrice.price, _liquidationIteration);
+        }
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateDeposit,
@@ -86,9 +88,11 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateWithdrawal, currentPriceData
         );
 
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
-
-        _liquidatePositions(currentPrice.price, _liquidationIteration);
+        bool priceUpdated = _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        // liquidate if pnl applied
+        if (priceUpdated) {
+            _liquidatePositions(currentPrice.price, _liquidationIteration);
+        }
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateWithdrawal,
@@ -136,9 +140,11 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         );
 
         // FIXME: use neutral price here!
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
-
-        _liquidatePositions(currentPrice.price, _liquidationIteration);
+        bool priceUpdated = _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        // liquidate if pnl applied
+        if (priceUpdated) {
+            _liquidatePositions(currentPrice.price, _liquidationIteration);
+        }
 
         // Apply liquidation penalty
         // reverts if liquidationPrice >= entryPrice
@@ -205,9 +211,11 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
         );
 
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
-
-        _liquidatePositions(currentPrice.price, _liquidationIteration);
+        bool priceUpdated = _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        // liquidate if pnl applied
+        if (priceUpdated) {
+            _liquidatePositions(currentPrice.price, _liquidationIteration);
+        }
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateClosePosition,

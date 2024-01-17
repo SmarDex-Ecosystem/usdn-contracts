@@ -16,8 +16,6 @@ import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 contract UsdnProtocolHandler is UsdnProtocol, Test {
     // initial wsteth price randomly setup at $2630
     uint128 public constant WSTETH_INITIAL_PRICE = 2630 ether;
-    // default position amount
-    uint96 public constant refAmount = 20 ether;
     // initial block
     uint256 public immutable initialBlock;
     // previous long init
@@ -100,7 +98,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     // mock initiate open positions for x users
     // users must be created with createAndFundUsers()
-    function mockInitiateOpenPosition(bool autoValidate, address[] memory _users) external returns (int24 _tick) {
+    function mockInitiateOpenPosition(uint96 refAmount, bool autoValidate, address[] memory _users)
+        external
+        returns (int24 _tick)
+    {
         uint256 count = _users.length;
 
         for (uint256 i; i < count; i++) {

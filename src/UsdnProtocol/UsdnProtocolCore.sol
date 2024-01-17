@@ -130,10 +130,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         expo_ = _vaultAssetAvailable(currentPrice);
     }
 
-    function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) internal {
+    function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) internal returns (bool priceUpdated_) {
         // If the price is not fresh, do nothing
         if (timestamp <= _lastUpdateTimestamp) {
-            return;
+            return false;
         }
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
         int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundingAsset(currentPrice, timestamp));
@@ -148,6 +148,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _balanceVault = uint256(newVaultBalance);
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
+
+        priceUpdated_ = true;
     }
 
     function _retrieveAssetsAndCheckBalance(address from, uint256 amount) internal {
