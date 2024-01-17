@@ -35,34 +35,42 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         pnl_ = _totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
     }
 
-    function funding(uint128 currentPrice, uint128 timestamp) public view returns (int256 fund_) {
+    function funding(uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
+    {
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
             // slither-disable-next-line incorrect-equality
         } else if (timestamp == _lastUpdateTimestamp) {
-            return 0;
+            return (0, 0, 0);
         }
 
         int256 secondsElapsed = _toInt256(timestamp - _lastUpdateTimestamp);
         // we want the expo at the last update, since we are now calculating the funding since the last update
-        int256 vaultExpo = _vaultTradingExpo(currentPrice);
-        int256 longExpo = _longTradingExpo(currentPrice);
+        vaultExpo_ = _vaultTradingExpo(currentPrice);
+        longExpo_ = _longTradingExpo(currentPrice);
         int256 relative;
-        if (vaultExpo > longExpo) {
-            relative = vaultExpo;
+        if (vaultExpo_ > longExpo_) {
+            relative = vaultExpo_;
         } else {
-            relative = longExpo;
+            relative = longExpo_;
         }
         // avoid division by zero
         if (relative == 0) {
-            return 0;
+            return (0, 0, 0);
         }
-        fund_ = longExpo.safeSub(vaultExpo).safeMul(_fundingRatePerSecond * secondsElapsed * 100).safeDiv(relative);
+        fund_ = longExpo_.safeSub(vaultExpo_).safeMul(_fundingRatePerSecond * secondsElapsed * 100).safeDiv(relative);
     }
 
-    function fundingAsset(uint128 currentPrice, uint128 timestamp) public view returns (int256 fund_) {
-        fund_ = -funding(currentPrice, timestamp).safeMul(_longTradingExpo(currentPrice))
-            / int256(10) ** FUNDING_RATE_DECIMALS;
+    function fundingAsset(uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
+    {
+        (fund_, longExpo_, vaultExpo_) = funding(currentPrice, timestamp);
+        fund_ = -fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
@@ -70,7 +78,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         view
         returns (int256 available_)
     {
-        available_ = _longAssetAvailable(currentPrice).safeSub(fundingAsset(currentPrice, timestamp));
+        (int256 fund,,) = fundingAsset(currentPrice, timestamp);
+        available_ = _longAssetAvailable(currentPrice).safeSub(fund);
     }
 
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
@@ -78,7 +87,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         view
         returns (int256 available_)
     {
-        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundingAsset(currentPrice, timestamp));
+        (int256 fund,,) = fundingAsset(currentPrice, timestamp);
+        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fund);
     }
 
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
@@ -146,8 +156,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         if (timestamp <= _lastUpdateTimestamp) {
             return;
         }
+
+        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
+
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
-        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundingAsset(currentPrice, timestamp));
+        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fund);
         if (newLongBalance < 0) {
             newLongBalance = 0;
         }
@@ -160,10 +173,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
 
-        uint256 longTradingExpo = _totalExpo - uint256(newLongBalance);
-        int256 fund = funding(currentPrice, timestamp);
-
-        if (longTradingExpo >= uint256(newVaultBalance)) {
+        if (oldLongExpo >= newVaultBalance) {
             // newMultiplier = oldMultiplier * (1 + funding)
             if (fund > 0) {
                 _liquidationMultiplier += _liquidationMultiplier * uint256(fund);
@@ -171,14 +181,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
                 _liquidationMultiplier -= _liquidationMultiplier * uint256(-fund);
             }
         } else {
-            // newMultiplier = oldMultiplier * (1 + funding * (longTradingExpo / _balanceVault))
+            // newMultiplier = oldMultiplier * (1 + funding * (oldLongExpo / _balanceVault))
             if (fund > 0) {
                 _liquidationMultiplier += FixedPointMathLib.fullMulDiv(
-                    _liquidationMultiplier * uint256(fund), longTradingExpo, uint256(newVaultBalance)
+                    _liquidationMultiplier * uint256(fund), uint256(oldLongExpo), uint256(oldVaultExpo)
                 );
             } else {
                 _liquidationMultiplier -= FixedPointMathLib.fullMulDiv(
-                    _liquidationMultiplier * uint256(-fund), longTradingExpo, uint256(newVaultBalance)
+                    _liquidationMultiplier * uint256(-fund), uint256(oldLongExpo), uint256(oldVaultExpo)
                 );
             }
         }
