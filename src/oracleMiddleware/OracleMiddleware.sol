@@ -19,7 +19,6 @@ import {
  * @notice This contract is used to get the price of an asset from different price oracle.
  * It is used by the USDN protocol to get the price of the USDN underlying asset.
  * @dev This contract is a middleware between the USDN protocol and the price oracles.
- * @author Yashiru
  */
 contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOracle, ChainlinkOracle {
     uint256 constant VALIDATION_DELAY = 24 seconds;
