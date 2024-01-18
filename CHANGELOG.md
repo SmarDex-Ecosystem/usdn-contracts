@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.2.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.1.3...v0.2.0) (2024-01-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deposit-withdraw:** deposit and withdraw amount calculations ([#43](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/43))
+* **TickMath:** increase precision to 0.01% per tick ([#36](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/36))
+
+### Features
+
+* Oracle middleware ([#33](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/33)) ([af59706](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/af59706de11fba24a0579e65bd6b13f02ef26c5b))
+* update deploy script with oracle middleware implementation ([#48](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/48)) ([68d9f7d](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/68d9f7db04e50d38dc06a260dd6365ca26ae9e48))
+
+
+### Bug Fixes
+
+* check safety margin ([#41](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/41)) ([ae001fd](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/ae001fd725edd3880a1a734d053098917357d530))
+* **deposit-withdraw:** deposit and withdraw amount calculations ([#43](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/43)) ([f7a9d7b](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/f7a9d7b7c1bc750f5181ac1e76d4c3a87c597f9b))
+* USDN mint amount ([#38](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/38)) ([4bd98d1](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/4bd98d12dc0e4c1db5d92b0583f14f1719bb5432))
+
+
+### Code Refactoring
+
+* **TickMath:** increase precision to 0.01% per tick ([#36](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/36)) ([3524339](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/3524339b4df67b7ba020348768bda2420b1dd8fc))
+
 ## [0.1.3](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.1.2...v0.1.3) (2024-01-09)
 
 
