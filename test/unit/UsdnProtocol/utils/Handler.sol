@@ -21,37 +21,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing)
     { }
 
-    function mockInitiateOpenPosition(bool autoValidate, address user, uint128 price, uint40 leverage, uint96 amount)
-        external
-        returns (int24 tick)
-    {
-        vm.startPrank(user);
-        _asset.approve(address(this), type(uint256).max);
-
-        bytes memory priceData = abi.encode(price);
-        uint128 liquidationTargetPrice = getLiquidationPrice(price, leverage);
-
-        tick = getEffectiveTickForPrice(liquidationTargetPrice);
-        this.initiateOpenPosition(amount, tick, priceData, "");
-
-        // if auto validate true
-        if (autoValidate) {
-            this.validateOpenPosition(priceData, priceData);
-        }
-        emit log_named_decimal_int("vault expo", _vaultTradingExpo(price), 18);
-        emit log_named_decimal_int("long expo", _longTradingExpo(price), 18);
-        // vm.stopPrank();
-        // vm.warp(1_704_179_700); // 2024-01-01 07:00:00 UTC
-
-        // priceData = abi.encode(4000 ether);
-        // vm.prank(address(0x2222222222222222222222222222222222222222));
-        // this.initiateOpenPosition(100, tick, priceData, "");
-
-        // vm.warp(1_705_043_700);
-        // vm.prank(address(0x3333333333333333333333333333333333333333));
-        // this.initiateOpenPosition(100, tick, priceData, priceData);
-    }
-
     function validationDeadline() external view returns (uint256) {
         return _validationDeadline;
     }
