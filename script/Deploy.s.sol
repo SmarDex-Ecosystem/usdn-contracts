@@ -6,7 +6,6 @@ import { Script } from "forge-std/Script.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { OracleMiddleware } from "../src/oracleMiddleware/OracleMiddleware.sol";
@@ -59,8 +58,7 @@ contract Deploy is Script {
 
         // Initialize if needed
         if (depositAmount > 0 && longAmount > 0) {
-            // TODO: change last parameter when final oracle middleware is available
-            protocol.initialize(uint128(depositAmount), uint128(longAmount), protocol.minTick(), abi.encode(""));
+            protocol.initialize(uint128(depositAmount), uint128(longAmount), protocol.minTick(), "");
         }
 
         vm.stopBroadcast();
