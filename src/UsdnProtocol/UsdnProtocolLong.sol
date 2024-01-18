@@ -127,7 +127,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         leverage_ = ((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint40();
     }
 
-    function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
+    function _maxLiquidationPriceWithSafetyMargin(uint128 price) public view returns (uint128 maxLiquidationPrice_) {
         maxLiquidationPrice_ = uint128(price * (PERCENTAGE_DIVISOR - _safetyMargin) / PERCENTAGE_DIVISOR);
     }
 

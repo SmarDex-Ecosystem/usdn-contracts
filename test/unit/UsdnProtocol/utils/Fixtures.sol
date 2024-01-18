@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import "test/utils/Constants.sol";
 import { DEPLOYER } from "test/utils/Constants.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
@@ -31,14 +32,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
         protocol.initialize(
-            10 ether, 10 ether, protocol.getEffectiveTickForPrice(1000 ether), abi.encode(uint128(2000 ether))
+            10 ether, 5 ether, protocol.getEffectiveTickForPrice(1000 ether), abi.encode(uint128(2000 ether))
         );
         vm.stopPrank();
     }
 
     function test_setUp() public {
         assertGt(protocol.tickSpacing(), 1, "tickSpacing"); // we want to test all functions for a tickSpacing > 1
-        assertEq(wstETH.balanceOf(address(protocol)), 20 ether, "wstETH protocol balance");
+        assertEq(wstETH.balanceOf(address(protocol)), 15 ether, "wstETH protocol balance");
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "usdn dead address balance");
         assertEq(usdn.balanceOf(DEPLOYER), 20_000 ether - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         assertEq(usdn.totalSupply(), 20_000 ether, "usdn total supply");
@@ -52,7 +53,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(firstPos.leverage, 1_983_994_053, "first pos leverage");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
-        assertEq(firstPos.amount, 10 ether - protocol.FIRST_LONG_AMOUNT(), "first pos amount");
+        assertEq(firstPos.amount, 5 ether - protocol.FIRST_LONG_AMOUNT(), "first pos amount");
         assertEq(firstPos.startPrice, 2000 ether, "first pos start price");
+    }
+
+    function createAndFundUser(address _asset, uint256 _initialBalance, address user) public {
+        vm.deal(user, _initialBalance * 2);
+        vm.prank(user);
+        (bool success,) = _asset.call{ value: _initialBalance }("");
+        require(success, "Weth mint failed");
     }
 }
