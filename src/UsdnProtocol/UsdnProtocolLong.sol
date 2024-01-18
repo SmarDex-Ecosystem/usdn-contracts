@@ -133,7 +133,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
 
     function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {
         uint128 maxLiquidationPrice = _maxLiquidationPriceWithSafetyMargin(currentPrice);
-        if (liquidationPrice < maxLiquidationPrice) {
+        if (liquidationPrice >= maxLiquidationPrice) {
             revert UsdnProtocolLiquidationPriceSafetyMargin(liquidationPrice, maxLiquidationPrice);
         }
     }

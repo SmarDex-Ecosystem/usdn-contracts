@@ -29,7 +29,7 @@ contract TestUsdnMint is UsdnTokenFixture {
      * @custom:and The total shares are 100
      */
     function test_mint() public {
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Transfer(address(0), USER_1, 100 ether); // expected event
         usdn.mint(USER_1, 100 ether);
 
@@ -56,7 +56,7 @@ contract TestUsdnMint is UsdnTokenFixture {
 
         usdn.adjustDivisor(usdn.MAX_DIVISOR() / 2);
 
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Transfer(address(0), USER_1, 100 ether); // expected event
         usdn.mint(USER_1, 100 ether);
 

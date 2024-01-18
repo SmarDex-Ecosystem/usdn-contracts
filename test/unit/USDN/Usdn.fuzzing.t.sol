@@ -62,7 +62,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         usdn.mint(address(this), usdn.maxTokens());
         uint256 balanceBefore = usdn.balanceOf(address(this));
 
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Transfer(address(this), USER_1, transferAmount); // expected event
         usdn.transfer(USER_1, transferAmount);
 
@@ -94,7 +94,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
 
         uint256 balanceBefore = usdn.balanceOf(address(this));
 
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Transfer(address(this), USER_1, transferAmount); // expected event
         usdn.transfer(USER_1, transferAmount);
 

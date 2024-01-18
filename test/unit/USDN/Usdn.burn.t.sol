@@ -39,7 +39,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
         assertEq(usdn.balanceOf(USER_1), 200 ether, "initial balance");
         assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.MAX_DIVISOR(), "initial shares");
 
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Transfer(USER_1, address(0), 50 ether); // expected event
         vm.prank(USER_1);
         usdn.burn(50 ether);
@@ -68,7 +68,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
         assertEq(usdn.balanceOf(USER_1), 111_111_111_111_111_111_111, "initial balance");
         assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.MAX_DIVISOR(), "initial shares");
 
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Transfer(USER_1, address(0), 111_111_111_111_111_111_111); // expected event
         vm.prank(USER_1);
         usdn.burn(111_111_111_111_111_111_111);
@@ -127,7 +127,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
         // changing multiplier doesn't affect allowance
         assertEq(usdn.allowance(USER_1, address(this)), 50 ether, "initial allowance");
 
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Transfer(USER_1, address(0), 50 ether); // expected event
         usdn.burnFrom(USER_1, 50 ether);
 

@@ -15,19 +15,23 @@
     "test": "forge test -vvv",
     "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\"",
     "slither": "slither .",
-    "exportAbi": "forge build && ts-node ./script/exportAbi.ts -g '{*.sol,!(libraries|interfaces)/**/*.sol}'",
+    "exportAbi": "forge build && ts-node ./script/exportAbi.ts -g '{Usdn.sol,UsdnProtocol/UsdnProtocol.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
     "clean": "rm -rf dist && forge clean"
   },
+  "main": "dist/index.js",
   "files": [
     "dist",
     "broadcast"
   ],
   "devDependencies": {
+    "@chainlink/contracts": "^0.8.0",
     "@openzeppelin/contracts": "^5.0.0",
+    "@pythnetwork/pyth-sdk-solidity": "^2.3.0",
     "commander": "^11.1.0",
     "glob": "^10.3.10",
     "husky": "^8.0.3",
     "solady": "^0.0.138",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "tsup": "^8.0.1"
   }
 }

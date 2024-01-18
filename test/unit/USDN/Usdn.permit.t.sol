@@ -54,7 +54,7 @@ contract TestUsdnPermit is UsdnTokenFixture {
         bytes32 digest = sigUtils.getTypedDataHash(permit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, digest);
 
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Approval(user, address(this), 100 ether); // expected event
         usdn.permit(user, address(this), 100 ether, type(uint256).max, v, r, s);
         assertEq(usdn.allowance(user, address(this)), 100 ether, "allowance");
@@ -86,7 +86,7 @@ contract TestUsdnPermit is UsdnTokenFixture {
         usdn.permit(user, address(this), 100 ether, type(uint256).max, v, r, s);
 
         // transfer from
-        vm.expectEmit(true, true, true, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit Transfer(user, USER_1, 100 ether); // expected event
         usdn.transferFrom(user, USER_1, 100 ether);
 
