@@ -31,9 +31,9 @@ contract Deploy is Script {
         if (middlewareAddress != address(0)) {
             middleware = IOracleMiddleware(middlewareAddress);
         } else {
-            address pythAddress = vm.envOr("PYTH_ADDRESS", address(0));
-            bytes32 pythPriceId = vm.envOr("PYTH_WSTETH_PRICE_ID", bytes32(0));
-            address chainlinkPriceAddress = vm.envOr("CHAINLINK_STETH_PRICE_ADDRESS", address(0));
+            address pythAddress = vm.envAddress("PYTH_ADDRESS");
+            bytes32 pythPriceId = vm.envBytes32("PYTH_WSTETH_PRICE_ID");
+            address chainlinkPriceAddress = vm.envAddress("CHAINLINK_STETH_PRICE_ADDRESS");
             middleware = new OracleMiddleware(pythAddress, pythPriceId, chainlinkPriceAddress);
             middlewareAddress = address(middleware);
         }
