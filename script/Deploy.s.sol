@@ -3,12 +3,12 @@ pragma solidity 0.8.20;
 
 import { Script } from "forge-std/Script.sol";
 
-import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
+import { OracleMiddleware } from "../src/oracleMiddleware/OracleMiddleware.sol";
 
 contract Deploy is Script {
     function run() external {
@@ -30,8 +30,10 @@ contract Deploy is Script {
         if (middlewareAddress != address(0)) {
             middleware = IOracleMiddleware(middlewareAddress);
         } else {
-            // TODO: update when final oracle middleware is available
-            middleware = new MockOracleMiddleware();
+            address pythAddress = vm.envAddress("PYTH_ADDRESS");
+            bytes32 pythPriceId = vm.envBytes32("PYTH_WSTETH_PRICE_ID");
+            address chainlinkPriceAddress = vm.envAddress("CHAINLINK_STETH_PRICE_ADDRESS");
+            middleware = new OracleMiddleware(pythAddress, pythPriceId, chainlinkPriceAddress);
             middlewareAddress = address(middleware);
         }
 
@@ -56,10 +58,7 @@ contract Deploy is Script {
 
         // Initialize if needed
         if (depositAmount > 0 && longAmount > 0) {
-            // TODO: change last parameter when final oracle middleware is available
-            protocol.initialize(
-                uint128(depositAmount), uint128(longAmount), protocol.minTick(), abi.encode(uint128(2000 ether))
-            );
+            protocol.initialize(uint128(depositAmount), uint128(longAmount), protocol.minTick(), "");
         }
 
         vm.stopBroadcast();
