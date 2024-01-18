@@ -181,4 +181,9 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function totalLongPositions() external view returns (uint256) {
         return _totalLongPositions;
     }
+
+    // fetch max liquidation execution
+    function maxLiquidationIteration() external pure returns (uint16) {
+        return MAX_LIQUIDATION_ITERATION;
+    }
 }

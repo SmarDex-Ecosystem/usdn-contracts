@@ -20,7 +20,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and Block number increase 20
      * @custom:and Simulate a -20% asset price drawdown
      * @custom:when User execute any protocol action 
-     * @custom:then Sould execute liquidations.
+     * @custom:then Should execute liquidations.
      * @custom:and Change contract state.
      */
     function test_openUserLiquidation() public {
@@ -80,12 +80,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     }
 
     /* @custom:scenario Simulate user open positions then 
-     * a price drawdown and liquidations by liquidators.
+     * a price drawdown and liquidations by liquidators with above max iteration.
      * @custom:given User open positions 
      * @custom:and Block number increase 20
      * @custom:and Simulate a -20% asset price drawdown
      * @custom:when Liquidators execute liquidate 
-     * @custom:then Sould execute liquidations.
+     * @custom:then Should execute liquidations.
      * @custom:and Change contract state.
      */
     function test_openLiquidatorLiquidation() public {
@@ -338,5 +338,35 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(protocol.totalLongPositions(), 2, "wrong second totalLongPositions");
     }
 
-    // TODO add test liquidation with iteration paremeter above max iter
+    /* @custom:scenario Simulate user open positions then 
+     * a price drawdown and liquidations by liquidators.
+     * @custom:given User open positions 
+     * @custom:and Block number increase 20
+     * @custom:and Simulate a -20% asset price drawdown
+     * @custom:when Liquidators execute liquidate 
+     * @custom:then Should execute liquidations.
+     * @custom:and Change contract state.
+     */
+    function test_openLiquidatorLiquidationAboveMax() public {
+        // mock initiate open
+        int24 initialTick = protocol.mockInitiateOpenPosition(20 ether, true, protocol.getUsers(protocol.userCount()));
+        // max liquidation iteration constant
+        uint16 maxLiquidationIteration = protocol.maxLiquidationIteration();
+        // check if first tick version match initial value
+        assertEq(protocol.tickVersion(initialTick), 0, "wrong first tickVersion");
+
+        uint8 blockDiff = 20;
+        // increment 20 block (20% drawdown)
+        // to reach liquidation price
+        vm.roll(block.number + blockDiff); // block number
+        // increment timestamp equivalent required by pnl
+        vm.warp(block.timestamp + blockDiff * 12);
+        // get price info
+        (, bytes memory priceData) = protocol.getPriceInfo(block.number);
+        // liquidator liquidation
+        protocol.liquidate(priceData, maxLiquidationIteration + 1);
+
+        // check if second tick version is updated properly
+        assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
+    }
 }
