@@ -60,9 +60,7 @@ contract Deploy is Script {
         // Initialize if needed
         if (depositAmount > 0 && longAmount > 0) {
             // TODO: change last parameter when final oracle middleware is available
-            protocol.initialize(
-                uint128(depositAmount), uint128(longAmount), protocol.minTick(), abi.encode(uint128(2000 ether))
-            );
+            protocol.initialize(uint128(depositAmount), uint128(longAmount), protocol.minTick(), abi.encode(""));
         }
 
         vm.stopBroadcast();

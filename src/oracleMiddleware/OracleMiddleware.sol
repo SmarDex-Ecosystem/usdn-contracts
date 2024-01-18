@@ -44,8 +44,8 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         if (action == ProtocolAction.None) {
             return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.Initialize) {
-            // There is no reason to use the confidence interval here
-            return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
+            // Use chainlink data to make deploiement easier
+            return getChainlinkOnChainPrice();
         } else if (action == ProtocolAction.ValidateDeposit) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies
@@ -143,7 +143,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         if (action == ProtocolAction.None) {
             return getPythUpdateFee(data);
         } else if (action == ProtocolAction.Initialize) {
-            return getPythUpdateFee(data);
+            return 0;
         } else if (action == ProtocolAction.ValidateDeposit) {
             return getPythUpdateFee(data);
         } else if (action == ProtocolAction.ValidateWithdrawal) {
