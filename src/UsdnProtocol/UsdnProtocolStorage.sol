@@ -18,7 +18,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     /* -------------------------------------------------------------------------- */
 
     /// @notice The number of decimals for leverage values
-    uint8 public constant LEVERAGE_DECIMALS = 18;
+    uint8 public constant LEVERAGE_DECIMALS = 21;
 
     /// @notice The number of decimals for funding rate values
     uint8 public constant FUNDING_RATE_DECIMALS = 18;
@@ -66,7 +66,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     IOracleMiddleware internal _oracleMiddleware;
 
     /// @notice The minimum leverage for a position
-    uint256 internal _minLeverage = 1 * 10 ** LEVERAGE_DECIMALS + 1;
+    uint256 internal _minLeverage = 10 ** LEVERAGE_DECIMALS + 1;
 
     /// @notice The maximum leverage for a position
     uint256 internal _maxLeverage = 10 * 10 ** LEVERAGE_DECIMALS;

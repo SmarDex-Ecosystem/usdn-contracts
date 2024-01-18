@@ -482,10 +482,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             available = 0;
         }
 
-        int256 value = positionValue(price.price.toUint128(), pos.startPrice, pos.amount, pos.leverage);
-        if (value < 0) {
-            value = 0;
-        }
+        int256 value = positionValue(price.price.toUint128(), pos.startPrice, pos.amount, liquidationPrice).toInt256();
         uint256 assetToTransfer;
         if (value > available) {
             assetToTransfer = uint256(available);

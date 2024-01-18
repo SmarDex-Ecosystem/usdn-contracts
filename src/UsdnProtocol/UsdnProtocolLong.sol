@@ -42,7 +42,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     }
 
     function getLiquidationPrice(uint128 startPrice, uint128 leverage) public pure returns (uint128 price_) {
-        price_ = startPrice - ((uint128(10) ** LEVERAGE_DECIMALS * startPrice) / leverage);
+        price_ = (startPrice - ((uint256(10) ** LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
     }
 
     /// @dev This applies the liquidation penalty
@@ -67,32 +67,35 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         leverage_ = _getLeverage(startPrice, liquidationPrice);
     }
 
-    function positionPnl(uint128 currentPrice, uint128 startPrice, uint128 amount, uint128 leverage)
+    /**
+     * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
+     * @param currentPrice The current price of the asset
+     * @param startPrice The price at which the position was opened
+     * @param amount The amount of the position
+     * @param liqPrice The liquidation price of the position
+     */
+    function positionValue(uint128 currentPrice, uint128 startPrice, uint256 amount, uint128 liqPrice)
         public
         pure
-        returns (int256 pnl_)
+        returns (uint256 value_)
     {
-        int256 priceDiff = _toInt256(currentPrice).safeSub(_toInt256(startPrice));
-        pnl_ = _toInt256(amount).safeMul(priceDiff).safeMul(_toInt256(leverage)).safeDiv(
-            _toInt256(startPrice) * int256(10) ** LEVERAGE_DECIMALS
-        );
-    }
-
-    function positionValue(uint128 currentPrice, uint128 startPrice, uint128 amount, uint128 leverage)
-        public
-        pure
-        returns (int256 value_)
-    {
-        value_ = _toInt256(amount).safeAdd(positionPnl(currentPrice, startPrice, amount, leverage));
+        if (currentPrice < liqPrice) {
+            return 0;
+        }
+        // calculate "theoretical" leverage which does not contain the liquidation penalty
+        uint128 initialLeverage = _getLeverage(startPrice, liqPrice);
+        uint256 totalExpo = amount * initialLeverage / 10 ** LEVERAGE_DECIMALS;
+        value_ = totalExpo * (currentPrice - liqPrice) / currentPrice;
     }
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
         tick_ = TickMath.getTickAtPrice(uint256(price));
+        int24 tickSpacing = _tickSpacing; // gas saving
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         if (tick_ < 0) {
             // we round up the inverse number (positive) then invert it -> round towards negative infinity
-            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(_tickSpacing)))))
-                * _tickSpacing;
+            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(tickSpacing)))))
+                * tickSpacing;
             // avoid invalid ticks
             int24 minUsableTick = minTick();
             if (tick_ < minUsableTick) {
@@ -101,7 +104,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         } else {
             // rounding is desirable here
             // slither-disable-next-line divide-before-multiply
-            tick_ = (tick_ / _tickSpacing) * _tickSpacing;
+            tick_ = (tick_ / tickSpacing) * tickSpacing;
         }
     }
 

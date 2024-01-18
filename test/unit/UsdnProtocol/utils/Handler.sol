@@ -35,6 +35,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _vaultAssetAvailable(currentPrice);
     }
 
+    function longAssetAvailable(uint128 currentPrice) external view returns (int256) {
+        return _longAssetAvailable(currentPrice);
+    }
+
     function totalExpo() external view returns (uint256) {
         return _totalExpo;
     }
