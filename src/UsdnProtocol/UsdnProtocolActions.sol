@@ -151,7 +151,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // Apply liquidation penalty
         // reverts if liquidationPrice >= entryPrice
-        uint40 leverage = getLeverageWithLiquidationPenalty(currentPrice.price.toUint128(), liquidationPrice_);
+        uint128 leverage = getLeverageWithLiquidationPenalty(currentPrice.price.toUint128(), liquidationPrice_);
         if (leverage < _minLeverage) {
             revert UsdnProtocolLeverageTooLow();
         }
@@ -427,7 +427,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // Apply liquidation penalty
         // reverts if liquidationPrice >= entryPrice
-        uint40 leverage = getLeverageWithLiquidationPenalty(price.price.toUint128(), liquidationPrice);
+        uint128 leverage = getLeverageWithLiquidationPenalty(price.price.toUint128(), liquidationPrice);
         // Leverage is always greater than 1 (liquidationPrice is positive).
         // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
         if (leverage > _maxLeverage) {

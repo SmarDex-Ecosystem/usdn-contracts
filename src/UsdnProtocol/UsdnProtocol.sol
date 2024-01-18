@@ -96,7 +96,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
-        uint40 leverage = _getLeverage(price, liquidationPrice); // no liquidation penalty
+        uint128 leverage = _getLeverage(price, liquidationPrice); // no liquidation penalty
         Position memory long = Position({
             user: user,
             amount: amount,

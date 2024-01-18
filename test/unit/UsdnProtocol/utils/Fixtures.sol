@@ -24,6 +24,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     MockOracleMiddleware public oracleMiddleware;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
+    uint128 public initialLongLeverage;
 
     function setUp() public virtual {
         vm.warp(1_704_092_400); // 2024-01-01 07:00:00 UTC
@@ -42,6 +43,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             abi.encode(INITIAL_PRICE)
         );
         usdnInitialTotalSupply = usdn.totalSupply();
+        Position memory firstPos = protocol.getLongPosition(protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2), 0);
+        initialLongLeverage = firstPos.leverage;
         vm.stopPrank();
     }
 
@@ -53,13 +56,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0);
-        assertEq(defaultPos.leverage, 1 gwei, "default pos leverage");
+        assertEq(defaultPos.leverage, 1_000_000_000_000_000_005, "default pos leverage");
         assertEq(defaultPos.timestamp, block.timestamp, "default pos timestamp");
         assertEq(defaultPos.user, protocol.DEAD_ADDRESS(), "default pos user");
         assertEq(defaultPos.amount, protocol.FIRST_LONG_AMOUNT(), "default pos amount");
         assertEq(defaultPos.startPrice, INITIAL_PRICE, "default pos start price");
         Position memory firstPos = protocol.getLongPosition(protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2), 0);
-        assertEq(firstPos.leverage, 1_983_994_053, "first pos leverage");
+        assertEq(firstPos.leverage, 1_983_994_053_940_692_631, "first pos leverage");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, INITIAL_LONG - protocol.FIRST_LONG_AMOUNT(), "first pos amount");

@@ -34,4 +34,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
     }
+
+    function totalExpo() external view returns (uint256) {
+        return _totalExpo;
+    }
+
+    function getLeverage(uint128 startPrice, uint128 liquidationPrice) external pure returns (uint128) {
+        return _getLeverage(startPrice, liquidationPrice);
+    }
 }

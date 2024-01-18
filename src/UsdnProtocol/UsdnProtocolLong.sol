@@ -41,7 +41,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         }
     }
 
-    function getLiquidationPrice(uint128 startPrice, uint40 leverage) public pure returns (uint128 price_) {
+    function getLiquidationPrice(uint128 startPrice, uint128 leverage) public pure returns (uint128 price_) {
         price_ = startPrice - ((uint128(10) ** LEVERAGE_DECIMALS * startPrice) / leverage);
     }
 
@@ -49,7 +49,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     function getLeverageWithLiquidationPenalty(uint128 startPrice, uint128 liquidationPrice)
         public
         view
-        returns (uint40 leverage_)
+        returns (uint128 leverage_)
     {
         if (startPrice <= liquidationPrice) {
             // this situation is not allowed (newly open position must be solvent)
@@ -67,7 +67,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         leverage_ = _getLeverage(startPrice, liquidationPrice);
     }
 
-    function positionPnl(uint128 currentPrice, uint128 startPrice, uint128 amount, uint40 leverage)
+    function positionPnl(uint128 currentPrice, uint128 startPrice, uint128 amount, uint128 leverage)
         public
         pure
         returns (int256 pnl_)
@@ -78,7 +78,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         );
     }
 
-    function positionValue(uint128 currentPrice, uint128 startPrice, uint128 amount, uint40 leverage)
+    function positionValue(uint128 currentPrice, uint128 startPrice, uint128 amount, uint128 leverage)
         public
         pure
         returns (int256 value_)
@@ -110,14 +110,14 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     }
 
     /// @dev This does not take into account the liquidation penalty
-    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) internal pure returns (uint40 leverage_) {
+    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) internal pure returns (uint128 leverage_) {
         if (startPrice <= liquidationPrice) {
             // this situation is not allowed (newly open position must be solvent)
             // Also, calculation below would underflow
             revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
         }
 
-        leverage_ = ((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint40();
+        leverage_ = ((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
     }
 
     function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {

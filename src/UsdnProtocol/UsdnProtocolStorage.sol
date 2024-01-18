@@ -18,7 +18,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     /* -------------------------------------------------------------------------- */
 
     /// @notice The number of decimals for leverage values
-    uint8 public constant LEVERAGE_DECIMALS = 9;
+    uint8 public constant LEVERAGE_DECIMALS = 18;
 
     /// @notice The number of decimals for funding rate values
     uint8 public constant FUNDING_RATE_DECIMALS = 18;
