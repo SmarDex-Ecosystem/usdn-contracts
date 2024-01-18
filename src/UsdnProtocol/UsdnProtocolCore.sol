@@ -99,14 +99,32 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     /* --------------------------  Internal functions --------------------------- */
 
     /**
-     * @notice Calculate the PnL of the long side, considering the overall total expo and change in price.
+     * @notice Calculate the PnL in dollars of the long side, considering the overall total expo and change in price.
+     * @dev TODO: not used right now, maybe make external for front-end?
      * @param newPrice The new price
      * @param oldPrice The old price
      * @param totalExpo The total exposure of the long side
      */
-    function _pnlLong(uint128 newPrice, uint128 oldPrice, uint256 totalExpo) internal view returns (int256 pnl_) {
+    function _pnlLong(uint256 totalExpo, uint128 newPrice, uint128 oldPrice) internal view returns (int256 pnl_) {
         int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
         pnl_ = totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
+    }
+
+    /**
+     * @notice Calculate the PnL in asset units of the long side, considering the overall total expo and change in
+     * price.
+     * @param totalExpo The total exposure of the long side
+     * @param balanceLong The (old) balance of the long side
+     * @param newPrice The new price
+     * @param oldPrice The old price when the old balance was updated
+     */
+    function _pnlAsset(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
+        internal
+        pure
+        returns (int256 pnl_)
+    {
+        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
+        pnl_ = totalExpo.toInt256().safeSub(balanceLong.toInt256()).safeMul(priceDiff).safeDiv(_toInt256(newPrice));
     }
 
     /**
@@ -128,7 +146,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
      */
     function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
         internal
-        view
+        pure
         returns (int256 available_)
     {
         // Avoid division by zero
@@ -137,16 +155,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             return 0;
         }
 
-        // Cast to int256 to check overflow and optimize gas usage
-        int256 totalExpoInt = totalExpo.toInt256();
-        int256 balanceLongInt = balanceLong.toInt256();
-
-        // pnlAsset = ((totalExpo - balanceLong) * pnlLong * 10^assetDecimals) / (totalExpo * price)
-        int256 pnlAsset = totalExpoInt.safeSub(balanceLongInt).safeMul(_pnlLong(newPrice, oldPrice, totalExpo)).safeMul(
-            int256(10) ** _assetDecimals
-        ).safeDiv(totalExpoInt.safeMul(_toInt256(newPrice)));
-
-        available_ = balanceLongInt.safeAdd(pnlAsset);
+        available_ = balanceLong.toInt256().safeAdd(_pnlAsset(totalExpo, balanceLong, newPrice, oldPrice));
     }
 
     /**
@@ -173,7 +182,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         uint256 balanceLong,
         uint128 newPrice,
         uint128 oldPrice
-    ) internal view returns (int256 available_) {
+    ) internal pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
         int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
         if (newLongBalance < 0) {
