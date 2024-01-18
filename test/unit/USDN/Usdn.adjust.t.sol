@@ -46,7 +46,7 @@ contract TestUsdnAdjust is UsdnTokenFixture {
 
         usdn.mint(USER_1, 100 ether);
 
-        vm.expectEmit(true, true, false, false, address(usdn));
+        vm.expectEmit(address(usdn));
         emit DivisorAdjusted(maxDivisor, maxDivisor / 10); // expected event
         usdn.adjustDivisor(maxDivisor / 10);
 

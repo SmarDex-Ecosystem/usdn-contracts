@@ -13,7 +13,9 @@ libs = ["node_modules", "lib"]
 # -------------------------------- Remappings -------------------------------- #
 
 remappings = [
+    "@chainlink/=node_modules/@chainlink/",
     "@openzeppelin/=node_modules/@openzeppelin/",
+    "@pythnetwork=node_modules/@pythnetwork/",
     "solady/src/=node_modules/solady/src/",
 ]
 
@@ -78,7 +80,6 @@ runs = 256
 depth = 5
 # call_override = false
 dictionary_weight = 40
-
 
 # ---------------------------------------------------------------------------- #
 #                                  Deployments                                 #

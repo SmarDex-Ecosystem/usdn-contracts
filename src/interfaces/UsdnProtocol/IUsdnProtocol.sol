@@ -12,7 +12,8 @@ pragma solidity 0.8.20;
  * @param timestamp The timestamp of the position start.
  * @param user The user address.
  * @param amount The amount of the position.
- * @param startPrice The price of the asset at the position opening.
+ * @param startPrice The price of the asset at the position opening. TODO: remove once we have the new function to
+ * retrieve the value of a position.
  */
 struct Position {
     uint40 leverage; // 5 bytes. Max 1_099_511_627_775 (1_099 with 9 decimals)
@@ -58,13 +59,26 @@ enum ProtocolAction {
  * @param user The user address.
  * @param tick The tick for open/close long (zero for vault actions).
  * @param amountOrIndex The amount for deposit/withdraw, or index inside the tick for open/close long.
+ * @param assetPrice The price of the asset at the time of last update (unused for open/close long).
+ * @param totalExpo The total exposure at the time of the action (unused for open/close long).
+ * @param balanceVault The balance of the vault at the time of last update (unused for open/close long).
+ * @param balanceLong The balance of the long positions at the time of last update (unused for open/close long).
+ * @param usdnTotalSupply The total supply of USDN at the time of the action (unused for open/close long).
  */
 struct PendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
     address user; // 20 bytes
-    int24 tick; // 3 bytes, tick for open/close long
-    uint256 amountOrIndex; // 32 bytes, amount for deposit/withdraw, or index inside the tick for open/close long
+    int24 tick; // 3 bytes
+    uint128 amountOrIndex; // 16 bytes
+    uint128 assetPrice; // 16 bytes
+    // TODO: in practice, we often cast this to int256, so should we consider uint128 here?
+    uint256 totalExpo; // 32 bytes
+    // TODO: in practice, we often cast this to int256, so should we consider uint128 here?
+    uint256 balanceVault; // 32 bytes
+    // TODO: in practice, we often cast this to int256, so should we consider uint128 here?
+    uint256 balanceLong; // 32 bytes
+    uint256 usdnTotalSupply; // 32 bytes
 }
 
 /* -------------------------------------------------------------------------- */
@@ -165,6 +179,9 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the initilization deposit is too low
     error UsdnProtocolMinInitAmount(uint256 minInitAmount);
+
+    /// @dev Indicates that the provided USDN contract has a total supply above zero at deployment
+    error UsdnProtocolInvalidUsdn(address usdnAddress);
 
     /// @dev Indicates that the user is not allowed to perform an action
     error UsdnProtocolUnauthorized();

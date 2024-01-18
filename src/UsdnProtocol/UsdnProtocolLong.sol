@@ -201,7 +201,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         return keccak256(abi.encodePacked(tick, _tickVersion[tick]));
     }
 
-    function _liquidatePositions(uint128 currentPrice, uint16 iteration) internal returns (uint256 liquidated_) {
+    function _liquidatePositions(uint256 currentPrice, uint16 iteration) internal returns (uint256 liquidated_) {
         // max iteration limit
         if (iteration > MAX_LIQUIDATION_ITERATION) {
             iteration = MAX_LIQUIDATION_ITERATION;

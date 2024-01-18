@@ -29,11 +29,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     /* -------------------------- Public view functions ------------------------- */
 
-    function pnlLong(uint128 price) public view returns (int256 pnl_) {
-        int256 priceDiff = _toInt256(price) - _toInt256(_lastPrice);
-        pnl_ = _totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
-    }
-
     function funding(uint128 currentPrice, uint128 timestamp) public view returns (int256 fund_) {
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
@@ -51,6 +46,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             relative = vaultExpo;
         } else {
             relative = longExpo;
+        }
+        // avoid division by zero
+        if (relative == 0) {
+            return 0;
         }
         fund_ = longExpo.safeSub(vaultExpo).safeMul(_fundingRatePerSecond * secondsElapsed * 100).safeDiv(relative);
     }
@@ -94,30 +93,96 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint128(block.timestamp), ProtocolAction.None, priceData
         );
-        _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
     }
 
     /* --------------------------  Internal functions --------------------------- */
 
-    /// @dev Available at the time of the last balances update (without taking funding into account)
-    function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        // Cast to int256 to check overflow and optimize gas usage
-        int256 totalExpo = _totalExpo.toInt256();
-        // Cast to int256 to check overflow and optimize gas usage
-        int256 balanceLong = _balanceLong.toInt256();
-
-        // pnlAsset = (totalExpo - balanceLong) * pnlLong * 10^assetDecimals / (totalExpo * currentPrice)
-        int256 pnlAsset = totalExpo.safeSub(balanceLong).safeMul(pnlLong(currentPrice)).safeMul(
-            int256(10) ** _assetDecimals
-        ).safeDiv(totalExpo.safeMul(_toInt256(currentPrice)));
-
-        available_ = balanceLong.safeAdd(pnlAsset);
+    /**
+     * @notice Calculate the PnL of the long side, considering the overall total expo and change in price.
+     * @param newPrice The new price
+     * @param oldPrice The old price
+     * @param totalExpo The total exposure of the long side
+     */
+    function _pnlLong(uint128 newPrice, uint128 oldPrice, uint256 totalExpo) internal view returns (int256 pnl_) {
+        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
+        pnl_ = totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
     }
 
-    /// @dev Available at the time of the last balances update (without taking funding into account)
+    /**
+     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
+     * @param currentPrice The current price
+     * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
+     * due to the price change to `currentPrice`.
+     */
+    function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
+        available_ = _longAssetAvailable(_totalExpo, _balanceLong, currentPrice, _lastPrice);
+    }
+
+    /**
+     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
+     * @param totalExpo The total exposure of the long side
+     * @param balanceLong The (old) balance of the long side
+     * @param newPrice The new price
+     * @param oldPrice The old price when the old balance was updated
+     */
+    function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
+        internal
+        view
+        returns (int256 available_)
+    {
+        // Avoid division by zero
+        // slither-disable-next-line incorrect-equality
+        if (totalExpo == 0) {
+            return 0;
+        }
+
+        // Cast to int256 to check overflow and optimize gas usage
+        int256 totalExpoInt = totalExpo.toInt256();
+        int256 balanceLongInt = balanceLong.toInt256();
+
+        // pnlAsset = ((totalExpo - balanceLong) * pnlLong * 10^assetDecimals) / (totalExpo * price)
+        int256 pnlAsset = totalExpoInt.safeSub(balanceLongInt).safeMul(_pnlLong(newPrice, oldPrice, totalExpo)).safeMul(
+            int256(10) ** _assetDecimals
+        ).safeDiv(totalExpoInt.safeMul(_toInt256(newPrice)));
+
+        available_ = balanceLongInt.safeAdd(pnlAsset);
+    }
+
+    /**
+     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
+     * account).
+     * @param currentPrice Current price
+     */
     function _vaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        available_ =
-            _balanceVault.toInt256().safeAdd(_balanceLong.toInt256()).safeSub(_longAssetAvailable(currentPrice));
+        available_ = _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, currentPrice, _lastPrice);
+    }
+
+    /**
+     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
+     * account).
+     * @param totalExpo the total expo
+     * @param balanceVault the (old) balance of the vault
+     * @param balanceLong the (old) balance of the long side
+     * @param newPrice the new price
+     * @param oldPrice the old price when the old balances were updated
+     */
+    function _vaultAssetAvailable(
+        uint256 totalExpo,
+        uint256 balanceVault,
+        uint256 balanceLong,
+        uint128 newPrice,
+        uint128 oldPrice
+    ) internal view returns (int256 available_) {
+        int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
+        int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
+        if (newLongBalance < 0) {
+            newLongBalance = 0;
+        }
+        available_ = totalBalance.safeSub(newLongBalance);
+        if (available_ < 0) {
+            available_ = 0;
+        }
     }
 
     /// @dev At the time of the last balances update (without taking funding into account)
@@ -221,7 +286,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _pendingActions[user] = uint256(rawIndex) + 1;
     }
 
-    function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
+    function _getPendingAction(address user, bool clear) internal returns (PendingAction memory action_) {
         uint256 pendingActionIndex = _pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
@@ -231,8 +296,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         uint128 rawIndex = uint128(pendingActionIndex - 1);
         action_ = _pendingActionsQueue.atRaw(rawIndex);
 
-        // remove the pending action
-        _pendingActionsQueue.clearAt(rawIndex);
-        delete _pendingActions[user];
+        if (clear) {
+            // remove the pending action
+            _pendingActionsQueue.clearAt(rawIndex);
+            delete _pendingActions[user];
+        }
     }
 }

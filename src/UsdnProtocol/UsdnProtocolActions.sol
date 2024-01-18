@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
@@ -12,6 +13,7 @@ import { IUsdn } from "src/interfaces/IUsdn.sol";
 
 abstract contract UsdnProtocolActions is UsdnProtocolLong {
     using SafeERC20 for IUsdn;
+    using SafeCast for uint256;
     using LibBitmap for LibBitmap.Bitmap;
 
     /**
@@ -42,7 +44,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateDeposit, currentPriceData
         );
 
-        bool priceUpdated = _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        bool priceUpdated =
+            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
         // liquidate if pnl applied
         if (priceUpdated) {
             _liquidatePositions(currentPrice.price, _liquidationIteration);
@@ -53,7 +56,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp: timestamp,
             user: msg.sender,
             tick: 0, // unused
-            amountOrIndex: amount
+            amountOrIndex: amount,
+            assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
+            totalExpo: _totalExpo,
+            balanceVault: _balanceVault,
+            balanceLong: _balanceLong,
+            usdnTotalSupply: _usdn.totalSupply()
         });
 
         _addPendingAction(msg.sender, pendingAction);
@@ -88,7 +96,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateWithdrawal, currentPriceData
         );
 
-        bool priceUpdated = _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        bool priceUpdated =
+            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
         // liquidate if pnl applied
         if (priceUpdated) {
             _liquidatePositions(currentPrice.price, _liquidationIteration);
@@ -99,7 +108,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp: timestamp,
             user: msg.sender,
             tick: 0, // unused
-            amountOrIndex: usdnAmount
+            amountOrIndex: usdnAmount,
+            assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
+            totalExpo: _totalExpo,
+            balanceVault: _balanceVault,
+            balanceLong: _balanceLong,
+            usdnTotalSupply: _usdn.totalSupply()
         });
 
         _addPendingAction(msg.sender, pendingAction);
@@ -140,7 +154,8 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         );
 
         // FIXME: use neutral price here!
-        bool priceUpdated = _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        bool priceUpdated =
+            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
         // liquidate if pnl applied
         if (priceUpdated) {
             _liquidatePositions(currentPrice.price, _liquidationIteration);
@@ -148,7 +163,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // Apply liquidation penalty
         // reverts if liquidationPrice >= entryPrice
-        uint40 leverage = getLeverageWithLiquidationPenalty(currentPrice.price, liquidationPrice_);
+        uint40 leverage = getLeverageWithLiquidationPenalty(currentPrice.price.toUint128(), liquidationPrice_);
         if (leverage < _minLeverage) {
             revert UsdnProtocolLeverageTooLow();
         }
@@ -157,13 +172,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         }
 
         // Liquidation price must be at least x% below current price
-        _checkSafetyMargin(currentPrice.price, liquidationPrice_);
+        _checkSafetyMargin(currentPrice.price.toUint128(), liquidationPrice_);
 
         // Register position and adjust contract state
         Position memory long = Position({
             user: msg.sender,
             amount: amount,
-            startPrice: currentPrice.price,
+            startPrice: currentPrice.price.toUint128(),
             leverage: leverage,
             timestamp: timestamp
         });
@@ -175,7 +190,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp: timestamp,
             user: msg.sender,
             tick: tick,
-            amountOrIndex: index_
+            amountOrIndex: index_.toUint128(),
+            assetPrice: 0,
+            totalExpo: 0,
+            balanceVault: 0,
+            balanceLong: 0,
+            usdnTotalSupply: 0
         });
         _addPendingAction(msg.sender, pendingAction);
 
@@ -211,19 +231,33 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
         );
 
-        bool priceUpdated = _applyPnlAndFunding(currentPrice.price, currentPrice.timestamp);
+        bool priceUpdated =
+            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
         // liquidate if pnl applied
         if (priceUpdated) {
             _liquidatePositions(currentPrice.price, _liquidationIteration);
         }
 
+        // TODO: what needs to be stored here so we can remove the position from the tick and calculate the profit
+        // in validateClosePosition?
+        // We will use the tick to calculate the liquidation price.
+        // We won't need the index anymore, so we can store the amount in fifth parameter.
+        // We can store the leverage in any of the other parameters (it's a uint40).
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateClosePosition,
             timestamp: timestamp,
             user: msg.sender,
             tick: tick,
-            amountOrIndex: index
+            amountOrIndex: index.toUint128(),
+            assetPrice: 0,
+            totalExpo: 0,
+            balanceVault: 0,
+            balanceLong: 0,
+            usdnTotalSupply: 0
         });
+
+        // TODO: remove position from the tick so that it can't be liquidated after 24s and stops impacting the PnL and
+        // funding calculations
 
         _addPendingAction(msg.sender, pendingAction);
 
@@ -241,7 +275,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
-        PendingAction memory deposit = _getAndClearPendingAction(user);
+        PendingAction memory deposit = _getPendingAction(user, true); // clear pending action
 
         // check type of action
         if (deposit.action != ProtocolAction.InitiateDeposit) {
@@ -267,20 +301,54 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
     function _validateDepositWithAction(PendingAction memory deposit, bytes calldata priceData, bool initializing)
         internal
+        returns (PriceInfo memory depositPrice_)
     {
         // During initialization, we might want to use a different oracle, so we have a special action
         ProtocolAction action = initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateDeposit;
 
-        PriceInfo memory depositPrice =
+        depositPrice_ =
             _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(deposit.timestamp, action, priceData);
 
         // adjust balances
         // FIXME: use neutral price here!
-        _applyPnlAndFunding(depositPrice.price, depositPrice.timestamp);
+        if (!initializing) {
+            // There is no need to adjust balances during initialization.
+            // Also, during initialization, `_lastUpdateTimestamp` and `_lastPrice` are not updated yet.
+            _applyPnlAndFunding(depositPrice_.price.toUint128(), depositPrice_.timestamp.toUint128());
+        }
+
+        // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
+        // action, or the current price provided for validation. We will use the lower of the two amounts to mint.
+
+        // During initialization, the deposit.assetPrice is zero, so we use the price provided for validation.
+        uint256 oldPrice = initializing ? depositPrice_.price : deposit.assetPrice;
+
+        // The last parameter (price) is only used during initialization
+        uint256 usdnToMint1 =
+            _calcMintUsdn(deposit.amountOrIndex, deposit.balanceVault, deposit.usdnTotalSupply, oldPrice);
+        uint256 usdnToMint2 = _calcMintUsdn(
+            deposit.amountOrIndex,
+            uint256(
+                _vaultAssetAvailable(
+                    deposit.totalExpo,
+                    deposit.balanceVault,
+                    deposit.balanceLong,
+                    depositPrice_.price.toUint128(), // new price
+                    deposit.assetPrice // old price
+                )
+            ),
+            deposit.usdnTotalSupply,
+            depositPrice_.price
+        );
+        uint256 usdnToMint;
+        if (usdnToMint1 <= usdnToMint2) {
+            usdnToMint = usdnToMint1;
+        } else {
+            usdnToMint = usdnToMint2;
+        }
 
         _balanceVault += deposit.amountOrIndex;
 
-        uint256 usdnToMint = _calcMintUsdn(deposit.amountOrIndex, depositPrice.price);
         if (initializing) {
             // we mint the minimum amount of USDN to the dead address, so that the total supply never falls to zero
             _usdn.mint(DEAD_ADDRESS, MIN_USDN_SUPPLY);
@@ -295,7 +363,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
-        PendingAction memory withdrawal = _getAndClearPendingAction(user);
+        PendingAction memory withdrawal = _getPendingAction(user, true); // clear pending action
 
         // check type of action
         if (withdrawal.action != ProtocolAction.InitiateWithdrawal) {
@@ -315,16 +383,32 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         );
 
         // adjust balances
-        // FIXME: use neutral price here!
-        _applyPnlAndFunding(withdrawalPrice.price, withdrawalPrice.timestamp);
+        _applyPnlAndFunding(withdrawalPrice.neutralPrice.toUint128(), withdrawalPrice.timestamp.toUint128());
 
-        int256 available = _vaultAssetAvailable(withdrawalPrice.price);
-        if (available < 0) {
-            available = 0; // clamp to zero
+        // We calculate the available balance of the vault side, either considering the asset price at the time of the
+        // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
+        // redeem the underlying asset share.
+
+        uint256 available1 = withdrawal.balanceVault;
+        uint256 available2 = uint256(
+            _vaultAssetAvailable(
+                withdrawal.totalExpo,
+                withdrawal.balanceVault,
+                withdrawal.balanceLong,
+                withdrawalPrice.price.toUint128(), // new price
+                withdrawal.assetPrice // old price
+            )
+        );
+        uint256 available;
+        if (available1 <= available2) {
+            available = available1;
+        } else {
+            available = available2;
         }
+
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         uint256 assetToTransfer =
-            FixedPointMathLib.fullMulDiv(withdrawal.amountOrIndex, uint256(available), _usdn.totalSupply());
+            FixedPointMathLib.fullMulDiv(withdrawal.amountOrIndex, available, withdrawal.usdnTotalSupply);
 
         _balanceVault -= assetToTransfer;
         // we have the USDN in the contract already
@@ -337,7 +421,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function _validateOpenPosition(address user, bytes calldata priceData) internal {
-        PendingAction memory open = _getAndClearPendingAction(user);
+        PendingAction memory open = _getPendingAction(user, true); // clear pending action
 
         // check type of action
         if (open.action != ProtocolAction.InitiateOpenPosition) {
@@ -362,15 +446,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
 
         // adjust balances
-        // FIXME: use neutral price here!
-        _applyPnlAndFunding(price.price, price.timestamp);
+        _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
 
         // TODO: if price <= liquidationPrice, re-calculate a liquidation price based on the leverage so that the
         // position remains solvent. Emit LiquidationPriceChanged.
 
         // Apply liquidation penalty
         // reverts if liquidationPrice >= entryPrice
-        uint40 leverage = getLeverageWithLiquidationPenalty(price.price, liquidationPrice);
+        uint40 leverage = getLeverageWithLiquidationPenalty(price.price.toUint128(), liquidationPrice);
         // Leverage is always greater than 1 (liquidationPrice is positive).
         // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
         if (leverage > _maxLeverage) {
@@ -382,13 +465,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // Adjust position parameters
         Position storage pos = _longPositions[_tickHash(tick)][index];
         pos.leverage = leverage;
-        pos.startPrice = price.price;
+        pos.startPrice = price.price.toUint128();
 
         emit ValidatedOpenPosition(long.user, pos, tick, index, liquidationPrice);
     }
 
     function _validateClosePosition(address user, bytes calldata priceData) internal {
-        PendingAction memory close = _getAndClearPendingAction(user);
+        PendingAction memory close = _getPendingAction(user, true); // clear pending action
 
         // check type of action
         if (close.action != ProtocolAction.InitiateClosePosition) {
@@ -413,8 +496,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
 
         // adjust balances
-        // FIXME: use neutral price here!
-        _applyPnlAndFunding(price.price, price.timestamp);
+        _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
 
         Position memory pos = getLongPosition(tick, index);
 
@@ -426,7 +508,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             available = 0;
         }
 
-        int256 value = positionValue(price.price, pos.startPrice, pos.amount, pos.leverage);
+        int256 value = positionValue(price.price.toUint128(), pos.startPrice, pos.amount, pos.leverage);
         if (value < 0) {
             value = 0;
         }
