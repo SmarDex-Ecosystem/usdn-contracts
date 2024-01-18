@@ -70,22 +70,20 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     /**
      * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
      * @param currentPrice The current price of the asset
-     * @param startPrice The price at which the position was opened
+     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
      * @param amount The amount of the position
-     * @param liqPrice The liquidation price of the position
+     * @param initLeverage The initial leverage of the position
      */
-    function positionValue(uint128 currentPrice, uint128 startPrice, uint256 amount, uint128 liqPrice)
+    function positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint256 amount, uint128 initLeverage)
         public
         pure
         returns (uint256 value_)
     {
-        if (currentPrice < liqPrice) {
+        if (currentPrice < liqPriceWithoutPenalty) {
             return 0;
         }
-        // calculate "theoretical" leverage which does not contain the liquidation penalty
-        uint128 initialLeverage = _getLeverage(startPrice, liqPrice);
-        uint256 totalExpo = amount * initialLeverage / 10 ** LEVERAGE_DECIMALS;
-        value_ = totalExpo * (currentPrice - liqPrice) / currentPrice;
+        uint256 totalExpo = amount * initLeverage / 10 ** LEVERAGE_DECIMALS;
+        value_ = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice;
     }
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {

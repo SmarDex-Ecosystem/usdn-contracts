@@ -24,6 +24,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     MockOracleMiddleware public oracleMiddleware;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
+    uint128 public defaultPosLeverage;
     uint128 public initialLongLeverage;
 
     function setUp() public virtual {
@@ -43,6 +44,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             abi.encode(INITIAL_PRICE)
         );
         usdnInitialTotalSupply = usdn.totalSupply();
+        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0);
+        defaultPosLeverage = defaultPos.leverage;
         Position memory firstPos = protocol.getLongPosition(protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2), 0);
         initialLongLeverage = firstPos.leverage;
         vm.stopPrank();

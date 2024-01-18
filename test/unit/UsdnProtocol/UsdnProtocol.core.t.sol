@@ -29,13 +29,13 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // calculate the value of the init position
         uint128 initLiqPrice = protocol.getEffectivePriceForTick(protocol.minTick());
         uint256 initPosValue =
-            protocol.positionValue(INITIAL_PRICE, INITIAL_PRICE, protocol.FIRST_LONG_AMOUNT(), initLiqPrice);
+            protocol.positionValue(INITIAL_PRICE, initLiqPrice, protocol.FIRST_LONG_AMOUNT(), defaultPosLeverage);
         emit log_named_decimal_uint("initPosValue", initPosValue, wstETH.decimals());
 
         // calculate the value of the deployer's long position
         uint128 longLiqPrice = protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2));
         uint256 longPosValue = protocol.positionValue(
-            INITIAL_PRICE, INITIAL_PRICE, INITIAL_LONG - protocol.FIRST_LONG_AMOUNT(), longLiqPrice
+            INITIAL_PRICE, longLiqPrice, INITIAL_LONG - protocol.FIRST_LONG_AMOUNT(), initialLongLeverage
         );
         emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());
 
@@ -63,13 +63,13 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // calculate the value of the deployer's long position
         uint128 initLiqPrice = protocol.getEffectivePriceForTick(protocol.minTick());
         uint256 initPosValue =
-            protocol.positionValue(currentPrice, INITIAL_PRICE, protocol.FIRST_LONG_AMOUNT(), initLiqPrice);
+            protocol.positionValue(currentPrice, initLiqPrice, protocol.FIRST_LONG_AMOUNT(), defaultPosLeverage);
         emit log_named_decimal_uint("initPosValue", initPosValue, wstETH.decimals());
 
         // calculate the value of the first long position
         uint128 longLiqPrice = protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2));
         uint256 longPosValue = protocol.positionValue(
-            currentPrice, INITIAL_PRICE, INITIAL_LONG - protocol.FIRST_LONG_AMOUNT(), longLiqPrice
+            currentPrice, longLiqPrice, INITIAL_LONG - protocol.FIRST_LONG_AMOUNT(), initialLongLeverage
         );
         emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());
 

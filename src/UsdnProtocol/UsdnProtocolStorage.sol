@@ -77,8 +77,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     /// @notice The funding rate per second
     int256 internal _fundingRatePerSecond = 3_472_222_222; // 18 decimals (0.03% daily -> 0.0000003472% per second)
 
-    /// @notice The liquidation penalty
-    uint256 internal _liquidationPenalty = 200; // divisor is 10_000 -> 2%
+    /// @notice The liquidation penalty (in tick spacing units)
+    uint24 internal _liquidationPenalty = 2; // 200 ticks -> ~2.02%
 
     /// @notice Safety margin for the liquidation price of newly open positions
     uint256 internal _safetyMargin = 200; // divisor is 10_000 -> 2%
