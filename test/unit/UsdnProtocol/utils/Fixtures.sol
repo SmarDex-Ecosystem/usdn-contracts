@@ -66,11 +66,4 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(firstPos.amount, INITIAL_LONG - protocol.FIRST_LONG_AMOUNT(), "first pos amount");
         assertEq(firstPos.startPrice, INITIAL_PRICE, "first pos start price");
     }
-
-    function createAndFundUser(address _asset, uint256 _initialBalance, address user) public {
-        vm.deal(user, _initialBalance * 2);
-        vm.prank(user);
-        (bool success,) = _asset.call{ value: _initialBalance }("");
-        require(success, "Weth mint failed");
-    }
 }

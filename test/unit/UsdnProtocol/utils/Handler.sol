@@ -14,7 +14,7 @@ import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol
  */
-contract UsdnProtocolHandler is UsdnProtocol, Test {
+contract UsdnProtocolHandler is UsdnProtocol {
     uint128 public constant wstethInitialPrice = 2630 ether;
 
     constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
@@ -26,7 +26,6 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         returns (int24 _tick)
     {
         vm.startPrank(user);
-        _asset.approve(address(this), type(uint256).max);
 
         bytes memory priceData = abi.encode(price);
 
@@ -34,13 +33,22 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         emit log_named_decimal_uint("liquidationTargetPrice", liquidationTargetPrice, 18);
 
         _tick = getEffectiveTickForPrice(liquidationTargetPrice);
-
+        emit log_named_decimal_uint("multiplier", _liquidationMultiplier, 38);
         this.initiateOpenPosition(amount, _tick, priceData, "");
 
         // if auto validate true
         if (autoValidate) {
             this.validateOpenPosition(priceData, priceData);
         }
+        vm.warp(1_704_093_400); // 2024-01-01 07:00:00 UTC
+
+        liquidationTargetPrice = getLiquidationPrice(2200 ether, leverage);
+        emit log_named_decimal_uint("liquidationTargetPrice", liquidationTargetPrice, 18);
+        _tick = getEffectiveTickForPrice(liquidationTargetPrice);
+        priceData = abi.encode(2200 ether);
+        this.initiateOpenPosition(amount, _tick, priceData, "");
+
+        emit log_named_decimal_uint("multiplier", _liquidationMultiplier, 38);
     }
 
     function validationDeadline() external view returns (uint256) {

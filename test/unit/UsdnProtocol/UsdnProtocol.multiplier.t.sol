@@ -11,8 +11,11 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
     }
 
     function test_initiatePosition() public {
-        createAndFundUser(address(wstETH), 10_000 ether, USER_1);
-        emit log_named_decimal_uint("safety margin", protocol._maxLiquidationPriceWithSafetyMargin(2000 ether), 18);
-        // protocol.mockInitiateOpenPosition(false, USER_1, 2000 ether, 1_100_000_000, 1 ether);
+        vm.deal(USER_1, 20_000 ether);
+        wstETH.mint(USER_1, 10_000 ether);
+        vm.prank(USER_1);
+        wstETH.approve(address(protocol), type(uint256).max);
+
+        protocol.mockInitiateOpenPosition(true, USER_1, 1900 ether, 1_100_000_000, 100 ether);
     }
 }

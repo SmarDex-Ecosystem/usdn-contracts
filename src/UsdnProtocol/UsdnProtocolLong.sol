@@ -87,6 +87,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     }
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
+        int24 tickSpacing = _tickSpacing;
         // adjust price by liquidation multiplier
         uint256 adjustedPrice =
             FixedPointMathLib.fullMulDiv(uint256(price), 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
@@ -95,8 +96,8 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         if (tick_ < 0) {
             // we round up the inverse number (positive) then invert it -> round towards negative infinity
-            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(_tickSpacing)))))
-                * _tickSpacing;
+            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(tickSpacing)))))
+                * tickSpacing;
             // avoid invalid ticks
             int24 minUsableTick = minTick();
             if (tick_ < minUsableTick) {
@@ -105,7 +106,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         } else {
             // rounding is desirable here
             // slither-disable-next-line divide-before-multiply
-            tick_ = (tick_ / _tickSpacing) * _tickSpacing;
+            tick_ = (tick_ / tickSpacing) * tickSpacing;
         }
     }
 
