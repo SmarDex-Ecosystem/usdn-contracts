@@ -14,8 +14,8 @@ import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdn
 contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     uint256 constant INITIAL_WSTETH_BALANCE = 10 ether;
 
-    function setUp() public override {
-        super.setUp();
+    function setUp() public {
+        super._setUp(DEFAULT_PARAMS);
         wstETH.mint(address(this), INITIAL_WSTETH_BALANCE);
         wstETH.approve(address(protocol), type(uint256).max);
     }
@@ -43,7 +43,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
         assertEq(
             wstETH.balanceOf(address(protocol)),
-            INITIAL_DEPOSIT + INITIAL_LONG + depositAmount,
+            params.initialDeposit + params.initialLong + depositAmount,
             "wstETH protocol balance"
         );
         // no USDN should be minted yet

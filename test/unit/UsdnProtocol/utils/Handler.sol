@@ -23,31 +23,38 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function mockInitiateOpenPosition(bool autoValidate, address user, uint128 price, uint40 leverage, uint96 amount)
         external
-        returns (int24 _tick)
+        returns (int24 tick)
     {
+        emit log_named_decimal_int("vault expo", _vaultTradingExpo(2000 ether), 18);
+
         vm.startPrank(user);
 
         bytes memory priceData = abi.encode(price);
-
         uint128 liquidationTargetPrice = getLiquidationPrice(price, leverage);
         emit log_named_decimal_uint("liquidationTargetPrice", liquidationTargetPrice, 18);
 
-        _tick = getEffectiveTickForPrice(liquidationTargetPrice);
-        emit log_named_decimal_uint("multiplier", _liquidationMultiplier, 38);
-        this.initiateOpenPosition(amount, _tick, priceData, "");
+        tick = getEffectiveTickForPrice(liquidationTargetPrice);
+        emit log_named_decimal_uint("real liq price", getEffectivePriceForTick(tick), 18);
+        this.initiateOpenPosition(amount, tick, priceData, "");
+        emit log_named_decimal_int("vault expo", _vaultTradingExpo(2000 ether), 18);
 
         // if auto validate true
         if (autoValidate) {
             this.validateOpenPosition(priceData, priceData);
         }
-        vm.warp(1_704_093_400); // 2024-01-01 07:00:00 UTC
+        emit log_named_decimal_int("vault expo", _vaultTradingExpo(2000 ether), 18);
 
-        liquidationTargetPrice = getLiquidationPrice(2200 ether, leverage);
-        emit log_named_decimal_uint("liquidationTargetPrice", liquidationTargetPrice, 18);
-        _tick = getEffectiveTickForPrice(liquidationTargetPrice);
-        priceData = abi.encode(2200 ether);
-        this.initiateOpenPosition(amount, _tick, priceData, "");
+        vm.stopPrank();
+        vm.warp(1_704_179_700); // 2024-01-01 07:00:00 UTC
 
+        priceData = abi.encode(4000 ether);
+        vm.prank(address(0x2222222222222222222222222222222222222222));
+        this.initiateOpenPosition(100, tick, priceData, "");
+        emit log_named_decimal_uint("multiplier", _liquidationMultiplier, 38);
+
+        vm.warp(1_705_043_700);
+        vm.prank(address(0x3333333333333333333333333333333333333333));
+        this.initiateOpenPosition(100, tick, priceData, priceData);
         emit log_named_decimal_uint("multiplier", _liquidationMultiplier, 38);
     }
 

@@ -8,8 +8,8 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { TickMath } from "src/libraries/TickMath.sol";
 
 contract TestUsdnProtocolTicks is UsdnProtocolBaseFixture {
-    function setUp() public override {
-        super.setUp();
+    function setUp() public {
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**
