@@ -7,23 +7,27 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        super._setUp(
+            SetUpParams({
+                initialDeposit: 10 ether,
+                initialLong: 5 ether,
+                initialPrice: 2000 ether,
+                initialTimestamp: 1_704_092_400
+            })
+        );
     }
 
     function test_initiatePosition() public {
         vm.deal(USER_1, 20_000 ether);
         wstETH.mint(USER_1, 10_000 ether);
-        vm.prank(USER_1);
-        wstETH.approve(address(protocol), type(uint256).max);
         vm.deal(USER_2, 20_000 ether);
         wstETH.mint(USER_2, 10_000 ether);
-        vm.prank(USER_2);
-        wstETH.approve(address(protocol), type(uint256).max);
-        vm.deal(USER_3, 20_000 ether);
-        wstETH.mint(USER_3, 10_000 ether);
-        vm.prank(USER_3);
-        wstETH.approve(address(protocol), type(uint256).max);
 
-        protocol.mockInitiateOpenPosition(true, USER_1, 2000 ether, 2_000_000_000, 500 ether);
+        protocol.mockInitiateOpenPosition(true, USER_1, 4000 ether, 2_000_000_000, 500 ether);
+        emit log_named_decimal_uint("multiplier", protocol.liquidationMultiplier(), 38);
+
+        vm.warp(DEFAULT_PARAMS.initialTimestamp + 1 days);
+        protocol.mockInitiateOpenPosition(true, USER_2, 4000 ether, 2_000_000_000, 500 ether);
+        emit log_named_decimal_uint("multiplier", protocol.liquidationMultiplier(), 38);
     }
 }

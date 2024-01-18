@@ -25,37 +25,31 @@ contract UsdnProtocolHandler is UsdnProtocol {
         external
         returns (int24 tick)
     {
-        emit log_named_decimal_int("vault expo", _vaultTradingExpo(2000 ether), 18);
-
         vm.startPrank(user);
+        _asset.approve(address(this), type(uint256).max);
 
         bytes memory priceData = abi.encode(price);
         uint128 liquidationTargetPrice = getLiquidationPrice(price, leverage);
-        emit log_named_decimal_uint("liquidationTargetPrice", liquidationTargetPrice, 18);
 
         tick = getEffectiveTickForPrice(liquidationTargetPrice);
-        emit log_named_decimal_uint("real liq price", getEffectivePriceForTick(tick), 18);
         this.initiateOpenPosition(amount, tick, priceData, "");
-        emit log_named_decimal_int("vault expo", _vaultTradingExpo(2000 ether), 18);
 
         // if auto validate true
         if (autoValidate) {
             this.validateOpenPosition(priceData, priceData);
         }
-        emit log_named_decimal_int("vault expo", _vaultTradingExpo(2000 ether), 18);
+        emit log_named_decimal_int("vault expo", _vaultTradingExpo(price), 18);
+        emit log_named_decimal_int("long expo", _longTradingExpo(price), 18);
+        // vm.stopPrank();
+        // vm.warp(1_704_179_700); // 2024-01-01 07:00:00 UTC
 
-        vm.stopPrank();
-        vm.warp(1_704_179_700); // 2024-01-01 07:00:00 UTC
+        // priceData = abi.encode(4000 ether);
+        // vm.prank(address(0x2222222222222222222222222222222222222222));
+        // this.initiateOpenPosition(100, tick, priceData, "");
 
-        priceData = abi.encode(4000 ether);
-        vm.prank(address(0x2222222222222222222222222222222222222222));
-        this.initiateOpenPosition(100, tick, priceData, "");
-        emit log_named_decimal_uint("multiplier", _liquidationMultiplier, 38);
-
-        vm.warp(1_705_043_700);
-        vm.prank(address(0x3333333333333333333333333333333333333333));
-        this.initiateOpenPosition(100, tick, priceData, priceData);
-        emit log_named_decimal_uint("multiplier", _liquidationMultiplier, 38);
+        // vm.warp(1_705_043_700);
+        // vm.prank(address(0x3333333333333333333333333333333333333333));
+        // this.initiateOpenPosition(100, tick, priceData, priceData);
     }
 
     function validationDeadline() external view returns (uint256) {
@@ -72,5 +66,9 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
+    }
+
+    function liquidationMultiplier() external view returns (uint256) {
+        return _liquidationMultiplier;
     }
 }
