@@ -10,6 +10,7 @@ import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { IPriceController } from "src/interfaces/IPriceController.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
 contract UsdnProtocol is UsdnProtocolActions, Ownable {
@@ -28,10 +29,13 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
      * @param oracleMiddleware The oracle middleware contract.
      * @param tickSpacing The positions tick spacing.
      */
-    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
-        Ownable(msg.sender)
-        UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing)
-    { }
+    constructor(
+        IUsdn usdn,
+        IERC20Metadata asset,
+        IOracleMiddleware oracleMiddleware,
+        IPriceController priceController,
+        int24 tickSpacing
+    ) Ownable(msg.sender) UsdnProtocolStorage(usdn, asset, oracleMiddleware, priceController, tickSpacing) { }
 
     /**
      * @notice Initialize the protocol.

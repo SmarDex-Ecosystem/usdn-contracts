@@ -7,6 +7,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
+import { IPriceController } from "src/interfaces/IPriceController.sol";
 import { IUsdnProtocolErrors, Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
@@ -67,6 +68,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
 
     /// @notice The oracle middleware contract.
     IOracleMiddleware internal _oracleMiddleware;
+
+    /// @notice The price controller contract.
+    IPriceController internal _priceController;
 
     /// @notice The minimum leverage for a position
     uint256 internal _minLeverage = 1 * 10 ** LEVERAGE_DECIMALS + 1;
@@ -153,7 +157,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
      * @param oracleMiddleware The oracle middleware contract.
      * @param tickSpacing_ The positions tick spacing.
      */
-    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing_) {
+    constructor(
+        IUsdn usdn,
+        IERC20Metadata asset,
+        IOracleMiddleware oracleMiddleware,
+        IPriceController priceController,
+        int24 tickSpacing_
+    ) {
         // Since all USDN must be minted by the protocol, we check that the total supply is 0
         if (usdn.totalSupply() != 0) {
             revert UsdnProtocolInvalidUsdn(address(usdn));
@@ -163,6 +173,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
         _asset = asset;
         _assetDecimals = asset.decimals();
         _oracleMiddleware = oracleMiddleware;
+        _priceController = priceController;
         _priceFeedDecimals = oracleMiddleware.decimals();
         _tickSpacing = tickSpacing_;
     }

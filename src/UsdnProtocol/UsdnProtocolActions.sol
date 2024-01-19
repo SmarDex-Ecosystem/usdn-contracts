@@ -40,8 +40,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         uint40 timestamp = uint40(block.timestamp);
 
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            timestamp, ProtocolAction.InitiateDeposit, currentPriceData
+        PriceInfo memory currentPrice = _priceController.adjustedPrice(
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                timestamp, ProtocolAction.InitiateDeposit, currentPriceData
+            )
         );
 
         bool priceUpdated =
@@ -92,8 +94,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         uint40 timestamp = uint40(block.timestamp);
 
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            timestamp, ProtocolAction.InitiateWithdrawal, currentPriceData
+        PriceInfo memory currentPrice = _priceController.adjustedPrice(
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                timestamp, ProtocolAction.InitiateWithdrawal, currentPriceData
+            )
         );
 
         bool priceUpdated =
@@ -149,8 +153,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         uint40 timestamp = uint40(block.timestamp);
 
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            timestamp, ProtocolAction.InitiateOpenPosition, currentPriceData
+        PriceInfo memory currentPrice = _priceController.adjustedPrice(
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                timestamp, ProtocolAction.InitiateOpenPosition, currentPriceData
+            )
         );
 
         bool priceUpdated =
@@ -226,8 +232,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         uint40 timestamp = uint40(block.timestamp);
 
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
+        PriceInfo memory currentPrice = _priceController.adjustedPrice(
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
+            )
         );
 
         bool priceUpdated =
@@ -274,8 +282,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function liquidate(bytes calldata currentPriceData, uint16 iterations) external payable {
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint40(block.timestamp), ProtocolAction.Liquidation, currentPriceData
+        PriceInfo memory currentPrice = _priceController.adjustedPrice(
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                uint40(block.timestamp), ProtocolAction.Liquidation, currentPriceData
+            )
         );
 
         _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -307,8 +317,9 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // During initialization, we might want to use a different oracle, so we have a special action
         ProtocolAction action = initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateDeposit;
 
-        depositPrice_ =
-            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(deposit.timestamp, action, priceData);
+        depositPrice_ = _priceController.adjustedPrice(
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(deposit.timestamp, action, priceData)
+        );
 
         // adjust balances
         if (!initializing) {
@@ -378,8 +389,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function _validateWithdrawalWithAction(PendingAction memory withdrawal, bytes calldata priceData) internal {
-        PriceInfo memory withdrawalPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            withdrawal.timestamp, ProtocolAction.ValidateWithdrawal, priceData
+        PriceInfo memory withdrawalPrice = _priceController.adjustedPrice(
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                withdrawal.timestamp, ProtocolAction.ValidateWithdrawal, priceData
+            )
         );
 
         // adjust balances
@@ -439,8 +452,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         int24 tick = long.tick;
         uint256 index = long.amountOrIndex;
 
-        PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            long.timestamp, ProtocolAction.ValidateOpenPosition, priceData
+        PriceInfo memory price = _priceController.adjustedPrice(
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                long.timestamp, ProtocolAction.ValidateOpenPosition, priceData
+            )
         );
 
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
@@ -489,8 +504,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         int24 tick = long.tick;
         uint256 index = long.amountOrIndex;
 
-        PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            long.timestamp, ProtocolAction.ValidateClosePosition, priceData
+        PriceInfo memory price = _priceController.adjustedPrice(
+            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                long.timestamp, ProtocolAction.ValidateClosePosition, priceData
+            )
         );
 
         uint128 liquidationPrice = getEffectivePriceForTick(tick);

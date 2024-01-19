@@ -11,7 +11,8 @@ import {
     IOracleMiddlewareErrors,
     PriceInfo,
     ConfidenceInterval,
-    FormattedPythPrice
+    FormattedPythPrice,
+    Assets
 } from "src/interfaces/IOracleMiddleware.sol";
 
 /**
@@ -109,6 +110,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
 
             price_.timestamp = pythPrice.publishTime;
             price_.neutralPrice = uint256(pythPrice.price);
+            price_.asset = Assets.wstEth;
         } else {
             revert PythValidationFailed();
         }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { IOracleMiddleware, ProtocolAction, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { IOracleMiddleware, ProtocolAction, PriceInfo, Assets } from "src/interfaces/IOracleMiddleware.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware {
     uint8 constant DECIMALS = 18;
@@ -21,7 +21,8 @@ contract MockOracleMiddleware is IOracleMiddleware {
         } else {
             ts = 0;
         }
-        PriceInfo memory price = PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: uint48(ts) });
+        PriceInfo memory price =
+            PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: uint48(ts), asset: Assets.wstEth });
         return price;
     }
 

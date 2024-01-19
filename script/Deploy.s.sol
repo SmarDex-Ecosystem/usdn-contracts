@@ -6,9 +6,11 @@ import { Script } from "forge-std/Script.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
+import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { OracleMiddleware } from "../src/oracleMiddleware/OracleMiddleware.sol";
+import { PriceController } from "src/oracleMiddleware/controller/PriceController.sol";
 
 contract Deploy is Script {
     function run() external {
@@ -37,6 +39,16 @@ contract Deploy is Script {
             middlewareAddress = address(middleware);
         }
 
+        // Deploy PriceController
+        address controllerAddress = vm.envOr("PRICE_CONTROLLER_ADDRESS", address(0));
+        PriceController controller;
+        if (controllerAddress != address(0)) {
+            controller = PriceController(controllerAddress);
+        } else {
+            controller = new PriceController(IWstETH(wstETHAddress));
+            controllerAddress = address(controller);
+        }
+
         // Deploy USDN token, without a specific minter or adjuster for now
         address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
         Usdn usdn;
@@ -48,7 +60,7 @@ contract Deploy is Script {
         }
 
         // Deploy the protocol with tick spacing 100 = 1%
-        UsdnProtocol protocol = new UsdnProtocol(usdn, wstETH, middleware, 100);
+        UsdnProtocol protocol = new UsdnProtocol(usdn, wstETH, middleware, controller, 100);
 
         // Grant USDN minter role to protocol and approve wstETH spending
         uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
