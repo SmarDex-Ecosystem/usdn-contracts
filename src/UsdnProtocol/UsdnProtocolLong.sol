@@ -62,8 +62,11 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         }
         // totalExpo = amount * initLeverage
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
-        value_ =
-            amount * initLeverage * (currentPrice - liqPriceWithoutPenalty) / (currentPrice * 10 ** LEVERAGE_DECIMALS);
+        value_ = FixedPointMathLib.fullMulDiv(
+            amount,
+            uint256(initLeverage) * (currentPrice - liqPriceWithoutPenalty),
+            currentPrice * uint256(10) ** LEVERAGE_DECIMALS
+        );
     }
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
