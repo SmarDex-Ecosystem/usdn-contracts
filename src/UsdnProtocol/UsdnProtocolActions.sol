@@ -153,7 +153,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateOpenPosition, currentPriceData
         );
 
-        // FIXME: use neutral price here!
         bool priceUpdated =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
         // liquidate if pnl applied
@@ -274,6 +273,18 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
     }
 
+    function liquidate(bytes calldata currentPriceData, uint16 iterations) external payable {
+        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+            uint40(block.timestamp), ProtocolAction.Liquidation, currentPriceData
+        );
+
+        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+
+        _liquidatePositions(currentPrice.price, iterations);
+
+        // TODO: add liquidator incentive if needed
+    }
+
     function _validateDeposit(address user, bytes calldata priceData) internal {
         PendingAction memory deposit = _getPendingAction(user, true); // clear pending action
 
@@ -289,16 +300,6 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _validateDepositWithAction(deposit, priceData, false);
     }
 
-    function liquidate(bytes calldata currentPriceData, uint16 iterations) external payable {
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint40(block.timestamp), ProtocolAction.Liquidation, currentPriceData
-        );
-
-        _liquidatePositions(currentPrice.price, iterations);
-
-        // TODO: add liquidator incentive if needed
-    }
-
     function _validateDepositWithAction(PendingAction memory deposit, bytes calldata priceData, bool initializing)
         internal
         returns (PriceInfo memory depositPrice_)
@@ -310,11 +311,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(deposit.timestamp, action, priceData);
 
         // adjust balances
-        // FIXME: use neutral price here!
         if (!initializing) {
             // There is no need to adjust balances during initialization.
             // Also, during initialization, `_lastUpdateTimestamp` and `_lastPrice` are not updated yet.
-            _applyPnlAndFunding(depositPrice_.price.toUint128(), depositPrice_.timestamp.toUint128());
+            _applyPnlAndFunding(depositPrice_.neutralPrice.toUint128(), depositPrice_.timestamp.toUint128());
         }
 
         // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
