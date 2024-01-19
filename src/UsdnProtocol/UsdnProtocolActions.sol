@@ -44,8 +44,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateDeposit, currentPriceData
         );
 
-        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-        // TODO: perform liquidation of other pos with currentPrice
+        bool priceUpdated =
+            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+        // liquidate if pnl applied
+        if (priceUpdated) {
+            _liquidatePositions(currentPrice.price, _liquidationIteration);
+        }
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateDeposit,
@@ -92,8 +96,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateWithdrawal, currentPriceData
         );
 
-        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-        // TODO: perform liquidation of other pos with currentPrice
+        bool priceUpdated =
+            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+        // liquidate if pnl applied
+        if (priceUpdated) {
+            _liquidatePositions(currentPrice.price, _liquidationIteration);
+        }
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateWithdrawal,
@@ -131,7 +139,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
-    ) external payable initializedAndNonReentrant returns (uint128 liquidationPrice_, uint256 index_) {
+    ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 index_) {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -142,12 +150,16 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateOpenPosition, currentPriceData
         );
 
-        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-
-        // TODO: perform liquidation of other pos with currentPrice
+        {
+            bool priceUpdated =
+                _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+            // liquidate if pnl applied
+            if (priceUpdated) {
+                _liquidatePositions(currentPrice.price, _liquidationIteration);
+            }
+        }
 
         uint128 leverage;
-        int24 tick;
         {
             // we calculate the closest valid tick down for the desired liq price without liquidation penalty
             int24 desiredLiqTick = getEffectiveTickForPrice(desiredLiqPrice);
@@ -164,14 +176,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             }
 
             // Apply liquidation penalty
-            tick = desiredLiqTick + int24(_liquidationPenalty) * _tickSpacing;
+            tick_ = desiredLiqTick + int24(_liquidationPenalty) * _tickSpacing;
         }
 
         // Calculate effective liquidation price
-        liquidationPrice_ = getEffectivePriceForTick(tick);
+        uint128 liquidationPrice = getEffectivePriceForTick(tick_);
 
         // Liquidation price must be at least x% below current price
-        _checkSafetyMargin(currentPrice.price.toUint128(), liquidationPrice_);
+        _checkSafetyMargin(currentPrice.price.toUint128(), liquidationPrice);
 
         // Register position and adjust contract state
         Position memory long = Position({
@@ -181,14 +193,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             leverage: leverage,
             timestamp: timestamp
         });
-        index_ = _saveNewPosition(tick, long);
+        index_ = _saveNewPosition(tick_, long);
 
         // Register pending action
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateOpenPosition,
             timestamp: timestamp,
             user: msg.sender,
-            tick: tick,
+            tick: tick_,
             amountOrIndex: index_.toUint128(),
             assetPrice: 0,
             totalExpo: 0,
@@ -199,7 +211,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _addPendingAction(msg.sender, pendingAction);
 
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
-        emit InitiatedOpenPosition(msg.sender, long, tick, index_);
+        emit InitiatedOpenPosition(msg.sender, long, tick_, index_);
         _executePendingAction(previousActionPriceData);
     }
 
@@ -230,8 +242,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
         );
 
-        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-        // TODO: perform liquidation of other pos with currentPrice
+        bool priceUpdated =
+            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+        // liquidate if pnl applied
+        if (priceUpdated) {
+            _liquidatePositions(currentPrice.price, _liquidationIteration);
+        }
 
         // TODO: what needs to be stored here so we can remove the position from the tick and calculate the profit
         // in validateClosePosition?
@@ -269,6 +285,18 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
     }
 
+    function liquidate(bytes calldata currentPriceData, uint16 iterations) external payable {
+        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+            uint40(block.timestamp), ProtocolAction.Liquidation, currentPriceData
+        );
+
+        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+
+        _liquidatePositions(currentPrice.price, iterations);
+
+        // TODO: add liquidator incentive if needed
+    }
+
     function _validateDeposit(address user, bytes calldata priceData) internal {
         PendingAction memory deposit = _getPendingAction(user, true); // clear pending action
 
@@ -295,11 +323,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(deposit.timestamp, action, priceData);
 
         // adjust balances
-        // FIXME: use neutral price here!
         if (!initializing) {
             // There is no need to adjust balances during initialization.
             // Also, during initialization, `_lastUpdateTimestamp` and `_lastPrice` are not updated yet.
-            _applyPnlAndFunding(depositPrice_.price.toUint128(), depositPrice_.timestamp.toUint128());
+            _applyPnlAndFunding(depositPrice_.neutralPrice.toUint128(), depositPrice_.timestamp.toUint128());
         }
 
         // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate

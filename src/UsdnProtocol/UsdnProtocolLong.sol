@@ -201,4 +201,55 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     function _tickHash(int24 tick) internal view returns (bytes32) {
         return keccak256(abi.encodePacked(tick, _tickVersion[tick]));
     }
+
+    function _liquidatePositions(uint256 currentPrice, uint16 iteration) internal returns (uint256 liquidated_) {
+        // max iteration limit
+        if (iteration > MAX_LIQUIDATION_ITERATION) {
+            iteration = MAX_LIQUIDATION_ITERATION;
+        }
+
+        // TODO: !!! need to change when the liquidation multiplier is added!
+        int24 currentTick = TickMath.getClosestTickAtPrice(uint256(currentPrice));
+        int24 tick = _maxInitializedTick;
+
+        uint256 i;
+        do {
+            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+            if (index == LibBitmap.NOT_FOUND) {
+                // no populated ticks left
+                break;
+            }
+
+            tick = _bitmapIndexToTick(index);
+            if (tick < currentTick) {
+                break;
+            }
+
+            // we have found a non-empty tick that needs to be liquidated
+            bytes32 tickHash = _tickHash(tick);
+            uint256 length = _positionsInTick[tickHash];
+
+            unchecked {
+                _totalExpo -= _totalExpoByTick[tickHash];
+
+                _totalLongPositions -= length;
+                liquidated_ += length;
+
+                ++_tickVersion[tick];
+                ++i;
+            }
+            _tickBitmap.unset(_tickToBitmapIndex(tick));
+        } while (i < iteration);
+
+        if (liquidated_ != 0) {
+            if (tick < currentTick) {
+                // all ticks above the current tick were liquidated
+                _maxInitializedTick = findMaxInitializedTick(currentTick);
+            } else {
+                // unsure if all ticks above the current tick were liquidated, but some were
+                _maxInitializedTick = findMaxInitializedTick(tick);
+            }
+        }
+        // TODO transfer remaining collat to vault
+    }
 }

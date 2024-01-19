@@ -10,6 +10,8 @@ import { WstETH } from "test/utils/WstEth.sol";
 import { IUsdnProtocolErrors, IUsdnProtocolEvents, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { Usdn } from "src/Usdn.sol";
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 /**
  * @title UsdnProtocolBaseFixture
  * @dev Utils for testing the USDN Protocol
@@ -18,6 +20,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     uint128 public constant INITIAL_DEPOSIT = 10 ether;
     uint128 public constant INITIAL_LONG = 5 ether;
     uint128 public constant INITIAL_PRICE = 2000 ether; // 2000 USD per wstETH
+    // initial wsteth price randomly setup at $2630
+    uint128 public constant WSTETH_INITIAL_PRICE = 2630 ether;
+    // initial block
+    uint256 public initialBlock;
+    // previous long init
+    uint256[] public prevActionBlock;
+    // store created addresses
+    address[] public users;
 
     Usdn public usdn;
     WstETH public wstETH;
@@ -44,6 +54,15 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         Position memory firstPos = protocol.getLongPosition(protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2), 0);
         initialLongLeverage = firstPos.leverage;
         vm.stopPrank();
+
+        // initialize x10 EOA addresses with 10K ETH and 10K WSTETH
+        createAndFundUsers(10, 10_000 ether);
+        // store initial block
+        initialBlock = block.number;
+        // store initial usdn action block number
+        prevActionBlock.push(initialBlock);
+        // increment 1 block
+        vm.roll(initialBlock + 1);
     }
 
     function test_setUp() public {
@@ -65,5 +84,82 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, INITIAL_LONG - protocol.FIRST_LONG_AMOUNT(), "first pos amount");
         assertEq(firstPos.startPrice, INITIAL_PRICE, "first pos start price");
+    }
+
+    // create x funded addresses with ETH and underlying
+    function createAndFundUsers(uint256 userCount, uint256 initialBalance) public {
+        // user memory
+        address[] memory _users = new address[](userCount);
+
+        for (uint256 i; i < userCount; i++) {
+            // user address from private key i + 1
+            _users[i] = vm.addr(i + 1);
+
+            // fund eth
+            vm.deal(_users[i], initialBalance * 2);
+
+            // fund wsteth
+            vm.startPrank(_users[i]);
+            (bool success,) = address(wstETH).call{ value: initialBalance }("");
+            require(success, "swap asset error");
+            wstETH.approve(address(protocol), type(uint256).max);
+
+            assertTrue(wstETH.balanceOf(_users[i]) != 0, "user with empty wallet");
+            vm.stopPrank();
+        }
+        // store users
+        users = _users;
+    }
+
+    // mock initiate open positions for x users
+    function mockInitiateOpenPosition(uint96 refAmount, bool autoValidate, address[] memory _users)
+        public
+        returns (int24 tick_)
+    {
+        uint256 count = _users.length;
+
+        for (uint256 i; i < count; i++) {
+            (uint128 currentPrice, bytes memory priceData) = getPriceInfo(block.number);
+            // liquidation target price -15%
+            uint128 liquidationTargetPriceUint = currentPrice * 85 / 100;
+
+            vm.startPrank(_users[i]);
+            // initiate open position
+            (tick_,) = protocol.initiateOpenPosition(refAmount, liquidationTargetPriceUint, priceData, "");
+
+            // if auto validate true
+            if (autoValidate) {
+                // auto validate open position
+                protocol.validateOpenPosition(priceData, priceData);
+            }
+            vm.stopPrank();
+        }
+    }
+
+    // get encoded price to simulate a price drawdown according to
+    // block number currently 1% down per block from initial price
+    function getPriceInfo(uint256 blockNumber) public view returns (uint128 price_, bytes memory data_) {
+        // check correct block
+        require(blockNumber + 1 > initialBlock, "unallowed block");
+        // diff block + 1
+        uint256 diffBlocks = blockNumber + 1 - initialBlock;
+        // check correct diffBlocks
+        require(diffBlocks < 100, "block number too far");
+        // price = initial price - (n x diff block)%
+        price_ = uint128(WSTETH_INITIAL_PRICE - (WSTETH_INITIAL_PRICE * diffBlocks / 100));
+        // encode price
+        data_ = abi.encode(price_);
+    }
+
+    // users memory array
+    function getUsers(uint256 length) public view returns (address[] memory) {
+        require(length <= users.length, "wrong length");
+        address[] memory _users = new address[](length);
+
+        for (uint256 i; i < length; i++) {
+            _users[i] = users[i];
+        }
+
+        return _users;
     }
 }
