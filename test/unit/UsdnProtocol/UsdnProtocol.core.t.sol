@@ -75,7 +75,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint256 sumOfPositions = longPosValue + initPosValue;
 
         // there are rounding errors when calculating the value of a position,
-        // here we have up to 1 wei of error for each position
-        assertApproxEqAbs(uint256(protocol.longAssetAvailable(currentPrice)), sumOfPositions, 1, "long balance");
+        // here we have up to 1 wei of error for each position (in this case no error)
+        assertEq(uint256(protocol.longAssetAvailable(currentPrice)), sumOfPositions, "long balance");
     }
 }

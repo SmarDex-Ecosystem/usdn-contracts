@@ -60,8 +60,10 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         if (currentPrice < liqPriceWithoutPenalty) {
             return 0;
         }
-        uint256 totalExpo = amount * initLeverage / 10 ** LEVERAGE_DECIMALS;
-        value_ = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice;
+        // totalExpo = amount * initLeverage
+        // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
+        value_ =
+            amount * initLeverage * (currentPrice - liqPriceWithoutPenalty) / (currentPrice * 10 ** LEVERAGE_DECIMALS);
     }
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
