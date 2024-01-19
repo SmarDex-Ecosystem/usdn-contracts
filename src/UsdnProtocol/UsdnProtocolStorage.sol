@@ -32,6 +32,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
      */
     uint256 public constant PERCENTAGE_DIVISOR = 10_000;
 
+    /// @notice maximum tick liquidation by transaction
+    uint16 public constant MAX_LIQUIDATION_ITERATION = 10;
+
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
     /* -------------------------------------------------------------------------- */
@@ -82,6 +85,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
 
     /// @notice Safety margin for the liquidation price of newly open positions
     uint256 internal _safetyMargin = 200; // divisor is 10_000 -> 2%
+
+    /// @notice User current liquidation iteration in tick.
+    uint16 internal _liquidationIteration = 5;
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
