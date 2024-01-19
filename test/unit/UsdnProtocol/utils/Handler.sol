@@ -14,9 +14,7 @@ import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol
  */
-contract UsdnProtocolHandler is UsdnProtocol {
-    uint128 public constant wstethInitialPrice = 2630 ether;
-
+contract UsdnProtocolHandler is UsdnProtocol, Test {
     constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
         UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing)
     { }

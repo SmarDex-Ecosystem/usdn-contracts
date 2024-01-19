@@ -16,9 +16,8 @@ import {
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
-import { Test } from "forge-std/Test.sol";
 
-abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, UsdnProtocolStorage, Test {
+abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
     using SignedMath for int256;
@@ -228,9 +227,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _balanceVault = uint256(newVaultBalance);
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
-        emit log_named_decimal_int("oldLongExpo", oldLongExpo, 18);
-        emit log_named_decimal_int("oldVaultExpo", oldVaultExpo, 18);
-        emit log_named_decimal_int("fund", fund, 18);
 
         if (oldLongExpo >= oldVaultExpo) {
             // newMultiplier = oldMultiplier * (1 + funding)

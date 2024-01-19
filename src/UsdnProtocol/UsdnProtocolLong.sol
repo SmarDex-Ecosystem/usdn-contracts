@@ -88,10 +88,10 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
         int24 tickSpacing = _tickSpacing;
-        // adjust price by liquidation multiplier
-        uint256 adjustedPrice =
-            FixedPointMathLib.fullMulDiv(uint256(price), 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
-        tick_ = TickMath.getTickAtPrice(adjustedPrice);
+        tick_ = TickMath.getTickAtPrice(
+            // adjusted price with liquidation multiplier
+            FixedPointMathLib.fullMulDiv(uint256(price), 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier)
+        );
 
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         if (tick_ < 0) {
@@ -111,7 +111,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     }
 
     function getEffectivePriceForTick(int24 tick) public view returns (uint128 price_) {
-        // adjust price by liquidation multiplier
+        // adjusted price with liquidation multiplier
         price_ = FixedPointMathLib.fullMulDiv(
             TickMath.getPriceAtTick(tick), _liquidationMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
         ).toUint128();
@@ -128,7 +128,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         leverage_ = ((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint40();
     }
 
-    function _maxLiquidationPriceWithSafetyMargin(uint128 price) public view returns (uint128 maxLiquidationPrice_) {
+    function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
         maxLiquidationPrice_ = uint128(price * (PERCENTAGE_DIVISOR - _safetyMargin) / PERCENTAGE_DIVISOR);
     }
 
