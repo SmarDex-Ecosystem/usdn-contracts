@@ -119,7 +119,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
         for (uint256 i; i < count; i++) {
             (uint128 currentPrice, bytes memory priceData) = getPriceInfo(block.number);
-            // uint128 currentPriceUint = uint128(abi.decode(currentPrice, (uint256)));
             // liquidation target price -15%
             uint128 liquidationTargetPriceUint = currentPrice - (currentPrice * 15 / 100);
             // effective tick for target price
