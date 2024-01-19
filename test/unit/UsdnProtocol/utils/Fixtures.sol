@@ -138,11 +138,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         }
     }
 
-    // get encoded price
-    // to simulate a price drawdown
-    // according to block number
-    // currently 1% down per block
-    // from initial price
+    // get encoded price to simulate a price drawdown according to
+    // block number currently 1% down per block from initial price
     function getPriceInfo(uint256 blockNumber) public view returns (uint128 price, bytes memory data) {
         // check correct block
         require(blockNumber + 1 > initialBlock, "unallowed block");
