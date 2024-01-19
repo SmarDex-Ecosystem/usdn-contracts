@@ -38,14 +38,15 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
      * @dev This function can only be called once. Other external functions can only be called after the initialization.
      * @param depositAmount The amount of wstETH to deposit.
      * @param longAmount The amount of wstETH to use for the long.
-     * @param longTick The desired tick corresponding to the liquidation price of the long.
+     * @param desiredLiqPrice The desired liquidation price for the long.
      * @param currentPriceData The current price data.
      */
-    function initialize(uint128 depositAmount, uint128 longAmount, int24 longTick, bytes calldata currentPriceData)
-        external
-        payable
-        initializer
-    {
+    function initialize(
+        uint128 depositAmount,
+        uint128 longAmount,
+        uint128 desiredLiqPrice,
+        bytes calldata currentPriceData
+    ) external payable initializer {
         if (depositAmount < MIN_INIT_DEPOSIT) {
             revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
         }
@@ -91,12 +92,17 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
 
         // Create long positions with min leverage
         _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), minTick());
-        _createInitialPosition(msg.sender, longAmount - FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), longTick);
+        _createInitialPosition(
+            msg.sender,
+            longAmount - FIRST_LONG_AMOUNT,
+            currentPrice.price.toUint128(),
+            getEffectiveTickForPrice(desiredLiqPrice) // no liquidation penalty
+        );
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
-        uint128 leverage = _getLeverage(price, liquidationPrice); // no liquidation penalty
+        uint128 leverage = _getLeverage(price, liquidationPrice);
         Position memory long = Position({
             user: user,
             amount: amount,

@@ -101,9 +101,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     /**
      * @notice Calculate the PnL in dollars of the long side, considering the overall total expo and change in price.
      * @dev TODO: not used right now, maybe make external for front-end?
+     * @param totalExpo The total exposure of the long side
      * @param newPrice The new price
      * @param oldPrice The old price
-     * @param totalExpo The total exposure of the long side
      */
     function _pnlLong(uint256 totalExpo, uint128 newPrice, uint128 oldPrice) internal view returns (int256 pnl_) {
         int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);

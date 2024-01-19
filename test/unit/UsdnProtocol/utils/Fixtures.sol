@@ -37,12 +37,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
-        protocol.initialize(
-            INITIAL_DEPOSIT,
-            INITIAL_LONG,
-            protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2),
-            abi.encode(INITIAL_PRICE)
-        );
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_LONG, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
         usdnInitialTotalSupply = usdn.totalSupply();
         Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0);
         defaultPosLeverage = defaultPos.leverage;
