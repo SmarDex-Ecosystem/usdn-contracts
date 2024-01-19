@@ -62,7 +62,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         prevActionBlock.push(initialBlock);
         // increment 1 block
         vm.roll(initialBlock + 1);
-        vm.startPrank(address(this));
     }
 
     function test_setUp() public {
@@ -105,6 +104,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             wstETH.approve(address(protocol), type(uint256).max);
 
             assertTrue(wstETH.balanceOf(_users[i]) != 0, "user with empty wallet");
+            vm.stopPrank();
         }
         // store users
         users = _users;
