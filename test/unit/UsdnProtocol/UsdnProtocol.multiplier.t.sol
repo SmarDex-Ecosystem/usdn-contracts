@@ -5,12 +5,16 @@ import "test/utils/Constants.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 /**
  * @custom:feature The `multiplier` variable of the USDN Protocol
  * @custom:background Given a protocol initialized with 100 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x.
  */
 contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
+    using SafeCast for uint256;
+
     function setUp() public {
         super._setUp(
             SetUpParams({
@@ -33,29 +37,32 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
      * @custom:then The multiplier should be < 1e38
      */
     function test_liquidationMultiplier() public {
+        bytes memory priceData = abi.encode(4000 ether);
+
         vm.deal(USER_1, 100_000 ether);
         wstETH.mint(USER_1, 100_000 ether);
         vm.startPrank(USER_1);
         wstETH.approve(address(protocol), type(uint256).max);
 
-        uint128 liquidationTargetPrice = protocol.getLiquidationPrice(4000 ether, 2_000_000_000);
-        int24 tick = protocol.getEffectiveTickForPrice(liquidationTargetPrice);
+        int24 tick = protocol.getEffectiveTickForPrice(
+            protocol.getLiquidationPrice(4000 ether, (2 * 10 ** protocol.LEVERAGE_DECIMALS()).toUint40())
+        );
 
-        protocol.initiateOpenPosition(500 ether, tick, abi.encode(4000 ether), abi.encode(4000 ether));
-        protocol.validateOpenPosition(abi.encode(4000 ether), abi.encode(4000 ether));
-        assertEq(protocol.liquidationMultiplier(), 1e38);
+        protocol.initiateOpenPosition(500 ether, tick, priceData, "");
+        protocol.validateOpenPosition(priceData, "");
+        assertEq(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 
         // Here, we have longExpo > vaultExpo and fund > 0, so we should have multiplier > 1
-        vm.warp(DEFAULT_PARAMS.initialTimestamp + 1 days);
-        protocol.initiateDeposit(500 ether, abi.encode(4000 ether), abi.encode(4000 ether));
-        protocol.validateDeposit(abi.encode(4000 ether), abi.encode(4000 ether));
-        assertGt(protocol.liquidationMultiplier(), 1e38);
+        skip(1 days);
+        protocol.initiateDeposit(500 ether, priceData, "");
+        protocol.validateDeposit(priceData, "");
+        assertGt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 
         // Here, we have vaultExpo ~= 2*longExpo and fund < 0, so we should have multiplier < 1
-        vm.warp(DEFAULT_PARAMS.initialTimestamp + 6 days);
+        skip(6 days);
         // We need to initiate a position to trigger the refresh of the multiplier
-        protocol.initiateOpenPosition(1, tick, abi.encode(4000 ether), abi.encode(4000 ether));
-        assertLt(protocol.liquidationMultiplier(), 1e38);
+        protocol.initiateOpenPosition(1, tick, priceData, "");
+        assertLt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 
         vm.stopPrank();
     }
