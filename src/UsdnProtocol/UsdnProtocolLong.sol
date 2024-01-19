@@ -45,28 +45,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         price_ = (startPrice - ((uint256(10) ** LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
     }
 
-    /// @dev This applies the liquidation penalty
-    function getLeverageWithLiquidationPenalty(uint128 startPrice, uint128 liquidationPrice)
-        public
-        view
-        returns (uint128 leverage_)
-    {
-        if (startPrice <= liquidationPrice) {
-            // this situation is not allowed (newly open position must be solvent)
-            revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
-        }
-
-        // From here, the following holds true: startPrice > liquidationPrice >= theoreticalLiquidationPrice
-
-        // Apply liquidation penalty
-        // theoretical liquidation price = 0.98 * desired liquidation price
-        // TODO: check if unchecked math would be ok
-        liquidationPrice =
-            (liquidationPrice * (PERCENTAGE_DIVISOR - _liquidationPenalty) / PERCENTAGE_DIVISOR).toUint128();
-
-        leverage_ = _getLeverage(startPrice, liquidationPrice);
-    }
-
     /**
      * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
      * @param currentPrice The current price of the asset
