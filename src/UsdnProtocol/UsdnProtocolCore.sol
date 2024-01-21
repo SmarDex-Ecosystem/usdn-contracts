@@ -206,10 +206,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         expo_ = _vaultAssetAvailable(currentPrice);
     }
 
-    function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) internal {
+    function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) internal returns (bool priceUpdated_) {
         // If the price is not fresh, do nothing
         if (timestamp <= _lastUpdateTimestamp) {
-            return;
+            return false;
         }
 
         (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
@@ -253,6 +253,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
                 );
             }
         }
+
+        priceUpdated_ = true;
     }
 
     function _retrieveAssetsAndCheckBalance(address from, uint256 amount) internal {
