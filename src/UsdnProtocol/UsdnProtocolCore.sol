@@ -30,6 +30,15 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     /* -------------------------- Public view functions ------------------------- */
 
+    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) public view returns (uint256) {
+        if (timestamp <= _lastUpdateTimestamp) {
+            return _liquidationMultiplier;
+        }
+
+        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
+        return _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
+    }
+
     function funding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -108,6 +117,39 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     }
 
     /* --------------------------  Internal functions --------------------------- */
+
+    function _getLiquidationMultiplier(
+        int256 fund,
+        int256 oldLongExpo,
+        int256 oldVaultExpo,
+        uint256 liquidationMultiplier
+    ) internal pure returns (uint256 multiplier_) {
+        multiplier_ = liquidationMultiplier;
+
+        if (oldLongExpo >= oldVaultExpo) {
+            // newMultiplier = oldMultiplier * (1 + funding)
+            if (fund > 0) {
+                multiplier_ += FixedPointMathLib.fullMulDiv(multiplier_, uint256(fund), 10 ** FUNDING_RATE_DECIMALS);
+            } else {
+                multiplier_ -= FixedPointMathLib.fullMulDiv(multiplier_, uint256(-fund), 10 ** FUNDING_RATE_DECIMALS);
+            }
+        } else {
+            // newMultiplier = oldMultiplier * (1 + funding * (oldLongExpo / _balanceVault))
+            if (fund > 0) {
+                multiplier_ += FixedPointMathLib.fullMulDiv(
+                    multiplier_ * uint256(fund),
+                    uint256(oldLongExpo),
+                    uint256(oldVaultExpo) * 10 ** FUNDING_RATE_DECIMALS
+                );
+            } else {
+                multiplier_ -= FixedPointMathLib.fullMulDiv(
+                    multiplier_ * uint256(-fund),
+                    uint256(oldLongExpo),
+                    uint256(oldVaultExpo) * 10 ** FUNDING_RATE_DECIMALS
+                );
+            }
+        }
+    }
 
     /**
      * @notice Calculate the PnL of the long side, considering the overall total expo and change in price.
@@ -227,32 +269,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _balanceVault = uint256(newVaultBalance);
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
-
-        if (oldLongExpo >= oldVaultExpo) {
-            // newMultiplier = oldMultiplier * (1 + funding)
-            if (fund > 0) {
-                _liquidationMultiplier +=
-                    FixedPointMathLib.fullMulDiv(_liquidationMultiplier, uint256(fund), 10 ** FUNDING_RATE_DECIMALS);
-            } else {
-                _liquidationMultiplier -=
-                    FixedPointMathLib.fullMulDiv(_liquidationMultiplier, uint256(-fund), 10 ** FUNDING_RATE_DECIMALS);
-            }
-        } else {
-            // newMultiplier = oldMultiplier * (1 + funding * (oldLongExpo / _balanceVault))
-            if (fund > 0) {
-                _liquidationMultiplier += FixedPointMathLib.fullMulDiv(
-                    _liquidationMultiplier * uint256(fund),
-                    uint256(oldLongExpo),
-                    uint256(oldVaultExpo) * 10 ** FUNDING_RATE_DECIMALS
-                );
-            } else {
-                _liquidationMultiplier -= FixedPointMathLib.fullMulDiv(
-                    _liquidationMultiplier * uint256(-fund),
-                    uint256(oldLongExpo),
-                    uint256(oldVaultExpo) * 10 ** FUNDING_RATE_DECIMALS
-                );
-            }
-        }
+        _liquidationMultiplier = _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
 
         priceUpdated_ = true;
     }

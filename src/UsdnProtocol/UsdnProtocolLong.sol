@@ -32,41 +32,15 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         len_ = _positionsInTick[_tickHash(tick)];
     }
 
-    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp)
+    function getLiquidationPriceWithMultiplier(uint128 price, uint40 leverage)
         public
         view
-        returns (uint256 multiplier_)
+        returns (uint128 liquidationPrice_)
     {
-        if (timestamp <= _lastUpdateTimestamp) {
-            return _liquidationMultiplier;
-        }
-
-        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
-        multiplier_ = _liquidationMultiplier;
-
-        if (oldLongExpo >= oldVaultExpo) {
-            // newMultiplier = oldMultiplier * (1 + funding)
-            if (fund > 0) {
-                multiplier_ += FixedPointMathLib.fullMulDiv(multiplier_, uint256(fund), 10 ** FUNDING_RATE_DECIMALS);
-            } else {
-                multiplier_ -= FixedPointMathLib.fullMulDiv(multiplier_, uint256(-fund), 10 ** FUNDING_RATE_DECIMALS);
-            }
-        } else {
-            // newMultiplier = oldMultiplier * (1 + funding * (oldLongExpo / _balanceVault))
-            if (fund > 0) {
-                multiplier_ += FixedPointMathLib.fullMulDiv(
-                    multiplier_ * uint256(fund),
-                    uint256(oldLongExpo),
-                    uint256(oldVaultExpo) * 10 ** FUNDING_RATE_DECIMALS
-                );
-            } else {
-                multiplier_ -= FixedPointMathLib.fullMulDiv(
-                    multiplier_ * uint256(-fund),
-                    uint256(oldLongExpo),
-                    uint256(oldVaultExpo) * 10 ** FUNDING_RATE_DECIMALS
-                );
-            }
-        }
+        liquidationPrice_ = getLiquidationPrice(price, leverage);
+        liquidationPrice_ = FixedPointMathLib.fullMulDiv(
+            liquidationPrice_, _liquidationMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
+        ).toUint128();
     }
 
     function findMaxInitializedTick(int24 searchStart) public view returns (int24 tick_) {
