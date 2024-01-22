@@ -21,7 +21,8 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
      * @custom:given No time has elapsed since the initialization (no funding rates)
      * @custom:and The price of the asset starts at 2000 dollars
      * @custom:and 10 random long positions and 10 random deposits are created with prices between 2000 and 3000 dollars
-     * @custom:when The sum of all position values is calculated at a price between 3000 and 10000 dollars
+     * @custom:when The sum of all position values is calculated at a price between the max position start price and
+     * 10000 dollars
      * @custom:then The long side available balance is greater or equal to the sum of all position values
      * @param finalPrice the final price of the asset, at which we want to compare the available balance with the sum of
      * all long positions
