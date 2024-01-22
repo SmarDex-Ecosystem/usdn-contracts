@@ -18,6 +18,84 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         super.setUp();
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                                 Without FFI                                */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario Parse and validate price with mocked hermes API signature
+     * @custom:given The price feed is wstETH/USD
+     * @custom:and The validationDelay is respected
+     * @custom:when Protocol action is `None`
+     * @custom:then The price signature is well decoded
+     * @custom:and The price retrived by the oracle middleware is the same as the one from the hermes API
+     */
+    function test_parseAndValidatePriceWithPythDataAndNoneAction() public ethMainnetFork {
+        super.setUp();
+        (uint256 pythPrice,, uint256 pythTimestamp, bytes memory data) = super.getMockedPythSignature();
+
+        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+            uint128(pythTimestamp - oracleMiddleware.validationDelay()), ProtocolAction.None, data
+        );
+
+        assertEq(middlewarePrice.timestamp, pythTimestamp);
+        assertEq(
+            middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals(), pythPrice
+        );
+    }
+
+    /**
+     * @custom:scenario Parse and validate price with mocked hermes API signature
+     * @custom:given The price feed is wstETH/USD
+     * @custom:and The validationDelay is respected
+     * @custom:when Protocol action is `ValidateDeposit`
+     * @custom:then The price signature is well decoded
+     * @custom:and The price retrived by the oracle middleware is equals to the
+     *             one from the hermes API - the confidence interval.
+     */
+    function test_parseAndValidatePriceWithPythDataAndValidateDepositAction() public ethMainnetFork {
+        super.setUp();
+        (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = super.getMockedPythSignature();
+
+        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+            uint128(pythTimestamp - oracleMiddleware.validationDelay()), ProtocolAction.ValidateDeposit, data
+        );
+
+        assertEq(middlewarePrice.timestamp, pythTimestamp);
+        assertEq(
+            middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals(),
+            pythPrice - pythConf
+        );
+    }
+
+    /**
+     * @custom:scenario Parse and validate price with real hermes API signature
+     * @custom:given The price feed is wstETH/USD
+     * @custom:and The validationDelay is respected
+     * @custom:when Protocol action is `ValidateOpenPosition`
+     * @custom:then The price signature is well decoded
+     * @custom:and The price retrived by the oracle middleware is equals to the
+     *             one from the hermes API + the confidence interval.
+     */
+    function test_parseAndValidatePriceWithPythDataAndValidateOpenPositionAction() public ethMainnetFork {
+        super.setUp();
+        (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = super.getMockedPythSignature();
+
+        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+            uint128(pythTimestamp - oracleMiddleware.validationDelay()), ProtocolAction.ValidateOpenPosition, data
+        );
+
+        assertEq(middlewarePrice.timestamp, pythTimestamp);
+        assertEq(
+            middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals(),
+            pythPrice + pythConf
+        );
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                  With FFI                                  */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * @custom:scenario Parse and validate price with real hermes API signature
      * @custom:given The price feed is wstETH/USD

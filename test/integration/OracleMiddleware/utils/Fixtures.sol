@@ -8,6 +8,12 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import { PYTH_ORACLE, CHAINLINK_ORACLE, PYTH_WSTETH_USD } from "test/utils/Constants.sol";
+import {
+    PYTH_DATA_PRICE,
+    PYTH_DATA_CONF,
+    PYTH_DATA_TIMESTAMP,
+    PYTH_DATA
+} from "test/integration/OracleMiddleware/utils/Constants.sol";
 
 import { OracleMiddleware } from "src/oracleMiddleware/OracleMiddleware.sol";
 
@@ -38,8 +44,8 @@ contract OracleMiddlewareBaseFixture is BaseFixture {
         );
     }
 
-    function getMockedPythSignature() internal view returns (uint256) {
-        return 1;
+    function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
+        return (PYTH_DATA_PRICE, PYTH_DATA_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA);
     }
 
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)
