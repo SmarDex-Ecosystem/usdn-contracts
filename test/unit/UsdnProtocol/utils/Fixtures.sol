@@ -32,9 +32,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400 // 2024-01-01 07:00:00 UTC
      });
-    uint128 public constant INITIAL_PRICE = 2000 ether; // 2000 USD per wstETH
-    // initial wsteth price randomly setup at $2630
-    uint128 public constant WSTETH_INITIAL_PRICE = 2630 ether;
     // initial block
     uint256 public initialBlock;
     // previous long init
@@ -165,7 +162,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         // check correct diffBlocks
         require(diffBlocks < 100, "block number too far");
         // price = initial price - (n x diff block)%
-        price = uint128(WSTETH_INITIAL_PRICE - (WSTETH_INITIAL_PRICE * diffBlocks / 100));
+        price = uint128(params.initialPrice - (params.initialPrice * diffBlocks / 100));
         // encode price
         data = abi.encode(price);
     }
