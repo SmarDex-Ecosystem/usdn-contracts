@@ -8,6 +8,7 @@ import { ConfidenceInterval, FormattedPythPrice, IOracleMiddlewareErrors } from 
 
 /**
  * @title PythOracle contract
+ * @author @yashiru
  * @notice This contract is used to get the price of an asset from pyth. It is used by the USDN protocol to get the
  * price of the USDN underlying asset.
  */
@@ -38,9 +39,9 @@ contract PythOracle is IOracleMiddlewareErrors {
         bytes[] memory pricesUpdateData = new bytes[](1);
         pricesUpdateData[0] = priceUpdateData;
 
-        try _pyth.parsePriceFeedUpdatesUnique(pricesUpdateData, priceIds, targetTimestamp, type(uint64).max) returns (
-            PythStructs.PriceFeed[] memory priceFeeds
-        ) {
+        try _pyth.parsePriceFeedUpdatesUnique{ value: msg.value }(
+            pricesUpdateData, priceIds, targetTimestamp, type(uint64).max
+        ) returns (PythStructs.PriceFeed[] memory priceFeeds) {
             if (priceFeeds[0].price.price < 0) {
                 revert WrongPrice(priceFeeds[0].price.price);
             }
