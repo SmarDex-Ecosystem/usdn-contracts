@@ -7,7 +7,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     foundry = {
-      url = "github:shazow/foundry.nix";
+      url = "github:shazow/foundry.nix/monthly"; # Use monthly branch for permanent releases";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     solc = {
