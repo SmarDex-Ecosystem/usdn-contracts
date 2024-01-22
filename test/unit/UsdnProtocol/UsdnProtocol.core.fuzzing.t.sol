@@ -35,7 +35,7 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
 
         // create 10 random positions on each side of the protocol
         for (uint256 i = 0; i < 10; i++) {
-            vm.roll(1); // change random seed
+            vm.roll(block.number + 1); // change random seed
 
             // create a random long position
             uint256 longAmount = (block.prevrandao % 9 ether) + 1 ether;
@@ -48,7 +48,7 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
             pos[i] = protocol.getLongPosition(tick, index);
             ticks[i] = tick;
 
-            vm.roll(1); // change random seed
+            vm.roll(block.number + 1); // change random seed
 
             // create a random short position
             uint256 shortAmount = (block.prevrandao % 9 ether) + 1 ether;
