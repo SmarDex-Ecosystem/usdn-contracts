@@ -20,7 +20,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is equal to the initial price
      * @custom:when The sum of all position values is calculated
      * @custom:then The long side available balance is equal to the sum of all position values
-     * @dev Due to imprecisions in the calculations, there are in practice a few wei of difference
+     * @dev Due to imprecision in the calculations, there are in practice a few wei of difference
      * @dev TODO: can we modify the calculations so that the difference is always favoring the protocol?
      */
     function test_longAssetAvailable() public {
@@ -51,7 +51,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset has increased to $2100
      * @custom:when The sum of all position values is calculated
      * @custom:then The long side available balance is equal to the sum of all position values
-     * @dev Due to imprecisions in the calculations, there are in practice a few wei of difference
+     * @dev Due to imprecision in the calculations, there are in practice a few wei of difference
      * @dev TODO: can we modify the calculations so that the difference is always favoring the protocol?
      */
     function test_longAssetAvailablePriceUp() public {
