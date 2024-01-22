@@ -27,8 +27,6 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
      * all long positions
      */
     function testFuzz_longAssetAvailable(uint128 finalPrice) public {
-        finalPrice = uint128(bound(uint256(finalPrice), 3000 ether, 10_000 ether));
-        emit log_named_decimal_uint("finalPrice", finalPrice, oracleMiddleware.decimals());
         uint256 currentPrice = 2000 ether;
 
         Position[] memory pos = new Position[](10);
@@ -60,6 +58,9 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
             // increase the current price, each time by 100 dollars or less, the max price is 3000 dollars
             currentPrice += block.prevrandao % 100 ether;
         }
+
+        // Bound the final price between the highest position start price and 10000 dollars
+        finalPrice = uint128(bound(uint256(finalPrice), currentPrice, 10_000 ether));
 
         // calculate the value of all new long positions
         uint256 longPosValue;
