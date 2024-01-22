@@ -32,15 +32,15 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         len_ = _positionsInTick[_tickHash(tick)];
     }
 
-    function getLiquidationPriceWithMultiplier(uint128 price, uint40 leverage)
-        public
-        view
-        returns (uint128 liquidationPrice_)
-    {
-        liquidationPrice_ = getLiquidationPrice(price, leverage);
-        liquidationPrice_ = FixedPointMathLib.fullMulDiv(
-            liquidationPrice_, _liquidationMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
-        ).toUint128();
+    function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
+        liquidationPrice_ = getLiquidationPrice(price, uint40(_minLeverage));
+
+        if (liquidationPrice_ < TickMath.MIN_PRICE) {
+            return uint128(TickMath.getPriceAtTick(minTick()));
+        }
+
+        int24 tick = getEffectiveTickForPrice(liquidationPrice_);
+        liquidationPrice_ = uint128(TickMath.getPriceAtTick(tick + _tickSpacing));
     }
 
     function findMaxInitializedTick(int24 searchStart) public view returns (int24 tick_) {

@@ -25,6 +25,8 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
                 initialBlock: DEFAULT_PARAMS.initialBlock
             })
         );
+        wstETH.mint(address(this), 100_000 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
     }
 
     /**
@@ -39,11 +41,6 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
      */
     function test_liquidationMultiplier() public {
         bytes memory priceData = abi.encode(4000 ether);
-
-        vm.deal(USER_1, 100_000 ether);
-        wstETH.mint(USER_1, 100_000 ether);
-        vm.startPrank(USER_1);
-        wstETH.approve(address(protocol), type(uint256).max);
 
         int24 tick = protocol.getEffectiveTickForPrice(
             protocol.getLiquidationPrice(4000 ether, (2 * 10 ** protocol.LEVERAGE_DECIMALS()).toUint40())
