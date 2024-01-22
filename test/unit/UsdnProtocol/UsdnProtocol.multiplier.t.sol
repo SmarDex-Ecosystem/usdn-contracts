@@ -20,8 +20,9 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
             SetUpParams({
                 initialDeposit: 100 ether,
                 initialLong: 5 ether,
-                initialPrice: 2000 ether,
-                initialTimestamp: 1_704_092_400
+                initialPrice: DEFAULT_PARAMS.initialPrice,
+                initialTimestamp: DEFAULT_PARAMS.initialTimestamp,
+                initialBlock: DEFAULT_PARAMS.initialBlock
             })
         );
     }

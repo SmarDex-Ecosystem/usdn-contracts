@@ -23,6 +23,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         uint128 initialLong;
         uint128 initialPrice;
         uint256 initialTimestamp;
+        uint256 initialBlock;
     }
 
     SetUpParams public params;
@@ -30,10 +31,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         initialDeposit: 10 ether,
         initialLong: 5 ether,
         initialPrice: 2000 ether, // 2000 USD per wstETH
-        initialTimestamp: 1_704_092_400 // 2024-01-01 07:00:00 UTC
-     });
-    // initial block
-    uint256 public initialBlock;
+        initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
+        initialBlock: block.number
+    });
     // previous long init
     uint256[] public prevActionBlock;
     // store created addresses
@@ -67,12 +67,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
         // initialize x10 EOA addresses with 10K ETH and 10K WSTETH
         createAndFundUsers(10, 10_000 ether);
-        // store initial block
-        initialBlock = block.number;
         // store initial usdn action block number
-        prevActionBlock.push(initialBlock);
+        prevActionBlock.push(params.initialBlock);
         // increment 1 block
-        vm.roll(initialBlock + 1);
+        vm.roll(params.initialBlock + 1);
     }
 
     function test_setUp() public {
@@ -156,9 +154,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     // block number currently 1% down per block from initial price
     function getPriceInfo(uint256 blockNumber) public view returns (uint128 price, bytes memory data) {
         // check correct block
-        require(blockNumber + 1 > initialBlock, "unallowed block");
+        require(blockNumber + 1 > params.initialBlock, "unallowed block");
         // diff block + 1
-        uint256 diffBlocks = blockNumber + 1 - initialBlock;
+        uint256 diffBlocks = blockNumber + 1 - params.initialBlock;
         // check correct diffBlocks
         require(diffBlocks < 100, "block number too far");
         // price = initial price - (n x diff block)%
