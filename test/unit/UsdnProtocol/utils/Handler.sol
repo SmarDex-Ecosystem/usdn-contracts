@@ -87,4 +87,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function getLeverage(uint128 startPrice, uint128 liquidationPrice) external pure returns (uint128) {
         return _getLeverage(startPrice, liquidationPrice);
     }
+
+    function liquidationPenalty() external view returns (uint24) {
+        return _liquidationPenalty;
+    }
 }
