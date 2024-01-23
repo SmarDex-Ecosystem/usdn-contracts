@@ -30,7 +30,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      * @custom:then The price signature is well decoded
      * @custom:and The price retrived by the oracle middleware is the same as the one from the hermes API
      */
-    function test_parseAndValidatePriceWithPythDataAndNoneAction() public ethMainnetFork {
+    function test_ForkParseAndValidatePriceWithPythDataAndNoneAction() public ethMainnetFork {
         super.setUp();
         (uint256 pythPrice,, uint256 pythTimestamp, bytes memory data) = super.getMockedPythSignature();
 
@@ -53,7 +53,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      * @custom:and The price retrived by the oracle middleware is equals to the
      *             one from the hermes API - the confidence interval.
      */
-    function test_parseAndValidatePriceWithPythDataAndValidateDepositAction() public ethMainnetFork {
+    function test_ForkParseAndValidatePriceWithPythDataAndValidateDepositAction() public ethMainnetFork {
         super.setUp();
         (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = super.getMockedPythSignature();
 
@@ -77,7 +77,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      * @custom:and The price retrived by the oracle middleware is equals to the
      *             one from the hermes API + the confidence interval.
      */
-    function test_parseAndValidatePriceWithPythDataAndValidateOpenPositionAction() public ethMainnetFork {
+    function test_ForkParseAndValidatePriceWithPythDataAndValidateOpenPositionAction() public ethMainnetFork {
         super.setUp();
         (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = super.getMockedPythSignature();
 
@@ -104,7 +104,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      * @custom:then The price signature is well decoded
      * @custom:and The price retrived by the oracle middleware is the same as the one from the hermes API
      */
-    function test_FFIparseAndValidatePriceWithPythDataAndNoneAction() public ethMainnetFork {
+    function test_ForkFFIparseAndValidatePriceWithPythDataAndNoneAction() public ethMainnetFork {
         super.setUp();
         (uint256 pythPrice,, uint256 pythTimestamp, bytes memory data) =
             super.getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
@@ -128,7 +128,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      * @custom:and The price retrived by the oracle middleware is equals to the
      *             one from the hermes API - the confidence interval.
      */
-    function test_FFIparseAndValidatePriceWithPythDataAndValidateDepositAction() public ethMainnetFork {
+    function test_ForkFFIparseAndValidatePriceWithPythDataAndValidateDepositAction() public ethMainnetFork {
         super.setUp();
         (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
             super.getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
@@ -153,7 +153,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      * @custom:and The price retrived by the oracle middleware is equals to the
      *             one from the hermes API + the confidence interval.
      */
-    function test_FFIparseAndValidatePriceWithPythDataAndValidateOpenPositionAction() public ethMainnetFork {
+    function test_ForkFFIparseAndValidatePriceWithPythDataAndValidateOpenPositionAction() public ethMainnetFork {
         super.setUp();
         (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
             super.getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
@@ -178,7 +178,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      * @custom:and The price retrived by the oracle middleware is equals to the
      *             one from the chainlink on chain contract.
      */
-    function test_FFIparseAndValidatePriceWithPythDataAndInitiateDepositAction() public ethMainnetFork {
+    function test_ForkFFIparseAndValidatePriceWithPythDataAndInitiateDepositAction() public ethMainnetFork {
         super.setUp();
         (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = super.getChainlinkPrice();
 
