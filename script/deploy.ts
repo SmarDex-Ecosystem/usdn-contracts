@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { Command } from 'commander';
 import 'dotenv/config';
 
