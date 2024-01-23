@@ -207,7 +207,7 @@ contract OracleMiddleware is
 
     /// @notice Set new fees ( only owner )
     function setFees(uint16 newFees) external onlyOwner {
-        if (newFees > FEES_DENOMINATOR) {
+        if (newFees > FEES_DENOMINATOR * 2) {
             revert FeesToHigh();
         }
 
