@@ -30,6 +30,7 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
      * interval given by the oracle, the protocol always win.
      * @param finalPrice the final price of the asset, at which we want to compare the available balance with the sum of
      * all long positions. 5 USD are subtracted when calculating a single long position value.
+     * @param random a random number used to generate the position parameters
      */
     function testFuzz_longAssetAvailable(uint128 finalPrice, uint256 random) public {
         uint256 currentPrice = 2000 ether;
