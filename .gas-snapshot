@@ -1,7 +1,6 @@
 BaseFixture:test() (gas: 164)
 DequeFixture:test() (gas: 186)
 MockChainlinkOnChain:test() (gas: 142)
-MockChainlinkOnChain:test() (gas: 142)
 MockPyth:test() (gas: 184)
 OracleMiddlewareBaseFixture:test() (gas: 186)
 OracleMiddlewareBaseFixture:test() (gas: 186)
