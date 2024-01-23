@@ -31,7 +31,7 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
      * @param finalPrice the final price of the asset, at which we want to compare the available balance with the sum of
      * all long positions. 5 USD are subtracted when calculating a single long position value.
      */
-    function testFuzz_longAssetAvailable(uint128 finalPrice) public {
+    function testFuzz_longAssetAvailable(uint128 finalPrice, uint256 random) public {
         uint256 currentPrice = 2000 ether;
 
         Position[] memory pos = new Position[](10);
@@ -39,7 +39,7 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
 
         // create 10 random positions on each side of the protocol
         for (uint256 i = 0; i < 10; i++) {
-            uint256 random = uint256(keccak256(abi.encode(i)));
+            random = uint256(keccak256(abi.encode(random, i)));
 
             // create a random long position
             uint256 longAmount = (random % 9 ether) + 1 ether;
@@ -52,7 +52,7 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
             pos[i] = protocol.getLongPosition(tick, index);
             ticks[i] = tick;
 
-            random = uint256(keccak256(abi.encode(i, 2)));
+            random = uint256(keccak256(abi.encode(random, i, 2)));
 
             // create a random short position
             uint256 shortAmount = (random % 9 ether) + 1 ether;
