@@ -61,7 +61,5 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         // We need to initiate a position to trigger the refresh of the multiplier
         protocol.initiateOpenPosition(1, tick, priceData, "");
         assertLt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
-
-        vm.stopPrank();
     }
 }

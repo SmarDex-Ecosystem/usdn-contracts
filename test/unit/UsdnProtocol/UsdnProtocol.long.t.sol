@@ -3,7 +3,6 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
@@ -37,10 +36,10 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:when The price of the asset is 10 ** 12 wei
      * @custom:and The multiplier is 1x.
      * @custom:then The minimum liquidation price should be
-     * getPriceAtTick(MIN_TICK) = 10078 wei.
+     * getPriceAtTick(MIN_TICK) = 10179 wei.
      */
     function test_minLiquidationPrice() public {
-        uint256 min = protocol.getMinLiquidationPrice(10 ** 12);
-        assertEq(min, TickMath.getPriceAtTick(protocol.minTick()));
+        uint256 minPrice = protocol.getMinLiquidationPrice(10 ** 12);
+        assertEq(minPrice, TickMath.getPriceAtTick(protocol.minTick() + protocol.tickSpacing()));
     }
 }

@@ -34,13 +34,8 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
 
     function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
         liquidationPrice_ = getLiquidationPrice(price, uint40(_minLeverage));
-
-        if (liquidationPrice_ < TickMath.MIN_PRICE) {
-            return uint128(TickMath.getPriceAtTick(minTick()));
-        }
-
         int24 tick = getEffectiveTickForPrice(liquidationPrice_);
-        liquidationPrice_ = uint128(TickMath.getPriceAtTick(tick + _tickSpacing));
+        liquidationPrice_ = getEffectivePriceForTick(tick + _tickSpacing);
     }
 
     function findMaxInitializedTick(int24 searchStart) public view returns (int24 tick_) {
@@ -98,6 +93,10 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     }
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
+        if (price < TickMath.MIN_PRICE) {
+            return minTick();
+        }
+
         int24 tickSpacing = _tickSpacing;
         tick_ = TickMath.getTickAtPrice(
             // adjusted price with liquidation multiplier

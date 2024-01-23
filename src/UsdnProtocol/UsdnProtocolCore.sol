@@ -44,17 +44,17 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         view
         returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
     {
+        vaultExpo_ = _vaultTradingExpo(currentPrice);
+        longExpo_ = _longTradingExpo(currentPrice);
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
             // slither-disable-next-line incorrect-equality
         } else if (timestamp == _lastUpdateTimestamp) {
-            return (0, 0, 0);
+            return (0, longExpo_, vaultExpo_);
         }
 
         int256 secondsElapsed = _toInt256(timestamp - _lastUpdateTimestamp);
         // we want the expo at the last update, since we are now calculating the funding since the last update
-        vaultExpo_ = _vaultTradingExpo(currentPrice);
-        longExpo_ = _longTradingExpo(currentPrice);
         int256 relative;
         if (vaultExpo_ > longExpo_) {
             relative = vaultExpo_;
@@ -63,7 +63,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         }
         // avoid division by zero
         if (relative == 0) {
-            return (0, 0, 0);
+            return (0, longExpo_, vaultExpo_);
         }
         fund_ = longExpo_.safeSub(vaultExpo_).safeMul(_fundingRatePerSecond * secondsElapsed * 100).safeDiv(relative);
     }
@@ -255,9 +255,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         }
 
         (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
+        (int256 fundAsset,,) = fundingAsset(currentPrice, timestamp);
 
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
-        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fund);
+        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAsset);
         if (newLongBalance < 0) {
             newLongBalance = 0;
         }

@@ -228,7 +228,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             );
         }
         // check if first total expo match initial value
-        assertEq(protocol.totalExpo(), 1172.602317304999999016 ether, "wrong first totalExpo");
+        assertEq(protocol.totalExpo(), 1172.602317544999999016 ether, "wrong first totalExpo");
         // check if first max initialized match initial value
         assertEq(protocol.maxInitializedTick(), 74_100, "wrong first maxInitializedTick");
         // check if first total long positions match initial value
@@ -284,7 +284,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         }
 
         // check if second total expo match expected value
-        assertEq(protocol.totalExpo(), 596.195268324999999016 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 596.195268564999999016 ether, "wrong second totalExpo");
         // check if second max initialized match expected value
         assertEq(protocol.maxInitializedTick(), 73_600, "wrong second maxInitializedTick");
         // check if second total long positions match expected value
