@@ -21,17 +21,17 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_funding() public {
         (int256 fund, int256 longExpo, int256 vaultExpo) =
             protocol.funding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp));
-        assertEq(fund, 0, "fundig should be 0 if no time has passed");
+        assertEq(fund, 0, "funding should be 0 if no time has passed");
         assertEq(longExpo, 4.919970264999999016 ether, "longExpo if no time has passed");
         assertEq(vaultExpo, 10 ether, "vaultExpo if no time has passed");
     }
 
     /**
-     * @custom:scenario Callling the `funding` function
+     * @custom:scenario Calling the `funding` function
      * @custom:when The timestamp is in the past
      * @custom:then The protocol reverts with `UsdnProtocolTimestampTooOld`
      */
-    function test_RevertWhen_funding_pastTimesptamp() public {
+    function test_RevertWhen_funding_pastTimestamp() public {
         vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
         protocol.funding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp) - 1);
     }
