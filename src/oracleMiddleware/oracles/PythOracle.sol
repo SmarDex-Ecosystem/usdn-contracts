@@ -8,7 +8,6 @@ import { ConfidenceInterval, FormattedPythPrice, IOracleMiddlewareErrors } from 
 
 /**
  * @title PythOracle contract
- * @author @yashiru
  * @notice This contract is used to get the price of an asset from pyth. It is used by the USDN protocol to get the
  * price of the USDN underlying asset.
  */

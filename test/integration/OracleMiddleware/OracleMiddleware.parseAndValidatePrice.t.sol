@@ -12,6 +12,7 @@ import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfac
  * @custom:feature The `parseAndValidatePrice` function of `OracleMiddleware`
  * @custom:background Given the price of ETH is 2000 USD
  * @custom:and The confidence interval is 20 USD
+ * @custom:and The oracles are not mocked
  */
 contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBaseFixture, IOracleMiddlewareErrors {
     function setUp() public override {
