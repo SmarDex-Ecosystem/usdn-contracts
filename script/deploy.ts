@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import { Command } from 'commander';
 import 'dotenv/config';
 
+// parse CLI options
 const program = new Command();
 
 program
@@ -18,6 +19,7 @@ program
 
 const options = program.opts();
 
+// global CLI options used for all commands
 const cliArgs: string[] = [];
 if (options.rpcUrl) {
   cliArgs.push('--rpc-url');
@@ -37,6 +39,7 @@ if (options.verify) {
   cliArgs.push('--verify');
 }
 
+// Deploy libs and retrieve addresses
 const queueLib = JSON.parse(
   execSync(
     `forge create --json ${['-f', options.from, ...cliArgs].join(
@@ -60,10 +63,12 @@ const tickLib = JSON.parse(
 ).deployedTo;
 console.log(`TickMath: ${tickLib}`);
 
+// Optionally run the setup script to get wstETH
 if (options.setup) {
   execSync(`forge script ${cliArgs.join(' ')} script/Fork.s.sol --broadcast`);
 }
 
+// Deploy the protocol with the linked libraries
 const deployArgs = [
   ...cliArgs,
   '--non-interactive',
@@ -77,6 +82,7 @@ const deployArgs = [
 
 const resString = execSync(`forge script ${deployArgs.join(' ')} script/Deploy.s.sol --broadcast`).toString();
 
+// Parse the resulting transactions to get the contract addresses
 const regex = /Transactions saved to: (\S+)/;
 const match = resString.match(regex);
 
