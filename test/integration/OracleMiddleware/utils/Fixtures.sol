@@ -29,7 +29,7 @@ contract OracleMiddlewareBaseFixture is BaseFixture {
     OracleMiddleware public oracleMiddleware;
 
     modifier ethMainnetFork() {
-        string memory url = vm.envString("URL_ETH_MAINNET");
+        string memory url = vm.rpcUrl("mainnet");
         vm.createSelectFork(url);
         _;
     }

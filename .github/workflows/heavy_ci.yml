@@ -1,0 +1,61 @@
+name: CI with heavy test run
+on:
+  push:
+  pull_request:
+
+env:
+  FOUNDRY_PROFILE: heavy_ci
+
+jobs:
+  run-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install deps
+        run: npm ci && forge install
+
+      - name: Check gas snapshots
+        run: npm run snapshot:check
+
+      - name: Run tests
+        run: forge test --gas-report
+  run-slither:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install deps
+        run: npm ci && forge install
+
+      - name: Install slither
+        run: pip3 install slither-analyzer
+
+      - name: Run slither
+        run: |
+          slither --fail-none --json - . | jq '.results.detectors[] | .elements[0].source_mapping as $src | "::\( if .impact == "High" then "error" elif .impact == "Medium" then "warning" else "notice" end ) file=\( $src.filename_relative ),col=\( $src.starting_column ),endColumn=\( $src.ending_column ),line=\( $src.lines[0] )\( if $src.lines[0] == $src.lines[-1] then "" else ",endLine=" + "\( $src.lines[-1] )" end )::\( .description )"' | xargs -n1 echo
+

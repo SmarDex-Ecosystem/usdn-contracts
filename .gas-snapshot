@@ -47,7 +47,7 @@ TestOracleMiddlewareParseAndValidatePrice:test_parseAndValidatePriceForValidateW
 TestOracleMiddlewareParseAndValidatePrice:test_setUp() (gas: 32187)
 TestOracleMiddlewareParseAndValidatePriceRealData:test() (gas: 186)
 TestOracleMiddlewareParseAndValidatePriceRealData:test_parseAndValidatePriceWithPythDataAndNoneAction() (gas: 1403080)
-TestOracleMiddlewareParseAndValidatePriceRealData:test_parseAndValidatePriceWithPythDataAndValidateDepositAction() (gas: 1403354)
+TestOracleMiddlewareParseAndValidatePriceRealData:test_parseAndValidatePriceWithPythDataAndValidateDepositAction() (gas: 1403310)
 TestOracleMiddlewareParseAndValidatePriceRealData:test_parseAndValidatePriceWithPythDataAndValidateOpenPositionAction() (gas: 1403501)
 TestOracleMiddlewareValidationCost:test() (gas: 208)
 TestOracleMiddlewareValidationCost:test_RevertWhen_validationCostWithUnsupportedAction() (gas: 7124)
