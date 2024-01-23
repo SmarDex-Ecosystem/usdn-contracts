@@ -75,4 +75,8 @@ contract MockPyth {
     function getUpdateFee(bytes[] calldata) external pure returns (uint256) {
         return 1e18;
     }
+
+    // force ignore from coverage report
+    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
+    function test() public virtual { }
 }

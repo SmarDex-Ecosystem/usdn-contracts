@@ -65,4 +65,8 @@ contract OracleMiddlewareBaseFixture is BaseFixture {
         (, int256 price,, uint256 timestamp,) = chainlinkOnChain.latestRoundData();
         return (uint256(price), uint256(timestamp));
     }
+
+    // force ignore from coverage report
+    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
+    function test() public virtual override { }
 }

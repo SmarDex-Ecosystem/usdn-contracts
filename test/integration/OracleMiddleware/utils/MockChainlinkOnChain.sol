@@ -53,4 +53,8 @@ contract MockChainlinkOnChain {
     function decimals() external pure returns (uint8) {
         return 8;
     }
+
+    // force ignore from coverage report
+    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
+    function test() public virtual { }
 }
