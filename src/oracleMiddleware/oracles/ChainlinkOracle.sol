@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import { AggregatorInterface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorInterface.sol";
-import { PriceInfo, IOracleMiddlewareErrors, Assets } from "../../interfaces/IOracleMiddleware.sol";
+import { PriceInfo, IOracleMiddlewareErrors } from "../../interfaces/IOracleMiddleware.sol";
 
 /**
  * @title ChainlinkOracle contract
@@ -33,12 +33,7 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
             revert WrongPrice(price);
         }
 
-        price_ = PriceInfo({
-            price: uint256(price),
-            neutralPrice: uint256(price),
-            timestamp: timestamp,
-            asset: Assets.stEth
-        });
+        price_ = PriceInfo({ price: uint256(price), neutralPrice: uint256(price), timestamp: timestamp });
     }
 
     /**

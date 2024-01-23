@@ -61,6 +61,8 @@ interface IOracleMiddlewareErrors {
     error WrongPrice(int256 price);
     /// @notice The oracle price is invalid
     error PriceTooOld(int256 price, uint256 timestamp);
+    /// @notice The new fees is to high
+    error FeesToHigh();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -73,13 +75,11 @@ interface IOracleMiddlewareErrors {
  * @dev Their is no need for optimisation here, the struct is only used in memory and not in storage.
  * @param price The validated asset price.
  * @param timestamp The timestamp of the price data.
- * @param asset enum.
  */
 struct PriceInfo {
     uint256 price;
     uint256 neutralPrice;
     uint256 timestamp;
-    Assets asset;
 }
 
 /**
@@ -118,14 +118,4 @@ enum Oracle {
     Pyth,
     ChainlinkDataStream,
     ChainlinkOnChain
-}
-
-/**
- * @notice Assets to returned.
- * @param stEth asset.
- * @param wstEth asset.
- */
-enum Assets {
-    stEth,
-    wstEth
 }

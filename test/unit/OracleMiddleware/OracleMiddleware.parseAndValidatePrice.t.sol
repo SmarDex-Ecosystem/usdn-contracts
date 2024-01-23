@@ -7,6 +7,7 @@ import { OracleMiddlewareBaseFixture } from "test/unit/OracleMiddleware/utils/Fi
 import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
 
 import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
+import { IWstETH } from "src/interfaces/IWstETH.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `OracleMiddleware`
@@ -19,10 +20,13 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
 
     constructor() {
         super.setUp();
-
-        FORMATTED_ETH_PRICE =
-            (ETH_PRICE * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals());
-        FORMATTED_ETH_CONF = (ETH_CONF * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals());
+        uint256 tokensPerStEth = IWstETH(oracleMiddleware.wstEth()).tokensPerStEth();
+        FORMATTED_ETH_PRICE = tokensPerStEth
+            * ((ETH_PRICE * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals())) / 1 ether;
+        FORMATTED_ETH_CONF = (
+            tokensPerStEth
+                * ((ETH_CONF * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals())) / 1 ether
+        ) * oracleMiddleware.fees() / oracleMiddleware.feesDenominator();
     }
 
     function setUp() public override {

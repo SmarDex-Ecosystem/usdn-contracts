@@ -9,20 +9,15 @@ import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
-import { IPriceController } from "src/interfaces/IPriceController.sol";
 /**
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol
  */
 
 contract UsdnProtocolHandler is UsdnProtocol, Test {
-    constructor(
-        IUsdn usdn,
-        IERC20Metadata asset,
-        IOracleMiddleware oracleMiddleware,
-        IPriceController priceController,
-        int24 tickSpacing
-    ) UsdnProtocol(usdn, asset, oracleMiddleware, priceController, tickSpacing) { }
+    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
+        UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing)
+    { }
 
     // tick version
     function tickVersion(int24 _tick) external view returns (uint256) {

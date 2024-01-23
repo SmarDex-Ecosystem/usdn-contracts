@@ -6,7 +6,6 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { WstETH } from "test/utils/WstEth.sol";
-import { MockPriceController, IWstETH } from "test/unit/UsdnProtocol/utils/MockPriceController.sol";
 
 import { IUsdnProtocolErrors, IUsdnProtocolEvents, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { Usdn } from "src/Usdn.sol";
@@ -33,7 +32,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     Usdn public usdn;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
-    MockPriceController public controller;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
 
@@ -43,8 +41,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdn = new Usdn(address(0), address(0));
         wstETH = new WstETH();
         oracleMiddleware = new MockOracleMiddleware();
-        controller = new MockPriceController(IWstETH(address(wstETH)));
-        protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, controller, 100); // tick spacing 100 = 1%
+        protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 100); // tick spacing 100 = 1%
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x

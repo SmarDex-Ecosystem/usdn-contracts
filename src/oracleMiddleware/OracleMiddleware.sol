@@ -2,17 +2,18 @@
 pragma solidity 0.8.20;
 
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { PythOracle } from "src/oracleMiddleware/oracles/PythOracle.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { ChainlinkOracle } from "src/oracleMiddleware/oracles/ChainlinkOracle.sol";
+import { ToWstETH } from "src/oracleMiddleware/towsteth/ToWstETH.sol";
 import {
     IOracleMiddleware,
     IOracleMiddlewareErrors,
     PriceInfo,
     ConfidenceInterval,
-    FormattedPythPrice,
-    Assets
+    FormattedPythPrice
 } from "src/interfaces/IOracleMiddleware.sol";
 
 /**
@@ -21,15 +22,31 @@ import {
  * It is used by the USDN protocol to get the price of the USDN underlying asset.
  * @dev This contract is a middleware between the USDN protocol and the price oracles.
  */
-contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOracle, ChainlinkOracle {
+contract OracleMiddleware is
+    IOracleMiddleware,
+    IOracleMiddlewareErrors,
+    PythOracle,
+    ChainlinkOracle,
+    ToWstETH,
+    Ownable
+{
     uint256 constant VALIDATION_DELAY = 24 seconds;
 
     // slither-disable-next-line shadowing-state
     uint8 private constant DECIMALS = 18;
+    // fees denominator
+    uint16 private constant FEES_DENOMINATOR = 10_000;
+    // STETH/USD price id
+    bytes32 private constant STETH_USD_ID = 0x846ae1bdb6300b817cee5fdee2a6da192775030db5615b94a465f53bd40850b5;
 
-    constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed)
+    // modifiable fees
+    uint16 internal _fees = 4000;
+
+    constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed, address wsteth)
         PythOracle(pythContract, pythPriceID)
         ChainlinkOracle(chainlinkPriceFeed)
+        ToWstETH(wsteth)
+        Ownable(msg.sender)
     { }
 
     /* -------------------------------------------------------------------------- */
@@ -101,16 +118,19 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
 
         if (pythPrice.price != -1) {
             if (conf == ConfidenceInterval.Down) {
-                price_.price = uint256(pythPrice.price) - pythPrice.conf;
+                price_.price = uint256(pythPrice.price) - (pythPrice.conf * _fees / FEES_DENOMINATOR);
             } else if (conf == ConfidenceInterval.Up) {
-                price_.price = uint256(pythPrice.price) + pythPrice.conf;
+                price_.price = uint256(pythPrice.price) + (pythPrice.conf * _fees / FEES_DENOMINATOR);
             } else {
                 price_.price = uint256(pythPrice.price);
             }
 
             price_.timestamp = pythPrice.publishTime;
             price_.neutralPrice = uint256(pythPrice.price);
-            price_.asset = Assets.wstEth;
+
+            if (_priceID == STETH_USD_ID) {
+                price_ = toWstETH(price_);
+            }
         } else {
             revert PythValidationFailed();
         }
@@ -120,7 +140,11 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
      * @dev Get the price from Chainlink onChain.
      */
     function getChainlinkOnChainPrice() private view returns (PriceInfo memory) {
-        return getFormattedChainlinkPrice(DECIMALS);
+        if (address(_wstEth) == address(0)) {
+            return getFormattedChainlinkPrice(DECIMALS);
+        } else {
+            return toWstETH(getFormattedChainlinkPrice(DECIMALS));
+        }
     }
 
     /* -------------------------------------------------------------------------- */
@@ -134,9 +158,23 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     }
 
     /// @notice Returns the number of decimals for the price (constant)
-
     function decimals() external pure returns (uint8) {
         return DECIMALS;
+    }
+
+    /// @notice Returns the fees denominator (constant)
+    function feesDenominator() external pure returns (uint16) {
+        return FEES_DENOMINATOR;
+    }
+
+    /// @notice Returns the fees
+    function fees() external view returns (uint16) {
+        return _fees;
+    }
+
+    /// @notice Returns pyth stEth USD id
+    function stEthUsdId() external pure returns (bytes32) {
+        return STETH_USD_ID;
     }
 
     /// @notice Returns the ETH cost of one price validation for the given action
@@ -165,5 +203,14 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         } else if (action == ProtocolAction.InitiateClosePosition) {
             return 0;
         }
+    }
+
+    /// @notice Set new fees ( only owner )
+    function setFees(uint16 newFees) external onlyOwner {
+        if (newFees > FEES_DENOMINATOR) {
+            revert FeesToHigh();
+        }
+
+        _fees = newFees;
     }
 }

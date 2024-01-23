@@ -8,6 +8,9 @@ import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
 
 import { OracleMiddleware } from "src/oracleMiddleware/OracleMiddleware.sol";
+import { WstETH } from "test/utils/WstEth.sol";
+
+import { STETH_USD_ID } from "test/unit/OracleMiddleware/utils/Constants.sol";
 
 /**
  * @title OracleMiddlewareBaseFixture
@@ -17,13 +20,16 @@ contract OracleMiddlewareBaseFixture is BaseFixture {
     MockPyth mockPyth;
     MockChainlinkOnChain mockChainlinkOnChain;
     OracleMiddleware public oracleMiddleware;
+    WstETH public wsteth;
 
     function setUp() public virtual {
         vm.warp(1_704_063_600); // 01/01/2024 @ 12:00am (UTC+2)
 
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
-        oracleMiddleware = new OracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain));
+        wsteth = new WstETH();
+        oracleMiddleware =
+            new OracleMiddleware(address(mockPyth), STETH_USD_ID, address(mockChainlinkOnChain), address(wsteth));
     }
 
     function test_setUp() public {
