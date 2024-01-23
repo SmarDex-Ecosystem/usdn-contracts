@@ -13,7 +13,7 @@ Environment variables can be used to control the script execution:
 - `USDN_ADDRESS`: if provided, skips deployment of the USDN token
 - `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
 - `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
-- `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only needed if `WSTETH_ADDRESS` is given.
+- `GET_WSTETH`: whether to get wstETH by sending ether to the wstETH contract or not. Only applicable if `WSTETH_ADDRESS` is given.
 
 Example for an anvil fork using the real wstETH and depositing 1 ETH for both vault side and long side:
 Will also link oracles to the real mainnet configuration:
