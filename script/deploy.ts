@@ -44,18 +44,21 @@ const queueLib = JSON.parse(
     )} "src/libraries/DoubleEndedQueue.sol:DoubleEndedQueue"`,
   ).toString(),
 ).deployedTo;
+console.log(`DoubleEndedQueue: ${queueLib}`);
 
 const mathLib = JSON.parse(
   execSync(
     `forge create --json ${['-f', options.from, ...cliArgs].join(' ')} "src/libraries/SignedMath.sol:SignedMath"`,
   ).toString(),
 ).deployedTo;
+console.log(`SignedMath: ${mathLib}`);
 
 const tickLib = JSON.parse(
   execSync(
     `forge create --json ${['-f', options.from, ...cliArgs].join(' ')} "src/libraries/TickMath.sol:TickMath"`,
   ).toString(),
 ).deployedTo;
+console.log(`TickMath: ${tickLib}`);
 
 if (options.setup) {
   execSync(`forge script ${cliArgs.join(' ')} script/Fork.s.sol --broadcast`);
@@ -64,12 +67,12 @@ if (options.setup) {
 const deployArgs = [
   ...cliArgs,
   '--non-interactive',
-  /* '--libraries',
+  '--libraries',
   `"src/libraries/DoubleEndedQueue.sol:DoubleEndedQueue:${queueLib}"`,
   '--libraries',
   `"src/libraries/SignedMath.sol:SignedMath:${mathLib}"`,
   '--libraries',
-  `"src/libraries/TickMath.sol:TickMath:${tickLib}"`, */
+  `"src/libraries/TickMath.sol:TickMath:${tickLib}"`,
 ];
 
 const resString = execSync(`forge script ${deployArgs.join(' ')} script/Deploy.s.sol --broadcast`).toString();
@@ -86,26 +89,8 @@ const jsonFilePath = match[1];
 const file = readFileSync(jsonFilePath);
 const data = JSON.parse(file.toString());
 const middlewareAddress = data.transactions[0].contractAddress;
+console.log(`OracleMiddleware: ${middlewareAddress}`);
 const usdnAddress = data.transactions[1].contractAddress;
-
-const finalArgs = [
-  ...cliArgs,
-  '--libraries',
-  `"src/libraries/DoubleEndedQueue.sol:DoubleEndedQueue:${queueLib}"`,
-  '--libraries',
-  `"src/libraries/SignedMath.sol:SignedMath:${mathLib}"`,
-  '--libraries',
-  `"src/libraries/TickMath.sol:TickMath:${tickLib}"`,
-];
-
-const finalRes = execSync(
-  `forge create --json ${[
-    '-f',
-    options.from,
-    '--constructor-args',
-    `${usdnAddress} ${process.env.WSTETH_ADDRESS} ${middlewareAddress} 100`,
-    ...finalArgs,
-  ].join(' ')} "src/UsdnProtocol/UsdnProtocol.sol:UsdnProtocol"`,
-).toString();
-
-console.log(finalRes);
+console.log(`USDN: ${usdnAddress}`);
+const protocolAddress = data.transactions[2].contractAddress;
+console.log(`Protocol: ${protocolAddress}`);
