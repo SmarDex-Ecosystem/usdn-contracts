@@ -39,11 +39,11 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
 
         // create 10 random positions on each side of the protocol
         for (uint256 i = 0; i < 10; i++) {
-            vm.roll(block.number + 1); // change random seed
+            uint256 random = uint256(keccak256(abi.encode(i)));
 
             // create a random long position
-            uint256 longAmount = (block.prevrandao % 9 ether) + 1 ether;
-            uint256 longLeverage = (block.prevrandao % 3) + 2;
+            uint256 longAmount = (random % 9 ether) + 1 ether;
+            uint256 longLeverage = (random % 3) + 2;
             uint256 longLiqPrice = currentPrice / longLeverage;
             vm.startPrank(users[i]);
             (int24 tick, uint256 index) =
@@ -52,16 +52,16 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
             pos[i] = protocol.getLongPosition(tick, index);
             ticks[i] = tick;
 
-            vm.roll(block.number + 1); // change random seed
+            random = uint256(keccak256(abi.encode(i, 2)));
 
             // create a random short position
-            uint256 shortAmount = (block.prevrandao % 9 ether) + 1 ether;
+            uint256 shortAmount = (random % 9 ether) + 1 ether;
             protocol.initiateDeposit(uint128(shortAmount), abi.encode(currentPrice), "");
             protocol.validateDeposit(abi.encode(currentPrice), "");
             vm.stopPrank();
 
             // increase the current price, each time by 100 dollars or less, the max price is 3000 dollars
-            currentPrice += block.prevrandao % 100 ether;
+            currentPrice += random % 100 ether;
         }
 
         // Bound the final price between the highest position start price and 10000 dollars
