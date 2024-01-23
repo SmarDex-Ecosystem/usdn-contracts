@@ -1,0 +1,21 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "lineWidth": 120
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "jsxQuoteStyle": "single"
+    }
+  },
+  "linter": {
+    "enabled": true
+  },
+  "files": {
+    "ignore": [".devenv/*", ".direnv/*", "node_modules/*", "dist/*", ".env", ".env.*", "package-lock.json"]
+  }
+}
