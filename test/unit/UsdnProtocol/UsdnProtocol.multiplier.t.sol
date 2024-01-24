@@ -41,7 +41,6 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
      */
     function test_liquidationMultiplier() public {
         bytes memory priceData = abi.encode(4000 ether);
-
         int24 tick = protocol.getEffectiveTickForPrice(
             protocol.getLiquidationPrice(4000 ether, (2 * 10 ** protocol.LEVERAGE_DECIMALS()).toUint40())
         );

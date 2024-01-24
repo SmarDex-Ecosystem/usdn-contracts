@@ -93,15 +93,16 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     }
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
-        if (price < TickMath.MIN_PRICE) {
+        // adjusted price with liquidation multiplier
+        uint256 priceWithMultiplier =
+            FixedPointMathLib.fullMulDiv(uint256(price), 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
+
+        if (priceWithMultiplier < TickMath.MIN_PRICE) {
             return minTick();
         }
 
         int24 tickSpacing = _tickSpacing;
-        tick_ = TickMath.getTickAtPrice(
-            // adjusted price with liquidation multiplier
-            FixedPointMathLib.fullMulDiv(uint256(price), 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier)
-        );
+        tick_ = TickMath.getTickAtPrice(priceWithMultiplier);
 
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         if (tick_ < 0) {

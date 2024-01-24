@@ -13,33 +13,110 @@ import { TickMath } from "src/libraries/TickMath.sol";
 contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+        wstETH.mint(address(this), 100_000 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
     }
 
     /**
      * @custom:scenario Check value of the `getMinLiquidationPrice` function
-     * @custom:when The price of the asset is $5000
+     * @custom:when The minimum leverage is 1.000000001
      * @custom:and The multiplier is 1x.
      */
-    function test_getMinLiquidationPrice() public {
+    function test_getMinLiquidationPrice_multiplierEqOne() public {
         /**
-         * 5000 - 5000 / MINIMUM_LEVERAGE = 0.000004999999995001
+         * 5000 - 5000 / 1.000000001 = 0.000004999999995001
          * tick(0.000004999999995001) = -122100 => + tickSpacing = -122000
-         * price(-122000) = 0.000005033524916457
+         */
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), TickMath.getPriceAtTick(-122_000), "for price = 5000");
+
+        /**
+         * 10^12 - 10^12 / 1.000000001 < MINIMUM_PRICE
+         * => minLiquidationPrice = getPriceAtTick(protocol.minTick() + protocol.tickSpacing())
+         */
+        assertEq(
+            protocol.getMinLiquidationPrice(10 ** 12),
+            TickMath.getPriceAtTick(protocol.minTick() + protocol.tickSpacing()),
+            "for price = 1 * 10^12 wei"
+        );
+    }
+
+    /**
+     * @custom:scenario Check value of the `getMinLiquidationPrice` function
+     * @custom:when The minimum leverage is 1.000000001
+     * @custom:and The multiplier is > 1.
+     */
+    function test_getMinLiquidationPrice_multiplierGtOne() public {
+        bytes memory priceData = abi.encode(4000 ether);
+        int24 tick = protocol.getEffectiveTickForPrice(
+            protocol.getLiquidationPrice(4000 ether, uint40(2 * 10 ** protocol.LEVERAGE_DECIMALS()))
+        );
+
+        protocol.initiateOpenPosition(500 ether, tick, priceData, "");
+        protocol.validateOpenPosition(priceData, "");
+        skip(1 days);
+        protocol.initiateDeposit(1, priceData, "");
+        protocol.validateDeposit(priceData, "");
+
+        assertGt(
+            protocol.liquidationMultiplier(),
+            10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
+            "liquidation multiplier <= 1"
+        );
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_031_271_466_416, "wrong minimum liquidation price");
+    }
+
+    /**
+     * @custom:scenario Check value of the `getMinLiquidationPrice` function
+     * @custom:when The minimum leverage is 1.000000001
+     * @custom:and The multiplier is < 1.
+     */
+    function test_getMinLiquidationPrice_multiplierLtOne() public {
+        bytes memory priceData = abi.encode(4000 ether);
+
+        protocol.initiateDeposit(500 ether, priceData, "");
+        protocol.validateDeposit(priceData, "");
+        skip(1 days);
+        protocol.initiateDeposit(1, priceData, "");
+        protocol.validateDeposit(priceData, "");
+
+        assertLt(
+            protocol.liquidationMultiplier(),
+            10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
+            "liquidation multiplier >= 1"
+        );
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_032_796_759_627, "wrong minimum liquidation price");
+    }
+
+    /**
+     * @custom:scenario Check value of the `getMinLiquidationPrice` function
+     * @custom:when The minimum leverage is 1
+     * @custom:and The multiplier is 1x.
+     */
+    function test_getMinLiquidationPrice__minLeverageEqOne() public {
+        /**
+         * 5000 - 5000 / 1 = 0
+         * => minLiquidationPrice = getPriceAtTick(protocol.minTick() + protocol.tickSpacing())
          */
 
-        uint256 min = protocol.getMinLiquidationPrice(5000 ether);
-        assertEq(min, 0.000005033524916457 ether);
+        protocol.setMinLeverage(uint40(10 ** protocol.LEVERAGE_DECIMALS()));
+        assertEq(
+            protocol.getMinLiquidationPrice(5000 ether),
+            TickMath.getPriceAtTick(protocol.minTick() + protocol.tickSpacing())
+        );
     }
 
     /**
      * @custom:scenario Check value of the `getMinLiquidationPrice` function
-     * @custom:when The price of the asset is 10 ** 12 wei
+     * @custom:when The minimum leverage is 1.1
      * @custom:and The multiplier is 1x.
-     * @custom:then The minimum liquidation price should be
-     * getPriceAtTick(MIN_TICK) = 10179 wei.
      */
-    function test_minLiquidationPrice() public {
-        uint256 minPrice = protocol.getMinLiquidationPrice(10 ** 12);
-        assertEq(minPrice, TickMath.getPriceAtTick(protocol.minTick() + protocol.tickSpacing()));
+    function test_getMinLiquidationPrice__minLeverageEq1_1() public {
+        /**
+         * 5000 - 5000 / 1.1 = 454.545454545454545455
+         * tick(454.545454545454545455) = 61_100 => + tickSpacing = 61_200
+         */
+
+        protocol.setMinLeverage(11 * 10 ** (protocol.LEVERAGE_DECIMALS() - 1)); // = x1.1
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), TickMath.getPriceAtTick(61_200));
     }
 }
