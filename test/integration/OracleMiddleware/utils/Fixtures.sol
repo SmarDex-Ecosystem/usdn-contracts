@@ -2,11 +2,10 @@
 pragma solidity 0.8.20;
 
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
-
-import { BaseFixture } from "test/utils/Fixtures.sol";
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
+import { BaseFixture } from "test/utils/Fixtures.sol";
 import { PYTH_ORACLE, CHAINLINK_ORACLE, PYTH_WSTETH_USD } from "test/utils/Constants.sol";
 import {
     PYTH_DATA_PRICE,
@@ -16,8 +15,6 @@ import {
 } from "test/integration/OracleMiddleware/utils/Constants.sol";
 
 import { OracleMiddleware } from "src/oracleMiddleware/OracleMiddleware.sol";
-
-import { console2 } from "forge-std/Test.sol";
 
 /**
  * @title OracleMiddlewareBaseFixture
@@ -31,6 +28,11 @@ contract OracleMiddlewareBaseFixture is BaseFixture {
     modifier ethMainnetFork() {
         string memory url = vm.rpcUrl("mainnet");
         vm.createSelectFork(url);
+        _;
+    }
+
+    modifier reSetUp() {
+        setUp();
         _;
     }
 
