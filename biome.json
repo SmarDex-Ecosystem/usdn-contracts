@@ -16,6 +16,19 @@
     "enabled": true
   },
   "files": {
-    "ignore": [".devenv/*", ".direnv/*", "node_modules/*", "dist/*", ".env", ".env.*", "package-lock.json"]
+    "ignore": [
+      ".coverage/*",
+      ".devenv/*",
+      ".direnv/*",
+      "broadcast/*",
+      "cache/*",
+      "dist/*",
+      "lib/*",
+      "node_modules/*",
+      "out/*",
+      ".env",
+      ".env.*",
+      "package-lock.json"
+    ]
   }
 }

@@ -14,6 +14,8 @@
     "cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info && open .coverage/index.html",
     "test": "forge test -vvv",
     "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\"",
+    "format": "forge fmt",
+    "format:js": "npx @biomejs/biome format . --write",
     "slither": "slither .",
     "exportAbi": "forge build && ts-node ./script/exportAbi.ts -g '{Usdn.sol,UsdnProtocol/UsdnProtocol.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
     "clean": "rm -rf dist && forge clean"
