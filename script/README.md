@@ -38,5 +38,18 @@ If `WSTETH_ADDRESS` is defined and `GET_WSTETH=true`, then the script will wrap 
 contract so that there is enough balance.
 
 ```
-forge script --via-ir --non-interactive --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 -f anvil script/Deploy.s.sol --broadcast
+forge script --non-interactive --private-key 0xac... -f http://localhost:8545 script/Deploy.s.sol --broadcast
+```
+
+## Anvil fork configuration
+
+The `anvil` fork should be launched with at least the following parameters:
+
+- `-a 100` to fund 100 addresses with 10'000 Ξ
+- `-f https://..` to fork mainnet at the latest height
+- `--chain-id 31337` to change from the default (1) forked chain ID
+- `--code-size-limit 50000` to support larger contracts (50kB) since we are still in the process of optimizing code size
+
+```
+anvil -a 100 -f [Mainnet RPC] --chain-id 31337 --code-size-limit 50000
 ```
