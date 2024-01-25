@@ -136,16 +136,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
     function initiateOpenPosition(
         uint96 amount,
-        int24 tick,
+        uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
-    ) external payable initializedAndNonReentrant returns (uint128 liquidationPrice_, uint256 index_) {
+    ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 index_) {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
-
-        // calculate effective liquidation price
-        liquidationPrice_ = getEffectivePriceForTick(tick);
 
         uint40 timestamp = uint40(block.timestamp);
 
@@ -153,25 +150,40 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             timestamp, ProtocolAction.InitiateOpenPosition, currentPriceData
         );
 
-        bool priceUpdated =
-            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-        // liquidate if pnl applied
-        if (priceUpdated) {
-            _liquidatePositions(currentPrice.price, _liquidationIteration);
+        {
+            bool priceUpdated =
+                _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+            // liquidate if pnl applied
+            if (priceUpdated) {
+                _liquidatePositions(currentPrice.price, _liquidationIteration);
+            }
         }
 
-        // Apply liquidation penalty
-        // reverts if liquidationPrice >= entryPrice
-        uint40 leverage = getLeverageWithLiquidationPenalty(currentPrice.price.toUint128(), liquidationPrice_);
-        if (leverage < _minLeverage) {
-            revert UsdnProtocolLeverageTooLow();
+        uint128 leverage;
+        {
+            // we calculate the closest valid tick down for the desired liq price without liquidation penalty
+            int24 desiredLiqTick = getEffectiveTickForPrice(desiredLiqPrice);
+            uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(desiredLiqTick);
+
+            // calculate position leverage
+            // reverts if liquidationPrice >= entryPrice
+            leverage = _getLeverage(currentPrice.price.toUint128(), liqPriceWithoutPenalty);
+            if (leverage < _minLeverage) {
+                revert UsdnProtocolLeverageTooLow();
+            }
+            if (leverage > _maxLeverage) {
+                revert UsdnProtocolLeverageTooHigh();
+            }
+
+            // Apply liquidation penalty
+            tick_ = desiredLiqTick + int24(_liquidationPenalty) * _tickSpacing;
         }
-        if (leverage > _maxLeverage) {
-            revert UsdnProtocolLeverageTooHigh();
-        }
+
+        // Calculate effective liquidation price
+        uint128 liquidationPrice = getEffectivePriceForTick(tick_);
 
         // Liquidation price must be at least x% below current price
-        _checkSafetyMargin(currentPrice.price.toUint128(), liquidationPrice_);
+        _checkSafetyMargin(currentPrice.price.toUint128(), liquidationPrice);
 
         // Register position and adjust contract state
         Position memory long = Position({
@@ -181,14 +193,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             leverage: leverage,
             timestamp: timestamp
         });
-        index_ = _saveNewPosition(tick, long);
+        index_ = _saveNewPosition(tick_, long);
 
         // Register pending action
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateOpenPosition,
             timestamp: timestamp,
             user: msg.sender,
-            tick: tick,
+            tick: tick_,
             amountOrIndex: index_.toUint128(),
             assetPrice: 0,
             totalExpo: 0,
@@ -199,7 +211,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _addPendingAction(msg.sender, pendingAction);
 
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
-        emit InitiatedOpenPosition(msg.sender, long, tick, index_);
+        emit InitiatedOpenPosition(msg.sender, long, tick_, index_);
         _executePendingAction(previousActionPriceData);
     }
 
@@ -273,14 +285,18 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
     }
 
-    function liquidate(bytes calldata currentPriceData, uint16 iterations) external payable {
+    function liquidate(bytes calldata currentPriceData, uint16 iterations)
+        external
+        payable
+        returns (uint256 liquidated_)
+    {
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint40(block.timestamp), ProtocolAction.Liquidation, currentPriceData
         );
 
         _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
-        _liquidatePositions(currentPrice.price, iterations);
+        liquidated_ = _liquidatePositions(currentPrice.price, iterations);
 
         // TODO: add liquidator incentive if needed
     }
@@ -443,22 +459,21 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             long.timestamp, ProtocolAction.ValidateOpenPosition, priceData
         );
 
-        uint128 liquidationPrice = getEffectivePriceForTick(tick);
-
         // adjust balances
         _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
 
         // TODO: if price <= liquidationPrice, re-calculate a liquidation price based on the leverage so that the
         // position remains solvent. Emit LiquidationPriceChanged.
 
-        // Apply liquidation penalty
+        // Re-calculate leverage
+        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
         // reverts if liquidationPrice >= entryPrice
-        uint40 leverage = getLeverageWithLiquidationPenalty(price.price.toUint128(), liquidationPrice);
+        uint128 leverage = _getLeverage(price.price.toUint128(), liqPriceWithoutPenalty);
         // Leverage is always greater than 1 (liquidationPrice is positive).
         // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
         if (leverage > _maxLeverage) {
             // TODO: We should adjust liquidation price to have a leverage of _maxLeverage
-            // Update the `tick`, `index` and `liquidationPrice` variables.
+            // Update the `tick` and `index` variables.
             // Emit LiquidationPriceChanged.
         }
 
@@ -467,7 +482,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         pos.leverage = leverage;
         pos.startPrice = price.price.toUint128();
 
-        emit ValidatedOpenPosition(long.user, pos, tick, index, liquidationPrice);
+        emit ValidatedOpenPosition(long.user, pos, tick, index, getEffectivePriceForTick(tick));
     }
 
     function _validateClosePosition(address user, bytes calldata priceData) internal {
@@ -493,14 +508,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             long.timestamp, ProtocolAction.ValidateClosePosition, priceData
         );
 
-        uint128 liquidationPrice = getEffectivePriceForTick(tick);
-
         // adjust balances
         _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
 
+        uint128 liquidationPrice = getEffectivePriceForTick(tick);
+
         Position memory pos = getLongPosition(tick, index);
 
-        // TODO: check if can be liquidated according to the provided price
+        // TODO: check if can be liquidated according to the liquidation price (with liquidation penalty)
         liquidationPrice;
 
         int256 available = _longAssetAvailable(_lastPrice);
@@ -508,10 +523,11 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             available = 0;
         }
 
-        int256 value = positionValue(price.price.toUint128(), pos.startPrice, pos.amount, pos.leverage);
-        if (value < 0) {
-            value = 0;
-        }
+        // Calculate position value
+        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
+        int256 value =
+            positionValue(price.price.toUint128(), liqPriceWithoutPenalty, pos.amount, pos.leverage).toInt256();
+
         uint256 assetToTransfer;
         if (value > available) {
             assetToTransfer = uint256(available);

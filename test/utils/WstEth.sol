@@ -14,7 +14,7 @@ contract WstETH is ERC20, ERC20Permit {
         _mint(to, amount);
     }
 
-    /// @dev Returns the amount of stETH per wstETH (mock value)
+    /// @dev Returns the amount of ETH per stETH (mock value)
     function stEthPerToken() public pure returns (uint256) {
         return 1.15 ether;
     }
