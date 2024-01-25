@@ -5,6 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /// @custom:feature The `_liquidatePositions` function of `UsdnProtocol`
