@@ -32,6 +32,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         len_ = _positionsInTick[_tickHash(tick)];
     }
 
+    // slither-disable-next-line write-after-write
     function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
         liquidationPrice_ = getLiquidationPrice(price, uint40(_minLeverage));
         int24 tick = getEffectiveTickForPrice(liquidationPrice_);
