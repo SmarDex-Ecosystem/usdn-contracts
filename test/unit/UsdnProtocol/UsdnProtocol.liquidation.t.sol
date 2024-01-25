@@ -51,7 +51,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.warp(block.timestamp + blockDiff * 12);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 1);
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
         // second mock init open position
         mockInitiateOpenPosition(20 ether, true, getUsers(users.length / 2));
 
@@ -109,7 +109,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         (, bytes memory priceData) = getPriceInfo(block.number);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 1);
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
 
@@ -229,7 +229,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         (, bytes memory priceData) = getPriceInfo(block.number);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 1);
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
         // liquidator first liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
 

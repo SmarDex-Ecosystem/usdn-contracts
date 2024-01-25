@@ -171,9 +171,9 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a tick is liquidated
      * @param tick The liquidated tick.
-     * @param newTickVersion The new tick version that is current.
+     * @param oldTickVersion The liquidated tick version.
      */
-    event LiquidatedTick(int24 indexed tick, uint256 newTickVersion);
+    event LiquidatedTick(int24 indexed tick, uint256 indexed oldTickVersion);
 }
 
 /* -------------------------------------------------------------------------- */
