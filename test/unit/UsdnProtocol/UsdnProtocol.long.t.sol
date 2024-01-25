@@ -47,11 +47,10 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      */
     function test_getMinLiquidationPrice_multiplierGtOne() public {
         bytes memory priceData = abi.encode(4000 ether);
-        int24 tick = protocol.getEffectiveTickForPrice(
-            protocol.getLiquidationPrice(4000 ether, uint40(2 * 10 ** protocol.LEVERAGE_DECIMALS()))
-        );
+        uint128 desiredLiqPrice =
+            protocol.getLiquidationPrice(4000 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
 
-        protocol.initiateOpenPosition(500 ether, tick, priceData, "");
+        protocol.initiateOpenPosition(500 ether, desiredLiqPrice, priceData, "");
         protocol.validateOpenPosition(priceData, "");
         skip(1 days);
         protocol.initiateDeposit(1, priceData, "");
@@ -92,13 +91,12 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:when The minimum leverage is 1
      * @custom:and The multiplier is 1x.
      */
-    function test_getMinLiquidationPrice__minLeverageEqOne() public {
+    function test_getMinLiquidationPrice_minLeverageEqOne() public {
         /**
          * 5000 - 5000 / 1 = 0
          * => minLiquidationPrice = getPriceAtTick(protocol.minTick() + protocol.tickSpacing())
          */
-
-        protocol.setMinLeverage(uint40(10 ** protocol.LEVERAGE_DECIMALS()));
+        protocol.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS());
         assertEq(
             protocol.getMinLiquidationPrice(5000 ether),
             TickMath.getPriceAtTick(protocol.minTick() + protocol.tickSpacing())
@@ -110,12 +108,11 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:when The minimum leverage is 1.1
      * @custom:and The multiplier is 1x.
      */
-    function test_getMinLiquidationPrice__minLeverageEq1_1() public {
+    function test_getMinLiquidationPrice_minLeverageEq1_1() public {
         /**
          * 5000 - 5000 / 1.1 = 454.545454545454545455
          * tick(454.545454545454545455) = 61_100 => + tickSpacing = 61_200
          */
-
         protocol.setMinLeverage(11 * 10 ** (protocol.LEVERAGE_DECIMALS() - 1)); // = x1.1
         assertEq(protocol.getMinLiquidationPrice(5000 ether), TickMath.getPriceAtTick(61_200));
     }

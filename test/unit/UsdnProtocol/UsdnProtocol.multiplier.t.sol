@@ -41,11 +41,10 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
      */
     function test_liquidationMultiplier() public {
         bytes memory priceData = abi.encode(4000 ether);
-        int24 tick = protocol.getEffectiveTickForPrice(
-            protocol.getLiquidationPrice(4000 ether, (2 * 10 ** protocol.LEVERAGE_DECIMALS()).toUint40())
-        );
+        uint128 desiredLiqPrice =
+            protocol.getLiquidationPrice(4000 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
 
-        protocol.initiateOpenPosition(500 ether, tick, priceData, "");
+        protocol.initiateOpenPosition(500 ether, desiredLiqPrice, priceData, "");
         protocol.validateOpenPosition(priceData, "");
         assertEq(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 
@@ -58,7 +57,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         // Here, we have vaultExpo ~= 2*longExpo and fund < 0, so we should have multiplier < 1
         skip(6 days);
         // We need to initiate a position to trigger the refresh of the multiplier
-        protocol.initiateOpenPosition(1, tick, priceData, "");
+        protocol.initiateOpenPosition(1, desiredLiqPrice, priceData, "");
         assertLt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
     }
 }

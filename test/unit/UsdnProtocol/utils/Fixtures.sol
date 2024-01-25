@@ -44,6 +44,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     MockOracleMiddleware public oracleMiddleware;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
+    uint128 public defaultPosLeverage;
+    uint128 public initialLongLeverage;
 
     function _setUp(SetUpParams memory testParams) public virtual {
         vm.warp(testParams.initialTimestamp);
@@ -58,10 +60,15 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         protocol.initialize(
             testParams.initialDeposit,
             testParams.initialLong,
-            protocol.getEffectiveTickForPrice(testParams.initialPrice / 2),
+            testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
         usdnInitialTotalSupply = usdn.totalSupply();
+        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0);
+        defaultPosLeverage = defaultPos.leverage;
+        Position memory firstPos =
+            protocol.getLongPosition(protocol.getEffectiveTickForPrice(testParams.initialPrice / 2), 0);
+        initialLongLeverage = firstPos.leverage;
         vm.stopPrank();
         params = testParams;
 
@@ -84,14 +91,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0);
-        assertEq(defaultPos.leverage, 1 gwei, "default pos leverage");
+        assertEq(defaultPos.leverage, 1_000_000_000_000_000_005_039, "default pos leverage");
         assertEq(defaultPos.timestamp, block.timestamp, "default pos timestamp");
         assertEq(defaultPos.user, protocol.DEAD_ADDRESS(), "default pos user");
         assertEq(defaultPos.amount, protocol.FIRST_LONG_AMOUNT(), "default pos amount");
         assertEq(defaultPos.startPrice, params.initialPrice, "default pos start price");
         Position memory firstPos =
             protocol.getLongPosition(protocol.getEffectiveTickForPrice(params.initialPrice / 2), 0);
-        assertEq(firstPos.leverage, 1_983_994_053, "first pos leverage");
+        assertEq(firstPos.leverage, 1_983_994_053_940_692_631_258, "first pos leverage");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong - protocol.FIRST_LONG_AMOUNT(), "first pos amount");
@@ -99,20 +106,20 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     }
 
     // create x funded addresses with ETH and underlying
-    function createAndFundUsers(uint256 _userCount, uint256 _initialBalance) public {
+    function createAndFundUsers(uint256 userCount, uint256 initialBalance) public {
         // user memory
-        address[] memory _users = new address[](_userCount);
+        address[] memory _users = new address[](userCount);
 
-        for (uint256 i; i < _userCount; i++) {
+        for (uint256 i; i < userCount; i++) {
             // user address from private key i + 1
             _users[i] = vm.addr(i + 1);
 
             // fund eth
-            vm.deal(_users[i], _initialBalance * 2);
+            vm.deal(_users[i], initialBalance * 2);
 
             // fund wsteth
             vm.startPrank(_users[i]);
-            (bool success,) = address(wstETH).call{ value: _initialBalance }("");
+            (bool success,) = address(wstETH).call{ value: initialBalance }("");
             require(success, "swap asset error");
             wstETH.approve(address(protocol), type(uint256).max);
 
@@ -126,20 +133,18 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     // mock initiate open positions for x users
     function mockInitiateOpenPosition(uint96 refAmount, bool autoValidate, address[] memory _users)
         public
-        returns (int24 _tick)
+        returns (int24 tick_)
     {
         uint256 count = _users.length;
 
         for (uint256 i; i < count; i++) {
             (uint128 currentPrice, bytes memory priceData) = getPriceInfo(block.number);
             // liquidation target price -15%
-            uint128 liquidationTargetPriceUint = currentPrice - (currentPrice * 15 / 100);
-            // effective tick for target price
-            _tick = protocol.getEffectiveTickForPrice(liquidationTargetPriceUint);
+            uint128 liquidationTargetPriceUint = currentPrice * 85 / 100;
 
             vm.startPrank(_users[i]);
             // initiate open position
-            protocol.initiateOpenPosition(refAmount, _tick, priceData, "");
+            (tick_,) = protocol.initiateOpenPosition(refAmount, liquidationTargetPriceUint, priceData, "");
 
             // if auto validate true
             if (autoValidate) {
@@ -152,7 +157,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
     // get encoded price to simulate a price drawdown according to
     // block number currently 1% down per block from initial price
-    function getPriceInfo(uint256 blockNumber) public view returns (uint128 price, bytes memory data) {
+    function getPriceInfo(uint256 blockNumber) public view returns (uint128 price_, bytes memory data_) {
         // check correct block
         require(blockNumber + 1 > params.initialBlock, "unallowed block");
         // diff block + 1
@@ -160,9 +165,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         // check correct diffBlocks
         require(diffBlocks < 100, "block number too far");
         // price = initial price - (n x diff block)%
-        price = uint128(params.initialPrice - (params.initialPrice * diffBlocks / 100));
+        price_ = uint128(params.initialPrice - (params.initialPrice * diffBlocks / 100));
         // encode price
-        data = abi.encode(price);
+        data_ = abi.encode(price_);
     }
 
     // users memory array
