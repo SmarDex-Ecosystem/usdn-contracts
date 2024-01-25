@@ -8,7 +8,7 @@ import { WstETH } from "test/utils/WstEth.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { OracleMiddleware } from "../src/oracleMiddleware/OracleMiddleware.sol";
+import { OracleMiddleware } from "../src/OracleMiddleware/OracleMiddleware.sol";
 
 contract Deploy is Script {
     function run() external {
