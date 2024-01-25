@@ -241,6 +241,8 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
                 ++i;
             }
             _tickBitmap.unset(_tickToBitmapIndex(tick));
+
+            emit LiquidatedTick(tick, _tickVersion[tick]);
         } while (i < iteration);
 
         if (liquidated_ != 0) {
