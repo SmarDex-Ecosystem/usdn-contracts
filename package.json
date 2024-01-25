@@ -1,40 +1,40 @@
 {
-  "name": "@usdn/usdn-contracts",
-  "version": "0.2.0",
-  "description": "Contracts for the USDN token and derivatives protocol",
-  "repository": "git@github.com:Blockchain-RA2-Tech/usdn-contracts.git",
-  "author": "RA2 Tech",
-  "license": "BUSL-1.1",
-  "scripts": {
-    "prepare": "husky install",
-    "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test FFI",
-    "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test FFI --check",
-    "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test FFI",
-    "cov": "forge coverage --no-match-test FFI",
-    "cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info && open .coverage/index.html",
-    "test": "forge test -vvv",
-    "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\"",
-    "format": "forge fmt",
-    "format:js": "npx @biomejs/biome format . --write",
-    "slither": "slither .",
-    "exportAbi": "forge build && ts-node ./script/exportAbi.ts -g '{Usdn.sol,UsdnProtocol/UsdnProtocol.sol,OracleMiddleware/OracleMiddleware.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
-    "clean": "rm -rf dist && forge clean"
-  },
-  "main": "dist/index.js",
-  "files": [
-    "dist",
-    "broadcast"
-  ],
-  "devDependencies": {
-    "@biomejs/biome": "^1.5.3",
-    "@chainlink/contracts": "^0.8.0",
-    "@openzeppelin/contracts": "^5.0.0",
-    "@pythnetwork/pyth-sdk-solidity": "^2.3.0",
-    "commander": "^11.1.0",
-    "glob": "^10.3.10",
-    "husky": "^8.0.3",
-    "solady": "^0.0.138",
-    "ts-node": "^10.9.2",
-    "tsup": "^8.0.1"
-  }
+	"name": "@usdn/usdn-contracts",
+	"version": "0.2.0",
+	"description": "Contracts for the USDN token and derivatives protocol",
+	"repository": "git@github.com:Blockchain-RA2-Tech/usdn-contracts.git",
+	"author": "RA2 Tech",
+	"license": "BUSL-1.1",
+	"scripts": {
+		"prepare": "husky install",
+		"snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fuzz)\"",
+		"snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fuzz)\" --check",
+		"coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test FFI",
+		"cov": "forge coverage --no-match-test FFI",
+		"cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info && open .coverage/index.html",
+		"test": "forge test -vvv",
+		"quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\"",
+		"format": "forge fmt",
+		"format:js": "npx @biomejs/biome format . --write",
+		"slither": "slither .",
+		"exportAbi": "forge build && ts-node ./script/exportAbi.ts -g '{Usdn.sol,UsdnProtocol/UsdnProtocol.sol,OracleMiddleware/OracleMiddleware.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
+		"clean": "rm -rf dist && forge clean"
+	},
+	"main": "dist/index.js",
+	"files": [
+		"dist",
+		"broadcast"
+	],
+	"devDependencies": {
+		"@biomejs/biome": "^1.5.3",
+		"@chainlink/contracts": "^0.8.0",
+		"@openzeppelin/contracts": "^5.0.0",
+		"@pythnetwork/pyth-sdk-solidity": "^2.3.0",
+		"commander": "^11.1.0",
+		"glob": "^10.3.10",
+		"husky": "^8.0.3",
+		"solady": "^0.0.138",
+		"ts-node": "^10.9.2",
+		"tsup": "^8.0.1"
+	}
 }
