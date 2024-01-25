@@ -25,12 +25,6 @@ contract OracleMiddlewareBaseFixture is BaseFixture {
     AggregatorV3Interface chainlinkOnChain;
     OracleMiddleware public oracleMiddleware;
 
-    modifier ethMainnetFork() {
-        string memory url = vm.rpcUrl("mainnet");
-        vm.createSelectFork(url);
-        _;
-    }
-
     modifier reSetUp() {
         setUp();
         _;

@@ -10,6 +10,12 @@ import "test/utils/Constants.sol";
  * @dev Define labels for various accounts and contracts.
  */
 contract BaseFixture is Test {
+    modifier ethMainnetFork() {
+        string memory url = vm.rpcUrl("mainnet");
+        vm.createSelectFork(url);
+        _;
+    }
+
     constructor() {
         /* -------------------------------------------------------------------------- */
         /*                                  Accounts                                  */
