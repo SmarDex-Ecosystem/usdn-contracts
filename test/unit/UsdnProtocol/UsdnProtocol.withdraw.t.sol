@@ -20,8 +20,8 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
     // We can't do the deposit here because then the `test_setUp()` fails in the fixture.
     // This will be refactored once we have the new fixture setup function from PR #42
-    function setUp() public override {
-        super.setUp();
+    function setUp() public {
+        super._setUp(DEFAULT_PARAMS);
         wstETH.mint(address(this), INITIAL_WSTETH_BALANCE);
         wstETH.approve(address(protocol), type(uint256).max);
         usdn.approve(address(protocol), type(uint256).max);

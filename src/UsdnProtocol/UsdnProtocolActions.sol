@@ -253,7 +253,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // in validateClosePosition?
         // We will use the tick to calculate the liquidation price.
         // We won't need the index anymore, so we can store the amount in fifth parameter.
-        // We can store the leverage in any of the other parameters (it's a uint40).
+        // We can store the leverage in any of the other parameters (it's a uint128).
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateClosePosition,
             timestamp: timestamp,
