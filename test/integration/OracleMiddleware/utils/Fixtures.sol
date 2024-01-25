@@ -39,11 +39,7 @@ contract OracleMiddlewareBaseFixture is BaseFixture {
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
         chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE);
-        oracleMiddleware = new OracleMiddleware(
-            address(pyth),
-            PYTH_WSTETH_USD,
-            address(chainlinkOnChain)
-        );
+        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_WSTETH_USD, address(chainlinkOnChain));
     }
 
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {

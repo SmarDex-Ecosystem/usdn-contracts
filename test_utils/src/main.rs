@@ -1,6 +1,7 @@
 use std::ops::DivAssign;
 
 use alloy_primitives::{FixedBytes, I256, U256};
+use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use clap::{Parser, Subcommand};
@@ -65,8 +66,7 @@ enum Commands {
     },
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     let cli = Cli::parse();
 
     let wad: Integer = "1000000000000000000".parse().unwrap();
@@ -108,8 +108,8 @@ async fn main() -> Result<()> {
             let request_url = format!(
                 "https://hermes.pyth.network/api/get_price_feed?id={feed}&publish_time={publish_time}&binary=true"
             );
-            let response = reqwest::get(&request_url).await?;
-            let price: HermesResponse = response.json().await?;
+            let response = reqwest::blocking::get(request_url)?;
+            let price: HermesResponse = response.json()?;
             print_pyth_response(price)?;
         }
     }
@@ -137,24 +137,15 @@ fn print_u256_hex(x: Integer) -> Result<()> {
 
 fn print_pyth_response(response: HermesResponse) -> Result<()> {
     let price_hex = response.price.price.parse::<U256>()?;
-    let price_bytes: FixedBytes<32> = price_hex.to_be_bytes().into();
-
     let conf_hex = response.price.conf.parse::<U256>()?;
-    let conf_bytes: FixedBytes<32> = conf_hex.to_be_bytes().into();
-
     // Decode vaa from base64 to hex
     let decoded_vaa = STANDARD.decode(response.vaa)?;
-
-    let vaa_raw_bytes: String = decoded_vaa
-        .iter()
-        .map(|byte| format!("{:02X}", byte))
-        .collect();
-    let vaa_bytes = format!("{:064x}{:064x}{}", 128, decoded_vaa.len(), vaa_raw_bytes);
-
-    println!(
-        "{}{:32x}{:064x}{}",
-        price_bytes, conf_bytes, response.price.publish_time, vaa_bytes
+    let data = (
+        price_hex,
+        conf_hex,
+        U256::from(response.price.publish_time),
+        &decoded_vaa,
     );
-
+    print!("{}", const_hex::encode_prefixed(data.abi_encode_params()));
     Ok(())
 }
