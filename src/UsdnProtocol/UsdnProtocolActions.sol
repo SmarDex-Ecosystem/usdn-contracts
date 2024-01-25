@@ -58,7 +58,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             tick: 0, // unused
             amountOrIndex: amount,
             assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
-            totalExpo: _totalExpo,
+            totalExpoOrTickVersion: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
@@ -110,7 +110,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             tick: 0, // unused
             amountOrIndex: usdnAmount,
             assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
-            totalExpo: _totalExpo,
+            totalExpoOrTickVersion: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
@@ -139,7 +139,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
-    ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 index_) {
+    ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -186,32 +186,34 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _checkSafetyMargin(currentPrice.price.toUint128(), liquidationPrice);
 
         // Register position and adjust contract state
-        Position memory long = Position({
-            user: msg.sender,
-            amount: amount,
-            startPrice: currentPrice.price.toUint128(),
-            leverage: leverage,
-            timestamp: timestamp
-        });
-        index_ = _saveNewPosition(tick_, long);
+        {
+            Position memory long = Position({
+                user: msg.sender,
+                amount: amount,
+                startPrice: currentPrice.price.toUint128(),
+                leverage: leverage,
+                timestamp: timestamp
+            });
+            (tickVersion_, index_) = _saveNewPosition(tick_, long);
 
-        // Register pending action
-        PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.InitiateOpenPosition,
-            timestamp: timestamp,
-            user: msg.sender,
-            tick: tick_,
-            amountOrIndex: index_.toUint128(),
-            assetPrice: 0,
-            totalExpo: 0,
-            balanceVault: 0,
-            balanceLong: 0,
-            usdnTotalSupply: 0
-        });
-        _addPendingAction(msg.sender, pendingAction);
-
+            // Register pending action
+            PendingAction memory pendingAction = PendingAction({
+                action: ProtocolAction.InitiateOpenPosition,
+                timestamp: timestamp,
+                user: msg.sender,
+                tick: tick_,
+                amountOrIndex: index_.toUint128(),
+                assetPrice: 0,
+                totalExpoOrTickVersion: tickVersion_,
+                balanceVault: 0,
+                balanceLong: 0,
+                usdnTotalSupply: 0
+            });
+            _addPendingAction(msg.sender, pendingAction);
+            emit InitiatedOpenPosition(msg.sender, long, tick_, tickVersion_, index_);
+        }
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
-        emit InitiatedOpenPosition(msg.sender, long, tick_, index_);
+
         _executePendingAction(previousActionPriceData);
     }
 
@@ -226,12 +228,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
     function initiateClosePosition(
         int24 tick,
+        uint256 tickVersion,
         uint256 index,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
     ) external payable initializedAndNonReentrant {
         // check if the position belongs to the user
-        Position memory pos = getLongPosition(tick, index);
+        Position memory pos = getLongPosition(tick, tickVersion, index);
         if (pos.user != msg.sender) {
             revert UsdnProtocolUnauthorized();
         }
@@ -249,7 +252,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             _liquidatePositions(currentPrice.price, _liquidationIteration);
         }
 
-        // TODO: what needs to be stored here so we can remove the position from the tick and calculate the profit
+        // TODO: what needs to be stored here so we can remove the position from the tick now and calculate the profit
         // in validateClosePosition?
         // We will use the tick to calculate the liquidation price.
         // We won't need the index anymore, so we can store the amount in fifth parameter.
@@ -261,7 +264,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             tick: tick,
             amountOrIndex: index.toUint128(),
             assetPrice: 0,
-            totalExpo: 0,
+            totalExpoOrTickVersion: tickVersion,
             balanceVault: 0,
             balanceLong: 0,
             usdnTotalSupply: 0
@@ -272,7 +275,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         _addPendingAction(msg.sender, pendingAction);
 
-        emit InitiatedClosePosition(msg.sender, tick, index);
+        emit InitiatedClosePosition(msg.sender, tick, tickVersion, index);
         _executePendingAction(previousActionPriceData);
     }
 
@@ -346,7 +349,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             deposit.amountOrIndex,
             uint256(
                 _vaultAssetAvailable(
-                    deposit.totalExpo,
+                    deposit.totalExpoOrTickVersion,
                     deposit.balanceVault,
                     deposit.balanceLong,
                     depositPrice_.price.toUint128(), // new price
@@ -408,7 +411,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint256 available1 = withdrawal.balanceVault;
         uint256 available2 = uint256(
             _vaultAssetAvailable(
-                withdrawal.totalExpo,
+                withdrawal.totalExpoOrTickVersion,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
                 withdrawalPrice.price.toUint128(), // new price
@@ -453,7 +456,17 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
     function _validateOpenPositionWithAction(PendingAction memory long, bytes calldata priceData) internal {
         int24 tick = long.tick;
+        uint256 tickVersion = long.totalExpoOrTickVersion;
         uint256 index = long.amountOrIndex;
+
+        (bytes32 tickHash, uint256 version) = _tickHash(tick);
+
+        if (version != tickVersion) {
+            // The current tick version doesn't match the version from the pending action.
+            // This means the position has been liquidated in the mean time
+            // TODO: emit event notifying the user
+            return;
+        }
 
         PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             long.timestamp, ProtocolAction.ValidateOpenPosition, priceData
@@ -478,11 +491,11 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         }
 
         // Adjust position parameters
-        Position storage pos = _longPositions[_tickHash(tick)][index];
+        Position storage pos = _longPositions[tickHash][index];
         pos.leverage = leverage;
         pos.startPrice = price.price.toUint128();
 
-        emit ValidatedOpenPosition(long.user, pos, tick, index, getEffectivePriceForTick(tick));
+        emit ValidatedOpenPosition(long.user, pos, tick, tickVersion, index, getEffectivePriceForTick(tick));
     }
 
     function _validateClosePosition(address user, bytes calldata priceData) internal {
@@ -502,7 +515,19 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
     function _validateClosePositionWithAction(PendingAction memory long, bytes calldata priceData) internal {
         int24 tick = long.tick;
+        uint256 tickVersion = long.totalExpoOrTickVersion;
         uint256 index = long.amountOrIndex;
+
+        (, uint256 version) = _tickHash(tick);
+
+        if (version != tickVersion) {
+            // The current tick version doesn't match the version from the pending action.
+            // This means the position has been liquidated in the mean time
+            // TODO: this will become unapplicable when we change the flow of closing positions to directly remove
+            // the position from the tick after the initiate action. After that change, we will need another mechanism
+            // to make sure the pending close positions can be liquidated during the 24s window.
+            return;
+        }
 
         PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             long.timestamp, ProtocolAction.ValidateClosePosition, priceData
@@ -513,7 +538,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
 
-        Position memory pos = getLongPosition(tick, index);
+        Position memory pos = getLongPosition(tick, tickVersion, index);
 
         // TODO: check if can be liquidated according to the liquidation price (with liquidation penalty)
         liquidationPrice;
@@ -537,13 +562,13 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         // remove the position for the protocol and adjust state
         _balanceLong -= assetToTransfer;
-        _removePosition(tick, index, pos);
+        _removePosition(tick, tickVersion, index, pos);
 
         // send the asset to the user
         _distributeAssetsAndCheckBalance(pos.user, assetToTransfer);
 
         emit ValidatedClosePosition(
-            pos.user, tick, index, assetToTransfer, int256(assetToTransfer) - _toInt256(pos.amount)
+            pos.user, tick, tickVersion, index, assetToTransfer, int256(assetToTransfer) - _toInt256(pos.amount)
         );
     }
 
