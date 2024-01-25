@@ -25,11 +25,6 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _tickVersion[_tick];
     }
 
-    // total expo
-    function totalExpo() external view returns (uint256) {
-        return _totalExpo;
-    }
-
     // tick hash
     function tickHash(int24 tick) external view returns (bytes32) {
         return _tickHash(tick);
@@ -79,5 +74,21 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
+    }
+
+    function longAssetAvailable(uint128 currentPrice) external view returns (int256) {
+        return _longAssetAvailable(currentPrice);
+    }
+
+    function totalExpo() external view returns (uint256) {
+        return _totalExpo;
+    }
+
+    function getLeverage(uint128 startPrice, uint128 liquidationPrice) external pure returns (uint128) {
+        return _getLeverage(startPrice, liquidationPrice);
+    }
+
+    function liquidationPenalty() external view returns (uint24) {
+        return _liquidationPenalty;
     }
 }

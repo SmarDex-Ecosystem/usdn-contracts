@@ -58,7 +58,8 @@ contract Deploy is Script {
 
         // Initialize if needed
         if (depositAmount > 0 && longAmount > 0) {
-            protocol.initialize(uint128(depositAmount), uint128(longAmount), protocol.minTick(), "");
+            // Desired liquidation price at 1 USD
+            protocol.initialize(uint128(depositAmount), uint128(longAmount), 1 ether, "");
         }
 
         vm.stopBroadcast();
