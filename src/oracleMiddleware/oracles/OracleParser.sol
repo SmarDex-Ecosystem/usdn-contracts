@@ -14,13 +14,13 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
  * @dev return price.
  */
 contract OracleParser is PythOracle, ChainlinkOracle, Ownable {
-    // wsteth instance
+    /// @notice wsteth instance
     IWstETH internal immutable _wstEth;
 
-    // confidence ratio denominator
+    /// @notice confidence ratio denominator
     uint16 private constant CONF_DENOMINATOR = 10_000;
 
-    // updatable confidence ratio
+    /// @notice updatable confidence ratio
     uint16 internal _confRatio = 4000;
 
     constructor(address pyth, bytes32 priceID, address priceFeed, address wsteth)
@@ -40,22 +40,22 @@ contract OracleParser is PythOracle, ChainlinkOracle, Ownable {
         _confRatio = newConfRatio;
     }
 
-    /// @notice conf ratio denominator
+    /// @notice Conf ratio denominator
     function confDenominator() external pure returns (uint16) {
         return CONF_DENOMINATOR;
     }
 
-    /// @notice conf ratio
+    /// @notice Conf ratio
     function confRatio() external view returns (uint16) {
         return _confRatio;
     }
 
-    // wsteth contract address
+    /// @notice Wsteth contract address
     function wstEth() external view returns (address) {
         return address(_wstEth);
     }
 
-    /// @notice wsteth target.
+    /// @notice Is it wsteth target
     function isWsteth() public view returns (bool) {
         return address(_wstEth) != address(0);
     }
