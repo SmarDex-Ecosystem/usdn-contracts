@@ -7,7 +7,7 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
 
-import { OracleMiddleware } from "src/oracleMiddleware/OracleMiddleware.sol";
+import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 
 /**
  * @title OracleMiddlewareBaseFixture

@@ -14,7 +14,7 @@ import {
     PYTH_DATA
 } from "test/integration/OracleMiddleware/utils/Constants.sol";
 
-import { OracleMiddleware } from "src/oracleMiddleware/OracleMiddleware.sol";
+import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 
 /**
  * @title OracleMiddlewareBaseFixture
