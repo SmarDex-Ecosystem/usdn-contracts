@@ -18,13 +18,28 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     uint256 initialWstETHBalance;
     uint256 initialUsdnBalance;
 
-    // We can't do the deposit here because then the `test_setUp()` fails in the fixture.
-    // This will be refactored once we have the new fixture setup function from PR #42
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
         wstETH.mint(address(this), INITIAL_WSTETH_BALANCE);
         wstETH.approve(address(protocol), type(uint256).max);
         usdn.approve(address(protocol), type(uint256).max);
+        // user deposits wstETH at price $2000
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        protocol.initiateDeposit(DEPOSIT_AMOUNT, currentPrice, "");
+        protocol.validateDeposit(currentPrice, "");
+        initialUsdnBalance = usdn.balanceOf(address(this));
+        initialWstETHBalance = wstETH.balanceOf(address(this));
+    }
+
+    /**
+     * @custom:scenario Test the setup function output
+     * @custom:given The user deposited 1 wstETH at price $2000
+     * @custom:then The user's USDN balance is 2000 USDN
+     * @custom:and The user's wstETH balance is 9 wstETH
+     */
+    function test_withdrawSetUp() public {
+        assertEq(initialUsdnBalance, 2000 * DEPOSIT_AMOUNT, "initial usdn balance");
+        assertEq(initialWstETHBalance, INITIAL_WSTETH_BALANCE - DEPOSIT_AMOUNT, "initial wstETH balance");
     }
 
     /**
@@ -41,7 +56,6 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The pending action is actionable after the validation deadline has elapsed
      */
     function test_initiateWithdraw() public {
-        _makeDeposit();
         skip(3600);
         bytes memory currentPrice = abi.encode(uint128(3000 ether));
 
@@ -77,7 +91,6 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with `UsdnProtocolZeroAmount`
      */
     function test_RevertWhen_zeroAmount() public {
-        _makeDeposit();
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
         protocol.initiateWithdrawal(0, abi.encode(uint128(2000 ether)), "");
     }
@@ -93,7 +106,6 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425567369616038842
      */
     function test_validateWithdrawPriceUp() public {
-        _makeDeposit();
         skip(3600);
         _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.425567369616038842 ether);
     }
@@ -109,20 +121,8 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.455407845991096267
      */
     function test_validateWithdrawPriceDown() public {
-        _makeDeposit();
         skip(3600);
         _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.455407845991096267 ether);
-    }
-
-    /// @dev Helper function to make a deposit of 1 wstETH at price $2000
-    function _makeDeposit() internal {
-        bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        protocol.initiateDeposit(DEPOSIT_AMOUNT, currentPrice, "");
-        protocol.validateDeposit(currentPrice, "");
-        initialUsdnBalance = usdn.balanceOf(address(this));
-        initialWstETHBalance = wstETH.balanceOf(address(this));
-        assertEq(initialUsdnBalance, 2000 * DEPOSIT_AMOUNT, "initial usdn balance");
-        assertEq(initialWstETHBalance, INITIAL_WSTETH_BALANCE - DEPOSIT_AMOUNT, "initial wstETH balance");
     }
 
     /**
