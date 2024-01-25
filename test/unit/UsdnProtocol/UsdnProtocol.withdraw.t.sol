@@ -40,7 +40,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The pending action is not actionable yet
      * @custom:and The pending action is actionable after the validation deadline has elapsed
      */
-    function test_initateWithdraw() public {
+    function test_initiateWithdraw() public {
         _makeDeposit();
         skip(3600);
         bytes memory currentPrice = abi.encode(uint128(3000 ether));
