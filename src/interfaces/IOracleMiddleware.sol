@@ -55,14 +55,16 @@ interface IOracleMiddlewareErrors {
     error OracleMiddlewareWrongPriceTimestamp(uint64 min, uint64 max, uint64 result);
     /// @notice The requested action is not supported by the middleware
     error OracleMiddlewareUnsupportedAction(ProtocolAction action);
+    /// @notice The requested action is not expected
+    error OracleMiddlewareUnexpectedAction();
     /// @notice The Pyth price validation failed
     error PythValidationFailed();
     /// @notice The oracle price is invalid
     error WrongPrice(int256 price);
     /// @notice The oracle price is invalid
     error PriceTooOld(int256 price, uint256 timestamp);
-    /// @notice The new fees is to high
-    error FeesToHigh();
+    /// @notice The confidence ratio is too high
+    error ConfRatioTooHigh();
 }
 
 /* -------------------------------------------------------------------------- */

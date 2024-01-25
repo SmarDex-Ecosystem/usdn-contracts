@@ -10,8 +10,6 @@ import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChain
 import { OracleMiddleware } from "src/oracleMiddleware/OracleMiddleware.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
-import { STETH_USD_ID } from "test/unit/OracleMiddleware/utils/Constants.sol";
-
 /**
  * @title OracleMiddlewareBaseFixture
  * @dev Utils for testing the oracle middleware
@@ -28,8 +26,7 @@ contract OracleMiddlewareBaseFixture is BaseFixture {
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
         wsteth = new WstETH();
-        oracleMiddleware =
-            new OracleMiddleware(address(mockPyth), STETH_USD_ID, address(mockChainlinkOnChain), address(wsteth));
+        oracleMiddleware = new OracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(wsteth));
     }
 
     function test_setUp() public {

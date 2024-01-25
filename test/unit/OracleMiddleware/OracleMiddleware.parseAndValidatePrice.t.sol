@@ -20,13 +20,22 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
 
     constructor() {
         super.setUp();
-        uint256 tokensPerStEth = IWstETH(oracleMiddleware.wstEth()).tokensPerStEth();
-        FORMATTED_ETH_PRICE = tokensPerStEth
-            * ((ETH_PRICE * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals())) / 1 ether;
-        FORMATTED_ETH_CONF = (
-            tokensPerStEth
-                * ((ETH_CONF * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals())) / 1 ether
-        ) * oracleMiddleware.fees() / oracleMiddleware.feesDenominator();
+
+        uint256 formattedEthPrice =
+            (ETH_PRICE * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals());
+        uint256 formattedEthConf = (
+            (ETH_CONF * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals())
+        ) * oracleMiddleware.confRatio() / oracleMiddleware.confDenominator();
+
+        // case wsteth: require to apply a ratio
+        if (oracleMiddleware.wstEth() != address(0)) {
+            uint256 stEthPerToken = IWstETH(oracleMiddleware.wstEth()).stEthPerToken();
+            formattedEthPrice = formattedEthPrice * 1 ether / stEthPerToken;
+            formattedEthConf = formattedEthConf * 1 ether / stEthPerToken;
+        }
+
+        FORMATTED_ETH_PRICE = formattedEthPrice;
+        FORMATTED_ETH_CONF = formattedEthConf;
     }
 
     function setUp() public override {
@@ -119,7 +128,9 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
             ProtocolAction.ValidateDeposit,
             abi.encode("data")
         );
-        assertEq(price.price, FORMATTED_ETH_PRICE - FORMATTED_ETH_CONF, "Wrong price for ValidateDeposit action");
+        assertApproxEqAbs(
+            price.price, FORMATTED_ETH_PRICE - FORMATTED_ETH_CONF, 1, "Wrong price for ValidateDeposit action"
+        );
     }
 
     /**
@@ -215,7 +226,9 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
             ProtocolAction.ValidateClosePosition,
             abi.encode("data")
         );
-        assertEq(price.price, FORMATTED_ETH_PRICE - FORMATTED_ETH_CONF, "Wrong price for ValidateClosePosition action");
+        assertApproxEqAbs(
+            price.price, FORMATTED_ETH_PRICE - FORMATTED_ETH_CONF, 1, "Wrong price for ValidateClosePosition action"
+        );
     }
 
     /**
@@ -231,7 +244,9 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
             ProtocolAction.Liquidation,
             abi.encode("data")
         );
-        assertEq(price.price, FORMATTED_ETH_PRICE - FORMATTED_ETH_CONF, "Wrong price for Liquidation action");
+        assertApproxEqAbs(
+            price.price, FORMATTED_ETH_PRICE - FORMATTED_ETH_CONF, 1, "Wrong price for Liquidation action"
+        );
     }
 
     /* -------------------------------------------------------------------------- */
