@@ -3,10 +3,9 @@ pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { Test } from "forge-std/Test.sol";
-
 import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
@@ -15,7 +14,7 @@ import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
  * @dev Wrapper to aid in testing the protocol
  */
 
-contract UsdnProtocolHandler is UsdnProtocol, Test {
+contract UsdnProtocolHandler is UsdnProtocol {
     constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
         UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing)
     { }
@@ -74,6 +73,22 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
+    }
+
+    function liquidationMultiplier() external view returns (uint256) {
+        return _liquidationMultiplier;
+    }
+
+    function setMinLeverage(uint256 minLeverage) external {
+        _minLeverage = minLeverage;
+    }
+
+    function getMinLeverage() external view returns (uint256) {
+        return _minLeverage;
+    }
+
+    function minimumPrice() external pure returns (uint256) {
+        return TickMath.MIN_PRICE;
     }
 
     function longAssetAvailable(uint128 currentPrice) external view returns (int256) {
