@@ -12,8 +12,8 @@ import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
  */
 contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
-    function setUp() public override {
-        super.setUp();
+    function setUp() public {
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**
@@ -83,9 +83,12 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
         longPosValue +=
             protocol.positionValue(finalPrice - 5 ether, liqPrice, protocol.FIRST_LONG_AMOUNT(), defaultPosLeverage);
         // calculate the value of the deployer's long position
-        liqPrice = protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2));
+        liqPrice = protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
         longPosValue += protocol.positionValue(
-            finalPrice - 5 ether, liqPrice, INITIAL_LONG - protocol.FIRST_LONG_AMOUNT(), initialLongLeverage
+            finalPrice - 5 ether,
+            liqPrice,
+            DEFAULT_PARAMS.initialLong - protocol.FIRST_LONG_AMOUNT(),
+            initialLongLeverage
         );
 
         emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());

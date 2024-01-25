@@ -12,8 +12,31 @@ import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
  */
 contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
-    function setUp() public override {
-        super.setUp();
+    function setUp() public {
+        super._setUp(DEFAULT_PARAMS);
+    }
+
+    /**
+     * @custom:scenario Check return values of the `funding` function
+     * @custom:when The timestamp is the same as the initial timestamp
+     * @custom:then The funding should be 0
+     */
+    function test_funding() public {
+        (int256 fund, int256 longExpo, int256 vaultExpo) =
+            protocol.funding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp));
+        assertEq(fund, 0, "funding should be 0 if no time has passed");
+        assertEq(longExpo, 4.919970269703462172 ether, "longExpo if no time has passed");
+        assertEq(vaultExpo, 10 ether, "vaultExpo if no time has passed");
+    }
+
+    /**
+     * @custom:scenario Calling the `funding` function
+     * @custom:when The timestamp is in the past
+     * @custom:then The protocol reverts with `UsdnProtocolTimestampTooOld`
+     */
+    function test_RevertWhen_funding_pastTimestamp() public {
+        vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
+        protocol.funding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp) - 1);
     }
 
     /**
@@ -28,13 +51,18 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_longAssetAvailable() public {
         // calculate the value of the init position
         uint128 initLiqPrice = protocol.getEffectivePriceForTick(protocol.minTick());
-        uint256 initPosValue =
-            protocol.positionValue(INITIAL_PRICE, initLiqPrice, protocol.FIRST_LONG_AMOUNT(), defaultPosLeverage);
+        uint256 initPosValue = protocol.positionValue(
+            DEFAULT_PARAMS.initialPrice, initLiqPrice, protocol.FIRST_LONG_AMOUNT(), defaultPosLeverage
+        );
 
         // calculate the value of the deployer's long position
-        uint128 longLiqPrice = protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2));
+        uint128 longLiqPrice =
+            protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
         uint256 longPosValue = protocol.positionValue(
-            INITIAL_PRICE, longLiqPrice, INITIAL_LONG - protocol.FIRST_LONG_AMOUNT(), initialLongLeverage
+            DEFAULT_PARAMS.initialPrice,
+            longLiqPrice,
+            DEFAULT_PARAMS.initialLong - protocol.FIRST_LONG_AMOUNT(),
+            initialLongLeverage
         );
 
         // calculate the sum to know the theoretical long balance
@@ -42,6 +70,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.
-        assertGe(uint256(protocol.longAssetAvailable(INITIAL_PRICE)), sumOfPositions, "long balance");
+        assertGe(uint256(protocol.longAssetAvailable(DEFAULT_PARAMS.initialPrice)), sumOfPositions, "long balance");
     }
 }

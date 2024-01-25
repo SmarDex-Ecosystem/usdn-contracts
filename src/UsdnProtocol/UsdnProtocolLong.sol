@@ -32,6 +32,13 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         len_ = _positionsInTick[_tickHash(tick)];
     }
 
+    // slither-disable-next-line write-after-write
+    function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
+        liquidationPrice_ = getLiquidationPrice(price, uint128(_minLeverage));
+        int24 tick = getEffectiveTickForPrice(liquidationPrice_);
+        liquidationPrice_ = getEffectivePriceForTick(tick + _tickSpacing);
+    }
+
     function findMaxInitializedTick(int24 searchStart) public view returns (int24 tick_) {
         uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(searchStart));
         if (index == LibBitmap.NOT_FOUND) {
@@ -70,8 +77,17 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     }
 
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
-        tick_ = TickMath.getTickAtPrice(uint256(price));
-        int24 tickSpacing = _tickSpacing; // gas saving
+        // adjusted price with liquidation multiplier
+        uint256 priceWithMultiplier =
+            FixedPointMathLib.fullMulDiv(uint256(price), 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
+
+        if (priceWithMultiplier < TickMath.MIN_PRICE) {
+            return minTick();
+        }
+
+        int24 tickSpacing = _tickSpacing;
+        tick_ = TickMath.getTickAtPrice(priceWithMultiplier);
+
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         if (tick_ < 0) {
             // we round up the inverse number (positive) then invert it -> round towards negative infinity
@@ -89,8 +105,11 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         }
     }
 
-    function getEffectivePriceForTick(int24 tick) public pure returns (uint128 price_) {
-        price_ = TickMath.getPriceAtTick(tick).toUint128();
+    function getEffectivePriceForTick(int24 tick) public view returns (uint128 price_) {
+        // adjusted price with liquidation multiplier
+        price_ = FixedPointMathLib.fullMulDiv(
+            TickMath.getPriceAtTick(tick), _liquidationMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
+        ).toUint128();
     }
 
     /// @dev This does not take into account the liquidation penalty
