@@ -65,6 +65,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
                 action: ProtocolAction.InitiateDeposit,
                 timestamp: 0, // not needed since we have a special ProtocolAction for init
                 user: msg.sender,
+                to: msg.sender,
                 tick: 0, // unused
                 amountOrIndex: depositAmount,
                 assetPrice: 0, // special case for init
@@ -77,7 +78,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
             // Transfer the wstETH for the deposit
             _retrieveAssetsAndCheckBalance(msg.sender, depositAmount);
 
-            emit InitiatedDeposit(msg.sender, depositAmount);
+            emit InitiatedDeposit(msg.sender, msg.sender, depositAmount);
             // Mint USDN (a small amount is minted to the dead address)
             // last parameter = initializing
             currentPrice = _validateDepositWithAction(pendingAction, currentPriceData, true);

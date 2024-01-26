@@ -57,7 +57,7 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
 
             // create a random short position
             uint256 shortAmount = (random % 9 ether) + 1 ether;
-            protocol.initiateDeposit(uint128(shortAmount), abi.encode(currentPrice), "");
+            protocol.initiateDeposit(uint128(shortAmount), abi.encode(currentPrice), "", users[i]);
             protocol.validateDeposit(abi.encode(currentPrice), "");
             vm.stopPrank();
 

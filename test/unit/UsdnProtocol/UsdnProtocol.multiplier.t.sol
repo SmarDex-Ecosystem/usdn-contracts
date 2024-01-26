@@ -50,7 +50,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
 
         // Here, we have longExpo > vaultExpo and fund > 0, so we should have multiplier > 1
         skip(1 days);
-        protocol.initiateDeposit(500 ether, priceData, "");
+        protocol.initiateDeposit(500 ether, priceData, "", address(this));
         protocol.validateDeposit(priceData, "");
         assertGt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 

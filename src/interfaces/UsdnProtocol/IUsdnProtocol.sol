@@ -57,6 +57,7 @@ enum ProtocolAction {
  * @param action The action type (Initiate...).
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
+ * @param to The destination address.
  * @param tick The tick for open/close long (zero for vault actions).
  * @param amountOrIndex The amount for deposit/withdraw, or index inside the tick for open/close long.
  * @param assetPrice The price of the asset at the time of last update (unused for open/close long).
@@ -69,6 +70,7 @@ struct PendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
     address user; // 20 bytes
+    address to; // 20 bytes
     int24 tick; // 3 bytes
     uint128 amountOrIndex; // 16 bytes
     uint128 assetPrice; // 16 bytes
@@ -89,9 +91,10 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user initiates a deposit.
      * @param user The user address.
+     * @param to The destination address.
      * @param amount The amount of asset that were deposited.
      */
-    event InitiatedDeposit(address indexed user, uint256 amount);
+    event InitiatedDeposit(address indexed user, address indexed to, uint256 amount);
 
     /**
      * @notice Emitted when a user validates a deposit.

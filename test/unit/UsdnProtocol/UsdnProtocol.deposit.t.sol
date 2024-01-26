@@ -37,8 +37,8 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), depositAmount); // expected event
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        emit InitiatedDeposit(address(this), address(this), depositAmount); // expected event
+        protocol.initiateDeposit(depositAmount, currentPrice, "", address(this));
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
         assertEq(
@@ -71,7 +71,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_zeroAmount() public {
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateDeposit(0, abi.encode(uint128(2000 ether)), "");
+        protocol.initiateDeposit(0, abi.encode(uint128(2000 ether)), "", address(this));
     }
 
     /**
@@ -113,7 +113,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit(depositAmount, currentPrice, "", address(this));
         uint256 vaultBalance = protocol.balanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation

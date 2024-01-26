@@ -28,12 +28,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
      * @param amount The amount of wstETH to deposit.
      * @param currentPriceData The latest price data
      * @param previousActionPriceData The price data of an actionable pending action.
+     * @param to The address who will receive the USDN minted.
      */
-    function initiateDeposit(uint128 amount, bytes calldata currentPriceData, bytes calldata previousActionPriceData)
-        external
-        payable
-        initializedAndNonReentrant
-    {
+    function initiateDeposit(
+        uint128 amount,
+        bytes calldata currentPriceData,
+        bytes calldata previousActionPriceData,
+        address to
+    ) external payable initializedAndNonReentrant {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -55,6 +57,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             action: ProtocolAction.InitiateDeposit,
             timestamp: timestamp,
             user: msg.sender,
+            to: to,
             tick: 0, // unused
             amountOrIndex: amount,
             assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
@@ -68,7 +71,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
 
-        emit InitiatedDeposit(msg.sender, amount);
+        emit InitiatedDeposit(msg.sender, to, amount);
         _executePendingAction(previousActionPriceData);
     }
 
@@ -107,6 +110,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             action: ProtocolAction.InitiateWithdrawal,
             timestamp: timestamp,
             user: msg.sender,
+            to: address(0),
             tick: 0, // unused
             amountOrIndex: usdnAmount,
             assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
@@ -200,6 +204,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             action: ProtocolAction.InitiateOpenPosition,
             timestamp: timestamp,
             user: msg.sender,
+            to: address(0),
             tick: tick_,
             amountOrIndex: index_.toUint128(),
             assetPrice: 0,
@@ -258,6 +263,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             action: ProtocolAction.InitiateClosePosition,
             timestamp: timestamp,
             user: msg.sender,
+            to: address(0),
             tick: tick,
             amountOrIndex: index.toUint128(),
             assetPrice: 0,
