@@ -4,11 +4,12 @@ pragma solidity 0.8.20;
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { USER_1, USER_2, USER_3 } from "test/utils/Constants.sol";
 
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { Position, PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
- * @custom:feature The internal functions of the core of the protocol
+ * @custom:feature The functions of the core of the protocol
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
  */
 contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
@@ -71,5 +72,84 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.
         assertGe(uint256(protocol.longAssetAvailable(DEFAULT_PARAMS.initialPrice)), sumOfPositions, "long balance");
+    }
+
+    /**
+     * @custom:scenario Get the first actionable pending action
+     * @custom:given The user has initiated a deposit
+     * @custom:and The validation deadline has elapsed
+     * @custom:when The first actionable pending action is requested
+     * @custom:then The pending action is returned
+     */
+    function test_getActionablePendingAction() public {
+        wstETH.mint(address(this), 100_000 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
+        // there should be no pending action at this stage
+        PendingAction memory action = protocol.getActionablePendingAction(0);
+        assertTrue(action.action == ProtocolAction.None, "pending action before initiate");
+        // initiate long
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        // the pending action is not yet actionable
+        action = protocol.getActionablePendingAction(0);
+        assertTrue(action.action == ProtocolAction.None, "pending action after initiate");
+        // the pending action is actionable after the validation deadline
+        skip(protocol.validationDeadline() + 1);
+        action = protocol.getActionablePendingAction(0);
+        assertEq(action.user, address(this), "action user");
+    }
+
+    /**
+     * @custom:scenario Get the first actionable pending action when the queue is sparse
+     * @custom:given 3 users have initiated a deposit
+     * @custom:and The first and second pending actions have been manually removed from the queue
+     * @custom:when The first actionable pending action is requested with a max iter of 1
+     * @custom:or The first actionable pending action is requested with a max iter of 2
+     * @custom:then No actionable pending action is returned with a max iter of 1
+     * @custom:or The third pending action is returned with a max iter of 2
+     */
+    function test_getActionablePendingActionSparse() public {
+        wstETH.mint(USER_1, 100_000 ether);
+        wstETH.mint(USER_2, 100_000 ether);
+        wstETH.mint(USER_3, 100_000 ether);
+        // Setup 3 pending actions
+        vm.startPrank(USER_1);
+        wstETH.approve(address(protocol), type(uint256).max);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        vm.stopPrank();
+        vm.startPrank(USER_2);
+        wstETH.approve(address(protocol), type(uint256).max);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        vm.stopPrank();
+        vm.startPrank(USER_3);
+        wstETH.approve(address(protocol), type(uint256).max);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        vm.stopPrank();
+
+        // Simulate the second item in the queue being empty (sets it to zero values)
+        protocol.removePendingAction(1, USER_2);
+        // Simulate the first item in the queue being empty
+        // This will pop the first item, but leave the second empty
+        protocol.removePendingAction(0, USER_1);
+
+        // Wait
+        skip(protocol.validationDeadline() + 1);
+
+        // With 1 max iter, we should not get any pending action (since the first item in the queue is zeroed)
+        PendingAction memory action = protocol.getActionablePendingAction(1);
+        assertEq(action.user, address(0), "max iter 1");
+        // With 2 max iter, we should get the action corresponding to the third user, which is actionable
+        action = protocol.getActionablePendingAction(2);
+        assertTrue(action.user == USER_3, "max iter 2");
+    }
+
+    /**
+     * @custom:scenario Get the first actionable pending action when the queue is empty
+     * @custom:given The queue is empty
+     * @custom:when The first actionable pending action is requested
+     * @custom:then No actionable pending action is returned
+     */
+    function test_getActionablePendingActionEmpty() public {
+        PendingAction memory action = protocol.getActionablePendingAction(0);
+        assertEq(action.user, address(0));
     }
 }
