@@ -64,10 +64,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             abi.encode(testParams.initialPrice)
         );
         usdnInitialTotalSupply = usdn.totalSupply();
-        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0);
+        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0, 0);
         defaultPosLeverage = defaultPos.leverage;
         Position memory firstPos =
-            protocol.getLongPosition(protocol.getEffectiveTickForPrice(testParams.initialPrice / 2), 0);
+            protocol.getLongPosition(protocol.getEffectiveTickForPrice(testParams.initialPrice / 2), 0, 0);
         initialLongLeverage = firstPos.leverage;
         vm.stopPrank();
         params = testParams;
@@ -90,14 +90,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
-        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0);
+        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0, 0);
         assertEq(defaultPos.leverage, 1_000_000_000_000_000_005_039, "default pos leverage");
         assertEq(defaultPos.timestamp, block.timestamp, "default pos timestamp");
         assertEq(defaultPos.user, protocol.DEAD_ADDRESS(), "default pos user");
         assertEq(defaultPos.amount, protocol.FIRST_LONG_AMOUNT(), "default pos amount");
         assertEq(defaultPos.startPrice, params.initialPrice, "default pos start price");
         Position memory firstPos =
-            protocol.getLongPosition(protocol.getEffectiveTickForPrice(params.initialPrice / 2), 0);
+            protocol.getLongPosition(protocol.getEffectiveTickForPrice(params.initialPrice / 2), 0, 0);
         assertEq(firstPos.leverage, 1_983_994_053_940_692_631_258, "first pos leverage");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
@@ -133,7 +133,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     // mock initiate open positions for x users
     function mockInitiateOpenPosition(uint96 refAmount, bool autoValidate, address[] memory _users)
         public
-        returns (int24 tick_)
+        returns (int24 tick_, uint256 tickVersion_)
     {
         uint256 count = _users.length;
 
@@ -144,7 +144,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
             vm.startPrank(_users[i]);
             // initiate open position
-            (tick_,) = protocol.initiateOpenPosition(refAmount, liquidationTargetPriceUint, priceData, "");
+            (tick_, tickVersion_,) = protocol.initiateOpenPosition(refAmount, liquidationTargetPriceUint, priceData, "");
 
             // if auto validate true
             if (autoValidate) {
