@@ -55,7 +55,8 @@ for (const name of solFiles) {
         }
         if (abiItem.type === 'error') {
           const signature = formatAbiItem(abiItem);
-          const selector = toFunctionSelector(abiItem as unknown as AbiFunction);
+          const selector = toFunctionSelector(signature.slice(6)); // remove 'error ' from signature
+          console.log(abiItem, signature, selector);
           return `// ${selector}: ${signature}\n`;
         }
       });
