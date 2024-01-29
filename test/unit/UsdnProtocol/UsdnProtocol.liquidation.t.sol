@@ -6,6 +6,8 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
+import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+
 /// @custom:feature The `_liquidatePositions` function of `UsdnProtocol`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     using Strings for uint256;
@@ -25,8 +27,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      */
     function test_openUserLiquidation() public {
         // mock initiate open
-        int24 initialTick = mockInitiateOpenPosition(20 ether, true, getUsers(users.length));
-        assertEq(protocol.tickVersion(initialTick), 0, "wrong first tickVersion");
+        (int24 initialTick, uint256 initialTickVersion) =
+            mockInitiateOpenPosition(20 ether, true, getUsers(users.length));
+        assertEq(protocol.tickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
         // check if first total expo match initial value
         assertEq(protocol.totalExpo(), 1281.880255488384322072 ether, "wrong first totalExpo");
         // check if first tick match initial value
@@ -49,12 +52,13 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // increment timestamp equivalent required by pnl
         vm.warp(block.timestamp + blockDiff * 12);
 
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
         // second mock init open position
         mockInitiateOpenPosition(20 ether, true, getUsers(users.length / 2));
 
-        uint256 secondTickVersion = protocol.tickVersion(initialTick);
         // check if second tick version is updated properly
-        assertEq(secondTickVersion, 1, "wrong second tickVersion");
+        assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
         // check if second total expo is equal expected value
         assertEq(protocol.totalExpo(), 675.762949901442510582 ether, "wrong second totalExpo");
         // check if second total expo by tick is equal expected value
@@ -80,8 +84,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      */
     function test_openLiquidatorLiquidation() public {
         // mock initiate open
-        int24 initialTick = mockInitiateOpenPosition(20 ether, true, getUsers(users.length));
-        assertEq(protocol.tickVersion(initialTick), 0, "wrong first tickVersion");
+        (int24 initialTick, uint256 initialTickVersion) =
+            mockInitiateOpenPosition(20 ether, true, getUsers(users.length));
+        assertEq(protocol.tickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
         // check if first total expo match initial value
         assertEq(protocol.totalExpo(), 1281.880255488384322072 ether, "wrong first totalExpo");
         // check if first tick match initial value
@@ -105,6 +110,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.warp(block.timestamp + blockDiff * 12);
         // get price info
         (, bytes memory priceData) = getPriceInfo(block.number);
+
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
 
@@ -159,7 +167,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // all open positions
         for (uint256 i; i != length; i++) {
             // open user position and store related initial tick
-            initialTicks[i] = mockInitiateOpenPosition(20 ether, true, splitUsers[i]);
+            (initialTicks[i],) = mockInitiateOpenPosition(20 ether, true, splitUsers[i]);
             // block change to move price below
             uint8 blockJump = 1;
             // increment 1 block (1% drawdown)
@@ -223,6 +231,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // get price info
         (, bytes memory priceData) = getPriceInfo(block.number);
 
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
         // liquidator first liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
 
@@ -329,11 +339,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      */
     function test_openLiquidatorLiquidationAboveMax() public {
         // mock initiate open
-        int24 initialTick = mockInitiateOpenPosition(20 ether, true, getUsers(users.length));
+        (int24 initialTick, uint256 initialTickVersion) =
+            mockInitiateOpenPosition(20 ether, true, getUsers(users.length));
         // max liquidation iteration constant
         uint16 maxLiquidationIteration = protocol.maxLiquidationIteration();
         // check if first tick version match initial value
-        assertEq(protocol.tickVersion(initialTick), 0, "wrong first tickVersion");
+        assertEq(protocol.tickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
 
         uint8 blockDiff = 20;
         // increment 20 block (20% drawdown)

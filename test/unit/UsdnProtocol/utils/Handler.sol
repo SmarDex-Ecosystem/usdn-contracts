@@ -27,23 +27,26 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     // tick hash
-    function tickHash(int24 tick) external view returns (bytes32) {
+    function tickHash(int24 tick) external view returns (bytes32, uint256) {
         return _tickHash(tick);
     }
 
     // total expo by tick
     function totalExpoByTick(int24 tick) external view returns (uint256) {
-        return _totalExpoByTick[_tickHash(tick)];
+        (bytes32 tHash,) = _tickHash(tick);
+        return _totalExpoByTick[tHash];
     }
 
     // long positions length
     function longPositionsLength(int24 tick) external view returns (uint256) {
-        return _longPositions[_tickHash(tick)].length;
+        (bytes32 tHash,) = _tickHash(tick);
+        return _longPositions[tHash].length;
     }
 
     // positions in tick
     function positionsInTick(int24 tick) external view returns (uint256) {
-        return _positionsInTick[_tickHash(tick)];
+        (bytes32 tHash,) = _tickHash(tick);
+        return _positionsInTick[tHash];
     }
 
     // max initialized tick

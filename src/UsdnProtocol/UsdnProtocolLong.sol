@@ -24,12 +24,21 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         tick_ = TickMath.maxUsableTick(_tickSpacing);
     }
 
-    function getLongPosition(int24 tick, uint256 index) public view returns (Position memory pos_) {
-        pos_ = _longPositions[_tickHash(tick)][index];
+    function getLongPosition(int24 tick, uint256 tickVersion, uint256 index)
+        public
+        view
+        returns (Position memory pos_)
+    {
+        (bytes32 tickHash, uint256 version) = _tickHash(tick);
+        if (tickVersion != version) {
+            revert UsdnProtocolOutdatedTick(version, tickVersion);
+        }
+        pos_ = _longPositions[tickHash][index];
     }
 
     function getLongPositionsLength(int24 tick) external view returns (uint256 len_) {
-        len_ = _positionsInTick[_tickHash(tick)];
+        (bytes32 tickHash,) = _tickHash(tick);
+        len_ = _positionsInTick[tickHash];
     }
 
     // slither-disable-next-line write-after-write
@@ -134,8 +143,12 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         }
     }
 
-    function _saveNewPosition(int24 tick, Position memory long) internal returns (uint256 index_) {
-        bytes32 tickHash = _tickHash(tick);
+    function _saveNewPosition(int24 tick, Position memory long)
+        internal
+        returns (uint256 tickVersion_, uint256 index_)
+    {
+        bytes32 tickHash;
+        (tickHash, tickVersion_) = _tickHash(tick);
 
         // Adjust state
         _balanceLong += long.amount;
@@ -159,8 +172,12 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         tickArray.push(long);
     }
 
-    function _removePosition(int24 tick, uint256 index, Position memory long) internal {
-        bytes32 tickHash = _tickHash(tick);
+    function _removePosition(int24 tick, uint256 tickVersion, uint256 index, Position memory long) internal {
+        (bytes32 tickHash, uint256 version) = _tickHash(tick);
+
+        if (version != tickVersion) {
+            revert UsdnProtocolOutdatedTick(version, tickVersion);
+        }
 
         // Adjust state
         uint256 removeExpo = FixedPointMathLib.fullMulDiv(long.amount, long.leverage, 10 ** LEVERAGE_DECIMALS);
@@ -200,8 +217,9 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         tick_ = compactTick * _tickSpacing;
     }
 
-    function _tickHash(int24 tick) internal view returns (bytes32) {
-        return keccak256(abi.encodePacked(tick, _tickVersion[tick]));
+    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        version_ = _tickVersion[tick];
+        hash_ = keccak256(abi.encodePacked(tick, version_));
     }
 
     function _liquidatePositions(uint256 currentPrice, uint16 iteration) internal returns (uint256 liquidated_) {
@@ -228,7 +246,7 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
             }
 
             // we have found a non-empty tick that needs to be liquidated
-            bytes32 tickHash = _tickHash(tick);
+            (bytes32 tickHash,) = _tickHash(tick);
             uint256 length = _positionsInTick[tickHash];
 
             unchecked {
@@ -241,6 +259,8 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
                 ++i;
             }
             _tickBitmap.unset(_tickToBitmapIndex(tick));
+
+            emit LiquidatedTick(tick, _tickVersion[tick] - 1);
         } while (i < iteration);
 
         if (liquidated_ != 0) {
