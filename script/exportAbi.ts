@@ -7,6 +7,16 @@ import { toEventSelector, toEventSignature, toFunctionSelector, toFunctionSignat
 
 const ABI_EXPORT_PATH = './dist/abi';
 
+type EnumMember = {
+  name: string;
+};
+
+type EnumNode = {
+  nodeType: string;
+  canonicalName: string;
+  members: EnumMember[];
+};
+
 const program = new Command();
 
 program
@@ -69,5 +79,30 @@ for (const name of solFiles) {
     console.log(`./out/${name}.sol/${name}.json does not exist`);
   }
 }
+
+// Get all enums
+const outFiles = globSync('out/**/*.json', { withFileTypes: true });
+if (DEBUG) console.log('artifacts:', outFiles);
+
+const allEnums: Map<string, string> = new Map();
+for (const artifact of outFiles) {
+  try {
+    const file = readFileSync(artifact.fullpath());
+    const {
+      ast: { nodes },
+    } = JSON.parse(file.toString());
+    const enums = nodes.filter((node: EnumNode) => node.nodeType === 'EnumDefinition');
+    for (const enum_ of enums) {
+      const members = enum_.members.map((member: EnumMember) => `  ${member.name}`);
+      allEnums.set(enum_.canonicalName, `export enum ${enum_.canonicalName} {\n${members.join(',\n')}\n};\n`);
+    }
+  } catch {
+    console.log(`${artifact.fullpath()} does not exist`);
+  }
+}
+console.log(allEnums);
+const fileContent = [...allEnums.values()].join('\n');
+writeFileSync(`${ABI_EXPORT_PATH}/Enums.ts`, fileContent);
+indexContent += `export * from './Enums';\n`;
 
 writeFileSync(`${ABI_EXPORT_PATH}/index.ts`, indexContent);
