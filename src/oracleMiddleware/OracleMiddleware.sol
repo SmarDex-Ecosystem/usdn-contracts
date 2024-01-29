@@ -39,6 +39,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         external
         payable
+        virtual
         returns (PriceInfo memory)
     {
         if (action == ProtocolAction.None) {
