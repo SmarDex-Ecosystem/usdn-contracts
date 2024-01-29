@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { console2 } from "forge-std/Test.sol";
 
 import { WstethBaseFixture } from "test/unit/OracleMiddleware/utils/WstethOracleFixtures.sol";
-import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
+import { STETH_PRICE, STETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
 
 import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 
@@ -21,8 +21,9 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
         super.setUp();
 
         uint256 formattedStEthPrice =
-            (ETH_PRICE * (10 ** wstethOracle.decimals())) / (10 ** wstethOracle.pythDecimals());
-        uint256 formattedStEthConf = (ETH_CONF * (10 ** wstethOracle.decimals())) / (10 ** wstethOracle.pythDecimals());
+            (STETH_PRICE * (10 ** wstethOracle.decimals())) / (10 ** wstethOracle.pythDecimals());
+        uint256 formattedStEthConf =
+            (STETH_CONF * (10 ** wstethOracle.decimals())) / (10 ** wstethOracle.pythDecimals());
         uint256 stEthPerToken = wsteth.stEthPerToken();
         FORMATTED_WSTETH_PRICE = formattedStEthPrice * 1 ether / stEthPerToken;
         FORMATTED_WSTETH_CONF = formattedStEthConf * 1 ether / stEthPerToken;

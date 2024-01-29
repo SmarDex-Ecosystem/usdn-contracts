@@ -7,7 +7,7 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
 
-import { WstethOracle } from "src/OracleMiddleware/oracles/WstethOracle.sol";
+import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
 /**
@@ -17,7 +17,7 @@ import { WstETH } from "test/utils/WstEth.sol";
 contract WstethBaseFixture is BaseFixture {
     MockPyth mockPyth;
     MockChainlinkOnChain mockChainlinkOnChain;
-    WstethOracle public wstethOracle;
+    WstEthOracleMiddleware public wstethOracle;
     WstETH public wsteth;
 
     function setUp() public virtual {
@@ -26,7 +26,7 @@ contract WstethBaseFixture is BaseFixture {
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
         wsteth = new WstETH();
-        wstethOracle = new WstethOracle(address(mockPyth), 0, address(mockChainlinkOnChain), address(wsteth));
+        wstethOracle = new WstEthOracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(wsteth));
     }
 
     function test_setUp() public {

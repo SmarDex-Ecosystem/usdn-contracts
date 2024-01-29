@@ -10,7 +10,7 @@ import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
  * @title Contract to apply and return wsteth price
  * @notice This contract is used to get the price of wsteth from steth price oracle.
  */
-contract WstethOracle is OracleMiddleware {
+contract WstEthOracleMiddleware is OracleMiddleware {
     /// @notice wsteth instance
     IWstETH internal immutable _wstEth;
 
