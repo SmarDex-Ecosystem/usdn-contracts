@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.3.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.2.0...v0.3.0) (2024-01-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* liquidation multiplier ([#42](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/42))
+* **long:** calculate position value according to new formula ([#49](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/49))
+
+### Features
+
+* add oracle middleware ABI ([#55](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/55)) ([739b363](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/739b3634f39ff3ac27bbb33f892a23c8272dff5a))
+* liquidation multiplier ([#42](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/42)) ([765446e](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/765446e39e86a7db1775312b4103b78795a63d6a))
+* liquidations ([#44](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/44)) ([b9da1b4](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/b9da1b4320080abae2bce122d568d97dd045ce6c))
+* **long:** calculate position value according to new formula ([#49](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/49)) ([b8f12d2](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/b8f12d2792aa41be3ea9b6164a0e2451b783a5d6))
+
+
+### Bug Fixes
+
+* update flake.lock ([#51](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/51)) ([b991c33](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/b991c33dfa0b29fc1b1f1c68897a10422a28e52f))
+
 ## [0.2.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.1.3...v0.2.0) (2024-01-18)
 
 
