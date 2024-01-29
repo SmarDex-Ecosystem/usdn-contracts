@@ -3,9 +3,9 @@ pragma solidity 0.8.20;
 
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-import { PythOracle } from "src/oracleMiddleware/oracles/PythOracle.sol";
+import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
+import { PythOracle } from "src/OracleMiddleware/oracles/PythOracle.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { ChainlinkOracle } from "src/oracleMiddleware/oracles/ChainlinkOracle.sol";
 import {
     IOracleMiddleware,
     IOracleMiddlewareErrors,

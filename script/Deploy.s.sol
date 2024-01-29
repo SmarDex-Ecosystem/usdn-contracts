@@ -8,17 +8,25 @@ import { WstETH } from "test/utils/WstEth.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { OracleMiddleware } from "../src/oracleMiddleware/OracleMiddleware.sol";
+import { OracleMiddleware } from "../src/OracleMiddleware/OracleMiddleware.sol";
 
 contract Deploy is Script {
     function run() external {
         vm.startBroadcast(vm.envAddress("DEPLOYER_ADDRESS"));
+
+        uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
+        uint256 longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
 
         // Deploy wstETH if needed
         address payable wstETHAddress = payable(vm.envOr("WSTETH_ADDRESS", address(0)));
         WstETH wstETH;
         if (wstETHAddress != address(0)) {
             wstETH = WstETH(wstETHAddress);
+            if (vm.envOr("GET_WSTETH", false) && depositAmount > 0 && longAmount > 0) {
+                uint256 ethAmount = (depositAmount + longAmount + 1000) * wstETH.stEthPerToken() / 1 ether;
+                (bool result,) = wstETHAddress.call{ value: ethAmount }(hex"");
+                require(result, "Failed to mint wstETH");
+            }
         } else {
             wstETH = new WstETH();
             wstETHAddress = payable(address(wstETH));
@@ -51,14 +59,13 @@ contract Deploy is Script {
         UsdnProtocol protocol = new UsdnProtocol(usdn, wstETH, middleware, 100);
 
         // Grant USDN minter role to protocol and approve wstETH spending
-        uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
-        uint256 longAmount = vm.envOr("INIT_LONG_AMOUNT", uint256(0));
+
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), depositAmount + longAmount);
-
         // Initialize if needed
         if (depositAmount > 0 && longAmount > 0) {
-            protocol.initialize(uint128(depositAmount), uint128(longAmount), protocol.minTick(), "");
+            // Desired liquidation price at 1 USD
+            protocol.initialize(uint128(depositAmount), uint128(longAmount), 1 ether, "");
         }
 
         vm.stopBroadcast();

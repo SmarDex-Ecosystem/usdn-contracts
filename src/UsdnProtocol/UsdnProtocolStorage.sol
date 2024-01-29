@@ -18,10 +18,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     /* -------------------------------------------------------------------------- */
 
     /// @notice The number of decimals for leverage values
-    uint8 public constant LEVERAGE_DECIMALS = 9;
+    uint8 public constant LEVERAGE_DECIMALS = 21;
 
     /// @notice The number of decimals for funding rate values
     uint8 public constant FUNDING_RATE_DECIMALS = 18;
+
+    /// @notice The number of decimals for liquidation multiplier values
+    uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
 
     /// @notice The number of seconds in a day
     uint256 public constant SECONDS_PER_DAY = 60 * 60 * 24;
@@ -68,8 +71,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     /// @notice The oracle middleware contract.
     IOracleMiddleware internal _oracleMiddleware;
 
-    /// @notice The minimum leverage for a position
-    uint256 internal _minLeverage = 1 * 10 ** LEVERAGE_DECIMALS + 1;
+    /// @notice The minimum leverage for a position (1.000000001)
+    uint256 internal _minLeverage = 10 ** LEVERAGE_DECIMALS + 10 ** 12;
 
     /// @notice The maximum leverage for a position
     uint256 internal _maxLeverage = 10 * 10 ** LEVERAGE_DECIMALS;
@@ -80,8 +83,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     /// @notice The funding rate per second
     int256 internal _fundingRatePerSecond = 3_472_222_222; // 18 decimals (0.03% daily -> 0.0000003472% per second)
 
-    /// @notice The liquidation penalty
-    uint256 internal _liquidationPenalty = 200; // divisor is 10_000 -> 2%
+    /// @notice The liquidation penalty (in tick spacing units)
+    uint24 internal _liquidationPenalty = 2; // 200 ticks -> ~2.02%
 
     /// @notice Safety margin for the liquidation price of newly open positions
     uint256 internal _safetyMargin = 200; // divisor is 10_000 -> 2%
@@ -98,6 +101,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
 
     /// @notice The timestamp of the last balances update
     uint128 internal _lastUpdateTimestamp;
+
+    /**
+     * @notice The multiplier for liquidation price calculations
+     * @dev This value reprensents 1 with 38 decimals to have the same precision when the multiplier
+     * tends to 0 and high values (uint256.max have 78 digits).
+     */
+    uint256 internal _liquidationMultiplier = 100_000_000_000_000_000_000_000_000_000_000_000_000;
 
     /* -------------------------- Pending actions queue ------------------------- */
 

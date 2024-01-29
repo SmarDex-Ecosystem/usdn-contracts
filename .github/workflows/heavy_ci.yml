@@ -1,0 +1,46 @@
+name: CI with heavy test run
+on:
+  workflow_dispatch:
+
+env:
+  FOUNDRY_PROFILE: heavy_ci
+
+jobs:
+  heavy-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            test_utils -> target
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install deps
+        run: npm ci && forge install
+
+      - name: Build test_utils
+        run: cargo build --release
+        working-directory: test_utils
+
+      - name: Check gas snapshots
+        run: npm run snapshot:check
+
+      - name: Run tests
+        run: forge test --gas-report

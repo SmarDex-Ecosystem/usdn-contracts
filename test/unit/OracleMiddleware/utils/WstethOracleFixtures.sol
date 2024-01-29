@@ -7,7 +7,7 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
 
-import { WstethOracle } from "src/oracleMiddleware/oracles/WstethOracle.sol";
+import { WstethOracle } from "src/OracleMiddleware/oracles/WstethOracle.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
 /**

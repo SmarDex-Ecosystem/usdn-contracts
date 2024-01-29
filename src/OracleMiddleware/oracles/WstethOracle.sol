@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 
-import { OracleMiddleware } from "src/oracleMiddleware/OracleMiddleware.sol";
+import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 
 /**
  * @title Contract to apply and return wsteth price
