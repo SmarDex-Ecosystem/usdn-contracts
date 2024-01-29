@@ -6,7 +6,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
- * @custom:feature The `deposit` function of the USDN Protocol
+ * @custom:feature The deposit function of the USDN Protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x.
  * @custom:and A user with 10 wstETH in their wallet
@@ -82,9 +82,10 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user validates the deposit
      * @custom:then The user's USDN balance increases by 2000 USDN
      * @custom:and The USDN total supply increases by 2000 USDN
+     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
      */
     function test_validateDepositPriceIncrease() public {
-        checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether);
+        _checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether);
     }
 
     /**
@@ -95,19 +96,20 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user validates the deposit
      * @custom:then The user's USDN balance increases by 1949.518048223628563225 USDN
      * @custom:and The USDN total supply increases by 1949.518048223628563225 USDN
+     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1949.518048223628563225 USDN
      */
     function test_validateDepositPriceDecrease() public {
-        checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048223628563225 ether);
+        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048223628563225 ether);
     }
 
     /**
-     * Create a deposit at price `initialPrice`, then validate it at price `assetPrice`, then check the emitted event
-     * and the resulting state.
+     * @dev Create a deposit at price `initialPrice`, then validate it at price `assetPrice`, then check the emitted
+     * event and the resulting state.
      * @param initialPrice price of the asset at the time of deposit initiation
      * @param assetPrice price of the asset at the time of deposit validation
      * @param expectedUsdnAmount expected amount of USDN minted
      */
-    function checkValidateDepositWithPrice(uint128 initialPrice, uint128 assetPrice, uint256 expectedUsdnAmount)
+    function _checkValidateDepositWithPrice(uint128 initialPrice, uint128 assetPrice, uint256 expectedUsdnAmount)
         internal
     {
         uint128 depositAmount = 1 ether;
@@ -124,7 +126,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         currentPrice = abi.encode(assetPrice);
 
         // if price decreases, we need to use the new balance to calculate the minted amount
-        if (assetPrice < 2000 ether) {
+        if (assetPrice < initialPrice) {
             vaultBalance = uint256(protocol.vaultAssetAvailable(assetPrice));
         }
 
@@ -132,7 +134,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 mintedAmount = uint256(depositAmount) * usdn.totalSupply() / vaultBalance;
         assertEq(mintedAmount, expectedUsdnAmount, "minted amount");
 
-        vm.expectEmit(true, true, false, false);
+        vm.expectEmit();
         emit ValidatedDeposit(address(this), depositAmount, mintedAmount); // expected event
         protocol.validateDeposit(currentPrice, "");
 
