@@ -66,7 +66,6 @@ for (const name of solFiles) {
         if (abiItem.type === 'error') {
           const signature = formatAbiItem(abiItem);
           const selector = toFunctionSelector(signature.slice(6)); // remove 'error ' from signature
-          console.log(abiItem, signature, selector);
           return `// ${selector}: ${signature}\n`;
         }
       });
@@ -100,7 +99,7 @@ for (const artifact of outFiles) {
     console.log(`${artifact.fullpath()} does not exist`);
   }
 }
-console.log(allEnums);
+if (DEBUG) console.log(allEnums);
 const fileContent = [...allEnums.values()].join('\n');
 writeFileSync(`${ABI_EXPORT_PATH}/Enums.ts`, fileContent);
 indexContent += `export * from './Enums';\n`;
