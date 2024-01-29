@@ -33,13 +33,13 @@ contract WstethOracle is OracleMiddleware {
      * @return The price and timestamp as `PriceInfo`.
      */
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
-        external
+        public
         payable
         override
         returns (PriceInfo memory)
     {
         // fetched steth price
-        PriceInfo memory stethPrice = this.parseAndValidatePrice{ value: msg.value }(targetTimestamp, action, data);
+        PriceInfo memory stethPrice = super.parseAndValidatePrice(targetTimestamp, action, data);
 
         // stEth ratio for one wstEth
         uint256 stEthPerToken = _wstEth.stEthPerToken();
