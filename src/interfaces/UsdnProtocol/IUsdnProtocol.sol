@@ -188,6 +188,13 @@ interface IUsdnProtocolEvents {
     event ValidatedClosePosition(
         address indexed user, int24 tick, uint256 tickVersion, uint256 index, uint256 amountReceived, int256 profit
     );
+
+    /**
+     * @notice Emitted when a tick is liquidated
+     * @param tick The liquidated tick.
+     * @param oldTickVersion The liquidated tick version.
+     */
+    event LiquidatedTick(int24 indexed tick, uint256 indexed oldTickVersion);
 }
 
 /* -------------------------------------------------------------------------- */
