@@ -68,7 +68,7 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
                 tick: 0, // unused
                 amountOrIndex: depositAmount,
                 assetPrice: 0, // special case for init
-                totalExpo: 0,
+                totalExpoOrTickVersion: 0,
                 balanceVault: 0,
                 balanceLong: 0,
                 usdnTotalSupply: 0
@@ -110,8 +110,8 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
             timestamp: uint40(block.timestamp)
         });
         // Save the position and update the state
-        uint256 index = _saveNewPosition(tick, long);
-        emit InitiatedOpenPosition(user, long, tick, index);
-        emit ValidatedOpenPosition(user, long, tick, index, liquidationPrice);
+        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
+        emit InitiatedOpenPosition(user, long, tick, tickVersion, index);
+        emit ValidatedOpenPosition(user, long, tick, tickVersion, index, liquidationPrice);
     }
 }

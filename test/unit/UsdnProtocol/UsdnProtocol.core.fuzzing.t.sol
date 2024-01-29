@@ -47,10 +47,10 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
             uint256 longLeverage = (random % 3) + 2;
             uint256 longLiqPrice = currentPrice / longLeverage;
             vm.startPrank(users[i]);
-            (int24 tick, uint256 index) =
+            (int24 tick, uint256 tickVersion, uint256 index) =
                 protocol.initiateOpenPosition(uint96(longAmount), uint128(longLiqPrice), abi.encode(currentPrice), "");
             protocol.validateOpenPosition(abi.encode(currentPrice), "");
-            pos[i] = protocol.getLongPosition(tick, index);
+            pos[i] = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;
 
             random = uint256(keccak256(abi.encode(random, i, 2)));

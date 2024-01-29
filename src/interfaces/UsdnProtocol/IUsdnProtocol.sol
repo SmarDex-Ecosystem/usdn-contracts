@@ -60,7 +60,8 @@ enum ProtocolAction {
  * @param tick The tick for open/close long (zero for vault actions).
  * @param amountOrIndex The amount for deposit/withdraw, or index inside the tick for open/close long.
  * @param assetPrice The price of the asset at the time of last update (unused for open/close long).
- * @param totalExpo The total exposure at the time of the action (unused for open/close long).
+ * @param totalExpoOrTickVersion The total exposure at the time of the action (for deposit/withdraw), or the tick
+ * version (for open/close long).
  * @param balanceVault The balance of the vault at the time of last update (unused for open/close long).
  * @param balanceLong The balance of the long positions at the time of last update (unused for open/close long).
  * @param usdnTotalSupply The total supply of USDN at the time of the action (unused for open/close long).
@@ -72,11 +73,8 @@ struct PendingAction {
     int24 tick; // 3 bytes
     uint128 amountOrIndex; // 16 bytes
     uint128 assetPrice; // 16 bytes
-    // TODO: in practice, we often cast this to int256, so should we consider uint128 here?
-    uint256 totalExpo; // 32 bytes
-    // TODO: in practice, we often cast this to int256, so should we consider uint128 here?
+    uint256 totalExpoOrTickVersion; // 32 bytes
     uint256 balanceVault; // 32 bytes
-    // TODO: in practice, we often cast this to int256, so should we consider uint128 here?
     uint256 balanceLong; // 32 bytes
     uint256 usdnTotalSupply; // 32 bytes
 }
@@ -118,12 +116,17 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user initiates the opening of a long position.
+     * @dev The combination of the tick number, the tick version, and the index constitutes a unique identifier for the
+     * position.
      * @param user The user address.
      * @param position The position that was opened (pending validation).
      * @param tick The tick containing the position.
+     * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
      */
-    event InitiatedOpenPosition(address indexed user, Position position, int24 tick, uint256 index);
+    event InitiatedOpenPosition(
+        address indexed user, Position position, int24 tick, uint256 tickVersion, uint256 index
+    );
 
     /**
      * @notice Emitted when a user validates the opening of a long position.
@@ -131,41 +134,59 @@ interface IUsdnProtocolEvents {
      * @param position The position that was opened (final).
      * @param tick The tick containing the position.
      * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
+     * @param tickVersion The tick version.
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
      * @param index The index of the position inside the tick array.
      * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
      * @param liquidationPrice The liquidation price of the position (final).
      */
     event ValidatedOpenPosition(
-        address indexed user, Position position, int24 tick, uint256 index, uint128 liquidationPrice
+        address indexed user,
+        Position position,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index,
+        uint128 liquidationPrice
     );
 
     /**
      * @notice Emitted when a position was moved from one tick to another.
      * @param oldTick The old tick of the position.
+     * @param oldTickVersion The old tick version.
      * @param oldIndex The old index of the position inside the tick array.
      * @param newTick The new tick containing the position.
+     * @param newTickVersion The new tick version.
      * @param newIndex The new index of the position inside the `newTick` array.
      */
-    event LiquidationPriceChanged(int24 indexed oldTick, uint256 indexed oldIndex, int24 newTick, uint256 newIndex);
+    event LiquidationPriceChanged(
+        int24 indexed oldTick,
+        uint256 indexed oldTickVersion,
+        uint256 indexed oldIndex,
+        int24 newTick,
+        uint256 newTickVersion,
+        uint256 newIndex
+    );
 
     /**
      * @notice Emitted when a user initiates the closing of a long position.
      * @param user The user address.
      * @param tick The tick containing the position.
+     * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
      */
-    event InitiatedClosePosition(address indexed user, int24 tick, uint256 index);
+    event InitiatedClosePosition(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
 
     /**
      * @notice Emitted when a user validates the closing of a long position
      * @param user The user address.
      * @param tick The tick that was containing the position.
+     * @param tickVersion The tick version.
      * @param index The index that the position had inside the tick array.
      * @param amountReceived The amount of asset that were sent to the user.
      * @param profit The profit that the user made.
      */
     event ValidatedClosePosition(
-        address indexed user, int24 tick, uint256 index, uint256 amountReceived, int256 profit
+        address indexed user, int24 tick, uint256 tickVersion, uint256 index, uint256 amountReceived, int256 profit
     );
 
     /**
@@ -219,4 +240,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the liquidation price exceeds the safety margin
     error UsdnProtocolLiquidationPriceSafetyMargin(uint128 liquidationPrice, uint128 maxLiquidationPrice);
+
+    /// @dev Indicates that the provided tick version is outdated (transactions have been liquidated)
+    error UsdnProtocolOutdatedTick(uint256 currentVersion, uint256 providedVersion);
 }
