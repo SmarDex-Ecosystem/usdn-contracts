@@ -30,7 +30,9 @@ contract DequeFixture is BaseFixture {
         assertEq(a.tick, b.tick, string.concat(err, " - action tick"));
         assertEq(a.amountOrIndex, b.amountOrIndex, string.concat(err, " - amount or index"));
         assertEq(a.assetPrice, b.assetPrice, string.concat(err, " - asset price"));
-        assertEq(a.totalExpo, b.totalExpo, string.concat(err, " - total exposure"));
+        assertEq(
+            a.totalExpoOrTickVersion, b.totalExpoOrTickVersion, string.concat(err, " - total exposure or tick version")
+        );
         assertEq(a.balanceVault, b.balanceVault, string.concat(err, " - vault balance"));
         assertEq(a.balanceLong, b.balanceLong, string.concat(err, " - long balance"));
         assertEq(a.usdnTotalSupply, b.usdnTotalSupply, string.concat(err, " - USDN total supply"));
