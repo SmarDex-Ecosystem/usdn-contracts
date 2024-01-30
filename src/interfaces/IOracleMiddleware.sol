@@ -41,6 +41,13 @@ interface IOracleMiddleware {
      * @return The ETH cost of one price validation
      */
     function validationCost(bytes calldata data, ProtocolAction action) external returns (uint256);
+
+    /**
+     * @notice Update the "validation delay" (in seconds) between an action timestamp and the price
+     *         data timestamp used to validate that action.
+     * @param newDelay The new validation delay
+     */
+    function updateValidationDelay(uint256 newDelay) external;
 }
 
 /* -------------------------------------------------------------------------- */
