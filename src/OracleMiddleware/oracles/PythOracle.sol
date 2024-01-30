@@ -38,21 +38,15 @@ contract PythOracle is IOracleMiddlewareErrors {
         bytes[] memory pricesUpdateData = new bytes[](1);
         pricesUpdateData[0] = priceUpdateData;
 
-        try _pyth.parsePriceFeedUpdatesUnique{ value: msg.value }(
+        PythStructs.PriceFeed[] memory priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: msg.value }(
             pricesUpdateData, priceIds, targetTimestamp, type(uint64).max
-        ) returns (PythStructs.PriceFeed[] memory priceFeeds) {
-            if (priceFeeds[0].price.price < 0) {
-                revert OracleMiddlewareWrongPrice(priceFeeds[0].price.price);
-            }
-            return priceFeeds[0].price;
-        } catch {
-            return PythStructs.Price({
-                price: -1, // negative price to indicate error
-                conf: 0,
-                expo: 0,
-                publishTime: 0
-            });
+        );
+
+        if (priceFeeds[0].price.price < 0) {
+            revert OracleMiddlewareWrongPrice(priceFeeds[0].price.price);
         }
+
+        return priceFeeds[0].price;
     }
 
     /**

@@ -7,6 +7,7 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { OracleMiddlewareBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
 import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
+import { IMockPythError } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 
 import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 
@@ -15,7 +16,11 @@ import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfac
  * @custom:background Given the price of ETH is 2000 USD
  * @custom:and The confidence interval is 20 USD
  */
-contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixture, IOracleMiddlewareErrors {
+contract TestOracleMiddlewareParseAndValidatePrice is
+    OracleMiddlewareBaseFixture,
+    IOracleMiddlewareErrors,
+    IMockPythError
+{
     using Strings for uint256;
 
     uint256 immutable FORMATTED_ETH_PRICE;
@@ -197,33 +202,33 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         uint256 timestamp = block.timestamp - oracleMiddleware.validationDelay();
 
         // Expect revert when validating price for None action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.None, abi.encode("data"));
 
         // Expect revert when validating price for ValidateDeposit action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data"));
 
         // Expect revert when validating price for ValidateWithdrawal action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.ValidateWithdrawal, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateOpenPosition action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.ValidateOpenPosition, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateClosePosition action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.ValidateClosePosition, abi.encode("data")
         );
 
         // Expect revert when validating price for Liquidation action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data"));
 
         /* ---------------------- Initiates action still works ---------------------- */
@@ -271,33 +276,33 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         uint256 timestamp = block.timestamp - oracleMiddleware.validationDelay();
 
         // Expect revert when validating price for None action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.None, abi.encode("data"));
 
         // Expect revert when validating price for ValidateDeposit action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data"));
 
         // Expect revert when validating price for ValidateWithdrawal action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.ValidateWithdrawal, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateOpenPosition action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.ValidateOpenPosition, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateClosePosition action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.ValidateClosePosition, abi.encode("data")
         );
 
         // Expect revert when validating price for Liquidation action
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythValidationFailed.selector));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data"));
 
         /* ---------------------- Initiates action still works ---------------------- */
