@@ -355,12 +355,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
      */
     function _removeStalePendingAction(address user) internal {
         uint256 pendingActionIndex = _pendingActions[user];
+        // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
             return;
         }
         uint128 rawIndex = uint128(pendingActionIndex - 1);
         PendingAction memory action = _pendingActionsQueue.atRaw(rawIndex);
         // the position is only at risk of being liquidated while pending if it is an open position action
+        // slither-disable-next-line incorrect-equality
         if (action.action == ProtocolAction.InitiateOpenPosition) {
             (, uint256 version) = _tickHash(action.tick);
             if (version != action.totalExpoOrTickVersion) {
