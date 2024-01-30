@@ -14,12 +14,12 @@ import { ConfidenceInterval, FormattedPythPrice, IOracleMiddlewareErrors } from 
 contract PythOracle is IOracleMiddlewareErrors {
     uint256 private constant DECIMALS = 8;
 
-    bytes32 public immutable _priceID;
-    IPyth public immutable _pyth;
+    bytes32 internal immutable _priceID;
+    IPyth internal immutable _pyth;
 
-    constructor(address pyth, bytes32 priceID) {
-        _pyth = IPyth(pyth);
-        _priceID = priceID;
+    constructor(address pythAddress, bytes32 pythPriceID) {
+        _pyth = IPyth(pythAddress);
+        _priceID = pythPriceID;
     }
 
     /**
@@ -89,5 +89,21 @@ contract PythOracle is IOracleMiddlewareErrors {
      */
     function pythDecimals() public pure returns (uint256) {
         return DECIMALS;
+    }
+
+    /**
+     * @notice Get the Pyth contract address
+     * @return pyth_ The Pyth contract address
+     */
+    function pyth() public view returns (IPyth) {
+        return _pyth;
+    }
+
+    /**
+     * @notice Get the Pyth price ID
+     * @return priceID_ The Pyth price ID
+     */
+    function priceID() public view returns (bytes32) {
+        return _priceID;
     }
 }

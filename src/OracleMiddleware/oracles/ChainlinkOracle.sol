@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import { AggregatorInterface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorInterface.sol";
 import { PriceInfo, IOracleMiddlewareErrors } from "../../interfaces/IOracleMiddleware.sol";
 
 /**
@@ -12,10 +11,10 @@ import { PriceInfo, IOracleMiddlewareErrors } from "../../interfaces/IOracleMidd
  */
 contract ChainlinkOracle is IOracleMiddlewareErrors {
     /// @notice Chainlink price feed aggregator contract
-    AggregatorV3Interface public immutable _priceFeed;
+    AggregatorV3Interface internal immutable _priceFeed;
 
-    constructor(address priceFeed) {
-        _priceFeed = AggregatorV3Interface(priceFeed);
+    constructor(address chainlinkPriceFeed) {
+        _priceFeed = AggregatorV3Interface(chainlinkPriceFeed);
     }
 
     /**
@@ -54,5 +53,9 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
      */
     function chainlinkDecimals() public view returns (uint256) {
         return _priceFeed.decimals();
+    }
+
+    function priceFeed() public view returns (AggregatorV3Interface) {
+        return _priceFeed;
     }
 }

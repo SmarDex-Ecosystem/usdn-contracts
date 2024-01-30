@@ -27,8 +27,8 @@ contract OracleMiddlewareBaseFixture is BaseFixture {
     }
 
     function test_setUp() public {
-        assertEq(address(oracleMiddleware._pyth()), address(mockPyth));
-        assertEq(address(oracleMiddleware._priceFeed()), address(mockChainlinkOnChain));
+        assertEq(address(oracleMiddleware.pyth()), address(mockPyth));
+        assertEq(address(oracleMiddleware.priceFeed()), address(mockChainlinkOnChain));
 
         assertEq(mockPyth.lastPublishTime(), block.timestamp);
         assertEq(mockChainlinkOnChain.lastPublishTime(), block.timestamp);
