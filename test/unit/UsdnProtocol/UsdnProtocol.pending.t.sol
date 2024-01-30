@@ -17,6 +17,10 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         super._setUp(DEFAULT_PARAMS);
     }
 
+    /**
+     * @dev Helper to test the functionality of `getActionablePendingAction` and `i_getActionablePendingAction`
+     * @param func The function to call
+     */
     function _getActionablePendingActionHelper(function (uint256) external returns (PendingAction memory) func)
         internal
     {
@@ -58,6 +62,11 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         _getActionablePendingActionHelper(protocol.i_getActionablePendingAction);
     }
 
+    /**
+     * @dev Helper to test the functionality of `getActionablePendingAction` and `i_getActionablePendingAction` when the
+     * queue is sparsely populated
+     * @param func The function to call
+     */
     function _getActionablePendingActionSparseHelper(function (uint256) external returns (PendingAction memory) func)
         internal
     {
@@ -121,6 +130,11 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         _getActionablePendingActionSparseHelper(protocol.i_getActionablePendingAction);
     }
 
+    /**
+     * @dev Helper to test the functionality of `getActionablePendingAction` and `i_getActionablePendingAction` when the
+     * queue is empty
+     * @param func The function to call
+     */
     function _getActionablePendingActionEmptyHelper(function (uint256) external returns (PendingAction memory) func)
         internal
     {
