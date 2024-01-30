@@ -2,7 +2,7 @@
 // Based on the OpenZeppelin implementation
 pragma solidity ^0.8.20;
 
-import { ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice A sequence of items with the ability to efficiently push and pop items (i.e. insert and remove) on both ends

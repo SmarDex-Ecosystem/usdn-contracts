@@ -5,7 +5,7 @@ import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
 import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
 import { PythOracle } from "src/OracleMiddleware/oracles/PythOracle.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import {
     IOracleMiddleware,
     IOracleMiddlewareErrors,
