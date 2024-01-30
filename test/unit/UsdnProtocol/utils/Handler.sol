@@ -7,8 +7,7 @@ import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.so
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
-import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
-import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 /**
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol

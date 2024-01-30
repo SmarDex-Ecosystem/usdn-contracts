@@ -9,7 +9,8 @@ import { PendingAction, ProtocolAction, Position } from "src/interfaces/UsdnProt
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
-import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 contract UsdnProtocol is UsdnProtocolActions, Ownable {
     using SafeCast for uint256;

@@ -4,7 +4,8 @@ pragma solidity ^0.8.20;
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-import { ConfidenceInterval, FormattedPythPrice, IOracleMiddlewareErrors } from "src/interfaces/IOracleMiddleware.sol";
+import { ConfidenceInterval, FormattedPythPrice } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
 /**
  * @title PythOracle contract

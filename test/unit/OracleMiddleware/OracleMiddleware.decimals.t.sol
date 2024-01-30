@@ -6,7 +6,8 @@ import { console2 } from "forge-std/Test.sol";
 import { OracleMiddlewareBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
 import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
 
-import { PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /**
  * @custom:feature The `decimals` function of `OracleMiddleware`

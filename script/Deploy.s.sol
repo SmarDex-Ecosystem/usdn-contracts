@@ -5,7 +5,7 @@ import { Script } from "forge-std/Script.sol";
 
 import { WstETH } from "test/utils/WstEth.sol";
 
-import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { OracleMiddleware } from "../src/OracleMiddleware/OracleMiddleware.sol";

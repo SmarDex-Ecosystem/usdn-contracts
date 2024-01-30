@@ -8,7 +8,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { Position, ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
-import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 
 abstract contract UsdnProtocolActions is UsdnProtocolLong {

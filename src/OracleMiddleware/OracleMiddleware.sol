@@ -7,12 +7,11 @@ import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.so
 import { PythOracle } from "src/OracleMiddleware/oracles/PythOracle.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import {
-    IOracleMiddleware,
-    IOracleMiddlewareErrors,
     PriceInfo,
     ConfidenceInterval,
     FormattedPythPrice
-} from "src/interfaces/IOracleMiddleware.sol";
+} from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
 /**
  * @title OracleMiddleware contract
@@ -20,7 +19,7 @@ import {
  * It is used by the USDN protocol to get the price of the USDN underlying asset.
  * @dev This contract is a middleware between the USDN protocol and the price oracles.
  */
-contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOracle, ChainlinkOracle {
+contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle {
     uint256 constant VALIDATION_DELAY = 24 seconds;
 
     // slither-disable-next-line shadowing-state
@@ -139,7 +138,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
 
     /// @notice Returns the ETH cost of one price validation for the given action
     function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256) {
-        // TODO: Validate each ConfidanceInterval
+        // TODO: Validate each ConfidenceInterval
         if (action == ProtocolAction.None) {
             return getPythUpdateFee(data);
         } else if (action == ProtocolAction.Initialize) {
