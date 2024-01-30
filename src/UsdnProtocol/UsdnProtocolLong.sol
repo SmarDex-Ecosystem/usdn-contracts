@@ -217,11 +217,6 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         tick_ = compactTick * _tickSpacing;
     }
 
-    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
-        version_ = _tickVersion[tick];
-        hash_ = keccak256(abi.encodePacked(tick, version_));
-    }
-
     function _liquidatePositions(uint256 currentPrice, uint16 iteration) internal returns (uint256 liquidated_) {
         // max iteration limit
         if (iteration > MAX_LIQUIDATION_ITERATION) {

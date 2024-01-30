@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Vm } from "forge-std/Test.sol";
+
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @custom:feature The internal functions of the core of the protocol
@@ -71,5 +73,75 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.
         assertGe(uint256(protocol.longAssetAvailable(DEFAULT_PARAMS.initialPrice)), sumOfPositions, "long balance");
+    }
+
+    /**
+     * @custom:scenario A pending new long position gets liquidated
+     * @custom:given A pending new position was liquidated before being validated
+     * @custom:and The pending action is stale (tick version mismatch)
+     * @custom:when The user opens another position
+     * @custom:then The protocol emits a `StalePendingActionRemoved` event
+     */
+    function test_stalePendingActionReInit() public {
+        wstETH.mint(address(this), 2 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
+
+        // create a pending action with a liquidation price around $1700
+        vm.recordLogs();
+        protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
+        // get the tick, tick version and index of the newly created position
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        (, int24 tick, uint256 tickVersion, uint256 index) =
+            abi.decode(entries[0].data, (Position, int24, uint256, uint256));
+
+        // the price drops to $1500 and the position gets liquidated
+        skip(30);
+        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
+
+        // the pending action is stale
+        (, uint256 currentTickVersion) = protocol.tickHash(tick);
+        PendingAction memory action = protocol.getUserPendingAction(address(this));
+        assertEq(action.totalExpoOrTickVersion, tickVersion, "tick version");
+        assertTrue(action.totalExpoOrTickVersion != currentTickVersion, "current tick version");
+
+        // we should be able to open a new position
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(uint128(1500 ether)), "");
+    }
+
+    /**
+     * @custom:scenario A pending new long position gets liquidated and then validated
+     * @custom:given A pending new position was liquidated before being validated
+     * @custom:and The pending action is stale (tick version mismatch)
+     * @custom:when The user tries to validate the pending action
+     * @custom:then The protocol emits a `StalePendingActionRemoved` event
+     */
+    function test_stalePendingActionValidate() public {
+        wstETH.mint(address(this), 2 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
+
+        // create a pending action with a liquidation price around $1700
+        vm.recordLogs();
+        protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
+        // get the tick, tick version and index of the newly created position
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        (, int24 tick, uint256 tickVersion, uint256 index) =
+            abi.decode(entries[0].data, (Position, int24, uint256, uint256));
+
+        // the price drops to $1500 and the position gets liquidated
+        skip(30);
+        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
+
+        // the pending action is stale
+        (, uint256 currentTickVersion) = protocol.tickHash(tick);
+        PendingAction memory action = protocol.getUserPendingAction(address(this));
+        assertEq(action.totalExpoOrTickVersion, tickVersion, "tick version");
+        assertTrue(action.totalExpoOrTickVersion != currentTickVersion, "current tick version");
+
+        // validating the action emits the proper event
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
+        protocol.validateOpenPosition(abi.encode(uint128(1500 ether)), "");
     }
 }

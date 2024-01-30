@@ -464,7 +464,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         if (version != tickVersion) {
             // The current tick version doesn't match the version from the pending action.
             // This means the position has been liquidated in the mean time
-            // TODO: emit event notifying the user
+            emit StalePendingActionRemoved(long.user, tick, tickVersion, index);
             return;
         }
 
