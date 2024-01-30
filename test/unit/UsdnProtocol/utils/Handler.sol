@@ -108,4 +108,16 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function liquidationPenalty() external view returns (uint24) {
         return _liquidationPenalty;
     }
+
+    function getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
+        return _getLiquidationPrice(startPrice, leverage);
+    }
+
+    function positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint256 amount, uint128 initLeverage)
+        external
+        pure
+        returns (uint256 value_)
+    {
+        return _positionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
+    }
 }

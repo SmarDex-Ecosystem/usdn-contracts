@@ -37,6 +37,7 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
 
         Position[] memory pos = new Position[](10);
         int24[] memory ticks = new int24[](10);
+        uint256[] memory indices = new uint256[](10);
 
         // create 10 random positions on each side of the protocol
         for (uint256 i = 0; i < 10; i++) {
@@ -52,6 +53,7 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
             protocol.validateOpenPosition(abi.encode(currentPrice), "");
             pos[i] = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;
+            indices[i] = index;
 
             random = uint256(keccak256(abi.encode(random, i, 2)));
 
@@ -70,16 +72,12 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
 
         // calculate the value of all new long positions (simulating taking the low bound of the confidence interval)
         uint256 longPosValue;
-        uint128 liqPrice;
         for (uint256 i = 0; i < 10; i++) {
-            Position memory position = pos[i];
-            liqPrice = protocol.getEffectivePriceForTick(
-                ticks[i] - int24(protocol.liquidationPenalty()) * protocol.tickSpacing()
-            );
-            longPosValue += protocol.positionValue(finalPrice - 5 ether, liqPrice, position.amount, position.leverage);
+            longPosValue += protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice - 5 ether);
         }
-        // calculate the value of the init position
-        liqPrice = protocol.getEffectivePriceForTick(protocol.minTick());
+        // calculate the value of the init position (we use the low-level pure function because there is no liquidation
+        // penalty for those)
+        uint128 liqPrice = protocol.getEffectivePriceForTick(protocol.minTick());
         longPosValue +=
             protocol.positionValue(finalPrice - 5 ether, liqPrice, protocol.FIRST_LONG_AMOUNT(), defaultPosLeverage);
         // calculate the value of the deployer's long position

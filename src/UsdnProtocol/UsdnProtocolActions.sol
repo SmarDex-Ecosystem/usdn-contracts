@@ -551,7 +551,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // Calculate position value
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
         int256 value =
-            positionValue(price.price.toUint128(), liqPriceWithoutPenalty, pos.amount, pos.leverage).toInt256();
+            _positionValue(price.price.toUint128(), liqPriceWithoutPenalty, pos.amount, pos.leverage).toInt256();
 
         uint256 assetToTransfer;
         if (value > available) {
