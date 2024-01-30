@@ -39,7 +39,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         external
         payable
-        returns (PriceInfo memory)
+        returns (PriceInfo memory _result)
     {
         if (action == ProtocolAction.None) {
             return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
@@ -138,7 +138,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     }
 
     /// @notice Returns the ETH cost of one price validation for the given action
-    function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256) {
+    function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256 _result) {
         // TODO: Validate each ConfidanceInterval
         if (action == ProtocolAction.None) {
             return getPythUpdateFee(data);
