@@ -3,30 +3,31 @@ pragma solidity 0.8.20;
 
 import { console2 } from "forge-std/Test.sol";
 
-import { WstethBaseFixture } from "test/unit/OracleMiddleware/utils/WstethOracleFixtures.sol";
-import { STETH_PRICE, STETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
-
 import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
+
+import { WstethBaseFixture } from "test/unit/OracleMiddleware/utils/WstethOracleFixtures.sol";
+import { StETHToWstETH } from "test/unit/OracleMiddleware/utils/StETHToWstETH.sol";
+import { STETH_PRICE, STETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `WstethOracle`
  * @custom:background Given the price WSTETH is ~1739 USD
  * @custom:and The confidence interval is 20 USD
  */
-contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMiddlewareErrors {
-    uint256 immutable FORMATTED_WSTETH_PRICE;
-    uint256 immutable FORMATTED_WSTETH_CONF;
+contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMiddlewareErrors, StETHToWstETH {
+    uint256 immutable FORMATTED_STETH_PRICE;
+    uint256 immutable FORMATTED_STETH_CONF;
+    uint256 immutable STETH_PER_TOKEN;
 
     constructor() {
         super.setUp();
 
-        uint256 formattedStEthPrice =
-            (STETH_PRICE * (10 ** wstethOracle.decimals())) / (10 ** wstethOracle.pythDecimals());
-        uint256 formattedStEthConf =
-            (STETH_CONF * (10 ** wstethOracle.decimals())) / (10 ** wstethOracle.pythDecimals());
-        uint256 stEthPerToken = wsteth.stEthPerToken();
-        FORMATTED_WSTETH_PRICE = formattedStEthPrice * 1 ether / stEthPerToken;
-        FORMATTED_WSTETH_CONF = formattedStEthConf * 1 ether / stEthPerToken;
+        FORMATTED_STETH_PRICE =
+            uint256(uint256(uint64(STETH_PRICE)) * 10 ** wstethOracle.decimals() / 10 ** wstethOracle.pythDecimals());
+        FORMATTED_STETH_CONF =
+            uint256(uint256(uint64(STETH_CONF)) * 10 ** wstethOracle.decimals() / 10 ** wstethOracle.pythDecimals());
+
+        STETH_PER_TOKEN = wsteth.stEthPerToken();
     }
 
     function setUp() public override {
@@ -48,7 +49,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
         PriceInfo memory price = wstethOracle.parseAndValidatePrice(
             uint128(block.timestamp - wstethOracle.validationDelay()), ProtocolAction.None, abi.encode("data")
         );
-        assertEq(price.price, FORMATTED_WSTETH_PRICE, "Wrong price for None action");
+        assertEq(price.price, stethToWsteth(FORMATTED_STETH_PRICE, STETH_PER_TOKEN), "Wrong price for None action");
     }
 
     /**
@@ -62,7 +63,9 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
         PriceInfo memory price = wstethOracle.parseAndValidatePrice(
             uint128(block.timestamp - wstethOracle.validationDelay()), ProtocolAction.Initialize, abi.encode("data")
         );
-        assertEq(price.price, FORMATTED_WSTETH_PRICE, "Wrong price for Initialize action");
+        assertEq(
+            price.price, stethToWsteth(FORMATTED_STETH_PRICE, STETH_PER_TOKEN), "Wrong price for Initialize action"
+        );
     }
 
     /**
@@ -78,7 +81,9 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
             ProtocolAction.InitiateDeposit,
             abi.encode("data")
         );
-        assertEq(price.price, FORMATTED_WSTETH_PRICE, "Wrong price for InitiateDeposit action");
+        assertEq(
+            price.price, stethToWsteth(FORMATTED_STETH_PRICE, STETH_PER_TOKEN), "Wrong price for InitiateDeposit action"
+        );
     }
 
     /**
@@ -94,8 +99,10 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
             ProtocolAction.ValidateDeposit,
             abi.encode("data")
         );
-        assertApproxEqAbs(
-            price.price, FORMATTED_WSTETH_PRICE - FORMATTED_WSTETH_CONF, 1, "Wrong price for ValidateDeposit action"
+        assertEq(
+            price.price,
+            stethToWsteth(FORMATTED_STETH_PRICE - FORMATTED_STETH_CONF, STETH_PER_TOKEN),
+            "Wrong price for ValidateDeposit action"
         );
     }
 
@@ -112,7 +119,11 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
             ProtocolAction.InitiateWithdrawal,
             abi.encode("data")
         );
-        assertEq(price.price, FORMATTED_WSTETH_PRICE, "Wrong price for InitiateWithdrawal action");
+        assertEq(
+            price.price,
+            stethToWsteth(FORMATTED_STETH_PRICE, STETH_PER_TOKEN),
+            "Wrong price for InitiateWithdrawal action"
+        );
     }
 
     /**
@@ -128,7 +139,11 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
             ProtocolAction.ValidateWithdrawal,
             abi.encode("data")
         );
-        assertEq(price.price, FORMATTED_WSTETH_PRICE, "Wrong price for ValidateWithdrawal action");
+        assertEq(
+            price.price,
+            stethToWsteth(FORMATTED_STETH_PRICE, STETH_PER_TOKEN),
+            "Wrong price for ValidateWithdrawal action"
+        );
     }
 
     /**
@@ -144,7 +159,11 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
             ProtocolAction.InitiateOpenPosition,
             abi.encode("data")
         );
-        assertEq(price.price, FORMATTED_WSTETH_PRICE, "Wrong price for InitiateOpenPosition action");
+        assertEq(
+            price.price,
+            stethToWsteth(FORMATTED_STETH_PRICE, STETH_PER_TOKEN),
+            "Wrong price for InitiateOpenPosition action"
+        );
     }
 
     /**
@@ -161,7 +180,9 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
             abi.encode("data")
         );
         assertEq(
-            price.price, FORMATTED_WSTETH_PRICE + FORMATTED_WSTETH_CONF, "Wrong price for ValidateOpenPosition action"
+            price.price,
+            stethToWsteth(FORMATTED_STETH_PRICE + FORMATTED_STETH_CONF, STETH_PER_TOKEN),
+            "Wrong price for ValidateOpenPosition action"
         );
     }
 
@@ -178,7 +199,11 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
             ProtocolAction.InitiateClosePosition,
             abi.encode("data")
         );
-        assertEq(price.price, FORMATTED_WSTETH_PRICE, "Wrong price for InitiateClosePosition action");
+        assertEq(
+            price.price,
+            stethToWsteth(FORMATTED_STETH_PRICE, STETH_PER_TOKEN),
+            "Wrong price for InitiateClosePosition action"
+        );
     }
 
     /**
@@ -194,10 +219,9 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
             ProtocolAction.ValidateClosePosition,
             abi.encode("data")
         );
-        assertApproxEqAbs(
+        assertEq(
             price.price,
-            FORMATTED_WSTETH_PRICE - FORMATTED_WSTETH_CONF,
-            1,
+            stethToWsteth(FORMATTED_STETH_PRICE - FORMATTED_STETH_CONF, STETH_PER_TOKEN),
             "Wrong price for ValidateClosePosition action"
         );
     }
@@ -213,8 +237,10 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMidd
         PriceInfo memory price = wstethOracle.parseAndValidatePrice(
             uint128(block.timestamp - wstethOracle.validationDelay()), ProtocolAction.Liquidation, abi.encode("data")
         );
-        assertApproxEqAbs(
-            price.price, FORMATTED_WSTETH_PRICE - FORMATTED_WSTETH_CONF, 1, "Wrong price for Liquidation action"
+        assertEq(
+            price.price,
+            stethToWsteth(FORMATTED_STETH_PRICE - FORMATTED_STETH_CONF, STETH_PER_TOKEN),
+            "Wrong price for Liquidation action"
         );
     }
 }
