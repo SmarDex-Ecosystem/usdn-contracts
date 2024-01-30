@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Path of the script folder (so that the script can be invoked from somewhere else than the project's root)
+SCRIPT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
+
 # Anvil RPC URL
 RPC_URL=http://localhost:8545
 # Anvil first test private key
@@ -15,4 +18,9 @@ export PYTH_WSTETH_PRICE_ID=0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1
 export CHAINLINK_STETH_PRICE_ADDRESS=0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8
 export GET_WSTETH=true
 
+# Execute in the context of the project's root
+pushd $SCRIPT_DIR/..
+
 forge script --non-interactive --private-key $DEPLOYER_PRIVATE_KEY -f $RPC_URL script/Deploy.s.sol --broadcast
+
+popd
