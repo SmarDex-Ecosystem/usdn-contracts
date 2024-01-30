@@ -41,6 +41,22 @@ interface IOracleMiddleware {
      * @return The ETH cost of one price validation
      */
     function validationCost(bytes calldata data, ProtocolAction action) external returns (uint256);
+
+    /// @notice get max confidence ratio
+    function maxConfRatio() external pure returns (uint16);
+
+    /// @notice get confidence ratio denominator
+    function confRatioDenom() external pure returns (uint16);
+
+    /// @notice get confidence ratio
+    function confRatio() external view returns (uint16);
+
+    /**
+     * @notice Set confidence ratio (admin).
+     * @param newConfRatio the new confidence ratio.
+     * @dev New value should be lower than max confidence ratio.
+     */
+    function setConfRatio(uint16 newConfRatio) external;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -61,6 +77,8 @@ interface IOracleMiddlewareErrors {
     error WrongPrice(int256 price);
     /// @notice The oracle price is invalid
     error PriceTooOld(int256 price, uint256 timestamp);
+    /// @notice the confidence ratio is too high
+    error ConfRatioTooHigh();
 }
 
 /* -------------------------------------------------------------------------- */

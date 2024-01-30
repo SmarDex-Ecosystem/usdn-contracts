@@ -60,8 +60,12 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
         assertEq(middlewarePrice.timestamp, pythTimestamp);
         assertEq(
-            middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals(),
-            pythPrice - pythConf
+            middlewarePrice.price,
+            (pythPrice * 10 ** oracleMiddleware.decimals() / 10 ** oracleMiddleware.pythDecimals())
+                - (
+                    pythConf * 10 ** oracleMiddleware.decimals() / 10 ** oracleMiddleware.pythDecimals()
+                        * oracleMiddleware.confRatio() / oracleMiddleware.confRatioDenom()
+                )
         );
     }
 
@@ -83,8 +87,12 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
         assertEq(middlewarePrice.timestamp, pythTimestamp);
         assertEq(
-            middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals(),
-            pythPrice + pythConf
+            middlewarePrice.price,
+            (pythPrice * 10 ** oracleMiddleware.decimals() / 10 ** oracleMiddleware.pythDecimals())
+                + (
+                    pythConf * 10 ** oracleMiddleware.decimals() / 10 ** oracleMiddleware.pythDecimals()
+                        * oracleMiddleware.confRatio() / oracleMiddleware.confRatioDenom()
+                )
         );
     }
 

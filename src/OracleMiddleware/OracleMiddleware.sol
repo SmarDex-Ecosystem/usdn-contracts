@@ -14,22 +14,98 @@ import {
     FormattedPythPrice
 } from "src/interfaces/IOracleMiddleware.sol";
 
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
 /**
  * @title OracleMiddleware contract
  * @notice This contract is used to get the price of an asset from different price oracle.
  * It is used by the USDN protocol to get the price of the USDN underlying asset.
  * @dev This contract is a middleware between the USDN protocol and the price oracles.
  */
-contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOracle, ChainlinkOracle {
+contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOracle, ChainlinkOracle, Ownable {
     uint256 constant VALIDATION_DELAY = 24 seconds;
 
     // slither-disable-next-line shadowing-state
     uint8 private constant DECIMALS = 18;
+    /// @notice confidence ratio denominator
+    uint16 private constant CONF_RATIO_DENOM = 10_000;
+    /// @notice confidence ratio: up to 200%
+    uint16 private constant MAX_CONF_RATIO = CONF_RATIO_DENOM * 2;
+
+    /// @notice confidence ratio: default 40%
+    uint16 private _confRatio = 4000; // to divide by CONF_RATIO_DENOM
 
     constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed)
         PythOracle(pythContract, pythPriceID)
         ChainlinkOracle(chainlinkPriceFeed)
+        Ownable(msg.sender)
     { }
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Generic features                              */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IOracleMiddleware
+    function validationDelay() external pure returns (uint256) {
+        return VALIDATION_DELAY;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function decimals() external pure returns (uint8) {
+        return DECIMALS;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256 cost_) {
+        // TODO: Validate each ConfidanceInterval
+        if (action == ProtocolAction.None) {
+            return getPythUpdateFee(data);
+        } else if (action == ProtocolAction.Initialize) {
+            return 0;
+        } else if (action == ProtocolAction.ValidateDeposit) {
+            return getPythUpdateFee(data);
+        } else if (action == ProtocolAction.ValidateWithdrawal) {
+            return getPythUpdateFee(data);
+        } else if (action == ProtocolAction.ValidateOpenPosition) {
+            return getPythUpdateFee(data);
+        } else if (action == ProtocolAction.ValidateClosePosition) {
+            return getPythUpdateFee(data);
+        } else if (action == ProtocolAction.Liquidation) {
+            return getPythUpdateFee(data);
+        } else if (action == ProtocolAction.InitiateDeposit) {
+            return 0;
+        } else if (action == ProtocolAction.InitiateWithdrawal) {
+            return 0;
+        } else if (action == ProtocolAction.InitiateOpenPosition) {
+            return 0;
+        } else if (action == ProtocolAction.InitiateClosePosition) {
+            return 0;
+        }
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function maxConfRatio() external pure returns (uint16) {
+        return MAX_CONF_RATIO;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function confRatioDenom() external pure returns (uint16) {
+        return CONF_RATIO_DENOM;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function confRatio() external view returns (uint16) {
+        return _confRatio;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function setConfRatio(uint16 newConfRatio) external onlyOwner {
+        // confidence ratio limit check
+        if (newConfRatio > MAX_CONF_RATIO) {
+            revert ConfRatioTooHigh();
+        }
+        _confRatio = newConfRatio;
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                          Price retrieval features                          */
@@ -39,7 +115,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         external
         payable
-        returns (PriceInfo memory)
+        returns (PriceInfo memory price_)
     {
         if (action == ProtocolAction.None) {
             return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
@@ -100,9 +176,9 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
 
         if (pythPrice.price != -1) {
             if (conf == ConfidenceInterval.Down) {
-                price_.price = uint256(pythPrice.price) - pythPrice.conf;
+                price_.price = uint256(pythPrice.price) - (pythPrice.conf * _confRatio / CONF_RATIO_DENOM);
             } else if (conf == ConfidenceInterval.Up) {
-                price_.price = uint256(pythPrice.price) + pythPrice.conf;
+                price_.price = uint256(pythPrice.price) + (pythPrice.conf * _confRatio / CONF_RATIO_DENOM);
             } else {
                 price_.price = uint256(pythPrice.price);
             }
@@ -114,54 +190,8 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         }
     }
 
-    /**
-     * @dev Get the price from Chainlink onChain.
-     */
+    /// @dev Get the price from Chainlink onChain.
     function getChainlinkOnChainPrice() private view returns (PriceInfo memory) {
         return getFormattedChainlinkPrice(DECIMALS);
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                              Generic features                              */
-    /* -------------------------------------------------------------------------- */
-
-    /// @notice Returns the delay (in seconds) between an action timestamp and the
-    ///         price data timestamp used to validate that action.
-    function validationDelay() external pure returns (uint256) {
-        return VALIDATION_DELAY;
-    }
-
-    /// @notice Returns the number of decimals for the price (constant)
-
-    function decimals() external pure returns (uint8) {
-        return DECIMALS;
-    }
-
-    /// @notice Returns the ETH cost of one price validation for the given action
-    function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256) {
-        // TODO: Validate each ConfidanceInterval
-        if (action == ProtocolAction.None) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.Initialize) {
-            return 0;
-        } else if (action == ProtocolAction.ValidateDeposit) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.ValidateWithdrawal) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.ValidateOpenPosition) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.ValidateClosePosition) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.Liquidation) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.InitiateDeposit) {
-            return 0;
-        } else if (action == ProtocolAction.InitiateWithdrawal) {
-            return 0;
-        } else if (action == ProtocolAction.InitiateOpenPosition) {
-            return 0;
-        } else if (action == ProtocolAction.InitiateClosePosition) {
-            return 0;
-        }
     }
 }

@@ -1,11 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { IOracleMiddleware, ProtocolAction, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import {
+    IOracleMiddleware, ProtocolAction, PriceInfo, IOracleMiddlewareErrors
+} from "src/interfaces/IOracleMiddleware.sol";
 
-contract MockOracleMiddleware is IOracleMiddleware {
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
+contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     uint8 constant DECIMALS = 18;
     uint256 constant VALIDATION_DELAY = 24 seconds;
+    uint16 private constant CONF_RATIO_DENOM = 10_000;
+    uint16 private constant MAX_CONF_RATIO = CONF_RATIO_DENOM * 2;
+    uint16 private _confRatio = 4000; // to divide by CONF_RATIO_DENOM
+
+    constructor() Ownable(msg.sender) { }
 
     /// @inheritdoc IOracleMiddleware
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction, bytes calldata data)
@@ -38,5 +47,29 @@ contract MockOracleMiddleware is IOracleMiddleware {
     /// @inheritdoc IOracleMiddleware
     function validationCost(bytes calldata, ProtocolAction) external pure returns (uint256) {
         return 1;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function maxConfRatio() external pure returns (uint16) {
+        return MAX_CONF_RATIO;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function confRatioDenom() external pure returns (uint16) {
+        return CONF_RATIO_DENOM;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function confRatio() external view returns (uint16) {
+        return _confRatio;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function setConfRatio(uint16 newConfRatio) external onlyOwner {
+        // confidence ratio limit check
+        if (newConfRatio > MAX_CONF_RATIO) {
+            revert IOracleMiddlewareErrors.ConfRatioTooHigh();
+        }
+        _confRatio = newConfRatio;
     }
 }
