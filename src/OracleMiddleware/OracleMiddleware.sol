@@ -100,20 +100,16 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         FormattedPythPrice memory pythPrice =
             getFormattedPythPrice(data, actionTimestamp + uint64(_validationDelay), DECIMALS);
 
-        if (pythPrice.price != -1) {
-            if (conf == ConfidenceInterval.Down) {
-                price_.price = uint256(pythPrice.price) - pythPrice.conf;
-            } else if (conf == ConfidenceInterval.Up) {
-                price_.price = uint256(pythPrice.price) + pythPrice.conf;
-            } else {
-                price_.price = uint256(pythPrice.price);
-            }
-
-            price_.timestamp = pythPrice.publishTime;
-            price_.neutralPrice = uint256(pythPrice.price);
+        if (conf == ConfidenceInterval.Down) {
+            price_.price = uint256(pythPrice.price) - pythPrice.conf;
+        } else if (conf == ConfidenceInterval.Up) {
+            price_.price = uint256(pythPrice.price) + pythPrice.conf;
         } else {
-            revert OracleMiddlewarePythValidationFailed();
+            price_.price = uint256(pythPrice.price);
         }
+
+        price_.timestamp = pythPrice.publishTime;
+        price_.neutralPrice = uint256(pythPrice.price);
     }
 
     /// @dev Get the price from Chainlink onChain.

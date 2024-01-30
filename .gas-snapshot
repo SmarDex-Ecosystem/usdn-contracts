@@ -33,7 +33,7 @@ TestOracleMiddlewareParseAndValidatePrice:test_RevertWhen_parseAndValidatePriceW
 TestOracleMiddlewareParseAndValidatePrice:test_RevertWhen_parseAndValidatePriceWhileOracleMiddlewarePythValidationFailed() (gas: 101208)
 TestOracleMiddlewareParseAndValidatePrice:test_RevertWhen_parseAndValidatePriceWithNegativeEthPrice() (gas: 123231)
 TestOracleMiddlewareParseAndValidatePrice:test_RevertWhen_parseAndValidatePriceWithUnsupportedAction() (gas: 9861)
-TestOracleMiddlewareParseAndValidatePrice:test_parseAndValidatePriceForAllActions() (gas: 143492)
+TestOracleMiddlewareParseAndValidatePrice:test_parseAndValidatePriceForAllActions() (gas: 142964)
 TestOracleMiddlewareParseAndValidatePrice:test_setUp() (gas: 32065)
 TestOracleMiddlewareParseAndValidatePriceRealData:test() (gas: 186)
 TestOracleMiddlewareValidationCost:test() (gas: 208)
