@@ -116,4 +116,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _pendingActionsQueue.clearAt(rawIndex);
         delete _pendingActions[user];
     }
+
+    function i_getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory) {
+        return _getActionablePendingAction(maxIter);
+    }
 }
