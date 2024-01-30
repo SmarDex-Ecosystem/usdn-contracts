@@ -17,7 +17,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         super._setUp(DEFAULT_PARAMS);
     }
 
-    function getActionablePendingActionHelper(function (uint256) external returns (PendingAction memory) func)
+    function _getActionablePendingActionHelper(function (uint256) external returns (PendingAction memory) func)
         internal
     {
         wstETH.mint(address(this), 100_000 ether);
@@ -44,7 +44,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then The pending action is returned
      */
     function test_getActionablePendingAction() public {
-        getActionablePendingActionHelper(protocol.getActionablePendingAction);
+        _getActionablePendingActionHelper(protocol.getActionablePendingAction);
     }
 
     /**
@@ -55,10 +55,10 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then The pending action is returned
      */
     function test_internalGetActionablePendingAction() public {
-        getActionablePendingActionHelper(protocol.i_getActionablePendingAction);
+        _getActionablePendingActionHelper(protocol.i_getActionablePendingAction);
     }
 
-    function getActionablePendingActionSparseHelper(function (uint256) external returns (PendingAction memory) func)
+    function _getActionablePendingActionSparseHelper(function (uint256) external returns (PendingAction memory) func)
         internal
     {
         wstETH.mint(USER_1, 100_000 ether);
@@ -105,7 +105,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:or The third pending action is returned with a max iter of 2
      */
     function test_getActionablePendingActionSparse() public {
-        getActionablePendingActionSparseHelper(protocol.getActionablePendingAction);
+        _getActionablePendingActionSparseHelper(protocol.getActionablePendingAction);
     }
 
     /**
@@ -118,10 +118,10 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:or The third pending action is returned with a max iter of 2
      */
     function test_internalGetActionablePendingActionSparse() public {
-        getActionablePendingActionSparseHelper(protocol.i_getActionablePendingAction);
+        _getActionablePendingActionSparseHelper(protocol.i_getActionablePendingAction);
     }
 
-    function getActionablePendingActionEmptyHelper(function (uint256) external returns (PendingAction memory) func)
+    function _getActionablePendingActionEmptyHelper(function (uint256) external returns (PendingAction memory) func)
         internal
     {
         PendingAction memory action = func(0);
@@ -135,7 +135,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then No actionable pending action is returned
      */
     function test_getActionablePendingActionEmpty() public {
-        getActionablePendingActionEmptyHelper(protocol.getActionablePendingAction);
+        _getActionablePendingActionEmptyHelper(protocol.getActionablePendingAction);
     }
 
     /**
@@ -145,6 +145,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then No actionable pending action is returned
      */
     function test_internalGetActionablePendingActionEmpty() public {
-        getActionablePendingActionEmptyHelper(protocol.i_getActionablePendingAction);
+        _getActionablePendingActionEmptyHelper(protocol.i_getActionablePendingAction);
     }
 }
