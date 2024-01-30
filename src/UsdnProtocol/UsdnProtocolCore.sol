@@ -359,8 +359,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         if (pendingActionIndex == 0) {
             return;
         }
-        uint128 rawIndex = uint128(pendingActionIndex - 1);
-        PendingAction memory action = _pendingActionsQueue.atRaw(rawIndex);
+        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user, false); // do not clear
         // the position is only at risk of being liquidated while pending if it is an open position action
         // slither-disable-next-line incorrect-equality
         if (action.action == ProtocolAction.InitiateOpenPosition) {
@@ -397,20 +396,24 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
      * @param user The user address
      * @param clear Whether to pop the pending action from the queue or leave it there
      * @return action_ The pending action struct
+     * @return rawIndex_ The raw index of the pending action in the queue
      */
-    function _getPendingAction(address user, bool clear) internal returns (PendingAction memory action_) {
+    function _getPendingAction(address user, bool clear)
+        internal
+        returns (PendingAction memory action_, uint128 rawIndex_)
+    {
         uint256 pendingActionIndex = _pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
             revert UsdnProtocolNoPendingAction();
         }
 
-        uint128 rawIndex = uint128(pendingActionIndex - 1);
-        action_ = _pendingActionsQueue.atRaw(rawIndex);
+        rawIndex_ = uint128(pendingActionIndex - 1);
+        action_ = _pendingActionsQueue.atRaw(rawIndex_);
 
         if (clear) {
             // remove the pending action
-            _pendingActionsQueue.clearAt(rawIndex);
+            _pendingActionsQueue.clearAt(rawIndex_);
             delete _pendingActions[user];
         }
     }
