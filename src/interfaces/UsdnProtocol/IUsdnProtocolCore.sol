@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { IUsdnProtocolStorage } from "src/interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
 import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolCore
  * @notice Interface for the core layer of the USDN protocol.
  */
-interface IUsdnProtocolCore {
+interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /// @notice The address that holds the minimum supply of USDN and first minimum long position.
     function DEAD_ADDRESS() external view returns (address);
 
