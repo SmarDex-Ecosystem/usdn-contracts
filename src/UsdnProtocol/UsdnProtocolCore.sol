@@ -264,6 +264,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         }
 
         (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
+        // TO DO : return funding in fundingAsset()
         (int256 fundAsset,,) = fundingAsset(currentPrice, timestamp);
 
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
@@ -279,6 +280,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _balanceVault = uint256(newVaultBalance);
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
+        _lastFunding = fund;
         _liquidationMultiplier = _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
 
         priceUpdated_ = true;
@@ -303,6 +305,15 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         if (_asset.balanceOf(to) != expectedBalance) {
             revert UsdnProtocolIncompleteTransfer(to, _asset.balanceOf(to), expectedBalance);
         }
+    }
+
+    function _calculateMovAvgCoefficient(int256 fund, uint128 secondsElapsed) internal returns (int256) {
+        /// _movAvgCoefficient = (fund + _movAvgCoefficient * (movAvgPeriod - (block.timestamp - _lastUpdateTimestamp)))
+        /// / movAvgPeriod
+        _movAvgCoefficient =
+            (fund + _movAvgCoefficient * int128(_movAvgPeriod - secondsElapsed)) / int128(_movAvgPeriod);
+
+        return _movAvgCoefficient;
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {

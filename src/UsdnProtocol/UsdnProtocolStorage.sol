@@ -92,9 +92,15 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     /// @notice User current liquidation iteration in tick.
     uint16 internal _liquidationIteration = 5;
 
+    /// @notice The moving average period for the funding coefficient
+    uint128 internal _movAvgPeriod = 5 days;
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
+
+    /// @notice The funding corresponding to the last update timestamp
+    int256 internal _lastFunding = 0;
 
     /// @notice The price of the asset during the last balances update (with price feed decimals)
     uint128 internal _lastPrice;
@@ -127,6 +133,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     uint256 internal _balanceVault;
 
     /* ----------------------------- Long positions ----------------------------- */
+
+    /// @notice The moving average coefficient for the funding
+    int256 internal _movAvgCoefficient = 1 * 10 ** 18;
 
     /// @notice The balance of long positions (with asset decimals)
     uint256 internal _balanceLong;
