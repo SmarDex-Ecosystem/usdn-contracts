@@ -9,11 +9,11 @@ import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+
 /**
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol
  */
-
 contract UsdnProtocolHandler is UsdnProtocol {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
