@@ -51,7 +51,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     function test_validationCostForInitializeAction() public {
         uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Initialize);
 
-        assertEq(fee, 0, "Wrong fee cost for Initialize action");
+        assertEq(fee, mockPyth.getUpdateFee(data), "Wrong fee cost for Initialize action");
     }
 
     /**

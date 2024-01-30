@@ -145,7 +145,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         if (action == ProtocolAction.None) {
             return getPythUpdateFee(data);
         } else if (action == ProtocolAction.Initialize) {
-            return 0;
+            return getPythUpdateFee(data);
         } else if (action == ProtocolAction.ValidateDeposit) {
             return getPythUpdateFee(data);
         } else if (action == ProtocolAction.ValidateWithdrawal) {
