@@ -5,38 +5,8 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 
-/**
- * @title Events for the USDN token contract
- */
-interface IUsdnEvents {
-    /**
-     * @notice Emitted when the divisor is adjusted.
-     * @param oldDivisor divisor before adjustment
-     * @param newDivisor divisor after adjustment
-     */
-    event DivisorAdjusted(uint256 oldDivisor, uint256 newDivisor);
-}
-
-/**
- * @title Errors for the USDN token contract
- */
-interface IUsdnErrors {
-    /**
-     * @dev Indicates that the provided divisor is invalid. This is usually because the new value is larger or
-     * equal to the current divisor, or the new divisor is too small.
-     * @param divisor invalid divisor
-     */
-    error UsdnInvalidDivisor(uint256 divisor);
-
-    /**
-     * @dev Indicates that the number of tokens exceeds the maximum allowed value.
-     * @param value invalid token value
-     */
-    error UsdnMaxTokensExceeded(uint256 value);
-
-    /// @dev Indicates that the newly minted tokens would make the total supply of shares overflow uint256
-    error UsdnTotalSupplyOverflow();
-}
+import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
+import { IUsdnErrors } from "src/interfaces/Usdn/IUsdnErrors.sol";
 
 /**
  * @title USDN token interface
