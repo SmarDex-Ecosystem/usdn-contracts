@@ -110,7 +110,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
             price_.timestamp = pythPrice.publishTime;
             price_.neutralPrice = uint256(pythPrice.price);
         } else {
-            revert PythValidationFailed();
+            revert OracleMiddlewarePythValidationFailed();
         }
     }
 

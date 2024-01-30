@@ -42,7 +42,7 @@ contract PythOracle is IOracleMiddlewareErrors {
             pricesUpdateData, priceIds, targetTimestamp, type(uint64).max
         ) returns (PythStructs.PriceFeed[] memory priceFeeds) {
             if (priceFeeds[0].price.price < 0) {
-                revert WrongPrice(priceFeeds[0].price.price);
+                revert OracleMiddlewareWrongPrice(priceFeeds[0].price.price);
             }
             return priceFeeds[0].price;
         } catch {

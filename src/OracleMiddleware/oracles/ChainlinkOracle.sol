@@ -26,11 +26,11 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
         if (timestamp < block.timestamp - 1 hours) {
-            revert PriceTooOld(price, timestamp);
+            revert OracleMiddlewarePriceTooOld(price, timestamp);
         }
 
         if (price < 0) {
-            revert WrongPrice(price);
+            revert OracleMiddlewareWrongPrice(price);
         }
 
         price_ = PriceInfo({ price: uint256(price), neutralPrice: uint256(price), timestamp: timestamp });
