@@ -308,12 +308,26 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     }
 
     function _calculateMovAvgCoefficient(int256 fund, uint128 secondsElapsed) internal returns (int256) {
-        /// _movAvgCoefficient = (fund + _movAvgCoefficient * (movAvgPeriod - (block.timestamp - _lastUpdateTimestamp)))
-        /// / movAvgPeriod
+        // _movAvgCoefficient = (fund + _movAvgCoefficient * (movAvgPeriod - (block.timestamp - _lastUpdateTimestamp)))
+        // / movAvgPeriod
+
+        // TO DO : add protection with timestamp
         _movAvgCoefficient =
             (fund + _movAvgCoefficient * int128(_movAvgPeriod - secondsElapsed)) / int128(_movAvgPeriod);
 
         return _movAvgCoefficient;
+    }
+
+    function _getImbalanceIndex(uint128 currentPrice) internal view returns (int256) {
+        // if(shortExpo>longExpo) -> ((longExpo-shortExpo)/shortExpo) else -> -((shortExpo-longExpo)/longExpo)))
+        int256 vaultExpo = _vaultTradingExpo(currentPrice);
+        int256 longExpo = _longTradingExpo(currentPrice);
+
+        if (vaultExpo > longExpo) {
+            return (longExpo - vaultExpo) / vaultExpo;
+        } else {
+            return (vaultExpo - longExpo) / longExpo;
+        }
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {

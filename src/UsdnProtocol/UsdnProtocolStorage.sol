@@ -134,8 +134,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
 
     /* ----------------------------- Long positions ----------------------------- */
 
-    /// @notice The moving average coefficient for the funding
-    int256 internal _movAvgCoefficient = 1 * 10 ** 18;
+    /// @notice The moving average coefficient for the funding (0.0003 at initialization)
+    int256 internal _movAvgCoefficient = 3 * 10 ** 14; //  TO DO : 18 decimals ?
 
     /// @notice The balance of long positions (with asset decimals)
     uint256 internal _balanceLong;
