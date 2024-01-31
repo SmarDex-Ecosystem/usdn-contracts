@@ -11,10 +11,6 @@ import { ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdn
  *
  * The struct is called `Deque` and holds `PendingAction`s. This data structure can only be used in storage, and not in
  * memory.
- *
- * ```solidity
- * DoubleEndedQueue.Deque queue;
- * ```
  */
 library DoubleEndedQueue {
     /// @dev Indicates that an operation (e.g. {front}) couldn't be completed due to the queue being empty.
