@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { Vm } from "forge-std/Test.sol";
-
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -87,12 +85,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         wstETH.approve(address(protocol), type(uint256).max);
 
         // create a pending action with a liquidation price around $1700
-        vm.recordLogs();
-        protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
-        // get the tick, tick version and index of the newly created position
-        Vm.Log[] memory entries = vm.getRecordedLogs();
-        (, int24 tick, uint256 tickVersion, uint256 index) =
-            abi.decode(entries[0].data, (Position, int24, uint256, uint256));
+        (int24 tick, uint256 tickVersion, uint256 index) =
+            protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
 
         // the price drops to $1500 and the position gets liquidated
         skip(30);
@@ -122,12 +116,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         wstETH.approve(address(protocol), type(uint256).max);
 
         // create a pending action with a liquidation price around $1700
-        vm.recordLogs();
-        protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
-        // get the tick, tick version and index of the newly created position
-        Vm.Log[] memory entries = vm.getRecordedLogs();
-        (, int24 tick, uint256 tickVersion, uint256 index) =
-            abi.decode(entries[0].data, (Position, int24, uint256, uint256));
+        (int24 tick, uint256 tickVersion, uint256 index) =
+            protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
 
         // the price drops to $1500 and the position gets liquidated
         skip(30);
