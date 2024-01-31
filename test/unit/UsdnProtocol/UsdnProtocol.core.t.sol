@@ -79,6 +79,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:and The pending action is stale (tick version mismatch)
      * @custom:when The user opens another position
      * @custom:then The protocol emits a `StalePendingActionRemoved` event
+     * @custom:and The transaction does not revert
      */
     function test_stalePendingActionReInit() public {
         wstETH.mint(address(this), 2 ether);
@@ -110,6 +111,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:and The pending action is stale (tick version mismatch)
      * @custom:when The user tries to validate the pending action
      * @custom:then The protocol emits a `StalePendingActionRemoved` event
+     * @custom:and The transaction does not revert
      */
     function test_stalePendingActionValidate() public {
         wstETH.mint(address(this), 2 ether);
