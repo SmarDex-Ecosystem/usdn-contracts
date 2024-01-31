@@ -5,7 +5,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol
