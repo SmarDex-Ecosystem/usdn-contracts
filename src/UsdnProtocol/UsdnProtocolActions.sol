@@ -573,7 +573,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function _executePendingAction(bytes calldata priceData) internal {
-        PendingAction memory pending = getActionablePendingAction(0); // use default maxIter
+        PendingAction memory pending = _getActionablePendingAction(0); // use default maxIter
         if (pending.action == ProtocolAction.None) {
             // no pending action
             return;

@@ -316,27 +316,73 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     /* -------------------------- Pending actions queue ------------------------- */
 
-    function getActionablePendingAction(uint256 maxIter) public returns (PendingAction memory action_) {
-        if (_pendingActionsQueue.empty()) {
+    /**
+     * @notice Retrieve a pending action that must be validated by the next user action in the protocol.
+     * @dev If this function returns a pending action, then the next user action MUST include the price update data
+     * for this pending action as the last parameter.
+     * @param maxIter The maximum number of iterations to find the first initialized item
+     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     */
+    function getActionablePendingAction(uint256 maxIter) external view returns (PendingAction memory action_) {
+        uint256 queueLength = _pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
             return action_;
         }
         // default max iterations
         if (maxIter == 0) {
             maxIter = DEFAULT_QUEUE_MAX_ITER;
         }
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
 
         uint256 i = 0;
         do {
+            // Since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
+            PendingAction memory candidate = _pendingActionsQueue.at(i);
+            if (candidate.timestamp == 0) {
+                // try the next one
+                continue;
+            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
+                // we found an actionable pending action
+                return candidate;
+            } else {
+                // the first pending action is not actionable
+                return action_;
+            }
+        } while (++i < maxIter);
+    }
+
+    /**
+     * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
+     * are removed.
+     * @param maxIter The maximum number of iterations to find the first initialized item
+     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     */
+    function _getActionablePendingAction(uint256 maxIter) internal returns (PendingAction memory action_) {
+        uint256 queueLength = _pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
+            return action_;
+        }
+        // default max iterations
+        if (maxIter == 0) {
+            maxIter = DEFAULT_QUEUE_MAX_ITER;
+        }
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
+
+        uint256 i = 0;
+        do {
+            // Since we will never call `front` more than `queueLength` times, there is no risk of reverting
             PendingAction memory candidate = _pendingActionsQueue.front();
             if (candidate.timestamp == 0) {
                 // remove the stale pending action
                 // slither-disable-next-line unused-return
                 _pendingActionsQueue.popFront();
-                // if the queue is empty, return
-                if (_pendingActionsQueue.empty()) {
-                    return action_;
-                }
-                // otherwise, try the next one
+                // try the next one
                 continue;
             } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
