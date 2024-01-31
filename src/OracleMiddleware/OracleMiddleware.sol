@@ -91,7 +91,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle {
     {
         /**
          * @dev Fetch the price from Pyth, return a price at -1 if it fails
-         * @dev Add the validation delay to the action timestamp to get the timestamp of the price data used to
+         * Add the validation delay to the action timestamp to get the timestamp of the price data used to
          * validate
          */
         FormattedPythPrice memory pythPrice =

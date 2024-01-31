@@ -27,7 +27,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @notice Get the predicted value of the funding for the given asset price and timestamp
      * @dev The effect of any profits or losses from the long positions since the last contract state update are taken
      * into account.
-     * @dev When multiplied with the long trading exposure, this value gives the asset balance that needs to be paid to
+     * When multiplied with the long trading exposure, this value gives the asset balance that needs to be paid to
      * the vault side (or long side if negative).
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
@@ -96,7 +96,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * rates and any profit or loss of the long positions since the last contract state update.
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.None` action.
-     * @dev The price validation might require payment according to the return value of the `validationCost` function
+     * The price validation might require payment according to the return value of the `validationCost` function
      * of the middleware.
      * @param priceData The current price data for the asset.
      */
