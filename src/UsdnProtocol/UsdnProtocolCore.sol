@@ -309,6 +309,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         return int256(uint256(x));
     }
 
+    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        version_ = _tickVersion[tick];
+        hash_ = keccak256(abi.encodePacked(tick, version_));
+    }
+
     /* -------------------------- Pending actions queue ------------------------- */
 
     /**
@@ -389,7 +394,40 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         } while (++i < maxIter);
     }
 
+    /**
+     * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
+     * @dev This is only applicable to `InitiateOpenPosition` pending actions
+     * @param user The user address
+     */
+    function _removeStalePendingAction(address user) internal {
+        uint256 pendingActionIndex = _pendingActions[user];
+        // slither-disable-next-line incorrect-equality
+        if (pendingActionIndex == 0) {
+            return;
+        }
+        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user, false); // do not clear
+        // the position is only at risk of being liquidated while pending if it is an open position action
+        // slither-disable-next-line incorrect-equality
+        if (action.action == ProtocolAction.InitiateOpenPosition) {
+            (, uint256 version) = _tickHash(action.tick);
+            if (version != action.totalExpoOrTickVersion) {
+                // the position was liquidated while pending
+                // remove the stale pending action
+                _pendingActionsQueue.clearAt(rawIndex);
+                delete _pendingActions[user];
+                emit StalePendingActionRemoved(user, action.tick, action.totalExpoOrTickVersion, action.amountOrIndex);
+            }
+        }
+    }
+
+    /**
+     * @notice Add a pending action to the queue
+     * @dev This reverts if there is already a pending action for this user
+     * @param user The user address
+     * @param action The pending action struct
+     */
     function _addPendingAction(address user, PendingAction memory action) internal {
+        _removeStalePendingAction(user); // check if there is a pending action that was liquidated and remove it
         if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
         }
@@ -399,19 +437,29 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _pendingActions[user] = uint256(rawIndex) + 1;
     }
 
-    function _getPendingAction(address user, bool clear) internal returns (PendingAction memory action_) {
+    /**
+     * @notice Get the pending action for a user and optionally pop it from the queue
+     * @param user The user address
+     * @param clear Whether to pop the pending action from the queue or leave it there
+     * @return action_ The pending action struct
+     * @return rawIndex_ The raw index of the pending action in the queue
+     */
+    function _getPendingAction(address user, bool clear)
+        internal
+        returns (PendingAction memory action_, uint128 rawIndex_)
+    {
         uint256 pendingActionIndex = _pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
             revert UsdnProtocolNoPendingAction();
         }
 
-        uint128 rawIndex = uint128(pendingActionIndex - 1);
-        action_ = _pendingActionsQueue.atRaw(rawIndex);
+        rawIndex_ = uint128(pendingActionIndex - 1);
+        action_ = _pendingActionsQueue.atRaw(rawIndex_);
 
         if (clear) {
             // remove the pending action
-            _pendingActionsQueue.clearAt(rawIndex);
+            _pendingActionsQueue.clearAt(rawIndex_);
             delete _pendingActions[user];
         }
     }
