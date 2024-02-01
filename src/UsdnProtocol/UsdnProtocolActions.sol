@@ -240,40 +240,53 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         }
 
         uint40 timestamp = uint40(block.timestamp);
+        {
+            PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
+            );
 
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
-        );
-
-        bool priceUpdated =
-            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-        // liquidate if pnl applied
-        if (priceUpdated) {
-            _liquidatePositions(currentPrice.price, _liquidationIteration);
+            bool priceUpdated =
+                _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+            // liquidate if pnl applied
+            if (priceUpdated) {
+                _liquidatePositions(currentPrice.price, _liquidationIteration);
+            }
         }
 
-        // TODO: what needs to be stored here so we can remove the position from the tick now and calculate the profit
-        // in validateClosePosition?
-        // We will use the tick to calculate the liquidation price.
-        // We won't need the index anymore, so we can store the amount in fifth parameter.
-        // We can store the leverage in any of the other parameters (it's a uint128).
+        {
+            (, uint256 version) = _tickHash(tick);
+            if (version != tickVersion) {
+                // our position was liquidated
+                // can't close a liquidated position
+                // TODO: emit event
+                return;
+            }
+        }
+
+        uint256 liqMultiplier = _liquidationMultiplier;
+        uint256 tempTransfer = _assetToTransfer(tick, pos.amount, pos.leverage, liqMultiplier);
+
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateClosePosition,
             timestamp: timestamp,
             user: msg.sender,
             tick: tick,
-            amountOrIndex: index.toUint128(),
-            assetPrice: 0,
+            amountOrIndex: pos.amount, // TODO: rename to `amount` and use `usdnTotalSupplyOrPosIndex` for
+                // deposit/withdraw
+            assetPrice: pos.leverage, // TODO: rename struct field to `assetPriceOrLeverage`
             totalExpoOrTickVersion: tickVersion,
-            balanceVault: 0,
-            balanceLong: 0,
-            usdnTotalSupply: 0
-        });
+            balanceVault: liqMultiplier, // TODO: rename struct field to `balanceVaultOrLiqMultiplier`
+            balanceLong: tempTransfer, // TODO: rename struct field to `balanceLongOrTempTransfer`
+            usdnTotalSupply: index // TODO: rename struct field to `usdnTotalSupplyOrPosIndex`
+         });
 
-        // TODO: remove position from the tick so that it can't be liquidated after 24s and stops impacting the PnL and
-        // funding calculations
+        // decrease balance optimistically (exact amount will be recalculated during validation)
+        // transfer will be done after validation
+        _balanceLong -= tempTransfer;
 
         _addPendingAction(msg.sender, pendingAction);
+
+        _removePosition(tick, tickVersion, index, pos);
 
         emit InitiatedClosePosition(msg.sender, tick, tickVersion, index);
         _executePendingAction(previousActionPriceData);
@@ -515,19 +528,12 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
     function _validateClosePositionWithAction(PendingAction memory long, bytes calldata priceData) internal {
         int24 tick = long.tick;
-        uint256 tickVersion = long.totalExpoOrTickVersion;
-        uint256 index = long.amountOrIndex;
+        uint256 amount = long.amountOrIndex;
+        uint128 leverage = long.assetPrice;
+        uint256 liqMultiplier = long.balanceVault;
+        uint256 tempTransfer = long.balanceLong;
 
-        (, uint256 version) = _tickHash(tick);
-
-        if (version != tickVersion) {
-            // The current tick version doesn't match the version from the pending action.
-            // This means the position has been liquidated in the mean time
-            // TODO: this will become unapplicable when we change the flow of closing positions to directly remove
-            // the position from the tick after the initiate action. After that change, we will need another mechanism
-            // to make sure the pending close positions can be liquidated during the 24s window.
-            return;
-        }
+        // TODO: how to check if position was liquidated during the 24s between initiate and validate?
 
         PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             long.timestamp, ProtocolAction.ValidateClosePosition, priceData
@@ -536,40 +542,55 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         // adjust balances
         _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
 
-        uint128 liquidationPrice = getEffectivePriceForTick(tick);
+        uint256 assetToTransfer = _assetToTransfer(tick, amount, leverage, liqMultiplier);
 
-        Position memory pos = getLongPosition(tick, tickVersion, index);
+        // adjust long balance that was previously optimistically decreased
+        if (assetToTransfer > tempTransfer) {
+            // we didn't remove enough
+            _balanceLong -= assetToTransfer - tempTransfer;
+        } else if (assetToTransfer < tempTransfer) {
+            // we removed too much
+            _balanceLong += tempTransfer - assetToTransfer;
+        }
 
-        // TODO: check if can be liquidated according to the liquidation price (with liquidation penalty)
-        liquidationPrice;
+        // send the asset to the user
+        _distributeAssetsAndCheckBalance(long.user, assetToTransfer);
 
-        int256 available = _longAssetAvailable(_lastPrice);
+        emit ValidatedClosePosition(
+            long.user,
+            tick,
+            long.totalExpoOrTickVersion, // tick version
+            long.usdnTotalSupply, // index
+            assetToTransfer,
+            int256(assetToTransfer) - amount.toInt256()
+        );
+    }
+
+    function _assetToTransfer(int24 tick, uint256 posAmount, uint128 posLeverage, uint256 liqMultiplier)
+        internal
+        view
+        returns (uint256 assetToTransfer_)
+    {
+        uint128 lastPrice = _lastPrice;
+        // calculate amount to transfer
+        int256 available = _longAssetAvailable(lastPrice);
         if (available < 0) {
             available = 0;
         }
 
         // Calculate position value
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
-        int256 value =
-            positionValue(price.price.toUint128(), liqPriceWithoutPenalty, pos.amount, pos.leverage).toInt256();
+        int256 value = positionValue(
+            lastPrice,
+            _getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
+            posAmount,
+            posLeverage
+        ).toInt256();
 
-        uint256 assetToTransfer;
         if (value > available) {
-            assetToTransfer = uint256(available);
+            assetToTransfer_ = uint256(available);
         } else {
-            assetToTransfer = uint256(value);
+            assetToTransfer_ = uint256(value);
         }
-
-        // remove the position for the protocol and adjust state
-        _balanceLong -= assetToTransfer;
-        _removePosition(tick, tickVersion, index, pos);
-
-        // send the asset to the user
-        _distributeAssetsAndCheckBalance(pos.user, assetToTransfer);
-
-        emit ValidatedClosePosition(
-            pos.user, tick, tickVersion, index, assetToTransfer, int256(assetToTransfer) - _toInt256(pos.amount)
-        );
     }
 
     function _executePendingAction(bytes calldata priceData) internal {
