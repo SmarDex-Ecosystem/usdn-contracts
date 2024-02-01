@@ -83,40 +83,28 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is
                 // timestamp check
                 assertEq(middlewarePrice.timestamp, pythTimestamp);
 
+                // formatted pyth price
+                uint256 formattedPythPrice =
+                    pythPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
+
+                // formatted pyth conf
+                uint256 formattedPythConf =
+                    pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
+
                 // Price + conf
                 if (action == ProtocolAction.ValidateOpenPosition) {
                     // check price
-                    assertEq(
-                        middlewarePrice.price,
-                        stethToWsteth(
-                            (pythPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals())
-                                + (pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals())
-                        ),
-                        priceError
-                    );
+                    assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
 
                     // Price - conf
                 } else if (action == ProtocolAction.ValidateDeposit) {
                     // check price
-                    assertEq(
-                        middlewarePrice.price,
-                        stethToWsteth(
-                            (pythPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals())
-                                - (pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals())
-                        ),
-                        priceError
-                    );
+                    assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
 
                     // Price only
                 } else {
                     // check price
-                    assertEq(
-                        middlewarePrice.price,
-                        stethToWsteth(
-                            pythPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals()
-                        ),
-                        priceError
-                    );
+                    assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice), priceError);
                 }
             }
         }
@@ -180,40 +168,28 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is
                 // timestamp check
                 assertEq(middlewarePrice.timestamp, pythTimestamp);
 
+                // formatted pyth price
+                uint256 formattedPythPrice =
+                    pythPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
+
+                // formatted pyth conf
+                uint256 formattedPythConf =
+                    pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
+
                 // Price + conf
                 if (action == ProtocolAction.ValidateOpenPosition) {
                     // check price
-                    assertEq(
-                        middlewarePrice.price,
-                        stethToWsteth(
-                            (pythPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals())
-                                + (pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals())
-                        ),
-                        priceError
-                    );
+                    assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
 
                     // Price - conf
                 } else if (action == ProtocolAction.ValidateDeposit) {
                     // check price
-                    assertEq(
-                        middlewarePrice.price,
-                        stethToWsteth(
-                            (pythPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals())
-                                - (pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals())
-                        ),
-                        priceError
-                    );
+                    assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
 
                     // Price only
                 } else {
                     // check price
-                    assertEq(
-                        middlewarePrice.price,
-                        stethToWsteth(
-                            pythPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals()
-                        ),
-                        priceError
-                    );
+                    assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice), priceError);
 
                     // pyth wsteth price comparison
                     (
