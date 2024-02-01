@@ -23,7 +23,7 @@ contract WstEthOracleMiddleware is OracleMiddleware {
     /**
      * @notice Parses and validates price data by applying steth/wsteth ratio.
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
-     * Wsteth price is calculated as follows : stethPrice x 1 ether / stEthPerToken.
+     * Wsteth price is calculated as follows : stethPrice x stEthPerToken / 1 ether.
      * @param targetTimestamp The target timestamp for validating the price data. For validation actions, this is the
      * timestamp of the initiation.
      * @param action Type of action for which the price is requested. The middleware may use this to alter the
