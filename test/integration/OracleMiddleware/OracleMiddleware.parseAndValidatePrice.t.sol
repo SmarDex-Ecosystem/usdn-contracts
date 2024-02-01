@@ -34,7 +34,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API or chainlink
      * onchain data
      */
-    function test_ForkparseAndValidatePriceForAllActions() public ethMainnetFork reSetUp {
+    function test_ForkParseAndValidatePriceForAllActions() public ethMainnetFork reSetUp {
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
@@ -114,7 +114,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API or chainlink
      * onchain data
      */
-    function test_ForkFFIparseAndValidatePriceForAllActions() public ethMainnetFork reSetUp {
+    function test_ForkFFIParseAndValidatePriceForAllActions() public ethMainnetFork reSetUp {
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type

@@ -34,7 +34,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API or chainlink
      * onchain data by applying Steth/Wsteth onchain price ratio.
      */
-    function test_ForkWstethparseAndValidatePriceForAllActions() public ethMainnetFork reSetUp {
+    function test_ForkWstethParseAndValidatePriceForAllActions() public ethMainnetFork reSetUp {
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
@@ -119,7 +119,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API or chainlink
      * onchain data by applying Steth/Wsteth onchain price ratio.
      */
-    function test_ForkFFIparseAndValidatePriceForAllActions() public ethMainnetFork reSetUp {
+    function test_ForkFFIParseAndValidatePriceForAllActions() public ethMainnetFork reSetUp {
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
@@ -195,7 +195,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
 
                     assertEq(middlewarePrice.timestamp, pythWstethTimestamp, "Wrong similar timestamp");
 
-                    // Should obtain a short differente price between pyth wsteth pricefeed
+                    // Should obtain a short different price between pyth wsteth pricefeed
                     // and pyth steth pricefeed adjusted with ratio.
                     // We are ok with a delta below pyth wsteth confidence.
                     assertApproxEqAbs(
