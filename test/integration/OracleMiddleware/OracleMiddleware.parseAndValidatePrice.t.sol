@@ -2,10 +2,9 @@
 pragma solidity 0.8.20;
 
 import { OracleMiddlewareBaseFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
-import { ActionsIntegrationTests } from "test/integration/OracleMiddleware/utils/ActionsIntegrationTests.sol";
 import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
 
-import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
+import { PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
@@ -14,11 +13,7 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
  * @custom:and The confidence interval is 20 USD
  * @custom:and The oracles are not mocked
  */
-contract TestOracleMiddlewareParseAndValidatePriceRealData is
-    OracleMiddlewareBaseFixture,
-    IOracleMiddlewareErrors,
-    ActionsIntegrationTests
-{
+contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBaseFixture {
     using Strings for uint256;
 
     function setUp() public override {

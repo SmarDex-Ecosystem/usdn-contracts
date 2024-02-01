@@ -1,22 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/Test.sol";
-
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 
 import { OracleMiddlewareBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
 import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
-import { Actions } from "test/unit/OracleMiddleware/utils/Actions.sol";
 
-import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `OracleMiddleware`
  * @custom:background Given the price of ETH is 2000 USD
  * @custom:and The confidence interval is 20 USD
  */
-contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixture, IOracleMiddlewareErrors, Actions {
+contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixture {
     using Strings for uint256;
 
     uint256 immutable FORMATTED_ETH_PRICE;

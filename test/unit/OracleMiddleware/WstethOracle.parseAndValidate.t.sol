@@ -1,14 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/Test.sol";
+import { PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 
-import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
-
-import { WstethBaseFixture } from "test/unit/OracleMiddleware/utils/WstethOracleFixtures.sol";
-import { StETHToWstETH } from "test/unit/OracleMiddleware/utils/StETHToWstETH.sol";
+import { WstethBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
 import { STETH_PRICE, STETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
-import { Actions } from "test/unit/OracleMiddleware/utils/Actions.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -17,7 +13,7 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
  * @custom:background Given the price WSTETH is ~1739 USD
  * @custom:and The confidence interval is 20 USD
  */
-contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture, IOracleMiddlewareErrors, StETHToWstETH, Actions {
+contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
     using Strings for uint256;
 
     uint256 immutable FORMATTED_STETH_PRICE;
