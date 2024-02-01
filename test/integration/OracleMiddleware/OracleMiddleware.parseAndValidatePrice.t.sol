@@ -82,35 +82,24 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is
                 // timestamp check
                 assertEq(middlewarePrice.timestamp, pythTimestamp);
 
+                // formatted middleware price
+                uint256 middlewareFormattedPrice =
+                    middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals();
+
                 // Price + conf
                 if (action == ProtocolAction.ValidateOpenPosition) {
                     // check price
-                    assertEq(
-                        middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals()
-                            / 10 ** oracleMiddleware.decimals(),
-                        pythPrice + pythConf,
-                        priceError
-                    );
+                    assertEq(middlewareFormattedPrice, pythPrice + pythConf, priceError);
 
                     // Price - conf
                 } else if (action == ProtocolAction.ValidateDeposit) {
                     // check price
-                    assertEq(
-                        middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals()
-                            / 10 ** oracleMiddleware.decimals(),
-                        pythPrice - pythConf,
-                        priceError
-                    );
+                    assertEq(middlewareFormattedPrice, pythPrice - pythConf, priceError);
 
                     // Price only
                 } else {
                     // check price
-                    assertEq(
-                        middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals()
-                            / 10 ** oracleMiddleware.decimals(),
-                        pythPrice,
-                        priceError
-                    );
+                    assertEq(middlewareFormattedPrice, pythPrice, priceError);
                 }
             }
         }
@@ -173,35 +162,24 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is
                 // timestamp check
                 assertEq(middlewarePrice.timestamp, pythTimestamp);
 
+                // formatted middleware price
+                uint256 middlewareFormattedPrice =
+                    middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals();
+
                 // Price + conf
                 if (action == ProtocolAction.ValidateOpenPosition) {
                     // check price
-                    assertEq(
-                        middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals()
-                            / 10 ** oracleMiddleware.decimals(),
-                        pythPrice + pythConf,
-                        priceError
-                    );
+                    assertEq(middlewareFormattedPrice, pythPrice + pythConf, priceError);
 
                     // Price - conf
                 } else if (action == ProtocolAction.ValidateDeposit) {
                     // check price
-                    assertEq(
-                        middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals()
-                            / 10 ** oracleMiddleware.decimals(),
-                        pythPrice - pythConf,
-                        priceError
-                    );
+                    assertEq(middlewareFormattedPrice, pythPrice - pythConf, priceError);
 
                     // Price only
                 } else {
                     // check price
-                    assertEq(
-                        middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals()
-                            / 10 ** oracleMiddleware.decimals(),
-                        pythPrice,
-                        priceError
-                    );
+                    assertEq(middlewareFormattedPrice, pythPrice, priceError);
                 }
             }
         }
