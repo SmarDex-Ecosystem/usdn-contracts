@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { WstethFixtures } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
+import { WstethFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
 import { PYTH_WSTETH_USD, PYTH_STETH_USD } from "test/utils/Constants.sol";
 
 import { PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
@@ -13,7 +13,7 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
  * @custom:and The confidence interval is 20 USD
  * @custom:and The oracles are not mocked
  */
-contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixtures {
+contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
     using Strings for uint256;
 
     function setUp() public override {

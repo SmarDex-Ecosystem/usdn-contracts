@@ -12,10 +12,10 @@ import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddlew
 import { IOracleMiddlewareErrors, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 
 /**
- * @title Actions
+ * @title ActionsFixture
  * @dev all protocol actions
  */
-contract Actions is IOracleMiddlewareErrors {
+contract ActionsFixture is IOracleMiddlewareErrors {
     // all action types
     ProtocolAction[] public actions = [
         ProtocolAction.None,
@@ -36,7 +36,7 @@ contract Actions is IOracleMiddlewareErrors {
  * @title OracleMiddlewareBaseFixture
  * @dev Utils for testing the oracle middleware
  */
-contract OracleMiddlewareBaseFixture is BaseFixture, Actions {
+contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
     MockPyth mockPyth;
     MockChainlinkOnChain mockChainlinkOnChain;
     OracleMiddleware public oracleMiddleware;
@@ -78,7 +78,7 @@ contract OracleMiddlewareBaseFixture is BaseFixture, Actions {
  * @title WstethBaseFixture
  * @dev Utils for testing the wsteth oracle
  */
-contract WstethBaseFixture is BaseFixture, Actions {
+contract WstethBaseFixture is BaseFixture, ActionsFixture {
     MockPyth mockPyth;
     MockChainlinkOnChain mockChainlinkOnChain;
     WstEthOracleMiddleware public wstethOracle;

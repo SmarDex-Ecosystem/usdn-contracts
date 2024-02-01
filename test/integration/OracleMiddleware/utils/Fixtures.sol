@@ -31,10 +31,10 @@ import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 
 /**
- * @title ActionsIntegrationTests
+ * @title ActionsIntegrationFixture
  * @dev required integration actions tests
  */
-contract ActionsIntegrationTests is IOracleMiddlewareErrors {
+contract ActionsIntegrationFixture is IOracleMiddlewareErrors {
     // action types for integration tests
     ProtocolAction[] public actions = [
         ProtocolAction.None,
@@ -48,7 +48,7 @@ contract ActionsIntegrationTests is IOracleMiddlewareErrors {
  * @title OracleMiddlewareBaseFixture
  * @dev Utils for testing the oracle middleware
  */
-contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationTests {
+contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationFixture {
     IPyth pyth;
     AggregatorV3Interface chainlinkOnChain;
     OracleMiddleware public oracleMiddleware;
@@ -92,10 +92,10 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationTests {
 }
 
 /**
- * @title OracleMiddlewareBaseFixture
+ * @title WstethFixture
  * @dev Utils for testing the oracle middleware
  */
-contract WstethFixtures is BaseFixture, ActionsIntegrationTests {
+contract WstethFixture is BaseFixture, ActionsIntegrationFixture {
     IPyth pyth;
     AggregatorV3Interface chainlinkOnChain;
     WstEthOracleMiddleware public wstethMiddleware;
