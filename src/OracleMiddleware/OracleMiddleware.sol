@@ -36,8 +36,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle {
 
     /// @inheritdoc IOracleMiddleware
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
-        external
+        public
         payable
+        virtual
         returns (PriceInfo memory)
     {
         if (action == ProtocolAction.None) {
