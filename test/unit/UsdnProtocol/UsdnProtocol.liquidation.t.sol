@@ -60,7 +60,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
         // check if second total expo is equal expected value
-        assertEq(protocol.totalExpo(), 675.762949901442510582 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 641.065993449946923772 ether, "wrong second totalExpo");
         // check if second total expo by tick is equal expected value
         assertEq(protocol.totalExpoByTick(initialTick), 0, "wrong second totalExpoByTick");
         // check if second long position length is equal expected value
@@ -68,7 +68,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if second position in tick is equal expected value
         assertEq(protocol.positionsInTick(initialTick), 0, "wrong second positionsInTick");
         // check if second max initialized is equal expected value
-        assertEq(protocol.maxInitializedTick(), 72_100, "wrong second maxInitializedTick");
+        assertEq(protocol.maxInitializedTick(), 72_000, "wrong second maxInitializedTick");
         // check if second total long positions is equal expected value
         assertEq(protocol.totalLongPositions(), 7, "wrong second totalLongPositions");
     }
@@ -216,7 +216,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             );
         }
         // check if first total expo match initial value
-        assertEq(protocol.totalExpo(), 1299.296340723580797681 ether, "wrong first totalExpo");
+        assertEq(protocol.totalExpo(), 1305.300201155907460572 ether, "wrong first totalExpo");
         // check if first max initialized match initial value
         assertEq(protocol.maxInitializedTick(), 74_300, "wrong first maxInitializedTick");
         // check if first total long positions match initial value
@@ -274,7 +274,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         }
 
         // check if second total expo match expected value
-        assertEq(protocol.totalExpo(), 660.805940136603836933 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 666.191714853673846674 ether, "wrong second totalExpo");
         // check if second max initialized match expected value
         assertEq(protocol.maxInitializedTick(), 73_800, "wrong second maxInitializedTick");
         // check if second total long positions match expected value

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import "forge-std/console2.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -53,19 +54,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             return (0, longExpo_, vaultExpo_);
         }
 
-        int256 secondsElapsed = _toInt256(timestamp - _lastUpdateTimestamp);
-        // we want the expo at the last update, since we are now calculating the funding since the last update
-        int256 relative;
+        uint256 numerator = uint256(longExpo_ * longExpo_ - 2 * longExpo_ * vaultExpo_ + vaultExpo_ * vaultExpo_);
+
+        int256 denominator;
         if (vaultExpo_ > longExpo_) {
-            relative = vaultExpo_;
+            denominator = vaultExpo_ * vaultExpo_;
+            fund_ = int256(
+                FixedPointMathLib.fullMulDiv(uint256(numerator), 12 * 10 ** 17, uint256(denominator * 10 ** 18))
+            ) + _movAvgCoefficient;
         } else {
-            relative = longExpo_;
+            denominator = longExpo_ * longExpo_;
+            fund_ = -int256(FixedPointMathLib.fullMulDiv(uint256(numerator), 12 * 10 ** 17, uint256(denominator * 10 ** 18)))
+                + _movAvgCoefficient;
         }
-        // avoid division by zero
-        if (relative == 0) {
-            return (0, longExpo_, vaultExpo_);
-        }
-        fund_ = longExpo_.safeSub(vaultExpo_).safeMul(_fundingRatePerSecond * secondsElapsed * 100).safeDiv(relative);
     }
 
     function fundingAsset(uint128 currentPrice, uint128 timestamp)
@@ -263,6 +264,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             return false;
         }
 
+        _calculateMovAvgCoefficient(timestamp - _lastUpdateTimestamp);
         (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
         // TO DO : return funding in fundingAsset()
         (int256 fundAsset,,) = fundingAsset(currentPrice, timestamp);
@@ -307,26 +309,25 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         }
     }
 
-    function _calculateMovAvgCoefficient(int256 fund, uint128 secondsElapsed) internal returns (int256) {
+    function _calculateMovAvgCoefficient(uint128 secondsElapsed) internal returns (int256) {
         // _movAvgCoefficient = (fund + _movAvgCoefficient * (movAvgPeriod - (block.timestamp - _lastUpdateTimestamp)))
         // / movAvgPeriod
 
         // TO DO : add protection with timestamp
         _movAvgCoefficient =
-            (fund + _movAvgCoefficient * int128(_movAvgPeriod - secondsElapsed)) / int128(_movAvgPeriod);
+            (_lastFunding + _movAvgCoefficient * int128(_movAvgPeriod - secondsElapsed)) / int128(_movAvgPeriod);
 
         return _movAvgCoefficient;
     }
 
-    function _getImbalanceIndex(uint128 currentPrice) internal view returns (int256) {
+    function _getImbalanceIndex(int256 vaultExpo, int256 longExpo) internal pure returns (int256) {
         // if(shortExpo>longExpo) -> ((longExpo-shortExpo)/shortExpo) else -> -((shortExpo-longExpo)/longExpo)))
-        int256 vaultExpo = _vaultTradingExpo(currentPrice);
-        int256 longExpo = _longTradingExpo(currentPrice);
 
         if (vaultExpo > longExpo) {
-            return (longExpo - vaultExpo) / vaultExpo;
+            // TO DO : find best precision
+            return (longExpo - vaultExpo) * 10 ** 18 / vaultExpo;
         } else {
-            return (vaultExpo - longExpo) / longExpo;
+            return -(vaultExpo - longExpo) * 10 ** 18 / longExpo;
         }
     }
 
