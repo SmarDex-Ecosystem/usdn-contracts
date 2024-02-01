@@ -7,7 +7,7 @@
   "license": "BUSL-1.1",
   "scripts": {
     "prepare": "husky install",
-    "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\"",
+    "snapshot": "FOUNDRY_PROFILE=ci forge clean && forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\"",
     "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --check",
     "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",
     "cov": "forge coverage --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",
