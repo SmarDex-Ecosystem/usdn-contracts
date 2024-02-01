@@ -46,8 +46,8 @@ contract WstEthOracleMiddleware is OracleMiddleware {
 
         // wsteth price
         return PriceInfo({
-            price: stethPrice.price * 1 ether / stEthPerToken,
-            neutralPrice: stethPrice.neutralPrice * 1 ether / stEthPerToken,
+            price: stethPrice.price * stEthPerToken / 1 ether,
+            neutralPrice: stethPrice.neutralPrice * stEthPerToken / 1 ether,
             timestamp: stethPrice.timestamp
         });
     }
