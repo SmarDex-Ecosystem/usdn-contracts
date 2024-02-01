@@ -5,10 +5,8 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-
 /**
- * @custom:feature The internal functions of the core of the protocol
+ * @custom:feature The functions of the core of the protocol
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
  */
 contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
