@@ -74,6 +74,31 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @dev Helper function to initiate a new position and liquidate it before it gets validated
+     * @return tick_ The tick of the new position
+     * @return tickVersion_ The tick version of the new position
+     * @return index_ The index of the new position
+     */
+    function _createStalePendingActionHelper() internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+        wstETH.mint(address(this), 2 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
+
+        // create a pending action with a liquidation price around $1700
+        (tick_, tickVersion_, index_) =
+            protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
+
+        // the price drops to $1500 and the position gets liquidated
+        skip(30);
+        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
+
+        // the pending action is stale
+        (, uint256 currentTickVersion) = protocol.tickHash(tick_);
+        PendingAction memory action = protocol.getUserPendingAction(address(this));
+        assertEq(action.totalExpoOrTickVersion, tickVersion_, "tick version");
+        assertTrue(action.totalExpoOrTickVersion != currentTickVersion, "current tick version");
+    }
+
+    /**
      * @custom:scenario A pending new long position gets liquidated
      * @custom:given A pending new position was liquidated before being validated
      * @custom:and The pending action is stale (tick version mismatch)
@@ -82,22 +107,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:and The transaction does not revert
      */
     function test_stalePendingActionReInit() public {
-        wstETH.mint(address(this), 2 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
-
-        // create a pending action with a liquidation price around $1700
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
-
-        // the price drops to $1500 and the position gets liquidated
-        skip(30);
-        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
-
-        // the pending action is stale
-        (, uint256 currentTickVersion) = protocol.tickHash(tick);
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
-        assertEq(action.totalExpoOrTickVersion, tickVersion, "tick version");
-        assertTrue(action.totalExpoOrTickVersion != currentTickVersion, "current tick version");
+        (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
 
         // we should be able to open a new position
         vm.expectEmit();
@@ -114,22 +124,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:and The transaction does not revert
      */
     function test_stalePendingActionValidate() public {
-        wstETH.mint(address(this), 2 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
-
-        // create a pending action with a liquidation price around $1700
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
-
-        // the price drops to $1500 and the position gets liquidated
-        skip(30);
-        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
-
-        // the pending action is stale
-        (, uint256 currentTickVersion) = protocol.tickHash(tick);
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
-        assertEq(action.totalExpoOrTickVersion, tickVersion, "tick version");
-        assertTrue(action.totalExpoOrTickVersion != currentTickVersion, "current tick version");
+        (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
 
         // validating the action emits the proper event
         vm.expectEmit();
