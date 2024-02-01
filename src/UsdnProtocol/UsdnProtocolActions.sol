@@ -565,6 +565,14 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         );
     }
 
+    /**
+     * @notice Calculate how much wstETH must be transferred to a user to close a position.
+     * @dev The amount is bound by the amount of wstETH available in the long side.
+     * @param tick The tick of the position
+     * @param posAmount The amount of the position
+     * @param posLeverage The initial leverage of the position
+     * @param liqMultiplier The liquidation multiplier at the moment of closing the position
+     */
     function _assetToTransfer(int24 tick, uint256 posAmount, uint128 posLeverage, uint256 liqMultiplier)
         internal
         view
