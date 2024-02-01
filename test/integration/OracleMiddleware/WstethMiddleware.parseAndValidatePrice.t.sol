@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+
 import { WstethFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
 import { PYTH_WSTETH_USD, PYTH_STETH_USD } from "test/utils/Constants.sol";
 
-import { PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `WstethMiddleware`

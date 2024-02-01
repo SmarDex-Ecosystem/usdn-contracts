@@ -7,9 +7,11 @@ import { WstETH } from "test/utils/WstEth.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
+
 import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { IOracleMiddlewareErrors, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
 /**
  * @title ActionsFixture

@@ -4,8 +4,6 @@ pragma solidity 0.8.20;
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import { IOracleMiddlewareErrors, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
-import { IWstETH } from "src/interfaces/IWstETH.sol";
 
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import {
@@ -16,7 +14,6 @@ import {
     PYTH_STETH_USD,
     WSTETH
 } from "test/utils/Constants.sol";
-
 import {
     PYTH_DATA_PRICE,
     PYTH_DATA_CONF,
@@ -27,8 +24,11 @@ import {
     PYTH_DATA_STETH
 } from "test/integration/OracleMiddleware/utils/Constants.sol";
 
+import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title ActionsIntegrationFixture
