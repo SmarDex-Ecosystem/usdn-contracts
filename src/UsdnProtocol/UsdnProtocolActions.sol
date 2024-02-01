@@ -240,17 +240,16 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         }
 
         uint40 timestamp = uint40(block.timestamp);
-        {
-            PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-                timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
-            );
 
-            bool priceUpdated =
-                _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-            // liquidate if pnl applied
-            if (priceUpdated) {
-                _liquidatePositions(currentPrice.price, _liquidationIteration);
-            }
+        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+            timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
+        );
+
+        bool priceUpdated =
+            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+        // liquidate if pnl applied
+        if (priceUpdated) {
+            _liquidatePositions(currentPrice.price, _liquidationIteration);
         }
 
         {
