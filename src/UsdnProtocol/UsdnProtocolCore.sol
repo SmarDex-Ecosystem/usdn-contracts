@@ -40,7 +40,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         return _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
     }
 
-    // TO DO : take off expos from return
+    // TO DO : add doc and warnings
     function funding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -48,6 +48,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     {
         vaultExpo_ = _vaultTradingExpo(currentPrice);
         longExpo_ = _longTradingExpo(currentPrice);
+
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
             // slither-disable-next-line incorrect-equality
@@ -55,20 +56,27 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             return (0, longExpo_, vaultExpo_);
         }
 
-        uint256 longU = longExpo_.toUint256();
-        uint256 vaultU = vaultExpo_.toUint256();
-        uint256 numerator = longU * longU + vaultU * vaultU - 2 * longU * vaultU;
+        uint256 uintLongExpo = longExpo_.toUint256();
+        uint256 uintVaultExpo = vaultExpo_.toUint256();
+
+        uint256 numerator =
+            uintLongExpo * uintLongExpo + uintVaultExpo * uintVaultExpo - 2 * uintLongExpo * uintVaultExpo;
 
         uint256 denominator;
         if (vaultExpo_ > longExpo_) {
-            denominator = vaultU * vaultU;
+            denominator = uintVaultExpo * uintVaultExpo;
             fund_ = int256(
-                FixedPointMathLib.fullMulDiv(uint256(numerator), 12 * 10 ** 17, uint256(denominator * 10 ** 18))
+                FixedPointMathLib.fullMulDiv(
+                    uint256(numerator), _fundingAggressivity, denominator * 10 ** FUNDING_AGGRESIVITY_DECIMALS
+                )
             ) + _movAvgCoefficient;
         } else {
-            denominator = longU * longU;
-            fund_ = -int256(FixedPointMathLib.fullMulDiv(uint256(numerator), 12 * 10 ** 17, uint256(denominator * 10 ** 18)))
-                + _movAvgCoefficient;
+            denominator = uintLongExpo * uintLongExpo;
+            fund_ = -int256(
+                FixedPointMathLib.fullMulDiv(
+                    uint256(numerator), _fundingAggressivity, denominator * 10 ** FUNDING_AGGRESIVITY_DECIMALS
+                )
+            ) + _movAvgCoefficient;
         }
     }
 
