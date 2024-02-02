@@ -11,7 +11,7 @@
     "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --check",
     "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test FFI",
     "cov": "forge coverage --no-match-test FFI",
-    "cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info && open .coverage/index.html",
+    "cov:html": "forge coverage --report lcov --no-match-test \"(FFI|Fuzz|invariant)\" && genhtml -o .coverage lcov.info && open .coverage/index.html",
     "test": "forge test -vvv",
     "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\"",
     "format": "forge fmt",
@@ -23,7 +23,7 @@
   "main": "dist/index.js",
   "files": ["dist", "broadcast"],
   "devDependencies": {
-    "@biomejs/biome": "1.4.0",
+    "@biomejs/biome": "^1.5.3",
     "@chainlink/contracts": "^0.8.0",
     "@openzeppelin/contracts": "^5.0.0",
     "@pythnetwork/pyth-sdk-solidity": "^2.3.0",

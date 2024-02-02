@@ -56,9 +56,10 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
 
         // Here, we have vaultExpo ~= 2*longExpo and fund < 0, so we should have multiplier < 1
         // TO DO : Fix this test
-        // skip(6 days);
+        skip(6 days);
         // We need to initiate a position to trigger the refresh of the multiplier
-        // protocol.initiateOpenPosition(1, desiredLiqPrice, priceData, "");
+        emit log_named_uint("mult", protocol.liquidationMultiplier());
+        protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
         // assertLt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
     }
 }

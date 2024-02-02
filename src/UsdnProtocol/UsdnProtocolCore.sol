@@ -21,6 +21,7 @@ import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
+    using SafeCast for int256;
     using SignedMath for int256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
@@ -54,16 +55,18 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             return (0, longExpo_, vaultExpo_);
         }
 
-        uint256 numerator = uint256(longExpo_ * longExpo_ - 2 * longExpo_ * vaultExpo_ + vaultExpo_ * vaultExpo_);
+        uint256 longU = longExpo_.toUint256();
+        uint256 vaultU = vaultExpo_.toUint256();
+        uint256 numerator = longU * longU + vaultU * vaultU - 2 * longU * vaultU;
 
-        int256 denominator;
+        uint256 denominator;
         if (vaultExpo_ > longExpo_) {
-            denominator = vaultExpo_ * vaultExpo_;
+            denominator = vaultU * vaultU;
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(uint256(numerator), 12 * 10 ** 17, uint256(denominator * 10 ** 18))
             ) + _movAvgCoefficient;
         } else {
-            denominator = longExpo_ * longExpo_;
+            denominator = longU * longU;
             fund_ = -int256(FixedPointMathLib.fullMulDiv(uint256(numerator), 12 * 10 ** 17, uint256(denominator * 10 ** 18)))
                 + _movAvgCoefficient;
         }
@@ -314,8 +317,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         // / movAvgPeriod
 
         // TO DO : add protection with timestamp
-        _movAvgCoefficient =
-            (_lastFunding + _movAvgCoefficient * int128(_movAvgPeriod - secondsElapsed)) / int128(_movAvgPeriod);
+        _movAvgCoefficient = (_lastFunding + _movAvgCoefficient * _toInt256(_movAvgPeriod) - _toInt256(secondsElapsed))
+            / _toInt256(_movAvgPeriod);
 
         return _movAvgCoefficient;
     }
