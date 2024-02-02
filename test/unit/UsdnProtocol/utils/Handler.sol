@@ -120,4 +120,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory) {
         return _getActionablePendingAction(maxIter);
     }
+
+    function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
+        return _vaultTradingExpo(currentPrice);
+    }
+
+    function i_longTradingExpo(uint128 currentPrice) external view returns (int256) {
+        return _longTradingExpo(currentPrice);
+    }
 }

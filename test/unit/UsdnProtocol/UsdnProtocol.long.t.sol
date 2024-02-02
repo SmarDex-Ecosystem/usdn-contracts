@@ -72,19 +72,18 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_getMinLiquidationPrice_multiplierLtOne() public {
         bytes memory priceData = abi.encode(4000 ether);
 
-        protocol.initiateDeposit(500 ether, priceData, "");
+        protocol.initiateDeposit(5000 ether, priceData, "");
         protocol.validateDeposit(priceData, "");
-        skip(1 days);
+        skip(6 days);
         protocol.initiateDeposit(1, priceData, "");
         protocol.validateDeposit(priceData, "");
 
-        // TO DO : Fix this test
-        // assertLt(
-        //     protocol.liquidationMultiplier(),
-        //     10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
-        //     "liquidation multiplier >= 1"
-        // );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_033_530_772_116, "wrong minimum liquidation price");
+        assertLt(
+            protocol.liquidationMultiplier(),
+            10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
+            "liquidation multiplier >= 1"
+        );
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_033_524_768_133, "wrong minimum liquidation price");
     }
 
     /**

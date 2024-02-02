@@ -41,25 +41,23 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
      */
     function test_liquidationMultiplier() public {
         bytes memory priceData = abi.encode(4000 ether);
-        uint128 desiredLiqPrice =
-            protocol.getLiquidationPrice(4000 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+        uint128 desiredLiqPrice = 2000 ether;
 
-        protocol.initiateOpenPosition(500 ether, desiredLiqPrice, priceData, "");
+        protocol.initiateOpenPosition(5 ether, desiredLiqPrice, priceData, "");
         protocol.validateOpenPosition(priceData, "");
         assertEq(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 
-        // Here, we have longExpo > vaultExpo and fund > 0, so we should have multiplier > 1
         skip(1 days);
-        protocol.initiateDeposit(500 ether, priceData, "");
+        // We need to initiate a position to trigger the refresh of the multiplier
+        protocol.initiateDeposit(1, priceData, "");
         protocol.validateDeposit(priceData, "");
+        // Here, we have vaultExpo > longExpo and fund > 0, so we should have multiplier > 1
         assertGt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 
-        // Here, we have vaultExpo ~= 2*longExpo and fund < 0, so we should have multiplier < 1
-        // TO DO : Fix this test
-        skip(6 days);
+        skip(10 days);
         // We need to initiate a position to trigger the refresh of the multiplier
-        emit log_named_uint("mult", protocol.liquidationMultiplier());
-        protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
-        // assertLt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
+        protocol.initiateDeposit(1, priceData, "");
+        // Here, we have vaultExpo > longExpo and fund < 0, so we should have multiplier < 1
+        assertLt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
     }
 }
