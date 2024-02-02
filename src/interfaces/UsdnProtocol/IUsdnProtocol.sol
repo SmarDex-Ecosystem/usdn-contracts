@@ -195,6 +195,15 @@ interface IUsdnProtocolEvents {
      * @param oldTickVersion The liquidated tick version.
      */
     event LiquidatedTick(int24 indexed tick, uint256 indexed oldTickVersion);
+
+    /**
+     * @notice Emitted when a user's position was liquidated while pending validation and we remove the pending action.
+     * @param user The user address.
+     * @param tick The tick that contained the position.
+     * @param tickVersion The tick version when the position was created.
+     * @param index The index of the position inside the tick array.
+     */
+    event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
 }
 
 /* -------------------------------------------------------------------------- */

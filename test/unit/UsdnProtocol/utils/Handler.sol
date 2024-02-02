@@ -8,13 +8,15 @@ import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
-import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
+import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+
 /**
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol
  */
-
 contract UsdnProtocolHandler is UsdnProtocol {
+    using DoubleEndedQueue for DoubleEndedQueue.Deque;
+
     constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
         UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing)
     { }
@@ -66,8 +68,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _validationDeadline;
     }
 
-    function getUserPendingAction(address user) external returns (PendingAction memory) {
-        return _getPendingAction(user, false); // do not clear
+    function getUserPendingAction(address user) external returns (PendingAction memory action_) {
+        (action_,) = _getPendingAction(user, false); // do not clear
     }
 
     function balanceVault() external view returns (uint256) {
@@ -108,5 +110,14 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function liquidationPenalty() external view returns (uint24) {
         return _liquidationPenalty;
+    }
+
+    function removePendingAction(uint128 rawIndex, address user) external {
+        _pendingActionsQueue.clearAt(rawIndex);
+        delete _pendingActions[user];
+    }
+
+    function i_getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory) {
+        return _getActionablePendingAction(maxIter);
     }
 }
