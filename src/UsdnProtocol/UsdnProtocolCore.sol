@@ -75,10 +75,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     function fundingAsset(uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
+        returns (int256 fundingAsset_, int256 longExpo_, int256 vaultExpo_, int256 fund_)
     {
         (fund_, longExpo_, vaultExpo_) = funding(currentPrice, timestamp);
-        fund_ = fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
+        fundingAsset_ = fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
@@ -86,8 +86,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         view
         returns (int256 available_)
     {
-        (int256 fund,,) = fundingAsset(currentPrice, timestamp);
-        available_ = _longAssetAvailable(currentPrice).safeSub(fund);
+        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
     }
 
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
@@ -95,8 +95,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         view
         returns (int256 available_)
     {
-        (int256 fund,,) = fundingAsset(currentPrice, timestamp);
-        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fund);
+        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
     }
 
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
@@ -268,9 +268,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         }
 
         _calculateMovAvgCoefficient(timestamp - _lastUpdateTimestamp);
-        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
-        // TO DO : return funding in fundingAsset()
-        (int256 fundAsset,,) = fundingAsset(currentPrice, timestamp);
+        (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
         int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAsset);
@@ -323,14 +321,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         return _movAvgCoefficient;
     }
 
-    function _getImbalanceIndex(int256 vaultExpo, int256 longExpo) internal pure returns (int256) {
+    function _getImbalanceIndex(int256 vaultExpo, int256 longExpo) internal view returns (int256) {
         // if(shortExpo>longExpo) -> ((longExpo-shortExpo)/shortExpo) else -> -((shortExpo-longExpo)/longExpo)))
 
         if (vaultExpo > longExpo) {
-            // TO DO : find best precision
-            return (longExpo - vaultExpo) * 10 ** 18 / vaultExpo;
+            return (longExpo - vaultExpo) * int256(10 ** _assetDecimals) / vaultExpo;
         } else {
-            return -(vaultExpo - longExpo) * 10 ** 18 / longExpo;
+            return -(vaultExpo - longExpo) * int256(10 ** _assetDecimals) / longExpo;
         }
     }
 
