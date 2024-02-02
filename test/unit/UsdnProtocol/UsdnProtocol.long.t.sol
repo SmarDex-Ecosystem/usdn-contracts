@@ -61,7 +61,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_035_034_973_931, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_034_733_046_329, "wrong minimum liquidation price");
     }
 
     /**
@@ -84,7 +84,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         //     10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
         //     "liquidation multiplier >= 1"
         // );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_033_532_235_523, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_033_530_772_116, "wrong minimum liquidation price");
     }
 
     /**

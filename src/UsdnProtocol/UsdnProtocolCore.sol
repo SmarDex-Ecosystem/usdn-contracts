@@ -311,12 +311,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     }
 
     function _calculateMovAvgCoefficient(uint128 secondsElapsed) internal returns (int256) {
-        // _movAvgCoefficient = (fund + _movAvgCoefficient * (movAvgPeriod - (block.timestamp - _lastUpdateTimestamp)))
-        // / movAvgPeriod
+        // _movAvgCoefficient = (fund + _movAvgCoefficient * (movAvgPeriod - secondsElapsed)) / movAvgPeriod
 
-        // TO DO : add protection with timestamp
-        _movAvgCoefficient = (_lastFunding + _movAvgCoefficient * _toInt256(_movAvgPeriod) - _toInt256(secondsElapsed))
-            / _toInt256(_movAvgPeriod);
+        _movAvgCoefficient = (
+            _lastFunding + _movAvgCoefficient * (_toInt256(_movAvgPeriod) - _toInt256(secondsElapsed))
+        ) / _toInt256(_movAvgPeriod);
 
         return _movAvgCoefficient;
     }
