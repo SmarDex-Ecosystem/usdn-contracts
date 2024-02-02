@@ -532,24 +532,32 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         uint256 liqMultiplier = long.balanceVault;
         uint256 tempTransfer = long.balanceLong;
 
-        // TODO: how to check if position was liquidated during the 24s between initiate and validate?
-
         PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             long.timestamp, ProtocolAction.ValidateClosePosition, priceData
         );
 
         // adjust balances
         _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
-
         uint256 assetToTransfer = _assetToTransfer(tick, amount, leverage, liqMultiplier);
 
         // adjust long balance that was previously optimistically decreased
         if (assetToTransfer > tempTransfer) {
             // we didn't remove enough
+            // FIXME: here, should send the user tempTransfer since it's the lower of the two amounts?
             _balanceLong -= assetToTransfer - tempTransfer;
         } else if (assetToTransfer < tempTransfer) {
             // we removed too much
             _balanceLong += tempTransfer - assetToTransfer;
+        }
+
+        // get liquidation price (with liq penalty) to check if position was valid at `timestamp + validationDelay`
+        uint128 liquidationPrice = _getEffectivePriceForTick(tick, liqMultiplier);
+        if (price.neutralPrice <= liquidationPrice) {
+            // position should be liquidated, we don't pay out the profits but send any remaining collateral to the
+            // vault
+            // TODO: emit event?
+            _balanceVault += assetToTransfer;
+            return;
         }
 
         // send the asset to the user
