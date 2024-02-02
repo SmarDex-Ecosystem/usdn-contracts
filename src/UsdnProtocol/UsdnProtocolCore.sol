@@ -107,15 +107,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
     }
 
-    /* ---------------------------- Public functions ---------------------------- */
-
-    function updateBalances(bytes calldata priceData) external payable initializedAndNonReentrant {
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint128(block.timestamp), ProtocolAction.None, priceData
-        );
-        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-    }
-
     /* --------------------------  Internal functions --------------------------- */
 
     function _getLiquidationMultiplier(
