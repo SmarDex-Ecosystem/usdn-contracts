@@ -85,6 +85,16 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         );
     }
 
+    function getPositionValue(int24 tick, uint256 tickVersion, uint256 index, uint128 currentPrice)
+        external
+        view
+        returns (uint256 value_)
+    {
+        Position memory pos = getLongPosition(tick, tickVersion, index);
+        uint128 liqPrice = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
+        value_ = positionValue(currentPrice, liqPrice, pos.amount, pos.leverage);
+    }
+
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
         // adjusted price with liquidation multiplier
         uint256 priceWithMultiplier =

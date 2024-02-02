@@ -216,7 +216,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             );
         }
         // check if first total expo match initial value
-        assertEq(protocol.totalExpo(), 1299.296340723580797681 ether, "wrong first totalExpo");
+        assertEq(protocol.totalExpo(), 1299.296339902327012002 ether, "wrong first totalExpo");
         // check if first max initialized match initial value
         assertEq(protocol.maxInitializedTick(), 74_300, "wrong first maxInitializedTick");
         // check if first total long positions match initial value
@@ -274,7 +274,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         }
 
         // check if second total expo match expected value
-        assertEq(protocol.totalExpo(), 660.805940136603836933 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 660.805939331093181129 ether, "wrong second totalExpo");
         // check if second max initialized match expected value
         assertEq(protocol.maxInitializedTick(), 73_800, "wrong second maxInitializedTick");
         // check if second total long positions match expected value
@@ -359,5 +359,55 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
+    }
+
+    /**
+     * @custom:scenario A position gets liquidated due to funding rates without price change
+     * @custom:given A small high risk position (leverage ~10x) and a very large low risk position (leverage ~2x)
+     * @custom:and A large imbalance in the trading expo of the long side vs vault side
+     * @custom:when We wait for 4 days and the price stays contant
+     * @custom:and We then call `liquidate`
+     * @custom:then Funding rates make the liquidation price of the high risk positions go up (the liquidation
+     * multiplier increases)
+     * @custom:and The high risk position gets liquidated even though the asset price has not changed
+     */
+    function test_liquidatedByFundingRates() public {
+        uint128 currentPrice = 2000 ether;
+
+        wstETH.mint(address(this), 1_000_000 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
+
+        bytes memory priceData = abi.encode(uint128(currentPrice));
+
+        // create high risk position
+        (int24 tick, uint256 tickVersion, uint256 index) =
+            protocol.initiateOpenPosition(5 ether, 9 * currentPrice / 10, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        protocol.validateOpenPosition(priceData, "");
+
+        // create large low-risk position to affect funding rates
+        protocol.initiateOpenPosition(500_000 ether, currentPrice / 2, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        protocol.validateOpenPosition(priceData, "");
+
+        uint256 initialMultiplier = protocol.liquidationMultiplier();
+
+        uint128 liqPrice = protocol.getEffectivePriceForTick(tick);
+        assertLt(liqPrice, currentPrice);
+
+        // Wait 4 days so that funding rates make the liquidation price of those positions go up
+        skip(4 days);
+
+        // Adjust balances, multiplier and liquidate positions
+        uint256 liquidated = protocol.liquidate(priceData, 0);
+
+        assertEq(liquidated, 1); // the liquidation price for the high risk position went above the current price
+        liqPrice = protocol.getEffectivePriceForTick(tick);
+        assertGt(liqPrice, currentPrice);
+        assertGt(protocol.liquidationMultiplier(), initialMultiplier);
+
+        // the position doesn't exist anymore
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion));
+        protocol.getLongPosition(tick, tickVersion, index);
     }
 }

@@ -74,7 +74,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
     {
         (fund_, longExpo_, vaultExpo_) = funding(currentPrice, timestamp);
-        fund_ = -fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
+        fund_ = fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
