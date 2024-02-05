@@ -3,7 +3,9 @@ pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction, VaultPendingAction, LongPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -131,5 +133,25 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory) {
         return _getActionablePendingAction(maxIter);
+    }
+
+    function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {
+        return _toVaultPendingAction(action);
+    }
+
+    function i_toLongPendingAction(PendingAction memory action) external pure returns (LongPendingAction memory) {
+        return _toLongPendingAction(action);
+    }
+
+    function i_convertVaultPendingAction(VaultPendingAction memory action)
+        external
+        pure
+        returns (PendingAction memory)
+    {
+        return _convertVaultPendingAction(action);
+    }
+
+    function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory) {
+        return _convertLongPendingAction(action);
     }
 }

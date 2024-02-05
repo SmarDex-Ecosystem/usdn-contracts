@@ -159,4 +159,50 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     function test_internalGetActionablePendingActionEmpty() public {
         _getActionablePendingActionEmptyHelper(protocol.i_getActionablePendingAction);
     }
+
+    /**
+     * @custom:scenario Convert an untyped pending action into a vault pending action
+     * @custom:given An untyped `PendingAction`
+     * @custom:when The action is converted to a `VaultPendingAction` and back into a `PendingAction`
+     * @custom:then The original and the converted `PendingAction` are equal
+     */
+    function test_internalConvertVaultPendingAction() public {
+        PendingAction memory action = PendingAction({
+            action: ProtocolAction.InitiateDeposit,
+            timestamp: uint40(block.timestamp),
+            user: address(this),
+            var1: 0, // must be zero because unused
+            amount: 42,
+            var2: 69,
+            var3: 420,
+            var4: 1337,
+            var5: 9000,
+            var6: 23
+        });
+        PendingAction memory result = protocol.i_convertVaultPendingAction(protocol.i_toVaultPendingAction(action));
+        _assertActionsEqual(action, result, "vault pending action conversion");
+    }
+
+    /**
+     * @custom:scenario Convert an untyped pending action into a long pending action
+     * @custom:given An untyped `PendingAction`
+     * @custom:when The action is converted to a `LongPendingAction` and back into a `PendingAction`
+     * @custom:then The original and the converted `PendingAction` are equal
+     */
+    function test_internalConvertLongPendingAction() public {
+        PendingAction memory action = PendingAction({
+            action: ProtocolAction.InitiateOpenPosition,
+            timestamp: uint40(block.timestamp),
+            user: address(this),
+            var1: 2398,
+            amount: 42,
+            var2: 69,
+            var3: 420,
+            var4: 1337,
+            var5: 9000,
+            var6: 23
+        });
+        PendingAction memory result = protocol.i_convertLongPendingAction(protocol.i_toLongPendingAction(action));
+        _assertActionsEqual(action, result, "long pending action conversion");
+    }
 }
