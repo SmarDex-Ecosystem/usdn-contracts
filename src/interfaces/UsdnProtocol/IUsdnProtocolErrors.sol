@@ -9,7 +9,7 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();
 
-    /// @dev Indicates that the initilization deposit is too low
+    /// @dev Indicates that the initialization deposit is too low
     error UsdnProtocolMinInitAmount(uint256 minInitAmount);
 
     /// @dev Indicates that the provided USDN contract has a total supply above zero at deployment
@@ -18,7 +18,7 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the user is not allowed to perform an action
     error UsdnProtocolUnauthorized();
 
-    /// @dev Indicates that the the token transfer didn't yield the expected balance change
+    /// @dev Indicates that the token transfer didn't yield the expected balance change
     error UsdnProtocolIncompleteTransfer(address to, uint256 effectiveBalance, uint256 expectedBalance);
 
     /// @dev Indicates that the user already has a pending action
