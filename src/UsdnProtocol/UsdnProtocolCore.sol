@@ -66,19 +66,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (vaultExpo_ > longExpo_) {
             denominator = uintVaultExpo * uintVaultExpo;
             fund_ = int256(
-                FixedPointMathLib.fullMulDiv(
-                    numerator, _fundingAggressivity, denominator * 10 ** FUNDING_AGGRESIVITY_DECIMALS
-                )
+                FixedPointMathLib.fullMulDiv(numerator, _fundingScale, denominator * 10 ** FUNDING_SCALE_DECIMALS)
             )
             // if MOVING_AVERAGE_DECIMALS != FUNDING_RATE_DECIMALS, we need to convert it
             + _movAvgCoefficient;
         } else {
             denominator = uintLongExpo * uintLongExpo;
-            fund_ = -int256(
-                FixedPointMathLib.fullMulDiv(
-                    numerator, _fundingAggressivity, denominator * 10 ** FUNDING_AGGRESIVITY_DECIMALS
-                )
-            ) + _movAvgCoefficient;
+            fund_ = -int256(FixedPointMathLib.fullMulDiv(numerator, _fundingScale, denominator * 10 ** FUNDING_SCALE_DECIMALS))
+                + _movAvgCoefficient;
         }
     }
 

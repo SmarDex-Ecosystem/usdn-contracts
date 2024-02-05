@@ -22,7 +22,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function MOVING_AVERAGE_DECIMALS() external view returns (uint8);
 
     /// @notice The number of decimals for funding aggressivity coefficient
-    function FUNDING_AGGRESIVITY_DECIMALS() external view returns (uint8);
+    function FUNDING_SCALE_DECIMALS() external view returns (uint8);
 
     /// @notice The number of seconds in a day
     function SECONDS_PER_DAY() external view returns (uint256);

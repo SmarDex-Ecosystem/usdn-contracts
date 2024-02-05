@@ -31,7 +31,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant MOVING_AVERAGE_DECIMALS = 18;
 
     /// @inheritdoc IUsdnProtocolStorage
-    uint8 public constant FUNDING_AGGRESIVITY_DECIMALS = 18;
+    uint8 public constant FUNDING_SCALE_DECIMALS = 18;
 
     /// @inheritdoc IUsdnProtocolStorage
     uint256 public constant SECONDS_PER_DAY = 60 * 60 * 24;
@@ -99,6 +99,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The moving average period for the funding coefficient
     uint128 internal _movAvgPeriod = 5 days;
 
+    /// @notice The coefficient for funding aggresivity (0.12)
+    uint256 internal _fundingScale = 12 * 10 ** 17; //  TO DO : 18 decimals ?
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
@@ -140,9 +143,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The moving average coefficient for the funding (0.0003 at initialization)
     int256 internal _movAvgCoefficient = 3 * 10 ** 14; //  TO DO : 18 decimals ?
-
-    /// @notice The coefficient for funding aggresivity (0.12)
-    uint256 internal _fundingAggressivity = 12 * 10 ** 17; //  TO DO : 18 decimals ?
 
     /// @notice The balance of long positions (with asset decimals)
     uint256 internal _balanceLong;
