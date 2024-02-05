@@ -309,29 +309,40 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         return int256(uint256(x));
     }
 
+    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        version_ = _tickVersion[tick];
+        hash_ = keccak256(abi.encodePacked(tick, version_));
+    }
+
     /* -------------------------- Pending actions queue ------------------------- */
 
-    function getActionablePendingAction(uint256 maxIter) public returns (PendingAction memory action_) {
-        if (_pendingActionsQueue.empty()) {
+    /**
+     * @notice Retrieve a pending action that must be validated by the next user action in the protocol.
+     * @dev If this function returns a pending action, then the next user action MUST include the price update data
+     * for this pending action as the last parameter.
+     * @param maxIter The maximum number of iterations to find the first initialized item
+     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     */
+    function getActionablePendingAction(uint256 maxIter) external view returns (PendingAction memory action_) {
+        uint256 queueLength = _pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
             return action_;
         }
         // default max iterations
         if (maxIter == 0) {
             maxIter = DEFAULT_QUEUE_MAX_ITER;
         }
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
 
         uint256 i = 0;
         do {
-            PendingAction memory candidate = _pendingActionsQueue.front();
+            // Since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
+            PendingAction memory candidate = _pendingActionsQueue.at(i);
             if (candidate.timestamp == 0) {
-                // remove the stale pending action
-                // slither-disable-next-line unused-return
-                _pendingActionsQueue.popFront();
-                // if the queue is empty, return
-                if (_pendingActionsQueue.empty()) {
-                    return action_;
-                }
-                // otherwise, try the next one
+                // try the next one
                 continue;
             } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
@@ -343,7 +354,80 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         } while (++i < maxIter);
     }
 
+    /**
+     * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
+     * are removed.
+     * @param maxIter The maximum number of iterations to find the first initialized item
+     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     */
+    function _getActionablePendingAction(uint256 maxIter) internal returns (PendingAction memory action_) {
+        uint256 queueLength = _pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
+            return action_;
+        }
+        // default max iterations
+        if (maxIter == 0) {
+            maxIter = DEFAULT_QUEUE_MAX_ITER;
+        }
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
+
+        uint256 i = 0;
+        do {
+            // Since we will never call `front` more than `queueLength` times, there is no risk of reverting
+            PendingAction memory candidate = _pendingActionsQueue.front();
+            if (candidate.timestamp == 0) {
+                // remove the stale pending action
+                // slither-disable-next-line unused-return
+                _pendingActionsQueue.popFront();
+                // try the next one
+                continue;
+            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
+                // we found an actionable pending action
+                return candidate;
+            } else {
+                // the first pending action is not actionable
+                return action_;
+            }
+        } while (++i < maxIter);
+    }
+
+    /**
+     * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
+     * @dev This is only applicable to `InitiateOpenPosition` pending actions
+     * @param user The user address
+     */
+    function _removeStalePendingAction(address user) internal {
+        uint256 pendingActionIndex = _pendingActions[user];
+        // slither-disable-next-line incorrect-equality
+        if (pendingActionIndex == 0) {
+            return;
+        }
+        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user, false); // do not clear
+        // the position is only at risk of being liquidated while pending if it is an open position action
+        // slither-disable-next-line incorrect-equality
+        if (action.action == ProtocolAction.InitiateOpenPosition) {
+            (, uint256 version) = _tickHash(action.tick);
+            if (version != action.totalExpoOrTickVersion) {
+                // the position was liquidated while pending
+                // remove the stale pending action
+                _pendingActionsQueue.clearAt(rawIndex);
+                delete _pendingActions[user];
+                emit StalePendingActionRemoved(user, action.tick, action.totalExpoOrTickVersion, action.amountOrIndex);
+            }
+        }
+    }
+
+    /**
+     * @notice Add a pending action to the queue
+     * @dev This reverts if there is already a pending action for this user
+     * @param user The user address
+     * @param action The pending action struct
+     */
     function _addPendingAction(address user, PendingAction memory action) internal {
+        _removeStalePendingAction(user); // check if there is a pending action that was liquidated and remove it
         if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
         }
@@ -353,19 +437,29 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _pendingActions[user] = uint256(rawIndex) + 1;
     }
 
-    function _getPendingAction(address user, bool clear) internal returns (PendingAction memory action_) {
+    /**
+     * @notice Get the pending action for a user and optionally pop it from the queue
+     * @param user The user address
+     * @param clear Whether to pop the pending action from the queue or leave it there
+     * @return action_ The pending action struct
+     * @return rawIndex_ The raw index of the pending action in the queue
+     */
+    function _getPendingAction(address user, bool clear)
+        internal
+        returns (PendingAction memory action_, uint128 rawIndex_)
+    {
         uint256 pendingActionIndex = _pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
             revert UsdnProtocolNoPendingAction();
         }
 
-        uint128 rawIndex = uint128(pendingActionIndex - 1);
-        action_ = _pendingActionsQueue.atRaw(rawIndex);
+        rawIndex_ = uint128(pendingActionIndex - 1);
+        action_ = _pendingActionsQueue.atRaw(rawIndex_);
 
         if (clear) {
             // remove the pending action
-            _pendingActionsQueue.clearAt(rawIndex);
+            _pendingActionsQueue.clearAt(rawIndex_);
             delete _pendingActions[user];
         }
     }

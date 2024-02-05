@@ -159,3 +159,24 @@ function invariant_totalSupply() public {
     assertEq(handler.totalSupply(), myContract.totalSupply(), "total supply");
 }
 ```
+
+### Testing internal functions
+
+To test internal functions, an `external` wrapper must be defined on the `Handler` contract for the contract being
+tested.
+
+As a naming convention, the wrapper uses the same name as the internal function, prefixed with `i`:
+
+```solidity
+contract Foo {
+    function _bar() internal {
+        return;
+    }
+}
+
+contract FooHandler is Foo {
+    function i_bar() external {
+        _bar();
+    }
+}
+```
