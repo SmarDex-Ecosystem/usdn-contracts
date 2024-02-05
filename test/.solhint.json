@@ -1,0 +1,16 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "func-visibility": ["warn", { "ignoreConstructors": true }],
+    "immutable-vars-naming": "off",
+    "max-states-count": "off",
+    "no-empty-blocks": "off",
+    "func-name-mixedcase": "off",
+    "var-name-mixedcase": "off",
+    "no-console": "off",
+    "custom-errors": "off",
+    "reason-string": "off",
+    "one-contract-per-file": "off",
+    "avoid-low-level-calls": "off"
+  }
+}

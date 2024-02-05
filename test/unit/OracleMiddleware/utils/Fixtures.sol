@@ -7,15 +7,17 @@ import { WstETH } from "test/utils/WstEth.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
+import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
+
 import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { IOracleMiddlewareErrors, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title ActionsFixture
  * @dev all protocol actions
  */
-contract ActionsFixture is IOracleMiddlewareErrors {
+contract ActionsFixture {
     // all action types
     ProtocolAction[] public actions = [
         ProtocolAction.None,
@@ -37,8 +39,8 @@ contract ActionsFixture is IOracleMiddlewareErrors {
  * @dev Utils for testing the oracle middleware
  */
 contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
-    MockPyth mockPyth;
-    MockChainlinkOnChain mockChainlinkOnChain;
+    MockPyth internal mockPyth;
+    MockChainlinkOnChain internal mockChainlinkOnChain;
     OracleMiddleware public oracleMiddleware;
 
     function setUp() public virtual {
@@ -46,12 +48,12 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
 
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
-        oracleMiddleware = new OracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain));
+        oracleMiddleware = new OracleMiddleware(address(mockPyth), PYTH_WSTETH_USD, address(mockChainlinkOnChain));
     }
 
     function test_setUp() public {
-        assertEq(address(oracleMiddleware._pyth()), address(mockPyth));
-        assertEq(address(oracleMiddleware._priceFeed()), address(mockChainlinkOnChain));
+        assertEq(address(oracleMiddleware.pyth()), address(mockPyth));
+        assertEq(address(oracleMiddleware.priceFeed()), address(mockChainlinkOnChain));
 
         assertEq(mockPyth.lastPublishTime(), block.timestamp);
         assertEq(mockChainlinkOnChain.lastPublishTime(), block.timestamp);
@@ -79,8 +81,8 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
  * @dev Utils for testing the wsteth oracle
  */
 contract WstethBaseFixture is BaseFixture, ActionsFixture {
-    MockPyth mockPyth;
-    MockChainlinkOnChain mockChainlinkOnChain;
+    MockPyth internal mockPyth;
+    MockChainlinkOnChain internal mockChainlinkOnChain;
     WstEthOracleMiddleware public wstethOracle;
     WstETH public wsteth;
 
@@ -94,8 +96,8 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
     }
 
     function test_setUp() public {
-        assertEq(address(wstethOracle._pyth()), address(mockPyth));
-        assertEq(address(wstethOracle._priceFeed()), address(mockChainlinkOnChain));
+        assertEq(address(wstethOracle.pyth()), address(mockPyth));
+        assertEq(address(wstethOracle.priceFeed()), address(mockChainlinkOnChain));
 
         assertEq(mockPyth.lastPublishTime(), block.timestamp);
         assertEq(mockChainlinkOnChain.lastPublishTime(), block.timestamp);

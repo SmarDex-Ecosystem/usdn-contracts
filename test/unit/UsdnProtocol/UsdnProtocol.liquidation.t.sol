@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 
 /// @custom:feature The `_liquidatePositions` function of `UsdnProtocol`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
@@ -52,8 +51,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // increment timestamp equivalent required by pnl
         vm.warp(block.timestamp + blockDiff * 12);
 
+        // get price info
+        (uint256 price,) = getPriceInfo(block.number);
+
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, price, 1_685_288_160_314_617_460_510);
         // second mock init open position
         mockInitiateOpenPosition(20 ether, true, getUsers(users.length / 2));
 
@@ -109,10 +111,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // increment timestamp equivalent required by pnl
         vm.warp(block.timestamp + blockDiff * 12);
         // get price info
-        (, bytes memory priceData) = getPriceInfo(block.number);
+        (uint256 price, bytes memory priceData) = getPriceInfo(block.number);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, price, 1_685_288_160_314_617_460_510);
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
 
@@ -147,11 +149,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function test_openLiquidatorPartialLiquidation() public {
         // get all funded users
         address[] memory allUsers = getUsers(users.length);
-        // user count
+        // users count
         uint256 length = allUsers.length;
         // sorted user array
         address[][] memory splitUsers = new address[][](length);
-        // user splitted in many unique user array
+        // users split into many single user arrays
         for (uint256 i; i != length; i++) {
             // array of unique user
             address[] memory standaloneUser = new address[](1);
@@ -229,10 +231,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // increment timestamp equivalent required by pnl
         vm.warp(block.timestamp + blockDiff * 12);
         // get price info
-        (, bytes memory priceData) = getPriceInfo(block.number);
+        (uint256 price, bytes memory priceData) = getPriceInfo(block.number);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, price, 1_685_353_737_713_329_396_811);
+
         // liquidator first liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
 

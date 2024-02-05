@@ -19,7 +19,7 @@ contract UsdnHandler is Usdn, Test {
     // track theoretical shares
     mapping(address account => uint256) public shares;
 
-    // track theorectical total supply
+    // track theoretical total supply
     uint256 public totalSharesSum;
 
     constructor(address[] memory _actors) Usdn(address(0), address(0)) {
@@ -38,7 +38,7 @@ contract UsdnHandler is Usdn, Test {
         _burn(_owner, _value);
     }
 
-    /* ------------------- Funtions used for invariant testing ------------------ */
+    /* ------------------ Functions used for invariant testing ------------------ */
 
     modifier useActor(uint256 actorIndexSeed) {
         console.log("bound actor ID");

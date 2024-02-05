@@ -5,25 +5,29 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
+import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 
-abstract contract UsdnProtocolLong is UsdnProtocolVault {
+abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
     using SignedMath for int256;
 
+    /// @inheritdoc IUsdnProtocolLong
     function minTick() public view returns (int24 tick_) {
         tick_ = TickMath.minUsableTick(_tickSpacing);
     }
 
+    /// @inheritdoc IUsdnProtocolLong
     function maxTick() public view returns (int24 tick_) {
         tick_ = TickMath.maxUsableTick(_tickSpacing);
     }
 
+    /// @inheritdoc IUsdnProtocolLong
     function getLongPosition(int24 tick, uint256 tickVersion, uint256 index)
         public
         view
@@ -36,55 +40,21 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         pos_ = _longPositions[tickHash][index];
     }
 
+    /// @inheritdoc IUsdnProtocolLong
     function getLongPositionsLength(int24 tick) external view returns (uint256 len_) {
         (bytes32 tickHash,) = _tickHash(tick);
         len_ = _positionsInTick[tickHash];
     }
 
+    /// @inheritdoc IUsdnProtocolLong
     // slither-disable-next-line write-after-write
     function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
-        liquidationPrice_ = getLiquidationPrice(price, uint128(_minLeverage));
+        liquidationPrice_ = _getLiquidationPrice(price, uint128(_minLeverage));
         int24 tick = getEffectiveTickForPrice(liquidationPrice_);
         liquidationPrice_ = getEffectivePriceForTick(tick + _tickSpacing);
     }
 
-    function findMaxInitializedTick(int24 searchStart) public view returns (int24 tick_) {
-        uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(searchStart));
-        if (index == LibBitmap.NOT_FOUND) {
-            tick_ = minTick();
-        } else {
-            tick_ = _bitmapIndexToTick(index);
-        }
-    }
-
-    function getLiquidationPrice(uint128 startPrice, uint128 leverage) public pure returns (uint128 price_) {
-        price_ = (startPrice - ((uint256(10) ** LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
-    }
-
-    /**
-     * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
-     * @param currentPrice The current price of the asset
-     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
-     * @param amount The amount of the position
-     * @param initLeverage The initial leverage of the position
-     */
-    function positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint256 amount, uint128 initLeverage)
-        public
-        pure
-        returns (uint256 value_)
-    {
-        if (currentPrice < liqPriceWithoutPenalty) {
-            return 0;
-        }
-        // totalExpo = amount * initLeverage
-        // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
-        value_ = FixedPointMathLib.fullMulDiv(
-            amount,
-            uint256(initLeverage) * (currentPrice - liqPriceWithoutPenalty),
-            currentPrice * uint256(10) ** LEVERAGE_DECIMALS
-        );
-    }
-
+    /// @inheritdoc IUsdnProtocolLong
     function getPositionValue(int24 tick, uint256 tickVersion, uint256 index, uint128 currentPrice)
         external
         view
@@ -92,9 +62,10 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
     {
         Position memory pos = getLongPosition(tick, tickVersion, index);
         uint128 liqPrice = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
-        value_ = positionValue(currentPrice, liqPrice, pos.amount, pos.leverage);
+        value_ = _positionValue(currentPrice, liqPrice, pos.amount, pos.leverage);
     }
 
+    /// @inheritdoc IUsdnProtocolLong
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
         // adjusted price with liquidation multiplier
         uint256 priceWithMultiplier =
@@ -124,11 +95,58 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
         }
     }
 
+    /// @inheritdoc IUsdnProtocolLong
     function getEffectivePriceForTick(int24 tick) public view returns (uint128 price_) {
         // adjusted price with liquidation multiplier
         price_ = FixedPointMathLib.fullMulDiv(
             TickMath.getPriceAtTick(tick), _liquidationMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
         ).toUint128();
+    }
+
+    /**
+     * @notice Find the largest tick which contains at least one position
+     * @param searchStart The tick from which to start searching
+     */
+    function _findMaxInitializedTick(int24 searchStart) internal view returns (int24 tick_) {
+        uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(searchStart));
+        if (index == LibBitmap.NOT_FOUND) {
+            tick_ = minTick();
+        } else {
+            tick_ = _bitmapIndexToTick(index);
+        }
+    }
+
+    /**
+     * @notice Calculate the theoretical liquidation price of a position knowing its start price and leverage
+     * @param startPrice Entry price of the position
+     * @param leverage Leverage of the position
+     */
+    function _getLiquidationPrice(uint128 startPrice, uint128 leverage) internal pure returns (uint128 price_) {
+        price_ = (startPrice - ((uint256(10) ** LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
+    }
+
+    /**
+     * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
+     * @param currentPrice The current price of the asset
+     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
+     * @param amount The amount of the position
+     * @param initLeverage The initial leverage of the position
+     */
+    function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint256 amount, uint128 initLeverage)
+        internal
+        pure
+        returns (uint256 value_)
+    {
+        if (currentPrice < liqPriceWithoutPenalty) {
+            return 0;
+        }
+        // totalExpo = amount * initLeverage
+        // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
+        value_ = FixedPointMathLib.fullMulDiv(
+            amount,
+            uint256(initLeverage) * (currentPrice - liqPriceWithoutPenalty),
+            currentPrice * uint256(10) ** LEVERAGE_DECIMALS
+        );
     }
 
     /// @dev This does not take into account the liquidation penalty
@@ -266,16 +284,16 @@ abstract contract UsdnProtocolLong is UsdnProtocolVault {
             }
             _tickBitmap.unset(_tickToBitmapIndex(tick));
 
-            emit LiquidatedTick(tick, _tickVersion[tick] - 1);
+            emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick));
         } while (i < iteration);
 
         if (liquidated_ != 0) {
             if (tick < currentTick) {
                 // all ticks above the current tick were liquidated
-                _maxInitializedTick = findMaxInitializedTick(currentTick);
+                _maxInitializedTick = _findMaxInitializedTick(currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                _maxInitializedTick = findMaxInitializedTick(tick);
+                _maxInitializedTick = _findMaxInitializedTick(tick);
             }
         }
         // TODO transfer remaining collat to vault
