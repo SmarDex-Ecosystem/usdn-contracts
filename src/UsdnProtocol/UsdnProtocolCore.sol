@@ -74,7 +74,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
     {
         (fund_, longExpo_, vaultExpo_) = funding(currentPrice, timestamp);
-        fund_ = -fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
+        fund_ = fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -109,16 +109,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         returns (int256 expo_)
     {
         expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
-    }
-
-    /* ---------------------------- Public functions ---------------------------- */
-
-    /// @inheritdoc IUsdnProtocolCore
-    function updateBalances(bytes calldata priceData) external payable initializedAndNonReentrant {
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint128(block.timestamp), ProtocolAction.None, priceData
-        );
-        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
     }
 
     /* --------------------------  Internal functions --------------------------- */

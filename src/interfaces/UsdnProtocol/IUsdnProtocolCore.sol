@@ -92,17 +92,6 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
 
     /**
-     * @notice Update the contract state (balances of the long and vault sides) according to the effects of the funding
-     * rates and any profit or loss of the long positions since the last contract state update.
-     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.None` action.
-     * The price validation might require payment according to the return value of the `validationCost` function
-     * of the middleware.
-     * @param priceData The current price data for the asset.
-     */
-    function updateBalances(bytes calldata priceData) external payable;
-
-    /**
      * @notice Retrieve a pending action that must be validated by the next user action in the protocol.
      * @dev If this function returns a pending action, then the next user action MUST include the price update data
      * for this pending action as the last parameter.
