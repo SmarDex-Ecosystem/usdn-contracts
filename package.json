@@ -1,6 +1,6 @@
 {
   "name": "@usdn/usdn-contracts",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:Blockchain-RA2-Tech/usdn-contracts.git",
   "author": "RA2 Tech",
@@ -9,9 +9,9 @@
     "prepare": "husky install",
     "snapshot": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\"",
     "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --check",
-    "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test FFI",
-    "cov": "forge coverage --no-match-test FFI",
-    "cov:html": "forge coverage --report lcov --no-match-test FFI && genhtml -o .coverage lcov.info && open .coverage/index.html",
+    "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",
+    "cov": "forge coverage --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",
+    "cov:html": "forge coverage --report lcov --no-match-test \"(FFI|Fork|Fuzz|invariant)\" && genhtml -o .coverage lcov.info && open .coverage/index.html",
     "test": "forge test -vvv",
     "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\"",
     "format": "forge fmt",
@@ -21,17 +21,22 @@
     "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf lib && forge clean && npm i && forge install"
   },
   "main": "dist/index.js",
-  "files": ["dist", "broadcast"],
+  "files": [
+    "dist",
+    "broadcast"
+  ],
   "devDependencies": {
     "@biomejs/biome": "1.4.0",
     "@chainlink/contracts": "^0.8.0",
     "@openzeppelin/contracts": "^5.0.0",
     "@pythnetwork/pyth-sdk-solidity": "^2.3.0",
+    "abitype": "^1.0.0",
     "commander": "^11.1.0",
     "glob": "^10.3.10",
     "husky": "^8.0.3",
     "solady": "^0.0.138",
     "ts-node": "^10.9.2",
-    "tsup": "^8.0.1"
+    "tsup": "^8.0.1",
+    "viem": "^2.5.0"
   }
 }

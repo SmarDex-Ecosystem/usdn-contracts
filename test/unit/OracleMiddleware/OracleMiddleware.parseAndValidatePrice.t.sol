@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/Test.sol";
-
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { OracleMiddlewareBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
 import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
 import { IMockPythError } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 
-import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
+import { PriceInfo, ProtocolAction, IOracleMiddlewareErrors } from "src/interfaces/IOracleMiddleware.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `OracleMiddleware`
@@ -25,20 +23,6 @@ contract TestOracleMiddlewareParseAndValidatePrice is
 
     uint256 immutable FORMATTED_ETH_PRICE;
     uint256 immutable FORMATTED_ETH_CONF;
-
-    ProtocolAction[] actions = [
-        ProtocolAction.None,
-        ProtocolAction.Initialize,
-        ProtocolAction.InitiateDeposit,
-        ProtocolAction.ValidateDeposit,
-        ProtocolAction.InitiateWithdrawal,
-        ProtocolAction.ValidateWithdrawal,
-        ProtocolAction.InitiateOpenPosition,
-        ProtocolAction.ValidateOpenPosition,
-        ProtocolAction.InitiateClosePosition,
-        ProtocolAction.ValidateClosePosition,
-        ProtocolAction.Liquidation
-    ];
 
     constructor() {
         super.setUp();
