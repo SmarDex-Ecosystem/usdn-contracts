@@ -18,12 +18,12 @@ interface IOracleMiddleware {
      * validation of the price or the returned price.
      * @param data Price data, the format varies from middleware to middleware and can be different depending on the
      * action.
-     * @return The price and timestamp as `PriceInfo`.
+     * @return result_ The price and timestamp as `PriceInfo`.
      */
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         external
         payable
-        returns (PriceInfo memory);
+        returns (PriceInfo memory result_);
 
     /**
      * @notice Returns the delay (in seconds) between the moment an action is initiated and the timestamp of the
@@ -41,6 +41,13 @@ interface IOracleMiddleware {
      * @return The ETH cost of one price validation
      */
     function validationCost(bytes calldata data, ProtocolAction action) external returns (uint256);
+
+    /**
+     * @notice Update the "validation delay" (in seconds) between an action timestamp and the price
+     *         data timestamp used to validate that action.
+     * @param newDelay The new validation delay
+     */
+    function updateValidationDelay(uint256 newDelay) external;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -52,15 +59,15 @@ interface IOracleMiddlewareErrors {
     /// @notice The price request does not respect the minimum validation delay
     error OracleMiddlewarePriceRequestTooEarly();
     /// @notice The requested price is outside the valid price range
-    error OracleMiddlewareWrongPriceTimestamp(uint64 min, uint64 max, uint64 result);
+    error OracleMiddlewareOracleMiddlewareWrongPriceTimestamp(uint64 min, uint64 max, uint64 result);
     /// @notice The requested action is not supported by the middleware
     error OracleMiddlewareUnsupportedAction(ProtocolAction action);
     /// @notice The Pyth price validation failed
-    error PythValidationFailed();
+    error OracleMiddlewarePythValidationFailed();
     /// @notice The oracle price is invalid
-    error WrongPrice(int256 price);
+    error OracleMiddlewareWrongPrice(int256 price);
     /// @notice The oracle price is invalid
-    error PriceTooOld(int256 price, uint256 timestamp);
+    error OracleMiddlewarePriceTooOld(int256 price, uint256 timestamp);
 }
 
 /* -------------------------------------------------------------------------- */
