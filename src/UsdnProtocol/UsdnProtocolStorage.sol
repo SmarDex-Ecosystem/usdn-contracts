@@ -28,7 +28,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
 
     /// @inheritdoc IUsdnProtocolStorage
-    uint8 public constant FUNDING_SF_DECIMALS = 18;
+    uint8 public constant FUNDING_SF_DECIMALS = 3;
 
     /// @inheritdoc IUsdnProtocolStorage
     uint256 public constant SECONDS_PER_DAY = 60 * 60 * 24;
