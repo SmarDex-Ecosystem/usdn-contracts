@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
-
 /**
  * @title MockChainlinkOnChain contract
  * @dev This contract is used to test the OracleMiddleware contract.

@@ -47,6 +47,10 @@ jobs:
         run: npm run exportAbi
         if: ${{ steps.release.outputs.release_created }}
 
+      - name: Generate docs
+        run: forge doc
+        if: ${{ steps.release.outputs.release_created }}
+
       - name: Configure AWS credentials
         uses: backend-ra2-tech/composite-workflows/aws-login@main
         with:

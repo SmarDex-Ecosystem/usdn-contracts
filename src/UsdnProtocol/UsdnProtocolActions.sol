@@ -6,29 +6,21 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { Position, ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { Position, ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
-import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
-import { IUsdn } from "src/interfaces/IUsdn.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 
-abstract contract UsdnProtocolActions is UsdnProtocolLong {
+abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IUsdn;
     using SafeCast for uint256;
     using LibBitmap for LibBitmap.Bitmap;
 
-    /**
-     * @dev The minimum total supply of USDN that we allow.
-     * Upon the first deposit, this amount is sent to the dead address and cannot be later recovered.
-     */
+    /// @inheritdoc IUsdnProtocolActions
     uint256 public constant MIN_USDN_SUPPLY = 1000;
 
-    /**
-     * @notice Initiate a deposit of assets into the vault.
-     * @dev This function is payable, and the amount of ETH sent is used to pay for low-latency price validation.
-     * @param amount The amount of wstETH to deposit.
-     * @param currentPriceData The latest price data
-     * @param previousActionPriceData The price data of an actionable pending action.
-     */
+    /// @inheritdoc IUsdnProtocolActions
     function initiateDeposit(uint128 amount, bytes calldata currentPriceData, bytes calldata previousActionPriceData)
         external
         payable
@@ -72,6 +64,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function validateDeposit(bytes calldata depositPriceData, bytes calldata previousActionPriceData)
         external
         payable
@@ -81,6 +74,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function initiateWithdrawal(
         uint128 usdnAmount,
         bytes calldata currentPriceData,
@@ -125,6 +119,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function validateWithdrawal(bytes calldata withdrawalPriceData, bytes calldata previousActionPriceData)
         external
         payable
@@ -134,6 +129,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(
         uint96 amount,
         uint128 desiredLiqPrice,
@@ -217,6 +213,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function validateOpenPosition(bytes calldata openPriceData, bytes calldata previousActionPriceData)
         external
         payable
@@ -226,6 +223,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function initiateClosePosition(
         int24 tick,
         uint256 tickVersion,
@@ -291,6 +289,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function validateClosePosition(bytes calldata closePriceData, bytes calldata previousActionPriceData)
         external
         payable
@@ -300,6 +299,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         _executePendingAction(previousActionPriceData);
     }
 
+    /// @inheritdoc IUsdnProtocolActions
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
@@ -317,7 +317,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
-        PendingAction memory deposit = _getPendingAction(user, true); // clear pending action
+        (PendingAction memory deposit,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
         if (deposit.action != ProtocolAction.InitiateDeposit) {
@@ -394,7 +394,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
-        PendingAction memory withdrawal = _getPendingAction(user, true); // clear pending action
+        (PendingAction memory withdrawal,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
         if (withdrawal.action != ProtocolAction.InitiateWithdrawal) {
@@ -452,7 +452,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function _validateOpenPosition(address user, bytes calldata priceData) internal {
-        PendingAction memory open = _getPendingAction(user, true); // clear pending action
+        (PendingAction memory open,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
         if (open.action != ProtocolAction.InitiateOpenPosition) {
@@ -476,7 +476,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         if (version != tickVersion) {
             // The current tick version doesn't match the version from the pending action.
             // This means the position has been liquidated in the mean time
-            // TODO: emit event notifying the user
+            emit StalePendingActionRemoved(long.user, tick, tickVersion, index);
             return;
         }
 
@@ -511,7 +511,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
     }
 
     function _validateClosePosition(address user, bytes calldata priceData) internal {
-        PendingAction memory close = _getPendingAction(user, true); // clear pending action
+        (PendingAction memory close,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
         if (close.action != ProtocolAction.InitiateClosePosition) {
@@ -594,7 +594,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
         }
 
         // Calculate position value
-        int256 value = positionValue(
+        int256 value = _positionValue(
             lastPrice,
             _getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
             posAmount,

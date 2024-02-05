@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.3.0...v0.4.0) (2024-02-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* **middleware:** wsteth oracle ([#62](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/62))
+* **core:** make getActionablePendingAction a view function ([#61](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/61))
+* **long:** events related to long positions now emit the tick version, many functions require tick, tick version and index to identify a position
+
+### Features
+
+* **liquidation:** events ([#59](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/59)) ([b5cfaab](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/b5cfaab94ecfcd6f8890a227db4fe99dfb0d0116))
+* **middleware:** wsteth oracle ([#62](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/62)) ([2682a90](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/2682a90a6e014f89438043c495690183413d8619))
+* **pending:** remove stale pending actions ([#69](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/69)) ([787e286](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/787e286b6472a9994b63b2403612366ecadecf84))
+
+
+### Code Refactoring
+
+* **core:** make getActionablePendingAction a view function ([#61](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/61)) ([146adf8](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/146adf879a59b61e868049ee09f888f53eeadf4c))
+* **long:** add tick version as part of unique position identifier ([#57](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/57)) ([308a31e](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/308a31e47f0478569b4b0905ae2bae48438886a7))
+
 ## [0.3.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.2.0...v0.3.0) (2024-01-25)
 
 

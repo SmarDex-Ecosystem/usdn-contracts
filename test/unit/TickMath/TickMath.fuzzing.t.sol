@@ -3,8 +3,6 @@ pragma solidity 0.8.20;
 
 import { console2 } from "forge-std/Test.sol";
 
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-
 import { TickMathFixture } from "test/unit/TickMath/utils/Fixtures.sol";
 
 import { TickMath } from "src/libraries/TickMath.sol";

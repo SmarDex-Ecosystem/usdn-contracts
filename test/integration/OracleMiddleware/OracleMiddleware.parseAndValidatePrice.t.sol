@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+
 import { OracleMiddlewareBaseFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
 import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
 
-import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `OracleMiddleware`
@@ -12,7 +15,9 @@ import { IOracleMiddlewareErrors, PriceInfo, ProtocolAction } from "src/interfac
  * @custom:and The confidence interval is 20 USD
  * @custom:and The oracles are not mocked
  */
-contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBaseFixture, IOracleMiddlewareErrors {
+contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBaseFixture {
+    using Strings for uint256;
+
     function setUp() public override {
         super.setUp();
     }
@@ -22,70 +27,79 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario Parse and validate price with mocked hermes API signature
-     * @custom:given The price feed is wstETH/USD
+     * @custom:scenario Parse and validate price with mocked hermes API signature for pyth
+     * or with chainlink onchain
+     * @custom:given The price feed is wstETH/USD for pyth and steth/usd for chainlink
      * @custom:and The validationDelay is respected
-     * @custom:when Protocol action is `None`
+     * @custom:when Protocol action is any targeted action
      * @custom:then The price signature is well decoded
-     * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API
+     * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API or chainlink
+     * onchain data
      */
-    function test_ForkParseAndValidatePriceWithPythDataAndNoneAction() public ethMainnetFork reSetUp {
-        (uint256 pythPrice,, uint256 pythTimestamp, bytes memory data) = super.getMockedPythSignature();
+    function test_ForkParseAndValidatePriceForAllActions() public ethMainnetFork reSetUp {
+        // all targeted actions loop
+        for (uint256 i; i < actions.length; i++) {
+            // action type
+            ProtocolAction action = actions[i];
 
-        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-            uint128(pythTimestamp - oracleMiddleware.validationDelay()), ProtocolAction.None, data
-        );
+            // timestamp error message
+            string memory timestampError =
+                string.concat("Wrong oracle middleware timestamp for action: ", uint256(action).toString());
+            // price error message
+            string memory priceError =
+                string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
 
-        assertEq(middlewarePrice.timestamp, pythTimestamp);
-        assertEq(
-            middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals(), pythPrice
-        );
-    }
+            // chainlink case
+            if (action == ProtocolAction.InitiateDeposit) {
+                // chainlink data
+                (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = super.getChainlinkPrice();
+                // middleware data
+                PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                    uint128(block.timestamp - oracleMiddleware.validationDelay()), action, abi.encode("")
+                );
+                // timestamp check
+                assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
+                // price check
+                assertEq(
+                    middlewarePrice.price * 10 ** oracleMiddleware.chainlinkDecimals()
+                        / 10 ** oracleMiddleware.decimals(),
+                    chainlinkPrice,
+                    priceError
+                );
+            } else {
+                // pyth data
+                (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
+                    super.getMockedPythSignature();
 
-    /**
-     * @custom:scenario Parse and validate price with mocked hermes API signature
-     * @custom:given The price feed is wstETH/USD
-     * @custom:and The validationDelay is respected
-     * @custom:when Protocol action is `ValidateDeposit`
-     * @custom:then The price signature is well decoded
-     * @custom:and The price retrieved by the oracle middleware is equals to the
-     *             one from the hermes API - the confidence interval.
-     */
-    function test_ForkParseAndValidatePriceWithPythDataAndValidateDepositAction() public ethMainnetFork reSetUp {
-        (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = super.getMockedPythSignature();
+                // middleware data
+                PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                    uint128(pythTimestamp - oracleMiddleware.validationDelay()), action, data
+                );
 
-        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-            uint128(pythTimestamp - oracleMiddleware.validationDelay()), ProtocolAction.ValidateDeposit, data
-        );
+                // timestamp check
+                assertEq(middlewarePrice.timestamp, pythTimestamp);
 
-        assertEq(middlewarePrice.timestamp, pythTimestamp);
-        assertEq(
-            middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals(),
-            pythPrice - pythConf
-        );
-    }
+                // formatted middleware price
+                uint256 middlewareFormattedPrice =
+                    middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals();
 
-    /**
-     * @custom:scenario Parse and validate price with real hermes API signature
-     * @custom:given The price feed is wstETH/USD
-     * @custom:and The validationDelay is respected
-     * @custom:when Protocol action is `ValidateOpenPosition`
-     * @custom:then The price signature is well decoded
-     * @custom:and The price retrieved by the oracle middleware is equals to the
-     *             one from the hermes API + the confidence interval.
-     */
-    function test_ForkParseAndValidatePriceWithPythDataAndValidateOpenPositionAction() public ethMainnetFork reSetUp {
-        (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = super.getMockedPythSignature();
+                // Price + conf
+                if (action == ProtocolAction.ValidateOpenPosition) {
+                    // check price
+                    assertEq(middlewareFormattedPrice, pythPrice + pythConf, priceError);
 
-        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-            uint128(pythTimestamp - oracleMiddleware.validationDelay()), ProtocolAction.ValidateOpenPosition, data
-        );
+                    // Price - conf
+                } else if (action == ProtocolAction.ValidateDeposit) {
+                    // check price
+                    assertEq(middlewareFormattedPrice, pythPrice - pythConf, priceError);
 
-        assertEq(middlewarePrice.timestamp, pythTimestamp);
-        assertEq(
-            middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals(),
-            pythPrice + pythConf
-        );
+                    // Price only
+                } else {
+                    // check price
+                    assertEq(middlewareFormattedPrice, pythPrice, priceError);
+                }
+            }
+        }
     }
 
     /* -------------------------------------------------------------------------- */
@@ -93,101 +107,78 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario Parse and validate price with real hermes API signature
-     * @custom:given The price feed is wstETH/USD
+     * @custom:scenario Parse and validate price with mocked hermes API signature for pyth
+     * or with chainlink onchain
+     * @custom:given The price feed is wstETH/USD for pyth and steth/usd for chainlink
      * @custom:and The validationDelay is respected
-     * @custom:when Protocol action is `None`
+     * @custom:when Protocol action is any targeted action
      * @custom:then The price signature is well decoded
-     * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API
+     * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API or chainlink
+     * onchain data
      */
-    function test_ForkFFIParseAndValidatePriceWithPythDataAndNoneAction() public ethMainnetFork reSetUp {
-        (uint256 pythPrice,, uint256 pythTimestamp, bytes memory data) =
-            super.getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
+    function test_ForkFFIParseAndValidatePriceForAllActions() public ethMainnetFork reSetUp {
+        // all targeted actions loop
+        for (uint256 i; i < actions.length; i++) {
+            // action type
+            ProtocolAction action = actions[i];
 
-        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-            uint128(block.timestamp - oracleMiddleware.validationDelay()), ProtocolAction.None, data
-        );
+            // timestamp error message
+            string memory timestampError =
+                string.concat("Wrong oracle middleware timestamp for action: ", uint256(action).toString());
+            // price error message
+            string memory priceError =
+                string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
 
-        assertEq(middlewarePrice.timestamp, pythTimestamp);
-        assertEq(
-            middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals(), pythPrice
-        );
-    }
+            // chainlink case
+            if (action == ProtocolAction.InitiateDeposit) {
+                // chainlink data
+                (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = super.getChainlinkPrice();
+                // middleware data
+                PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                    uint128(block.timestamp - oracleMiddleware.validationDelay()), action, abi.encode("")
+                );
+                // timestamp check
+                assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
+                // price check
+                assertEq(
+                    middlewarePrice.price * 10 ** oracleMiddleware.chainlinkDecimals()
+                        / 10 ** oracleMiddleware.decimals(),
+                    chainlinkPrice,
+                    priceError
+                );
+            } else {
+                // pyth data
+                (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
+                    super.getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
 
-    /**
-     * @custom:scenario Parse and validate price with real hermes API signature
-     * @custom:given The price feed is wstETH/USD
-     * @custom:and The validationDelay is respected
-     * @custom:when Protocol action is `ValidateDeposit`
-     * @custom:then The price signature is well decoded
-     * @custom:and The price retrieved by the oracle middleware is equals to the
-     *             one from the hermes API - the confidence interval.
-     */
-    function test_ForkFFIParseAndValidatePriceWithPythDataAndValidateDepositAction() public ethMainnetFork reSetUp {
-        (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
-            super.getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
+                // middleware data
+                PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                    uint128(pythTimestamp - oracleMiddleware.validationDelay()), action, data
+                );
 
-        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-            uint128(block.timestamp - oracleMiddleware.validationDelay()), ProtocolAction.ValidateDeposit, data
-        );
+                // timestamp check
+                assertEq(middlewarePrice.timestamp, pythTimestamp);
 
-        assertEq(middlewarePrice.timestamp, pythTimestamp);
-        assertEq(
-            middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals(),
-            pythPrice - pythConf
-        );
-    }
+                // formatted middleware price
+                uint256 middlewareFormattedPrice =
+                    middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals();
 
-    /**
-     * @custom:scenario Parse and validate price with real hermes API signature
-     * @custom:given The price feed is wstETH/USD
-     * @custom:and The validationDelay is respected
-     * @custom:when Protocol action is `ValidateOpenPosition`
-     * @custom:then The price signature is well decoded
-     * @custom:and The price retrieved by the oracle middleware is equals to the
-     *             one from the hermes API + the confidence interval.
-     */
-    function test_ForkFFIParseAndValidatePriceWithPythDataAndValidateOpenPositionAction()
-        public
-        ethMainnetFork
-        reSetUp
-    {
-        (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
-            super.getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
+                // Price + conf
+                if (action == ProtocolAction.ValidateOpenPosition) {
+                    // check price
+                    assertEq(middlewareFormattedPrice, pythPrice + pythConf, priceError);
 
-        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-            uint128(block.timestamp - oracleMiddleware.validationDelay()), ProtocolAction.ValidateOpenPosition, data
-        );
+                    // Price - conf
+                } else if (action == ProtocolAction.ValidateDeposit) {
+                    // check price
+                    assertEq(middlewareFormattedPrice, pythPrice - pythConf, priceError);
 
-        assertEq(middlewarePrice.timestamp, pythTimestamp);
-        assertEq(
-            middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals(),
-            pythPrice + pythConf
-        );
-    }
-
-    /**
-     * @custom:scenario Parse and validate price using chainlink onchain
-     * @custom:given The price feed is wstETH/USD
-     * @custom:and The validationDelay is respected
-     * @custom:when Protocol action is `InitiateDeposit`
-     * @custom:then The price signature is well decoded
-     * @custom:and The price retrieved by the oracle middleware is equals to the
-     *             one from the chainlink on chain contract.
-     */
-    function test_ForkFFIParseAndValidatePriceWithPythDataAndInitiateDepositAction() public ethMainnetFork reSetUp {
-        (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = super.getChainlinkPrice();
-
-        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-            uint128(block.timestamp - oracleMiddleware.validationDelay()),
-            ProtocolAction.InitiateDeposit,
-            abi.encode("")
-        );
-
-        assertEq(middlewarePrice.timestamp, chainlinkTimestamp);
-        assertEq(
-            middlewarePrice.price * 10 ** oracleMiddleware.chainlinkDecimals() / 10 ** oracleMiddleware.decimals(),
-            chainlinkPrice
-        );
+                    // Price only
+                } else {
+                    // check price
+                    assertEq(middlewareFormattedPrice, pythPrice, priceError);
+                }
+            }
+        }
     }
 }

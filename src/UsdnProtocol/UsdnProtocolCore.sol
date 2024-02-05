@@ -7,30 +7,28 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
-import {
-    IUsdnProtocolErrors,
-    IUsdnProtocolEvents,
-    ProtocolAction,
-    PendingAction
-} from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolCore } from "src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
+import { ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, UsdnProtocolStorage {
+abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
     using SignedMath for int256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
-    /// @notice The address that holds the minimum supply of USDN and first minimum long position.
+    /// @inheritdoc IUsdnProtocolCore
     address public constant DEAD_ADDRESS = address(0xdead);
 
-    uint256 constant DEFAULT_QUEUE_MAX_ITER = 10;
+    /// @inheritdoc IUsdnProtocolCore
+    uint256 public constant DEFAULT_QUEUE_MAX_ITER = 10;
 
     /* -------------------------- Public view functions ------------------------- */
 
-    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) public view returns (uint256) {
+    /// @inheritdoc IUsdnProtocolCore
+    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) external view returns (uint256) {
         if (timestamp <= _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
@@ -39,6 +37,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         return _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function funding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -68,6 +67,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         fund_ = longExpo_.safeSub(vaultExpo_).safeMul(_fundingRatePerSecond * secondsElapsed * 100).safeDiv(relative);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function fundingAsset(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -77,6 +77,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         fund_ = -fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -86,6 +87,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         available_ = _longAssetAvailable(currentPrice).safeSub(fund);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -95,10 +97,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         available_ = _vaultAssetAvailable(currentPrice).safeAdd(fund);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
         expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
         external
         view
@@ -109,6 +113,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     /* ---------------------------- Public functions ---------------------------- */
 
+    /// @inheritdoc IUsdnProtocolCore
     function updateBalances(bytes calldata priceData) external payable initializedAndNonReentrant {
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint128(block.timestamp), ProtocolAction.None, priceData
@@ -309,6 +314,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         return int256(uint256(x));
     }
 
+    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        version_ = _tickVersion[tick];
+        hash_ = keccak256(abi.encodePacked(tick, version_));
+    }
+
     /* -------------------------- Pending actions queue ------------------------- */
 
     /**
@@ -389,7 +399,40 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         } while (++i < maxIter);
     }
 
+    /**
+     * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
+     * @dev This is only applicable to `InitiateOpenPosition` pending actions
+     * @param user The user address
+     */
+    function _removeStalePendingAction(address user) internal {
+        uint256 pendingActionIndex = _pendingActions[user];
+        // slither-disable-next-line incorrect-equality
+        if (pendingActionIndex == 0) {
+            return;
+        }
+        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user, false); // do not clear
+        // the position is only at risk of being liquidated while pending if it is an open position action
+        // slither-disable-next-line incorrect-equality
+        if (action.action == ProtocolAction.InitiateOpenPosition) {
+            (, uint256 version) = _tickHash(action.tick);
+            if (version != action.totalExpoOrTickVersion) {
+                // the position was liquidated while pending
+                // remove the stale pending action
+                _pendingActionsQueue.clearAt(rawIndex);
+                delete _pendingActions[user];
+                emit StalePendingActionRemoved(user, action.tick, action.totalExpoOrTickVersion, action.amountOrIndex);
+            }
+        }
+    }
+
+    /**
+     * @notice Add a pending action to the queue
+     * @dev This reverts if there is already a pending action for this user
+     * @param user The user address
+     * @param action The pending action struct
+     */
     function _addPendingAction(address user, PendingAction memory action) internal {
+        _removeStalePendingAction(user); // check if there is a pending action that was liquidated and remove it
         if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
         }
@@ -399,19 +442,29 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _pendingActions[user] = uint256(rawIndex) + 1;
     }
 
-    function _getPendingAction(address user, bool clear) internal returns (PendingAction memory action_) {
+    /**
+     * @notice Get the pending action for a user and optionally pop it from the queue
+     * @param user The user address
+     * @param clear Whether to pop the pending action from the queue or leave it there
+     * @return action_ The pending action struct
+     * @return rawIndex_ The raw index of the pending action in the queue
+     */
+    function _getPendingAction(address user, bool clear)
+        internal
+        returns (PendingAction memory action_, uint128 rawIndex_)
+    {
         uint256 pendingActionIndex = _pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
             revert UsdnProtocolNoPendingAction();
         }
 
-        uint128 rawIndex = uint128(pendingActionIndex - 1);
-        action_ = _pendingActionsQueue.atRaw(rawIndex);
+        rawIndex_ = uint128(pendingActionIndex - 1);
+        action_ = _pendingActionsQueue.atRaw(rawIndex_);
 
         if (clear) {
             // remove the pending action
-            _pendingActionsQueue.clearAt(rawIndex);
+            _pendingActionsQueue.clearAt(rawIndex_);
             delete _pendingActions[user];
         }
     }

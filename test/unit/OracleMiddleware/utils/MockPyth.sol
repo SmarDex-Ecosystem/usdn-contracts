@@ -6,10 +6,18 @@ import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
 
 /**
+ * @title MockPythError interface
+ * @dev This interface is used to define the revert reason of the MockPyth contract.
+ */
+interface IMockPythError {
+    error MockedPythError();
+}
+
+/**
  * @title MockPyth contract
  * @dev This contract is used to test the OracleMiddleware contract.
  */
-contract MockPyth {
+contract MockPyth is IMockPythError {
     bool private alwaysRevertOnCall;
 
     uint64 public lastPublishTime;
@@ -52,7 +60,7 @@ contract MockPyth {
         payable
         returns (PythStructs.PriceFeed[] memory priceFeeds)
     {
-        require(!alwaysRevertOnCall, "MockPyth: always revert on call is enabled");
+        if (alwaysRevertOnCall) revert MockedPythError();
 
         lastPublishTime = minPublishTime;
 

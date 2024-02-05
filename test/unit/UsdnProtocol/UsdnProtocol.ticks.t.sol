@@ -36,7 +36,7 @@ contract TestUsdnProtocolTicks is UsdnProtocolBaseFixture {
         uint128 effLiqPrice = protocol.getEffectivePriceForTick(tick);
         assertLe(effLiqPrice, price, "effLiqPrice <= price");
         // for very small prices, the `getEffectiveTickForPrice` result might not be the best tick to use to represent
-        // the price due to rouding errors. But for all other prices, we can be sure that the next valid tick towards
+        // the price due to rounding errors. But for all other prices, we can be sure that the next valid tick towards
         // positive infinity would lead to a price that is too high.
         if (price > 5_000_000) {
             int24 nextTick = tick + protocol.tickSpacing(); // the next valid tick towards positive infinity

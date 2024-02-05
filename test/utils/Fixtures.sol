@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import "test/utils/Constants.sol";
+import "test/utils/Constants.sol" as constants;
 
 /**
  * @title BaseFixture
@@ -20,54 +20,54 @@ contract BaseFixture is Test {
         /* -------------------------------------------------------------------------- */
         /*                                  Accounts                                  */
         /* -------------------------------------------------------------------------- */
-        vm.label(DEPLOYER, "Deployer");
-        vm.label(ADMIN, "Admin");
-        vm.label(USER_1, "User1");
-        vm.label(USER_2, "User2");
-        vm.label(USER_3, "User3");
-        vm.label(USER_4, "User4");
+        vm.label(constants.DEPLOYER, "Deployer");
+        vm.label(constants.ADMIN, "Admin");
+        vm.label(constants.USER_1, "User1");
+        vm.label(constants.USER_2, "User2");
+        vm.label(constants.USER_3, "User3");
+        vm.label(constants.USER_4, "User4");
 
         /* -------------------------------------------------------------------------- */
         /*                              Ethereum mainnet                              */
         /* -------------------------------------------------------------------------- */
-        vm.label(USDC, "USDC");
-        vm.label(USDT, "USDT");
-        vm.label(WETH, "WETH");
-        vm.label(SDEX, "SDEX");
+        vm.label(constants.USDC, "USDC");
+        vm.label(constants.USDT, "USDT");
+        vm.label(constants.WETH, "WETH");
+        vm.label(constants.SDEX, "SDEX");
 
         /* -------------------------------------------------------------------------- */
         /*                               Polygon mainnet                              */
         /* -------------------------------------------------------------------------- */
-        vm.label(POLYGON_WMATIC, "WMATIC");
-        vm.label(POLYGON_USDC, "USDC");
-        vm.label(POLYGON_USDT, "USDT");
-        vm.label(POLYGON_WETH, "WETH");
-        vm.label(POLYGON_SDEX, "SDEX");
+        vm.label(constants.POLYGON_WMATIC, "WMATIC");
+        vm.label(constants.POLYGON_USDC, "USDC");
+        vm.label(constants.POLYGON_USDT, "USDT");
+        vm.label(constants.POLYGON_WETH, "WETH");
+        vm.label(constants.POLYGON_SDEX, "SDEX");
 
         /* -------------------------------------------------------------------------- */
         /*                              BNB chain mainnet                             */
         /* -------------------------------------------------------------------------- */
-        vm.label(BSC_WBNB, "WBNB");
-        vm.label(BSC_USDC, "USDC");
-        vm.label(BSC_USDT, "USDT");
-        vm.label(BSC_WETH, "WETH");
-        vm.label(BSC_SDEX, "SDEX");
+        vm.label(constants.BSC_WBNB, "WBNB");
+        vm.label(constants.BSC_USDC, "USDC");
+        vm.label(constants.BSC_USDT, "USDT");
+        vm.label(constants.BSC_WETH, "WETH");
+        vm.label(constants.BSC_SDEX, "SDEX");
 
         /* -------------------------------------------------------------------------- */
         /*                              Arbitrum mainnet                              */
         /* -------------------------------------------------------------------------- */
-        vm.label(ARBITRUM_USDC, "USDC");
-        vm.label(ARBITRUM_USDT, "USDT");
-        vm.label(ARBITRUM_WETH, "WETH");
-        vm.label(ARBITRUM_SDEX, "SDEX");
+        vm.label(constants.ARBITRUM_USDC, "USDC");
+        vm.label(constants.ARBITRUM_USDT, "USDT");
+        vm.label(constants.ARBITRUM_WETH, "WETH");
+        vm.label(constants.ARBITRUM_SDEX, "SDEX");
 
         /* -------------------------------------------------------------------------- */
         /*                                Base mainnet                                */
         /* -------------------------------------------------------------------------- */
-        vm.label(BASE_USDC, "USDC");
-        vm.label(BASE_USDBC, "USDbC");
-        vm.label(BASE_WETH, "WETH");
-        vm.label(BASE_SDEX, "SDEX");
+        vm.label(constants.BASE_USDC, "USDC");
+        vm.label(constants.BASE_USDBC, "USDbC");
+        vm.label(constants.BASE_WETH, "WETH");
+        vm.label(constants.BASE_SDEX, "SDEX");
     }
 
     // force ignore from coverage report

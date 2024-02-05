@@ -28,13 +28,16 @@ address constant USDC = address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
 address constant USDT = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 address constant WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 address constant SDEX = address(0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF);
+address constant WSTETH = address(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
 
 /* --------------------------------- Oracles -------------------------------- */
 
 address constant PYTH_ORACLE = address(0x4305FB66699C3B2702D4d05CF36551390A4c69C6);
-bytes32 constant PYTH_WSTETH_USD = bytes32(0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784);
-address constant CHAINLINK_ORACLE = address(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
+address constant CHAINLINK_ORACLE = address(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419); // ETH-USD
+address constant CHAINLINK_ORACLE_STETH = address(0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8); // STETH-USD
 bytes32 constant PYTH_ETH_USD = bytes32(0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace);
+bytes32 constant PYTH_STETH_USD = bytes32(0x846ae1bdb6300b817cee5fdee2a6da192775030db5615b94a465f53bd40850b5);
+bytes32 constant PYTH_WSTETH_USD = bytes32(0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784);
 
 /* -------------------------------------------------------------------------- */
 /*                               Polygon mainnet                              */
