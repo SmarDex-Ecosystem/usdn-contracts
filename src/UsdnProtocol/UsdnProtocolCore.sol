@@ -294,6 +294,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     function _distributeAssetsAndCheckBalance(address to, uint256 amount) internal {
+        // slither-disable-next-line incorrect-equality
         if (amount == 0) {
             return;
         }
