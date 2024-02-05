@@ -84,10 +84,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _minLeverage = minLeverage;
     }
 
-    function getMinLeverage() external view returns (uint256) {
-        return _minLeverage;
-    }
-
     function minimumPrice() external pure returns (uint256) {
         return TickMath.MIN_PRICE;
     }
