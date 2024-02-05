@@ -69,7 +69,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
         // adjusted price with liquidation multiplier
         uint256 priceWithMultiplier =
-            FixedPointMathLib.fullMulDiv(uint256(price), 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
+            FixedPointMathLib.fullMulDiv(price, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
 
         if (priceWithMultiplier < TickMath.MIN_PRICE) {
             return minTick();
@@ -251,8 +251,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             iteration = MAX_LIQUIDATION_ITERATION;
         }
 
-        // TODO: !!! need to change when the liquidation multiplier is added!
-        int24 currentTick = TickMath.getClosestTickAtPrice(uint256(currentPrice));
+        uint256 priceWithMultiplier =
+            FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
+        int24 currentTick = TickMath.getClosestTickAtPrice(priceWithMultiplier);
         int24 tick = _maxInitializedTick;
 
         uint256 i;
