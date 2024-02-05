@@ -36,4 +36,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * 100 is equivalent to a 1% increase in liquidation price between ticks.
      */
     function tickSpacing() external view returns (int24);
+
+    // @notice The minimum leverage value
+    function minLeverage() external view returns (uint256);
+
+    // @notice The maximum leverage value
+    function maxLeverage() external view returns (uint256);
 }
