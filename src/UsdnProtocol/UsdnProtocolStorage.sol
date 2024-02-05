@@ -109,7 +109,7 @@ abstract contract UsdnProtocolStorage is
 
     /**
      * @notice The multiplier for liquidation price calculations
-     * @dev This value reprensents 1 with 38 decimals to have the same precision when the multiplier
+     * @dev This value represents 1 with 38 decimals to have the same precision when the multiplier
      * tends to 0 and high values (uint256.max have 78 digits).
      */
     uint256 internal _liquidationMultiplier = 100_000_000_000_000_000_000_000_000_000_000_000_000;

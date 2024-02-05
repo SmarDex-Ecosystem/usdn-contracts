@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 /**
  * @notice The price and timestamp returned by the oracle middleware.
  * @dev The timestamp is the timestamp of the price data, not the timestamp of the request.
- * There is no need for optimisation here, the struct is only used in memory and not in storage.
+ * There is no need for optimization here, the struct is only used in memory and not in storage.
  * @param price The validated asset price, potentially adjusted by the middleware.
  * @param neutralPrice The neutral/average price of the asset.
  * @param timestamp The timestamp of the price data.

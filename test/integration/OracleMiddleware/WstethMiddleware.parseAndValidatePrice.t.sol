@@ -197,8 +197,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
 
                     assertEq(middlewarePrice.timestamp, pythWstethTimestamp, "Wrong similar timestamp");
 
-                    // Should obtain a short different price between pyth wsteth pricefeed
-                    // and pyth steth pricefeed adjusted with ratio.
+                    // Should obtain a short different price between pyth wsteth price feed
+                    // and pyth steth price feed adjusted with ratio.
                     // We are ok with a delta below pyth wsteth confidence.
                     assertApproxEqAbs(
                         middlewarePrice.price,

@@ -42,7 +42,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle {
         if (action == ProtocolAction.None) {
             return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.Initialize) {
-            // Use chainlink data to make deploiement easier
+            // Use chainlink data to make deployment easier
             return getChainlinkOnChainPrice();
         } else if (action == ProtocolAction.ValidateDeposit) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
@@ -75,7 +75,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle {
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                     Factorised price retrieval methods                     */
+    /*                    Specialized price retrieval methods                     */
     /* -------------------------------------------------------------------------- */
 
     /**

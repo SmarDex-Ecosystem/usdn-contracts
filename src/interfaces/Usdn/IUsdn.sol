@@ -92,7 +92,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /// @dev Adjustment role signature.
     function ADJUSTMENT_ROLE() external pure returns (bytes32);
 
-    /// @dev Maximum value of the divisor, which is also the intitial value.
+    /// @dev Maximum value of the divisor, which is also the initial value.
     function MAX_DIVISOR() external pure returns (uint256);
 
     /// @dev Minimum acceptable value of the divisor.
