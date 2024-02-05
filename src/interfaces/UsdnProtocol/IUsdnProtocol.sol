@@ -195,7 +195,9 @@ interface IUsdnProtocolEvents {
      * @param oldTickVersion The liquidated tick version.
      * @param liquidationPrice The liquidation price.
      */
-    event LiquidatedTick(int24 indexed tick, uint256 indexed oldTickVersion, uint256 liquidationPrice);
+    event LiquidatedTick(
+        int24 indexed tick, uint256 indexed oldTickVersion, uint256 liquidationPrice, uint256 effectiveTickPrice
+    );
 }
 
 /* -------------------------------------------------------------------------- */
