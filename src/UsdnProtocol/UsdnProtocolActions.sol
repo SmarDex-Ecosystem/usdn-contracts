@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import "forge-std/console.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -47,6 +46,7 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
 
         bool priceUpdated =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+        // liquidate if pnl applied
         if (priceUpdated) {
             _liquidatePositions(currentPrice.price, _liquidationIteration);
         }
