@@ -55,6 +55,7 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
         return _priceFeed.decimals();
     }
 
+    /// @notice Returns the Chainlink price feed aggregator contract
     function priceFeed() public view returns (AggregatorV3Interface) {
         return _priceFeed;
     }
