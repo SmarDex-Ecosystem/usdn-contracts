@@ -1,0 +1,7 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "func-visibility": ["warn", { "ignoreConstructors": true }],
+    "immutable-vars-naming": ["warn", { "immutablesAsConstants": false }]
+  }
+}
