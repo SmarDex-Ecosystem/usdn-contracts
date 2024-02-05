@@ -6,7 +6,6 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { OracleMiddlewareBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
 import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
 
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -18,8 +17,8 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixture {
     using Strings for uint256;
 
-    uint256 immutable FORMATTED_ETH_PRICE;
-    uint256 immutable FORMATTED_ETH_CONF;
+    uint256 internal immutable FORMATTED_ETH_PRICE;
+    uint256 internal immutable FORMATTED_ETH_CONF;
 
     constructor() {
         super.setUp();

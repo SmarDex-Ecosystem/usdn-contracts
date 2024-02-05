@@ -17,9 +17,9 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
     using Strings for uint256;
 
-    uint256 immutable FORMATTED_STETH_PRICE;
-    uint256 immutable FORMATTED_STETH_CONF;
-    uint256 immutable STETH_PER_TOKEN;
+    uint256 internal immutable FORMATTED_STETH_PRICE;
+    uint256 internal immutable FORMATTED_STETH_CONF;
+    uint256 internal immutable STETH_PER_TOKEN;
 
     constructor() {
         super.setUp();

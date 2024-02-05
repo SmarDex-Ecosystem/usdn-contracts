@@ -12,7 +12,7 @@ import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdn
  * @custom:and A user with 10 wstETH in their wallet
  */
 contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
-    uint256 constant INITIAL_WSTETH_BALANCE = 10 ether;
+    uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);

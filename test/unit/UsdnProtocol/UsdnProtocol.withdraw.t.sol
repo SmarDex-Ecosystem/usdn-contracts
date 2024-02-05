@@ -12,11 +12,11 @@ import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdn
  * @custom:and A user who deposited 1 wstETH at price $2000 to get 2000 USDN
  */
 contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
-    uint256 constant INITIAL_WSTETH_BALANCE = 10 ether;
-    uint128 constant DEPOSIT_AMOUNT = 1 ether;
-    uint128 constant USDN_AMOUNT = 1000 ether;
-    uint256 initialWstETHBalance;
-    uint256 initialUsdnBalance;
+    uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
+    uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
+    uint128 internal constant USDN_AMOUNT = 1000 ether;
+    uint256 internal initialWstETHBalance;
+    uint256 internal initialUsdnBalance;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);

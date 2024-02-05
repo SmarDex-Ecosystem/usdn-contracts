@@ -2,6 +2,8 @@
   "extends": "solhint:recommended",
   "rules": {
     "func-visibility": ["warn", { "ignoreConstructors": true }],
-    "immutable-vars-naming": ["warn", { "immutablesAsConstants": false }]
+    "immutable-vars-naming": ["warn", { "immutablesAsConstants": false }],
+    "max-states-count": "off",
+    "no-empty-blocks": "off"
   }
 }

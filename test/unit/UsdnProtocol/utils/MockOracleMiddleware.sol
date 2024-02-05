@@ -6,8 +6,8 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware {
-    uint8 constant DECIMALS = 18;
-    uint256 constant VALIDATION_DELAY = 24 seconds;
+    uint8 internal constant DECIMALS = 18;
+    uint256 internal constant VALIDATION_DELAY = 24 seconds;
 
     /// @inheritdoc IOracleMiddleware
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction, bytes calldata data)

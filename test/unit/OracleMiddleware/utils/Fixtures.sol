@@ -39,8 +39,8 @@ contract ActionsFixture is IOracleMiddlewareErrors {
  * @dev Utils for testing the oracle middleware
  */
 contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
-    MockPyth mockPyth;
-    MockChainlinkOnChain mockChainlinkOnChain;
+    MockPyth internal mockPyth;
+    MockChainlinkOnChain internal mockChainlinkOnChain;
     OracleMiddleware public oracleMiddleware;
 
     function setUp() public virtual {
@@ -81,8 +81,8 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
  * @dev Utils for testing the wsteth oracle
  */
 contract WstethBaseFixture is BaseFixture, ActionsFixture {
-    MockPyth mockPyth;
-    MockChainlinkOnChain mockChainlinkOnChain;
+    MockPyth internal mockPyth;
+    MockChainlinkOnChain internal mockChainlinkOnChain;
     WstEthOracleMiddleware public wstethOracle;
     WstETH public wsteth;
 

@@ -5,7 +5,6 @@ import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnHandler } from "test/unit/USDN/utils/Handler.sol";
 
-import { Usdn } from "src/Usdn.sol";
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 import { IUsdnErrors } from "src/interfaces/Usdn/IUsdnErrors.sol";
 

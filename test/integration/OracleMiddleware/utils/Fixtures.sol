@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
@@ -49,8 +48,8 @@ contract ActionsIntegrationFixture is IOracleMiddlewareErrors {
  * @dev Utils for testing the oracle middleware
  */
 contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationFixture {
-    IPyth pyth;
-    AggregatorV3Interface chainlinkOnChain;
+    IPyth internal pyth;
+    AggregatorV3Interface internal chainlinkOnChain;
     OracleMiddleware public oracleMiddleware;
 
     modifier reSetUp() {
@@ -96,10 +95,10 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationFixture {
  * @dev Utils for testing the oracle middleware
  */
 contract WstethFixture is BaseFixture, ActionsIntegrationFixture {
-    IPyth pyth;
-    AggregatorV3Interface chainlinkOnChain;
+    IPyth internal pyth;
+    AggregatorV3Interface internal chainlinkOnChain;
     WstEthOracleMiddleware public wstethMiddleware;
-    IWstETH public constant wsteth = IWstETH(WSTETH);
+    IWstETH public constant WST_ETH = IWstETH(WSTETH);
 
     modifier reSetUp() {
         setUp();
@@ -135,7 +134,7 @@ contract WstethFixture is BaseFixture, ActionsIntegrationFixture {
     }
 
     function stethToWsteth(uint256 amount) public view returns (uint256) {
-        return amount * wsteth.stEthPerToken() / 1 ether;
+        return amount * WST_ETH.stEthPerToken() / 1 ether;
     }
 
     // force ignore from coverage report

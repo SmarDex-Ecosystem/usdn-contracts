@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import "test/utils/Constants.sol";
 import { DEPLOYER } from "test/utils/Constants.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
@@ -12,8 +11,6 @@ import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEv
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
-
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
