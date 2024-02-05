@@ -355,8 +355,17 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         } while (++i < maxIter);
     }
 
-    function _toVaultPendingAction(PendingAction memory action) internal pure returns (VaultPendingAction memory) {
-        return VaultPendingAction({
+    /**
+     * @notice Convert a `PendingAction` to a `VaultPendingAction`
+     * @param action An untyped pending action
+     * @return vaultAction_ The converted vault pending action
+     */
+    function _toVaultPendingAction(PendingAction memory action)
+        internal
+        pure
+        returns (VaultPendingAction memory vaultAction_)
+    {
+        vaultAction_ = VaultPendingAction({
             action: action.action,
             timestamp: action.timestamp,
             user: action.user,
@@ -370,8 +379,17 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         });
     }
 
-    function _toLongPendingAction(PendingAction memory action) internal pure returns (LongPendingAction memory) {
-        return LongPendingAction({
+    /**
+     * @notice Convert a `PendingAction` to a `LongPendingAction`
+     * @param action An untyped pending action
+     * @return longAction_ The converted long pending action
+     */
+    function _toLongPendingAction(PendingAction memory action)
+        internal
+        pure
+        returns (LongPendingAction memory longAction_)
+    {
+        longAction_ = LongPendingAction({
             action: action.action,
             timestamp: action.timestamp,
             user: action.user,
@@ -385,12 +403,17 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         });
     }
 
+    /**
+     * @notice Convert a `VaultPendingAction` to a `PendingAction`
+     * @param action A vault pending action
+     * @return pendingAction_ The converted untyped pending action
+     */
     function _convertVaultPendingAction(VaultPendingAction memory action)
         internal
         pure
-        returns (PendingAction memory)
+        returns (PendingAction memory pendingAction_)
     {
-        return PendingAction({
+        pendingAction_ = PendingAction({
             action: action.action,
             timestamp: action.timestamp,
             user: action.user,
@@ -404,8 +427,17 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         });
     }
 
-    function _convertLongPendingAction(LongPendingAction memory action) internal pure returns (PendingAction memory) {
-        return PendingAction({
+    /**
+     * @notice Convert a `LongPendingAction` to a `PendingAction`
+     * @param action A long pending action
+     * @return pendingAction_ The converted untyped pending action
+     */
+    function _convertLongPendingAction(LongPendingAction memory action)
+        internal
+        pure
+        returns (PendingAction memory pendingAction_)
+    {
+        pendingAction_ = PendingAction({
             action: action.action,
             timestamp: action.timestamp,
             user: action.user,
