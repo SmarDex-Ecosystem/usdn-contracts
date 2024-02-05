@@ -52,8 +52,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // increment timestamp equivalent required by pnl
         vm.warp(block.timestamp + blockDiff * 12);
 
+        // get price info
+        (uint256 price,) = getPriceInfo(block.number);
+
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, price, 1_685_288_160_314_617_460_510);
         // second mock init open position
         mockInitiateOpenPosition(20 ether, true, getUsers(users.length / 2));
 
@@ -109,10 +112,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // increment timestamp equivalent required by pnl
         vm.warp(block.timestamp + blockDiff * 12);
         // get price info
-        (, bytes memory priceData) = getPriceInfo(block.number);
+        (uint256 price, bytes memory priceData) = getPriceInfo(block.number);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, price, 1_685_288_160_314_617_460_510);
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
 
@@ -229,10 +232,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // increment timestamp equivalent required by pnl
         vm.warp(block.timestamp + blockDiff * 12);
         // get price info
-        (, bytes memory priceData) = getPriceInfo(block.number);
+        (uint256 price, bytes memory priceData) = getPriceInfo(block.number);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, price, 1_685_353_737_717_423_280_954);
+
         // liquidator first liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
 
