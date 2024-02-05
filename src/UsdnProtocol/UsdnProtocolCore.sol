@@ -65,15 +65,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         uint256 denominator;
         if (vaultExpo_ > longExpo_) {
             denominator = uintVaultExpo * uintVaultExpo;
-            fund_ = int256(
-                FixedPointMathLib.fullMulDiv(numerator, _fundingScale, denominator * 10 ** FUNDING_SCALE_DECIMALS)
-            )
-            // if MOVING_AVERAGE_DECIMALS != FUNDING_RATE_DECIMALS, we need to convert it
-            + _movAvgCoefficient;
+            fund_ = -int256(FixedPointMathLib.fullMulDiv(numerator, _fundingSF, denominator * 10 ** FUNDING_SF_DECIMALS))
+                + _EMA;
         } else {
             denominator = uintLongExpo * uintLongExpo;
-            fund_ = -int256(FixedPointMathLib.fullMulDiv(numerator, _fundingScale, denominator * 10 ** FUNDING_SCALE_DECIMALS))
-                + _movAvgCoefficient;
+            fund_ = int256(FixedPointMathLib.fullMulDiv(numerator, _fundingSF, denominator * 10 ** FUNDING_SF_DECIMALS))
+                + _EMA;
         }
     }
 
@@ -278,7 +275,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return false;
         }
 
-        _calculateMovAvgCoefficient(timestamp - _lastUpdateTimestamp);
+        _calculateEMA(timestamp - _lastUpdateTimestamp);
         (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
@@ -321,25 +318,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
     }
 
-    function _calculateMovAvgCoefficient(uint128 secondsElapsed) internal returns (int256) {
-        // _movAvgCoefficient = (fund + _movAvgCoefficient * (movAvgPeriod - secondsElapsed)) / movAvgPeriod
+    function _calculateEMA(uint128 secondsElapsed) internal returns (int256) {
+        // _EMA = (fund + _EMA * (movAvgPeriod - secondsElapsed)) / movAvgPeriod
 
-        _movAvgCoefficient = (
-            _lastFunding + _movAvgCoefficient * (_toInt256(_movAvgPeriod) - _toInt256(secondsElapsed))
-        ) / _toInt256(_movAvgPeriod);
+        _EMA = (_lastFunding + _EMA * (_toInt256(_EMAPeriod) - _toInt256(secondsElapsed))) / _toInt256(_EMAPeriod);
 
         // if MOVING_AVERAGE_DECIMALS != FUNDING_RATE_DECIMALS, we need to convert it
-        return _movAvgCoefficient;
-    }
-
-    function _getImbalanceIndex(int256 vaultExpo, int256 longExpo) internal view returns (int256) {
-        // if(shortExpo>longExpo) -> ((longExpo-shortExpo)/shortExpo) else -> -((shortExpo-longExpo)/longExpo)))
-
-        if (vaultExpo > longExpo) {
-            return (longExpo - vaultExpo) * int256(10 ** _assetDecimals) / vaultExpo;
-        } else {
-            return -(vaultExpo - longExpo) * int256(10 ** _assetDecimals) / longExpo;
-        }
+        return _EMA;
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {

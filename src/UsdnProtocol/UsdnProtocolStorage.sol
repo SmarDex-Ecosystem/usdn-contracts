@@ -28,10 +28,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
 
     /// @inheritdoc IUsdnProtocolStorage
-    uint8 public constant MOVING_AVERAGE_DECIMALS = 18;
-
-    /// @inheritdoc IUsdnProtocolStorage
-    uint8 public constant FUNDING_SCALE_DECIMALS = 18;
+    uint8 public constant FUNDING_SF_DECIMALS = 18;
 
     /// @inheritdoc IUsdnProtocolStorage
     uint256 public constant SECONDS_PER_DAY = 60 * 60 * 24;
@@ -97,10 +94,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint16 internal _liquidationIteration = 5;
 
     /// @notice The moving average period for the funding coefficient
-    uint128 internal _movAvgPeriod = 5 days;
+    uint128 internal _EMAPeriod = 5 days;
 
-    /// @notice The coefficient for funding aggresivity (0.12)
-    uint256 internal _fundingScale = 12 * 10 ** 17; //  TO DO : 18 decimals ?
+    /// @notice The scaling factor (SF) of the funding rate (0.12)
+    uint256 internal _fundingSF = 12 * 10 ** (FUNDING_SF_DECIMALS - 2); //  TO DO : 18 decimals ?
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
@@ -141,8 +138,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /* ----------------------------- Long positions ----------------------------- */
 
-    /// @notice The moving average coefficient for the funding (0.0003 at initialization)
-    int256 internal _movAvgCoefficient = 3 * 10 ** 14; //  TO DO : 18 decimals ?
+    /// @notice The exponential moving average of the funding (0.0003 at initialization)
+    int256 internal _EMA = 3 * 10 ** 14;
 
     /// @notice The balance of long positions (with asset decimals)
     uint256 internal _balanceLong;
