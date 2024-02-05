@@ -5,10 +5,12 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolCore } from "src/UsdnProtocol/UsdnProtocolCore.sol";
+import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 
-abstract contract UsdnProtocolVault is UsdnProtocolCore {
+abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     using SafeCast for int256;
 
+    /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
         price_ = FixedPointMathLib.fullMulDiv(
             vaultAssetAvailableWithFunding(currentPrice, timestamp).toUint256(),
@@ -17,6 +19,7 @@ abstract contract UsdnProtocolVault is UsdnProtocolCore {
         );
     }
 
+    /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
         price_ = usdnPrice(currentPrice, uint128(block.timestamp));
     }

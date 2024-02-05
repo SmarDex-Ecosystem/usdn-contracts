@@ -3,11 +3,11 @@ pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
-import { IUsdn } from "src/interfaces/IUsdn.sol";
-import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
+import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 /**
@@ -110,6 +110,18 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function liquidationPenalty() external view returns (uint24) {
         return _liquidationPenalty;
+    }
+
+    function getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
+        return _getLiquidationPrice(startPrice, leverage);
+    }
+
+    function positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint256 amount, uint128 initLeverage)
+        external
+        pure
+        returns (uint256 value_)
+    {
+        return _positionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
     }
 
     function removePendingAction(uint128 rawIndex, address user) external {

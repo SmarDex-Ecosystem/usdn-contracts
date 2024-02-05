@@ -80,8 +80,8 @@ which records gas usage for all tests. When tests have changed, a new snapshot s
 
 ### Deployment scripts
 
-Each deployment script should be added as a command calling `forge script` in the `package.json`, passing the
-appropriate arguments, and then called with `npm run <command>`.
+Deployment for anvil forks should be done with a custom bash script at `script/deployFork.sh` which can be run without
+arguments. It must set up any environment variable required by the foundry deployment script.
 
 Common arguments to `forge script` are described in
 [the documentation](https://book.getfoundry.sh/reference/forge/forge-script#forge-script).
@@ -108,9 +108,9 @@ Foundry comes with a built-in code formatter that we configured like this (defau
 
 ```toml
 [profile.default.fmt]
-line_length = 120 # Max line lenght
-bracket_spacing = true # Spacing the brakets in the code
-wrap_comments = true # use max line length for comments aswell
+line_length = 120 # Max line length
+bracket_spacing = true # Spacing the brackets in the code
+wrap_comments = true # use max line length for comments as well
 number_underscore = "thousands" # add underscore separators in large numbers
 ```
 

@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 
 /// @custom:feature The `_liquidatePositions` function of `UsdnProtocol`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
@@ -150,11 +149,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function test_openLiquidatorPartialLiquidation() public {
         // get all funded users
         address[] memory allUsers = getUsers(users.length);
-        // user count
+        // users count
         uint256 length = allUsers.length;
         // sorted user array
         address[][] memory splitUsers = new address[][](length);
-        // user splitted in many unique user array
+        // users split into many single user arrays
         for (uint256 i; i != length; i++) {
             // array of unique user
             address[] memory standaloneUser = new address[](1);
