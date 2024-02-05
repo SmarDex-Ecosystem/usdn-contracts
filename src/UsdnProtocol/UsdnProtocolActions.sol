@@ -55,7 +55,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             user: msg.sender,
             _unused: 0,
             amount: amount,
-            assetPrice: _lastPrice,
+            assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than currentPriceData
             totalExpo: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
@@ -109,7 +109,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             user: msg.sender,
             _unused: 0,
             amount: usdnAmount,
-            assetPrice: _lastPrice,
+            assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than currentPriceData
             totalExpo: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
