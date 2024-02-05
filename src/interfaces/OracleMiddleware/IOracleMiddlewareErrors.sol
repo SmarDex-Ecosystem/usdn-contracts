@@ -20,9 +20,9 @@ interface IOracleMiddlewareErrors {
     /// @notice The Pyth price validation failed
     error OracleMiddlewarePythValidationFailed();
 
-    /// @notice The oracle price is invalid
+    /// @notice The oracle price is invalid (negative)
     error OracleMiddlewareWrongPrice(int256 price);
 
-    /// @notice The oracle price is invalid
+    /// @notice The oracle price is invalid (too old)
     error OracleMiddlewarePriceTooOld(int256 price, uint256 timestamp);
 }
