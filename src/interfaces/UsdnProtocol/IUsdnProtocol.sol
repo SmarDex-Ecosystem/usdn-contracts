@@ -2,14 +2,12 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
  * @title IUsdnProtocol
  * @notice Interface for the USDN protocol.
  */
-interface IUsdnProtocol is IUsdnProtocolActions, IUsdnProtocolEvents, IUsdnProtocolErrors {
+interface IUsdnProtocol is IUsdnProtocolActions {
     /**
      * @notice Initialize the protocol, making a first deposit and creating a first long position.
      * @dev This function can only be called once, and no other user action can be performed until it was called.

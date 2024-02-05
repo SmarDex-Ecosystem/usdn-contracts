@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+
 /**
  * @title IUsdnProtocolStorage
  * @notice Interface for the storage layer of the USDN protocol.
  */
-interface IUsdnProtocolStorage {
+interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The number of decimals for leverage values
     function LEVERAGE_DECIMALS() external view returns (uint8);
 
