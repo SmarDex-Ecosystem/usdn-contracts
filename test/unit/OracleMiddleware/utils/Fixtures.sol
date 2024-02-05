@@ -6,6 +6,7 @@ import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
+import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
 
 import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 
@@ -23,7 +24,7 @@ contract OracleMiddlewareBaseFixture is BaseFixture {
 
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
-        oracleMiddleware = new OracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain));
+        oracleMiddleware = new OracleMiddleware(address(mockPyth), PYTH_WSTETH_USD, address(mockChainlinkOnChain));
     }
 
     function test_setUp() public {
