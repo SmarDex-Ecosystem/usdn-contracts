@@ -92,8 +92,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // the pending action is stale
         (, uint256 currentTickVersion) = protocol.tickHash(tick_);
         PendingAction memory action = protocol.getUserPendingAction(address(this));
-        assertEq(action.totalExpoOrTickVersion, tickVersion_, "tick version");
-        assertTrue(action.totalExpoOrTickVersion != currentTickVersion, "current tick version");
+        assertEq(action.var3, tickVersion_, "tick version");
+        assertTrue(action.var3 != currentTickVersion, "current tick version");
     }
 
     /**
