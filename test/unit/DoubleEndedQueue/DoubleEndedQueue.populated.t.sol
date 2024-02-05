@@ -6,7 +6,8 @@ import { console2 } from "forge-std/Test.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 import { DequeFixture } from "test/unit/DoubleEndedQueue/utils/Fixtures.sol";
 
-import { DoubleEndedQueue, ProtocolAction, PendingAction } from "src/libraries/DoubleEndedQueue.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue, PendingAction } from "src/libraries/DoubleEndedQueue.sol";
 
 /**
  * @custom:feature Test functions in `DoubleEndedQueue`

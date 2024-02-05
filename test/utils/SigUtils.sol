@@ -2,10 +2,10 @@
 pragma solidity 0.8.20;
 
 contract SigUtils {
-    bytes32 internal DOMAIN_SEPARATOR;
+    bytes32 internal immutable _domainSeparator;
 
-    constructor(bytes32 _DOMAIN_SEPARATOR) {
-        DOMAIN_SEPARATOR = _DOMAIN_SEPARATOR;
+    constructor(bytes32 domainSeparator) {
+        _domainSeparator = domainSeparator;
     }
 
     bytes32 public constant PERMIT_TYPEHASH =
@@ -28,7 +28,7 @@ contract SigUtils {
 
     // computes the hash of the fully encoded EIP-712 message for the domain, which can be used to recover the signer
     function getTypedDataHash(Permit memory _permit) public view returns (bytes32) {
-        return keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, getStructHash(_permit)));
+        return keccak256(abi.encodePacked("\x19\x01", _domainSeparator, getStructHash(_permit)));
     }
 
     // force ignore from coverage report

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
-
 import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
 import { PythOracle } from "src/OracleMiddleware/oracles/PythOracle.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -20,7 +18,7 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
  * @dev This contract is a middleware between the USDN protocol and the price oracles.
  */
 contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle {
-    uint256 constant VALIDATION_DELAY = 24 seconds;
+    uint256 internal constant VALIDATION_DELAY = 24 seconds;
 
     // slither-disable-next-line shadowing-state
     uint8 private constant DECIMALS = 18;
