@@ -37,9 +37,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      */
     function tickSpacing() external view returns (int24);
 
-    // @notice The minimum leverage value
+    /// @notice The minimum leverage value
     function minLeverage() external view returns (uint256);
 
-    // @notice The maximum leverage value
+    /// @notice The maximum leverage value
     function maxLeverage() external view returns (uint256);
+
+    ///@notice The multiplier for liquidation price calculations
+    function liquidationMultiplier() external view returns (uint256);
 }

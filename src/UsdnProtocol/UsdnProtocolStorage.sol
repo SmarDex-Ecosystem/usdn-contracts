@@ -187,4 +187,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     function maxLeverage() external view returns (uint256) {
         return _maxLeverage;
     }
+
+    function liquidationMultiplier() external view returns (uint256) {
+        return _liquidationMultiplier;
+    }
 }
