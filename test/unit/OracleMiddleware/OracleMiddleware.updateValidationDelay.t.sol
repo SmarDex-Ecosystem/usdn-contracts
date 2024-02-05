@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/Test.sol";
-
 import { OracleMiddlewareBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
-import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
-import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
-
-import { PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
 
 /**
  * @custom:feature The `updateValidationDelay` function of `OracleMiddleware`

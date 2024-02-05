@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
 import { PythOracle } from "src/OracleMiddleware/oracles/PythOracle.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import {
-    IOracleMiddleware,
-    IOracleMiddlewareErrors,
     PriceInfo,
     ConfidenceInterval,
     FormattedPythPrice
-} from "src/interfaces/IOracleMiddleware.sol";
+} from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
 /**
  * @title OracleMiddleware contract
@@ -21,7 +19,7 @@ import {
  * It is used by the USDN protocol to get the price of the USDN underlying asset.
  * @dev This contract is a middleware between the USDN protocol and the price oracles.
  */
-contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOracle, ChainlinkOracle, Ownable {
+contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Ownable {
     uint256 internal _validationDelay = 24 seconds;
 
     // slither-disable-next-line shadowing-state
@@ -47,7 +45,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
         if (action == ProtocolAction.None) {
             return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.Initialize) {
-            // Use chainlink data to make deploiement easier
+            // Use chainlink data to make deployment easier
             return getChainlinkOnChainPrice();
         } else if (action == ProtocolAction.ValidateDeposit) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
@@ -80,7 +78,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                     Factorised price retrieval methods                     */
+    /*                    Specialized price retrieval methods                     */
     /* -------------------------------------------------------------------------- */
 
     /**
@@ -95,7 +93,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
     {
         /**
          * @dev Fetch the price from Pyth, return a price at -1 if it fails
-         * @dev Add the validation delay to the action timestamp to get the timestamp of the price data used to
+         * Add the validation delay to the action timestamp to get the timestamp of the price data used to
          * validate
          */
         FormattedPythPrice memory pythPrice =
@@ -138,7 +136,7 @@ contract OracleMiddleware is IOracleMiddleware, IOracleMiddlewareErrors, PythOra
      * @param action The action to validate
      */
     function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256 _result) {
-        // TODO: Validate each ConfidanceInterval
+        // TODO: Validate each ConfidenceInterval
         if (action == ProtocolAction.None) {
             return getPythUpdateFee(data);
         } else if (action == ProtocolAction.Initialize) {

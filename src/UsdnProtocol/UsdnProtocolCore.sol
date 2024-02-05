@@ -7,30 +7,28 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
-import {
-    IUsdnProtocolErrors,
-    IUsdnProtocolEvents,
-    ProtocolAction,
-    PendingAction
-} from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocolCore } from "src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
+import { ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, UsdnProtocolStorage {
+abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
     using SignedMath for int256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
-    /// @notice The address that holds the minimum supply of USDN and first minimum long position.
+    /// @inheritdoc IUsdnProtocolCore
     address public constant DEAD_ADDRESS = address(0xdead);
 
-    uint256 constant DEFAULT_QUEUE_MAX_ITER = 10;
+    /// @inheritdoc IUsdnProtocolCore
+    uint256 public constant DEFAULT_QUEUE_MAX_ITER = 10;
 
     /* -------------------------- Public view functions ------------------------- */
 
-    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) public view returns (uint256) {
+    /// @inheritdoc IUsdnProtocolCore
+    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) external view returns (uint256) {
         if (timestamp <= _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
@@ -39,6 +37,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         return _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function funding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -68,6 +67,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         fund_ = longExpo_.safeSub(vaultExpo_).safeMul(_fundingRatePerSecond * secondsElapsed * 100).safeDiv(relative);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function fundingAsset(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -77,6 +77,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         fund_ = -fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -86,6 +87,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         available_ = _longAssetAvailable(currentPrice).safeSub(fund);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -95,10 +97,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         available_ = _vaultAssetAvailable(currentPrice).safeAdd(fund);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
         expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
         external
         view
@@ -109,6 +113,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
 
     /* ---------------------------- Public functions ---------------------------- */
 
+    /// @inheritdoc IUsdnProtocolCore
     function updateBalances(bytes calldata priceData) external payable initializedAndNonReentrant {
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint128(block.timestamp), ProtocolAction.None, priceData

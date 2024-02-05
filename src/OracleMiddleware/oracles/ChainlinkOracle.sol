@@ -2,7 +2,8 @@
 pragma solidity ^0.8.20;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import { PriceInfo, IOracleMiddlewareErrors } from "../../interfaces/IOracleMiddleware.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
 /**
  * @title ChainlinkOracle contract
@@ -22,6 +23,7 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
      * @return price_ The price of the asset
      */
     function getChainlinkPrice() internal view returns (PriceInfo memory price_) {
+        // slither-disable-next-line unused-return
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
         if (timestamp < block.timestamp - 1 hours) {

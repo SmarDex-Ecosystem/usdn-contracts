@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { PriceInfo, ProtocolAction } from "src/interfaces/IOracleMiddleware.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { WstethBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
 import { STETH_PRICE, STETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
 
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `WstethOracle`
@@ -16,9 +17,9 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
     using Strings for uint256;
 
-    uint256 immutable FORMATTED_STETH_PRICE;
-    uint256 immutable FORMATTED_STETH_CONF;
-    uint256 immutable STETH_PER_TOKEN;
+    uint256 internal immutable FORMATTED_STETH_PRICE;
+    uint256 internal immutable FORMATTED_STETH_CONF;
+    uint256 internal immutable STETH_PER_TOKEN;
 
     constructor() {
         super.setUp();
