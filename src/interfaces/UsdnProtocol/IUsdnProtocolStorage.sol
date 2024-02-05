@@ -43,6 +43,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The maximum leverage value
     function maxLeverage() external view returns (uint256);
 
-    ///@notice The multiplier for liquidation price calculations
+    /// @notice The multiplier for liquidation price calculations
     function liquidationMultiplier() external view returns (uint256);
 }
