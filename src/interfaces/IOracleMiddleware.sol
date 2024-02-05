@@ -18,12 +18,12 @@ interface IOracleMiddleware {
      * validation of the price or the returned price.
      * @param data Price data, the format varies from middleware to middleware and can be different depending on the
      * action.
-     * @return result The price and timestamp as `PriceInfo`.
+     * @return result_ The price and timestamp as `PriceInfo`.
      */
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         external
         payable
-        returns (PriceInfo memory result);
+        returns (PriceInfo memory result_);
 
     /**
      * @notice Returns the delay (in seconds) between the moment an action is initiated and the timestamp of the
