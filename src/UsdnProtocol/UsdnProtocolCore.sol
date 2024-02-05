@@ -40,7 +40,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         return _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
     }
 
-    // TO DO : add doc and warnings
     function funding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -59,6 +58,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         uint256 uintLongExpo = longExpo_.toUint256();
         uint256 uintVaultExpo = vaultExpo_.toUint256();
 
+        // fund = ((longExpo - vaultExpo)^2 * fundingAggressivity / denominator) + movAvgCoefficient
+        // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
         uint256 numerator =
             uintLongExpo * uintLongExpo + uintVaultExpo * uintVaultExpo - 2 * uintLongExpo * uintVaultExpo;
 
@@ -67,14 +68,16 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             denominator = uintVaultExpo * uintVaultExpo;
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
-                    uint256(numerator), _fundingAggressivity, denominator * 10 ** FUNDING_AGGRESIVITY_DECIMALS
+                    numerator, _fundingAggressivity, denominator * 10 ** FUNDING_AGGRESIVITY_DECIMALS
                 )
-            ) + _movAvgCoefficient;
+            )
+            // if MOVING_AVERAGE_DECIMALS != FUNDING_RATE_DECIMALS, we need to convert it
+            + _movAvgCoefficient;
         } else {
             denominator = uintLongExpo * uintLongExpo;
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
-                    uint256(numerator), _fundingAggressivity, denominator * 10 ** FUNDING_AGGRESIVITY_DECIMALS
+                    numerator, _fundingAggressivity, denominator * 10 ** FUNDING_AGGRESIVITY_DECIMALS
                 )
             ) + _movAvgCoefficient;
         }
@@ -325,6 +328,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             _lastFunding + _movAvgCoefficient * (_toInt256(_movAvgPeriod) - _toInt256(secondsElapsed))
         ) / _toInt256(_movAvgPeriod);
 
+        // if MOVING_AVERAGE_DECIMALS != FUNDING_RATE_DECIMALS, we need to convert it
         return _movAvgCoefficient;
     }
 

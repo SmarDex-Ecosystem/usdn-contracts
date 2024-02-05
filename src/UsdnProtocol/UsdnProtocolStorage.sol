@@ -26,7 +26,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     /// @notice The number of decimals for liquidation multiplier values
     uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
 
-    /// @notice The number of decimals for moving aerage coefficient
+    /// @notice The number of decimals for moving average coefficient
     uint8 public constant MOVING_AVERAGE_DECIMALS = 18;
 
     /// @notice The number of decimals for funding aggressivity coefficient
