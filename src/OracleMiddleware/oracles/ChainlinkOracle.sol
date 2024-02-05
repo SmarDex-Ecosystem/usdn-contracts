@@ -23,6 +23,7 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
      * @return price_ The price of the asset
      */
     function getChainlinkPrice() internal view returns (PriceInfo memory price_) {
+        // slither-disable-next-line unused-return
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
         if (timestamp < block.timestamp - 1 hours) {
