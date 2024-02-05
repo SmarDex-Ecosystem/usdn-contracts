@@ -32,6 +32,7 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
             revert OracleMiddlewareWrongPrice(price);
         }
 
+        // slither-disable-next-line unused-return
         price_ = PriceInfo({ price: uint256(price), neutralPrice: uint256(price), timestamp: timestamp });
     }
 
