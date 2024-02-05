@@ -132,4 +132,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory) {
         return _getActionablePendingAction(maxIter);
     }
+
+    function protocolFee() public view returns (uint256) {
+        return _protocolFee;
+    }
+
+    function protocolFeeDenominator() public view returns (uint256) {
+        return _protocolFeeDenominator;
+    }
 }

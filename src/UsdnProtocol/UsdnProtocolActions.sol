@@ -43,13 +43,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _liquidatePositions(currentPrice.price, _liquidationIteration);
         }
 
+        // Apply fees on price
+        // we use `_lastPrice` because it might be more recent than `currentPrice.price`
+        uint256 pendingActionPrice = _lastPrice + (_lastPrice * _protocolFee) / _protocolFeeDenominator;
+
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateDeposit,
             timestamp: timestamp,
             user: msg.sender,
             tick: 0, // unused
             amountOrIndex: amount,
-            assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
+            assetPrice: pendingActionPrice.toUint128(),
             totalExpoOrTickVersion: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
@@ -97,13 +101,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _liquidatePositions(currentPrice.price, _liquidationIteration);
         }
 
+        // Apply fees on price
+        // we use `_lastPrice` because it might be more recent than `currentPrice.price`
+        uint256 pendingActionPrice = _lastPrice - (_lastPrice * _protocolFee) / _protocolFeeDenominator;
+
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateWithdrawal,
             timestamp: timestamp,
             user: msg.sender,
             tick: 0, // unused
             amountOrIndex: usdnAmount,
-            assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than `currentPrice.price`
+            assetPrice: pendingActionPrice.toUint128(),
             totalExpoOrTickVersion: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
@@ -163,7 +171,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             // calculate position leverage
             // reverts if liquidationPrice >= entryPrice
-            leverage = _getLeverage(currentPrice.price.toUint128(), liqPriceWithoutPenalty);
+            // Inline calculation to avoid stack too deep
+            leverage = _getLeverage(
+                (currentPrice.price + (currentPrice.price * _protocolFee) / _protocolFeeDenominator).toUint128(),
+                liqPriceWithoutPenalty
+            );
             if (leverage < _minLeverage) {
                 revert UsdnProtocolLeverageTooLow();
             }
@@ -186,7 +198,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             Position memory long = Position({
                 user: msg.sender,
                 amount: amount,
-                startPrice: currentPrice.price.toUint128(),
+                // Inline calculation to avoid stack too deep
+                startPrice: (currentPrice.price + (currentPrice.price * _protocolFee) / _protocolFeeDenominator).toUint128(),
                 leverage: leverage,
                 timestamp: timestamp
             });
@@ -357,7 +370,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 )
             ),
             deposit.usdnTotalSupply,
-            depositPrice_.price
+            // Price with fees (Inline calculation to avoid stack too deep)
+            depositPrice_.price + (depositPrice_.price * _protocolFee) / _protocolFeeDenominator
         );
         uint256 usdnToMint;
         if (usdnToMint1 <= usdnToMint2) {
@@ -404,6 +418,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // adjust balances
         _applyPnlAndFunding(withdrawalPrice.neutralPrice.toUint128(), withdrawalPrice.timestamp.toUint128());
 
+        // Apply fees on price
+        // we use `_lastPrice` because it might be more recent than `currentPrice.price`
+        uint256 withdrawalPriceWithFees =
+            withdrawalPrice.price - (withdrawalPrice.price * _protocolFee) / _protocolFeeDenominator;
+
         // We calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
         // redeem the underlying asset share.
@@ -414,7 +433,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 withdrawal.totalExpoOrTickVersion,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
-                withdrawalPrice.price.toUint128(), // new price
+                withdrawalPriceWithFees.toUint128(), // new price
                 withdrawal.assetPrice // old price
             )
         );
@@ -481,7 +500,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Re-calculate leverage
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
         // reverts if liquidationPrice >= entryPrice
-        uint128 leverage = _getLeverage(price.price.toUint128(), liqPriceWithoutPenalty);
+        // Inline calculation to avoid stack too deep
+        uint128 leverage = _getLeverage((price.price + (price.price * _protocolFee) / _protocolFeeDenominator).toUint128(), liqPriceWithoutPenalty);
         // Leverage is always greater than 1 (liquidationPrice is positive).
         // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
         if (leverage > _maxLeverage) {
@@ -493,7 +513,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Adjust position parameters
         Position storage pos = _longPositions[tickHash][index];
         pos.leverage = leverage;
-        pos.startPrice = price.price.toUint128();
+        // Inline calculation to avoid stack too deep
+        pos.startPrice = (price.price + (price.price * _protocolFee) / _protocolFeeDenominator).toUint128();
 
         emit ValidatedOpenPosition(long.user, pos, tick, tickVersion, index, getEffectivePriceForTick(tick));
     }
@@ -533,6 +554,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             long.timestamp, ProtocolAction.ValidateClosePosition, priceData
         );
 
+        // Apply fees on price
+        uint256 positionPriceWithFees = price.price - (price.price * _protocolFee) / _protocolFeeDenominator;
+
         // adjust balances
         _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
 
@@ -550,8 +574,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Calculate position value
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
-        int256 value =
-            _positionValue(price.price.toUint128(), liqPriceWithoutPenalty, pos.amount, pos.leverage).toInt256();
+        int256 value = _positionValue(
+            positionPriceWithFees.toUint128(), liqPriceWithoutPenalty, pos.amount, pos.leverage
+        ).toInt256();
 
         uint256 assetToTransfer;
         if (value > available) {

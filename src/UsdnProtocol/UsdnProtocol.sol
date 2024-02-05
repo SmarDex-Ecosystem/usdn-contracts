@@ -116,4 +116,22 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         emit InitiatedOpenPosition(user, long, tick, tickVersion, index);
         emit ValidatedOpenPosition(user, long, tick, tickVersion, index, liquidationPrice);
     }
+
+    /**
+     * @notice Update the protocol fees.
+     * @param protocolFee The new protocol fee (in percentage).
+     */
+    function updateProtocolFees(uint256 protocolFee) external onlyOwner {
+        _protocolFee = protocolFee;
+        emit UpdatedProtocolFees(protocolFee);
+    }
+
+    /**
+     * @notice Update the protocol fee decimals.
+     * @param protocolFeeDecimals The new protocol fee decimals.
+     */
+    function updateProtocolFeeDecimals(uint256 protocolFeeDecimals) external onlyOwner {
+        _protocolFeeDenominator = protocolFeeDecimals;
+        emit UpdatedProtocolFeeDecimals(protocolFeeDecimals);
+    }
 }

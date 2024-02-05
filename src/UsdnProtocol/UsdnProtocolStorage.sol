@@ -119,6 +119,14 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The pending actions queue.
     DoubleEndedQueue.Deque internal _pendingActionsQueue;
 
+    /* ---------------------------------- Fees ---------------------------------- */
+
+    /// @notice The protocol fee (in percentage)
+    uint256 internal _protocolFee = 4; // 0.04%
+
+    /// @notice The protocol fee denominator
+    uint256 internal _protocolFeeDenominator = 10_000;
+
     /* ---------------------------------- Vault --------------------------------- */
 
     /// @notice The balance of deposits (with asset decimals)

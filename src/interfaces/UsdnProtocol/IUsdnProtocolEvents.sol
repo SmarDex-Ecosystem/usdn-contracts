@@ -132,4 +132,16 @@ interface IUsdnProtocolEvents {
      * @param index The index of the position inside the tick array.
      */
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
+
+    /**
+     * @notice Emitted when the protocol fees are updated.
+     * @param protocolFee The new protocol fee (in percentage).
+     */
+    event UpdatedProtocolFees(uint256 protocolFee);
+
+    /**
+     * @notice Emitted when the protocol fee decimals are updated.
+     * @param protocolFeeDecimals The new protocol fee decimals.
+     */
+    event UpdatedProtocolFeeDecimals(uint256 protocolFeeDecimals);
 }
