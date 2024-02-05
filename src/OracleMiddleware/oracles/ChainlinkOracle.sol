@@ -12,10 +12,10 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
  */
 contract ChainlinkOracle is IOracleMiddlewareErrors {
     /// @notice Chainlink price feed aggregator contract
-    AggregatorV3Interface public immutable _priceFeed;
+    AggregatorV3Interface internal immutable _priceFeed;
 
-    constructor(address priceFeed) {
-        _priceFeed = AggregatorV3Interface(priceFeed);
+    constructor(address chainlinkPriceFeed) {
+        _priceFeed = AggregatorV3Interface(chainlinkPriceFeed);
     }
 
     /**
@@ -26,13 +26,14 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
         if (timestamp < block.timestamp - 1 hours) {
-            revert PriceTooOld(price, timestamp);
+            revert OracleMiddlewarePriceTooOld(price, timestamp);
         }
 
         if (price < 0) {
-            revert WrongPrice(price);
+            revert OracleMiddlewareWrongPrice(price);
         }
 
+        // slither-disable-next-line unused-return
         price_ = PriceInfo({ price: uint256(price), neutralPrice: uint256(price), timestamp: timestamp });
     }
 
@@ -54,5 +55,10 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
      */
     function chainlinkDecimals() public view returns (uint256) {
         return _priceFeed.decimals();
+    }
+
+    /// @notice Returns the Chainlink price feed aggregator contract
+    function priceFeed() public view returns (AggregatorV3Interface) {
+        return _priceFeed;
     }
 }

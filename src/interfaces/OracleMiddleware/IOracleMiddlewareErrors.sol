@@ -8,21 +8,21 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * @notice Errors for the oracle middleware
  */
 interface IOracleMiddlewareErrors {
-    /// @dev The price request does not respect the minimum validation delay
+    /// @notice The price request does not respect the minimum validation delay
     error OracleMiddlewarePriceRequestTooEarly();
 
-    /// @dev The requested price is outside the valid price range
-    error OracleMiddlewareWrongPriceTimestamp(uint64 min, uint64 max, uint64 result);
+    /// @notice The requested price is outside the valid price range
+    error OracleMiddlewareOracleMiddlewareWrongPriceTimestamp(uint64 min, uint64 max, uint64 result);
 
-    /// @dev The requested action is not supported by the middleware
+    /// @notice The requested action is not supported by the middleware
     error OracleMiddlewareUnsupportedAction(ProtocolAction action);
 
-    /// @dev The Pyth price validation failed
-    error PythValidationFailed();
+    /// @notice The Pyth price validation failed
+    error OracleMiddlewarePythValidationFailed();
 
-    /// @dev The oracle price is invalid
-    error WrongPrice(int256 price);
+    /// @notice The oracle price is invalid
+    error OracleMiddlewareWrongPrice(int256 price);
 
-    /// @dev The oracle price is invalid
-    error PriceTooOld(int256 price, uint256 timestamp);
+    /// @notice The oracle price is invalid
+    error OracleMiddlewarePriceTooOld(int256 price, uint256 timestamp);
 }

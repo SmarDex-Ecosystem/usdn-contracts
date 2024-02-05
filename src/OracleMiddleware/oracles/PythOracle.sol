@@ -15,12 +15,12 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
 contract PythOracle is IOracleMiddlewareErrors {
     uint256 private constant DECIMALS = 8;
 
-    bytes32 public immutable _priceID;
-    IPyth public immutable _pyth;
+    bytes32 internal immutable _priceID;
+    IPyth internal immutable _pyth;
 
-    constructor(address pyth, bytes32 priceID) {
-        _pyth = IPyth(pyth);
-        _priceID = priceID;
+    constructor(address pythAddress, bytes32 pythPriceID) {
+        _pyth = IPyth(pythAddress);
+        _priceID = pythPriceID;
     }
 
     /**
@@ -39,21 +39,15 @@ contract PythOracle is IOracleMiddlewareErrors {
         bytes[] memory pricesUpdateData = new bytes[](1);
         pricesUpdateData[0] = priceUpdateData;
 
-        try _pyth.parsePriceFeedUpdatesUnique{ value: msg.value }(
+        PythStructs.PriceFeed[] memory priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: msg.value }(
             pricesUpdateData, priceIds, targetTimestamp, type(uint64).max
-        ) returns (PythStructs.PriceFeed[] memory priceFeeds) {
-            if (priceFeeds[0].price.price < 0) {
-                revert WrongPrice(priceFeeds[0].price.price);
-            }
-            return priceFeeds[0].price;
-        } catch {
-            return PythStructs.Price({
-                price: -1, // negative price to indicate error
-                conf: 0,
-                expo: 0,
-                publishTime: 0
-            });
+        );
+
+        if (priceFeeds[0].price.price < 0) {
+            revert OracleMiddlewareWrongPrice(priceFeeds[0].price.price);
         }
+
+        return priceFeeds[0].price;
     }
 
     /**
@@ -66,9 +60,6 @@ contract PythOracle is IOracleMiddlewareErrors {
         returns (FormattedPythPrice memory pythPrice_)
     {
         PythStructs.Price memory pythPrice = getPythPrice(priceUpdateData, targetTimestamp);
-        if (pythPrice.price < 0) {
-            return FormattedPythPrice({ price: -1, conf: 0, expo: 0, publishTime: 0 });
-        }
 
         pythPrice_ = FormattedPythPrice({
             price: int256(uint256(uint64(pythPrice.price)) * 10 ** _decimals / 10 ** DECIMALS),
@@ -96,5 +87,21 @@ contract PythOracle is IOracleMiddlewareErrors {
      */
     function pythDecimals() public pure returns (uint256) {
         return DECIMALS;
+    }
+
+    /**
+     * @notice Get the Pyth contract address
+     * @return pyth_ The Pyth contract address
+     */
+    function pyth() public view returns (IPyth) {
+        return _pyth;
+    }
+
+    /**
+     * @notice Get the Pyth price ID
+     * @return priceID_ The Pyth price ID
+     */
+    function priceID() public view returns (bytes32) {
+        return _priceID;
     }
 }
