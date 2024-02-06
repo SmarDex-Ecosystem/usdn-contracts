@@ -238,6 +238,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata previousActionPriceData
     ) external payable initializedAndNonReentrant {
         // check if the position belongs to the user
+        // this reverts if the position was liquidated
         Position memory pos = getLongPosition(tick, tickVersion, index);
         if (pos.user != msg.sender) {
             revert UsdnProtocolUnauthorized();
@@ -254,16 +255,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // liquidate if pnl applied
         if (priceUpdated) {
             _liquidatePositions(currentPrice.price, _liquidationIteration);
-        }
-
-        {
-            (, uint256 version) = _tickHash(tick);
-            if (version != tickVersion) {
-                // our position was liquidated
-                // can't close a liquidated position
-                // TODO: emit event
-                return;
-            }
         }
 
         uint256 liqMultiplier = _liquidationMultiplier;
@@ -547,7 +538,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // adjust long balance that was previously optimistically decreased
         if (assetToTransfer > long.closeTempTransfer) {
             // we didn't remove enough
-            // FIXME: here, should send the user tempTransfer since it's the lower of the two amounts?
+            // FIXME: here, should we replace assetToTransfer with the user tempTransfer since it's the lower of the
+            // two amounts? In wich case _balanceLong would already be correct.
             _balanceLong -= assetToTransfer - long.closeTempTransfer;
         } else if (assetToTransfer < long.closeTempTransfer) {
             // we removed too much
@@ -559,8 +551,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (price.neutralPrice <= liquidationPrice) {
             // position should be liquidated, we don't pay out the profits but send any remaining collateral to the
             // vault
-            // TODO: emit event?
             _balanceVault += assetToTransfer;
+            emit LiquidatedPosition(
+                long.user, long.tick, long.tickVersion, long.index, price.neutralPrice, liquidationPrice
+            );
             return;
         }
 
