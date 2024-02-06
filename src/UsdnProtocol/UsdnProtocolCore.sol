@@ -54,23 +54,23 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return (0, longExpo_, vaultExpo_);
         }
 
-        uint256 uintLongExpo = longExpo_.toUint256();
-        uint256 uintVaultExpo = vaultExpo_.toUint256();
-
-        // fund = ((longExpo - vaultExpo)^2 * fundingAggressivity / denominator) + movAvgCoefficient
+        // fund = (+-) ((longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
-        uint256 numerator =
-            uintLongExpo * uintLongExpo + uintVaultExpo * uintVaultExpo - 2 * uintLongExpo * uintVaultExpo;
+
+        int256 numerator = (longExpo_ - vaultExpo_);
+        numerator *= numerator;
 
         uint256 denominator;
         if (vaultExpo_ > longExpo_) {
-            denominator = uintVaultExpo * uintVaultExpo;
-            fund_ = -int256(FixedPointMathLib.fullMulDiv(numerator, _fundingSF, denominator * 10 ** FUNDING_SF_DECIMALS))
-                + _EMA;
+            denominator = uint256(vaultExpo_ * vaultExpo_);
+            fund_ = -int256(
+                FixedPointMathLib.fullMulDiv(uint256(numerator), _fundingSF, denominator * 10 ** FUNDING_SF_DECIMALS)
+            ) + _EMA;
         } else {
-            denominator = uintLongExpo * uintLongExpo;
-            fund_ = int256(FixedPointMathLib.fullMulDiv(numerator, _fundingSF, denominator * 10 ** FUNDING_SF_DECIMALS))
-                + _EMA;
+            denominator = uint256(longExpo_ * longExpo_);
+            fund_ = int256(
+                FixedPointMathLib.fullMulDiv(uint256(numerator), _fundingSF, denominator * 10 ** FUNDING_SF_DECIMALS)
+            ) + _EMA;
         }
     }
 
