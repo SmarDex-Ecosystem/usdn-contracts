@@ -539,7 +539,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (assetToTransfer > long.closeTempTransfer) {
             // we didn't remove enough
             // FIXME: here, should we replace assetToTransfer with the user tempTransfer since it's the lower of the
-            // two amounts? In wich case _balanceLong would already be correct.
+            // two amounts? In which case _balanceLong would already be correct.
             _balanceLong -= assetToTransfer - long.closeTempTransfer;
         } else if (assetToTransfer < long.closeTempTransfer) {
             // we removed too much

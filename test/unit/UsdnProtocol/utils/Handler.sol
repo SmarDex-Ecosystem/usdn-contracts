@@ -154,4 +154,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory) {
         return _convertLongPendingAction(action);
     }
+
+    function i_retrieveAssetsAndCheckBalance(address from, uint256 amount) external {
+        _retrieveAssetsAndCheckBalance(from, amount);
+    }
+
+    function i_distributeAssetsAndCheckBalance(address to, uint256 amount) external {
+        _distributeAssetsAndCheckBalance(to, amount);
+    }
 }
