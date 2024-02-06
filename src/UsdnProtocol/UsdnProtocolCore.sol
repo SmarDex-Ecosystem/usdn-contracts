@@ -356,7 +356,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Convert a `PendingAction` to a `VaultPendingAction`
-     * @dev This might get optimized later by using YUL to cast without copying the data.
      * @param action An untyped pending action
      * @return vaultAction_ The converted vault pending action
      */
@@ -365,23 +364,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         pure
         returns (VaultPendingAction memory vaultAction_)
     {
-        vaultAction_ = VaultPendingAction({
-            action: action.action,
-            timestamp: action.timestamp,
-            user: action.user,
-            _unused: 0,
-            amount: action.amount,
-            assetPrice: action.var2,
-            totalExpo: action.var3,
-            balanceVault: action.var4,
-            balanceLong: action.var5,
-            usdnTotalSupply: action.var6
-        });
+        assembly {
+            vaultAction_ := action
+        }
     }
 
     /**
      * @notice Convert a `PendingAction` to a `LongPendingAction`
-     * @dev This might get optimized later by using YUL to cast without copying the data.
      * @param action An untyped pending action
      * @return longAction_ The converted long pending action
      */
@@ -390,23 +379,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         pure
         returns (LongPendingAction memory longAction_)
     {
-        longAction_ = LongPendingAction({
-            action: action.action,
-            timestamp: action.timestamp,
-            user: action.user,
-            tick: action.var1,
-            closeAmount: action.amount,
-            closeLeverage: action.var2,
-            tickVersion: action.var3,
-            index: action.var4,
-            closeLiqMultiplier: action.var5,
-            closeTempTransfer: action.var6
-        });
+        assembly {
+            longAction_ := action
+        }
     }
 
     /**
      * @notice Convert a `VaultPendingAction` to a `PendingAction`
-     * @dev This might get optimized later by using YUL to cast without copying the data.
      * @param action A vault pending action
      * @return pendingAction_ The converted untyped pending action
      */
@@ -415,23 +394,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         pure
         returns (PendingAction memory pendingAction_)
     {
-        pendingAction_ = PendingAction({
-            action: action.action,
-            timestamp: action.timestamp,
-            user: action.user,
-            var1: 0,
-            amount: action.amount,
-            var2: action.assetPrice,
-            var3: action.totalExpo,
-            var4: action.balanceVault,
-            var5: action.balanceLong,
-            var6: action.usdnTotalSupply
-        });
+        assembly {
+            pendingAction_ := action
+        }
     }
 
     /**
      * @notice Convert a `LongPendingAction` to a `PendingAction`
-     * @dev This might get optimized later by using YUL to cast without copying the data.
      * @param action A long pending action
      * @return pendingAction_ The converted untyped pending action
      */
@@ -440,18 +409,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         pure
         returns (PendingAction memory pendingAction_)
     {
-        pendingAction_ = PendingAction({
-            action: action.action,
-            timestamp: action.timestamp,
-            user: action.user,
-            var1: action.tick,
-            amount: action.closeAmount,
-            var2: action.closeLeverage,
-            var3: action.tickVersion,
-            var4: action.index,
-            var5: action.closeLiqMultiplier,
-            var6: action.closeTempTransfer
-        });
+        assembly {
+            pendingAction_ := action
+        }
     }
 
     /**
