@@ -76,6 +76,8 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * the `ProtocolAction.InitiateOpenPosition` action.
      * The price validation might require payment according to the return value of the `validationCost` function
      * of the middleware.
+     * The position is immediately included in the protocol calculations with a temporary entry price (and thus
+     * leverage). The validation operation then updates the entry price and leverage with fresher data.
      * @param amount The amount of wstETH to deposit.
      * @param desiredLiqPrice The desired liquidation price.
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
@@ -100,6 +102,9 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
+     * This operation adjusts the entry price and initial leverage of the position.
+     * It is also possible for this operation to change the tick, tickVersion and index of the position, in which case
+     * we emit the `LiquidationPriceChanged` event.
      * @param openPriceData The price data corresponding to the sender's pending open position action.
      * @param previousActionPriceData The price data of an actionable pending action.
      */
@@ -116,6 +121,9 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * If the current tick version is greater than the tick version of the position (when it was opened), then the
      * position has been liquidated and the transaction will revert.
+     * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't
+     * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
+     * during the validate action.
      * @param tick The tick containing the position to close
      * @param tickVersion The tick version of the position to close
      * @param index The index of the position inside the tick array
@@ -138,6 +146,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
+     * This operation calculates the final exit price and profit of the long position and performs the payout.
      * @param closePriceData The price data corresponding to the sender's pending close position action.
      * @param previousActionPriceData The price data of an actionable pending action.
      */
@@ -152,6 +161,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The price validation might require payment according to the return value of the `validationCost` function
      * of the middleware.
      * Each tick is liquidated in constant time. The tick version is incremented for each tick that was liquidated.
+     * At least one tick will be liquidated, even if the `iterations` parameter is zero.
      * @param currentPriceData The most recent price data
      * @param iterations The maximum number of ticks to liquidate
      * @return liquidated_ The number of ticks that were liquidated
