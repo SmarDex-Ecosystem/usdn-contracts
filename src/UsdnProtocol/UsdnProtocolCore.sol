@@ -349,13 +349,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 return candidate;
             } else {
                 // the first pending action is not actionable
-                return action_;
             }
+            return action_;
         } while (++i < maxIter);
     }
 
     /**
      * @notice Convert a `PendingAction` to a `VaultPendingAction`
+     * @dev This might get optimized later by using YUL to cast without copying the data.
      * @param action An untyped pending action
      * @return vaultAction_ The converted vault pending action
      */
@@ -380,6 +381,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Convert a `PendingAction` to a `LongPendingAction`
+     * @dev This might get optimized later by using YUL to cast without copying the data.
      * @param action An untyped pending action
      * @return longAction_ The converted long pending action
      */
@@ -404,6 +406,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Convert a `VaultPendingAction` to a `PendingAction`
+     * @dev This might get optimized later by using YUL to cast without copying the data.
      * @param action A vault pending action
      * @return pendingAction_ The converted untyped pending action
      */
@@ -428,6 +431,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Convert a `LongPendingAction` to a `PendingAction`
+     * @dev This might get optimized later by using YUL to cast without copying the data.
      * @param action A long pending action
      * @return pendingAction_ The converted untyped pending action
      */
