@@ -116,4 +116,34 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         protocol.setMinLeverage(11 * 10 ** (protocol.LEVERAGE_DECIMALS() - 1)); // = x1.1
         assertEq(protocol.getMinLiquidationPrice(5000 ether), TickMath.getPriceAtTick(61_200));
     }
+
+    /**
+     * @custom:scenario Check calculations of `positionValue`
+     * @custom:given A position for 1 wstETH with a starting price of $1000
+     * @custom:and a leverage of 2x (liquidation price $500)
+     * @custom:or a leverage of 4x (liquidation price $750)
+     * @custom:when The current price is $2000 and the leverage is 2x
+     * @custom:or the current price is $1000 and the leverage is 2x
+     * @custom:or the current price is $500 and the leverage is 2x
+     * @custom:or the current price is $2000 and the leverage is 4x
+     * @custom:then The position value is 1.5 wstETH ($2000 at 2x)
+     * @custom:or the position value is 1 wstETH ($1000 at 2x)
+     * @custom:or the position value is 0 wstETH ($500 at 2x)
+     * @custom:or the position value is 2.5 wstETH ($2000 at 4x)
+     */
+    function test_positionValue() public {
+        // starting price is 1000 ether (liq at 500 with a leverage of 2x)
+        uint256 value =
+            protocol.positionValue(2000 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+        assertEq(value, 1.5 ether, "current price 2000");
+
+        value = protocol.positionValue(1000 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+        assertEq(value, 1 ether, "current price 1000");
+
+        value = protocol.positionValue(500 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+        assertEq(value, 0 ether, "current price 500");
+
+        value = protocol.positionValue(2000 ether, 750 ether, 1 ether, uint128(4 * 10 ** protocol.LEVERAGE_DECIMALS()));
+        assertEq(value, 2.5 ether, "current price 2000 leverage 4x");
+    }
 }
