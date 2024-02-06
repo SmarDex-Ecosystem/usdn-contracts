@@ -62,11 +62,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
         uint256 denominator;
         if (vaultExpo_ > longExpo_) {
+            // cost ~5-10k gas
+            if (vaultExpo_ == 0) {
+                return (0, longExpo_, vaultExpo_);
+            }
             denominator = uint256(vaultExpo_ * vaultExpo_);
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(uint256(numerator), _fundingSF, denominator * 10 ** FUNDING_SF_DECIMALS)
             ) + _EMA;
         } else {
+            // cost ~5-10k gas
+            if (longExpo_ == 0) {
+                return (0, longExpo_, vaultExpo_);
+            }
             denominator = uint256(longExpo_ * longExpo_);
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(uint256(numerator), _fundingSF, denominator * 10 ** FUNDING_SF_DECIMALS)
