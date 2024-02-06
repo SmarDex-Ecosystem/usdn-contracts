@@ -14,7 +14,8 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check value of the `assetToTransfer` function
      * @custom:given The position value is lower than the long available balance
-     * @custom:and The position of amount 1 wstETH has a starting price slightly below $500 with leverage 2x
+     * @custom:and The position of amount 1 wstETH has a liquidation price slightly below $500 with leverage 2x
+     * (starting price slightly below $1000)
      * @custom:and The current price is $2000
      * @custom:when the asset to transfer is calculated
      * @custom:then The asset to transfer is slightly above 1.5 wstETH
@@ -30,7 +31,8 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check value of the `assetToTransfer` function when the long balance is too small
      * @custom:given The position value is higher than the long available balance
-     * @custom:and The position of amount 100 wstETH has a starting price slightly below $500 with leverage 2x
+     * @custom:and The position of amount 100 wstETH has a liquidation price slightly below $500 with leverage 2x
+     * (starting price slightly below $1000)
      * @custom:and The current price is $2000
      * @custom:when the asset to transfer is calculated
      * @custom:then The asset to transfer is equal to the long available balance (because we don't have 150 wstETH)
