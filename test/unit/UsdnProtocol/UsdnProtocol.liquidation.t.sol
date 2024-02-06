@@ -28,7 +28,23 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // mock initiate open
         (int24 initialTick, uint256 initialTickVersion) =
             mockInitiateOpenPosition(20 ether, true, getUsers(users.length));
+        // for (uint256 i; i < 10; i++) {
+        //     // liquidation target price -15%
+        //     uint128 liquidationTargetPriceUint = currentPrice * 85 / 100;
 
+        //     vm.startPrank(_users[i]);
+        //     // initiate open position
+        //     (tick_, tickVersion_,) = protocol.initiateOpenPosition(refAmount, liquidationTargetPriceUint, priceData,
+        // "");
+
+        //     // if auto validate true
+        //     if (autoValidate) {
+        //         // auto validate open position
+        //         protocol.validateOpenPosition(priceData, priceData);
+        //     }
+
+        //     vm.stopPrank();
+        // }
         assertEq(protocol.tickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
         // check if first total expo match initial value
         assertEq(protocol.totalExpo(), 1283.887326349043056207 ether, "wrong first totalExpo");

@@ -21,8 +21,9 @@ contract MockOracleMiddleware is IOracleMiddleware {
         if (
             action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
                 || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+                || action == ProtocolAction.Initialize
         ) {
-            if (ts < _validationDelay) {
+            if (ts < 30 minutes) {
                 ts = 0;
             } else {
                 ts = ts - 30 minutes; // simulate that we got the price 30 minutes ago
