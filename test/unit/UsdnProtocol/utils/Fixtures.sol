@@ -150,6 +150,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
                 // auto validate open position
                 protocol.validateOpenPosition(priceData, priceData);
             }
+
             vm.stopPrank();
         }
     }

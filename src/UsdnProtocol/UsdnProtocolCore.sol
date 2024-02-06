@@ -57,6 +57,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // fund = (+-) ((longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
+        int256 elapsedSeconds = _toInt256(timestamp - _lastUpdateTimestamp);
         int256 numerator = (longExpo_ - vaultExpo_);
         numerator *= numerator;
 
@@ -66,18 +67,22 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             if (vaultExpo_ == 0) {
                 return (0, longExpo_, vaultExpo_);
             }
-            denominator = uint256(vaultExpo_ * vaultExpo_);
+            denominator = uint256(vaultExpo_ * vaultExpo_) * 1 days;
             fund_ = -int256(
-                FixedPointMathLib.fullMulDiv(uint256(numerator), _fundingSF, denominator * 10 ** FUNDING_SF_DECIMALS)
+                FixedPointMathLib.fullMulDiv(
+                    uint256(numerator * elapsedSeconds), _fundingSF * 10 ** 18, denominator * 10 ** FUNDING_SF_DECIMALS
+                )
             ) + _EMA;
         } else {
             // cost ~5-10k gas
             if (longExpo_ == 0) {
                 return (0, longExpo_, vaultExpo_);
             }
-            denominator = uint256(longExpo_ * longExpo_);
+            denominator = uint256(longExpo_ * longExpo_) * 1 days;
             fund_ = int256(
-                FixedPointMathLib.fullMulDiv(uint256(numerator), _fundingSF, denominator * 10 ** FUNDING_SF_DECIMALS)
+                FixedPointMathLib.fullMulDiv(
+                    uint256(numerator * elapsedSeconds), _fundingSF * 10 ** 18, denominator * 10 ** FUNDING_SF_DECIMALS
+                )
             ) + _EMA;
         }
     }
@@ -124,16 +129,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         returns (int256 expo_)
     {
         expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
-    }
-
-    /* ---------------------------- Public functions ---------------------------- */
-
-    /// @inheritdoc IUsdnProtocolCore
-    function updateBalances(bytes calldata priceData) external payable initializedAndNonReentrant {
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint128(block.timestamp), ProtocolAction.None, priceData
-        );
-        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
     }
 
     /* --------------------------  Internal functions --------------------------- */
@@ -283,7 +278,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return false;
         }
 
-        _calculateEMA(timestamp - _lastUpdateTimestamp);
+        _updateEMA(timestamp - _lastUpdateTimestamp);
         (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
@@ -326,10 +321,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
     }
 
-    function _calculateEMA(uint128 secondsElapsed) internal returns (int256) {
+    function _updateEMA(uint128 secondsElapsed) internal {
         _EMA = (_lastFunding + _EMA * (_toInt256(_EMAPeriod) - _toInt256(secondsElapsed))) / _toInt256(_EMAPeriod);
-
-        return _EMA;
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {

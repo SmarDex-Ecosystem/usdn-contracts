@@ -10,7 +10,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
     uint256 internal _validationDelay = 24 seconds;
 
     /// @inheritdoc IOracleMiddleware
-    function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction, bytes calldata data)
+    function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         external
         payable
         returns (PriceInfo memory)
@@ -18,11 +18,19 @@ contract MockOracleMiddleware is IOracleMiddleware {
         // TODO: return different timestamp depending on action?
         uint128 priceValue = abi.decode(data, (uint128));
         uint128 ts = targetTimestamp;
-        if (ts >= _validationDelay) {
-            ts = ts - uint128(_validationDelay); // simulate that we got the price 24 seconds ago
+        if (
+            action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
+                || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+        ) {
+            if (ts < _validationDelay) {
+                ts = 0;
+            } else {
+                ts = ts - 30 minutes; // simulate that we got the price 30 minutes ago
+            }
         } else {
-            ts = 0;
+            ts += uint128(_validationDelay);
         }
+
         PriceInfo memory price = PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: uint48(ts) });
         return price;
     }

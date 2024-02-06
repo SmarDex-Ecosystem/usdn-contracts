@@ -140,4 +140,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_longTradingExpo(uint128 currentPrice) external view returns (int256) {
         return _longTradingExpo(currentPrice);
     }
+
+    function i_lastFunding() external view returns (int256) {
+        return _lastFunding;
+    }
 }

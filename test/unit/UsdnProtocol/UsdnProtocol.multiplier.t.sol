@@ -42,10 +42,9 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether;
 
         protocol.initiateOpenPosition(5 ether, desiredLiqPrice, priceData, "");
-        protocol.validateOpenPosition(priceData, "");
         assertEq(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
+        protocol.validateOpenPosition(priceData, "");
 
-        skip(1 days);
         // We need to initiate a position to trigger the refresh of the multiplier
         protocol.initiateDeposit(1, priceData, "");
         protocol.validateDeposit(priceData, "");
