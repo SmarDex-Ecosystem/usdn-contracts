@@ -93,11 +93,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice User current liquidation iteration in tick.
     uint16 internal _liquidationIteration = 5;
 
-    /// @notice The moving average period for the funding coefficient
+    /// @notice The moving average period of the funding rate
     uint128 internal _EMAPeriod = 5 days;
 
     /// @notice The scaling factor (SF) of the funding rate (0.12)
-    uint256 internal _fundingSF = 12 * 10 ** (FUNDING_SF_DECIMALS - 2); //  TO DO : 18 decimals ?
+    uint256 internal _fundingSF = 12 * 10 ** (FUNDING_SF_DECIMALS - 2);
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
