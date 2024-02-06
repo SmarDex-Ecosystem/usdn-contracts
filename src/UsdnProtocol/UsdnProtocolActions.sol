@@ -207,7 +207,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 closeAmount: 0,
                 closeLeverage: 0,
                 tickVersion: tickVersion_,
-                index: index_.toUint128(),
+                index: index_,
                 closeLiqMultiplier: 0,
                 closeTempTransfer: 0
             });
