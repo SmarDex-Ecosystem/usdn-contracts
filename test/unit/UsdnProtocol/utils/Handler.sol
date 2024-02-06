@@ -80,16 +80,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _vaultAssetAvailable(currentPrice);
     }
 
-    function liquidationMultiplier() external view returns (uint256) {
-        return _liquidationMultiplier;
-    }
-
     function setMinLeverage(uint256 minLeverage) external {
         _minLeverage = minLeverage;
-    }
-
-    function getMinLeverage() external view returns (uint256) {
-        return _minLeverage;
     }
 
     function minimumPrice() external pure returns (uint256) {
