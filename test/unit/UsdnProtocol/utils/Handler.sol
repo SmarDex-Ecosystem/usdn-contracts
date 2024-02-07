@@ -3,7 +3,9 @@ pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction, VaultPendingAction, LongPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -76,6 +78,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _balanceVault;
     }
 
+    function balanceLong() external view returns (uint256) {
+        return _balanceLong;
+    }
+
     function vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
     }
@@ -86,6 +92,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function minimumPrice() external pure returns (uint256) {
         return TickMath.MIN_PRICE;
+    }
+
+    function lastPrice() external view returns (uint128) {
+        return _lastPrice;
     }
 
     function longAssetAvailable(uint128 currentPrice) external view returns (int256) {
@@ -135,5 +145,49 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_lastFunding() external view returns (int256) {
         return _lastFunding;
+    }
+
+    function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {
+        return _toVaultPendingAction(action);
+    }
+
+    function i_toLongPendingAction(PendingAction memory action) external pure returns (LongPendingAction memory) {
+        return _toLongPendingAction(action);
+    }
+
+    function i_convertVaultPendingAction(VaultPendingAction memory action)
+        external
+        pure
+        returns (PendingAction memory)
+    {
+        return _convertVaultPendingAction(action);
+    }
+
+    function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory) {
+        return _convertLongPendingAction(action);
+    }
+
+    function i_retrieveAssetsAndCheckBalance(address from, uint256 amount) external {
+        _retrieveAssetsAndCheckBalance(from, amount);
+    }
+
+    function i_distributeAssetsAndCheckBalance(address to, uint256 amount) external {
+        _distributeAssetsAndCheckBalance(to, amount);
+    }
+
+    function i_assetToTransfer(int24 tick, uint256 amount, uint128 leverage, uint256 liqMultiplier)
+        external
+        view
+        returns (uint256)
+    {
+        return _assetToTransfer(tick, amount, leverage, liqMultiplier);
+    }
+
+    function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint256 amount, uint128 initLeverage)
+        external
+        pure
+        returns (uint256 value_)
+    {
+        return _positionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
     }
 }
