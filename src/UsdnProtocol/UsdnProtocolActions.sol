@@ -587,8 +587,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 lastPrice = _lastPrice;
         // calculate amount to transfer
         int256 available = _longAssetAvailable(lastPrice);
-        if (available < 0) {
-            available = 0;
+        if (available <= 0) {
+            return 0;
         }
 
         // Calculate position value

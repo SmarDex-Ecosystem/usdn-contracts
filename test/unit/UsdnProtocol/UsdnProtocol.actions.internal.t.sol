@@ -45,4 +45,24 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
         );
         assertEq(res, longAvailable);
     }
+
+    /**
+     * @custom:scenario Check value of the `assetToTransfer` function when the long balance is zero
+     * @custom:given The long balance is empty
+     * @custom:when the asset to transfer is calculated
+     * @custom:then The asset to transfer is zero
+     */
+    function test_assetToTransferZeroBalance() public {
+        // adjust the price to a very low value, meaning that the long balance and long assez available is zero
+        skip(60);
+        protocol.liquidate(abi.encode(uint128(11_000)), 10);
+        assertEq(protocol.balanceLong(), 0);
+        assertEq(protocol.longAssetAvailable(11_000), 0);
+
+        int24 tick = protocol.getEffectiveTickForPrice(11_000);
+        uint256 res = protocol.i_assetToTransfer(
+            tick, 100 ether, uint128(10 ** protocol.LEVERAGE_DECIMALS()), protocol.liquidationMultiplier()
+        );
+        assertEq(res, 0);
+    }
 }

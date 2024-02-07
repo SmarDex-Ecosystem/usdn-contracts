@@ -78,6 +78,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _balanceVault;
     }
 
+    function balanceLong() external view returns (uint256) {
+        return _balanceLong;
+    }
+
     function vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
     }
@@ -96,6 +100,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function minimumPrice() external pure returns (uint256) {
         return TickMath.MIN_PRICE;
+    }
+
+    function lastPrice() external view returns (uint128) {
+        return _lastPrice;
     }
 
     function longAssetAvailable(uint128 currentPrice) external view returns (int256) {
