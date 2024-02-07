@@ -9,7 +9,7 @@ import { WstETH } from "test/utils/WstEth.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 
 /**
@@ -179,5 +179,24 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         }
 
         return _users;
+    }
+
+    /**
+     * @dev Helper function to assert two `PendingAction` are equal.
+     * Reverts if not equal.
+     * @param a First `PendingAction`
+     * @param b Second `PendingAction`
+     */
+    function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
+        assertTrue(a.action == b.action, string.concat(err, " - action type"));
+        assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
+        assertEq(a.user, b.user, string.concat(err, " - action user"));
+        assertEq(a.var1, b.var1, string.concat(err, " - action var1"));
+        assertEq(a.amount, b.amount, string.concat(err, " - action amount"));
+        assertEq(a.var2, b.var2, string.concat(err, " - action var2"));
+        assertEq(a.var3, b.var3, string.concat(err, " - action var3"));
+        assertEq(a.var4, b.var4, string.concat(err, " - action var4"));
+        assertEq(a.var5, b.var5, string.concat(err, " - action var5"));
+        assertEq(a.var6, b.var6, string.concat(err, " - action var6"));
     }
 }
