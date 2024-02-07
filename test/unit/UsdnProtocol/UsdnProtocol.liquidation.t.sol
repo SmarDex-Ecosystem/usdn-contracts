@@ -291,7 +291,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256 initialMultiplier = protocol.liquidationMultiplier();
 
         uint128 liqPrice = protocol.getEffectivePriceForTick(tick);
-        assertLt(liqPrice, currentPrice);
+        assertLt(liqPrice, currentPrice, "liquidation price >= current price");
 
         // Wait 1 day so that funding rates make the liquidation price of those positions go up
         skip(1 days);
@@ -299,10 +299,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Adjust balances, multiplier and liquidate positions
         uint256 liquidated = protocol.liquidate(priceData, 0);
 
-        assertEq(liquidated, 1); // the liquidation price for the high risk position went above the current price
+        // the liquidation price for the high risk position went above the current price
+        assertEq(liquidated, 1, "liquidation failed");
         liqPrice = protocol.getEffectivePriceForTick(tick);
-        assertGt(liqPrice, currentPrice);
-        assertGt(protocol.liquidationMultiplier(), initialMultiplier);
+        assertGt(liqPrice, currentPrice, "liquidation price <= current price");
+        assertGt(protocol.liquidationMultiplier(), initialMultiplier, "multiplier did not grow");
 
         // the position doesn't exist anymore
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion));
