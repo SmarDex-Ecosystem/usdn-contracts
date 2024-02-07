@@ -173,7 +173,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_internalConvertVaultPendingAction() public {
         PendingAction memory action = PendingAction({
-            action: ProtocolAction.InitiateDeposit,
+            action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
             user: address(this),
             var1: 0, // must be zero because unused
@@ -206,7 +206,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_internalConvertLongPendingAction() public {
         PendingAction memory action = PendingAction({
-            action: ProtocolAction.InitiateOpenPosition,
+            action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
             user: address(this),
             var1: 2398,
