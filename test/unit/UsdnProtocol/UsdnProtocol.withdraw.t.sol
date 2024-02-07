@@ -78,7 +78,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.InitiateWithdrawal, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
-        assertEq(action.amountOrIndex, USDN_AMOUNT, "action amount");
+        assertEq(action.amount, USDN_AMOUNT, "action amount");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.validationDeadline() + 1);

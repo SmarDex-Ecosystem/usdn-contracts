@@ -8,10 +8,14 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { IUsdnProtocolCore } from "src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
-import { ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    ProtocolAction,
+    PendingAction,
+    VaultPendingAction,
+    LongPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
@@ -324,6 +328,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     function _distributeAssetsAndCheckBalance(address to, uint256 amount) internal {
+        // slither-disable-next-line incorrect-equality
         if (amount == 0) {
             return;
         }
@@ -345,6 +350,66 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /* -------------------------- Pending actions queue ------------------------- */
+
+    /**
+     * @notice Convert a `PendingAction` to a `VaultPendingAction`
+     * @param action An untyped pending action
+     * @return vaultAction_ The converted vault pending action
+     */
+    function _toVaultPendingAction(PendingAction memory action)
+        internal
+        pure
+        returns (VaultPendingAction memory vaultAction_)
+    {
+        assembly {
+            vaultAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `PendingAction` to a `LongPendingAction`
+     * @param action An untyped pending action
+     * @return longAction_ The converted long pending action
+     */
+    function _toLongPendingAction(PendingAction memory action)
+        internal
+        pure
+        returns (LongPendingAction memory longAction_)
+    {
+        assembly {
+            longAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `VaultPendingAction` to a `PendingAction`
+     * @param action A vault pending action
+     * @return pendingAction_ The converted untyped pending action
+     */
+    function _convertVaultPendingAction(VaultPendingAction memory action)
+        internal
+        pure
+        returns (PendingAction memory pendingAction_)
+    {
+        assembly {
+            pendingAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `LongPendingAction` to a `PendingAction`
+     * @param action A long pending action
+     * @return pendingAction_ The converted untyped pending action
+     */
+    function _convertLongPendingAction(LongPendingAction memory action)
+        internal
+        pure
+        returns (PendingAction memory pendingAction_)
+    {
+        assembly {
+            pendingAction_ := action
+        }
+    }
 
     /**
      * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
@@ -401,13 +466,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // the position is only at risk of being liquidated while pending if it is an open position action
         // slither-disable-next-line incorrect-equality
         if (action.action == ProtocolAction.InitiateOpenPosition) {
-            (, uint256 version) = _tickHash(action.tick);
-            if (version != action.totalExpoOrTickVersion) {
+            LongPendingAction memory openAction = _toLongPendingAction(action);
+            (, uint256 version) = _tickHash(openAction.tick);
+            if (version != openAction.tickVersion) {
                 // the position was liquidated while pending
                 // remove the stale pending action
                 _pendingActionsQueue.clearAt(rawIndex);
                 delete _pendingActions[user];
-                emit StalePendingActionRemoved(user, action.tick, action.totalExpoOrTickVersion, action.amountOrIndex);
+                emit StalePendingActionRemoved(user, openAction.tick, openAction.tickVersion, openAction.index);
             }
         }
     }
