@@ -250,8 +250,8 @@ contract TestDequePopulated is DequeFixture {
         assertTrue(clearedAction.action == ProtocolAction.None);
         assertEq(clearedAction.timestamp, 0);
         assertEq(clearedAction.user, address(0));
-        assertEq(clearedAction.tick, 0);
-        assertEq(clearedAction.amountOrIndex, 0);
+        assertEq(clearedAction.var1, 0);
+        assertEq(clearedAction.amount, 0);
     }
 
     /**
