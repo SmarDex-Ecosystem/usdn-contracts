@@ -455,47 +455,68 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateOpenPositionWithAction(PendingAction memory long, bytes calldata priceData) internal {
-        int24 tick = long.tick;
-        uint256 tickVersion = long.totalExpoOrTickVersion;
-        uint256 index = long.amountOrIndex;
+        (bytes32 tickHash, uint256 version) = _tickHash(long.tick);
 
-        (bytes32 tickHash, uint256 version) = _tickHash(tick);
-
-        if (version != tickVersion) {
+        if (version != long.totalExpoOrTickVersion) {
             // The current tick version doesn't match the version from the pending action.
             // This means the position has been liquidated in the mean time
-            emit StalePendingActionRemoved(long.user, tick, tickVersion, index);
+            emit StalePendingActionRemoved(long.user, long.tick, long.totalExpoOrTickVersion, long.amountOrIndex);
             return;
         }
 
-        PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            long.timestamp, ProtocolAction.ValidateOpenPosition, priceData
-        );
-
-        // adjust balances
-        _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
-
-        // TODO: if price <= liquidationPrice, re-calculate a liquidation price based on the leverage so that the
-        // position remains solvent. Emit LiquidationPriceChanged.
-
-        // Re-calculate leverage
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
-        // reverts if liquidationPrice >= entryPrice
-        uint128 leverage = _getLeverage(price.price.toUint128(), liqPriceWithoutPenalty);
-        // Leverage is always greater than 1 (liquidationPrice is positive).
-        // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
-        if (leverage > _maxLeverage) {
-            // TODO: We should adjust liquidation price to have a leverage of _maxLeverage
-            // Update the `tick` and `index` variables.
-            // Emit LiquidationPriceChanged.
+        uint128 startPrice;
+        {
+            PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                long.timestamp, ProtocolAction.ValidateOpenPosition, priceData
+            );
+            startPrice = price.price.toUint128();
+            // adjust balances
+            _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
         }
 
-        // Adjust position parameters
-        Position storage pos = _longPositions[tickHash][index];
-        pos.leverage = leverage;
-        pos.startPrice = price.price.toUint128();
-
-        emit ValidatedOpenPosition(long.user, pos, tick, tickVersion, index, getEffectivePriceForTick(tick));
+        // Re-calculate leverage
+        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(long.tick - int24(_liquidationPenalty) * _tickSpacing);
+        // reverts if liquidationPrice >= entryPrice
+        uint128 leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
+        // Leverage is always greater than 1 (liquidationPrice is positive).
+        // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
+        // However, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
+        // of _maxLeverage
+        if (leverage > _maxLeverage) {
+            // remove and retrieve position
+            Position memory pos = _removePosition(long.tick, long.totalExpoOrTickVersion, long.amountOrIndex);
+            // theoretical liquidation price for _maxLeverage
+            liqPriceWithoutPenalty = _getLiquidationPrice(startPrice, _maxLeverage.toUint128());
+            // adjust to closest valid tick down
+            int24 tickWithoutPenalty = getEffectiveTickForPrice(liqPriceWithoutPenalty);
+            // retrieve exact liquidation price without penalty
+            liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
+            // update position leverage and price
+            pos.leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
+            pos.startPrice = startPrice;
+            // apply liquidation penalty
+            int24 tick = tickWithoutPenalty + int24(_liquidationPenalty) * _tickSpacing;
+            // insert position into new tick, update tickVersion and index
+            (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos);
+            // emit LiquidationPriceChanged
+            emit LiquidationPriceChanged(
+                long.tick, long.totalExpoOrTickVersion, long.amountOrIndex, tick, tickVersion, index
+            );
+            emit ValidatedOpenPosition(long.user, pos, tick, tickVersion, index, getEffectivePriceForTick(tick));
+        } else {
+            // simply update pos in storage
+            Position storage pos = _longPositions[tickHash][long.amountOrIndex];
+            pos.leverage = leverage;
+            pos.startPrice = startPrice;
+            emit ValidatedOpenPosition(
+                long.user,
+                pos,
+                long.tick,
+                long.totalExpoOrTickVersion,
+                long.amountOrIndex,
+                getEffectivePriceForTick(long.tick)
+            );
+        }
     }
 
     function _validateClosePosition(address user, bytes calldata priceData) internal {
@@ -562,7 +583,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // remove the position for the protocol and adjust state
         _balanceLong -= assetToTransfer;
-        _removePosition(tick, tickVersion, index, pos);
+        _removePosition(tick, tickVersion, index);
 
         // send the asset to the user
         _distributeAssetsAndCheckBalance(pos.user, assetToTransfer);
