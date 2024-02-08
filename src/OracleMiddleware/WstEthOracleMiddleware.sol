@@ -35,6 +35,7 @@ contract WstEthOracleMiddleware is OracleMiddleware {
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         public
         payable
+        virtual
         override
         returns (PriceInfo memory)
     {
