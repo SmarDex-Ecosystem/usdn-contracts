@@ -137,6 +137,44 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
+    function getActionablePendingAction(uint256 maxIter) external view returns (PendingAction memory action_) {
+        uint256 queueLength = _pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
+            return action_;
+        }
+        // default max iterations
+        if (maxIter == 0) {
+            maxIter = DEFAULT_QUEUE_MAX_ITER;
+        }
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
+
+        uint256 i = 0;
+        do {
+            // Since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
+            PendingAction memory candidate = _pendingActionsQueue.at(i);
+            // gas optimization
+            unchecked {
+                i++;
+            }
+            // If the msg.sender is equal to the user of the pending action, then the pending action is not actionable
+            // by this user (it will get validated automatically by their action). And so we need to return the next
+            // item in the queue so that they can validate a third-party pending action (if any).
+            if (candidate.timestamp == 0 || candidate.user == msg.sender) {
+                // try the next one
+                continue;
+            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
+                // we found an actionable pending action
+                return candidate;
+            }
+            // the first pending action is not actionable
+            return action_;
+        } while (i < maxIter);
+    }
+
     /* --------------------------  Internal functions --------------------------- */
 
     function _getLiquidationMultiplier(
@@ -346,43 +384,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /* -------------------------- Pending actions queue ------------------------- */
 
     /**
-     * @notice Retrieve a pending action that must be validated by the next user action in the protocol.
-     * @dev If this function returns a pending action, then the next user action MUST include the price update data
-     * for this pending action as the last parameter.
-     * @param maxIter The maximum number of iterations to find the first initialized item
-     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
-     */
-    function getActionablePendingAction(uint256 maxIter) external view returns (PendingAction memory action_) {
-        uint256 queueLength = _pendingActionsQueue.length();
-        if (queueLength == 0) {
-            // empty queue, early return
-            return action_;
-        }
-        // default max iterations
-        if (maxIter == 0) {
-            maxIter = DEFAULT_QUEUE_MAX_ITER;
-        }
-        if (queueLength < maxIter) {
-            maxIter = queueLength;
-        }
-
-        uint256 i = 0;
-        do {
-            // Since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
-            PendingAction memory candidate = _pendingActionsQueue.at(i);
-            if (candidate.timestamp == 0) {
-                // try the next one
-                continue;
-            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
-                // we found an actionable pending action
-                return candidate;
-            }
-            // else, the first pending action is not actionable
-            return action_;
-        } while (++i < maxIter);
-    }
-
-    /**
      * @notice Convert a `PendingAction` to a `VaultPendingAction`
      * @param action An untyped pending action
      * @return vaultAction_ The converted vault pending action
@@ -466,6 +467,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         do {
             // Since we will never call `front` more than `queueLength` times, there is no risk of reverting
             PendingAction memory candidate = _pendingActionsQueue.front();
+            // gas optimization
+            unchecked {
+                i++;
+            }
             if (candidate.timestamp == 0) {
                 // remove the stale pending action
                 // slither-disable-next-line unused-return
@@ -475,16 +480,15 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
                 return candidate;
-            } else {
-                // the first pending action is not actionable
-                return action_;
             }
-        } while (++i < maxIter);
+            // the first pending action is not actionable
+            return action_;
+        } while (i < maxIter);
     }
 
     /**
      * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
-     * @dev This is only applicable to `InitiateOpenPosition` pending actions
+     * @dev This is only applicable to `ValidateOpenPosition` pending actions
      * @param user The user address
      */
     function _removeStalePendingAction(address user) internal {
@@ -496,7 +500,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user, false); // do not clear
         // the position is only at risk of being liquidated while pending if it is an open position action
         // slither-disable-next-line incorrect-equality
-        if (action.action == ProtocolAction.InitiateOpenPosition) {
+        if (action.action == ProtocolAction.ValidateOpenPosition) {
             LongPendingAction memory openAction = _toLongPendingAction(action);
             (, uint256 version) = _tickHash(openAction.tick);
             if (version != openAction.tickVersion) {

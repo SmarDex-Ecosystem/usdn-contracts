@@ -50,7 +50,7 @@ enum ProtocolAction {
 
 /**
  * @notice A pending action in the queue.
- * @param action The action type (Initiate...).
+ * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
  * @param var1 See `VaultPendingAction` and `LongPendingAction`.
@@ -76,7 +76,7 @@ struct PendingAction {
 
 /**
  * @notice A pending action in the queue for a vault deposit or withdrawal.
- * @param action The action type (`InitiateDeposit` or `InitiateWithdrawal`).
+ * @param action The action type (`ValidateDeposit` or `ValidateWithdrawal`).
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
  * @param _unused Unused field to align the struct to `PendingAction`.
@@ -102,7 +102,7 @@ struct VaultPendingAction {
 
 /**
  * @notice A pending action in the queue for a long position.
- * @param action The action type (`InitiateOpenPosition` or `InitiateClosePosition`).
+ * @param action The action type (`ValidateOpenPosition` or `ValidateClosePosition`).
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
  * @param tick The tick of the position.
