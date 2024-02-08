@@ -625,7 +625,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (pending.action == ProtocolAction.None) {
             // no pending action
             return;
-        } else if (pending.action == ProtocolAction.ValidateDeposit) {
+        }
+        _clearPendingAction(pending.user);
+        if (pending.action == ProtocolAction.ValidateDeposit) {
             _validateDepositWithAction(pending, priceData, false);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
             _validateWithdrawalWithAction(pending, priceData);
