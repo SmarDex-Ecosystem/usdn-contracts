@@ -79,7 +79,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data.
      * @param amount The amount of wstETH to deposit.
-     * @param desiredLiqPrice The desired liquidation price.
+     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty.
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionPriceData The price data of an actionable pending action.

@@ -163,9 +163,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint128 leverage;
         {
-            // we calculate the closest valid tick down for the desired liq price without liquidation penalty
-            int24 desiredLiqTick = getEffectiveTickForPrice(desiredLiqPrice);
-            uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(desiredLiqTick);
+            // we calculate the closest valid tick down for the desired liq price with liquidation penalty
+            tick_ = getEffectiveTickForPrice(desiredLiqPrice);
+
+            // remove liquidation penalty for leverage calculation
+            uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - int24(_liquidationPenalty) * _tickSpacing);
 
             // calculate position leverage
             // reverts if liquidationPrice >= entryPrice
@@ -176,9 +178,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             if (leverage > _maxLeverage) {
                 revert UsdnProtocolLeverageTooHigh();
             }
-
-            // Apply liquidation penalty
-            tick_ = desiredLiqTick + int24(_liquidationPenalty) * _tickSpacing;
         }
 
         // Calculate effective liquidation price
@@ -611,7 +610,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (pending.action == ProtocolAction.None) {
             // no pending action
             return;
-        } else if (pending.action == ProtocolAction.ValidateDeposit) {
+        }
+        _clearPendingAction(pending.user);
+        if (pending.action == ProtocolAction.ValidateDeposit) {
             _validateDepositWithAction(pending, priceData, false);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
             _validateWithdrawalWithAction(pending, priceData);
