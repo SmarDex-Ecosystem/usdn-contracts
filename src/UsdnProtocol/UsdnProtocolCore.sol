@@ -134,6 +134,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         do {
             // Since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
             PendingAction memory candidate = _pendingActionsQueue.at(i);
+            // gas optimization
+            unchecked {
+                i++;
+            }
             // If the msg.sender is equal to the user of the pending action, then the pending action is not actionable
             // by this user (it will get validated automatically by their action). And so we need to return the next
             // item in the queue so that they can validate a third-party pending action (if any).
@@ -147,7 +151,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 // the first pending action is not actionable
                 return action_;
             }
-        } while (++i < maxIter);
+        } while (i < maxIter);
     }
 
     /* --------------------------  Internal functions --------------------------- */
