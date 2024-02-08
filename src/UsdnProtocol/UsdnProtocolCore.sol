@@ -147,10 +147,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
                 return candidate;
-            } else {
-                // the first pending action is not actionable
-                return action_;
             }
+            // the first pending action is not actionable
+            return action_;
         } while (i < maxIter);
     }
 
@@ -448,10 +447,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
                 return candidate;
-            } else {
-                // the first pending action is not actionable
-                return action_;
             }
+            // the first pending action is not actionable
+            return action_;
         } while (++i < maxIter);
     }
 
