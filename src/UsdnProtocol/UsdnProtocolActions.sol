@@ -365,7 +365,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                     deposit.totalExpoOrTickVersion,
                     deposit.balanceVault,
                     deposit.balanceLong,
-                    depositPrice_.price.toUint128(), // new price
+                    // Price with fees (Inline calculation to avoid stack too deep)
+                    (depositPrice_.price + (depositPrice_.price * _protocolFee) / _protocolFeeDenominator).toUint128(), // new
+                        // price
                     deposit.assetPrice // old price
                 )
             ),
@@ -501,7 +503,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
         // reverts if liquidationPrice >= entryPrice
         // Inline calculation to avoid stack too deep
-        uint128 leverage = _getLeverage((price.price + (price.price * _protocolFee) / _protocolFeeDenominator).toUint128(), liqPriceWithoutPenalty);
+        uint128 leverage = _getLeverage(
+            (price.price + (price.price * _protocolFee) / _protocolFeeDenominator).toUint128(), liqPriceWithoutPenalty
+        );
         // Leverage is always greater than 1 (liquidationPrice is positive).
         // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
         if (leverage > _maxLeverage) {
