@@ -90,6 +90,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice User current liquidation iteration in tick.
     uint16 internal _liquidationIteration = 5;
 
+    // TODO: Add checks when creating the setter for this variable (!= 0)
     /// @notice The moving average period of the funding rate
     uint128 internal _EMAPeriod = 5 days;
 

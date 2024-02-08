@@ -366,6 +366,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
     }
 
+    /**
+     * @notice Update the Exponential Moving Average (EMA) of the funding
+     * @param secondsElapsed The number of seconds elapsed since the last protocol action
+     * @dev This function is called every time the protocol state is updated
+     * @dev All required checks are done in the caller function (_applyPnlAndFunding)
+     */
     function _updateEMA(uint128 secondsElapsed) internal {
         // cache variable for optimization
         int256 intEMAPeriod = _toInt256(_EMAPeriod);
