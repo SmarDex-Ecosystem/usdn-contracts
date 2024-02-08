@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.5.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.4.0...v0.5.0) (2024-02-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **long:** the input desired liquidation price to `initiateOpenPosition` is now considered to already include the liquidation penalty.
+* **pending:** the queue `PendingActions` now store `Validate...` protocol actions
+* **long:** initiateClosePosition removes the position from the tick/protocol ([#70](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/70))
+* **liquidation-core:** fix two calculation bugs with liquidation tick selection and sign of `fundingAsset` ([#72](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/72))
+* **interfaces:** some public functions are now private
+* **middleware:** oracle middleware minor changes ([#66](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/66))
+* **UsdnProtocolLong:** add liquidation price in LiquidatedTick event ([#65](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/65))
+
+### Features
+
+* **interfaces:** create and refactor interfaces ([#64](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/64)) ([e6dbad5](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/e6dbad5c4510550fd2b63cfb00d09080a15073c4))
+* **middleware:** mock oracle middleware for fork environment ([#78](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/78)) ([97bc06d](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/97bc06dd4581a468098df3f8cead9b3006b06d7e))
+* new funding calculation ([#73](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/73)) ([740f4a2](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/740f4a21bc9385890b146fe7a24f36285489bcdc))
+* **storage:** add two functions to fetch internal variables ([#75](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/75)) ([b81a6cb](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/b81a6cb8d0d2be2e477cc686da69f92f3926402d))
+* **UsdnProtocolLong:** add liquidation price in LiquidatedTick event ([#65](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/65)) ([32a6301](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/32a63019b2fff36ac036e4c320bccf855ab005b7))
+
+
+### Bug Fixes
+
+* **liquidation-core:** fix two calculation bugs with liquidation tick selection and sign of `fundingAsset` ([#72](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/72)) ([df335ae](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/df335ae288a79f5fe5f80ea374001a05a126c116))
+* **long:** desired liq price now includes liquidation penalty ([#80](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/80)) ([f842ca7](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/f842ca7eec306583029fb0a606bc3a194531c796))
+* **pending:** remove pending action from third party user when it gets validated ([#81](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/81)) ([da0350b](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/da0350b994ea513d1f31e0bab126ea8d57a6e7ad))
+* **pending:** store `Validate...` protocol actions in pending actions ([#79](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/79)) ([79bfe56](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/79bfe56548b32d1a811b6e48113adaebab3fca05))
+* **pending:** user validating their own action while it's actionable by anyone ([#77](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/77)) ([df5b8c2](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/df5b8c24582d110d111cdac1706f5f35ca6b27a8))
+
+
+### Code Refactoring
+
+* **long:** initiateClosePosition removes the position from the tick/protocol ([#70](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/70)) ([a3f87c6](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/a3f87c62c459cfb47b6380791316416f85b913fa))
+* **middleware:** oracle middleware minor changes ([#66](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/66)) ([ff39bb3](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/ff39bb38b2f3c2e2e6e2ead29e8969c418015d7c))
+
 ## [0.4.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.3.0...v0.4.0) (2024-02-01)
 
 
