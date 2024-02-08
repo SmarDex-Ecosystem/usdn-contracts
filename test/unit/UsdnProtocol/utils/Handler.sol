@@ -56,6 +56,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _maxInitializedTick;
     }
 
+    // Exponantial Moving Average
+    function EMA() external view returns (int256) {
+        return _EMA;
+    }
+
     // total long position
     function totalLongPositions() external view returns (uint256) {
         return _totalLongPositions;
@@ -133,6 +138,18 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory) {
         return _getActionablePendingAction(maxIter);
+    }
+
+    function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
+        return _vaultTradingExpo(currentPrice);
+    }
+
+    function i_longTradingExpo(uint128 currentPrice) external view returns (int256) {
+        return _longTradingExpo(currentPrice);
+    }
+
+    function i_lastFunding() external view returns (int256) {
+        return _lastFunding;
     }
 
     function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {

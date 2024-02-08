@@ -46,14 +46,15 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * into account.
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
-     * @return fund_ The number of asset tokens of funding (with asset decimals)
+     * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
      * @return longExpo_ The long trading exposure (with asset decimals)
      * @return vaultExpo_ The vault trading exposure (with asset decimals)
+     * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
      */
     function fundingAsset(uint128 currentPrice, uint128 timestamp)
         external
         view
-        returns (int256 fund_, int256 longExpo_, int256 vaultExpo_);
+        returns (int256 fundingAsset_, int256 longExpo_, int256 vaultExpo_, int256 fund_);
 
     /**
      * @notice Get the predicted value of the long balance for the given asset price and timestamp

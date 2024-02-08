@@ -61,7 +61,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_031_271_466_416, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_002_839_520_694, "wrong minimum liquidation price");
     }
 
     /**
@@ -72,9 +72,9 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_getMinLiquidationPrice_multiplierLtOne() public {
         bytes memory priceData = abi.encode(4000 ether);
 
-        protocol.initiateDeposit(500 ether, priceData, "");
+        protocol.initiateDeposit(5000 ether, priceData, "");
         protocol.validateDeposit(priceData, "");
-        skip(1 days);
+        skip(6 days);
         protocol.initiateDeposit(1, priceData, "");
         protocol.validateDeposit(priceData, "");
 
@@ -83,7 +83,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_032_796_759_627, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_032_217_704_260, "wrong minimum liquidation price");
     }
 
     /**
