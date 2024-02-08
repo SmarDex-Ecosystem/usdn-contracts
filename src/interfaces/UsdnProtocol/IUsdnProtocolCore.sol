@@ -95,6 +95,8 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @notice Retrieve a pending action that must be validated by the next user action in the protocol.
      * @dev If this function returns a pending action, then the next user action MUST include the price update data
      * for this pending action as the last parameter.
+     * @dev Front-ends are encouraged to set the `from` address when calling this function, so that we can return the
+     * correct actionable action for a given user.
      * @param maxIter The maximum number of iterations to find the first initialized item
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
      */
