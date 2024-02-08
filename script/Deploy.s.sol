@@ -9,7 +9,7 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
-import { MockWstEthOracleMiddleware } from "test/utils/MockWstEthOracleMiddleware.sol";
+import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 
 contract Deploy is Script {
     function run() external {
@@ -64,13 +64,8 @@ contract Deploy is Script {
 
                 // fork
             } else {
-                middleware = new MockWstEthOracleMiddleware(
-                    pythAddress,
-                    pythPriceId,
-                    chainlinkPriceAddress,
-                    wstETHAddress,
-                    vm.envOr("MOCKED_WSTETH_PRICE", uint256(0))
-                );
+                middleware =
+                    new MockWstEthOracleMiddleware(pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress);
             }
 
             middlewareAddress = address(middleware);

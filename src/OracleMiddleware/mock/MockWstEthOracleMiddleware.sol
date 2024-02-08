@@ -13,24 +13,18 @@ import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddlew
  */
 contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     /// @notice Confidence interval denominator
-    uint64 internal constant CONF_DENOM = 10_000;
+    uint16 internal constant CONF_DENOM = 10_000;
     /// @notice Confidence interval percentage numerator
-    uint64 internal _wstethMockedConfPct = 500; // default 5% conf
+    uint16 internal _wstethMockedConfPct = 20; // default 0.2% conf
     /**
      * @notice Wsteth mocked price
      * @dev This price will be used if greater than zero.
      */
     uint256 internal _wstethMockedPrice;
 
-    constructor(
-        address pythContract,
-        bytes32 pythPriceID,
-        address chainlinkPriceFeed,
-        address wsteth,
-        uint256 initialWstethMockedPrice
-    ) WstEthOracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, wsteth) {
-        _wstethMockedPrice = initialWstethMockedPrice;
-    }
+    constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed, address wsteth)
+        WstEthOracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, wsteth)
+    { }
 
     /**
      * @notice Parses and validates price data by returning current wsteth mocked price.
@@ -95,7 +89,8 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
      * @dev To calculate a percentage of neutral price up or down in some protocol actions.
      * @param newWstethMockedConfPct .
      */
-    function setWstethMockedConfPct(uint64 newWstethMockedConfPct) external {
+    function setWstethMockedConfPct(uint16 newWstethMockedConfPct) external {
+        require(newWstethMockedConfPct <= 1500, "15% max");
         _wstethMockedConfPct = newWstethMockedConfPct;
     }
 
