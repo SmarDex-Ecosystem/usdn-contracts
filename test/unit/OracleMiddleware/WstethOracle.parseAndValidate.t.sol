@@ -19,6 +19,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
 
     uint256 internal immutable FORMATTED_STETH_PRICE;
     uint256 internal immutable FORMATTED_STETH_CONF;
+    uint256 internal immutable STETH_CONF_RATIO;
     uint256 internal immutable STETH_PER_TOKEN;
 
     constructor() {
@@ -28,7 +29,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
             uint256(uint256(uint64(STETH_PRICE)) * 10 ** wstethOracle.decimals() / 10 ** wstethOracle.pythDecimals());
         FORMATTED_STETH_CONF =
             uint256(uint256(uint64(STETH_CONF)) * 10 ** wstethOracle.decimals() / 10 ** wstethOracle.pythDecimals());
-
+        STETH_CONF_RATIO = FORMATTED_STETH_CONF * wstethOracle.confRatio() / wstethOracle.confRatioDenom();
         STETH_PER_TOKEN = wsteth.stEthPerToken();
     }
 
@@ -60,9 +61,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
                 assertEq(
-                    price.price,
-                    stethToWsteth(FORMATTED_STETH_PRICE + FORMATTED_STETH_CONF, STETH_PER_TOKEN),
-                    errorMessage
+                    price.price, stethToWsteth(FORMATTED_STETH_PRICE + STETH_CONF_RATIO, STETH_PER_TOKEN), errorMessage
                 );
             }
             // Price - conf
@@ -71,9 +70,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
                     || action == ProtocolAction.Liquidation
             ) {
                 assertEq(
-                    price.price,
-                    stethToWsteth(FORMATTED_STETH_PRICE - FORMATTED_STETH_CONF, STETH_PER_TOKEN),
-                    errorMessage
+                    price.price, stethToWsteth(FORMATTED_STETH_PRICE - STETH_CONF_RATIO, STETH_PER_TOKEN), errorMessage
                 );
             } else {
                 assertEq(price.price, stethToWsteth(FORMATTED_STETH_PRICE, STETH_PER_TOKEN), errorMessage);

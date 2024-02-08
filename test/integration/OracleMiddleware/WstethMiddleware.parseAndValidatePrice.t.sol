@@ -87,6 +87,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
                 // formatted pyth conf
                 uint256 formattedPythConf =
                     pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
+                formattedPythConf = formattedPythConf * wstethMiddleware.confRatio() / wstethMiddleware.confRatioDenom();
 
                 // Price + conf
                 if (action == ProtocolAction.ValidateOpenPosition) {
@@ -172,6 +173,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
                 // formatted pyth conf
                 uint256 formattedPythConf =
                     pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
+                formattedPythConf = formattedPythConf * wstethMiddleware.confRatio() / wstethMiddleware.confRatioDenom();
 
                 // Price + conf
                 if (action == ProtocolAction.ValidateOpenPosition) {
@@ -195,7 +197,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
                         uint256 pythWstethTimestamp,
                     ) = super.getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
 
-                    assertEq(middlewarePrice.timestamp, pythWstethTimestamp, "Wrong similar timestamp");
+                    // Approx eq because of the potential time difference between the two calls
+                    assertApproxEqAbs(middlewarePrice.timestamp, pythWstethTimestamp, 2, "Wrong similar timestamp");
 
                     // Should obtain a short different price between pyth wsteth price feed
                     // and pyth steth price feed adjusted with ratio.

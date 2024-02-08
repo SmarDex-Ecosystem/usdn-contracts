@@ -50,4 +50,20 @@ interface IOracleMiddleware is IOracleMiddlewareErrors {
      * @param newDelay The new validation delay
      */
     function updateValidationDelay(uint256 newDelay) external;
+
+    /// @notice get max confidence ratio
+    function maxConfRatio() external pure returns (uint16);
+
+    /// @notice get confidence ratio denominator
+    function confRatioDenom() external pure returns (uint16);
+
+    /// @notice get confidence ratio
+    function confRatio() external view returns (uint16);
+
+    /**
+     * @notice Set confidence ratio (admin).
+     * @param newConfRatio the new confidence ratio.
+     * @dev New value should be lower than max confidence ratio.
+     */
+    function setConfRatio(uint16 newConfRatio) external;
 }

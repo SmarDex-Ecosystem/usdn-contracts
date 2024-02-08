@@ -31,7 +31,8 @@ contract TestOracleMiddlewareParseAndValidatePrice is
 
         FORMATTED_ETH_PRICE =
             (ETH_PRICE * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals());
-        FORMATTED_ETH_CONF = (ETH_CONF * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals());
+        FORMATTED_ETH_CONF = (ETH_CONF * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals())
+            * oracleMiddleware.confRatio() / oracleMiddleware.confRatioDenom();
     }
 
     function setUp() public override {

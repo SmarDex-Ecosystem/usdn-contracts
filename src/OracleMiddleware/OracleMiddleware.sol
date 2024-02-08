@@ -13,6 +13,8 @@ import {
 } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
 /**
  * @title OracleMiddleware contract
  * @notice This contract is used to get the price of an asset from different price oracle.
@@ -24,6 +26,13 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     // slither-disable-next-line shadowing-state
     uint8 private constant DECIMALS = 18;
+    /// @notice confidence ratio denominator
+    uint16 private constant CONF_RATIO_DENOM = 10_000;
+    /// @notice confidence ratio: up to 200%
+    uint16 private constant MAX_CONF_RATIO = CONF_RATIO_DENOM * 2;
+
+    /// @notice confidence ratio: default 40%
+    uint16 private _confRatio = 4000; // to divide by CONF_RATIO_DENOM
 
     constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed)
         PythOracle(pythContract, pythPriceID)
@@ -40,7 +49,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         public
         payable
         virtual
-        returns (PriceInfo memory _result)
+        returns (PriceInfo memory price_)
     {
         if (action == ProtocolAction.None) {
             return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
@@ -99,10 +108,17 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         FormattedPythPrice memory pythPrice =
             getFormattedPythPrice(data, actionTimestamp + uint64(_validationDelay), DECIMALS);
 
-        if (conf == ConfidenceInterval.Down) {
-            price_.price = uint256(pythPrice.price) - pythPrice.conf;
-        } else if (conf == ConfidenceInterval.Up) {
-            price_.price = uint256(pythPrice.price) + pythPrice.conf;
+        if (pythPrice.price != -1) {
+            if (conf == ConfidenceInterval.Down) {
+                price_.price = uint256(pythPrice.price) - (pythPrice.conf * _confRatio / CONF_RATIO_DENOM);
+            } else if (conf == ConfidenceInterval.Up) {
+                price_.price = uint256(pythPrice.price) + (pythPrice.conf * _confRatio / CONF_RATIO_DENOM);
+            } else {
+                price_.price = uint256(pythPrice.price);
+            }
+
+            price_.timestamp = pythPrice.publishTime;
+            price_.neutralPrice = uint256(pythPrice.price);
         } else {
             price_.price = uint256(pythPrice.price);
         }
@@ -160,6 +176,34 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         } else if (action == ProtocolAction.InitiateClosePosition) {
             return 0;
         }
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                           Price confidence ratio                           */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IOracleMiddleware
+    function maxConfRatio() external pure returns (uint16) {
+        return MAX_CONF_RATIO;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function confRatioDenom() external pure returns (uint16) {
+        return CONF_RATIO_DENOM;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function confRatio() external view returns (uint16) {
+        return _confRatio;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function setConfRatio(uint16 newConfRatio) external onlyOwner {
+        // confidence ratio limit check
+        if (newConfRatio > MAX_CONF_RATIO) {
+            revert ConfRatioTooHigh();
+        }
+        _confRatio = newConfRatio;
     }
 
     /* -------------------------------------------------------------------------- */

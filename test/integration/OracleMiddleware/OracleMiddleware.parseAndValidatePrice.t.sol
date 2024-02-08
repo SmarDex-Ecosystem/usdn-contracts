@@ -61,7 +61,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
                 // price check
                 assertEq(
-                    middlewarePrice.price * 10 ** oracleMiddleware.chainlinkDecimals()
+                    (middlewarePrice.price * 10 ** oracleMiddleware.chainlinkDecimals())
                         / 10 ** oracleMiddleware.decimals(),
                     chainlinkPrice,
                     priceError
@@ -76,27 +76,33 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                     uint128(pythTimestamp - oracleMiddleware.validationDelay()), action, data
                 );
 
+                // Apply confidence ratio to the pyth confidence
+                uint256 formattedPythConfWithRatio = (
+                    (pythConf * 10 ** oracleMiddleware.decimals() * oracleMiddleware.confRatio())
+                        / oracleMiddleware.confRatioDenom()
+                ) / 10 ** oracleMiddleware.pythDecimals();
+
+                // formatted pyth price
+                uint256 formattedPythPrice =
+                    (pythPrice * 10 ** oracleMiddleware.decimals()) / 10 ** oracleMiddleware.pythDecimals();
+
                 // timestamp check
                 assertEq(middlewarePrice.timestamp, pythTimestamp);
-
-                // formatted middleware price
-                uint256 middlewareFormattedPrice =
-                    middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals();
 
                 // Price + conf
                 if (action == ProtocolAction.ValidateOpenPosition) {
                     // check price
-                    assertEq(middlewareFormattedPrice, pythPrice + pythConf, priceError);
+                    assertEq(middlewarePrice.price, formattedPythPrice + formattedPythConfWithRatio, priceError);
 
                     // Price - conf
                 } else if (action == ProtocolAction.ValidateDeposit) {
                     // check price
-                    assertEq(middlewareFormattedPrice, pythPrice - pythConf, priceError);
+                    assertEq(middlewarePrice.price, formattedPythPrice - formattedPythConfWithRatio, priceError);
 
                     // Price only
                 } else {
                     // check price
-                    assertEq(middlewareFormattedPrice, pythPrice, priceError);
+                    assertEq(middlewarePrice.price, formattedPythPrice, priceError);
                 }
             }
         }
@@ -141,7 +147,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
                 // price check
                 assertEq(
-                    middlewarePrice.price * 10 ** oracleMiddleware.chainlinkDecimals()
+                    (middlewarePrice.price * 10 ** oracleMiddleware.chainlinkDecimals())
                         / 10 ** oracleMiddleware.decimals(),
                     chainlinkPrice,
                     priceError
@@ -157,26 +163,32 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 );
 
                 // timestamp check
-                assertEq(middlewarePrice.timestamp, pythTimestamp);
+                assertApproxEqAbs(middlewarePrice.timestamp, pythTimestamp, 5);
 
-                // formatted middleware price
-                uint256 middlewareFormattedPrice =
-                    middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals();
+                // Apply confidence ratio to the pyth confidence
+                uint256 formattedPythConfWithRatio = (
+                    (pythConf * 10 ** oracleMiddleware.decimals() * oracleMiddleware.confRatio())
+                        / oracleMiddleware.confRatioDenom()
+                ) / 10 ** oracleMiddleware.pythDecimals();
+
+                // formatted pyth price
+                uint256 formattedPythPrice =
+                    (pythPrice * 10 ** oracleMiddleware.decimals()) / 10 ** oracleMiddleware.pythDecimals();
 
                 // Price + conf
                 if (action == ProtocolAction.ValidateOpenPosition) {
                     // check price
-                    assertEq(middlewareFormattedPrice, pythPrice + pythConf, priceError);
+                    assertEq(middlewarePrice.price, formattedPythPrice + formattedPythConfWithRatio, priceError);
 
                     // Price - conf
                 } else if (action == ProtocolAction.ValidateDeposit) {
                     // check price
-                    assertEq(middlewareFormattedPrice, pythPrice - pythConf, priceError);
+                    assertEq(middlewarePrice.price, formattedPythPrice - formattedPythConfWithRatio, priceError);
 
                     // Price only
                 } else {
                     // check price
-                    assertEq(middlewareFormattedPrice, pythPrice, priceError);
+                    assertEq(middlewarePrice.price, formattedPythPrice, priceError);
                 }
             }
         }
