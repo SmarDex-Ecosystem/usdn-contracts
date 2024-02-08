@@ -50,7 +50,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
-            action: ProtocolAction.InitiateDeposit,
+            action: ProtocolAction.ValidateDeposit,
             timestamp: timestamp,
             user: msg.sender,
             _unused: 0,
@@ -104,7 +104,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
-            action: ProtocolAction.InitiateWithdrawal,
+            action: ProtocolAction.ValidateWithdrawal,
             timestamp: timestamp,
             user: msg.sender,
             _unused: 0,
@@ -200,7 +200,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             // Register pending action
             LongPendingAction memory pendingAction = LongPendingAction({
-                action: ProtocolAction.InitiateOpenPosition,
+                action: ProtocolAction.ValidateOpenPosition,
                 timestamp: timestamp,
                 user: msg.sender,
                 tick: tick_,
@@ -261,7 +261,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 tempTransfer = _assetToTransfer(tick, pos.amount, pos.leverage, liqMultiplier);
 
         LongPendingAction memory pendingAction = LongPendingAction({
-            action: ProtocolAction.InitiateClosePosition,
+            action: ProtocolAction.ValidateClosePosition,
             timestamp: timestamp,
             user: msg.sender,
             tick: tick,
@@ -316,7 +316,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
-        if (pending.action != ProtocolAction.InitiateDeposit) {
+        if (pending.action != ProtocolAction.ValidateDeposit) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
@@ -394,7 +394,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
-        if (pending.action != ProtocolAction.InitiateWithdrawal) {
+        if (pending.action != ProtocolAction.ValidateWithdrawal) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
@@ -453,7 +453,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
-        if (pending.action != ProtocolAction.InitiateOpenPosition) {
+        if (pending.action != ProtocolAction.ValidateOpenPosition) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
@@ -512,7 +512,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
-        if (pending.action != ProtocolAction.InitiateClosePosition) {
+        if (pending.action != ProtocolAction.ValidateClosePosition) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
@@ -613,13 +613,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
         _clearPendingAction(pending.user);
-        if (pending.action == ProtocolAction.InitiateDeposit) {
+        if (pending.action == ProtocolAction.ValidateDeposit) {
             _validateDepositWithAction(pending, priceData, false);
-        } else if (pending.action == ProtocolAction.InitiateWithdrawal) {
+        } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
             _validateWithdrawalWithAction(pending, priceData);
-        } else if (pending.action == ProtocolAction.InitiateOpenPosition) {
+        } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
             _validateOpenPositionWithAction(pending, priceData);
-        } else if (pending.action == ProtocolAction.InitiateClosePosition) {
+        } else if (pending.action == ProtocolAction.ValidateClosePosition) {
             _validateClosePositionWithAction(pending, priceData);
         }
     }

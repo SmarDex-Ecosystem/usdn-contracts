@@ -459,7 +459,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
-     * @dev This is only applicable to `InitiateOpenPosition` pending actions
+     * @dev This is only applicable to `ValidateOpenPosition` pending actions
      * @param user The user address
      */
     function _removeStalePendingAction(address user) internal {
@@ -470,7 +470,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user, false); // do not clear
         // the position is only at risk of being liquidated while pending if it is an open position action
         // slither-disable-next-line incorrect-equality
-        if (action.action == ProtocolAction.InitiateOpenPosition) {
+        if (action.action == ProtocolAction.ValidateOpenPosition) {
             LongPendingAction memory openAction = _toLongPendingAction(action);
             (, uint256 version) = _tickHash(openAction.tick);
             if (version != openAction.tickVersion) {
