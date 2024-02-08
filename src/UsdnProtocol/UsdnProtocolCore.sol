@@ -62,7 +62,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
         int256 numerator = longExpo_ - vaultExpo_;
-        // TO DO : test
         // optimization : if numerator is zero, then return the EMA
         if (numerator == 0) {
             return (_EMA, longExpo_, vaultExpo_);

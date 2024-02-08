@@ -56,6 +56,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _maxInitializedTick;
     }
 
+    // Exponantial Moving Average
+    function EMA() external view returns (int256) {
+        return _EMA;
+    }
+
     // total long position
     function totalLongPositions() external view returns (uint256) {
         return _totalLongPositions;

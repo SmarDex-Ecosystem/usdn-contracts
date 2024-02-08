@@ -192,4 +192,33 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(this)), userBalanceBefore, "user balance");
         assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore, "protocol balance");
     }
+
+    /**
+     * @custom:scenario Funding calculation
+     * @custom:when long and vault expos are equal
+     * @custom:then fund should be equal to EMA
+     */
+    function test_fundingWhenEqualExpo() public {
+        wstETH.mint(address(this), 10_000 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
+        uint128 price = DEFAULT_PARAMS.initialPrice;
+        bytes memory priceData = abi.encode(price);
+
+        protocol.initiateOpenPosition(20 ether, price / 2, priceData, "");
+        protocol.validateOpenPosition(priceData, "");
+
+        // we create a deposit to make the long and vault expos equal
+        protocol.initiateDeposit(
+            uint128(uint256(protocol.i_longTradingExpo(price) - protocol.i_vaultTradingExpo(price))), priceData, ""
+        );
+        protocol.validateDeposit(priceData, "");
+
+        assertEq(
+            protocol.i_longTradingExpo(price),
+            protocol.i_vaultTradingExpo(price),
+            "long and vault expos should be equal"
+        );
+        (int256 fund_,,) = protocol.funding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
+        assertEq(fund_, protocol.EMA(), "funding should be equal to EMA");
+    }
 }

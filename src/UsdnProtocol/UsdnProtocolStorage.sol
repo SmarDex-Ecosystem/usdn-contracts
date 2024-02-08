@@ -182,7 +182,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _usdnDecimals = usdn.decimals();
         _asset = asset;
         _assetDecimals = asset.decimals();
-        if (_assetDecimals <= FUNDING_SF_DECIMALS) {
+        if (_assetDecimals < FUNDING_SF_DECIMALS) {
             revert UsdnProtocolInvalidAssetDecimals(_assetDecimals);
         }
         _oracleMiddleware = oracleMiddleware;
