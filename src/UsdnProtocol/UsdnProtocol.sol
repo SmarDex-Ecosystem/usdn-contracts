@@ -70,7 +70,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         {
             PendingAction memory pendingAction = _convertVaultPendingAction(
                 VaultPendingAction({
-                    action: ProtocolAction.InitiateDeposit,
+                    action: ProtocolAction.ValidateDeposit,
                     timestamp: 0, // not needed since we have a special ProtocolAction for init
                     user: msg.sender,
                     _unused: 0, // unused
