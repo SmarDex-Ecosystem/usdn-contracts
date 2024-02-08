@@ -231,4 +231,37 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         PendingAction memory result = protocol.i_convertLongPendingAction(longAction);
         _assertActionsEqual(action, result, "long pending action conversion");
     }
+
+    /**
+     * @custom:scenario Validate a user's pending position which is actionable at the same time as another user's
+     * pending action.
+     * @custom:given Two users have initiated deposits
+     * @custom:and The validation deadline has elapsed for both of them
+     * @custom:when The second user validates their pending position
+     * @custom:then Both positions are validated
+     */
+    function test_twoPending() public {
+        wstETH.mint(USER_1, 100_000 ether);
+        wstETH.mint(USER_2, 100_000 ether);
+        // Setup 2 pending actions
+        vm.startPrank(USER_1);
+        wstETH.approve(address(protocol), type(uint256).max);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        vm.stopPrank();
+        skip(30);
+        vm.startPrank(USER_2);
+        wstETH.approve(address(protocol), type(uint256).max);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2100 ether), "");
+        vm.stopPrank();
+
+        // Wait
+        skip(protocol.validationDeadline() + 1);
+
+        // Second user tries to validate their action
+        vm.startPrank(USER_2);
+        protocol.validateOpenPosition(abi.encode(2100 ether), abi.encode(2000 ether));
+        // No more pending action
+        PendingAction memory action = protocol.getActionablePendingAction(0);
+        assertEq(action.user, address(0));
+    }
 }
