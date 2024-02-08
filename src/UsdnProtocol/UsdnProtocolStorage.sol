@@ -31,9 +31,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant FUNDING_SF_DECIMALS = 3;
 
     /// @inheritdoc IUsdnProtocolStorage
-    uint256 public constant SECONDS_PER_DAY = 60 * 60 * 24;
-
-    /// @inheritdoc IUsdnProtocolStorage
     uint256 public constant PERCENTAGE_DIVISOR = 10_000;
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -104,7 +101,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /* -------------------------------------------------------------------------- */
 
     /// @notice The funding corresponding to the last update timestamp
-    int256 internal _lastFunding = 0;
+    int256 internal _lastFunding;
 
     /// @notice The price of the asset during the last balances update (with price feed decimals)
     uint128 internal _lastPrice;
@@ -139,7 +136,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /* ----------------------------- Long positions ----------------------------- */
 
     /// @notice The exponential moving average of the funding (0.0003 at initialization)
-    int256 internal _EMA = 3 * 10 ** 14;
+    int256 internal _EMA = int256(3 * 10 ** (FUNDING_RATE_DECIMALS - 4));
 
     /// @notice The balance of long positions (with asset decimals)
     uint256 internal _balanceLong;
@@ -185,6 +182,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _usdnDecimals = usdn.decimals();
         _asset = asset;
         _assetDecimals = asset.decimals();
+        if (_assetDecimals <= FUNDING_SF_DECIMALS) {
+            revert UsdnProtocolInvalidAssetDecimals(_assetDecimals);
+        }
         _oracleMiddleware = oracleMiddleware;
         _priceFeedDecimals = oracleMiddleware.decimals();
         _tickSpacing = tickSpacing_;

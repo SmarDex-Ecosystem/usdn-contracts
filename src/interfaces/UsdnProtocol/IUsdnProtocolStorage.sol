@@ -21,9 +21,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The number of decimals for the scaling factor of the funding rate
     function FUNDING_SF_DECIMALS() external view returns (uint8);
 
-    /// @notice The number of seconds in a day
-    function SECONDS_PER_DAY() external view returns (uint256);
-
     /**
      * @notice Divisor for the percentage values (safety margin)
      * @dev Example: 200 -> 2%

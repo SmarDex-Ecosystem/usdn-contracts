@@ -45,15 +45,12 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         assertEq(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
         protocol.validateOpenPosition(priceData, "");
 
-        // We need to initiate a position to trigger the refresh of the multiplier
-        protocol.initiateDeposit(1, priceData, "");
-        protocol.validateDeposit(priceData, "");
         // Here, we have vaultExpo > longExpo and fund > 0, so we should have multiplier > 1
         assertGt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 
         skip(10 days);
-        // We need to initiate a position to trigger the refresh of the multiplier
-        protocol.initiateDeposit(1, priceData, "");
+        // We need to call liquidate to trigger the refresh of the multiplier
+        protocol.liquidate(priceData, 0);
         // Here, we have vaultExpo > longExpo and fund < 0, so we should have multiplier < 1
         assertLt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
     }

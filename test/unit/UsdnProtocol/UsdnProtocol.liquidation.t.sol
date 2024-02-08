@@ -225,14 +225,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(protocol.totalLongPositions(), 2, "wrong second totalLongPositions");
     }
 
-    /* @custom:scenario Simulate user open positions then
-     * a price drawdown and liquidations by liquidators.
-     * @custom:given User open positions
-     * @custom:and Block number increase 20
-     * @custom:and Simulate a -20% asset price drawdown
-     * @custom:when Liquidators execute liquidate
-     * @custom:then Should execute liquidations.
-     * @custom:and Change contract state.
+    /* @custom:scenario Simulate user open positions on many different tick then
+     * a price drawdown and liquidation with maxLiquidationIteration + 1
+     * @custom:given Users open positions
+     * @custom:and Simulate a 50% price drawdown
+     * @custom:when Liquidators execute liquidate with maxLiquidationIteration + 1
      */
     function test_openLiquidatorLiquidationAboveMax() public {
         bytes memory priceData = abi.encode(2000 ether);

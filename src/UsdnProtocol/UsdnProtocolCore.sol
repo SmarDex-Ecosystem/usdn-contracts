@@ -17,8 +17,6 @@ import {
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
-import { console2 } from "forge-std/Test.sol";
-
 abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
@@ -63,16 +61,18 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // fund = (+-) ((longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
+        int256 numerator = longExpo_ - vaultExpo_;
+        // TO DO : test
+        // optimization : if numerator is zero, then return the EMA
+        if (numerator == 0) {
+            return (_EMA, longExpo_, vaultExpo_);
+        }
         int256 elapsedSeconds = _toInt256(timestamp - _lastUpdateTimestamp);
-        int256 numerator = (longExpo_ - vaultExpo_);
         numerator *= numerator;
 
         uint256 denominator;
         if (vaultExpo_ > longExpo_) {
-            // cost ~5-10k gas
-            if (vaultExpo_ == 0) {
-                return (0, longExpo_, vaultExpo_);
-            }
+            // we have to multiply by 1 day to get the correct units
             denominator = uint256(vaultExpo_ * vaultExpo_) * 1 days;
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
@@ -82,15 +82,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 )
             ) + _EMA;
         } else {
-            // cost ~5-10k gas
-            if (longExpo_ == 0) {
-                return (0, longExpo_, vaultExpo_);
-            }
+            // we have to multiply by 1 day to get the correct units
             denominator = uint256(longExpo_ * longExpo_) * 1 days;
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
                     uint256(numerator * elapsedSeconds),
-                    // TO DO : Add warning !!!
                     _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
                     denominator
                 )
@@ -334,7 +330,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     function _updateEMA(uint128 secondsElapsed) internal {
-        _EMA = (_lastFunding + _EMA * (_toInt256(_EMAPeriod) - _toInt256(secondsElapsed))) / _toInt256(_EMAPeriod);
+        // cache variable for optimization
+        int256 intEMAPeriod = _toInt256(_EMAPeriod);
+        _EMA = (_lastFunding + _EMA * (intEMAPeriod - _toInt256(secondsElapsed))) / intEMAPeriod;
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {
