@@ -7,7 +7,13 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import { Position, ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    Position,
+    ProtocolAction,
+    PendingAction,
+    VaultPendingAction,
+    LongPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -47,20 +53,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // we use `_lastPrice` because it might be more recent than `currentPrice.price`
         uint256 pendingActionPrice = _lastPrice + (_lastPrice * _protocolFee) / _protocolFeeDenominator;
 
-        PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.InitiateDeposit,
+        VaultPendingAction memory pendingAction = VaultPendingAction({
+            action: ProtocolAction.ValidateDeposit,
             timestamp: timestamp,
             user: msg.sender,
-            tick: 0, // unused
-            amountOrIndex: amount,
+            _unused: 0,
+            amount: amount,
             assetPrice: pendingActionPrice.toUint128(),
-            totalExpoOrTickVersion: _totalExpo,
+            totalExpo: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
         });
 
-        _addPendingAction(msg.sender, pendingAction);
+        _addPendingAction(msg.sender, _convertVaultPendingAction(pendingAction));
 
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
 
@@ -105,20 +111,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // we use `_lastPrice` because it might be more recent than `currentPrice.price`
         uint256 pendingActionPrice = _lastPrice - (_lastPrice * _protocolFee) / _protocolFeeDenominator;
 
-        PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.InitiateWithdrawal,
+        VaultPendingAction memory pendingAction = VaultPendingAction({
+            action: ProtocolAction.ValidateWithdrawal,
             timestamp: timestamp,
             user: msg.sender,
-            tick: 0, // unused
-            amountOrIndex: usdnAmount,
+            _unused: 0,
+            amount: usdnAmount,
             assetPrice: pendingActionPrice.toUint128(),
-            totalExpoOrTickVersion: _totalExpo,
+            totalExpo: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
         });
 
-        _addPendingAction(msg.sender, pendingAction);
+        _addPendingAction(msg.sender, _convertVaultPendingAction(pendingAction));
 
         // retrieve the USDN tokens, checks that balance is sufficient
         _usdn.safeTransferFrom(msg.sender, address(this), usdnAmount);
@@ -206,19 +212,19 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             (tickVersion_, index_) = _saveNewPosition(tick_, long);
 
             // Register pending action
-            PendingAction memory pendingAction = PendingAction({
-                action: ProtocolAction.InitiateOpenPosition,
+            LongPendingAction memory pendingAction = LongPendingAction({
+                action: ProtocolAction.ValidateOpenPosition,
                 timestamp: timestamp,
                 user: msg.sender,
                 tick: tick_,
-                amountOrIndex: index_.toUint128(),
-                assetPrice: 0,
-                totalExpoOrTickVersion: tickVersion_,
-                balanceVault: 0,
-                balanceLong: 0,
-                usdnTotalSupply: 0
+                closeAmount: 0,
+                closeLeverage: 0,
+                tickVersion: tickVersion_,
+                index: index_,
+                closeLiqMultiplier: 0,
+                closeTempTransfer: 0
             });
-            _addPendingAction(msg.sender, pendingAction);
+            _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
             emit InitiatedOpenPosition(msg.sender, long, tick_, tickVersion_, index_);
         }
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
@@ -245,6 +251,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata previousActionPriceData
     ) external payable initializedAndNonReentrant {
         // check if the position belongs to the user
+        // this reverts if the position was liquidated
         Position memory pos = getLongPosition(tick, tickVersion, index);
         if (pos.user != msg.sender) {
             revert UsdnProtocolUnauthorized();
@@ -263,28 +270,29 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _liquidatePositions(currentPrice.price, _liquidationIteration);
         }
 
-        // TODO: what needs to be stored here so we can remove the position from the tick now and calculate the profit
-        // in validateClosePosition?
-        // We will use the tick to calculate the liquidation price.
-        // We won't need the index anymore, so we can store the amount in fifth parameter.
-        // We can store the leverage in any of the other parameters (it's a uint128).
-        PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.InitiateClosePosition,
+        uint256 liqMultiplier = _liquidationMultiplier;
+        uint256 tempTransfer = _assetToTransfer(tick, pos.amount, pos.leverage, liqMultiplier);
+
+        LongPendingAction memory pendingAction = LongPendingAction({
+            action: ProtocolAction.ValidateClosePosition,
             timestamp: timestamp,
             user: msg.sender,
             tick: tick,
-            amountOrIndex: index.toUint128(),
-            assetPrice: 0,
-            totalExpoOrTickVersion: tickVersion,
-            balanceVault: 0,
-            balanceLong: 0,
-            usdnTotalSupply: 0
+            closeAmount: pos.amount,
+            closeLeverage: pos.leverage,
+            tickVersion: tickVersion,
+            index: index,
+            closeLiqMultiplier: liqMultiplier,
+            closeTempTransfer: tempTransfer
         });
 
-        // TODO: remove position from the tick so that it can't be liquidated after 24s and stops impacting the PnL and
-        // funding calculations
+        // decrease balance optimistically (exact amount will be recalculated during validation)
+        // transfer will be done after validation
+        _balanceLong -= tempTransfer;
 
-        _addPendingAction(msg.sender, pendingAction);
+        _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
+
+        _removePosition(tick, tickVersion, index, pos);
 
         emit InitiatedClosePosition(msg.sender, tick, tickVersion, index);
         _executePendingAction(previousActionPriceData);
@@ -318,24 +326,26 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
-        (PendingAction memory deposit,) = _getPendingAction(user, true); // clear pending action
+        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
-        if (deposit.action != ProtocolAction.InitiateDeposit) {
+        if (pending.action != ProtocolAction.ValidateDeposit) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (deposit.user != user) {
+        if (pending.user != user) {
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        _validateDepositWithAction(deposit, priceData, false);
+        _validateDepositWithAction(pending, priceData, false);
     }
 
-    function _validateDepositWithAction(PendingAction memory deposit, bytes calldata priceData, bool initializing)
+    function _validateDepositWithAction(PendingAction memory pending, bytes calldata priceData, bool initializing)
         internal
         returns (PriceInfo memory depositPrice_)
     {
+        VaultPendingAction memory deposit = _toVaultPendingAction(pending);
+
         // During initialization, we might want to use a different oracle, so we have a special action
         ProtocolAction action = initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateDeposit;
 
@@ -356,13 +366,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 oldPrice = initializing ? depositPrice_.price : deposit.assetPrice;
 
         // The last parameter (price) is only used during initialization
-        uint256 usdnToMint1 =
-            _calcMintUsdn(deposit.amountOrIndex, deposit.balanceVault, deposit.usdnTotalSupply, oldPrice);
+        uint256 usdnToMint1 = _calcMintUsdn(deposit.amount, deposit.balanceVault, deposit.usdnTotalSupply, oldPrice);
         uint256 usdnToMint2 = _calcMintUsdn(
-            deposit.amountOrIndex,
+            deposit.amount,
             uint256(
                 _vaultAssetAvailable(
-                    deposit.totalExpoOrTickVersion,
+                    deposit.totalExpo,
                     deposit.balanceVault,
                     deposit.balanceLong,
                     // Price with fees (Inline calculation to avoid stack too deep)
@@ -382,7 +391,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             usdnToMint = usdnToMint2;
         }
 
-        _balanceVault += deposit.amountOrIndex;
+        _balanceVault += deposit.amount;
 
         if (initializing) {
             // we mint the minimum amount of USDN to the dead address, so that the total supply never falls to zero
@@ -390,29 +399,31 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             uint256 mintToUser = usdnToMint - MIN_USDN_SUPPLY;
             _usdn.mint(deposit.user, mintToUser);
             emit ValidatedDeposit(DEAD_ADDRESS, 0, MIN_USDN_SUPPLY);
-            emit ValidatedDeposit(deposit.user, deposit.amountOrIndex, mintToUser);
+            emit ValidatedDeposit(deposit.user, deposit.amount, mintToUser);
         } else {
             _usdn.mint(deposit.user, usdnToMint);
-            emit ValidatedDeposit(deposit.user, deposit.amountOrIndex, usdnToMint);
+            emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint);
         }
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
-        (PendingAction memory withdrawal,) = _getPendingAction(user, true); // clear pending action
+        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
-        if (withdrawal.action != ProtocolAction.InitiateWithdrawal) {
+        if (pending.action != ProtocolAction.ValidateWithdrawal) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (withdrawal.user != user) {
+        if (pending.user != user) {
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        _validateWithdrawalWithAction(withdrawal, priceData);
+        _validateWithdrawalWithAction(pending, priceData);
     }
 
-    function _validateWithdrawalWithAction(PendingAction memory withdrawal, bytes calldata priceData) internal {
+    function _validateWithdrawalWithAction(PendingAction memory pending, bytes calldata priceData) internal {
+        VaultPendingAction memory withdrawal = _toVaultPendingAction(pending);
+
         PriceInfo memory withdrawalPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             withdrawal.timestamp, ProtocolAction.ValidateWithdrawal, priceData
         );
@@ -432,7 +443,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 available1 = withdrawal.balanceVault;
         uint256 available2 = uint256(
             _vaultAssetAvailable(
-                withdrawal.totalExpoOrTickVersion,
+                withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
                 withdrawalPriceWithFees.toUint128(), // new price
@@ -447,45 +458,42 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
-        uint256 assetToTransfer =
-            FixedPointMathLib.fullMulDiv(withdrawal.amountOrIndex, available, withdrawal.usdnTotalSupply);
+        uint256 assetToTransfer = FixedPointMathLib.fullMulDiv(withdrawal.amount, available, withdrawal.usdnTotalSupply);
 
         _balanceVault -= assetToTransfer;
         // we have the USDN in the contract already
-        _usdn.burn(withdrawal.amountOrIndex);
+        _usdn.burn(withdrawal.amount);
 
         // send the asset to the user
         _distributeAssetsAndCheckBalance(withdrawal.user, assetToTransfer);
 
-        emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amountOrIndex);
+        emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amount);
     }
 
     function _validateOpenPosition(address user, bytes calldata priceData) internal {
-        (PendingAction memory open,) = _getPendingAction(user, true); // clear pending action
+        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
-        if (open.action != ProtocolAction.InitiateOpenPosition) {
+        if (pending.action != ProtocolAction.ValidateOpenPosition) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (open.user != user) {
+        if (pending.user != user) {
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        _validateOpenPositionWithAction(open, priceData);
+        _validateOpenPositionWithAction(pending, priceData);
     }
 
-    function _validateOpenPositionWithAction(PendingAction memory long, bytes calldata priceData) internal {
-        int24 tick = long.tick;
-        uint256 tickVersion = long.totalExpoOrTickVersion;
-        uint256 index = long.amountOrIndex;
+    function _validateOpenPositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
+        LongPendingAction memory long = _toLongPendingAction(pending);
 
-        (bytes32 tickHash, uint256 version) = _tickHash(tick);
+        (bytes32 tickHash, uint256 version) = _tickHash(long.tick);
 
-        if (version != tickVersion) {
+        if (version != long.tickVersion) {
             // The current tick version doesn't match the version from the pending action.
             // This means the position has been liquidated in the mean time
-            emit StalePendingActionRemoved(long.user, tick, tickVersion, index);
+            emit StalePendingActionRemoved(long.user, long.tick, long.tickVersion, long.index);
             return;
         }
 
@@ -500,7 +508,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // position remains solvent. Emit LiquidationPriceChanged.
 
         // Re-calculate leverage
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
+        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(long.tick - int24(_liquidationPenalty) * _tickSpacing);
         // reverts if liquidationPrice >= entryPrice
         // Inline calculation to avoid stack too deep
         uint128 leverage = _getLeverage(
@@ -515,44 +523,33 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // Adjust position parameters
-        Position storage pos = _longPositions[tickHash][index];
+        Position storage pos = _longPositions[tickHash][long.index];
         pos.leverage = leverage;
         // Inline calculation to avoid stack too deep
         pos.startPrice = (price.price + (price.price * _protocolFee) / _protocolFeeDenominator).toUint128();
 
-        emit ValidatedOpenPosition(long.user, pos, tick, tickVersion, index, getEffectivePriceForTick(tick));
+        emit ValidatedOpenPosition(
+            long.user, pos, long.tick, long.tickVersion, long.index, getEffectivePriceForTick(long.tick)
+        );
     }
 
     function _validateClosePosition(address user, bytes calldata priceData) internal {
-        (PendingAction memory close,) = _getPendingAction(user, true); // clear pending action
+        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
-        if (close.action != ProtocolAction.InitiateClosePosition) {
+        if (pending.action != ProtocolAction.ValidateClosePosition) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (close.user != user) {
+        if (pending.user != user) {
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        _validateClosePositionWithAction(close, priceData);
+        _validateClosePositionWithAction(pending, priceData);
     }
 
-    function _validateClosePositionWithAction(PendingAction memory long, bytes calldata priceData) internal {
-        int24 tick = long.tick;
-        uint256 tickVersion = long.totalExpoOrTickVersion;
-        uint256 index = long.amountOrIndex;
-
-        (, uint256 version) = _tickHash(tick);
-
-        if (version != tickVersion) {
-            // The current tick version doesn't match the version from the pending action.
-            // This means the position has been liquidated in the mean time
-            // TODO: this will become unapplicable when we change the flow of closing positions to directly remove
-            // the position from the tick after the initiate action. After that change, we will need another mechanism
-            // to make sure the pending close positions can be liquidated during the 24s window.
-            return;
-        }
+    function _validateClosePositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
+        LongPendingAction memory long = _toLongPendingAction(pending);
 
         PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             long.timestamp, ProtocolAction.ValidateClosePosition, priceData
@@ -563,42 +560,81 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // adjust balances
         _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
+        uint256 assetToTransfer =
+            _assetToTransfer(long.tick, long.closeAmount, long.closeLeverage, long.closeLiqMultiplier);
 
-        uint128 liquidationPrice = getEffectivePriceForTick(tick);
-
-        Position memory pos = getLongPosition(tick, tickVersion, index);
-
-        // TODO: check if can be liquidated according to the liquidation price (with liquidation penalty)
-        liquidationPrice;
-
-        int256 available = _longAssetAvailable(_lastPrice);
-        if (available < 0) {
-            available = 0;
+        // adjust long balance that was previously optimistically decreased
+        if (assetToTransfer > long.closeTempTransfer) {
+            // we didn't remove enough
+            // FIXME: here, should we replace assetToTransfer with the user tempTransfer since it's the lower of the
+            // two amounts? In which case _balanceLong would already be correct.
+            _balanceLong -= assetToTransfer - long.closeTempTransfer;
+        } else if (assetToTransfer < long.closeTempTransfer) {
+            // we removed too much
+            _balanceLong += long.closeTempTransfer - assetToTransfer;
         }
 
-        // Calculate position value
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
-        int256 value = _positionValue(
-            positionPriceWithFees.toUint128(), liqPriceWithoutPenalty, pos.amount, pos.leverage
-        ).toInt256();
-
-        uint256 assetToTransfer;
-        if (value > available) {
-            assetToTransfer = uint256(available);
-        } else {
-            assetToTransfer = uint256(value);
+        // get liquidation price (with liq penalty) to check if position was valid at `timestamp + validationDelay`
+        uint128 liquidationPrice = _getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
+        if (price.neutralPrice <= liquidationPrice) {
+            // position should be liquidated, we don't pay out the profits but send any remaining collateral to the
+            // vault
+            _balanceVault += assetToTransfer;
+            emit LiquidatedPosition(
+                long.user, long.tick, long.tickVersion, long.index, price.neutralPrice, liquidationPrice
+            );
+            return;
         }
-
-        // remove the position for the protocol and adjust state
-        _balanceLong -= assetToTransfer;
-        _removePosition(tick, tickVersion, index, pos);
 
         // send the asset to the user
-        _distributeAssetsAndCheckBalance(pos.user, assetToTransfer);
+        _distributeAssetsAndCheckBalance(long.user, assetToTransfer);
 
         emit ValidatedClosePosition(
-            pos.user, tick, tickVersion, index, assetToTransfer, int256(assetToTransfer) - _toInt256(pos.amount)
+            long.user,
+            long.tick,
+            long.tickVersion,
+            long.index,
+            assetToTransfer,
+            int256(assetToTransfer) - _toInt256(long.closeAmount)
         );
+    }
+
+    /**
+     * @notice Calculate how much wstETH must be transferred to a user to close a position.
+     * @dev The amount is bound by the amount of wstETH available in the long side.
+     * @param tick The tick of the position
+     * @param posAmount The amount of the position
+     * @param posLeverage The initial leverage of the position
+     * @param liqMultiplier The liquidation multiplier at the moment of closing the position
+     */
+    function _assetToTransfer(int24 tick, uint256 posAmount, uint128 posLeverage, uint256 liqMultiplier)
+        internal
+        view
+        returns (uint256 assetToTransfer_)
+    {
+        uint128 lastPrice = _lastPrice;
+        // calculate amount to transfer
+        int256 available = _longAssetAvailable(lastPrice);
+        if (available <= 0) {
+            return 0;
+        }
+
+        // Apply fees on lastPrice
+        uint256 positionPriceWithFees = lastPrice - (lastPrice * _protocolFee) / _protocolFeeDenominator;
+
+        // Calculate position value
+        int256 value = _positionValue(
+            positionPriceWithFees.toUint128(),
+            _getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
+            posAmount,
+            posLeverage
+        ).toInt256();
+
+        if (value > available) {
+            assetToTransfer_ = uint256(available);
+        } else {
+            assetToTransfer_ = uint256(value);
+        }
     }
 
     function _executePendingAction(bytes calldata priceData) internal {
@@ -606,13 +642,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (pending.action == ProtocolAction.None) {
             // no pending action
             return;
-        } else if (pending.action == ProtocolAction.InitiateDeposit) {
+        } else if (pending.action == ProtocolAction.ValidateDeposit) {
             _validateDepositWithAction(pending, priceData, false);
-        } else if (pending.action == ProtocolAction.InitiateWithdrawal) {
+        } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
             _validateWithdrawalWithAction(pending, priceData);
-        } else if (pending.action == ProtocolAction.InitiateOpenPosition) {
+        } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
             _validateOpenPositionWithAction(pending, priceData);
-        } else if (pending.action == ProtocolAction.InitiateClosePosition) {
+        } else if (pending.action == ProtocolAction.ValidateClosePosition) {
             _validateClosePositionWithAction(pending, priceData);
         }
     }

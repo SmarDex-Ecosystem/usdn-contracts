@@ -28,7 +28,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol's wstETH balance increases by 1 wstETH
      * @custom:and The protocol emits an `InitiatedDeposit` event
      * @custom:and The USDN total supply does not change yet
-     * @custom:and The user has a pending action of type `InitiateDeposit` with the amount of 1 wstETH
+     * @custom:and The user has a pending action of type `ValidateDeposit` with the amount of 1 wstETH
      * @custom:and The pending action is not actionable yet
      * @custom:and The pending action is actionable after the validation deadline has elapsed
      */
@@ -49,17 +49,19 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         // no USDN should be minted yet
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply, "usdn total supply");
         // the pending action should not yet be actionable by a third party
+        vm.prank(address(0)); // simulate front-end call by someone else
         PendingAction memory action = protocol.getActionablePendingAction(0);
         assertTrue(action.action == ProtocolAction.None, "no pending action");
 
         action = protocol.getUserPendingAction(address(this));
-        assertTrue(action.action == ProtocolAction.InitiateDeposit, "action type");
+        assertTrue(action.action == ProtocolAction.ValidateDeposit, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
-        assertEq(action.amountOrIndex, depositAmount, "action amount");
+        assertEq(action.amount, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.validationDeadline() + 1);
+        vm.prank(address(0)); // simulate front-end call by someone else
         action = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(this), "pending action user");
     }

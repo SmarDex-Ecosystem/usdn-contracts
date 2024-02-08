@@ -49,28 +49,81 @@ enum ProtocolAction {
 }
 
 /**
- * @notice A pending deposit action.
- * @param action The action type (Initiate...).
+ * @notice A pending action in the queue.
+ * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
- * @param tick The tick for open/close long (zero for vault actions).
- * @param amountOrIndex The amount for deposit/withdraw, or index inside the tick for open/close long.
- * @param assetPrice The price of the asset at the time of last update (unused for open/close long).
- * @param totalExpoOrTickVersion The total exposure at the time of the action (for deposit/withdraw), or the tick
- * version (for open/close long).
- * @param balanceVault The balance of the vault at the time of last update (unused for open/close long).
- * @param balanceLong The balance of the long positions at the time of last update (unused for open/close long).
- * @param usdnTotalSupply The total supply of USDN at the time of the action (unused for open/close long).
+ * @param var1 See `VaultPendingAction` and `LongPendingAction`.
+ * @param amount The amount of the pending action.
+ * @param var2 See `VaultPendingAction` and `LongPendingAction`.
+ * @param var3 See `VaultPendingAction` and `LongPendingAction`.
+ * @param var4 See `VaultPendingAction` and `LongPendingAction`.
+ * @param var5 See `VaultPendingAction` and `LongPendingAction`.
+ * @param var6 See `VaultPendingAction` and `LongPendingAction`.
  */
 struct PendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
     address user; // 20 bytes
-    int24 tick; // 3 bytes
-    uint128 amountOrIndex; // 16 bytes
+    int24 var1; // 3 bytes
+    uint128 amount; // 16 bytes
+    uint128 var2; // 16 bytes
+    uint256 var3; // 32 bytes
+    uint256 var4; // 32 bytes
+    uint256 var5; // 32 bytes
+    uint256 var6; // 32 bytes
+}
+
+/**
+ * @notice A pending action in the queue for a vault deposit or withdrawal.
+ * @param action The action type (`ValidateDeposit` or `ValidateWithdrawal`).
+ * @param timestamp The timestamp of the initiate action.
+ * @param user The user address.
+ * @param _unused Unused field to align the struct to `PendingAction`.
+ * @param amount The amount of the pending action.
+ * @param assetPrice The price of the asset at the time of last update.
+ * @param totalExpo The total exposure at the time of last update.
+ * @param balanceVault The balance of the vault at the time of last update.
+ * @param balanceLong The balance of the long position at the time of last update.
+ * @param usdnTotalSupply The total supply of USDN at the time of the action.
+ */
+struct VaultPendingAction {
+    ProtocolAction action; // 1 byte
+    uint40 timestamp; // 5 bytes
+    address user; // 20 bytes
+    int24 _unused; // 3 bytes
+    uint128 amount; // 16 bytes
     uint128 assetPrice; // 16 bytes
-    uint256 totalExpoOrTickVersion; // 32 bytes
+    uint256 totalExpo; // 32 bytes
     uint256 balanceVault; // 32 bytes
     uint256 balanceLong; // 32 bytes
     uint256 usdnTotalSupply; // 32 bytes
+}
+
+/**
+ * @notice A pending action in the queue for a long position.
+ * @param action The action type (`ValidateOpenPosition` or `ValidateClosePosition`).
+ * @param timestamp The timestamp of the initiate action.
+ * @param user The user address.
+ * @param tick The tick of the position.
+ * @param closeAmount The amount of the pending action (only used when closing a position).
+ * @param closeLeverage The initial leverage of the position (only used when closing a position).
+ * @param tickVersion The version of the tick.
+ * @param index The index of the position in the tick list.
+ * @param closeLiqMultiplier The liquidation multiplier at the time of the last update (only used when closing a
+ * position).
+ * @param closeTempTransfer The amount that was optimistically removed on `initiateClosePosition` (only used when
+ * closing a position).
+ */
+struct LongPendingAction {
+    ProtocolAction action; // 1 byte
+    uint40 timestamp; // 5 bytes
+    address user; // 20 bytes
+    int24 tick; // 3 bytes
+    uint128 closeAmount; // 16 bytes
+    uint128 closeLeverage; // 16 bytes
+    uint256 tickVersion; // 32 bytes
+    uint256 index; // 32 bytes
+    uint256 closeLiqMultiplier; // 32 bytes
+    uint256 closeTempTransfer; // 32 bytes
 }

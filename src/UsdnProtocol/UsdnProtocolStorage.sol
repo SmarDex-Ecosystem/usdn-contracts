@@ -188,5 +188,18 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         return _tickSpacing;
     }
 
-    // TODO: add view functions for all storage items that need to be public
+    /// @inheritdoc IUsdnProtocolStorage
+    function minLeverage() external view returns (uint256) {
+        return _minLeverage;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function maxLeverage() external view returns (uint256) {
+        return _maxLeverage;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function liquidationMultiplier() external view returns (uint256) {
+        return _liquidationMultiplier;
+    }
 }

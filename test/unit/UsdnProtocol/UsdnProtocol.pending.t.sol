@@ -4,7 +4,12 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { USER_1, USER_2, USER_3 } from "test/utils/Constants.sol";
 
-import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction,
+    VaultPendingAction,
+    LongPendingAction,
+    ProtocolAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The functions handling the pending actions queue
@@ -30,10 +35,12 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // initiate long
         protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
         // the pending action is not yet actionable
+        vm.prank(address(0)); // simulate front-end call by someone else
         action = func(0);
         assertTrue(action.action == ProtocolAction.None, "pending action after initiate");
         // the pending action is actionable after the validation deadline
         skip(protocol.validationDeadline() + 1);
+        vm.prank(address(0)); // simulate front-end call by someone else
         action = func(0);
         assertEq(action.user, address(this), "action user");
     }
@@ -158,5 +165,98 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_internalGetActionablePendingActionEmpty() public {
         _getActionablePendingActionEmptyHelper(protocol.i_getActionablePendingAction);
+    }
+
+    /**
+     * @custom:scenario User who didn't validate their tx after 1 hour and call `getActionablePendingAction`
+     * @custom:background When a user have their own action in the first position in the queue and it's actionable by
+     * someone else, they should retrieve the next item in the queue at the moment of validating their own action.
+     * This is because they will remove their own action from the queue before attempting to validate the next item in
+     * the queue, and it would revert if they provided the price data for their own actionable pending action.
+     * @custom:given The user has initiated a long and waited the validation deadline duration
+     * @custom:and Their transaction is still the first in the queue
+     * @custom:when They call `getActionablePendingAction`
+     * @custom:then Their pending action in the queue is skipped and not returned
+     */
+    function test_getActionablePendingActionSameUser() public {
+        wstETH.mint(address(this), 100_000 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
+        // initiate long
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        // the pending action is actionable after the validation deadline
+        skip(protocol.validationDeadline() + 1);
+        vm.prank(address(0)); // simulate front-end call by someone else
+        PendingAction memory action = protocol.getActionablePendingAction(0);
+        assertEq(action.user, address(this), "action user");
+        // but if the user himself calls the function, the action should not be returned
+        action = protocol.getActionablePendingAction(0);
+        assertEq(action.user, address(0), "action user");
+    }
+
+    /**
+     * @custom:scenario Convert an untyped pending action into a vault pending action
+     * @custom:given An untyped `PendingAction`
+     * @custom:when The action is converted to a `VaultPendingAction` and back into a `PendingAction`
+     * @custom:then The original and the converted `PendingAction` are equal
+     */
+    function test_internalConvertVaultPendingAction() public {
+        PendingAction memory action = PendingAction({
+            action: ProtocolAction.ValidateDeposit,
+            timestamp: uint40(block.timestamp),
+            user: address(this),
+            var1: 0, // must be zero because unused
+            amount: 42,
+            var2: 69,
+            var3: 420,
+            var4: 1337,
+            var5: 9000,
+            var6: 23
+        });
+        VaultPendingAction memory vaultAction = protocol.i_toVaultPendingAction(action);
+        assertTrue(vaultAction.action == action.action, "action action");
+        assertEq(vaultAction.timestamp, action.timestamp, "action timestamp");
+        assertEq(vaultAction.user, action.user, "action user");
+        assertEq(vaultAction.amount, action.amount, "action amount");
+        assertEq(vaultAction.assetPrice, action.var2, "action price");
+        assertEq(vaultAction.totalExpo, action.var3, "action expo");
+        assertEq(vaultAction.balanceVault, action.var4, "action balance vault");
+        assertEq(vaultAction.balanceLong, action.var5, "action balance long");
+        assertEq(vaultAction.usdnTotalSupply, action.var6, "action total supply");
+        PendingAction memory result = protocol.i_convertVaultPendingAction(vaultAction);
+        _assertActionsEqual(action, result, "vault pending action conversion");
+    }
+
+    /**
+     * @custom:scenario Convert an untyped pending action into a long pending action
+     * @custom:given An untyped `PendingAction`
+     * @custom:when The action is converted to a `LongPendingAction` and back into a `PendingAction`
+     * @custom:then The original and the converted `PendingAction` are equal
+     */
+    function test_internalConvertLongPendingAction() public {
+        PendingAction memory action = PendingAction({
+            action: ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp),
+            user: address(this),
+            var1: 2398,
+            amount: 42,
+            var2: 69,
+            var3: 420,
+            var4: 1337,
+            var5: 9000,
+            var6: 23
+        });
+        LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
+        assertTrue(longAction.action == action.action, "action action");
+        assertEq(longAction.timestamp, action.timestamp, "action timestamp");
+        assertEq(longAction.user, action.user, "action user");
+        assertEq(longAction.tick, action.var1, "action tick");
+        assertEq(longAction.closeAmount, action.amount, "action amount");
+        assertEq(longAction.closeLeverage, action.var2, "action leverage");
+        assertEq(longAction.tickVersion, action.var3, "action version");
+        assertEq(longAction.index, action.var4, "action index");
+        assertEq(longAction.closeLiqMultiplier, action.var5, "action multiplier");
+        assertEq(longAction.closeTempTransfer, action.var6, "action transfer");
+        PendingAction memory result = protocol.i_convertLongPendingAction(longAction);
+        _assertActionsEqual(action, result, "long pending action conversion");
     }
 }

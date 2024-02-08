@@ -117,11 +117,29 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when a tick is liquidated
      * @param tick The liquidated tick.
      * @param oldTickVersion The liquidated tick version.
-     * @param liquidationPrice The liquidation price.
+     * @param liquidationPrice The asset price at the moment of liquidation.
      * @param effectiveTickPrice The effective liquidated tick price.
      */
     event LiquidatedTick(
         int24 indexed tick, uint256 indexed oldTickVersion, uint256 liquidationPrice, uint256 effectiveTickPrice
+    );
+
+    /**
+     * @notice Emitted when a position is individually liquidated
+     * @param user The user address.
+     * @param tick The tick that was containing the position.
+     * @param tickVersion The tick version.
+     * @param index The index that the position had inside the tick array.
+     * @param liquidationPrice The asset price at the moment of liquidation.
+     * @param effectiveTickPrice The effective liquidated tick price.
+     */
+    event LiquidatedPosition(
+        address indexed user,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index,
+        uint256 liquidationPrice,
+        uint256 effectiveTickPrice
     );
 
     /**

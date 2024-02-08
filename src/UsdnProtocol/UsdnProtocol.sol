@@ -6,7 +6,12 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { PendingAction, ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction,
+    VaultPendingAction,
+    ProtocolAction,
+    Position
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -63,18 +68,20 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Create vault deposit
         PriceInfo memory currentPrice;
         {
-            PendingAction memory pendingAction = PendingAction({
-                action: ProtocolAction.InitiateDeposit,
-                timestamp: 0, // not needed since we have a special ProtocolAction for init
-                user: msg.sender,
-                tick: 0, // unused
-                amountOrIndex: depositAmount,
-                assetPrice: 0, // special case for init
-                totalExpoOrTickVersion: 0,
-                balanceVault: 0,
-                balanceLong: 0,
-                usdnTotalSupply: 0
-            });
+            PendingAction memory pendingAction = _convertVaultPendingAction(
+                VaultPendingAction({
+                    action: ProtocolAction.ValidateDeposit,
+                    timestamp: 0, // not needed since we have a special ProtocolAction for init
+                    user: msg.sender,
+                    _unused: 0, // unused
+                    amount: depositAmount,
+                    assetPrice: 0, // special case for init
+                    totalExpo: 0,
+                    balanceVault: 0,
+                    balanceLong: 0,
+                    usdnTotalSupply: 0
+                })
+            );
 
             // Transfer the wstETH for the deposit
             _retrieveAssetsAndCheckBalance(msg.sender, depositAmount);
