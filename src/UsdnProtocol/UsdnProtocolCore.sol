@@ -438,6 +438,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         do {
             // Since we will never call `front` more than `queueLength` times, there is no risk of reverting
             PendingAction memory candidate = _pendingActionsQueue.front();
+            // gas optimization
+            unchecked {
+                i++;
+            }
             if (candidate.timestamp == 0) {
                 // remove the stale pending action
                 // slither-disable-next-line unused-return
@@ -450,7 +454,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             }
             // the first pending action is not actionable
             return action_;
-        } while (++i < maxIter);
+        } while (i < maxIter);
     }
 
     /**
