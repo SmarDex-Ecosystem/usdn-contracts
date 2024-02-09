@@ -4,6 +4,7 @@ on:
 
 env:
   FOUNDRY_PROFILE: heavy_ci
+  URL_ETH_MAINNET: ${{ secrets.URL_ETH_MAINNET }}
 
 jobs:
   heavy-ci:
