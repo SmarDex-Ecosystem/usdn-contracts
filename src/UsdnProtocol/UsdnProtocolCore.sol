@@ -20,6 +20,7 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
+    using SafeCast for int256;
     using SignedMath for int256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
@@ -49,6 +50,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     {
         vaultExpo_ = _vaultTradingExpo(currentPrice);
         longExpo_ = _longTradingExpo(currentPrice);
+
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
             // slither-disable-next-line incorrect-equality
@@ -56,29 +58,49 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return (0, longExpo_, vaultExpo_);
         }
 
-        int256 secondsElapsed = _toInt256(timestamp - _lastUpdateTimestamp);
-        // we want the expo at the last update, since we are now calculating the funding since the last update
-        int256 relative;
+        // fund = (+-) ((longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
+        // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
+
+        int256 numerator = longExpo_ - vaultExpo_;
+        // optimization : if numerator is zero, then return the EMA
+        if (numerator == 0) {
+            return (_EMA, longExpo_, vaultExpo_);
+        }
+        int256 elapsedSeconds = _toInt256(timestamp - _lastUpdateTimestamp);
+        numerator *= numerator;
+
+        uint256 denominator;
         if (vaultExpo_ > longExpo_) {
-            relative = vaultExpo_;
+            // we have to multiply by 1 day to get the correct units
+            denominator = uint256(vaultExpo_ * vaultExpo_) * 1 days;
+            fund_ = -int256(
+                FixedPointMathLib.fullMulDiv(
+                    uint256(numerator * elapsedSeconds),
+                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
+                    denominator
+                )
+            ) + _EMA;
         } else {
-            relative = longExpo_;
+            // we have to multiply by 1 day to get the correct units
+            denominator = uint256(longExpo_ * longExpo_) * 1 days;
+            fund_ = int256(
+                FixedPointMathLib.fullMulDiv(
+                    uint256(numerator * elapsedSeconds),
+                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
+                    denominator
+                )
+            ) + _EMA;
         }
-        // avoid division by zero
-        if (relative == 0) {
-            return (0, longExpo_, vaultExpo_);
-        }
-        fund_ = longExpo_.safeSub(vaultExpo_).safeMul(_fundingRatePerSecond * secondsElapsed * 100).safeDiv(relative);
     }
 
     /// @inheritdoc IUsdnProtocolCore
     function fundingAsset(uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
+        returns (int256 fundingAsset_, int256 longExpo_, int256 vaultExpo_, int256 fund_)
     {
         (fund_, longExpo_, vaultExpo_) = funding(currentPrice, timestamp);
-        fund_ = fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
+        fundingAsset_ = fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -87,8 +109,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         view
         returns (int256 available_)
     {
-        (int256 fund,,) = fundingAsset(currentPrice, timestamp);
-        available_ = _longAssetAvailable(currentPrice).safeSub(fund);
+        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -97,8 +119,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         view
         returns (int256 available_)
     {
-        (int256 fund,,) = fundingAsset(currentPrice, timestamp);
-        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fund);
+        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -300,8 +322,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return false;
         }
 
-        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
-        (int256 fundAsset,,) = fundingAsset(currentPrice, timestamp);
+        _updateEMA(timestamp - _lastUpdateTimestamp);
+        (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
         int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAsset);
@@ -316,6 +338,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         _balanceVault = uint256(newVaultBalance);
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
+        _lastFunding = fund;
         _liquidationMultiplier = _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
 
         priceUpdated_ = true;
@@ -341,6 +364,18 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (_asset.balanceOf(to) != expectedBalance) {
             revert UsdnProtocolIncompleteTransfer(to, _asset.balanceOf(to), expectedBalance);
         }
+    }
+
+    /**
+     * @notice Update the Exponential Moving Average (EMA) of the funding
+     * @param secondsElapsed The number of seconds elapsed since the last protocol action
+     * @dev This function is called every time the protocol state is updated
+     * @dev All required checks are done in the caller function (_applyPnlAndFunding)
+     */
+    function _updateEMA(uint128 secondsElapsed) internal {
+        // cache variable for optimization
+        int256 intEMAPeriod = _toInt256(_EMAPeriod);
+        _EMA = (_lastFunding + _EMA * (intEMAPeriod - _toInt256(secondsElapsed))) / intEMAPeriod;
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {

@@ -28,7 +28,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
 
     /// @inheritdoc IUsdnProtocolStorage
-    uint256 public constant SECONDS_PER_DAY = 60 * 60 * 24;
+    uint8 public constant FUNDING_SF_DECIMALS = 3;
 
     /// @inheritdoc IUsdnProtocolStorage
     uint256 public constant PERCENTAGE_DIVISOR = 10_000;
@@ -90,9 +90,19 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice User current liquidation iteration in tick.
     uint16 internal _liquidationIteration = 5;
 
+    // TODO: Add checks when creating the setter for this variable (!= 0)
+    /// @notice The moving average period of the funding rate
+    uint128 internal _EMAPeriod = 5 days;
+
+    /// @notice The scaling factor (SF) of the funding rate (0.12)
+    uint256 internal _fundingSF = 12 * 10 ** (FUNDING_SF_DECIMALS - 2);
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
+
+    /// @notice The funding corresponding to the last update timestamp
+    int256 internal _lastFunding;
 
     /// @notice The price of the asset during the last balances update (with price feed decimals)
     uint128 internal _lastPrice;
@@ -125,6 +135,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _balanceVault;
 
     /* ----------------------------- Long positions ----------------------------- */
+
+    /// @notice The exponential moving average of the funding (0.0003 at initialization)
+    int256 internal _EMA = int256(3 * 10 ** (FUNDING_RATE_DECIMALS - 4));
 
     /// @notice The balance of long positions (with asset decimals)
     uint256 internal _balanceLong;
@@ -170,6 +183,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _usdnDecimals = usdn.decimals();
         _asset = asset;
         _assetDecimals = asset.decimals();
+        if (_assetDecimals < FUNDING_SF_DECIMALS) {
+            revert UsdnProtocolInvalidAssetDecimals(_assetDecimals);
+        }
         _oracleMiddleware = oracleMiddleware;
         _priceFeedDecimals = oracleMiddleware.decimals();
         _tickSpacing = tickSpacing_;

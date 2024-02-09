@@ -15,6 +15,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided USDN contract has a total supply above zero at deployment
     error UsdnProtocolInvalidUsdn(address usdnAddress);
 
+    /// @dev Indicates that the asset decimals are invalid
+    error UsdnProtocolInvalidAssetDecimals(uint8 assetDecimals);
+
     /// @dev Indicates that the user is not allowed to perform an action
     error UsdnProtocolUnauthorized();
 
