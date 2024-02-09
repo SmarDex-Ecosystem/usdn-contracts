@@ -13,9 +13,12 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
 contract ChainlinkOracle is IOracleMiddlewareErrors {
     /// @notice Chainlink price feed aggregator contract
     AggregatorV3Interface internal immutable _priceFeed;
+    /// @notice Tolerated elapsed time until we consider the data too old
+    uint256 internal _timeElapsedLimit;
 
-    constructor(address chainlinkPriceFeed) {
+    constructor(address chainlinkPriceFeed, uint256 timeElapsedLimit) {
         _priceFeed = AggregatorV3Interface(chainlinkPriceFeed);
+        _timeElapsedLimit = timeElapsedLimit;
     }
 
     /**
@@ -26,7 +29,7 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
         // slither-disable-next-line unused-return
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
-        if (timestamp < block.timestamp - 1 hours) {
+        if (timestamp < block.timestamp - _timeElapsedLimit) {
             revert OracleMiddlewarePriceTooOld(price, timestamp);
         }
 

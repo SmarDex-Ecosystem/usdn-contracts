@@ -25,9 +25,14 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     // slither-disable-next-line shadowing-state
     uint8 private constant DECIMALS = 18;
 
-    constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed)
+    constructor(
+        address pythContract,
+        bytes32 pythPriceID,
+        address chainlinkPriceFeed,
+        uint256 chainlinkTimeElapsedLimit
+    )
         PythOracle(pythContract, pythPriceID)
-        ChainlinkOracle(chainlinkPriceFeed)
+        ChainlinkOracle(chainlinkPriceFeed, chainlinkTimeElapsedLimit)
         Ownable(msg.sender)
     { }
 

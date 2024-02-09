@@ -48,7 +48,8 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
 
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
-        oracleMiddleware = new OracleMiddleware(address(mockPyth), PYTH_WSTETH_USD, address(mockChainlinkOnChain));
+        oracleMiddleware =
+            new OracleMiddleware(address(mockPyth), PYTH_WSTETH_USD, address(mockChainlinkOnChain), 1 hours);
     }
 
     function test_setUp() public {
@@ -92,7 +93,8 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
         wsteth = new WstETH();
-        wstethOracle = new WstEthOracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(wsteth));
+        wstethOracle =
+            new WstEthOracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(wsteth), 1 hours);
     }
 
     function test_setUp() public {

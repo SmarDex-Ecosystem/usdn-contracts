@@ -60,7 +60,7 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationFixture {
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
         chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE);
-        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_WSTETH_USD, address(chainlinkOnChain));
+        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_WSTETH_USD, address(chainlinkOnChain), 1 hours);
     }
 
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
@@ -108,7 +108,8 @@ contract WstethFixture is BaseFixture, ActionsIntegrationFixture {
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
         chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
-        wstethMiddleware = new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH);
+        wstethMiddleware =
+            new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH, 1 hours);
     }
 
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
