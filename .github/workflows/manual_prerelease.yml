@@ -1,0 +1,50 @@
+# Workflow to trigger a manual pre-release of the package to CodeArtifact
+# The version name is generated using the branch name and the commit sha
+on:
+  workflow_dispatch:
+name: Manual Pre-release
+
+permissions:
+  id-token: write # Required for requesting AWS JWT
+
+jobs:
+  manual-prerelease:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci && forge install
+
+      - name: Update package version
+        run: npm version prerelease --no-git-tag-version --preid "${{github.ref_name}}.${{ github.sha }}"
+
+      - name: Export ABI
+        run: npm run exportAbi
+
+      - name: Generate docs
+        run: forge doc
+
+      - name: Configure AWS credentials
+        uses: backend-ra2-tech/composite-workflows/aws-login@main
+        with:
+          aws-role-to-assume: github-workflow-oidc-codeartifacts-deploy
+
+      - name: Publish to CodeArtifact
+        run: npm publish
