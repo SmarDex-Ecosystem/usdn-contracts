@@ -138,7 +138,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit ValidatedDeposit(address(this), depositAmount, mintedAmount); // expected event
-        protocol.validateDeposit(currentPrice, "");
+        protocol.validateDeposit{ value: oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit) }(
+            currentPrice, ""
+        );
 
         assertEq(usdn.balanceOf(address(this)), mintedAmount, "USDN user balance");
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply");

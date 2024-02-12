@@ -26,7 +26,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         // user deposits wstETH at price $2000
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         protocol.initiateDeposit(DEPOSIT_AMOUNT, currentPrice, "");
-        protocol.validateDeposit(currentPrice, "");
+        protocol.validateDeposit{ value: oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit) }(
+            currentPrice, ""
+        );
         initialUsdnBalance = usdn.balanceOf(address(this));
         initialWstETHBalance = wstETH.balanceOf(address(this));
     }
@@ -159,7 +161,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit ValidatedWithdrawal(address(this), withdrawnAmount, USDN_AMOUNT); // expected event
-        protocol.validateWithdrawal(currentPrice, "");
+        protocol.validateWithdrawal{
+            value: oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateWithdrawal)
+        }(currentPrice, "");
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");
         assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance + withdrawnAmount, "final wstETH balance");

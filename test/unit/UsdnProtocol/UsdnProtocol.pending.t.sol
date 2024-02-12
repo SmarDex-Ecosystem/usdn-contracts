@@ -271,23 +271,27 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     function test_twoPending() public {
         wstETH.mint(USER_1, 100_000 ether);
         wstETH.mint(USER_2, 100_000 ether);
+        bytes memory data1 = abi.encode(2000 ether);
+        bytes memory data2 = abi.encode(2100 ether);
         // Setup 2 pending actions
         vm.startPrank(USER_1);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, data1, "");
         vm.stopPrank();
         skip(30);
         vm.startPrank(USER_2);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2100 ether), "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, data2, "");
         vm.stopPrank();
 
         // Wait
         skip(protocol.validationDeadline() + 1);
 
         // Second user tries to validate their action
-        vm.startPrank(USER_2);
-        protocol.validateOpenPosition(abi.encode(2100 ether), abi.encode(2000 ether));
+        uint256 data1Fee = oracleMiddleware.validationCost(data1, ProtocolAction.ValidateOpenPosition);
+        uint256 data2Fee = oracleMiddleware.validationCost(data2, ProtocolAction.ValidateOpenPosition);
+        vm.prank(USER_2);
+        protocol.validateOpenPosition{ value: data1Fee + data2Fee }(data2, data1);
         // No more pending action
         PendingAction memory action = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(0));

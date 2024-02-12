@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { OracleMiddlewareBaseFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
+import { OracleMiddlewareBaseIntegrationFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
 import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -15,7 +15,7 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
  * @custom:and The confidence interval is 20 USD
  * @custom:and The oracles are not mocked
  */
-contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBaseFixture {
+contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBaseIntegrationFixture {
     using Strings for uint256;
 
     function setUp() public override {
@@ -52,7 +52,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // chainlink case
             if (action == ProtocolAction.InitiateDeposit) {
                 // chainlink data
-                (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = super.getChainlinkPrice();
+                (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
                 // middleware data
                 PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
                     uint128(block.timestamp - oracleMiddleware.validationDelay()), action, abi.encode("")
@@ -69,7 +69,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             } else {
                 // pyth data
                 (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
-                    super.getMockedPythSignature();
+                    getMockedPythSignature();
 
                 // middleware data
                 PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
@@ -132,7 +132,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // chainlink case
             if (action == ProtocolAction.InitiateDeposit) {
                 // chainlink data
-                (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = super.getChainlinkPrice();
+                (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
                 // middleware data
                 PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
                     uint128(block.timestamp - oracleMiddleware.validationDelay()), action, abi.encode("")
@@ -149,7 +149,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             } else {
                 // pyth data
                 (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
-                    super.getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
+                    getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
 
                 // middleware data
                 PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(

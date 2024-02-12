@@ -80,9 +80,9 @@ contract TestOracleMiddlewareParseAndValidatePrice is
             string memory errorMessage =
                 string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
 
-            PriceInfo memory price = oracleMiddleware.parseAndValidatePrice(
-                uint128(block.timestamp - oracleMiddleware.validationDelay()), action, abi.encode("data")
-            );
+            PriceInfo memory price = oracleMiddleware.parseAndValidatePrice{
+                value: oracleMiddleware.validationCost(abi.encode("data"), action)
+            }(uint128(block.timestamp - oracleMiddleware.validationDelay()), action, abi.encode("data"));
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
@@ -116,59 +116,72 @@ contract TestOracleMiddlewareParseAndValidatePrice is
         uint256 timestamp = block.timestamp - oracleMiddleware.validationDelay();
 
         // Expect revert when validating price for None action
+        uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.None, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.None, abi.encode("data")
+        );
 
         // Expect revert when validating price for ValidateDeposit action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateDeposit);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
+        );
 
         // Expect revert when validating price for ValidateWithdrawal action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateWithdrawal);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.ValidateWithdrawal, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateOpenPosition action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateOpenPosition);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.ValidateOpenPosition, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateClosePosition action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateClosePosition);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.ValidateClosePosition, abi.encode("data")
         );
 
         // Expect revert when validating price for Liquidation action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Liquidation);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data")
+        );
 
         /* ---------------------- Initiates action still works ---------------------- */
 
-        PriceInfo memory price = oracleMiddleware.parseAndValidatePrice(
-            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
-        );
+        PriceInfo memory price = oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit)
+        }(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
         assertEq(price.price, FORMATTED_ETH_PRICE, "Wrong price for InitiateDeposit action");
 
-        PriceInfo memory price2 = oracleMiddleware.parseAndValidatePrice(
-            uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data")
-        );
+        PriceInfo memory price2 = oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateWithdrawal)
+        }(uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data"));
         assertEq(price2.price, FORMATTED_ETH_PRICE, "Wrong price for InitiateWithdrawal action");
 
-        PriceInfo memory price3 = oracleMiddleware.parseAndValidatePrice(
-            uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data")
-        );
+        PriceInfo memory price3 = oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateOpenPosition)
+        }(uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data"));
         assertEq(price3.price, FORMATTED_ETH_PRICE, "Wrong price for InitiateOpenPosition action");
 
-        PriceInfo memory price4 = oracleMiddleware.parseAndValidatePrice(
-            uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data")
-        );
+        PriceInfo memory price4 = oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateClosePosition)
+        }(uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data"));
         assertEq(price4.price, FORMATTED_ETH_PRICE, "Wrong price for InitiateClosePosition action");
 
-        PriceInfo memory price5 =
-            oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.Initialize, abi.encode("data"));
+        PriceInfo memory price5 = oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Initialize)
+        }(uint128(timestamp), ProtocolAction.Initialize, abi.encode("data"));
         assertEq(price5.price, FORMATTED_ETH_PRICE, "Wrong price for Initialize action");
     }
 
@@ -188,59 +201,72 @@ contract TestOracleMiddlewareParseAndValidatePrice is
         uint256 timestamp = block.timestamp - oracleMiddleware.validationDelay();
 
         // Expect revert when validating price for None action
+        uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.None, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.None, abi.encode("data")
+        );
 
         // Expect revert when validating price for ValidateDeposit action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateDeposit);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
+        );
 
         // Expect revert when validating price for ValidateWithdrawal action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateWithdrawal);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.ValidateWithdrawal, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateOpenPosition action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateOpenPosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.ValidateOpenPosition, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateClosePosition action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateClosePosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.ValidateClosePosition, abi.encode("data")
         );
 
         // Expect revert when validating price for Liquidation action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Liquidation);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data")
+        );
 
         /* ---------------------- Initiates action still works ---------------------- */
 
-        PriceInfo memory price = oracleMiddleware.parseAndValidatePrice(
-            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
-        );
+        PriceInfo memory price = oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit)
+        }(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
         assertEq(price.price, FORMATTED_ETH_PRICE, "Wrong price for InitiateDeposit action");
 
-        PriceInfo memory price2 = oracleMiddleware.parseAndValidatePrice(
-            uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data")
-        );
+        PriceInfo memory price2 = oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateWithdrawal)
+        }(uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data"));
         assertEq(price2.price, FORMATTED_ETH_PRICE, "Wrong price for InitiateWithdrawal action");
 
-        PriceInfo memory price3 = oracleMiddleware.parseAndValidatePrice(
-            uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data")
-        );
+        PriceInfo memory price3 = oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateOpenPosition)
+        }(uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data"));
         assertEq(price3.price, FORMATTED_ETH_PRICE, "Wrong price for InitiateOpenPosition action");
 
-        PriceInfo memory price4 = oracleMiddleware.parseAndValidatePrice(
-            uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data")
-        );
+        PriceInfo memory price4 = oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateClosePosition)
+        }(uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data"));
         assertEq(price4.price, FORMATTED_ETH_PRICE, "Wrong price for InitiateClosePosition action");
 
-        PriceInfo memory price5 =
-            oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.Initialize, abi.encode("data"));
+        PriceInfo memory price5 = oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Initialize)
+        }(uint128(timestamp), ProtocolAction.Initialize, abi.encode("data"));
         assertEq(price5.price, FORMATTED_ETH_PRICE, "Wrong price for Initialize action");
     }
 
@@ -262,55 +288,76 @@ contract TestOracleMiddlewareParseAndValidatePrice is
         uint256 timestamp = block.timestamp - oracleMiddleware.validationDelay();
 
         // Expect revert when validating price for None action
+        uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.None, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.None, abi.encode("data")
+        );
 
         // Expect revert when validating price for ValidateDeposit action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateDeposit);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
+        );
 
         // Expect revert when validating price for ValidateWithdrawal action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateWithdrawal);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.ValidateWithdrawal, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateOpenPosition action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateOpenPosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.ValidateOpenPosition, abi.encode("data")
         );
 
         // Expect revert when validating price for ValidateClosePosition action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateClosePosition);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.ValidateClosePosition, abi.encode("data")
         );
 
         // Expect revert when validating price for Liquidation action
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Liquidation);
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data")
+        );
 
         /* ---------------------- Initiates action still works ---------------------- */
 
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.Initialize);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.Initialize, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.Initialize, abi.encode("data")
+        );
 
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
+        );
 
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateWithdrawal);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data")
         );
 
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateOpenPosition);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data")
         );
 
+        validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateClosePosition);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
-        oracleMiddleware.parseAndValidatePrice(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data")
         );
     }
@@ -321,30 +368,43 @@ contract TestOracleMiddlewareParseAndValidatePrice is
         /* ------------ Doesn't revert when the timestamp is not too old ------------ */
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 1 minutes);
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit)
+        }(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 30 minutes);
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit)
+        }(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 59 minutes);
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{
+            value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit)
+        }(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
 
         /* ------------------ Revert when the timestamp is too old ------------------ */
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 3601 seconds);
+        uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit);
         vm.expectRevert(
             abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, ETH_PRICE, block.timestamp - 3601 seconds)
         );
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
+        );
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 2 hours);
         vm.expectRevert(
             abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, ETH_PRICE, block.timestamp - 2 hours)
         );
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
+        );
 
         mockChainlinkOnChain.updateLastPublishTime(0);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, ETH_PRICE, 0));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
+            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
+        );
     }
 }

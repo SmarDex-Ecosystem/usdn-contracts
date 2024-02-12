@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { TickMath } from "src/libraries/TickMath.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The getter functions of the USDN Protocol
@@ -51,10 +52,14 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             protocol.getLiquidationPrice(4000 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
 
         protocol.initiateOpenPosition(500 ether, desiredLiqPrice, priceData, "");
-        protocol.validateOpenPosition(priceData, "");
+        protocol.validateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
+        }(priceData, "");
         skip(1 days);
         protocol.initiateDeposit(1, priceData, "");
-        protocol.validateDeposit(priceData, "");
+        protocol.validateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateDeposit) }(
+            priceData, ""
+        );
 
         assertGt(
             protocol.liquidationMultiplier(),
@@ -73,10 +78,14 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(4000 ether);
 
         protocol.initiateDeposit(5000 ether, priceData, "");
-        protocol.validateDeposit(priceData, "");
+        protocol.validateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateDeposit) }(
+            priceData, ""
+        );
         skip(6 days);
         protocol.initiateDeposit(1, priceData, "");
-        protocol.validateDeposit(priceData, "");
+        protocol.validateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateDeposit) }(
+            priceData, ""
+        );
 
         assertLt(
             protocol.liquidationMultiplier(),

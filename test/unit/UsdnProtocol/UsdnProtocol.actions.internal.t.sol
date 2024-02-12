@@ -3,6 +3,8 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature Test internal functions of the actions layer
  */
@@ -55,7 +57,10 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
     function test_assetToTransferZeroBalance() public {
         // adjust the price to a very low value, meaning that the long balance and long asset available is zero
         skip(60);
-        protocol.liquidate(abi.encode(uint128(11_000)), 10);
+        bytes memory priceData = abi.encode(uint128(11_000));
+        protocol.liquidate{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation) }(
+            priceData, 10
+        );
         assertEq(protocol.balanceLong(), 0);
         assertEq(protocol.longAssetAvailable(11_000), 0);
 

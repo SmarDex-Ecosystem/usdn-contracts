@@ -26,6 +26,13 @@ contract BaseFixture is Test {
         vm.label(constants.USER_2, "User2");
         vm.label(constants.USER_3, "User3");
         vm.label(constants.USER_4, "User4");
+        // deal ether
+        vm.deal(constants.DEPLOYER, 10_000 ether);
+        vm.deal(constants.ADMIN, 10_000 ether);
+        vm.deal(constants.USER_1, 10_000 ether);
+        vm.deal(constants.USER_2, 10_000 ether);
+        vm.deal(constants.USER_3, 10_000 ether);
+        vm.deal(constants.USER_4, 10_000 ether);
 
         /* -------------------------------------------------------------------------- */
         /*                              Ethereum mainnet                              */

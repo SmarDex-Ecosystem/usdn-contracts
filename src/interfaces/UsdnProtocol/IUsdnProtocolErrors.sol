@@ -6,6 +6,9 @@ pragma solidity 0.8.20;
  * @notice Errors for the USDN Protocol
  */
 interface IUsdnProtocolErrors {
+    /// @dev Indicates that the sender could not accept the ether refund
+    error UsdnProtocolEtherRefundFailed();
+
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();
 

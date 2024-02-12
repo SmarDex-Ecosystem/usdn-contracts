@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The `multiplier` variable of the USDN Protocol
@@ -43,14 +45,18 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
 
         protocol.initiateOpenPosition(5 ether, desiredLiqPrice, priceData, "");
         assertEq(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
-        protocol.validateOpenPosition(priceData, "");
+        protocol.validateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
+        }(priceData, "");
 
         // Here, we have vaultExpo > longExpo and fund > 0, so we should have multiplier > 1
         assertGt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 
         skip(10 days);
         // We need to call liquidate to trigger the refresh of the multiplier
-        protocol.liquidate(priceData, 0);
+        protocol.liquidate{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation) }(
+            priceData, 0
+        );
         // Here, we have vaultExpo > longExpo and fund < 0, so we should have multiplier < 1
         assertLt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
     }

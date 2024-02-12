@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol
@@ -87,7 +87,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         // the price drops to $1500 and the position gets liquidated
         skip(30);
-        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
+        bytes memory priceData = abi.encode(uint128(1500 ether));
+        protocol.liquidate{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation) }(
+            priceData, 10
+        );
 
         // the pending action is stale
         (, uint256 currentTickVersion) = protocol.tickHash(tick_);
@@ -124,10 +127,13 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_stalePendingActionValidate() public {
         (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
 
+        bytes memory priceData = abi.encode(uint128(1500 ether));
         // validating the action emits the proper event
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.validateOpenPosition(abi.encode(uint128(1500 ether)), "");
+        protocol.validateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
+        }(priceData, "");
     }
 
     /**
@@ -205,13 +211,17 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateOpenPosition(20 ether, price / 2, priceData, "");
-        protocol.validateOpenPosition(priceData, "");
+        protocol.validateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
+        }(priceData, "");
 
         // we create a deposit to make the long and vault expos equal
         protocol.initiateDeposit(
             uint128(uint256(protocol.i_longTradingExpo(price) - protocol.i_vaultTradingExpo(price))), priceData, ""
         );
-        protocol.validateDeposit(priceData, "");
+        protocol.validateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateDeposit) }(
+            priceData, ""
+        );
 
         assertEq(
             protocol.i_longTradingExpo(price),
@@ -221,4 +231,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         (int256 fund_,,) = protocol.funding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
         assertEq(fund_, protocol.EMA(), "funding should be equal to EMA");
     }
+
+    receive() external payable { }
 }

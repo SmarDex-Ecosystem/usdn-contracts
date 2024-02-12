@@ -9,7 +9,7 @@ import { WstETH } from "test/utils/WstEth.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 
 /**
@@ -53,7 +53,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
-        protocol.initialize(
+        protocol.initialize{
+            value: oracleMiddleware.validationCost(abi.encode(testParams.initialPrice), ProtocolAction.Initialize)
+        }(
             testParams.initialDeposit,
             testParams.initialLong,
             testParams.initialPrice / 2,
