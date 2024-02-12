@@ -7,10 +7,18 @@ import { USER_1 } from "test/utils/Constants.sol";
 import { LiquidationRewardsManagerBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 
+/// @title Events emitted by the LiquidationRewardsManager contract
+contract LiquidationRewardsManagerEvents {
+    event UpdateRewardsParameters(uint32 gasUsedPerTick, uint32 baseGasUsed, uint64 gasPriceLimit, uint16 multiplier);
+}
+
 /**
  * @custom:feature The `setRewardsParameters` function of `LiquidationRewardsManager`
  */
-contract LiquidationRewardsManagerSetRewardsParameters is LiquidationRewardsManagerBaseFixture {
+contract LiquidationRewardsManagerSetRewardsParameters is
+    LiquidationRewardsManagerBaseFixture,
+    LiquidationRewardsManagerEvents
+{
     function setUp() public override {
         super.setUp();
     }
@@ -26,6 +34,11 @@ contract LiquidationRewardsManagerSetRewardsParameters is LiquidationRewardsMana
         uint32 baseGasUsed = 200_000;
         uint64 gasPriceLimit = 8000 * (10 ** 9);
         uint16 multiplier = 10;
+
+        vm.expectEmit();
+        emit LiquidationRewardsManagerEvents.UpdateRewardsParameters(
+            gasUsedPerTick, baseGasUsed, gasPriceLimit, multiplier
+        );
         liquidationRewardsManager.setRewardsParameters(gasUsedPerTick, baseGasUsed, gasPriceLimit, multiplier);
 
         LiquidationRewardsManager.RewardsParameters memory rewardsParameters =

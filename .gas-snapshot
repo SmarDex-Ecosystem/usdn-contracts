@@ -14,7 +14,7 @@ LiquidationRewardsManagerSetRewardsParameters:test_RevertWhen_setRewardsParamete
 LiquidationRewardsManagerSetRewardsParameters:test_RevertWhen_setRewardsParametersWithGasPriceLimitTooHigh() (gas: 11888)
 LiquidationRewardsManagerSetRewardsParameters:test_RevertWhen_setRewardsParametersWithGasUsedPerTickTooHigh() (gas: 11404)
 LiquidationRewardsManagerSetRewardsParameters:test_RevertWhen_setRewardsParametersWithMultiplierTooHigh() (gas: 11950)
-LiquidationRewardsManagerSetRewardsParameters:test_setRewardsParametersWithValidValues() (gas: 17819)
+LiquidationRewardsManagerSetRewardsParameters:test_setRewardsParametersWithValidValues() (gas: 22567)
 OracleMiddlewareBaseFixture:test() (gas: 186)
 OracleMiddlewareBaseFixture:test() (gas: 186)
 OracleMiddlewareBaseFixture:test_setUp() (gas: 40401)
