@@ -3,18 +3,18 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { USER_1 } from "test/utils/Constants.sol";
 
 /**
- * @custom:feature The `deposit` function of the USDN Protocol
+ * @custom:feature The deposit function of the USDN Protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x.
  * @custom:and A user with 10 wstETH in their wallet
  */
 contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
-    uint256 constant INITIAL_WSTETH_BALANCE = 10 ether;
+    uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -30,7 +30,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol's wstETH balance increases by 1 wstETH
      * @custom:and The protocol emits an `InitiatedDeposit` event
      * @custom:and The USDN total supply does not change yet
-     * @custom:and The user has a pending action of type `InitiateDeposit` with the amount of 1 wstETH
+     * @custom:and The user has a pending action of type `ValidateDeposit` with the amount of 1 wstETH
      * @custom:and The pending action is not actionable yet
      * @custom:and The pending action is actionable after the validation deadline has elapsed
      */
@@ -66,18 +66,20 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         // no USDN should be minted yet
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply, "usdn total supply");
         // the pending action should not yet be actionable by a third party
+        vm.prank(address(0)); // simulate front-end call by someone else
         PendingAction memory action = protocol.getActionablePendingAction(0);
         assertTrue(action.action == ProtocolAction.None, "no pending action");
 
         action = protocol.getUserPendingAction(address(this));
-        assertTrue(action.action == ProtocolAction.InitiateDeposit, "action type");
+        assertTrue(action.action == ProtocolAction.ValidateDeposit, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
         assertEq(action.to, to, "action to");
-        assertEq(action.amountOrIndex, depositAmount, "action amount");
+        assertEq(action.amount, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.validationDeadline() + 1);
+        vm.prank(address(0)); // simulate front-end call by someone else
         action = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(this), "pending action user");
     }
@@ -110,9 +112,10 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user validates the deposit
      * @custom:then The user's USDN balance increases by 2000 USDN
      * @custom:and The USDN total supply increases by 2000 USDN
+     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
      */
     function test_validateDepositPriceIncrease() public {
-        checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether);
+        _checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether);
     }
 
     /**
@@ -123,19 +126,20 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user validates the deposit
      * @custom:then The user's USDN balance increases by 1949.518048223628563225 USDN
      * @custom:and The USDN total supply increases by 1949.518048223628563225 USDN
+     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1949.518048223628563225 USDN
      */
     function test_validateDepositPriceDecrease() public {
-        checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048223628563225 ether);
+        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048223628563225 ether);
     }
 
     /**
-     * Create a deposit at price `initialPrice`, then validate it at price `assetPrice`, then check the emitted event
-     * and the resulting state.
+     * @dev Create a deposit at price `initialPrice`, then validate it at price `assetPrice`, then check the emitted
+     * event and the resulting state.
      * @param initialPrice price of the asset at the time of deposit initiation
      * @param assetPrice price of the asset at the time of deposit validation
      * @param expectedUsdnAmount expected amount of USDN minted
      */
-    function checkValidateDepositWithPrice(uint128 initialPrice, uint128 assetPrice, uint256 expectedUsdnAmount)
+    function _checkValidateDepositWithPrice(uint128 initialPrice, uint128 assetPrice, uint256 expectedUsdnAmount)
         internal
     {
         uint128 depositAmount = 1 ether;
@@ -152,7 +156,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         currentPrice = abi.encode(assetPrice);
 
         // if price decreases, we need to use the new balance to calculate the minted amount
-        if (assetPrice < 2000 ether) {
+        if (assetPrice < initialPrice) {
             vaultBalance = uint256(protocol.vaultAssetAvailable(assetPrice));
         }
 
@@ -160,7 +164,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 mintedAmount = uint256(depositAmount) * usdn.totalSupply() / vaultBalance;
         assertEq(mintedAmount, expectedUsdnAmount, "minted amount");
 
-        vm.expectEmit(true, true, false, false);
+        vm.expectEmit();
         emit ValidatedDeposit(address(this), depositAmount, mintedAmount); // expected event
         protocol.validateDeposit(currentPrice, "");
 

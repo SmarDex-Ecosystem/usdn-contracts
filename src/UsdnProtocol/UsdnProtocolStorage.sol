@@ -4,38 +4,36 @@ pragma solidity 0.8.20;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
+import { IUsdnProtocolStorage } from "src/interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
-import { IUsdn } from "src/interfaces/IUsdn.sol";
-import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
-import { IUsdnProtocolErrors, Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
-abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReentrancyGuard {
+abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReentrancyGuard {
     using LibBitmap for LibBitmap.Bitmap;
 
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice The number of decimals for leverage values
+    /// @inheritdoc IUsdnProtocolStorage
     uint8 public constant LEVERAGE_DECIMALS = 21;
 
-    /// @notice The number of decimals for funding rate values
+    /// @inheritdoc IUsdnProtocolStorage
     uint8 public constant FUNDING_RATE_DECIMALS = 18;
 
-    /// @notice The number of decimals for liquidation multiplier values
+    /// @inheritdoc IUsdnProtocolStorage
     uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
 
-    /// @notice The number of seconds in a day
-    uint256 public constant SECONDS_PER_DAY = 60 * 60 * 24;
+    /// @inheritdoc IUsdnProtocolStorage
+    uint8 public constant FUNDING_SF_DECIMALS = 3;
 
-    /**
-     * @notice Divisor for the percentage values (liquidation penalty, safety margin)
-     * @dev Example: 200 -> 2%
-     */
+    /// @inheritdoc IUsdnProtocolStorage
     uint256 public constant PERCENTAGE_DIVISOR = 10_000;
 
-    /// @notice maximum tick liquidation by transaction
+    /// @inheritdoc IUsdnProtocolStorage
     uint16 public constant MAX_LIQUIDATION_ITERATION = 10;
 
     /* -------------------------------------------------------------------------- */
@@ -92,9 +90,19 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     /// @notice User current liquidation iteration in tick.
     uint16 internal _liquidationIteration = 5;
 
+    // TODO: Add checks when creating the setter for this variable (!= 0)
+    /// @notice The moving average period of the funding rate
+    uint128 internal _EMAPeriod = 5 days;
+
+    /// @notice The scaling factor (SF) of the funding rate (0.12)
+    uint256 internal _fundingSF = 12 * 10 ** (FUNDING_SF_DECIMALS - 2);
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
+
+    /// @notice The funding corresponding to the last update timestamp
+    int256 internal _lastFunding;
 
     /// @notice The price of the asset during the last balances update (with price feed decimals)
     uint128 internal _lastPrice;
@@ -104,7 +112,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
 
     /**
      * @notice The multiplier for liquidation price calculations
-     * @dev This value reprensents 1 with 38 decimals to have the same precision when the multiplier
+     * @dev This value represents 1 with 38 decimals to have the same precision when the multiplier
      * tends to 0 and high values (uint256.max have 78 digits).
      */
     uint256 internal _liquidationMultiplier = 100_000_000_000_000_000_000_000_000_000_000_000_000;
@@ -127,6 +135,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
     uint256 internal _balanceVault;
 
     /* ----------------------------- Long positions ----------------------------- */
+
+    /// @notice The exponential moving average of the funding (0.0003 at initialization)
+    int256 internal _EMA = int256(3 * 10 ** (FUNDING_RATE_DECIMALS - 4));
 
     /// @notice The balance of long positions (with asset decimals)
     uint256 internal _balanceLong;
@@ -172,14 +183,31 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolErrors, InitializableReent
         _usdnDecimals = usdn.decimals();
         _asset = asset;
         _assetDecimals = asset.decimals();
+        if (_assetDecimals < FUNDING_SF_DECIMALS) {
+            revert UsdnProtocolInvalidAssetDecimals(_assetDecimals);
+        }
         _oracleMiddleware = oracleMiddleware;
         _priceFeedDecimals = oracleMiddleware.decimals();
         _tickSpacing = tickSpacing_;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function tickSpacing() external view returns (int24) {
         return _tickSpacing;
     }
 
-    // TODO: add view functions for all storage items that need to be public
+    /// @inheritdoc IUsdnProtocolStorage
+    function minLeverage() external view returns (uint256) {
+        return _minLeverage;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function maxLeverage() external view returns (uint256) {
+        return _maxLeverage;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function liquidationMultiplier() external view returns (uint256) {
+        return _liquidationMultiplier;
+    }
 }

@@ -7,30 +7,33 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
+import { IUsdnProtocolCore } from "src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
 import {
-    IUsdnProtocolErrors,
-    IUsdnProtocolEvents,
     ProtocolAction,
-    PendingAction
-} from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+    PendingAction,
+    VaultPendingAction,
+    LongPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
 
-abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, UsdnProtocolStorage {
+abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
+    using SafeCast for int256;
     using SignedMath for int256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
-    /// @notice The address that holds the minimum supply of USDN and first minimum long position.
+    /// @inheritdoc IUsdnProtocolCore
     address public constant DEAD_ADDRESS = address(0xdead);
 
-    uint256 constant DEFAULT_QUEUE_MAX_ITER = 10;
+    /// @inheritdoc IUsdnProtocolCore
+    uint256 public constant DEFAULT_QUEUE_MAX_ITER = 10;
 
     /* -------------------------- Public view functions ------------------------- */
 
-    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) public view returns (uint256) {
+    /// @inheritdoc IUsdnProtocolCore
+    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) external view returns (uint256) {
         if (timestamp <= _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
@@ -39,6 +42,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         return _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function funding(uint128 currentPrice, uint128 timestamp)
         public
         view
@@ -46,6 +50,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     {
         vaultExpo_ = _vaultTradingExpo(currentPrice);
         longExpo_ = _longTradingExpo(currentPrice);
+
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
             // slither-disable-next-line incorrect-equality
@@ -53,52 +58,77 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             return (0, longExpo_, vaultExpo_);
         }
 
-        int256 secondsElapsed = _toInt256(timestamp - _lastUpdateTimestamp);
-        // we want the expo at the last update, since we are now calculating the funding since the last update
-        int256 relative;
+        // fund = (+-) ((longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
+        // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
+
+        int256 numerator = longExpo_ - vaultExpo_;
+        // optimization : if numerator is zero, then return the EMA
+        if (numerator == 0) {
+            return (_EMA, longExpo_, vaultExpo_);
+        }
+        int256 elapsedSeconds = _toInt256(timestamp - _lastUpdateTimestamp);
+        numerator *= numerator;
+
+        uint256 denominator;
         if (vaultExpo_ > longExpo_) {
-            relative = vaultExpo_;
+            // we have to multiply by 1 day to get the correct units
+            denominator = uint256(vaultExpo_ * vaultExpo_) * 1 days;
+            fund_ = -int256(
+                FixedPointMathLib.fullMulDiv(
+                    uint256(numerator * elapsedSeconds),
+                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
+                    denominator
+                )
+            ) + _EMA;
         } else {
-            relative = longExpo_;
+            // we have to multiply by 1 day to get the correct units
+            denominator = uint256(longExpo_ * longExpo_) * 1 days;
+            fund_ = int256(
+                FixedPointMathLib.fullMulDiv(
+                    uint256(numerator * elapsedSeconds),
+                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
+                    denominator
+                )
+            ) + _EMA;
         }
-        // avoid division by zero
-        if (relative == 0) {
-            return (0, longExpo_, vaultExpo_);
-        }
-        fund_ = longExpo_.safeSub(vaultExpo_).safeMul(_fundingRatePerSecond * secondsElapsed * 100).safeDiv(relative);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function fundingAsset(uint128 currentPrice, uint128 timestamp)
         public
         view
-        returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
+        returns (int256 fundingAsset_, int256 longExpo_, int256 vaultExpo_, int256 fund_)
     {
         (fund_, longExpo_, vaultExpo_) = funding(currentPrice, timestamp);
-        fund_ = -fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
+        fundingAsset_ = fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 available_)
     {
-        (int256 fund,,) = fundingAsset(currentPrice, timestamp);
-        available_ = _longAssetAvailable(currentPrice).safeSub(fund);
+        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 available_)
     {
-        (int256 fund,,) = fundingAsset(currentPrice, timestamp);
-        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fund);
+        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
         expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
     }
 
+    /// @inheritdoc IUsdnProtocolCore
     function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
         external
         view
@@ -107,13 +137,42 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
     }
 
-    /* ---------------------------- Public functions ---------------------------- */
+    /// @inheritdoc IUsdnProtocolCore
+    function getActionablePendingAction(uint256 maxIter) external view returns (PendingAction memory action_) {
+        uint256 queueLength = _pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
+            return action_;
+        }
+        // default max iterations
+        if (maxIter == 0) {
+            maxIter = DEFAULT_QUEUE_MAX_ITER;
+        }
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
 
-    function updateBalances(bytes calldata priceData) external payable initializedAndNonReentrant {
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
-            uint128(block.timestamp), ProtocolAction.None, priceData
-        );
-        _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+        uint256 i = 0;
+        do {
+            // Since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
+            PendingAction memory candidate = _pendingActionsQueue.at(i);
+            // gas optimization
+            unchecked {
+                i++;
+            }
+            // If the msg.sender is equal to the user of the pending action, then the pending action is not actionable
+            // by this user (it will get validated automatically by their action). And so we need to return the next
+            // item in the queue so that they can validate a third-party pending action (if any).
+            if (candidate.timestamp == 0 || candidate.user == msg.sender) {
+                // try the next one
+                continue;
+            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
+                // we found an actionable pending action
+                return candidate;
+            }
+            // the first pending action is not actionable
+            return action_;
+        } while (i < maxIter);
     }
 
     /* --------------------------  Internal functions --------------------------- */
@@ -263,8 +322,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
             return false;
         }
 
-        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
-        (int256 fundAsset,,) = fundingAsset(currentPrice, timestamp);
+        _updateEMA(timestamp - _lastUpdateTimestamp);
+        (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
         int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAsset);
@@ -279,6 +338,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _balanceVault = uint256(newVaultBalance);
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
+        _lastFunding = fund;
         _liquidationMultiplier = _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
 
         priceUpdated_ = true;
@@ -294,6 +354,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
     }
 
     function _distributeAssetsAndCheckBalance(address to, uint256 amount) internal {
+        // slither-disable-next-line incorrect-equality
         if (amount == 0) {
             return;
         }
@@ -305,45 +366,166 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         }
     }
 
+    /**
+     * @notice Update the Exponential Moving Average (EMA) of the funding
+     * @param secondsElapsed The number of seconds elapsed since the last protocol action
+     * @dev This function is called every time the protocol state is updated
+     * @dev All required checks are done in the caller function (_applyPnlAndFunding)
+     */
+    function _updateEMA(uint128 secondsElapsed) internal {
+        // cache variable for optimization
+        int256 intEMAPeriod = _toInt256(_EMAPeriod);
+        _EMA = (_lastFunding + _EMA * (intEMAPeriod - _toInt256(secondsElapsed))) / intEMAPeriod;
+    }
+
     function _toInt256(uint128 x) internal pure returns (int256) {
         return int256(uint256(x));
     }
 
+    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        version_ = _tickVersion[tick];
+        hash_ = keccak256(abi.encodePacked(tick, version_));
+    }
+
     /* -------------------------- Pending actions queue ------------------------- */
 
-    function getActionablePendingAction(uint256 maxIter) public returns (PendingAction memory action_) {
-        if (_pendingActionsQueue.empty()) {
+    /**
+     * @notice Convert a `PendingAction` to a `VaultPendingAction`
+     * @param action An untyped pending action
+     * @return vaultAction_ The converted vault pending action
+     */
+    function _toVaultPendingAction(PendingAction memory action)
+        internal
+        pure
+        returns (VaultPendingAction memory vaultAction_)
+    {
+        assembly {
+            vaultAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `PendingAction` to a `LongPendingAction`
+     * @param action An untyped pending action
+     * @return longAction_ The converted long pending action
+     */
+    function _toLongPendingAction(PendingAction memory action)
+        internal
+        pure
+        returns (LongPendingAction memory longAction_)
+    {
+        assembly {
+            longAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `VaultPendingAction` to a `PendingAction`
+     * @param action A vault pending action
+     * @return pendingAction_ The converted untyped pending action
+     */
+    function _convertVaultPendingAction(VaultPendingAction memory action)
+        internal
+        pure
+        returns (PendingAction memory pendingAction_)
+    {
+        assembly {
+            pendingAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `LongPendingAction` to a `PendingAction`
+     * @param action A long pending action
+     * @return pendingAction_ The converted untyped pending action
+     */
+    function _convertLongPendingAction(LongPendingAction memory action)
+        internal
+        pure
+        returns (PendingAction memory pendingAction_)
+    {
+        assembly {
+            pendingAction_ := action
+        }
+    }
+
+    /**
+     * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
+     * are removed.
+     * @param maxIter The maximum number of iterations to find the first initialized item
+     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     */
+    function _getActionablePendingAction(uint256 maxIter) internal returns (PendingAction memory action_) {
+        uint256 queueLength = _pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
             return action_;
         }
         // default max iterations
         if (maxIter == 0) {
             maxIter = DEFAULT_QUEUE_MAX_ITER;
         }
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
 
         uint256 i = 0;
         do {
+            // Since we will never call `front` more than `queueLength` times, there is no risk of reverting
             PendingAction memory candidate = _pendingActionsQueue.front();
+            // gas optimization
+            unchecked {
+                i++;
+            }
             if (candidate.timestamp == 0) {
                 // remove the stale pending action
                 // slither-disable-next-line unused-return
                 _pendingActionsQueue.popFront();
-                // if the queue is empty, return
-                if (_pendingActionsQueue.empty()) {
-                    return action_;
-                }
-                // otherwise, try the next one
+                // try the next one
                 continue;
             } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
                 return candidate;
-            } else {
-                // the first pending action is not actionable
-                return action_;
             }
-        } while (++i < maxIter);
+            // the first pending action is not actionable
+            return action_;
+        } while (i < maxIter);
     }
 
+    /**
+     * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
+     * @dev This is only applicable to `ValidateOpenPosition` pending actions
+     * @param user The user address
+     */
+    function _removeStalePendingAction(address user) internal {
+        // slither-disable-next-line incorrect-equality
+        if (_pendingActions[user] == 0) {
+            return;
+        }
+        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user, false); // do not clear
+        // the position is only at risk of being liquidated while pending if it is an open position action
+        // slither-disable-next-line incorrect-equality
+        if (action.action == ProtocolAction.ValidateOpenPosition) {
+            LongPendingAction memory openAction = _toLongPendingAction(action);
+            (, uint256 version) = _tickHash(openAction.tick);
+            if (version != openAction.tickVersion) {
+                // the position was liquidated while pending
+                // remove the stale pending action
+                _pendingActionsQueue.clearAt(rawIndex);
+                delete _pendingActions[user];
+                emit StalePendingActionRemoved(user, openAction.tick, openAction.tickVersion, openAction.index);
+            }
+        }
+    }
+
+    /**
+     * @notice Add a pending action to the queue
+     * @dev This reverts if there is already a pending action for this user
+     * @param user The user address
+     * @param action The pending action struct
+     */
     function _addPendingAction(address user, PendingAction memory action) internal {
+        _removeStalePendingAction(user); // check if there is a pending action that was liquidated and remove it
         if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
         }
@@ -353,20 +535,45 @@ abstract contract UsdnProtocolCore is IUsdnProtocolErrors, IUsdnProtocolEvents, 
         _pendingActions[user] = uint256(rawIndex) + 1;
     }
 
-    function _getPendingAction(address user, bool clear) internal returns (PendingAction memory action_) {
+    /**
+     * @notice Get the pending action for a user and optionally pop it from the queue
+     * @param user The user address
+     * @param clear Whether to pop the pending action from the queue or leave it there
+     * @return action_ The pending action struct
+     * @return rawIndex_ The raw index of the pending action in the queue
+     */
+    function _getPendingAction(address user, bool clear)
+        internal
+        returns (PendingAction memory action_, uint128 rawIndex_)
+    {
         uint256 pendingActionIndex = _pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
             revert UsdnProtocolNoPendingAction();
         }
 
-        uint128 rawIndex = uint128(pendingActionIndex - 1);
-        action_ = _pendingActionsQueue.atRaw(rawIndex);
+        rawIndex_ = uint128(pendingActionIndex - 1);
+        action_ = _pendingActionsQueue.atRaw(rawIndex_);
 
         if (clear) {
             // remove the pending action
-            _pendingActionsQueue.clearAt(rawIndex);
+            _pendingActionsQueue.clearAt(rawIndex_);
             delete _pendingActions[user];
         }
+    }
+
+    /**
+     * @notice Clear the pending action for a user
+     * @param user The user address
+     */
+    function _clearPendingAction(address user) internal {
+        uint256 pendingActionIndex = _pendingActions[user];
+        // slither-disable-next-line incorrect-equality
+        if (pendingActionIndex == 0) {
+            revert UsdnProtocolNoPendingAction();
+        }
+        uint128 rawIndex = uint128(pendingActionIndex - 1);
+        _pendingActionsQueue.clearAt(rawIndex);
+        delete _pendingActions[user];
     }
 }

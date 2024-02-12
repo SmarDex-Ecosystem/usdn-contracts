@@ -2,7 +2,7 @@
 // Based on the OpenZeppelin implementation
 pragma solidity ^0.8.20;
 
-import { ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @notice A sequence of items with the ability to efficiently push and pop items (i.e. insert and remove) on both ends
@@ -11,10 +11,6 @@ import { ProtocolAction, PendingAction } from "src/interfaces/UsdnProtocol/IUsdn
  *
  * The struct is called `Deque` and holds `PendingAction`s. This data structure can only be used in storage, and not in
  * memory.
- *
- * ```solidity
- * DoubleEndedQueue.Deque queue;
- * ```
  */
 library DoubleEndedQueue {
     /// @dev Indicates that an operation (e.g. {front}) couldn't be completed due to the queue being empty.

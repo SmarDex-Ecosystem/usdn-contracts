@@ -38,7 +38,7 @@
               ];
               dotenv.enable = true;
               languages.javascript.enable = true;
-              languages.javascript.package = pkgs.nodejs_18;
+              languages.javascript.package = pkgs.nodejs_20;
               enterShell = ''
                 npm i
                 forge install

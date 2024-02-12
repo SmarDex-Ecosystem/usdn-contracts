@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import "test/utils/Constants.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -41,23 +39,19 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
      */
     function test_liquidationMultiplier() public {
         bytes memory priceData = abi.encode(4000 ether);
-        uint128 desiredLiqPrice =
-            protocol.getLiquidationPrice(4000 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+        uint128 desiredLiqPrice = 2000 ether;
 
-        protocol.initiateOpenPosition(500 ether, desiredLiqPrice, priceData, "");
-        protocol.validateOpenPosition(priceData, "");
+        protocol.initiateOpenPosition(5 ether, desiredLiqPrice, priceData, "");
         assertEq(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
+        protocol.validateOpenPosition(priceData, "");
 
-        // Here, we have longExpo > vaultExpo and fund > 0, so we should have multiplier > 1
-        skip(1 days);
-        protocol.initiateDeposit(500 ether, priceData, "", address(this));
-        protocol.validateDeposit(priceData, "");
+        // Here, we have vaultExpo > longExpo and fund > 0, so we should have multiplier > 1
         assertGt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 
-        // Here, we have vaultExpo ~= 2*longExpo and fund < 0, so we should have multiplier < 1
-        skip(6 days);
-        // We need to initiate a position to trigger the refresh of the multiplier
-        protocol.initiateOpenPosition(1, desiredLiqPrice, priceData, "");
+        skip(10 days);
+        // We need to call liquidate to trigger the refresh of the multiplier
+        protocol.liquidate(priceData, 0);
+        // Here, we have vaultExpo > longExpo and fund < 0, so we should have multiplier < 1
         assertLt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
     }
 }

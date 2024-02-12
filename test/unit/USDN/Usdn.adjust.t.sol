@@ -11,8 +11,8 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
  * @custom:background Given the current divisor is MAX_DIVISOR
  */
 contract TestUsdnAdjust is UsdnTokenFixture {
-    uint256 maxDivisor;
-    uint256 minDivisor;
+    uint256 internal maxDivisor;
+    uint256 internal minDivisor;
 
     function setUp() public override {
         super.setUp();

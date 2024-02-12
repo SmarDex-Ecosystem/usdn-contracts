@@ -33,10 +33,10 @@ jobs:
           version: nightly
         if: ${{ steps.release.outputs.release_created }}
 
-      - name: Set up Node.js
+      - name: Install Node 20
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Install dependencies
@@ -45,6 +45,10 @@ jobs:
 
       - name: Export ABI
         run: npm run exportAbi
+        if: ${{ steps.release.outputs.release_created }}
+
+      - name: Generate docs
+        run: forge doc
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Configure AWS credentials

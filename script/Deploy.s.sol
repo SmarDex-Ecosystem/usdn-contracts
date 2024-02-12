@@ -5,10 +5,11 @@ import { Script } from "forge-std/Script.sol";
 
 import { WstETH } from "test/utils/WstEth.sol";
 
-import { IOracleMiddleware } from "src/interfaces/IOracleMiddleware.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { OracleMiddleware } from "../src/OracleMiddleware/OracleMiddleware.sol";
+import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 
 contract Deploy is Script {
     function run() external {
@@ -32,16 +33,41 @@ contract Deploy is Script {
             wstETHAddress = payable(address(wstETH));
         }
 
-        // Deploy Oracle middleware if needed
+        // Deploy oracle middleware if needed
+        // fetch middleware address environment variable
         address middlewareAddress = vm.envOr("MIDDLEWARE_ADDRESS", address(0));
-        IOracleMiddleware middleware;
+        // cache environment type
+        bool isProdEnv = block.chainid != 31_337;
+        // cache middleware
+        WstEthOracleMiddleware middleware;
+
+        // attach
         if (middlewareAddress != address(0)) {
-            middleware = IOracleMiddleware(middlewareAddress);
+            // prod
+            if (isProdEnv) {
+                middleware = WstEthOracleMiddleware(middlewareAddress);
+
+                // fork
+            } else {
+                middleware = MockWstEthOracleMiddleware(middlewareAddress);
+            }
+
+            // deploy
         } else {
             address pythAddress = vm.envAddress("PYTH_ADDRESS");
-            bytes32 pythPriceId = vm.envBytes32("PYTH_WSTETH_PRICE_ID");
+            bytes32 pythPriceId = vm.envBytes32("PYTH_STETH_PRICE_ID");
             address chainlinkPriceAddress = vm.envAddress("CHAINLINK_STETH_PRICE_ADDRESS");
-            middleware = new OracleMiddleware(pythAddress, pythPriceId, chainlinkPriceAddress);
+
+            // prod
+            if (isProdEnv) {
+                middleware = new WstEthOracleMiddleware(pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress);
+
+                // fork
+            } else {
+                middleware =
+                    new MockWstEthOracleMiddleware(pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress);
+            }
+
             middlewareAddress = address(middleware);
         }
 

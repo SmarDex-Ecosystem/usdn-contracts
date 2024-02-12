@@ -5,13 +5,20 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { PendingAction, ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import {
+    PendingAction,
+    VaultPendingAction,
+    ProtocolAction,
+    Position
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
-import { IUsdn } from "src/interfaces/IUsdn.sol";
-import { IOracleMiddleware, PriceInfo } from "src/interfaces/IOracleMiddleware.sol";
+import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-contract UsdnProtocol is UsdnProtocolActions, Ownable {
+contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     using SafeCast for uint256;
 
     /// @dev The minimum amount of wstETH for the initialization deposit and long.
@@ -61,19 +68,21 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
         // Create vault deposit
         PriceInfo memory currentPrice;
         {
-            PendingAction memory pendingAction = PendingAction({
-                action: ProtocolAction.InitiateDeposit,
-                timestamp: 0, // not needed since we have a special ProtocolAction for init
-                user: msg.sender,
-                to: msg.sender,
-                tick: 0, // unused
-                amountOrIndex: depositAmount,
-                assetPrice: 0, // special case for init
-                totalExpo: 0,
-                balanceVault: 0,
-                balanceLong: 0,
-                usdnTotalSupply: 0
-            });
+            PendingAction memory pendingAction = _convertVaultPendingAction(
+                VaultPendingAction({
+                    action: ProtocolAction.ValidateDeposit,
+                    timestamp: 0, // not needed since we have a special ProtocolAction for init
+                    user: msg.sender,
+                    to: msg.sender,
+                    _unused: 0, // unused
+                    amount: depositAmount,
+                    assetPrice: 0, // special case for init
+                    totalExpo: 0,
+                    balanceVault: 0,
+                    balanceLong: 0,
+                    usdnTotalSupply: 0
+                })
+            );
 
             // Transfer the wstETH for the deposit
             _retrieveAssetsAndCheckBalance(msg.sender, depositAmount);
@@ -111,8 +120,8 @@ contract UsdnProtocol is UsdnProtocolActions, Ownable {
             timestamp: uint40(block.timestamp)
         });
         // Save the position and update the state
-        uint256 index = _saveNewPosition(tick, long);
-        emit InitiatedOpenPosition(user, long, tick, index);
-        emit ValidatedOpenPosition(user, long, tick, index, liquidationPrice);
+        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
+        emit InitiatedOpenPosition(user, long, tick, tickVersion, index);
+        emit ValidatedOpenPosition(user, long, tick, tickVersion, index, liquidationPrice);
     }
 }
