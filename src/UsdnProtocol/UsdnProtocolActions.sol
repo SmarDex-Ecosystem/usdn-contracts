@@ -153,21 +153,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolZeroAmount();
         }
 
-        uint40 timestamp = uint40(block.timestamp);
-
         uint256 validationCost = _oracleMiddleware.validationCost(currentPriceData, ProtocolAction.InitiateOpenPosition);
         uint128 adjustedPrice; // the price returned by the oracle middleware, to be used for the user action
+        uint128 neutralPrice;
         {
             PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-                timestamp, ProtocolAction.InitiateOpenPosition, currentPriceData
+                uint40(block.timestamp), ProtocolAction.InitiateOpenPosition, currentPriceData
             );
-            bool priceUpdated =
-                _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+            adjustedPrice = currentPrice.price.toUint128();
+            neutralPrice = currentPrice.neutralPrice.toUint128();
+            bool priceUpdated = _applyPnlAndFunding(neutralPrice, currentPrice.timestamp.toUint128());
             // liquidate if pnl applied
             if (priceUpdated) {
                 _liquidatePositions(currentPrice.price, _liquidationIteration);
             }
-            adjustedPrice = currentPrice.price.toUint128();
         }
 
         uint128 leverage;
@@ -194,7 +193,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             uint128 liquidationPrice = getEffectivePriceForTick(tick_);
 
             // Liquidation price must be at least x% below current price
-            _checkSafetyMargin(adjustedPrice, liquidationPrice);
+            _checkSafetyMargin(neutralPrice, liquidationPrice);
         }
 
         // Register position and adjust contract state
@@ -204,14 +203,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 amount: amount,
                 startPrice: adjustedPrice,
                 leverage: leverage,
-                timestamp: timestamp
+                timestamp: uint40(block.timestamp)
             });
             (tickVersion_, index_) = _saveNewPosition(tick_, long);
 
             // Register pending action
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateOpenPosition,
-                timestamp: timestamp,
+                timestamp: uint40(block.timestamp),
                 user: msg.sender,
                 tick: tick_,
                 closeAmount: 0,
