@@ -65,6 +65,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
     /// @notice Denominator for the reward multiplier, will give us a 0.1% precision.
     uint8 public constant REWARD_MULTIPLIER_DENOMINATOR = 100;
+    /// @notice Number of decimals on the gas price, denominated in GWEI (9 decimals)
     uint8 public constant GAS_PRICE_DECIMALS = 9;
 
     /* -------------------------------------------------------------------------- */
@@ -79,11 +80,11 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     RewardsParameters private _rewardsParameters =
         RewardsParameters(27_671, 29_681 + 21_000, uint64(1000 * (10 ** GAS_PRICE_DECIMALS)), 200);
 
-    constructor(address chainlinkGasPriceFeed, IWstETH wstETHAddress, uint256 chainlinkElapsedTimeLimit)
+    constructor(address chainlinkGasPriceFeed, IWstETH wstETH, uint256 chainlinkElapsedTimeLimit)
         Ownable(msg.sender)
         ChainlinkOracle(chainlinkGasPriceFeed, chainlinkElapsedTimeLimit)
     {
-        _wstEth = wstETHAddress;
+        _wstEth = wstETH;
     }
 
     /**

@@ -9,9 +9,11 @@ import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
 import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
 
+import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IWstETH } from "src/interfaces/IWstETH.sol";
 
 /**
  * @title ActionsFixture
@@ -74,6 +76,28 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
         (, int256 price,, uint256 updatedAt,) = mockChainlinkOnChain.latestRoundData();
         assertEq(price, 2000 * 1e8);
         assertEq(updatedAt, block.timestamp);
+    }
+}
+
+/**
+ * @title LiquidationRewardsManagerBaseFixture
+ * @dev Utils for testing the liquidation rewards manager
+ */
+contract LiquidationRewardsManagerBaseFixture is BaseFixture {
+    MockChainlinkOnChain internal mockChainlinkOnChain;
+    WstETH internal wsteth;
+    LiquidationRewardsManager internal liquidationRewardsManager;
+
+    function setUp() public virtual {
+        vm.warp(1_704_063_600); // 01/01/2024 @ 12:00am (UTC+2)
+
+        mockChainlinkOnChain = new MockChainlinkOnChain();
+        wsteth = new WstETH();
+        liquidationRewardsManager =
+            new LiquidationRewardsManager(address(mockChainlinkOnChain), IWstETH(address(wsteth)), 2 days);
+        // Puts the gas at 30 gwei
+        mockChainlinkOnChain.setLatestRoundData(1, 30 * (10 ** 9), block.timestamp, 1);
+        vm.txGasPrice(30 * (10 ** 9));
     }
 }
 

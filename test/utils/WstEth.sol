@@ -19,6 +19,11 @@ contract WstETH is ERC20, ERC20Permit {
         return 1.15 ether;
     }
 
+    /// @dev Returns the amount of wstETH per stETH (mock value)
+    function getWstETHByStETH(uint256 _stETHAmount) external view returns (uint256) {
+        return _stETHAmount * 1.15 ether / 10 ** decimals();
+    }
+
     /// @dev Receive ETH and mint wstETH
     receive() external payable {
         _mint(msg.sender, msg.value * 1 ether / stEthPerToken());
