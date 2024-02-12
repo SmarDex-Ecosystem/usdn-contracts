@@ -205,22 +205,24 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         tickArray.push(long);
     }
 
-    function _removePosition(int24 tick, uint256 tickVersion, uint256 index, Position memory long) internal {
+    function _removePosition(int24 tick, uint256 tickVersion, uint256 index) internal returns (Position memory pos_) {
         (bytes32 tickHash, uint256 version) = _tickHash(tick);
 
         if (version != tickVersion) {
             revert UsdnProtocolOutdatedTick(version, tickVersion);
         }
 
+        Position[] storage tickArray = _longPositions[tickHash];
+        pos_ = tickArray[index];
+
         // Adjust state
-        uint256 removeExpo = FixedPointMathLib.fullMulDiv(long.amount, long.leverage, 10 ** LEVERAGE_DECIMALS);
+        uint256 removeExpo = FixedPointMathLib.fullMulDiv(pos_.amount, pos_.leverage, 10 ** LEVERAGE_DECIMALS);
         _totalExpo -= removeExpo;
         _totalExpoByTick[tickHash] -= removeExpo;
         --_positionsInTick[tickHash];
         --_totalLongPositions;
 
         // Remove from tick array (set to zero to avoid shifting indices)
-        Position[] storage tickArray = _longPositions[tickHash];
         delete tickArray[index];
         if (_positionsInTick[tickHash] == 0) {
             // we removed the last position in the tick
