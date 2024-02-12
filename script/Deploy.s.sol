@@ -4,8 +4,11 @@ pragma solidity 0.8.20;
 import { Script } from "forge-std/Script.sol";
 
 import { WstETH } from "test/utils/WstEth.sol";
+import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
 
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
@@ -83,8 +86,17 @@ contract Deploy is Script {
             usdnAddress = address(usdn);
         }
 
+        address chainlinkGasPriceFeed = vm.envAddress("CHAINLINK_GAS_PRICE_ADDRESS");
+        if (!isProdEnv) {
+            chainlinkGasPriceFeed = address(new MockChainlinkOnChain());
+        }
+
+        // Heartbeat is 2 days but I've seen the aggregator takes a bit more time to process the update TX.
+        LiquidationRewardsManager liquidationRewardsManager =
+            new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), (2 days + 5 minutes));
+
         // Deploy the protocol with tick spacing 100 = 1%
-        UsdnProtocol protocol = new UsdnProtocol(usdn, wstETH, middleware, 100);
+        UsdnProtocol protocol = new UsdnProtocol(usdn, wstETH, middleware, liquidationRewardsManager, 100);
 
         // Grant USDN minter role to protocol and approve wstETH spending
 
