@@ -15,6 +15,10 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
  * @dev This contract is a middleware between the USDN protocol and the gas price oracle.
  */
 contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracle, Ownable {
+    /* -------------------------------------------------------------------------- */
+    /*                                    Structs                                 */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * @notice Parameters for the rewards calculation.
      * @param gasUsedPerTick Gas used per tick to liquidate.
@@ -29,6 +33,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         uint16 multiplier; // to be divided by REWARD_MULTIPLIER_DENOMINATOR
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                                   Events                                   */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * @notice Emitted when the rewards parameters are changed.
      * @param gasUsedPerTick Gas used per tick to liquidate.
@@ -37,6 +45,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * @param multiplier Multiplier for the liquidators.
      */
     event UpdateRewardsParameters(uint32 gasUsedPerTick, uint32 baseGasUsed, uint64 gasPriceLimit, uint16 multiplier);
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   Errors                                   */
+    /* -------------------------------------------------------------------------- */
 
     /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
     error LiquidationRewardsManagerGasUsedPerTickTooHigh(uint256 value);
@@ -47,9 +59,17 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
     error LiquidationRewardsManagerMultiplierTooHigh(uint256 value);
 
+    /* -------------------------------------------------------------------------- */
+    /*                                  Constants                                 */
+    /* -------------------------------------------------------------------------- */
+
     /// @notice Denominator for the reward multiplier, will give us a 0.1% precision.
     uint8 public constant REWARD_MULTIPLIER_DENOMINATOR = 100;
     uint8 public constant GAS_PRICE_DECIMALS = 9;
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Storage Variables                             */
+    /* -------------------------------------------------------------------------- */
 
     /// @notice Address of the wstETH contract.
     IWstETH private immutable _wstEth;
