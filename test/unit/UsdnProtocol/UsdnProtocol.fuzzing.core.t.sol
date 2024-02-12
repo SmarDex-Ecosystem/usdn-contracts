@@ -9,7 +9,7 @@ import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProto
  * @custom:feature Fuzzing tests for the core of the protocol
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
  */
-contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
     }
