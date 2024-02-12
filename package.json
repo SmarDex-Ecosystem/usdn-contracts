@@ -8,7 +8,7 @@
   "scripts": {
     "prepare": "husky install",
     "snapshot": "FOUNDRY_PROFILE=ci forge clean && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --offline",
-    "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --check --offline",
+    "snapshot:check": "FOUNDRY_PROFILE=ci forge build && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --check --offline",
     "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",
     "cov": "forge coverage --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",
     "cov:html": "forge coverage --report lcov --no-match-test \"(FFI|Fork|Fuzz|invariant)\" && genhtml -o .coverage lcov.info && open .coverage/index.html",
