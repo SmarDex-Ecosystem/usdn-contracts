@@ -497,14 +497,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (uint256 validationCost_)
     {
         LongPendingAction memory long = _toLongPendingAction(pending);
-        (bytes32 tickHash, uint256 version) = _tickHash(long.tick);
-
-        if (version != long.tickVersion) {
-            // The current tick version doesn't match the version from the pending action.
-            // This means the position has been liquidated in the mean time
-            emit StalePendingActionRemoved(long.user, long.tick, long.tickVersion, long.index);
-            return 0;
-        }
 
         uint128 startPrice;
         {
@@ -515,6 +507,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             startPrice = price.price.toUint128();
             // adjust balances
             _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
+        }
+
+        (bytes32 tickHash, uint256 version) = _tickHash(long.tick);
+        if (version != long.tickVersion) {
+            // The current tick version doesn't match the version from the pending action.
+            // This means the position has been liquidated in the mean time
+            emit StalePendingActionRemoved(long.user, long.tick, long.tickVersion, long.index);
+            return validationCost_;
         }
 
         // Re-calculate leverage

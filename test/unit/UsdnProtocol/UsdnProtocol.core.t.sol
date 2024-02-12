@@ -238,6 +238,4 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         (int256 fund_,,) = protocol.funding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
         assertEq(fund_, protocol.EMA(), "funding should be equal to EMA");
     }
-
-    receive() external payable { }
 }
