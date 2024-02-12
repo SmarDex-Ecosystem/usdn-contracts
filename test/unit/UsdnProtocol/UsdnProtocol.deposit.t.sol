@@ -5,6 +5,8 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
+import { USER_1 } from "test/utils/Constants.sol";
+
 /**
  * @custom:feature The `deposit` function of the USDN Protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
@@ -33,12 +35,27 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The pending action is actionable after the validation deadline has elapsed
      */
     function test_initiateDeposit() public {
+        initiateDepositScenario(address(this));
+    }
+
+    /**
+     * @custom:scenario The user initiates a deposit of 1 wstETH with another user as the beneficiary
+     * @custom:given The to parameter is different from the sender of the transaction
+     * @custom:when initiateDeposit function is called
+     * @custom:then The protocol emits an `InitiatedDeposit` event with the right beneficiary
+     * @custom:and The user has a pending action of type `InitiateDeposit` with the right beneficiary
+     */
+    function test_initiateDepositForAnotherUser() public {
+        initiateDepositScenario(USER_1);
+    }
+
+    function initiateDepositScenario(address to) internal {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), address(this), depositAmount); // expected event
-        protocol.initiateDeposit(depositAmount, currentPrice, "", address(this));
+        emit InitiatedDeposit(address(this), to, depositAmount); // expected event
+        protocol.initiateDeposit(depositAmount, currentPrice, "", to);
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
         assertEq(
@@ -56,6 +73,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.InitiateDeposit, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
+        assertEq(action.to, to, "action to");
         assertEq(action.amountOrIndex, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
