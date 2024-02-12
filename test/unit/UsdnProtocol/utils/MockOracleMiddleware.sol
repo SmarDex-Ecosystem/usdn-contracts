@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
 import {
     IOracleMiddleware,
     ProtocolAction,
     PriceInfo,
     IOracleMiddlewareErrors
 } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     uint8 constant DECIMALS = 18;
@@ -74,7 +74,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     function setConfRatio(uint16 newConfRatio) external onlyOwner {
         // confidence ratio limit check
         if (newConfRatio > MAX_CONF_RATIO) {
-            revert IOracleMiddlewareErrors.ConfRatioTooHigh();
+            revert IOracleMiddlewareErrors.OracleMiddlewareConfRatioTooHigh();
         }
         _confRatio = newConfRatio;
     }

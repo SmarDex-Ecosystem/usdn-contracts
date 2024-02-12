@@ -57,7 +57,10 @@ interface IOracleMiddleware is IOracleMiddlewareErrors {
     /// @notice get confidence ratio denominator
     function confRatioDenom() external pure returns (uint16);
 
-    /// @notice get confidence ratio
+    /**
+     * @notice Return the confidence ratio. This ratio is used to apply a specific portion of the confidence interval
+     * provided by an oracle, which is used to adjust the precision of predictions or estimations.
+     */
     function confRatio() external view returns (uint16);
 
     /**

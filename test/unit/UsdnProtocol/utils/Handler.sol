@@ -140,7 +140,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     function protocolFeeDenominator() public view returns (uint256) {
-        return _protocolFeeDenominator;
+        return PROTOCOL_FEE_DENOMINATOR;
     }
 
     function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {

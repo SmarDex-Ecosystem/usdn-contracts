@@ -51,7 +51,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Apply fees on price
         // we use `_lastPrice` because it might be more recent than `currentPrice.price`
-        uint256 pendingActionPrice = _lastPrice + (_lastPrice * _protocolFee) / _protocolFeeDenominator;
+        uint256 pendingActionPrice = _lastPrice;
+        pendingActionPrice += (pendingActionPrice * _protocolFee) / PROTOCOL_FEE_DENOMINATOR;
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateDeposit,
@@ -109,7 +110,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Apply fees on price
         // we use `_lastPrice` because it might be more recent than `currentPrice.price`
-        uint256 pendingActionPrice = _lastPrice - (_lastPrice * _protocolFee) / _protocolFeeDenominator;
+        uint256 pendingActionPrice = _lastPrice;
+        pendingActionPrice -= (pendingActionPrice * _protocolFee) / PROTOCOL_FEE_DENOMINATOR;
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateWithdrawal,
@@ -179,7 +181,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // reverts if liquidationPrice >= entryPrice
             // Inline calculation to avoid stack too deep
             leverage = _getLeverage(
-                (currentPrice.price + (currentPrice.price * _protocolFee) / _protocolFeeDenominator).toUint128(),
+                (currentPrice.price + (currentPrice.price * _protocolFee) / PROTOCOL_FEE_DENOMINATOR).toUint128(),
                 liqPriceWithoutPenalty
             );
             if (leverage < _minLeverage) {
@@ -205,7 +207,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 user: msg.sender,
                 amount: amount,
                 // Inline calculation to avoid stack too deep
-                startPrice: (currentPrice.price + (currentPrice.price * _protocolFee) / _protocolFeeDenominator).toUint128(),
+                startPrice: (currentPrice.price + (currentPrice.price * _protocolFee) / PROTOCOL_FEE_DENOMINATOR).toUint128(
+                ),
                 leverage: leverage,
                 timestamp: timestamp
             });
@@ -375,14 +378,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                     deposit.balanceVault,
                     deposit.balanceLong,
                     // Price with fees (Inline calculation to avoid stack too deep)
-                    (depositPrice_.price + (depositPrice_.price * _protocolFee) / _protocolFeeDenominator).toUint128(), // new
+                    (depositPrice_.price + (depositPrice_.price * _protocolFee) / PROTOCOL_FEE_DENOMINATOR).toUint128(), // new
                         // price
                     deposit.assetPrice // old price
                 )
             ),
             deposit.usdnTotalSupply,
             // Price with fees (Inline calculation to avoid stack too deep)
-            depositPrice_.price + (depositPrice_.price * _protocolFee) / _protocolFeeDenominator
+            depositPrice_.price + (depositPrice_.price * _protocolFee) / PROTOCOL_FEE_DENOMINATOR
         );
         uint256 usdnToMint;
         if (usdnToMint1 <= usdnToMint2) {
@@ -432,9 +435,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _applyPnlAndFunding(withdrawalPrice.neutralPrice.toUint128(), withdrawalPrice.timestamp.toUint128());
 
         // Apply fees on price
-        // we use `_lastPrice` because it might be more recent than `currentPrice.price`
         uint256 withdrawalPriceWithFees =
-            withdrawalPrice.price - (withdrawalPrice.price * _protocolFee) / _protocolFeeDenominator;
+            withdrawalPrice.price - (withdrawalPrice.price * _protocolFee) / PROTOCOL_FEE_DENOMINATOR;
 
         // We calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
@@ -512,7 +514,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // reverts if liquidationPrice >= entryPrice
         // Inline calculation to avoid stack too deep
         uint128 leverage = _getLeverage(
-            (price.price + (price.price * _protocolFee) / _protocolFeeDenominator).toUint128(), liqPriceWithoutPenalty
+            (price.price + (price.price * _protocolFee) / PROTOCOL_FEE_DENOMINATOR).toUint128(), liqPriceWithoutPenalty
         );
         // Leverage is always greater than 1 (liquidationPrice is positive).
         // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
@@ -526,7 +528,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         Position storage pos = _longPositions[tickHash][long.index];
         pos.leverage = leverage;
         // Inline calculation to avoid stack too deep
-        pos.startPrice = (price.price + (price.price * _protocolFee) / _protocolFeeDenominator).toUint128();
+        pos.startPrice = (price.price + (price.price * _protocolFee) / PROTOCOL_FEE_DENOMINATOR).toUint128();
 
         emit ValidatedOpenPosition(
             long.user, pos, long.tick, long.tickVersion, long.index, getEffectivePriceForTick(long.tick)
@@ -554,9 +556,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             long.timestamp, ProtocolAction.ValidateClosePosition, priceData
         );
-
-        // Apply fees on price
-        uint256 positionPriceWithFees = price.price - (price.price * _protocolFee) / _protocolFeeDenominator;
 
         // adjust balances
         _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
@@ -620,7 +619,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // Apply fees on lastPrice
-        uint256 positionPriceWithFees = lastPrice - (lastPrice * _protocolFee) / _protocolFeeDenominator;
+        uint256 positionPriceWithFees = lastPrice - (lastPrice * _protocolFee) / PROTOCOL_FEE_DENOMINATOR;
 
         // Calculate position value
         int256 value = _positionValue(

@@ -27,5 +27,5 @@ interface IOracleMiddlewareErrors {
     error OracleMiddlewarePriceTooOld(int256 price, uint256 timestamp);
 
     /// @notice the confidence ratio is too high
-    error ConfRatioTooHigh();
+    error OracleMiddlewareConfRatioTooHigh();
 }

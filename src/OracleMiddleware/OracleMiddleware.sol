@@ -13,8 +13,6 @@ import {
 } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-
 /**
  * @title OracleMiddleware contract
  * @notice This contract is used to get the price of an asset from different price oracle.
@@ -108,20 +106,16 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         FormattedPythPrice memory pythPrice =
             getFormattedPythPrice(data, actionTimestamp + uint64(_validationDelay), DECIMALS);
 
-        if (pythPrice.price != -1) {
-            if (conf == ConfidenceInterval.Down) {
-                price_.price = uint256(pythPrice.price) - (pythPrice.conf * _confRatio / CONF_RATIO_DENOM);
-            } else if (conf == ConfidenceInterval.Up) {
-                price_.price = uint256(pythPrice.price) + (pythPrice.conf * _confRatio / CONF_RATIO_DENOM);
-            } else {
-                price_.price = uint256(pythPrice.price);
-            }
-
-            price_.timestamp = pythPrice.publishTime;
-            price_.neutralPrice = uint256(pythPrice.price);
+        if (conf == ConfidenceInterval.Down) {
+            price_.price = uint256(pythPrice.price) - ((pythPrice.conf * _confRatio) / CONF_RATIO_DENOM);
+        } else if (conf == ConfidenceInterval.Up) {
+            price_.price = uint256(pythPrice.price) + ((pythPrice.conf * _confRatio) / CONF_RATIO_DENOM);
         } else {
             price_.price = uint256(pythPrice.price);
         }
+
+        price_.timestamp = pythPrice.publishTime;
+        price_.neutralPrice = uint256(pythPrice.price);
 
         price_.timestamp = pythPrice.publishTime;
         price_.neutralPrice = uint256(pythPrice.price);
@@ -201,7 +195,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     function setConfRatio(uint16 newConfRatio) external onlyOwner {
         // confidence ratio limit check
         if (newConfRatio > MAX_CONF_RATIO) {
-            revert ConfRatioTooHigh();
+            revert OracleMiddlewareConfRatioTooHigh();
         }
         _confRatio = newConfRatio;
     }

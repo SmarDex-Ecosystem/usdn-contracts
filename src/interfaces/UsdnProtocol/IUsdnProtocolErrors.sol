@@ -47,4 +47,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided tick version is outdated (transactions have been liquidated)
     error UsdnProtocolOutdatedTick(uint256 currentVersion, uint256 providedVersion);
+
+    /// @dev Indicates that the provided protocol fee exceeds the maximum allowed
+    error UsdnProtocolMaxProtocolFeeExceeded();
 }
