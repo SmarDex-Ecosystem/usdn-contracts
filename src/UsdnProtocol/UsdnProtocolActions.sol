@@ -69,12 +69,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         emit InitiatedDeposit(msg.sender, amount);
         validationCost += _executePendingAction(previousActionPriceData);
-        if (msg.value > validationCost) {
-            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        refundExcessEther(validationCost);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -85,12 +80,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         uint256 validationCost = _validateDeposit(msg.sender, depositPriceData);
         validationCost += _executePendingAction(previousActionPriceData);
-        if (msg.value > validationCost) {
-            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        refundExcessEther(validationCost);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -138,12 +128,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit InitiatedWithdrawal(msg.sender, usdnAmount);
 
         validationCost += _executePendingAction(previousActionPriceData);
-        if (msg.value > validationCost) {
-            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        refundExcessEther(validationCost);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -154,12 +139,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         uint256 validationCost = _validateWithdrawal(msg.sender, withdrawalPriceData);
         validationCost += _executePendingAction(previousActionPriceData);
-        if (msg.value > validationCost) {
-            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        refundExcessEther(validationCost);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -247,12 +227,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
 
         validationCost += _executePendingAction(previousActionPriceData);
-        if (msg.value > validationCost) {
-            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        refundExcessEther(validationCost);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -263,12 +238,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         uint256 validationCost = _validateOpenPosition(msg.sender, openPriceData);
         validationCost += _executePendingAction(previousActionPriceData);
-        if (msg.value > validationCost) {
-            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        refundExcessEther(validationCost);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -332,12 +302,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit InitiatedClosePosition(msg.sender, tick, tickVersion, index);
 
         validationCost += _executePendingAction(previousActionPriceData);
-        if (msg.value > validationCost) {
-            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        refundExcessEther(validationCost);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -348,12 +313,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         uint256 validationCost = _validateClosePosition(msg.sender, closePriceData);
         validationCost += _executePendingAction(previousActionPriceData);
-        if (msg.value > validationCost) {
-            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        refundExcessEther(validationCost);
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -373,12 +333,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // TODO: add liquidator incentive if needed
 
-        if (msg.value > validationCost) {
-            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        refundExcessEther(validationCost);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal returns (uint256 validationCost_) {
@@ -721,6 +676,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             validationCost_ = _validateOpenPositionWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateClosePosition) {
             validationCost_ = _validateClosePositionWithAction(pending, priceData);
+        }
+    }
+
+    function refundExcessEther(uint256 validationCost) internal {
+        if (msg.value > validationCost) {
+            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
+            if (!success) {
+                revert UsdnProtocolEtherRefundFailed();
+            }
         }
     }
 }
