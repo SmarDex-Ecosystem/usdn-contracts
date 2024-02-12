@@ -51,7 +51,9 @@ contract PythOracle is IOracleMiddlewareErrors {
         // refund unused ether
         if (msg.value > pythFee) {
             (bool success,) = payable(msg.sender).call{ value: msg.value - pythFee }("");
-            success; // continue execution even if refund failed
+            if (!success) {
+                revert OracleMiddlewareEtherRefundFailed();
+            }
         }
 
         return priceFeeds[0].price;
