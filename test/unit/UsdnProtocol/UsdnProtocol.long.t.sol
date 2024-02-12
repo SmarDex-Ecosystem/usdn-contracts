@@ -51,12 +51,16 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice =
             protocol.getLiquidationPrice(4000 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
 
-        protocol.initiateOpenPosition(500 ether, desiredLiqPrice, priceData, "");
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(500 ether, desiredLiqPrice, priceData, "");
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
         }(priceData, "");
         skip(1 days);
-        protocol.initiateDeposit(1, priceData, "");
+        protocol.initiateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateDeposit) }(
+            1, priceData, ""
+        );
         protocol.validateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateDeposit) }(
             priceData, ""
         );
@@ -77,12 +81,16 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_getMinLiquidationPrice_multiplierLtOne() public {
         bytes memory priceData = abi.encode(4000 ether);
 
-        protocol.initiateDeposit(5000 ether, priceData, "");
+        protocol.initiateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateDeposit) }(
+            5000 ether, priceData, ""
+        );
         protocol.validateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateDeposit) }(
             priceData, ""
         );
         skip(6 days);
-        protocol.initiateDeposit(1, priceData, "");
+        protocol.initiateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateDeposit) }(
+            1, priceData, ""
+        );
         protocol.validateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateDeposit) }(
             priceData, ""
         );

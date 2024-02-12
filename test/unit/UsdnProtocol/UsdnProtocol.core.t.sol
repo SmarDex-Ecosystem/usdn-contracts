@@ -82,12 +82,14 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         wstETH.approve(address(protocol), type(uint256).max);
 
         // create a pending action with a liquidation price around $1700
-        (tick_, tickVersion_, index_) =
-            protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
+        bytes memory priceData = abi.encode(uint128(2000 ether));
+        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(1 ether, 1700 ether, priceData, "");
 
         // the price drops to $1500 and the position gets liquidated
         skip(30);
-        bytes memory priceData = abi.encode(uint128(1500 ether));
+        priceData = abi.encode(uint128(1500 ether));
         protocol.liquidate{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation) }(
             priceData, 10
         );
@@ -110,10 +112,13 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_stalePendingActionReInit() public {
         (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
 
+        bytes memory priceData = abi.encode(uint128(1500 ether));
         // we should be able to open a new position
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(uint128(1500 ether)), "");
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(1 ether, 1000 ether, priceData, "");
     }
 
     /**
@@ -210,13 +215,15 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(20 ether, price / 2, priceData, "");
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(20 ether, price / 2, priceData, "");
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
         }(priceData, "");
 
         // we create a deposit to make the long and vault expos equal
-        protocol.initiateDeposit(
+        protocol.initiateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateDeposit) }(
             uint128(uint256(protocol.i_longTradingExpo(price) - protocol.i_vaultTradingExpo(price))), priceData, ""
         );
         protocol.validateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateDeposit) }(

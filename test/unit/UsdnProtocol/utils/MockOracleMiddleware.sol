@@ -47,15 +47,8 @@ contract MockOracleMiddleware is IOracleMiddleware {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function validationCost(bytes calldata, ProtocolAction action) external pure returns (uint256) {
-        if (
-            action == ProtocolAction.None || action == ProtocolAction.ValidateDeposit
-                || action == ProtocolAction.ValidateWithdrawal || action == ProtocolAction.ValidateOpenPosition
-                || action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.Liquidation
-        ) {
-            return 1;
-        }
-        return 0;
+    function validationCost(bytes calldata, ProtocolAction) external pure returns (uint256) {
+        return 1;
     }
 
     function updateValidationDelay(uint256 newDelay) external {

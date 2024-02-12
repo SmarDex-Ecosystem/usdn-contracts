@@ -43,7 +43,9 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(4000 ether);
         uint128 desiredLiqPrice = 2000 ether;
 
-        protocol.initiateOpenPosition(5 ether, desiredLiqPrice, priceData, "");
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(5 ether, desiredLiqPrice, priceData, "");
         assertEq(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)

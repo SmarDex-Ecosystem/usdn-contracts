@@ -29,7 +29,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         for (uint256 i; i < 10; i++) {
             vm.startPrank(users[i]);
-            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition{
+                value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+            }(5 ether, 1700 ether, priceData, "");
             protocol.validateOpenPosition{
                 value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
             }(priceData, "");
@@ -58,7 +60,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, 1000 ether, 1_689_332_686_299_800_182_465);
         // initiate a position to liquidate all other positions
-        protocol.initiateOpenPosition(5 ether, 500 ether, priceData, "");
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(5 ether, 500 ether, priceData, "");
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
         }(priceData, "");
@@ -95,7 +99,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         for (uint256 i; i < 10; i++) {
             vm.startPrank(users[i]);
-            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition{
+                value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+            }(5 ether, 1700 ether, priceData, "");
             protocol.validateOpenPosition{
                 value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
             }(priceData, "");
@@ -163,8 +169,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         for (uint256 i; i < length; i++) {
             vm.startPrank(users[i]);
-            (initialTicks[i],,) =
-                protocol.initiateOpenPosition(20 ether, uint128(actualPrice * 80 / 100), priceData, "");
+            (initialTicks[i],,) = protocol.initiateOpenPosition{
+                value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+            }(20 ether, uint128(actualPrice * 80 / 100), priceData, "");
             protocol.validateOpenPosition{
                 value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
             }(priceData, "");
@@ -253,7 +260,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         for (uint256 i; i < 10; i++) {
             vm.startPrank(users[i]);
-            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition{
+                value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+            }(5 ether, 1700 ether, priceData, "");
             protocol.validateOpenPosition{
                 value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
             }(priceData, "");
@@ -294,15 +303,18 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(uint128(currentPrice));
 
         // create high risk position
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(5 ether, 9 * currentPrice / 10, priceData, "");
+        (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(5 ether, 9 * currentPrice / 10, priceData, "");
         skip(oracleMiddleware.validationDelay() + 1);
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
         }(priceData, "");
 
         // create large low-risk position to affect funding rates
-        protocol.initiateOpenPosition(500_000 ether, currentPrice / 2, priceData, "");
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(500_000 ether, currentPrice / 2, priceData, "");
         skip(oracleMiddleware.validationDelay() + 1);
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)

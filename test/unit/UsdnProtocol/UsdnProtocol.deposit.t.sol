@@ -38,7 +38,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit InitiatedDeposit(address(this), depositAmount); // expected event
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit{ value: oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit) }(
+            depositAmount, currentPrice, ""
+        );
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
         assertEq(
@@ -72,8 +74,10 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with `UsdnProtocolZeroAmount`
      */
     function test_RevertWhen_zeroAmount() public {
+        bytes memory priceData = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateDeposit);
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateDeposit(0, abi.encode(uint128(2000 ether)), "");
+        protocol.initiateDeposit{ value: validationCost }(0, priceData, "");
     }
 
     /**
@@ -117,7 +121,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit{ value: oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit) }(
+            depositAmount, currentPrice, ""
+        );
         uint256 vaultBalance = protocol.balanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation

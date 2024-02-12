@@ -18,7 +18,9 @@ contract UsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixture {
         (bool success,) = address(WST_ETH).call{ value: 10 ether }("");
         require(success, "USER_1 wstETH mint failed");
         WST_ETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, "", "");
+        protocol.initiateOpenPosition{ value: wstethMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
+            1 ether, 1000 ether, "", ""
+        );
         uint256 ts1 = block.timestamp;
         vm.stopPrank();
         skip(30);
@@ -26,7 +28,9 @@ contract UsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixture {
         (success,) = address(WST_ETH).call{ value: 10 ether }("");
         require(success, "USER_2 wstETH mint failed");
         WST_ETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, "", "");
+        protocol.initiateOpenPosition{ value: wstethMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
+            1 ether, 1000 ether, "", ""
+        );
         uint256 ts2 = block.timestamp;
         vm.stopPrank();
 

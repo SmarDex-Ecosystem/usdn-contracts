@@ -7,6 +7,7 @@ import { WstethIntegrationFixture } from "test/integration/OracleMiddleware/util
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is WstethIntegrationFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
@@ -46,7 +47,9 @@ contract UsdnProtocolBaseIntegrationFixture is WstethIntegrationFixture, IUsdnPr
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         WST_ETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
-        protocol.initialize(
+        protocol.initialize{
+            value: wstethMiddleware.validationCost(abi.encode(testParams.initialPrice), ProtocolAction.Initialize)
+        }(
             testParams.initialDeposit,
             testParams.initialLong,
             testParams.initialPrice / 2,

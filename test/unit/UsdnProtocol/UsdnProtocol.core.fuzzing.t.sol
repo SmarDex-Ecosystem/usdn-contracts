@@ -46,8 +46,9 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
             uint256 longLeverage = (random % 3) + 2;
             uint256 longLiqPrice = currentPrice / longLeverage;
             vm.startPrank(users[i]);
-            (int24 tick, uint256 tickVersion, uint256 index) =
-                protocol.initiateOpenPosition(uint96(longAmount), uint128(longLiqPrice), abi.encode(currentPrice), "");
+            (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition{
+                value: oracleMiddleware.validationCost(abi.encode(currentPrice), ProtocolAction.InitiateOpenPosition)
+            }(uint96(longAmount), uint128(longLiqPrice), abi.encode(currentPrice), "");
             protocol.validateOpenPosition{
                 value: oracleMiddleware.validationCost(abi.encode(currentPrice), ProtocolAction.ValidateOpenPosition)
             }(abi.encode(currentPrice), "");
@@ -59,7 +60,9 @@ contract TestUsdnProtocolCoreFuzzing is UsdnProtocolBaseFixture {
 
             // create a random short position
             uint256 shortAmount = (random % 9 ether) + 1 ether;
-            protocol.initiateDeposit(uint128(shortAmount), abi.encode(currentPrice), "");
+            protocol.initiateDeposit{
+                value: oracleMiddleware.validationCost(abi.encode(currentPrice), ProtocolAction.InitiateDeposit)
+            }(uint128(shortAmount), abi.encode(currentPrice), "");
             protocol.validateDeposit{
                 value: oracleMiddleware.validationCost(abi.encode(currentPrice), ProtocolAction.ValidateDeposit)
             }(abi.encode(currentPrice), "");
