@@ -40,6 +40,10 @@ abstract contract UsdnProtocolActions is UsdnProtocolLong {
             revert UsdnProtocolZeroAmount();
         }
 
+        if (to == address(0)) {
+            revert UsdnProtocolZeroAddressTo();
+        }
+
         uint40 timestamp = uint40(block.timestamp);
 
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(

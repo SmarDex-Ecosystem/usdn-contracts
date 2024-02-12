@@ -180,7 +180,10 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();
 
-    /// @dev Indicates that the initilization deposit is too low
+    /// @dev Indicates that the provided parameter to is zero
+    error UsdnProtocolZeroAddressTo();
+
+    /// @dev Indicates that the initialization deposit is too low
     error UsdnProtocolMinInitAmount(uint256 minInitAmount);
 
     /// @dev Indicates that the provided USDN contract has a total supply above zero at deployment
