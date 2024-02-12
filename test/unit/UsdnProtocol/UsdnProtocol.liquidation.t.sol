@@ -13,7 +13,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         wstETH.approve(address(protocol), type(uint256).max);
     }
 
-    /* @custom:scenario Simulate user open positions then
+    /**
+     * @custom:scenario Simulate user open positions then
      * a price drawdown and liquidations by other user action.
      * @custom:given User open positions
      * @custom:and Simulate a price drawdown
@@ -74,7 +75,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(protocol.totalLongPositions(), 3, "wrong second totalLongPositions");
     }
 
-    /* @custom:scenario Simulate user open positions then
+    /**
+     * @custom:scenario Simulate user open positions then
      * a price drawdown and liquidations by liquidators with above max iteration.
      * @custom:given User open positions
      * @custom:and Block number increase 20
@@ -135,7 +137,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(protocol.totalLongPositions(), 2, "wrong second totalLongPositions");
     }
 
-    /* @custom:scenario Simulate user open positions on many different tick then
+    /**
+     * @custom:scenario Simulate user open positions on many different tick then
      * a price drawdown and liquidations by liquidators.
      * @custom:given User open positions
      * @custom:and Simulate a 20 price drawdown
@@ -225,7 +228,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(protocol.totalLongPositions(), 2, "wrong second totalLongPositions");
     }
 
-    /* @custom:scenario Simulate user open positions on many different tick then
+    /**
+     * @custom:scenario Simulate user open positions on many different tick then
      * a price drawdown and liquidation with maxLiquidationIteration + 1
      * @custom:given Users open positions
      * @custom:and Simulate a 50% price drawdown
