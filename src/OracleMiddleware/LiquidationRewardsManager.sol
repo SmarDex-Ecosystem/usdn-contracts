@@ -15,20 +15,49 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
  * @dev This contract is a middleware between the USDN protocol and the gas price oracle.
  */
 contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracle, Ownable {
-    uint8 private constant GAS_PRICE_DECIMALS = 9;
+    /**
+     * @notice Parameters for the rewards calculation.
+     * @param gasUsedPerTick Gas used per tick to liquidate.
+     * @param baseGasUsed Gas used for the rest of the computation.
+     * @param gasPriceLimit Upper limit for the gas price.
+     * @param multiplier Multiplier for the liquidators.
+     */
+    struct RewardsParameters {
+        uint32 gasUsedPerTick;
+        uint32 baseGasUsed;
+        uint64 gasPriceLimit;
+        uint16 multiplier; // to be divided by REWARD_MULTIPLIER_DENOMINATOR
+    }
+
+    /**
+     * @notice Emitted when the rewards parameters are changed.
+     * @param gasUsedPerTick Gas used per tick to liquidate.
+     * @param baseGasUsed Gas used for the rest of the computation.
+     * @param gasPriceLimit Upper limit for the gas price.
+     * @param multiplier Multiplier for the liquidators.
+     */
+    event UpdateRewardsParameters(uint32 gasUsedPerTick, uint32 baseGasUsed, uint64 gasPriceLimit, uint16 multiplier);
+
+    /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
+    error LiquidationRewardsManagerGasUsedPerTickTooHigh(uint256 value);
+    /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
+    error LiquidationRewardsManagerBaseGasUsedTooHigh(uint256 value);
+    /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
+    error LiquidationRewardsManagerGasPriceLimitTooHigh(uint256 value);
+    /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
+    error LiquidationRewardsManagerMultiplierTooHigh(uint256 value);
+
+    /// @notice Denominator for the reward multiplier, will give us a 0.1% precision.
     uint8 public constant REWARD_MULTIPLIER_DENOMINATOR = 100;
+    uint8 public constant GAS_PRICE_DECIMALS = 9;
 
     /// @notice Address of the wstETH contract.
     IWstETH private immutable _wstEth;
 
-    /// @notice Gas used per tick to liquidate.
-    uint256 private _gasUsedPerTick = 27_671;
-    /// @notice Gas used for the rest of the computation.
-    uint256 private _baseGasUsed = 25_481 + 21_000;
-    /// @notice Upper limit for the gas price.
-    uint256 private _gasPriceLimit = 1000 * (10 ** GAS_PRICE_DECIMALS);
-    /// @notice Reward multiplier for the liquidators.
-    uint16 private _rewardsMultiplier = 200; // to be divided by REWARD_MULTIPLIER_DENOMINATOR
+    /// @notice Parameters for the rewards calculation
+    /// @dev Those values need to be updated if the gas cost changes.
+    RewardsParameters private _rewardsParameters =
+        RewardsParameters(27_671, 29_681 + 21_000, uint64(1000 * (10 ** GAS_PRICE_DECIMALS)), 200);
 
     constructor(address chainlinkGasPriceFeed, IWstETH wstETHAddress, uint256 chainlinkElapsedTimeLimit)
         Ownable(msg.sender)
@@ -42,7 +71,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * @dev This function cannot return a value higher than the _gasPriceLimit storage variable.
      * @return _gasPrice The gas price.
      */
-    function getGasPrice() private view returns (uint256 _gasPrice) {
+    function _getGasPrice(RewardsParameters memory rewardsParameters) private view returns (uint256 _gasPrice) {
         _gasPrice = (getChainlinkPrice()).price;
 
         if (tx.gasprice < _gasPrice) {
@@ -50,79 +79,50 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         }
 
         // Avoid paying an insane amount if network is abnormally congested
-        if (_gasPrice > _gasPriceLimit) {
-            _gasPrice = _gasPriceLimit;
+        if (_gasPrice > rewardsParameters.gasPriceLimit) {
+            _gasPrice = rewardsParameters.gasPriceLimit;
         }
     }
 
     /// @inheritdoc ILiquidationRewardsManager
     function getLiquidationRewards(uint16 tickAmount) external view returns (uint256 _wstETHRewards) {
-        uint256 gasUsed = _baseGasUsed + _gasUsedPerTick * tickAmount;
-        _wstETHRewards =
-            _wstEth.getWstETHByStETH(gasUsed * getGasPrice() * _rewardsMultiplier / REWARD_MULTIPLIER_DENOMINATOR);
+        RewardsParameters memory rewardsParameters = _rewardsParameters;
+        // Calculate te amount of gas spent during the liquidation.
+        uint256 gasUsed = rewardsParameters.baseGasUsed + rewardsParameters.gasUsedPerTick * tickAmount;
+        // Multiply by the gas price and the rewards multiplier.
+        _wstETHRewards = _wstEth.getWstETHByStETH(
+            gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplier / REWARD_MULTIPLIER_DENOMINATOR
+        );
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                          Storage Setters & Getters                         */
-    /* -------------------------------------------------------------------------- */
-
-    /// @notice Returns the amount of gas used per tick.
-    function getGasUsedPerTick() external view returns (uint256) {
-        return _gasUsedPerTick;
-    }
-
-    /**
-     * @notice Set a new value for the gas usded per tick.
-     * @param newGasUsedPerTick The new gas used per tick value.
-     */
-    function setGasUsedPerTick(uint256 newGasUsedPerTick) external onlyOwner {
-        _gasUsedPerTick = newGasUsedPerTick;
-
-        emit UpdateGasUsedPerTick(newGasUsedPerTick);
-    }
-
-    /// @notice Returns the amount of gas used by a liquidation transaction, minus the calculation per tick.
-    function getBaseGasUsed() external view returns (uint256) {
-        return _baseGasUsed;
+    /// @notice Returns the parameters used to calculate the rewards for a liquidation.
+    function getRewardsParameters() external view returns (RewardsParameters memory) {
+        return _rewardsParameters;
     }
 
     /**
-     * @notice Set a new value for the base gas used.
-     * @param newBaseGasUsed The new base gas used value.
+     * @notice Set new parameters for the rewards calculation.
+     * @param gasUsedPerTick Gas used per tick to liquidate.
+     * @param baseGasUsed Gas used for the rest of the computation.
+     * @param gasPriceLimit Upper limit for the gas price.
+     * @param multiplier Multiplier for the liquidators.
      */
-    function setBaseGasUsed(uint256 newBaseGasUsed) external onlyOwner {
-        _baseGasUsed = newBaseGasUsed;
+    function setRewardsParameters(uint32 gasUsedPerTick, uint32 baseGasUsed, uint64 gasPriceLimit, uint16 multiplier)
+        external
+        onlyOwner
+    {
+        if (gasUsedPerTick > 100_000) {
+            revert LiquidationRewardsManagerGasUsedPerTickTooHigh(gasUsedPerTick);
+        } else if (baseGasUsed > 200_000) {
+            revert LiquidationRewardsManagerBaseGasUsedTooHigh(baseGasUsed);
+        } else if (gasPriceLimit > (8000 * (10 ** GAS_PRICE_DECIMALS))) {
+            revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
+        } else if (multiplier > 10) {
+            revert LiquidationRewardsManagerMultiplierTooHigh(multiplier);
+        }
 
-        emit UpdateBaseGasUsed(newBaseGasUsed);
-    }
+        _rewardsParameters = RewardsParameters(gasUsedPerTick, baseGasUsed, gasPriceLimit, multiplier);
 
-    /// @notice Returns the gas price limit for the rewards calculation.
-    function getGasPriceLimit() external view returns (uint256) {
-        return _gasPriceLimit;
-    }
-
-    /**
-     * @notice Set a new gas price limit.
-     * @param newGasPriceLimit The new gas price limit value.
-     */
-    function setGasPriceLimit(uint256 newGasPriceLimit) external onlyOwner {
-        _gasPriceLimit = newGasPriceLimit;
-
-        emit UpdateGasPriceLimit(newGasPriceLimit);
-    }
-
-    /// @notice Returns the liquidator rewards multiplier.
-    function getRewardsMultiplier() external view returns (uint16) {
-        return _rewardsMultiplier;
-    }
-
-    /**
-     * @notice Set a new rewards multiplier.
-     * @param newRewardsMultiplier The new rewards multiplier value.
-     */
-    function setRewardsMultiplier(uint16 newRewardsMultiplier) external onlyOwner {
-        _rewardsMultiplier = newRewardsMultiplier;
-
-        emit UpdateRewardsMultiplier(newRewardsMultiplier);
+        emit UpdateRewardsParameters(gasUsedPerTick, baseGasUsed, gasPriceLimit, multiplier);
     }
 }
