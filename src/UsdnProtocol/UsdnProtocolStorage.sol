@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
-
-import { IUsdnProtocolStorage } from "src/interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
+import {
+    IUsdn,
+    IUsdnProtocolStorage,
+    IOracleMiddleware,
+    IERC20Metadata,
+    Position
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReentrancyGuard {
@@ -145,7 +146,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The total exposure (with asset decimals)
     uint256 internal _totalExpo;
 
-    /// @notice The liquidation price tick versions
+    /// @notice The liquidation tick version.
     // slither-disable-next-line uninitialized-state
     mapping(int24 => uint256) internal _tickVersion;
 
@@ -169,31 +170,61 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /**
      * @notice Constructor.
-     * @param usdn The USDN ERC20 contract.
-     * @param asset The asset ERC20 contract (wstETH).
-     * @param oracleMiddleware The oracle middleware contract.
+     * @param usdn_ The USDN ERC20 contract.
+     * @param asset_ The asset ERC20 contract (wstETH).
+     * @param oracleMiddleware_ The oracle middleware contract.
      * @param tickSpacing_ The positions tick spacing.
      */
-    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing_) {
+    constructor(IUsdn usdn_, IERC20Metadata asset_, IOracleMiddleware oracleMiddleware_, int24 tickSpacing_) {
         // Since all USDN must be minted by the protocol, we check that the total supply is 0
-        if (usdn.totalSupply() != 0) {
-            revert UsdnProtocolInvalidUsdn(address(usdn));
+        if (usdn_.totalSupply() != 0) {
+            revert UsdnProtocolInvalidUsdn(address(usdn_));
         }
-        _usdn = usdn;
-        _usdnDecimals = usdn.decimals();
-        _asset = asset;
-        _assetDecimals = asset.decimals();
+        _usdn = usdn_;
+        _usdnDecimals = usdn_.decimals();
+        _asset = asset_;
+        _assetDecimals = asset_.decimals();
         if (_assetDecimals < FUNDING_SF_DECIMALS) {
             revert UsdnProtocolInvalidAssetDecimals(_assetDecimals);
         }
-        _oracleMiddleware = oracleMiddleware;
-        _priceFeedDecimals = oracleMiddleware.decimals();
+        _oracleMiddleware = oracleMiddleware_;
+        _priceFeedDecimals = oracleMiddleware_.decimals();
         _tickSpacing = tickSpacing_;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function tickSpacing() external view returns (int24) {
         return _tickSpacing;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function asset() external view returns (IERC20Metadata) {
+        return _asset;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function priceFeedDecimals() external view returns (uint8) {
+        return _priceFeedDecimals;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function assetDecimals() external view returns (uint8) {
+        return _assetDecimals;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function usdn() external view returns (IUsdn) {
+        return _usdn;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function usdnDecimals() external view returns (uint8) {
+        return _usdnDecimals;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function oracleMiddleware() external view returns (IOracleMiddleware) {
+        return _oracleMiddleware;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -207,7 +238,112 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
+    function fundingRatePerSecond() external view returns (int256) {
+        return _fundingRatePerSecond;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function liquidationPenalty() external view returns (uint24) {
+        return _liquidationPenalty;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function validationDeadline() external view returns (uint256) {
+        return _validationDeadline;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function safetyMargin() external view returns (uint256) {
+        return _safetyMargin;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function liquidationIteration() external view returns (uint16) {
+        return _liquidationIteration;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function EMAPeriod() external view returns (uint128) {
+        return _EMAPeriod;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function fundingSF() external view returns (uint256) {
+        return _fundingSF;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function lastFunding() external view returns (int256) {
+        return _lastFunding;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function lastPrice() external view returns (uint128) {
+        return _lastPrice;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function lastUpdateTimestamp() external view returns (uint128) {
+        return _lastUpdateTimestamp;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
     function liquidationMultiplier() external view returns (uint256) {
         return _liquidationMultiplier;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function pendingActions(address user) external view returns (uint256) {
+        return _pendingActions[user];
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function balanceVault() external view returns (uint256) {
+        return _balanceVault;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function EMA() external view returns (int256) {
+        return _EMA;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function balanceLong() external view returns (uint256) {
+        return _balanceLong;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function totalExpo() external view returns (uint256) {
+        return _totalExpo;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function tickVersion(int24 tick) external view returns (uint256) {
+        return _tickVersion[tick];
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function longPositions(bytes32 tickHash, uint256 index) external view returns (Position memory) {
+        return _longPositions[tickHash][index];
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function totalExpoByTick(bytes32 tickHash) external view returns (uint256) {
+        return _totalExpoByTick[tickHash];
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function positionsInTick(bytes32 tickHash) external view returns (uint256) {
+        return _positionsInTick[tickHash];
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function maxInitializedTick() external view returns (int24) {
+        return _maxInitializedTick;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function totalLongPositions() external view returns (uint256) {
+        return _totalLongPositions;
     }
 }

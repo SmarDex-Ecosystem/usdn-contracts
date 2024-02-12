@@ -23,11 +23,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing)
     { }
 
-    // tick version
-    function tickVersion(int24 _tick) external view returns (uint256) {
-        return _tickVersion[_tick];
-    }
-
     // tick hash
     function tickHash(int24 tick) external view returns (bytes32, uint256) {
         return _tickHash(tick);
@@ -51,40 +46,13 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _positionsInTick[tHash];
     }
 
-    // max initialized tick
-    function maxInitializedTick() external view returns (int24) {
-        return _maxInitializedTick;
-    }
-
-    // Exponantial Moving Average
-    function EMA() external view returns (int256) {
-        return _EMA;
-    }
-
-    // total long position
-    function totalLongPositions() external view returns (uint256) {
-        return _totalLongPositions;
-    }
-
     // fetch max liquidation execution
     function maxLiquidationIteration() external pure returns (uint16) {
         return MAX_LIQUIDATION_ITERATION;
     }
 
-    function validationDeadline() external view returns (uint256) {
-        return _validationDeadline;
-    }
-
     function getUserPendingAction(address user) external returns (PendingAction memory action_) {
         (action_,) = _getPendingAction(user, false); // do not clear
-    }
-
-    function balanceVault() external view returns (uint256) {
-        return _balanceVault;
-    }
-
-    function balanceLong() external view returns (uint256) {
-        return _balanceLong;
     }
 
     function vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
@@ -99,24 +67,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return TickMath.MIN_PRICE;
     }
 
-    function lastPrice() external view returns (uint128) {
-        return _lastPrice;
-    }
-
     function longAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _longAssetAvailable(currentPrice);
     }
 
-    function totalExpo() external view returns (uint256) {
-        return _totalExpo;
-    }
-
     function getLeverage(uint128 startPrice, uint128 liquidationPrice) external pure returns (uint128) {
         return _getLeverage(startPrice, liquidationPrice);
-    }
-
-    function liquidationPenalty() external view returns (uint24) {
-        return _liquidationPenalty;
     }
 
     function getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
