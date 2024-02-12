@@ -10,9 +10,11 @@ import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 contract UsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixture {
     function setUp() public override {
         params = DEFAULT_PARAMS;
+        params.fork = true;
+        _setUp(params);
     }
 
-    function test_ForkFFIValidateTwoPos() public ethMainnetFork reSetUp {
+    function test_ForkFFIValidateTwoPos() public {
         // Setup 2 pending actions
         vm.startPrank(USER_1);
         (bool success,) = address(WST_ETH).call{ value: 10 ether }("");

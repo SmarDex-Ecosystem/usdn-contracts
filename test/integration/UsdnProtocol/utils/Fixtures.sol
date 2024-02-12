@@ -17,6 +17,7 @@ contract UsdnProtocolBaseIntegrationFixture is WstethIntegrationFixture, IUsdnPr
         uint128 initialPrice;
         uint256 initialTimestamp;
         uint256 initialBlock;
+        bool fork;
     }
 
     SetUpParams public params;
@@ -25,22 +26,23 @@ contract UsdnProtocolBaseIntegrationFixture is WstethIntegrationFixture, IUsdnPr
         initialLong: 5 ether,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
-        initialBlock: block.number
+        initialBlock: block.number,
+        fork: false
     });
 
     Usdn public usdn;
     UsdnProtocol public protocol;
 
-    modifier reSetUp() override {
-        _setUp(params);
-        _;
-    }
-
     function _setUp(SetUpParams memory testParams) public virtual {
+        if (testParams.fork) {
+            string memory url = vm.rpcUrl("mainnet");
+            vm.createSelectFork(url);
+            dealAccounts(); // provide test accounts with ETH again
+        }
         super.setUp();
         vm.warp(testParams.initialTimestamp);
         vm.startPrank(DEPLOYER);
-        (bool success,) = address(WST_ETH).call{ value: 100_000 ether }("");
+        (bool success,) = address(WST_ETH).call{ value: 1000 ether }("");
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
         protocol = new UsdnProtocol(usdn, WST_ETH, wstethMiddleware, 100); // tick spacing 100 = 1%
