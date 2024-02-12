@@ -40,6 +40,7 @@ contract PythOracle is IOracleMiddlewareErrors {
         pricesUpdateData[0] = priceUpdateData;
 
         uint256 pythFee = _pyth.getUpdateFee(pricesUpdateData);
+        // slither-disable-next-line arbitrary-send-eth
         PythStructs.PriceFeed[] memory priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: pythFee }(
             pricesUpdateData, priceIds, targetTimestamp, type(uint64).max
         );
@@ -50,6 +51,7 @@ contract PythOracle is IOracleMiddlewareErrors {
 
         // refund unused ether
         if (msg.value > pythFee) {
+            // slither-disable-next-line arbitrary-send-eth
             (bool success,) = payable(msg.sender).call{ value: msg.value - pythFee }("");
             if (!success) {
                 revert OracleMiddlewareEtherRefundFailed();
