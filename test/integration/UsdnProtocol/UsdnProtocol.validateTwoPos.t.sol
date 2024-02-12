@@ -7,13 +7,24 @@ import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtoco
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 
+/**
+ * @custom:feature Validating two positions with Pyth prices at the same time
+ * @custom:background Given a forked ethereum mainnet chain
+ */
 contract UsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixture {
     function setUp() public override {
         params = DEFAULT_PARAMS;
-        params.fork = true;
+        params.fork = true; // all tests in this contract must be labelled `Fork`
         _setUp(params);
     }
 
+    /**
+     * @custom:scenario Validate two new positions in a single transaction by providing a second price signature
+     * @custom:given Two pending open position actions from different users are awaiting confirmation
+     * @custom:and The validation deadline has elapsed
+     * @custom:when The second user submits the price signatures for his transaction and the first user's transaction
+     * @custom:then Both pending actions get validated
+     */
     function test_ForkFFIValidateTwoPos() public {
         // Setup 2 pending actions
         vm.startPrank(USER_1);
@@ -47,6 +58,7 @@ contract UsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixture {
         vm.prank(USER_2);
         protocol.validateOpenPosition{ value: data1Fee + data2Fee }(data2, data1);
         // No more pending action
+        vm.prank(address(0)); // simulate front-end call by someone else
         PendingAction memory action = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(0));
         vm.stopPrank();
