@@ -97,6 +97,12 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The scaling factor (SF) of the funding rate (0.12)
     uint256 internal _fundingSF = 12 * 10 ** (FUNDING_SF_DECIMALS - 2);
 
+    /// @notice The fee when the vault sends amount to the long positions (10 bips = 0.1%)
+    uint256 public feeBips = 10;
+
+    // TO DO : add natspec
+    address public feeCollector;
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
@@ -116,6 +122,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * tends to 0 and high values (uint256.max have 78 digits).
      */
     uint256 internal _liquidationMultiplier = 100_000_000_000_000_000_000_000_000_000_000_000_000;
+
+    /// @notice The pending protocol fee accumulator
+    uint256 internal _pendingProtocolFee;
 
     /* -------------------------- Pending actions queue ------------------------- */
 
@@ -209,5 +218,12 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function liquidationMultiplier() external view returns (uint256) {
         return _liquidationMultiplier;
+    }
+
+    // TO DO : add in the interface with natspec
+    // TO DO : onlyOwner
+    function setFee(uint256 _feeBips) external {
+        require(_feeBips <= 10_000, "Fee cannot exceed 100% (10000 bips)");
+        feeBips = _feeBips;
     }
 }
