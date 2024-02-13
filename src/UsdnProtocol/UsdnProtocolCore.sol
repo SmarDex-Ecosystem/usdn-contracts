@@ -379,8 +379,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      */
     function _updateEMA(uint128 secondsElapsed) internal {
         // cache variable for optimization
+        // TO DO : add protectio and tests for this
+        // if (secondsElapsed >= _EMAPeriod) {
+        //     _EMA = _lastFunding;
+        // } else {
         int256 intEMAPeriod = _toInt256(_EMAPeriod);
         _EMA = (_lastFunding + _EMA * (intEMAPeriod - _toInt256(secondsElapsed))) / intEMAPeriod;
+        // }
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {

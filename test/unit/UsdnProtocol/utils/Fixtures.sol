@@ -42,7 +42,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     uint128 public defaultPosLeverage;
     uint128 public initialLongLeverage;
     address[] public users;
-    address public feeColelctor = address(0x6969696969696969696969696969696969696969);
+    address public feeCollector = address(0x6969696969696969696969696969696969696969);
 
     function _setUp(SetUpParams memory testParams) public virtual {
         vm.warp(testParams.initialTimestamp);
@@ -50,7 +50,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdn = new Usdn(address(0), address(0));
         wstETH = new WstETH();
         oracleMiddleware = new MockOracleMiddleware();
-        protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 100, feeColelctor); // tick spacing 100 = 1%
+        protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 100, feeCollector); // tick spacing 100 = 1%
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x

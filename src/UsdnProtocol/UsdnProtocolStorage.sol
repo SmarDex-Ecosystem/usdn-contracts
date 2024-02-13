@@ -78,9 +78,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The deadline for a user to confirm their own action
     uint256 internal _validationDeadline = 60 minutes;
 
-    /// @notice The funding rate per second
-    int256 internal _fundingRatePerSecond = 3_472_222_222; // 18 decimals (0.03% daily -> 0.0000003472% per second)
-
     /// @notice The liquidation penalty (in tick spacing units)
     uint24 internal _liquidationPenalty = 2; // 200 ticks -> ~2.02%
 
@@ -243,7 +240,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     // TODO : onlyOwner
     /// @inheritdoc IUsdnProtocolStorage
     function setFeeBips(uint16 protocolFeeBips) external {
-        if (protocolFeeBips > 10_000 || protocolFeeBips < 0) {
+        if (protocolFeeBips > 10_000) {
             revert UsdnProtocolInvalidProtocolFeeBips(protocolFeeBips);
         }
         _protocolFeeBips = protocolFeeBips;
