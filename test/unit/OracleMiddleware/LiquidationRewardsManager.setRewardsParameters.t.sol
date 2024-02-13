@@ -45,7 +45,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
             liquidationRewardsManager.getRewardsParameters();
 
         assertEq(gasUsedPerTick, rewardsParameters.gasUsedPerTick, "The gasUsedPerTick variable was not updated");
-        assertEq(baseGasUsed, rewardsParameters.baseGasUsed, "The baseGasUsed variable was not updated");
+        assertEq(baseGasUsed, rewardsParameters.otherGasUsed, "The baseGasUsed variable was not updated");
         assertEq(gasPriceLimit, rewardsParameters.gasPriceLimit, "The gasPriceLimit variable was not updated");
         assertEq(multiplier, rewardsParameters.multiplier, "The multiplier variable was not updated");
     }

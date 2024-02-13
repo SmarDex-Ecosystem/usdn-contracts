@@ -22,13 +22,13 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /**
      * @notice Parameters for the rewards calculation.
      * @param gasUsedPerTick Gas used per tick to liquidate.
-     * @param baseGasUsed Gas used for the rest of the computation.
+     * @param otherGasUsed Gas used for the rest of the computation.
      * @param gasPriceLimit Upper limit for the gas price.
      * @param multiplier Multiplier for the liquidators.
      */
     struct RewardsParameters {
         uint32 gasUsedPerTick;
-        uint32 baseGasUsed;
+        uint32 otherGasUsed;
         uint64 gasPriceLimit;
         uint16 multiplier; // to be divided by REWARD_MULTIPLIER_DENOMINATOR
     }
@@ -65,8 +65,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
     /// @notice Denominator for the reward multiplier, will give us a 0.1% precision.
     uint16 public constant REWARD_MULTIPLIER_DENOMINATOR = 1000;
-    /// @notice Number of decimals on the gas price, denominated in GWEI (9 decimals)
+    /// @notice Number of decimals on the gas price, denominated in GWEI (9 decimals).
     uint8 public constant GAS_PRICE_DECIMALS = 9;
+    /// @notice Fixed amount of gas a transaction consume.
+    uint16 public constant BASE_GAS_COST = 21_000;
 
     /* -------------------------------------------------------------------------- */
     /*                              Storage Variables                             */
@@ -77,14 +79,19 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
     /// @notice Parameters for the rewards calculation
     /// @dev Those values need to be updated if the gas cost changes.
-    RewardsParameters private _rewardsParameters =
-        RewardsParameters(27_671, 29_681 + 21_000, uint64(1000 * (10 ** GAS_PRICE_DECIMALS)), 2000);
+    RewardsParameters private _rewardsParameters;
 
     constructor(address chainlinkGasPriceFeed, IWstETH wstETH, uint256 chainlinkElapsedTimeLimit)
         Ownable(msg.sender)
         ChainlinkOracle(chainlinkGasPriceFeed, chainlinkElapsedTimeLimit)
     {
         _wstEth = wstETH;
+        _rewardsParameters = RewardsParameters({
+            gasUsedPerTick: 27_671,
+            otherGasUsed: 29_681,
+            gasPriceLimit: uint64(1000 * (10 ** GAS_PRICE_DECIMALS)),
+            multiplier: 2000
+        });
     }
 
     /**
@@ -107,9 +114,15 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
     /// @inheritdoc ILiquidationRewardsManager
     function getLiquidationRewards(uint16 tickAmount) external view returns (uint256 _wstETHRewards) {
+        // Do not give rewards if no ticks were liquidated.
+        if (tickAmount == 0) {
+            return 0;
+        }
+
         RewardsParameters memory rewardsParameters = _rewardsParameters;
         // Calculate te amount of gas spent during the liquidation.
-        uint256 gasUsed = rewardsParameters.baseGasUsed + rewardsParameters.gasUsedPerTick * tickAmount;
+        uint256 gasUsed =
+            rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
         // Multiply by the gas price and the rewards multiplier.
         _wstETHRewards = _wstEth.getWstETHByStETH(
             gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplier / REWARD_MULTIPLIER_DENOMINATOR

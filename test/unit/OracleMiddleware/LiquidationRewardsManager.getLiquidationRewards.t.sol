@@ -29,6 +29,17 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
 
     /**
      * @custom:scenario Call `getLiquidationRewards` function
+     * @custom:when No ticks were liquidated
+     * @custom:then It should return 0
+     */
+    function test_getLiquidationRewardsFor0Tick() public {
+        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(0);
+
+        assertEq(rewards, 0);
+    }
+
+    /**
+     * @custom:scenario Call `getLiquidationRewards` function
      * @custom:when 3 ticks were liquidated
      * @custom:and The tx.gasPrice and oracle gas price feed are equals
      * @custom:and They are both below the gas price limit
