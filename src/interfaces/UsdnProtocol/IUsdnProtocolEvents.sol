@@ -156,5 +156,5 @@ interface IUsdnProtocolEvents {
      * @param feeCollector The collector address.
      * @param amount The amount of fee transferred.
      */
-    event ProtocolFeeDistribued(address feeCollector, uint256 amount);
+    event ProtocolFeeDistributed(address feeCollector, uint256 amount);
 }

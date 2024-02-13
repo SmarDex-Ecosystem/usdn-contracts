@@ -62,7 +62,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
         int256 numerator = longExpo_ - vaultExpo_;
-        // optimization : if numerator is zero, then return the EMA
+        // optimization : if the numerator is zero, then return the EMA
         if (numerator == 0) {
             return (_EMA, longExpo_, vaultExpo_);
         }
@@ -306,12 +306,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
     }
 
-    /// @dev At the time of the last balances update (without taking funding into account)
+    /// @dev At the time of the last balance update (without taking funding into account)
     function _longTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
         expo_ = _totalExpo.toInt256().safeSub(_longAssetAvailable(currentPrice));
     }
 
-    /// @dev At the time of the last balances update (without taking funding into account)
+    /// @dev At the time of the last balance update (without taking funding into account)
     function _vaultTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
         expo_ = _vaultAssetAvailable(currentPrice);
     }
@@ -340,7 +340,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
 
         (_balanceVault, _balanceLong) = _applyFee(newVaultBalance, newLongBalance, oldLongBalance);
-
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fund;
@@ -379,13 +378,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      */
     function _updateEMA(uint128 secondsElapsed) internal {
         // cache variable for optimization
-        // TO DO : add protectio and tests for this
-        // if (secondsElapsed >= _EMAPeriod) {
-        //     _EMA = _lastFunding;
-        // } else {
         int256 intEMAPeriod = _toInt256(_EMAPeriod);
         _EMA = (_lastFunding + _EMA * (intEMAPeriod - _toInt256(secondsElapsed))) / intEMAPeriod;
-        // }
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {
@@ -414,9 +408,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             pendingProtocolFee += uint256(-feeAmount);
         }
 
-        if (pendingProtocolFee >= _feesTreshold) {
+        if (pendingProtocolFee >= _feesThreshold) {
             _distributeAssetsAndCheckBalance(_feeCollector, pendingProtocolFee);
-            emit ProtocolFeeDistribued(_feeCollector, pendingProtocolFee);
+            emit ProtocolFeeDistributed(_feeCollector, pendingProtocolFee);
             _pendingProtocolFee = 0;
         } else {
             _pendingProtocolFee = pendingProtocolFee;

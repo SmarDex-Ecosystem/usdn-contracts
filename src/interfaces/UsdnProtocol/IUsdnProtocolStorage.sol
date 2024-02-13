@@ -61,7 +61,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @notice Set the fee collector address.
      * @param feeCollector The address of the fee collector.
      * @dev The fee collector is the address that receives the fees charged by the protocol
-     * @dev The fee collector must be different from zero address
+     * @dev The fee collector must be different from the zero address
      */
     function setFeeCollector(address feeCollector) external;
 }

@@ -97,10 +97,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The protocol fee percentage (in bips)
     uint16 internal _protocolFeeBips = 10;
 
-    /// @notice The fee collector address
+    /// @notice The fee collector's address
     address internal _feeCollector;
 
-    uint256 internal _feesTreshold = 1 ether;
+    uint256 internal _feesThreshold = 1 ether;
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
