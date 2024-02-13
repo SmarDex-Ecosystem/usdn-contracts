@@ -181,4 +181,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             }
         }
     }
+
+    // receive ether refunds
+    receive() external payable { }
 }

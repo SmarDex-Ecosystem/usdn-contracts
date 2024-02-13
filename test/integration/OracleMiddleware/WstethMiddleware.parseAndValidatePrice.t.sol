@@ -210,4 +210,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             }
         }
     }
+
+    // receive ether refunds
+    receive() external payable { }
 }
