@@ -161,7 +161,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(USDN_AMOUNT, currentPrice, "");
 
-        skip(oracleMiddleware.validationDelay());
+        skip(oracleMiddleware.validationDelay() + 1);
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateWithdrawal);
         uint256 balanceBefore = address(this).balance;
