@@ -90,10 +90,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function initiateWithdrawal(
         uint128 usdnAmount,
         bytes calldata currentPriceData,
-        bytes calldata previousActionPriceData
+        bytes calldata previousActionPriceData,
+        address to
     ) external payable initializedAndNonReentrant {
         if (usdnAmount == 0) {
             revert UsdnProtocolZeroAmount();
+        }
+        if (to == address(0)) {
+            revert UsdnProtocolZeroAddressTo();
         }
 
         uint40 timestamp = uint40(block.timestamp);
@@ -113,7 +117,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             action: ProtocolAction.ValidateWithdrawal,
             timestamp: timestamp,
             user: msg.sender,
-            to: address(0),
+            to: to,
             _unused: 0,
             amount: usdnAmount,
             assetPrice: _lastPrice, // we use `_lastPrice` because it might be more recent than currentPriceData
@@ -128,7 +132,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // retrieve the USDN tokens, checks that balance is sufficient
         _usdn.safeTransferFrom(msg.sender, address(this), usdnAmount);
 
-        emit InitiatedWithdrawal(msg.sender, usdnAmount);
+        emit InitiatedWithdrawal(msg.sender, to, usdnAmount);
         _executePendingAction(previousActionPriceData);
     }
 

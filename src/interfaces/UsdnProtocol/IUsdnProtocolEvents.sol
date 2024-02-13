@@ -28,9 +28,10 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user initiates a withdrawal.
      * @param user The user address.
+     * @param to The address that will receive the assets.
      * @param usdnAmount The amount of USDN that will be burned.
      */
-    event InitiatedWithdrawal(address indexed user, uint256 usdnAmount);
+    event InitiatedWithdrawal(address indexed user, address indexed to, uint256 usdnAmount);
 
     /**
      * @notice Emitted when a user validates a withdrawal.

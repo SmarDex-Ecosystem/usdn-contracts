@@ -5,6 +5,8 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
+import { USER_1 } from "test/utils/Constants.sol";
+
 /**
  * @custom:feature The withdraw function of the USDN Protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
@@ -56,12 +58,27 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The pending action is actionable after the validation deadline has elapsed
      */
     function test_initiateWithdraw() public {
+        _initiateWithdraw(address(this));
+    }
+
+    /**
+     * @custom:scenario The user initiates a withdrawal for 1000 USDN with another address as the beneficiary
+     * @custom:given The price of the asset is $3000
+     * @custom:when The user initiates a withdraw for 1000 USDN with another address as the beneficiary
+     * @custom:then The protocol emits an `InitiatedWithdrawal` event with the right beneficiary
+     * @custom:and The user has a pending action of type `InitiateWithdrawal` with the right beneficiary
+     */
+    function test_initiateWithdrawForAnotherAddress() public {
+        _initiateWithdraw(USER_1);
+    }
+
+    function _initiateWithdraw(address to) internal {
         skip(3600);
         bytes memory currentPrice = abi.encode(uint128(3000 ether));
 
         vm.expectEmit();
-        emit InitiatedWithdrawal(address(this), USDN_AMOUNT); // expected event
-        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "");
+        emit InitiatedWithdrawal(address(this), to, USDN_AMOUNT); // expected event
+        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "", to);
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "usdn user balance");
         assertEq(usdn.balanceOf(address(protocol)), USDN_AMOUNT, "usdn protocol balance");
@@ -78,6 +95,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.ValidateWithdrawal, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
+        assertEq(action.to, to, "action to");
         assertEq(action.amount, USDN_AMOUNT, "action amount");
 
         // the pending action should be actionable after the validation deadline
@@ -85,16 +103,27 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         vm.prank(address(0)); // simulate front-end call by someone else
         action = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(this), "pending action user");
+        assertEq(action.to, to, "pending action user");
     }
 
     /**
-     * @custom:scenario The user validates a withdrawal for 0 USDN
-     * @custom:when The user validates a withdrawal for 0 USDN
+     * @custom:scenario The user initiate a withdrawal for 0 USDN
+     * @custom:when The user initiate a withdrawal for 0 USDN
      * @custom:then The protocol reverts with `UsdnProtocolZeroAmount`
      */
     function test_RevertWhen_zeroAmount() public {
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateWithdrawal(0, abi.encode(uint128(2000 ether)), "");
+        protocol.initiateWithdrawal(0, abi.encode(uint128(2000 ether)), "", address(this));
+    }
+
+    /**
+     * @custom:scenario The user initiate a withdrawal for 0 USDN
+     * @custom:when The user initiate a withdrawal with the to address set to 0
+     * @custom:then The protocol reverts with `UsdnProtocolZeroAddressTo`
+     */
+    function test_RevertWhen_zeroAddressTo() public {
+        vm.expectRevert(UsdnProtocolZeroAddressTo.selector);
+        protocol.initiateWithdrawal(1 ether, abi.encode(uint128(2000 ether)), "", address(0));
     }
 
     /**
@@ -138,7 +167,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         public
     {
         bytes memory currentPrice = abi.encode(initialPrice);
-        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "");
+        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "", address(this));
 
         uint256 vaultBalance = protocol.balanceVault(); // save for withdrawn amount calculation in case price decreases
 

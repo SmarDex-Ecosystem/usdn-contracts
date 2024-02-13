@@ -52,11 +52,13 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param usdnAmount The amount of USDN to burn.
      * @param currentPriceData The current price data
      * @param previousActionPriceData The price data of an actionable pending action.
+     * @param to The address that will receive the assets
      */
     function initiateWithdrawal(
         uint128 usdnAmount,
         bytes calldata currentPriceData,
-        bytes calldata previousActionPriceData
+        bytes calldata previousActionPriceData,
+        address to
     ) external payable;
 
     /**
