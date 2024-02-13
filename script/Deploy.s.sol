@@ -49,7 +49,6 @@ contract Deploy is Script {
             // prod
             if (isProdEnv) {
                 middleware = WstEthOracleMiddleware(middlewareAddress);
-
                 // fork
             } else {
                 middleware = MockWstEthOracleMiddleware(middlewareAddress);
@@ -63,9 +62,9 @@ contract Deploy is Script {
 
             // prod
             if (isProdEnv) {
-                middleware =
-                    new WstEthOracleMiddleware(pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, 1 hours);
-
+                middleware = new WstEthOracleMiddleware(
+                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, (1 hours + 2 minutes)
+                );
                 // fork
             } else {
                 middleware = new MockWstEthOracleMiddleware(
@@ -91,9 +90,9 @@ contract Deploy is Script {
             chainlinkGasPriceFeed = address(new MockChainlinkOnChain());
         }
 
-        // Heartbeat is 2 days but I've seen the aggregator takes a bit more time to process the update TX.
+        // Heartbeat is 2 hours but I've seen the aggregator takes a bit more time to process the update TX.
         LiquidationRewardsManager liquidationRewardsManager =
-            new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), (2 days + 5 minutes));
+            new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), (2 hours + 10 minutes));
 
         // Deploy the protocol with tick spacing 100 = 1%
         UsdnProtocol protocol = new UsdnProtocol(usdn, wstETH, middleware, liquidationRewardsManager, 100);
