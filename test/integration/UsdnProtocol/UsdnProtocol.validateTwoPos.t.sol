@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { USER_1, USER_2, DEPLOYER, PYTH_STETH_USD } from "test/utils/Constants.sol";
+import { USER_1, USER_2, PYTH_STETH_USD } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 
 /**
  * @custom:feature Validating two positions with Pyth prices at the same time

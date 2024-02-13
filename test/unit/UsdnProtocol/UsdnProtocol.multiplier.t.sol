@@ -5,8 +5,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature The `multiplier` variable of the USDN Protocol
  * @custom:background Given a protocol initialized with 100 wstETH in the vault and 5 wstETH in a long position with a

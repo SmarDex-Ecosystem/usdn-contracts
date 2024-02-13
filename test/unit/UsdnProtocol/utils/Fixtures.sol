@@ -9,7 +9,7 @@ import { WstETH } from "test/utils/WstEth.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { Position, PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 
 /**
