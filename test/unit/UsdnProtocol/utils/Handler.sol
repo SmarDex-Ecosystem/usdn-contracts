@@ -19,9 +19,13 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 contract UsdnProtocolHandler is UsdnProtocol {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
-    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
-        UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing)
-    { }
+    constructor(
+        IUsdn usdn,
+        IERC20Metadata asset,
+        IOracleMiddleware oracleMiddleware,
+        int24 tickSpacing,
+        address feeCollector
+    ) UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing, feeCollector) { }
 
     // tick version
     function tickVersion(int24 _tick) external view returns (uint256) {

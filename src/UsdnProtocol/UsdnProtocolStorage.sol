@@ -97,11 +97,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The scaling factor (SF) of the funding rate (0.12)
     uint256 internal _fundingSF = 12 * 10 ** (FUNDING_SF_DECIMALS - 2);
 
-    /// @notice The fee when the vault sends amount to the long positions (10 bips = 0.1%)
-    uint256 public feeBips = 10;
-
     // TO DO : add natspec
-    address public feeCollector;
+    int256 internal _protocolFeeBips = 10;
+
+    // TO DO : add natspec and setter
+    address internal _feeCollector;
+
+    uint256 internal _feesTreshold = 1 ether;
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
@@ -123,6 +125,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     uint256 internal _liquidationMultiplier = 100_000_000_000_000_000_000_000_000_000_000_000_000;
 
+    // TO DO : getter
     /// @notice The pending protocol fee accumulator
     uint256 internal _pendingProtocolFee;
 
@@ -183,11 +186,18 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * @param oracleMiddleware The oracle middleware contract.
      * @param tickSpacing_ The positions tick spacing.
      */
-    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing_) {
+    constructor(
+        IUsdn usdn,
+        IERC20Metadata asset,
+        IOracleMiddleware oracleMiddleware,
+        int24 tickSpacing_,
+        address feeCollector
+    ) {
         // Since all USDN must be minted by the protocol, we check that the total supply is 0
         if (usdn.totalSupply() != 0) {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
+        require(feeCollector != address(0), "Fee collector cannot be the zero address");
         _usdn = usdn;
         _usdnDecimals = usdn.decimals();
         _asset = asset;
@@ -198,6 +208,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _oracleMiddleware = oracleMiddleware;
         _priceFeedDecimals = oracleMiddleware.decimals();
         _tickSpacing = tickSpacing_;
+        _feeCollector = feeCollector;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -222,8 +233,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     // TO DO : add in the interface with natspec
     // TO DO : onlyOwner
-    function setFee(uint256 _feeBips) external {
-        require(_feeBips <= 10_000, "Fee cannot exceed 100% (10000 bips)");
-        feeBips = _feeBips;
+    function setFee(int256 protocolFeeBips) external {
+        // TO DO : create an error
+        require(protocolFeeBips <= 10_000, "Fee cannot exceed 100% (10000 bips)");
+        require(protocolFeeBips >= 0, "Fee cannot be negative");
+        _protocolFeeBips = protocolFeeBips;
     }
 }

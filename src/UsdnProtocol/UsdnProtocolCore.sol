@@ -334,8 +334,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (newVaultBalance < 0) {
             newVaultBalance = 0;
         }
-        _balanceLong = uint256(newLongBalance);
-        _balanceVault = uint256(newVaultBalance);
+
+        (_balanceVault, _balanceLong) = _applyFee(newVaultBalance, newLongBalance);
+
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fund;
@@ -385,6 +386,26 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = _tickVersion[tick];
         hash_ = keccak256(abi.encodePacked(tick, version_));
+    }
+
+    function _applyFee(int256 newVaultBalance, int256 newLongBalance) internal returns (uint256, uint256) {
+        int256 diff = newLongBalance - _balanceLong.toInt256();
+        int256 feeAmount = (diff * _protocolFeeBips) / 10_000;
+
+        if (diff > 0) {
+            newLongBalance -= feeAmount;
+            _pendingProtocolFee += uint256(feeAmount);
+        } else if (diff < 0) {
+            newVaultBalance += feeAmount;
+            _pendingProtocolFee += uint256(-feeAmount);
+        }
+
+        if (_pendingProtocolFee >= _feesTreshold) {
+            _distributeAssetsAndCheckBalance(_feeCollector, _pendingProtocolFee);
+            _pendingProtocolFee = 0;
+        }
+
+        return (uint256(newVaultBalance), uint256(newLongBalance));
     }
 
     /* -------------------------- Pending actions queue ------------------------- */

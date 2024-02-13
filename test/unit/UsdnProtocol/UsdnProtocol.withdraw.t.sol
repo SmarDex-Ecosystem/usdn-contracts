@@ -109,7 +109,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      */
     function test_validateWithdrawPriceUp() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.425407470110072161 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.425399930106107861 ether);
     }
 
     /**
@@ -124,7 +124,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      */
     function test_validateWithdrawPriceDown() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.455215966583936249 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.45521590145106256 ether);
     }
 
     /**

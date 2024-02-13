@@ -34,10 +34,13 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param oracleMiddleware The oracle middleware contract.
      * @param tickSpacing The positions tick spacing.
      */
-    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
-        Ownable(msg.sender)
-        UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing)
-    { }
+    constructor(
+        IUsdn usdn,
+        IERC20Metadata asset,
+        IOracleMiddleware oracleMiddleware,
+        int24 tickSpacing,
+        address feeCollector
+    ) Ownable(msg.sender) UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing, feeCollector) { }
 
     /**
      * @notice Initialize the protocol.
