@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/console2.sol";
-
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -167,28 +165,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         view
         returns (int256 value_)
     {
-        // totalExpo = amount * initLeverage
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
 
         // if the current price is lower than the liquidation price, we have effectively a negative value
         if (currentPrice <= liqPriceWithoutPenalty) {
             // we calculate the inverse and then change the sign
-            value_ = -int256(
-                FixedPointMathLib.fullMulDiv(
-                    tickTotalExpo,
-                    liqPriceWithoutPenalty - currentPrice,
-                    currentPrice * uint256(10) ** LEVERAGE_DECIMALS
-                )
-            );
+            value_ = -int256(FixedPointMathLib.fullMulDiv(tickTotalExpo, liqPriceWithoutPenalty - currentPrice, currentPrice));
         } else {
-            value_ = int256(
-                FixedPointMathLib.fullMulDiv(
-                    tickTotalExpo,
-                    currentPrice - liqPriceWithoutPenalty,
-                    currentPrice * uint256(10) ** LEVERAGE_DECIMALS
-                )
-            );
+            value_ =
+                int256(FixedPointMathLib.fullMulDiv(tickTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice));
         }
     }
 
@@ -320,7 +306,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             uint256 length = _positionsInTick[tickHash];
 
             uint256 tickTotalExpo = _totalExpoByTick[tickHash];
-            console2.log("tick value", _tickValue(currentPrice, tick, tickTotalExpo));
             remainingCollateral += _tickValue(currentPrice, tick, tickTotalExpo);
             unchecked {
                 _totalExpo -= tickTotalExpo;
@@ -346,7 +331,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             }
         }
 
-        console2.log("remainingCollateral", remainingCollateral);
         // Transfer remaining collateral to vault or pay bad debt
         if (remainingCollateral >= 0) {
             if (uint256(remainingCollateral) > _balanceLong) {
