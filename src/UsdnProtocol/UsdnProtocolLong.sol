@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { console2 } from "forge-std/console2.sol";
+
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -154,6 +156,42 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         );
     }
 
+    /**
+     * @notice Calculate the value of a tick, knowing its contained total expo and the current asset price
+     * @param currentPrice The current price of the asset
+     * @param tick The tick number
+     * @param tickTotalExpo The total expo of the positions in the tick
+     */
+    function _tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo)
+        internal
+        view
+        returns (int256 value_)
+    {
+        // totalExpo = amount * initLeverage
+        // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
+        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
+
+        // if the current price is lower than the liquidation price, we have effectively a negative value
+        if (currentPrice <= liqPriceWithoutPenalty) {
+            // we calculate the inverse and then change the sign
+            value_ = -int256(
+                FixedPointMathLib.fullMulDiv(
+                    tickTotalExpo,
+                    liqPriceWithoutPenalty - currentPrice,
+                    currentPrice * uint256(10) ** LEVERAGE_DECIMALS
+                )
+            );
+        } else {
+            value_ = int256(
+                FixedPointMathLib.fullMulDiv(
+                    tickTotalExpo,
+                    currentPrice - liqPriceWithoutPenalty,
+                    currentPrice * uint256(10) ** LEVERAGE_DECIMALS
+                )
+            );
+        }
+    }
+
     /// @dev This does not take into account the liquidation penalty
     function _getLeverage(uint128 startPrice, uint128 liquidationPrice) internal pure returns (uint128 leverage_) {
         if (startPrice <= liquidationPrice) {
@@ -262,6 +300,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
         int24 currentTick = TickMath.getClosestTickAtPrice(priceWithMultiplier);
         int24 tick = _maxInitializedTick;
+        int256 remainingCollateral;
 
         uint256 i;
         do {
@@ -280,8 +319,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             (bytes32 tickHash,) = _tickHash(tick);
             uint256 length = _positionsInTick[tickHash];
 
+            uint256 tickTotalExpo = _totalExpoByTick[tickHash];
+            console2.log("tick value", _tickValue(currentPrice, tick, tickTotalExpo));
+            remainingCollateral += _tickValue(currentPrice, tick, tickTotalExpo);
             unchecked {
-                _totalExpo -= _totalExpoByTick[tickHash];
+                _totalExpo -= tickTotalExpo;
 
                 _totalLongPositions -= length;
                 liquidated_ += length;
@@ -303,6 +345,23 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 _maxInitializedTick = _findMaxInitializedTick(tick);
             }
         }
-        // TODO transfer remaining collat to vault
+
+        console2.log("remainingCollateral", remainingCollateral);
+        // Transfer remaining collateral to vault or pay bad debt
+        if (remainingCollateral >= 0) {
+            if (uint256(remainingCollateral) > _balanceLong) {
+                // avoid underflow
+                remainingCollateral = int256(_balanceLong);
+            }
+            _balanceVault += uint256(remainingCollateral);
+            _balanceLong -= uint256(remainingCollateral);
+        } else {
+            if (uint256(-remainingCollateral) > _balanceVault) {
+                // avoid underflow
+                remainingCollateral = -int256(_balanceVault);
+            }
+            _balanceVault -= uint256(-remainingCollateral);
+            _balanceLong += uint256(-remainingCollateral);
+        }
     }
 }
