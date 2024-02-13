@@ -29,12 +29,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         for (uint256 i; i < 10; i++) {
             vm.startPrank(users[i]);
-            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition{
-                value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-            }(5 ether, 1700 ether, priceData, "");
-            protocol.validateOpenPosition{
-                value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-            }(priceData, "");
+            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            protocol.validateOpenPosition(priceData, "");
             vm.stopPrank();
         }
 
@@ -60,12 +56,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, 1000 ether, 1_689_332_686_299_800_182_465);
         // initiate a position to liquidate all other positions
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(5 ether, 500 ether, priceData, "");
-        protocol.validateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-        }(priceData, "");
+        protocol.initiateOpenPosition(5 ether, 500 ether, priceData, "");
+        protocol.validateOpenPosition(priceData, "");
 
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
@@ -99,12 +91,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         for (uint256 i; i < 10; i++) {
             vm.startPrank(users[i]);
-            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition{
-                value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-            }(5 ether, 1700 ether, priceData, "");
-            protocol.validateOpenPosition{
-                value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-            }(priceData, "");
+            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            protocol.validateOpenPosition(priceData, "");
             vm.stopPrank();
         }
 
@@ -130,9 +118,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, 1000 ether, 1_692_533_133_837_250_861_380);
         // liquidator liquidation
-        protocol.liquidate{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation) }(
-            priceData, 9
-        );
+        protocol.liquidate(priceData, 9);
 
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
@@ -169,12 +155,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         for (uint256 i; i < length; i++) {
             vm.startPrank(users[i]);
-            (initialTicks[i],,) = protocol.initiateOpenPosition{
-                value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-            }(20 ether, uint128(actualPrice * 80 / 100), priceData, "");
-            protocol.validateOpenPosition{
-                value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-            }(priceData, "");
+            (initialTicks[i],,) =
+                protocol.initiateOpenPosition(20 ether, uint128(actualPrice * 80 / 100), priceData, "");
+            protocol.validateOpenPosition(priceData, "");
             vm.stopPrank();
             // 20 eth drawdown
             actualPrice -= 20 ether;
@@ -203,9 +186,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(73_700, 0, 1000 ether, 1_670_744_473_580_842_463_528);
         // liquidator first liquidation batch
-        protocol.liquidate{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation) }(
-            priceData, uint16(length / 2)
-        );
+        protocol.liquidate(priceData, uint16(length / 2));
 
         // half users should be liquidated
         for (uint256 i; i != length / 2; i++) {
@@ -225,9 +206,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(protocol.totalLongPositions(), 7, "wrong second totalLongPositions");
 
         // liquidator second liquidation batch
-        protocol.liquidate{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation) }(
-            priceData, uint16(length / 2)
-        );
+        protocol.liquidate(priceData, uint16(length / 2));
 
         // all users should be liquidated
         for (uint256 i = length / 2; i != length; i++) {
@@ -260,12 +239,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         for (uint256 i; i < 10; i++) {
             vm.startPrank(users[i]);
-            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition{
-                value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-            }(5 ether, 1700 ether, priceData, "");
-            protocol.validateOpenPosition{
-                value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-            }(priceData, "");
+            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            protocol.validateOpenPosition(priceData, "");
             vm.stopPrank();
         }
 
@@ -276,9 +251,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         skip(1 hours);
         priceData = abi.encode(1000 ether);
-        protocol.liquidate{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation) }(
-            priceData, maxLiquidationIteration + 1
-        );
+        protocol.liquidate(priceData, maxLiquidationIteration + 1);
 
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
@@ -303,22 +276,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(uint128(currentPrice));
 
         // create high risk position
-        (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(5 ether, 9 * currentPrice / 10, priceData, "");
+        (int24 tick, uint256 tickVersion, uint256 index) =
+            protocol.initiateOpenPosition(5 ether, 9 * currentPrice / 10, priceData, "");
         skip(oracleMiddleware.validationDelay() + 1);
-        protocol.validateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-        }(priceData, "");
+        protocol.validateOpenPosition(priceData, "");
 
         // create large low-risk position to affect funding rates
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(500_000 ether, currentPrice / 2, priceData, "");
+        protocol.initiateOpenPosition(500_000 ether, currentPrice / 2, priceData, "");
         skip(oracleMiddleware.validationDelay() + 1);
-        protocol.validateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-        }(priceData, "");
+        protocol.validateOpenPosition(priceData, "");
 
         uint256 initialMultiplier = protocol.liquidationMultiplier();
 
@@ -329,9 +295,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         skip(1 days);
 
         // Adjust balances, multiplier and liquidate positions
-        uint256 liquidated = protocol.liquidate{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation)
-        }(priceData, 0);
+        uint256 liquidated = protocol.liquidate(priceData, 0);
 
         // the liquidation price for the high risk position went above the current price
         assertEq(liquidated, 1, "liquidation failed");

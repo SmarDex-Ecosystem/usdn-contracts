@@ -34,9 +34,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.None, "pending action before initiate");
         // initiate long
         bytes memory priceData = abi.encode(2000 ether);
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
         // the pending action is not yet actionable
         vm.prank(address(0)); // simulate front-end call by someone else
         action = func(0);
@@ -85,21 +83,15 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // Setup 3 pending actions
         vm.startPrank(USER_1);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
         vm.stopPrank();
         vm.startPrank(USER_2);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
         vm.stopPrank();
         vm.startPrank(USER_3);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
         vm.stopPrank();
 
         // Simulate the second item in the queue being empty (sets it to zero values)
@@ -193,9 +185,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         wstETH.approve(address(protocol), type(uint256).max);
         // initiate long
         bytes memory priceData = abi.encode(2000 ether);
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
         // the pending action is actionable after the validation deadline
         skip(protocol.validationDeadline() + 1);
         vm.prank(address(0)); // simulate front-end call by someone else
@@ -289,26 +279,20 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // Setup 2 pending actions
         vm.startPrank(USER_1);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(data1, ProtocolAction.InitiateOpenPosition)
-        }(1 ether, 1000 ether, data1, "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, data1, "");
         vm.stopPrank();
         skip(30);
         vm.startPrank(USER_2);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(data2, ProtocolAction.InitiateOpenPosition)
-        }(1 ether, 1000 ether, data2, "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, data2, "");
         vm.stopPrank();
 
         // Wait
         skip(protocol.validationDeadline() + 1);
 
         // Second user tries to validate their action
-        uint256 data1Fee = oracleMiddleware.validationCost(data1, ProtocolAction.ValidateOpenPosition);
-        uint256 data2Fee = oracleMiddleware.validationCost(data2, ProtocolAction.ValidateOpenPosition);
         vm.prank(USER_2);
-        protocol.validateOpenPosition{ value: data1Fee + data2Fee }(data2, data1);
+        protocol.validateOpenPosition(data2, data1);
         // No more pending action
         PendingAction memory action = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(0));

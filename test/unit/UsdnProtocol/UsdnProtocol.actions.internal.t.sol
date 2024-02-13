@@ -58,9 +58,7 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
         // adjust the price to a very low value, meaning that the long balance and long asset available is zero
         skip(60);
         bytes memory priceData = abi.encode(uint128(11_000));
-        protocol.liquidate{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation) }(
-            priceData, 10
-        );
+        protocol.liquidate(priceData, 10);
         assertEq(protocol.balanceLong(), 0);
         assertEq(protocol.longAssetAvailable(11_000), 0);
 

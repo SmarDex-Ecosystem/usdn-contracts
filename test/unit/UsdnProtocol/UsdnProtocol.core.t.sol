@@ -83,16 +83,12 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         // create a pending action with a liquidation price around $1700
         bytes memory priceData = abi.encode(uint128(2000 ether));
-        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(1 ether, 1700 ether, priceData, "");
+        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(1 ether, 1700 ether, priceData, "");
 
         // the price drops to $1500 and the position gets liquidated
         skip(30);
         priceData = abi.encode(uint128(1500 ether));
-        protocol.liquidate{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation) }(
-            priceData, 10
-        );
+        protocol.liquidate(priceData, 10);
 
         // the pending action is stale
         (, uint256 currentTickVersion) = protocol.tickHash(tick_);
@@ -116,9 +112,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // we should be able to open a new position
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
     }
 
     /**
@@ -136,9 +130,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // validating the action emits the proper event
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.validateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-        }(priceData, "");
+        protocol.validateOpenPosition(priceData, "");
     }
 
     /**
@@ -215,20 +207,14 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(20 ether, price / 2, priceData, "");
-        protocol.validateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-        }(priceData, "");
+        protocol.initiateOpenPosition(20 ether, price / 2, priceData, "");
+        protocol.validateOpenPosition(priceData, "");
 
         // we create a deposit to make the long and vault expos equal
-        protocol.initiateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateDeposit) }(
+        protocol.initiateDeposit(
             uint128(uint256(protocol.i_longTradingExpo(price) - protocol.i_vaultTradingExpo(price))), priceData, ""
         );
-        protocol.validateDeposit{ value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateDeposit) }(
-            priceData, ""
-        );
+        protocol.validateDeposit(priceData, "");
 
         assertEq(
             protocol.i_longTradingExpo(price),
