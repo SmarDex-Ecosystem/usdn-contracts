@@ -407,4 +407,36 @@ contract TestOracleMiddlewareParseAndValidatePrice is
             uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
         );
     }
+
+    /**
+     * @custom:scenario The user sends too much ether when validating a price
+     * @custom:given The user validates a price that requires 1 wei of ether
+     * @custom:when The user sends 0.5 ether as value in the `parseAndValidatePrice` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_parseAndValidatePriceRefundEther() public {
+        uint256 balanceBefore = address(this).balance;
+        bytes memory priceData = abi.encode("data");
+        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateDeposit);
+        oracleMiddleware.parseAndValidatePrice{ value: 0.5 ether }(
+            uint128(block.timestamp), ProtocolAction.ValidateDeposit, priceData
+        );
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario The user doesn't send enough ether when validating a price
+     * @custom:given The user validates a price that requires 1 wei of ether
+     * @custom:when The user sends 0 ether as value in the `parseAndValidatePrice` call
+     * @custom:then The function reverts with `OracleMiddlewareInsufficientFee`
+     */
+    function test_RevertWhen_parseAndValidatePriceInsufficientFee() public {
+        vm.expectRevert(OracleMiddlewareInsufficientFee.selector);
+        oracleMiddleware.parseAndValidatePrice(
+            uint128(block.timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
+        );
+    }
+
+    // test refunds
+    receive() external payable { }
 }
