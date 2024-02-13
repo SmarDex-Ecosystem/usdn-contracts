@@ -325,7 +325,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         _updateEMA(timestamp - _lastUpdateTimestamp);
         (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
-        int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
+        // cache variable for optimization
+        int256 oldLongBalance = _balanceLong.toInt256();
+        int256 totalBalance = oldLongBalance.safeAdd(_balanceVault.toInt256());
         int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAsset);
         if (newLongBalance < 0) {
             newLongBalance = 0;
@@ -335,7 +337,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             newVaultBalance = 0;
         }
 
-        (_balanceVault, _balanceLong) = _applyFee(newVaultBalance, newLongBalance);
+        (_balanceVault, _balanceLong) = _applyFee(newVaultBalance, newLongBalance, oldLongBalance);
 
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
@@ -388,8 +390,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         hash_ = keccak256(abi.encodePacked(tick, version_));
     }
 
-    function _applyFee(int256 newVaultBalance, int256 newLongBalance) internal returns (uint256, uint256) {
-        int256 diff = newLongBalance - _balanceLong.toInt256();
+    function _applyFee(int256 newVaultBalance, int256 newLongBalance, int256 oldLongBalance)
+        internal
+        returns (uint256, uint256)
+    {
+        int256 diff = newLongBalance - oldLongBalance;
         int256 feeAmount = (diff * _protocolFeeBips) / 10_000;
 
         if (diff > 0) {
@@ -397,6 +402,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             _pendingProtocolFee += uint256(feeAmount);
         } else if (diff < 0) {
             newVaultBalance += feeAmount;
+            // This cast is safe because `diff` is negative
             _pendingProtocolFee += uint256(-feeAmount);
         }
 
