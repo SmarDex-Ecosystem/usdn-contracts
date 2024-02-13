@@ -6,21 +6,23 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 import { LiquidationRewardsManagerBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-
-/// @title Events emitted by the LiquidationRewardsManager contract
-contract LiquidationRewardsManagerEvents {
-    event RewardsParametersUpdated(uint32 gasUsedPerTick, uint32 otherGasUsed, uint64 gasPriceLimit, uint16 multiplier);
-}
+import { ILiquidationRewardsManagerErrorsEventsTypes } from
+    "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 
 /**
  * @custom:feature The `setRewardsParameters` function of `LiquidationRewardsManager`
  */
 contract LiquidationRewardsManagerSetRewardsParameters is
     LiquidationRewardsManagerBaseFixture,
-    LiquidationRewardsManagerEvents
+    ILiquidationRewardsManagerErrorsEventsTypes
 {
     function setUp() public override {
         super.setUp();
+    }
+
+    /// @dev only here to fit the ILiquidationRewardsManager interface
+    function getLiquidationRewards(uint16, uint256) external pure returns (uint256 _wstETHRewards) {
+        return 0;
     }
 
     /**
@@ -36,13 +38,10 @@ contract LiquidationRewardsManagerSetRewardsParameters is
         uint16 multiplier = 10;
 
         vm.expectEmit();
-        emit LiquidationRewardsManagerEvents.RewardsParametersUpdated(
-            gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier
-        );
+        emit RewardsParametersUpdated(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
         liquidationRewardsManager.setRewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
 
-        LiquidationRewardsManager.RewardsParameters memory rewardsParameters =
-            liquidationRewardsManager.getRewardsParameters();
+        RewardsParameters memory rewardsParameters = liquidationRewardsManager.getRewardsParameters();
 
         assertEq(gasUsedPerTick, rewardsParameters.gasUsedPerTick, "The gasUsedPerTick variable was not updated");
         assertEq(otherGasUsed, rewardsParameters.otherGasUsed, "The otherGasUsed variable was not updated");
@@ -81,11 +80,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
         uint16 multiplier = 10;
 
         // Expect revert when gas used per tick is too high
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                LiquidationRewardsManager.LiquidationRewardsManagerGasUsedPerTickTooHigh.selector, gasUsedPerTick
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerGasUsedPerTickTooHigh.selector, gasUsedPerTick));
         liquidationRewardsManager.setRewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
     }
 
@@ -102,11 +97,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
         uint16 multiplier = 10;
 
         // Expect revert when base gas used is too high
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                LiquidationRewardsManager.LiquidationRewardsManagerOtherGasUsedTooHigh.selector, otherGasUsed
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerOtherGasUsedTooHigh.selector, otherGasUsed));
         liquidationRewardsManager.setRewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
     }
 
@@ -123,11 +114,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
         uint16 multiplier = 10;
 
         // Expect revert when gas used per tick is too high
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                LiquidationRewardsManager.LiquidationRewardsManagerGasPriceLimitTooHigh.selector, gasPriceLimit
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerGasPriceLimitTooHigh.selector, gasPriceLimit));
         liquidationRewardsManager.setRewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
     }
 
@@ -144,11 +131,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
         uint16 multiplier = 11;
 
         // Expect revert when multiplier is too high
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                LiquidationRewardsManager.LiquidationRewardsManagerMultiplierTooHigh.selector, multiplier
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerMultiplierTooHigh.selector, multiplier));
         liquidationRewardsManager.setRewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
     }
 }
