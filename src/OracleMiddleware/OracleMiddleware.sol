@@ -8,6 +8,7 @@ import { PythOracle } from "src/OracleMiddleware/oracles/PythOracle.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import {
     PriceInfo,
+    ChainlinkPriceInfo,
     ConfidenceInterval,
     FormattedPythPrice
 } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -50,8 +51,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         if (action == ProtocolAction.None) {
             return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.Initialize) {
-            // Use chainlink data to make deployment easier
-            return getChainlinkOnChainPrice();
+            return getOnChainPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.ValidateDeposit) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies
@@ -72,13 +72,13 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             // of price inaccuracies
             return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.Down);
         } else if (action == ProtocolAction.InitiateDeposit) {
-            return getChainlinkOnChainPrice();
+            return getOnChainPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateWithdrawal) {
-            return getChainlinkOnChainPrice();
+            return getOnChainPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateOpenPosition) {
-            return getChainlinkOnChainPrice();
+            return getOnChainPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateClosePosition) {
-            return getChainlinkOnChainPrice();
+            return getOnChainPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         }
     }
 
@@ -116,9 +116,21 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         price_.neutralPrice = uint256(pythPrice.price);
     }
 
-    /// @dev Get the price from Chainlink onChain.
-    function getChainlinkOnChainPrice() private view returns (PriceInfo memory) {
-        return getFormattedChainlinkPrice(DECIMALS);
+    /// @dev Get the price from Chainlink onChain or, if data is invalid, get the price from pyth.
+    function getOnChainPrice(bytes calldata data, uint64 actionTimestamp, ConfidenceInterval conf)
+        private
+        returns (PriceInfo memory)
+    {
+        ChainlinkPriceInfo memory chainlinkOnChainPrice = getFormattedChainlinkPrice(DECIMALS);
+        if (chainlinkOnChainPrice.neutralPrice <= 0) {
+            return getPythOrChainlinkDataStreamPrice(data, actionTimestamp, conf);
+        }
+
+        return PriceInfo({
+            price: uint256(chainlinkOnChainPrice.price),
+            neutralPrice: uint256(chainlinkOnChainPrice.neutralPrice),
+            timestamp: chainlinkOnChainPrice.timestamp
+        });
     }
 
     /* -------------------------------------------------------------------------- */

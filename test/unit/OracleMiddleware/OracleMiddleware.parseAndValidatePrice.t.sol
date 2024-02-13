@@ -291,60 +291,81 @@ contract TestOracleMiddlewareParseAndValidatePrice is
         vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.Liquidation, abi.encode("data"));
 
-        /* ---------------------- Initiates action still works ---------------------- */
+        /* ------------------ All initiate actions revert as well ------------------ */
 
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.Initialize, abi.encode("data"));
 
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
 
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.InitiateWithdrawal, abi.encode("data")
         );
 
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.InitiateOpenPosition, abi.encode("data")
         );
 
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1));
+        vm.expectRevert(abi.encodeWithSelector(MockedPythError.selector));
         oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.InitiateClosePosition, abi.encode("data")
         );
     }
 
-    function test_RevertWhen_chainlinkPriceIsTooOld() public {
+    /**
+     * @custom:scenario Parse and validate price
+     * @custom:given Chainlink oracle data's last timestamp is too old
+     * @custom:and Pyth is functional
+     * @custom:then It returns the onchain price from Pyth
+     */
+    function test_getPriceFromPythWhenChainlinkPriceIsTooOld() public {
         uint256 timestamp = block.timestamp - oracleMiddleware.validationDelay();
 
-        /* ------------ Doesn't revert when the timestamp is not too old ------------ */
+        // Give a slightly different price for chainlink to be able to differentiate the oracles responses
+        int256 mockedChainlinkPrice = int256(ETH_PRICE - 1);
+        mockChainlinkOnChain.setLatestRoundData(1, mockedChainlinkPrice, block.timestamp, 1);
+
+        /* ----- Get the price from chainlink when the timestamp is close enough ---- */
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 1 minutes);
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        PriceInfo memory priceInfo = oracleMiddleware.parseAndValidatePrice(
+            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
+        );
+        assertEq(priceInfo.price, FORMATTED_ETH_PRICE - 1e10);
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 30 minutes);
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
+        );
+        assertEq(priceInfo.price, FORMATTED_ETH_PRICE - 1e10);
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 59 minutes);
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
+        );
+        assertEq(priceInfo.price, FORMATTED_ETH_PRICE - 1e10);
 
-        /* ------------------ Revert when the timestamp is too old ------------------ */
+        /* -------- Get the price from Pyth when chainlink's price is invalid ------- */
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 3601 seconds);
-        vm.expectRevert(
-            abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, ETH_PRICE, block.timestamp - 3601 seconds)
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
         );
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        assertEq(priceInfo.price, FORMATTED_ETH_PRICE);
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 2 hours);
-        vm.expectRevert(
-            abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, ETH_PRICE, block.timestamp - 2 hours)
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
         );
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        assertEq(priceInfo.price, FORMATTED_ETH_PRICE);
 
         mockChainlinkOnChain.updateLastPublishTime(0);
-        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, ETH_PRICE, 0));
-        oracleMiddleware.parseAndValidatePrice(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
+        priceInfo = oracleMiddleware.parseAndValidatePrice(
+            uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
+        );
+        assertEq(priceInfo.price, FORMATTED_ETH_PRICE);
     }
 }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { PriceInfo, ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
 /**
@@ -25,20 +25,15 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
      * @notice Get the price of the asset from Chainlink
      * @return price_ The price of the asset
      */
-    function getChainlinkPrice() internal view returns (PriceInfo memory price_) {
+    function getChainlinkPrice() internal view returns (ChainlinkPriceInfo memory price_) {
         // slither-disable-next-line unused-return
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
         if (timestamp < block.timestamp - _timeElapsedLimit) {
-            revert OracleMiddlewarePriceTooOld(price, timestamp);
+            price = -1;
         }
 
-        if (price < 0) {
-            revert OracleMiddlewareWrongPrice(price);
-        }
-
-        // slither-disable-next-line unused-return
-        price_ = PriceInfo({ price: uint256(price), neutralPrice: uint256(price), timestamp: timestamp });
+        price_ = ChainlinkPriceInfo({ price: price, neutralPrice: price, timestamp: timestamp });
     }
 
     /**
@@ -46,10 +41,14 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
      * @param decimals The number of decimals to format the price to
      * @return formattedPrice_ The formatted price of the asset
      */
-    function getFormattedChainlinkPrice(uint256 decimals) internal view returns (PriceInfo memory formattedPrice_) {
+    function getFormattedChainlinkPrice(uint256 decimals)
+        internal
+        view
+        returns (ChainlinkPriceInfo memory formattedPrice_)
+    {
         uint256 oracleDecimal = _priceFeed.decimals();
         formattedPrice_ = getChainlinkPrice();
-        formattedPrice_.price = uint256(formattedPrice_.price) * (10 ** decimals) / (10 ** oracleDecimal);
+        formattedPrice_.price = formattedPrice_.price * int256(10 ** decimals) / int256(10 ** oracleDecimal);
         formattedPrice_.neutralPrice = formattedPrice_.price;
     }
 
