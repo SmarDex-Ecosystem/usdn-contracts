@@ -188,13 +188,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Register position and adjust contract state
         {
-            Position memory long = Position({
-                user: msg.sender,
-                amount: amount,
-                startPrice: currentPrice.price.toUint128(),
-                leverage: leverage,
-                timestamp: timestamp
-            });
+            Position memory long =
+                Position({ user: msg.sender, amount: amount, leverage: leverage, timestamp: timestamp });
             (tickVersion_, index_) = _saveNewPosition(tick_, long);
 
             // Register pending action
@@ -211,7 +206,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 closeTempTransfer: 0
             });
             _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
-            emit InitiatedOpenPosition(msg.sender, long, tick_, tickVersion_, index_);
+            emit InitiatedOpenPosition(
+                msg.sender,
+                long.timestamp,
+                long.leverage,
+                long.amount,
+                currentPrice.price.toUint128(),
+                tick_,
+                tickVersion_,
+                index_
+            );
         }
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
 
@@ -501,24 +505,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             int24 tickWithoutPenalty = getEffectiveTickForPrice(liqPriceWithoutPenalty);
             // retrieve exact liquidation price without penalty
             liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
-            // update position leverage and price
+            // update position leverage
             pos.leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
-            pos.startPrice = startPrice;
             // apply liquidation penalty
             int24 tick = tickWithoutPenalty + int24(_liquidationPenalty) * _tickSpacing;
             // insert position into new tick, update tickVersion and index
             (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos);
             // emit LiquidationPriceChanged
             emit LiquidationPriceChanged(long.tick, long.tickVersion, long.index, tick, tickVersion, index);
-            emit ValidatedOpenPosition(long.user, pos, tick, tickVersion, index, getEffectivePriceForTick(tick));
+            emit ValidatedOpenPosition(pos.user, pos.leverage, startPrice, tick, tickVersion, index);
         } else {
             // simply update pos in storage
             Position storage pos = _longPositions[tickHash][long.index];
             pos.leverage = leverage;
-            pos.startPrice = startPrice;
-            emit ValidatedOpenPosition(
-                long.user, pos, long.tick, long.tickVersion, long.index, getEffectivePriceForTick(long.tick)
-            );
+            emit ValidatedOpenPosition(long.user, leverage, startPrice, long.tick, long.tickVersion, long.index);
         }
     }
 
