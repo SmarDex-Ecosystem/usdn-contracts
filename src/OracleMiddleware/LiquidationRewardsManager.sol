@@ -69,7 +69,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     }
 
     /// @inheritdoc ILiquidationRewardsManager
-    function getLiquidationRewards(uint16 tickAmount, uint256) external view returns (uint256 _wstETHRewards) {
+    function getLiquidationRewards(uint16 tickAmount, uint256) external view returns (uint256 wstETHRewards_) {
         // Do not give rewards if no ticks were liquidated.
         if (tickAmount == 0) {
             return 0;
@@ -80,7 +80,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         uint256 gasUsed =
             rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
         // Multiply by the gas price and the rewards multiplier.
-        _wstETHRewards = _wstEth.getWstETHByStETH(
+        wstETHRewards_ = _wstEth.getWstETHByStETH(
             gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplier / REWARD_MULTIPLIER_DENOMINATOR
         );
     }
