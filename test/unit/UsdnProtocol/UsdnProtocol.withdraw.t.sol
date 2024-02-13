@@ -136,6 +136,40 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user sends too much ether when initiating a withdrawal
+     * @custom:given The user withdraws 1 wstETH
+     * @custom:when The user sends 0.5 ether as value in the `initiateWithdrawal` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_initiateWithdrawEtherRefund() public {
+        uint256 balanceBefore = address(this).balance;
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
+        protocol.initiateWithdrawal{ value: validationCost }(USDN_AMOUNT, currentPrice, "");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario The user sends too much ether when validating a withdrawal
+     * @custom:given The user initiated a withdrawal of 1000 USDN and validates it
+     * @custom:when The user sends 0.5 ether as value in the `validateWithdrawal` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_validateWithdrawEtherRefund() public {
+        // initiate
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
+        protocol.initiateWithdrawal{ value: validationCost }(USDN_AMOUNT, currentPrice, "");
+
+        skip(oracleMiddleware.validationDelay());
+        // validate
+        validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateWithdrawal);
+        uint256 balanceBefore = address(this).balance;
+        protocol.validateWithdrawal{ value: 0.5 ether }(currentPrice, "");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
      * @dev Create a withdrawal at price `initialPrice`, then validate it at price `assetPrice`, then check the emitted
      * event and the resulting state.
      * @param initialPrice price of the asset at the time of withdrawal initiation
@@ -176,4 +210,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");
         assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance + withdrawnAmount, "final wstETH balance");
     }
+
+    // test refunds
+    receive() external payable { }
 }
