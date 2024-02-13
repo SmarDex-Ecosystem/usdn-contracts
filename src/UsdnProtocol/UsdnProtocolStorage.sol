@@ -222,4 +222,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     function liquidationMultiplier() external view returns (uint256) {
         return _liquidationMultiplier;
     }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function liquidationRewardsManager() external view returns (address) {
+        return address(_liquidationRewardsManager);
+    }
 }

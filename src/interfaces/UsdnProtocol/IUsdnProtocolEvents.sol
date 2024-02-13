@@ -150,4 +150,10 @@ interface IUsdnProtocolEvents {
      * @param index The index of the position inside the tick array.
      */
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
+
+    /**
+     * @notice Emitted when tht LiquidationRewardsManager contract is updated.
+     * @param newAddress The address of the new (current) contract.
+     */
+    event LiquidationRewardsManagerUpdated(address newAddress);
 }
