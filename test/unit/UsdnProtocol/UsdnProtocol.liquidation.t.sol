@@ -11,6 +11,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         super._setUp(DEFAULT_PARAMS);
         wstETH.mint(address(this), 100_000 ether);
         wstETH.approve(address(protocol), type(uint256).max);
+
+        chainlinkGasPriceFeed.setLatestRoundData(1, 30 * (10 ** 9), block.timestamp, 1);
+        vm.txGasPrice(30 * (10 ** 9));
     }
 
     /**
@@ -83,6 +86,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and Simulate a -20% asset price drawdown
      * @custom:when Liquidators execute liquidate
      * @custom:then Should execute liquidations.
+     * @custom:and Caller should receive liquidation rewards.
      * @custom:and Change contract state.
      */
     function test_openLiquidatorLiquidation() public {
@@ -116,10 +120,20 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         skip(1 hours);
         priceData = abi.encode(1000 ether);
 
+        uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
+
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, 1000 ether, 1_692_533_133_837_250_861_380);
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
+
+        // check that the liquidator received its rewards
+        uint256 wstETHBalanceAfterRewards = wstETH.balanceOf(address(this));
+        assertEq(
+            wstETHBalanceAfterRewards - wstETHBalanceBeforeRewards,
+            5_406_288_000_000_000,
+            "The liquidator did not receive the right amount of rewards"
+        );
 
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
@@ -184,11 +198,23 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(protocol.totalLongPositions(), 12, "wrong first totalLongPositions");
 
         priceData = abi.encode(1000 ether);
+
+        uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
+
         skip(1 hours);
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(73_700, 0, 1000 ether, 1_670_744_473_580_842_463_528);
+
         // liquidator first liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
+
+        // check that the liquidator received its rewards
+        uint256 wstETHBalanceAfterRewards = wstETH.balanceOf(address(this));
+        assertEq(
+            wstETHBalanceAfterRewards - wstETHBalanceBeforeRewards,
+            13_043_484_000_000_000,
+            "The liquidator did not receive the right amount of rewards"
+        );
 
         // half users should be liquidated
         for (uint256 i; i != length / 2; i++) {
@@ -207,8 +233,18 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if second total long positions match expected value
         assertEq(protocol.totalLongPositions(), 7, "wrong second totalLongPositions");
 
+        wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
+
         // liquidator second liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
+
+        // check that the liquidator received its rewards
+        wstETHBalanceAfterRewards = wstETH.balanceOf(address(this));
+        assertEq(
+            wstETHBalanceAfterRewards - wstETHBalanceBeforeRewards,
+            13_043_484_000_000_000,
+            "The liquidator did not receive the right amount of rewards"
+        );
 
         // all users should be liquidated
         for (uint256 i = length / 2; i != length; i++) {
@@ -234,6 +270,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:given Users open positions
      * @custom:and Simulate a 50% price drawdown
      * @custom:when Liquidators execute liquidate with maxLiquidationIteration + 1
+     * @custom:then Only the max number of liquidations are executed
+     * @custom:and The liquidator receive rewards in connection with the amount of ticks liquidated
      */
     function test_openLiquidatorLiquidationAboveMax() public {
         bytes memory priceData = abi.encode(2000 ether);
@@ -252,9 +290,21 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if first tick version match initial value
         assertEq(protocol.tickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
 
+        uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
+
         skip(1 hours);
         priceData = abi.encode(1000 ether);
         protocol.liquidate(priceData, maxLiquidationIteration + 1);
+
+        // check that the liquidator received its rewards
+        uint256 wstETHBalanceAfterRewards = wstETH.balanceOf(address(this));
+        // check that it receives rewards based on the amount of ticks liquidated (1) and not the amount of
+        // iterations provided in the protocol.liquidate call
+        assertEq(
+            wstETHBalanceAfterRewards - wstETHBalanceBeforeRewards,
+            5_406_288_000_000_000,
+            "The liquidator did not receive the right amount of rewards"
+        );
 
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
@@ -297,8 +347,14 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Wait 1 day so that funding rates make the liquidation price of those positions go up
         skip(1 days);
 
+        uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
+
         // Adjust balances, multiplier and liquidate positions
         uint256 liquidated = protocol.liquidate(priceData, 0);
+
+        // check that the liquidator received its rewards
+        uint256 wstETHBalanceAfterRewards = wstETH.balanceOf(address(this));
+        assertEq(wstETHBalanceAfterRewards - wstETHBalanceBeforeRewards, 5_406_288_000_000_000);
 
         // the liquidation price for the high risk position went above the current price
         assertEq(liquidated, 1, "liquidation failed");

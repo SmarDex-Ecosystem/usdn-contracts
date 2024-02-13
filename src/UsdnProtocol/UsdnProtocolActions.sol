@@ -298,7 +298,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
-        returns (uint256 liquidated_)
+        returns (uint256 liquidatedPositions_)
     {
         PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
             uint40(block.timestamp), ProtocolAction.Liquidation, currentPriceData
@@ -306,9 +306,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
-        liquidated_ = _liquidatePositions(currentPrice.price, iterations);
+        uint16 liquidatedTicks_;
+        (liquidatedPositions_, liquidatedTicks_) = _liquidatePositions(currentPrice.price, iterations);
 
-        // TODO: add liquidator incentive if needed
+        uint256 liquidationRewards = _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks_);
+        _asset.transfer(msg.sender, liquidationRewards);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {

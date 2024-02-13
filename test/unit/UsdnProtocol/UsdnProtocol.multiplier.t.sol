@@ -49,6 +49,8 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         assertGt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 
         skip(10 days);
+        // Update the oracle data feed to avoid a revert
+        chainlinkGasPriceFeed.updateLastPublishTime(block.timestamp);
         // We need to call liquidate to trigger the refresh of the multiplier
         protocol.liquidate(priceData, 0);
         // Here, we have vaultExpo > longExpo and fund < 0, so we should have multiplier < 1

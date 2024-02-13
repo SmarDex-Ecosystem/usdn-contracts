@@ -250,7 +250,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         tick_ = compactTick * _tickSpacing;
     }
 
-    function _liquidatePositions(uint256 currentPrice, uint16 iteration) internal returns (uint256 liquidated_) {
+    function _liquidatePositions(uint256 currentPrice, uint16 iteration)
+        internal
+        returns (uint256 liquidatedPositions_, uint16 liquidatedTicks_)
+    {
         // max iteration limit
         if (iteration > MAX_LIQUIDATION_ITERATION) {
             iteration = MAX_LIQUIDATION_ITERATION;
@@ -261,7 +264,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int24 currentTick = TickMath.getClosestTickAtPrice(priceWithMultiplier);
         int24 tick = _maxInitializedTick;
 
-        uint256 i;
         do {
             uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
             if (index == LibBitmap.NOT_FOUND) {
@@ -282,17 +284,17 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 _totalExpo -= _totalExpoByTick[tickHash];
 
                 _totalLongPositions -= length;
-                liquidated_ += length;
+                liquidatedPositions_ += length;
 
                 ++_tickVersion[tick];
-                ++i;
+                ++liquidatedTicks_;
             }
             _tickBitmap.unset(_tickToBitmapIndex(tick));
 
             emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick));
-        } while (i < iteration);
+        } while (liquidatedTicks_ < iteration);
 
-        if (liquidated_ != 0) {
+        if (liquidatedPositions_ != 0) {
             if (tick < currentTick) {
                 // all ticks above the current tick were liquidated
                 _maxInitializedTick = _findMaxInitializedTick(currentTick);
