@@ -115,7 +115,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
      */
     function test_validateDepositPriceIncrease() public {
-        _checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether);
+        _checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether, address(this));
     }
 
     /**
@@ -129,7 +129,20 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1949.518048223628563225 USDN
      */
     function test_validateDepositPriceDecrease() public {
-        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048223628563225 ether);
+        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048223628563225 ether, address(this));
+    }
+
+    /**
+     * @custom:scenario The user initiates and validates a deposit while to parameter is different from the user
+     * @custom:given The user deposits 1 wstETH
+     * @custom:and The price of the asset is $2000 at the moment of initiation and validation
+     * @custom:when The user validates the deposit
+     * @custom:and The USDN total supply increases by 2000 USDN
+     * @custom:and The USDN balance increases by 2000 USDN for the address to
+     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
+     */
+    function test_validateDepositAddressToDifferent() public {
+        _checkValidateDepositWithPrice(2000 ether, 2000 ether, 2000 ether, USER_1);
     }
 
     /**
@@ -138,14 +151,18 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @param initialPrice price of the asset at the time of deposit initiation
      * @param assetPrice price of the asset at the time of deposit validation
      * @param expectedUsdnAmount expected amount of USDN minted
+     * @param to expected address with the minted USDN
      */
-    function _checkValidateDepositWithPrice(uint128 initialPrice, uint128 assetPrice, uint256 expectedUsdnAmount)
-        internal
-    {
+    function _checkValidateDepositWithPrice(
+        uint128 initialPrice,
+        uint128 assetPrice,
+        uint256 expectedUsdnAmount,
+        address to
+    ) internal {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 
-        protocol.initiateDeposit(depositAmount, currentPrice, "", address(this));
+        protocol.initiateDeposit(depositAmount, currentPrice, "", to);
         uint256 vaultBalance = protocol.balanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation
@@ -165,10 +182,13 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(mintedAmount, expectedUsdnAmount, "minted amount");
 
         vm.expectEmit();
-        emit ValidatedDeposit(address(this), depositAmount, mintedAmount); // expected event
+        emit ValidatedDeposit(address(this), to, depositAmount, mintedAmount); // expected event
         protocol.validateDeposit(currentPrice, "");
 
-        assertEq(usdn.balanceOf(address(this)), mintedAmount, "USDN user balance");
+        assertEq(usdn.balanceOf(to), mintedAmount, "USDN to balance");
+        if (address(this) != to) {
+            assertEq(usdn.balanceOf(address(this)), 0, "USDN user balance");
+        }
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply");
     }
 }

@@ -390,11 +390,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _usdn.mint(DEAD_ADDRESS, MIN_USDN_SUPPLY);
             uint256 mintToUser = usdnToMint - MIN_USDN_SUPPLY;
             _usdn.mint(deposit.user, mintToUser);
-            emit ValidatedDeposit(DEAD_ADDRESS, 0, MIN_USDN_SUPPLY);
-            emit ValidatedDeposit(deposit.user, deposit.amount, mintToUser);
+            emit ValidatedDeposit(DEAD_ADDRESS, DEAD_ADDRESS, 0, MIN_USDN_SUPPLY);
+            emit ValidatedDeposit(deposit.user, deposit.user, deposit.amount, mintToUser);
         } else {
-            _usdn.mint(deposit.user, usdnToMint);
-            emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint);
+            _usdn.mint(deposit.to, usdnToMint);
+            emit ValidatedDeposit(deposit.user, deposit.to, deposit.amount, usdnToMint);
         }
     }
 

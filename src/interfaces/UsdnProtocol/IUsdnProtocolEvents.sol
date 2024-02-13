@@ -11,7 +11,7 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user initiates a deposit.
      * @param user The user address.
-     * @param user The to address.
+     * @param to The address that will receive the USDN tokens.
      * @param amount The amount of asset that were deposited.
      */
     event InitiatedDeposit(address indexed user, address indexed to, uint256 amount);
@@ -19,10 +19,11 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user validates a deposit.
      * @param user The user address.
+     * @param to The address that received the USDN tokens.
      * @param amountDeposited The amount of asset that were deposited.
      * @param usdnMinted The amount of USDN that were minted.
      */
-    event ValidatedDeposit(address indexed user, uint256 amountDeposited, uint256 usdnMinted);
+    event ValidatedDeposit(address indexed user, address indexed to, uint256 amountDeposited, uint256 usdnMinted);
 
     /**
      * @notice Emitted when a user initiates a withdrawal.
