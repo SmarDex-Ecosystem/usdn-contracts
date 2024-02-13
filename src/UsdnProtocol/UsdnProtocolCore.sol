@@ -398,21 +398,23 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     {
         int256 diff = newLongBalance - oldLongBalance;
         int256 feeAmount = (diff * _protocolFeeBips) / 10_000;
-        // uint256 pendingProtocolFee = _pendingProtocolFee;
+        uint256 pendingProtocolFee = _pendingProtocolFee;
 
         if (diff > 0) {
             newLongBalance -= feeAmount;
-            _pendingProtocolFee += uint256(feeAmount);
+            pendingProtocolFee += uint256(feeAmount);
         } else if (diff < 0) {
             newVaultBalance += feeAmount;
             // This cast is safe because `diff` is negative
-            _pendingProtocolFee += uint256(-feeAmount);
+            pendingProtocolFee += uint256(-feeAmount);
         }
 
-        if (_pendingProtocolFee >= _feesTreshold) {
+        if (pendingProtocolFee >= _feesTreshold) {
             // TO DO : add event
-            _distributeAssetsAndCheckBalance(_feeCollector, _pendingProtocolFee);
+            _distributeAssetsAndCheckBalance(_feeCollector, pendingProtocolFee);
             _pendingProtocolFee = 0;
+        } else {
+            _pendingProtocolFee = pendingProtocolFee;
         }
 
         return (uint256(newVaultBalance), uint256(newLongBalance));
