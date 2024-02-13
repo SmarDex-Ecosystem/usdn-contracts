@@ -317,12 +317,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) internal returns (bool priceUpdated_) {
+        // cache variable for optimization
+        uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
         // If the price is not fresh, do nothing
-        if (timestamp <= _lastUpdateTimestamp) {
+        if (timestamp <= lastUpdateTimestamp) {
             return false;
         }
 
-        _updateEMA(timestamp - _lastUpdateTimestamp);
+        _updateEMA(timestamp - lastUpdateTimestamp);
         (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
         // cache variable for optimization
@@ -396,6 +398,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     {
         int256 diff = newLongBalance - oldLongBalance;
         int256 feeAmount = (diff * _protocolFeeBips) / 10_000;
+        // uint256 pendingProtocolFee = _pendingProtocolFee;
 
         if (diff > 0) {
             newLongBalance -= feeAmount;
@@ -407,6 +410,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
 
         if (_pendingProtocolFee >= _feesTreshold) {
+            // TO DO : add event
             _distributeAssetsAndCheckBalance(_feeCollector, _pendingProtocolFee);
             _pendingProtocolFee = 0;
         }
