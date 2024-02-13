@@ -14,6 +14,9 @@ interface IOracleMiddlewareErrors {
     /// @notice The oracle price is invalid (too old)
     error OracleMiddlewarePriceTooOld(int256 price, uint256 timestamp);
 
+    /// @notice Not enough ether was provided to cover the cost of price validation
+    error OracleMiddlewareInsufficientFee();
+
     /// @notice The sender could not accept the ether refund
     error OracleMiddlewareEtherRefundFailed();
 }

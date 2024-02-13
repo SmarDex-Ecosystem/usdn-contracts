@@ -6,6 +6,9 @@ pragma solidity 0.8.20;
  * @notice Errors for the USDN Protocol
  */
 interface IUsdnProtocolErrors {
+    /// @notice Not enough ether was provided to cover the cost of price validation
+    error UsdnProtocolInsufficientFee();
+
     /// @dev Indicates that the sender could not accept the ether refund
     error UsdnProtocolEtherRefundFailed();
 

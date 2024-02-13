@@ -38,10 +38,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint40 timestamp = uint40(block.timestamp);
 
-        uint256 validationCost = _oracleMiddleware.validationCost(currentPriceData, ProtocolAction.InitiateDeposit);
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            timestamp, ProtocolAction.InitiateDeposit, currentPriceData
-        );
+        (PriceInfo memory currentPrice, uint256 validationCost) =
+            _getOraclePrice(ProtocolAction.InitiateDeposit, timestamp, currentPriceData);
 
         bool priceUpdated =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -95,10 +93,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint40 timestamp = uint40(block.timestamp);
 
-        uint256 validationCost = _oracleMiddleware.validationCost(currentPriceData, ProtocolAction.InitiateWithdrawal);
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            timestamp, ProtocolAction.InitiateWithdrawal, currentPriceData
-        );
+        (PriceInfo memory currentPrice, uint256 validationCost) =
+            _getOraclePrice(ProtocolAction.InitiateWithdrawal, timestamp, currentPriceData);
 
         bool priceUpdated =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -153,13 +149,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolZeroAmount();
         }
 
-        uint256 validationCost = _oracleMiddleware.validationCost(currentPriceData, ProtocolAction.InitiateOpenPosition);
+        uint256 validationCost;
         uint128 adjustedPrice; // the price returned by the oracle middleware, to be used for the user action
         uint128 neutralPrice;
         {
-            PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-                uint40(block.timestamp), ProtocolAction.InitiateOpenPosition, currentPriceData
-            );
+            PriceInfo memory currentPrice;
+            (currentPrice, validationCost) =
+                _getOraclePrice(ProtocolAction.InitiateOpenPosition, uint40(block.timestamp), currentPriceData);
+
             adjustedPrice = currentPrice.price.toUint128();
             neutralPrice = currentPrice.neutralPrice.toUint128();
             bool priceUpdated = _applyPnlAndFunding(neutralPrice, currentPrice.timestamp.toUint128());
@@ -254,12 +251,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint40 timestamp = uint40(block.timestamp);
 
-        uint256 validationCost =
-            _oracleMiddleware.validationCost(currentPriceData, ProtocolAction.InitiateClosePosition);
+        uint256 validationCost;
         {
-            PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-                timestamp, ProtocolAction.InitiateClosePosition, currentPriceData
-            );
+            PriceInfo memory currentPrice;
+            (currentPrice, validationCost) =
+                _getOraclePrice(ProtocolAction.InitiateClosePosition, timestamp, currentPriceData);
 
             bool priceUpdated =
                 _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -318,10 +314,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         returns (uint256 liquidated_)
     {
-        uint256 validationCost = _oracleMiddleware.validationCost(currentPriceData, ProtocolAction.Liquidation);
-        PriceInfo memory currentPrice = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint40(block.timestamp), ProtocolAction.Liquidation, currentPriceData
-        );
+        (PriceInfo memory currentPrice, uint256 validationCost) =
+            _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
 
         _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
@@ -356,9 +350,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // During initialization, we might want to use a different oracle, so we have a special action
         ProtocolAction action = initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateDeposit;
 
-        validationCost_ = _oracleMiddleware.validationCost(priceData, action);
-        depositPrice_ =
-            _oracleMiddleware.parseAndValidatePrice{ value: validationCost_ }(deposit.timestamp, action, priceData);
+        (depositPrice_, validationCost_) = _getOraclePrice(action, deposit.timestamp, priceData);
 
         // adjust balances
         if (!initializing) {
@@ -432,10 +424,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         VaultPendingAction memory withdrawal = _toVaultPendingAction(pending);
 
-        validationCost_ = _oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateWithdrawal);
-        PriceInfo memory withdrawalPrice = _oracleMiddleware.parseAndValidatePrice{ value: validationCost_ }(
-            withdrawal.timestamp, ProtocolAction.ValidateWithdrawal, priceData
-        );
+        PriceInfo memory withdrawalPrice;
+        (withdrawalPrice, validationCost_) =
+            _getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, priceData);
 
         // adjust balances
         _applyPnlAndFunding(withdrawalPrice.neutralPrice.toUint128(), withdrawalPrice.timestamp.toUint128());
@@ -497,10 +488,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint128 startPrice;
         {
-            validationCost_ = _oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition);
-            PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: validationCost_ }(
-                long.timestamp, ProtocolAction.ValidateOpenPosition, priceData
-            );
+            PriceInfo memory price;
+            (price, validationCost_) = _getOraclePrice(ProtocolAction.ValidateOpenPosition, long.timestamp, priceData);
+
             startPrice = price.price.toUint128();
             // adjust balances
             _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
@@ -572,10 +562,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         LongPendingAction memory long = _toLongPendingAction(pending);
 
-        validationCost_ = _oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateClosePosition);
-        PriceInfo memory price = _oracleMiddleware.parseAndValidatePrice{ value: validationCost_ }(
-            long.timestamp, ProtocolAction.ValidateClosePosition, priceData
-        );
+        PriceInfo memory price;
+        (price, validationCost_) = _getOraclePrice(ProtocolAction.ValidateClosePosition, long.timestamp, priceData);
 
         // adjust balances
         _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
@@ -669,6 +657,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         } else if (pending.action == ProtocolAction.ValidateClosePosition) {
             validationCost_ = _validateClosePositionWithAction(pending, priceData);
         }
+    }
+
+    function _getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
+        internal
+        returns (PriceInfo memory price_, uint256 validationCost_)
+    {
+        validationCost_ = _oracleMiddleware.validationCost(priceData, action);
+        if (msg.value < validationCost_) {
+            // this check is not bulletproof. In case we do two price validations that require a payment in the same
+            // transaction, and we don't have enough value for the second one, the second validation will fail with a
+            // generic revert.
+            revert UsdnProtocolInsufficientFee();
+        }
+        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost_ }(timestamp, action, priceData);
     }
 
     function _refundExcessEther(uint256 validationCost) internal {

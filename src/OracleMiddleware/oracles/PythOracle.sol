@@ -40,6 +40,9 @@ contract PythOracle is IOracleMiddlewareErrors {
         pricesUpdateData[0] = priceUpdateData;
 
         uint256 pythFee = _pyth.getUpdateFee(pricesUpdateData);
+        if (msg.value < pythFee) {
+            revert OracleMiddlewareInsufficientFee();
+        }
         // slither-disable-next-line arbitrary-send-eth
         PythStructs.PriceFeed[] memory priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: pythFee }(
             pricesUpdateData, priceIds, targetTimestamp, type(uint64).max
