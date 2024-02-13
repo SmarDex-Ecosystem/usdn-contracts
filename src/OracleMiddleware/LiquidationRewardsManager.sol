@@ -40,11 +40,11 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /**
      * @notice Emitted when the rewards parameters are changed.
      * @param gasUsedPerTick Gas used per tick to liquidate.
-     * @param baseGasUsed Gas used for the rest of the computation.
+     * @param otherGasUsed Gas used for the rest of the computation.
      * @param gasPriceLimit Upper limit for the gas price.
      * @param multiplier Multiplier for the liquidators.
      */
-    event UpdateRewardsParameters(uint32 gasUsedPerTick, uint32 baseGasUsed, uint64 gasPriceLimit, uint16 multiplier);
+    event RewardsParametersUpdated(uint32 gasUsedPerTick, uint32 otherGasUsed, uint64 gasPriceLimit, uint16 multiplier);
 
     /* -------------------------------------------------------------------------- */
     /*                                   Errors                                   */
@@ -53,7 +53,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
     error LiquidationRewardsManagerGasUsedPerTickTooHigh(uint256 value);
     /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
-    error LiquidationRewardsManagerBaseGasUsedTooHigh(uint256 value);
+    error LiquidationRewardsManagerOtherGasUsedTooHigh(uint256 value);
     /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
     error LiquidationRewardsManagerGasPriceLimitTooHigh(uint256 value);
     /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
@@ -137,26 +137,26 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /**
      * @notice Set new parameters for the rewards calculation.
      * @param gasUsedPerTick Gas used per tick to liquidate.
-     * @param baseGasUsed Gas used for the rest of the computation.
+     * @param otherGasUsed Gas used for the rest of the computation.
      * @param gasPriceLimit Upper limit for the gas price.
      * @param multiplier Multiplier for the liquidators.
      */
-    function setRewardsParameters(uint32 gasUsedPerTick, uint32 baseGasUsed, uint64 gasPriceLimit, uint16 multiplier)
+    function setRewardsParameters(uint32 gasUsedPerTick, uint32 otherGasUsed, uint64 gasPriceLimit, uint16 multiplier)
         external
         onlyOwner
     {
         if (gasUsedPerTick > 100_000) {
             revert LiquidationRewardsManagerGasUsedPerTickTooHigh(gasUsedPerTick);
-        } else if (baseGasUsed > 200_000) {
-            revert LiquidationRewardsManagerBaseGasUsedTooHigh(baseGasUsed);
+        } else if (otherGasUsed > 200_000) {
+            revert LiquidationRewardsManagerOtherGasUsedTooHigh(otherGasUsed);
         } else if (gasPriceLimit > (8000 * (10 ** GAS_PRICE_DECIMALS))) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
         } else if (multiplier > 10) {
             revert LiquidationRewardsManagerMultiplierTooHigh(multiplier);
         }
 
-        _rewardsParameters = RewardsParameters(gasUsedPerTick, baseGasUsed, gasPriceLimit, multiplier);
+        _rewardsParameters = RewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
 
-        emit UpdateRewardsParameters(gasUsedPerTick, baseGasUsed, gasPriceLimit, multiplier);
+        emit RewardsParametersUpdated(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
     }
 }
