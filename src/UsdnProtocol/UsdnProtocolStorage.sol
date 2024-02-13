@@ -97,10 +97,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The scaling factor (SF) of the funding rate (0.12)
     uint256 internal _fundingSF = 12 * 10 ** (FUNDING_SF_DECIMALS - 2);
 
-    // TO DO : add natspec
-    int256 internal _protocolFeeBips = 10;
+    /// @notice The protocol fee percentage (in bips)
+    uint16 internal _protocolFeeBips = 10;
 
-    // TO DO : add natspec and setter
+    /// @notice The fee collector address
     address internal _feeCollector;
 
     uint256 internal _feesTreshold = 1 ether;
@@ -125,7 +125,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     uint256 internal _liquidationMultiplier = 100_000_000_000_000_000_000_000_000_000_000_000_000;
 
-    // TO DO : getter
     /// @notice The pending protocol fee accumulator
     uint256 internal _pendingProtocolFee;
 
@@ -197,7 +196,12 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         if (usdn.totalSupply() != 0) {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
-        require(feeCollector != address(0), "Fee collector cannot be the zero address");
+
+        // TODO : do we need to check the feeCollector interface (ERC165) ?
+        if (feeCollector == address(0)) {
+            revert UsdnProtocolInvalidFeeCollector(feeCollector);
+        }
+
         _usdn = usdn;
         _usdnDecimals = usdn.decimals();
         _asset = asset;
@@ -231,12 +235,26 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         return _liquidationMultiplier;
     }
 
-    // TO DO : add in the interface with natspec
-    // TO DO : onlyOwner
-    function setFee(int256 protocolFeeBips) external {
-        // TO DO : create an error
-        require(protocolFeeBips <= 10_000, "Fee cannot exceed 100% (10000 bips)");
-        require(protocolFeeBips >= 0, "Fee cannot be negative");
+    /// @inheritdoc IUsdnProtocolStorage
+    function pendingProtocolFee() external view returns (uint256) {
+        return _pendingProtocolFee;
+    }
+
+    // TODO : onlyOwner
+    /// @inheritdoc IUsdnProtocolStorage
+    function setFeeBips(uint16 protocolFeeBips) external {
+        if (protocolFeeBips > 10_000 || protocolFeeBips < 0) {
+            revert UsdnProtocolInvalidProtocolFeeBips(protocolFeeBips);
+        }
         _protocolFeeBips = protocolFeeBips;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function setFeeCollector(address feeCollector) external {
+        // TODO : do we need to check the feeCollector interface (ERC165) ?
+        if (feeCollector == address(0)) {
+            revert UsdnProtocolInvalidFeeCollector(feeCollector);
+        }
+        _feeCollector = feeCollector;
     }
 }

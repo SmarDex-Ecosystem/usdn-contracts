@@ -397,7 +397,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         returns (uint256, uint256)
     {
         int256 diff = newLongBalance - oldLongBalance;
-        int256 feeAmount = (diff * _protocolFeeBips) / 10_000;
+        int256 feeAmount = (diff * _toInt256(_protocolFeeBips)) / 10_000;
         uint256 pendingProtocolFee = _pendingProtocolFee;
 
         if (diff > 0) {
@@ -410,8 +410,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
 
         if (pendingProtocolFee >= _feesTreshold) {
-            // TO DO : add event
             _distributeAssetsAndCheckBalance(_feeCollector, pendingProtocolFee);
+            emit ProtocolFeeDistribued(_feeCollector, pendingProtocolFee);
             _pendingProtocolFee = 0;
         } else {
             _pendingProtocolFee = pendingProtocolFee;

@@ -150,4 +150,11 @@ interface IUsdnProtocolEvents {
      * @param index The index of the position inside the tick array.
      */
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
+
+    /**
+     * @notice Emitted when a user initiates a deposit to the protocol fee vault.
+     * @param feeCollector The collector address.
+     * @param amount The amount of fee transferred.
+     */
+    event ProtocolFeeDistribued(address feeCollector, uint256 amount);
 }

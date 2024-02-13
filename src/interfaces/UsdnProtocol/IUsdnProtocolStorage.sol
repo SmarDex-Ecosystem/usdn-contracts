@@ -45,4 +45,23 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The multiplier for liquidation price calculations
     function liquidationMultiplier() external view returns (uint256);
+
+    /// @notice The pending fees that are accumulated in the protocol
+    function pendingProtocolFee() external view returns (uint256);
+
+    /**
+     * @notice Set the fee percentage.
+     * @param feeBips The fee percentage (in bips) to be charged.
+     * @dev Fees are charged when transfers occur between the vault and the long
+     * @dev example: 0.5% -> 50 bips
+     */
+    function setFeeBips(uint16 feeBips) external;
+
+    /**
+     * @notice Set the fee collector address.
+     * @param feeCollector The address of the fee collector.
+     * @dev The fee collector is the address that receives the fees charged by the protocol
+     * @dev The fee collector must be different from zero address
+     */
+    function setFeeCollector(address feeCollector) external;
 }

@@ -50,4 +50,10 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided tick version is outdated (transactions have been liquidated)
     error UsdnProtocolOutdatedTick(uint256 currentVersion, uint256 providedVersion);
+
+    /// @dev Indicates that the provided fee percentage is invalid (< 0% or > 100%)
+    error UsdnProtocolInvalidProtocolFeeBips(uint16 protocolFeeBips);
+
+    /// @dev Indicates that the provided fee collector address is invalid
+    error UsdnProtocolInvalidFeeCollector(address feeCollector);
 }
