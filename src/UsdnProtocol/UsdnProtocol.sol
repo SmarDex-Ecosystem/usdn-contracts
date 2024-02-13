@@ -108,12 +108,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             getEffectiveTickForPrice(desiredLiqPrice) // no liquidation penalty
         );
 
-        if (msg.value > validationCost) {
-            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        _refundExcessEther(validationCost);
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
