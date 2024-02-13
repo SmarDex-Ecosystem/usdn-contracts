@@ -113,7 +113,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     }
 
     /// @inheritdoc ILiquidationRewardsManager
-    function getLiquidationRewards(uint16 tickAmount) external view returns (uint256 _wstETHRewards) {
+    function getLiquidationRewards(uint16 tickAmount, uint256) external view returns (uint256 _wstETHRewards) {
         // Do not give rewards if no ticks were liquidated.
         if (tickAmount == 0) {
             return 0;

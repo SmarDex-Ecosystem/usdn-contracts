@@ -307,9 +307,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
         uint16 liquidatedTicks_;
-        (liquidatedPositions_, liquidatedTicks_) = _liquidatePositions(currentPrice.price, iterations);
+        uint256 liquidatedCollateral_;
+        (liquidatedPositions_, liquidatedTicks_, liquidatedCollateral_) =
+            _liquidatePositions(currentPrice.price, iterations);
 
-        uint256 liquidationRewards = _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks_);
+        uint256 liquidationRewards =
+            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks_, liquidatedCollateral_);
         _asset.transfer(msg.sender, liquidationRewards);
     }
 

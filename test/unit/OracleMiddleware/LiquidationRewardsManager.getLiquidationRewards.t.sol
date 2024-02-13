@@ -22,7 +22,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:then It should return an amount of wstETH
      */
     function test_getLiquidationRewardsFor1Tick() public {
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1);
+        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         assertEq(rewards, 5_406_288_000_000_000);
     }
@@ -33,7 +33,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:then It should return 0
      */
     function test_getLiquidationRewardsFor0Tick() public {
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(0);
+        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(0, 0);
 
         assertEq(rewards, 0);
     }
@@ -47,7 +47,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:then It should return an amount of wstETH
      */
     function test_getLiquidationRewardsFor3Ticks() public {
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(3);
+        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(3, 0);
 
         assertEq(rewards, 9_224_886_000_000_000);
     }
@@ -62,7 +62,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      */
     function test_getLiquidationRewardsWithOracleGasPrice() public {
         mockChainlinkOnChain.setLatestRoundData(1, 15 * (10 ** 9), block.timestamp, 1);
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1);
+        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         assertEq(rewards, 2_703_144_000_000_000);
     }
@@ -77,7 +77,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      */
     function test_getLiquidationRewardsWithTxGasPrice() public {
         vm.txGasPrice(20 * (10 ** 9));
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1);
+        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         assertEq(rewards, 3_604_192_000_000_000);
     }
@@ -93,7 +93,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     function test_getLiquidationRewardsWithTxGasPriceAndAboveTheLimit() public {
         vm.txGasPrice(1001 * (10 ** 9));
         mockChainlinkOnChain.setLatestRoundData(1, 2000 * (10 ** 9), block.timestamp, 1);
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1);
+        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         // With a gas price at 1001 gwei, the result without the limit should have been 180_389_809_600_000_000
         assertEq(rewards, 180_209_600_000_000_000);
@@ -110,7 +110,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     function test_getLiquidationRewardsWithOacleGasPriceFeedAndAboveTheLimit() public {
         vm.txGasPrice(2000 * (10 ** 9));
         mockChainlinkOnChain.setLatestRoundData(1, 1001 * (10 ** 9), block.timestamp, 1);
-        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1);
+        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         // With a gas price at 1001 gwei, the result without the limit should have been 180_389_809_600_000_000
         assertEq(rewards, 180_209_600_000_000_000);

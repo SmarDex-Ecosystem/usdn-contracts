@@ -176,13 +176,14 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * @param usdn The USDN ERC20 contract.
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
+     * @param liquidationRewardsManager_ The liquidation rewards manager contract.
      * @param tickSpacing_ The positions tick spacing.
      */
     constructor(
         IUsdn usdn,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
-        ILiquidationRewardsManager liquidationRewardsManager,
+        ILiquidationRewardsManager liquidationRewardsManager_,
         int24 tickSpacing_
     ) {
         // Since all USDN must be minted by the protocol, we check that the total supply is 0
@@ -198,7 +199,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         }
         _oracleMiddleware = oracleMiddleware;
         _priceFeedDecimals = oracleMiddleware.decimals();
-        _liquidationRewardsManager = liquidationRewardsManager;
+        _liquidationRewardsManager = liquidationRewardsManager_;
         _tickSpacing = tickSpacing_;
     }
 

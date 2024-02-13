@@ -252,7 +252,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     function _liquidatePositions(uint256 currentPrice, uint16 iteration)
         internal
-        returns (uint256 liquidatedPositions_, uint16 liquidatedTicks_)
+        returns (uint256 liquidatedPositions_, uint16 liquidatedTicks_, uint256 liquidatedCollateral_)
     {
         // max iteration limit
         if (iteration > MAX_LIQUIDATION_ITERATION) {
@@ -304,5 +304,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             }
         }
         // TODO transfer remaining collat to vault
+        // TODO assign the remaining collat amount to liquidatedCollateral_
+        liquidatedCollateral_ = 0;
     }
 }
