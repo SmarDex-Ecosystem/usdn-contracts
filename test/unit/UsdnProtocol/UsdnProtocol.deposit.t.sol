@@ -109,6 +109,38 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user sends too much ether when initiating a deposit
+     * @custom:given The user deposits 1 wstETH
+     * @custom:when The user sends 0.5 ether as value in the `initiateDeposit` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_initiateDepositEtherRefund() public {
+        uint256 balanceBefore = address(this).balance;
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
+        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, "");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario The user sends too much ether when validating a deposit
+     * @custom:given The user initiated a deposit of 1 wstETH and validates it
+     * @custom:when The user sends 0.5 ether as value in the `validateDeposit` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_validateDepositEtherRefund() public {
+        // initiate
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
+        protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, "");
+        // validate
+        validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
+        uint256 balanceBefore = address(this).balance;
+        protocol.validateDeposit{ value: 0.5 ether }(currentPrice, "");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
      * @dev Create a deposit at price `initialPrice`, then validate it at price `assetPrice`, then check the emitted
      * event and the resulting state.
      * @param initialPrice price of the asset at the time of deposit initiation
@@ -151,4 +183,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(usdn.balanceOf(address(this)), mintedAmount, "USDN user balance");
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply");
     }
+
+    // test refunds
+    receive() external payable { }
 }

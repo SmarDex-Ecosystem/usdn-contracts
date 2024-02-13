@@ -11,7 +11,7 @@ import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
  * @custom:feature Validating two positions with Pyth prices at the same time
  * @custom:background Given a forked ethereum mainnet chain
  */
-contract UsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixture {
+contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixture {
     function setUp() public override {
         params = DEFAULT_PARAMS;
         params.fork = true; // all tests in this contract must be labelled `Fork`
