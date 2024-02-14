@@ -96,8 +96,8 @@ contract LiquidationRewardsManagerBaseFixture is BaseFixture {
         liquidationRewardsManager =
             new LiquidationRewardsManager(address(mockChainlinkOnChain), IWstETH(address(wsteth)), 2 days);
         // Puts the gas at 30 gwei
-        mockChainlinkOnChain.setLatestRoundData(1, 30 * 1e9, block.timestamp, 1);
-        vm.txGasPrice(30 * 1e9);
+        mockChainlinkOnChain.setLatestRoundData(1, 30 gwei, block.timestamp, 1);
+        vm.txGasPrice(30 gwei);
     }
 }
 

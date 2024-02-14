@@ -21,8 +21,6 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
     /// @notice Denominator for the reward multiplier, will give us a 0.1% precision.
     uint16 public constant REWARD_MULTIPLIER_DENOMINATOR = 1000;
-    /// @notice Number of decimals on the gas price, denominated in GWEI (9 decimals).
-    uint8 public constant GAS_PRICE_DECIMALS = 9;
     /// @notice Fixed amount of gas a transaction consume.
     uint16 public constant BASE_GAS_COST = 21_000;
 
@@ -45,7 +43,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 27_671,
             otherGasUsed: 29_681,
-            gasPriceLimit: uint64(1000 * (10 ** GAS_PRICE_DECIMALS)),
+            gasPriceLimit: uint64(1000 gwei),
             multiplier: 2000
         });
     }
@@ -106,7 +104,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             revert LiquidationRewardsManagerGasUsedPerTickTooHigh(gasUsedPerTick);
         } else if (otherGasUsed > 200_000) {
             revert LiquidationRewardsManagerOtherGasUsedTooHigh(otherGasUsed);
-        } else if (gasPriceLimit > (8000 * (10 ** GAS_PRICE_DECIMALS))) {
+        } else if (gasPriceLimit > 8000 gwei) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
         } else if (multiplier > 10) {
             revert LiquidationRewardsManagerMultiplierTooHigh(multiplier);
