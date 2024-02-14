@@ -56,7 +56,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     function _getGasPrice(RewardsParameters memory rewardsParameters) private view returns (uint256 _gasPrice) {
         int256 rawGasPrice = (getChainlinkPrice()).neutralPrice;
 
-        // If the gas price is invalid, return 0 and do not distribut rewards.
+        // If the gas price is invalid, return 0 and do not distribute rewards.
         if (rawGasPrice <= 0) {
             return 0;
         }
