@@ -19,7 +19,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Denominator for the reward multiplier, will give us a 0.1% precision.
+    /// @notice Basis points for the reward multiplier, will give us a 0.1% precision.
     uint16 public constant REWARD_MULTIPLIER_DENOMINATOR = 1000;
     /// @notice Fixed amount of gas a transaction consume.
     uint16 public constant BASE_GAS_COST = 21_000;
@@ -45,7 +45,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             gasUsedPerTick: 27_671,
             otherGasUsed: 29_681,
             gasPriceLimit: uint64(1000 gwei),
-            multiplier: 2000
+            multiplierBps: 2000
         });
     }
 
@@ -65,7 +65,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
         // Multiply by the gas price and the rewards multiplier.
         wstETHRewards_ = _wstEth.getWstETHByStETH(
-            gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplier / REWARD_MULTIPLIER_DENOMINATOR
+            gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplierBps / REWARD_MULTIPLIER_DENOMINATOR
         );
     }
 
@@ -75,23 +75,25 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     }
 
     /// @inheritdoc ILiquidationRewardsManager
-    function setRewardsParameters(uint32 gasUsedPerTick, uint32 otherGasUsed, uint64 gasPriceLimit, uint16 multiplier)
-        external
-        onlyOwner
-    {
+    function setRewardsParameters(
+        uint32 gasUsedPerTick,
+        uint32 otherGasUsed,
+        uint64 gasPriceLimit,
+        uint16 multiplierBps
+    ) external onlyOwner {
         if (gasUsedPerTick > 500_000) {
             revert LiquidationRewardsManagerGasUsedPerTickTooHigh(gasUsedPerTick);
         } else if (otherGasUsed > 1_000_000) {
             revert LiquidationRewardsManagerOtherGasUsedTooHigh(otherGasUsed);
         } else if (gasPriceLimit > 8000 gwei) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
-        } else if (multiplier > 10 * REWARD_MULTIPLIER_DENOMINATOR) {
-            revert LiquidationRewardsManagerMultiplierTooHigh(multiplier);
+        } else if (multiplierBps > 10 * REWARD_MULTIPLIER_DENOMINATOR) {
+            revert LiquidationRewardsManagerMultiplierBpsTooHigh(multiplierBps);
         }
 
-        _rewardsParameters = RewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
+        _rewardsParameters = RewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplierBps);
 
-        emit RewardsParametersUpdated(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
+        emit RewardsParametersUpdated(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplierBps);
     }
 
     /**

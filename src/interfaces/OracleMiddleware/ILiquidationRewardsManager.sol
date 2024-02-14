@@ -24,8 +24,12 @@ interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTy
      * @param gasUsedPerTick Gas used per tick liquidated.
      * @param otherGasUsed Gas used for the rest of the computation.
      * @param gasPriceLimit Upper limit for the gas price.
-     * @param multiplier Multiplier for the rewards (will be divided by REWARD_MULTIPLIER_DENOMINATOR).
+     * @param multiplierBps Multiplier for the rewards (will be divided by REWARD_MULTIPLIER_DENOMINATOR).
      */
-    function setRewardsParameters(uint32 gasUsedPerTick, uint32 otherGasUsed, uint64 gasPriceLimit, uint16 multiplier)
-        external;
+    function setRewardsParameters(
+        uint32 gasUsedPerTick,
+        uint32 otherGasUsed,
+        uint64 gasPriceLimit,
+        uint16 multiplierBps
+    ) external;
 }

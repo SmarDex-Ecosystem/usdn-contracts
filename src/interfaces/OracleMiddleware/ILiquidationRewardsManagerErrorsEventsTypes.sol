@@ -11,9 +11,11 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param gasUsedPerTick Gas used per tick to liquidate.
      * @param otherGasUsed Gas used for the rest of the computation.
      * @param gasPriceLimit Upper limit for the gas price.
-     * @param multiplier Multiplier for the liquidators.
+     * @param multiplierBps Multiplier for the liquidators.
      */
-    event RewardsParametersUpdated(uint32 gasUsedPerTick, uint32 otherGasUsed, uint64 gasPriceLimit, uint16 multiplier);
+    event RewardsParametersUpdated(
+        uint32 gasUsedPerTick, uint32 otherGasUsed, uint64 gasPriceLimit, uint16 multiplierBps
+    );
 
     /* -------------------------------------------------------------------------- */
     /*                                    Structs                                 */
@@ -24,25 +26,25 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param gasUsedPerTick Gas used per tick to liquidate.
      * @param otherGasUsed Gas used for the rest of the computation.
      * @param gasPriceLimit Upper limit for the gas price.
-     * @param multiplier Multiplier for the liquidators.
+     * @param multiplierBps Multiplier basis points for the liquidator rewards.
      */
     struct RewardsParameters {
         uint32 gasUsedPerTick;
         uint32 otherGasUsed;
         uint64 gasPriceLimit;
-        uint16 multiplier; // to be divided by REWARD_MULTIPLIER_DENOMINATOR
+        uint16 multiplierBps; // to be divided by REWARD_MULTIPLIER_DENOMINATOR
     }
 
     /* -------------------------------------------------------------------------- */
     /*                                   Errors                                   */
     /* -------------------------------------------------------------------------- */
 
-    /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
+    /// @dev Indicates that the gasUsedPerTick parameter has been set to a value we consider too high.
     error LiquidationRewardsManagerGasUsedPerTickTooHigh(uint256 value);
-    /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
+    /// @dev Indicates that the otherGasUsed parameter has been set to a value we consider too high.
     error LiquidationRewardsManagerOtherGasUsedTooHigh(uint256 value);
-    /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
+    /// @dev Indicates that the gasPriceLimit parameter has been set to a value we consider too high.
     error LiquidationRewardsManagerGasPriceLimitTooHigh(uint256 value);
-    /// @dev Indicates that one of the rewards parameter has been set to a value we consider too high.
-    error LiquidationRewardsManagerMultiplierTooHigh(uint256 value);
+    /// @dev Indicates that the multiplierBps parameter has been set to a value we consider too high.
+    error LiquidationRewardsManagerMultiplierBpsTooHigh(uint256 value);
 }
