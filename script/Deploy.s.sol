@@ -63,12 +63,12 @@ contract Deploy is Script {
             // prod
             if (isProdEnv) {
                 middleware = new WstEthOracleMiddleware(
-                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, (1 hours + 2 minutes)
+                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, 1 hours + 2 minutes
                 );
                 // fork
             } else {
                 middleware = new MockWstEthOracleMiddleware(
-                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, 1 hours
+                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, 1 hours + 2 minutes
                 );
             }
 
