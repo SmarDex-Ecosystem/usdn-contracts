@@ -122,4 +122,20 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         emit InitiatedOpenPosition(user, long.timestamp, long.leverage, long.amount, price, tick, tickVersion, index);
         emit ValidatedOpenPosition(user, long.leverage, price, tick, tickVersion, index);
     }
+
+    /// @inheritdoc IUsdnProtocol
+    function setFeeBps(uint16 protocolFeeBps) external onlyOwner {
+        if (protocolFeeBps > BPS_DIVISOR) {
+            revert UsdnProtocolInvalidProtocolFeeBps(protocolFeeBps);
+        }
+        _protocolFeeBps = protocolFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setFeeCollector(address feeCollector) external onlyOwner {
+        if (feeCollector == address(0)) {
+            revert UsdnProtocolInvalidFeeCollector();
+        }
+        _feeCollector = feeCollector;
+    }
 }

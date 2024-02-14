@@ -49,19 +49,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The pending fees that are accumulated in the protocol
     function pendingProtocolFee() external view returns (uint256);
 
-    /**
-     * @notice Set the fee percentage.
-     * @param feeBps The fee percentage (in bps) to be charged.
-     * @dev Fees are charged when transfers occur between the vault and the long
-     * @dev example: 0.5% -> 50 bps
-     */
-    function setFeeBps(uint16 feeBps) external;
+    /// @notice The fee threshold before fees are sent to the fee collector
+    function feesThreshold() external view returns (uint256);
 
-    /**
-     * @notice Set the fee collector address.
-     * @param feeCollector The address of the fee collector.
-     * @dev The fee collector is the address that receives the fees charged by the protocol
-     * @dev The fee collector must be different from the zero address
-     */
-    function setFeeCollector(address feeCollector) external;
+    /// @notice The address of the fee collector
+    function feeCollector() external view returns (address);
 }

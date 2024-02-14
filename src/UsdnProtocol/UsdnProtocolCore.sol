@@ -391,14 +391,24 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         hash_ = keccak256(abi.encodePacked(tick, version_));
     }
 
+    /**
+     * @notice Apply the protocol fee to the balances and distribute the fee to
+     * the fee collector if it exceeds the threshold
+     * @param newVaultBalance The new vault balance after applying pnl and funding
+     * @param newLongBalance The new long balance after applying pnl and funding
+     * @param oldLongBalance The old long balance before applying pnl and funding
+     * @return vaultBalanceWithFee_ The updated vault balance after applying the fee
+     * @return longBalanceWithFee_ The updated long balance after applying the fee
+     */
     function _applyFee(int256 newVaultBalance, int256 newLongBalance, int256 oldLongBalance)
         internal
-        returns (uint256, uint256)
+        returns (uint256 vaultBalanceWithFee_, uint256 longBalanceWithFee_)
     {
         int256 diff = newLongBalance - oldLongBalance;
         int256 feeAmount = (diff * _toInt256(_protocolFeeBps)) / 10_000;
         uint256 pendingProtocolFee = _pendingProtocolFee;
 
+        // if diff > 0, vault sends to long so we take fee from long
         if (diff > 0) {
             newLongBalance -= feeAmount;
             pendingProtocolFee += uint256(feeAmount);

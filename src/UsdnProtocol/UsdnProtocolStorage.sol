@@ -236,20 +236,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         return _pendingProtocolFee;
     }
 
-    // TODO : onlyOwner
     /// @inheritdoc IUsdnProtocolStorage
-    function setFeeBps(uint16 protocolFeeBps) external {
-        if (protocolFeeBps > BPS_DIVISOR) {
-            revert UsdnProtocolInvalidProtocolFeeBps(protocolFeeBps);
-        }
-        _protocolFeeBps = protocolFeeBps;
+    function feesThreshold() external view returns (uint256) {
+        return _feesThreshold;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function setFeeCollector(address feeCollector) external {
-        if (feeCollector == address(0)) {
-            revert UsdnProtocolInvalidFeeCollector();
-        }
-        _feeCollector = feeCollector;
+    function feeCollector() external view returns (address) {
+        return _feeCollector;
     }
 }
