@@ -181,20 +181,20 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
      * @param tickSpacing_ The positions tick spacing.
-     * @param feeCollector The address of the fee collector.
+     * @param feeCollector_ The address of the fee collector.
      */
     constructor(
         IUsdn usdn,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
         int24 tickSpacing_,
-        address feeCollector
+        address feeCollector_
     ) {
         // Since all USDN must be minted by the protocol, we check that the total supply is 0
         if (usdn.totalSupply() != 0) {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
-        if (feeCollector == address(0)) {
+        if (feeCollector_ == address(0)) {
             revert UsdnProtocolInvalidFeeCollector();
         }
 
@@ -208,7 +208,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _oracleMiddleware = oracleMiddleware;
         _priceFeedDecimals = oracleMiddleware.decimals();
         _tickSpacing = tickSpacing_;
-        _feeCollector = feeCollector;
+        _feeCollector = feeCollector_;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
