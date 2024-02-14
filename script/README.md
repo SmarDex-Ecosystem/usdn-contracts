@@ -11,6 +11,8 @@ Environment variables can be used to control the script execution:
 - `PYTH_WSTETH_PRICE_ID`: required if middleware address not provided, the price id of the wstETH pyth oracle
 - `PYTH_STETH_PRICE_ID`: required if middleware address not provided, the price id of the wstETH pyth oracle
 - `CHAINLINK_STETH_PRICE_ADDRESS`: required if middleware address not provided, the address of the stETH chainlink oracle
+- `LIQUIDATION_REWARDS_MANAGER_ADDRESS`: if provided, skips deployment of the liquidation rewards manager
+- `CHAINLINK_GAS_PRICE_ADDRESS`: required if liquidation rewards manager address not provided, the address of the gas price chainlink oracle
 - `USDN_ADDRESS`: if provided, skips deployment of the USDN token
 - `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
 - `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).

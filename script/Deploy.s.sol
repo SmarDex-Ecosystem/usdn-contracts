@@ -75,6 +75,22 @@ contract Deploy is Script {
             middlewareAddress = address(middleware);
         }
 
+        // Deploy the LiquidationRewardsManager if necessary
+        address liquidationRewardsManagerAddress = vm.envOr("LIQUIDATION_REWARDS_MANAGER_ADDRESS", address(0));
+        LiquidationRewardsManager liquidationRewardsManager;
+        if (liquidationRewardsManagerAddress != address(0)) {
+            liquidationRewardsManager = LiquidationRewardsManager(liquidationRewardsManagerAddress);
+        } else {
+            address chainlinkGasPriceFeed = vm.envAddress("CHAINLINK_GAS_PRICE_ADDRESS");
+            if (!isProdEnv) {
+                chainlinkGasPriceFeed = address(new MockChainlinkOnChain());
+            }
+
+            // Heartbeat is 2 hours but I've seen the aggregator takes a bit more time to process the update TX.
+            liquidationRewardsManager =
+                new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), (2 hours + 10 minutes));
+        }
+
         // Deploy USDN token, without a specific minter or adjuster for now
         address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
         Usdn usdn;
@@ -84,15 +100,6 @@ contract Deploy is Script {
             usdn = new Usdn(address(0), address(0));
             usdnAddress = address(usdn);
         }
-
-        address chainlinkGasPriceFeed = vm.envAddress("CHAINLINK_GAS_PRICE_ADDRESS");
-        if (!isProdEnv) {
-            chainlinkGasPriceFeed = address(new MockChainlinkOnChain());
-        }
-
-        // Heartbeat is 2 hours but I've seen the aggregator takes a bit more time to process the update TX.
-        LiquidationRewardsManager liquidationRewardsManager =
-            new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), (2 hours + 10 minutes));
 
         // Deploy the protocol with tick spacing 100 = 1%
         UsdnProtocol protocol = new UsdnProtocol(usdn, wstETH, middleware, liquidationRewardsManager, 100);
