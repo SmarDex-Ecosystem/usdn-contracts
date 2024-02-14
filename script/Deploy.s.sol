@@ -68,7 +68,7 @@ contract Deploy is Script {
                 // fork
             } else {
                 middleware = new MockWstEthOracleMiddleware(
-                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, 1 hours + 2 minutes
+                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, 1 hours + 10 minutes
                 );
             }
 
