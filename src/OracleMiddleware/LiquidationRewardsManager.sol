@@ -40,6 +40,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         ChainlinkOracle(chainlinkGasPriceFeed, chainlinkElapsedTimeLimit)
     {
         _wstEth = wstETH;
+        // TODO update with the final values
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 27_671,
             otherGasUsed: 29_681,
@@ -49,31 +50,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     }
 
     /**
-     * @notice Get the gas price from Chainlink or tx.gasprice, the lesser of the 2 values.
-     * @dev This function cannot return a value higher than the _gasPriceLimit storage variable.
-     * @return _gasPrice The gas price.
+     * @inheritdoc ILiquidationRewardsManager
+     * @dev In the current implementation, the `amountLiquidated` parameter is not used
      */
-    function _getGasPrice(RewardsParameters memory rewardsParameters) private view returns (uint256 _gasPrice) {
-        int256 rawGasPrice = (getChainlinkPrice()).price;
-
-        // If the gas price is invalid, return 0 and do not distribute rewards.
-        if (rawGasPrice <= 0) {
-            return 0;
-        }
-
-        // We can safely cast as rawGasPrice cannot be below 0
-        _gasPrice = uint256(rawGasPrice);
-        if (tx.gasprice < _gasPrice) {
-            _gasPrice = tx.gasprice;
-        }
-
-        // Avoid paying an insane amount if network is abnormally congested
-        if (_gasPrice > rewardsParameters.gasPriceLimit) {
-            _gasPrice = rewardsParameters.gasPriceLimit;
-        }
-    }
-
-    /// @inheritdoc ILiquidationRewardsManager
     function getLiquidationRewards(uint16 tickAmount, uint256) external view returns (uint256 wstETHRewards_) {
         // Do not give rewards if no ticks were liquidated.
         if (tickAmount == 0) {
@@ -113,5 +92,30 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         _rewardsParameters = RewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
 
         emit RewardsParametersUpdated(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
+    }
+
+    /**
+     * @notice Get the gas price from Chainlink or tx.gasprice, the lesser of the 2 values.
+     * @dev This function cannot return a value higher than the _gasPriceLimit storage variable.
+     * @return gasPrice_ The gas price.
+     */
+    function _getGasPrice(RewardsParameters memory rewardsParameters) private view returns (uint256 gasPrice_) {
+        int256 rawGasPrice = (getChainlinkPrice()).price;
+
+        // If the gas price is invalid, return 0 and do not distribute rewards.
+        if (rawGasPrice <= 0) {
+            return 0;
+        }
+
+        // We can safely cast as rawGasPrice cannot be below 0
+        gasPrice_ = uint256(rawGasPrice);
+        if (tx.gasprice < gasPrice_) {
+            gasPrice_ = tx.gasprice;
+        }
+
+        // Avoid paying an insane amount if network is abnormally congested
+        if (gasPrice_ > rewardsParameters.gasPriceLimit) {
+            gasPrice_ = rewardsParameters.gasPriceLimit;
+        }
     }
 }
