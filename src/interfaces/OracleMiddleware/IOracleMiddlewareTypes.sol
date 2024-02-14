@@ -19,7 +19,7 @@ struct PriceInfo {
  * @notice The price and timestamp returned by the chainlink oracle.
  * @dev The timestamp is the timestamp of the price data, not the timestamp of the request.
  * There is no need for optimization here, the struct is only used in memory and not in storage.
- * @param price The asset price formatted by the middleware.
+ * @param price The asset price formatted by the middleware. -1 means the price is too old and considered invalid.
  * @param timestamp The timestamp of the price data.
  */
 struct ChainlinkPriceInfo {

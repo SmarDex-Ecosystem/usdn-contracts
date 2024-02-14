@@ -307,7 +307,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
         uint16 liquidatedTicks;
-        uint256 liquidatedCollateral;
+        int256 liquidatedCollateral;
         (liquidatedPositions_, liquidatedTicks, liquidatedCollateral) =
             _liquidatePositions(currentPrice.price, iterations);
 

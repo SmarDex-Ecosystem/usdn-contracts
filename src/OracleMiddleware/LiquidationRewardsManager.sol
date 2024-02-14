@@ -51,9 +51,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
     /**
      * @inheritdoc ILiquidationRewardsManager
-     * @dev In the current implementation, the `amountLiquidated` parameter is not used
+     * @dev In the current implementation, the `int256 amountLiquidated` parameter is not used
      */
-    function getLiquidationRewards(uint16 tickAmount, uint256) external view returns (uint256 wstETHRewards_) {
+    function getLiquidationRewards(uint16 tickAmount, int256) external view returns (uint256 wstETHRewards_) {
         // Do not give rewards if no ticks were liquidated.
         if (tickAmount == 0) {
             return 0;
