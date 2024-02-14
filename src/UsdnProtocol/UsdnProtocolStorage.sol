@@ -181,6 +181,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
      * @param tickSpacing_ The positions tick spacing.
+     * @param feeCollector The address of the fee collector.
      */
     constructor(
         IUsdn usdn,

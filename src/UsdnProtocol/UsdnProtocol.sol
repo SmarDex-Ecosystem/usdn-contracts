@@ -33,6 +33,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
      * @param tickSpacing The positions tick spacing.
+     * @param feeCollector The address of the fee collector.
      */
     constructor(
         IUsdn usdn,
