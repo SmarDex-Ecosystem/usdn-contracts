@@ -100,13 +100,13 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         external
         onlyOwner
     {
-        if (gasUsedPerTick > 100_000) {
+        if (gasUsedPerTick > 500_000) {
             revert LiquidationRewardsManagerGasUsedPerTickTooHigh(gasUsedPerTick);
-        } else if (otherGasUsed > 200_000) {
+        } else if (otherGasUsed > 1_000_000) {
             revert LiquidationRewardsManagerOtherGasUsedTooHigh(otherGasUsed);
         } else if (gasPriceLimit > 8000 gwei) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
-        } else if (multiplier > 10) {
+        } else if (multiplier > 10 * REWARD_MULTIPLIER_DENOMINATOR) {
             revert LiquidationRewardsManagerMultiplierTooHigh(multiplier);
         }
 

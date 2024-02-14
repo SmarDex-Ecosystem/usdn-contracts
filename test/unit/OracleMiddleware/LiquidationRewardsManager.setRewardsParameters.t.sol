@@ -28,10 +28,10 @@ contract LiquidationRewardsManagerSetRewardsParameters is
      * @custom:and The `RewardsParametersUpdated` event should be emitted
      */
     function test_setRewardsParametersWithValidValues() public {
-        uint32 gasUsedPerTick = 100_000;
-        uint32 otherGasUsed = 200_000;
-        uint64 gasPriceLimit = 8000 * (10 ** 9);
-        uint16 multiplier = 10;
+        uint32 gasUsedPerTick = 500_000;
+        uint32 otherGasUsed = 1_000_000;
+        uint64 gasPriceLimit = 8000 gwei;
+        uint16 multiplier = 10 * liquidationRewardsManager.REWARD_MULTIPLIER_DENOMINATOR();
 
         vm.expectEmit();
         emit RewardsParametersUpdated(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
@@ -51,10 +51,10 @@ contract LiquidationRewardsManagerSetRewardsParameters is
      * @custom:then It reverts with a OwnableUnauthorizedAccount error
      */
     function test_RevertWhen_setRewardsParametersCallerIsNotTheOwner() public {
-        uint32 gasUsedPerTick = 100_000;
-        uint32 otherGasUsed = 200_000;
-        uint64 gasPriceLimit = 8000 * (10 ** 9);
-        uint16 multiplier = 10;
+        uint32 gasUsedPerTick = 500_000;
+        uint32 otherGasUsed = 1_000_000;
+        uint64 gasPriceLimit = 8000 gwei;
+        uint16 multiplier = 10 * liquidationRewardsManager.REWARD_MULTIPLIER_DENOMINATOR();
 
         vm.prank(USER_1);
 
@@ -70,10 +70,10 @@ contract LiquidationRewardsManagerSetRewardsParameters is
      * @custom:then It reverts with a LiquidationRewardsManagerGasUsedPerTickTooHigh error
      */
     function test_RevertWhen_setRewardsParametersWithGasUsedPerTickTooHigh() public {
-        uint32 gasUsedPerTick = 100_001;
-        uint32 otherGasUsed = 200_000;
-        uint64 gasPriceLimit = 8000 * (10 ** 9);
-        uint16 multiplier = 10;
+        uint32 gasUsedPerTick = 500_001;
+        uint32 otherGasUsed = 1_000_000;
+        uint64 gasPriceLimit = 8000 gwei;
+        uint16 multiplier = 10 * liquidationRewardsManager.REWARD_MULTIPLIER_DENOMINATOR();
 
         // Expect revert when the gas used per tick parameter is too high
         vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerGasUsedPerTickTooHigh.selector, gasUsedPerTick));
@@ -87,10 +87,10 @@ contract LiquidationRewardsManagerSetRewardsParameters is
      * @custom:then It reverts with a LiquidationRewardsManagerOtherGasUsedTooHigh error
      */
     function test_RevertWhen_setRewardsParametersWithOtherGasUsedTooHigh() public {
-        uint32 gasUsedPerTick = 100_000;
-        uint32 otherGasUsed = 200_001;
-        uint64 gasPriceLimit = 8000 * (10 ** 9);
-        uint16 multiplier = 10;
+        uint32 gasUsedPerTick = 500_000;
+        uint32 otherGasUsed = 1_000_001;
+        uint64 gasPriceLimit = 8000 gwei;
+        uint16 multiplier = 10 * liquidationRewardsManager.REWARD_MULTIPLIER_DENOMINATOR();
 
         // Expect revert when the other gas used parameter is too high
         vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerOtherGasUsedTooHigh.selector, otherGasUsed));
@@ -104,10 +104,10 @@ contract LiquidationRewardsManagerSetRewardsParameters is
      * @custom:then It reverts with a LiquidationRewardsManagerGasPriceLimitTooHigh error
      */
     function test_RevertWhen_setRewardsParametersWithGasPriceLimitTooHigh() public {
-        uint32 gasUsedPerTick = 100_000;
-        uint32 otherGasUsed = 200_000;
-        uint64 gasPriceLimit = 8000 * (10 ** 9) + 1;
-        uint16 multiplier = 10;
+        uint32 gasUsedPerTick = 500_000;
+        uint32 otherGasUsed = 1_000_000;
+        uint64 gasPriceLimit = 8000 gwei + 1;
+        uint16 multiplier = 10 * liquidationRewardsManager.REWARD_MULTIPLIER_DENOMINATOR();
 
         // Expect revert when the gas price limit parameter is too high
         vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerGasPriceLimitTooHigh.selector, gasPriceLimit));
@@ -121,10 +121,10 @@ contract LiquidationRewardsManagerSetRewardsParameters is
      * @custom:then It reverts with a LiquidationRewardsManagerMultiplierTooHigh error
      */
     function test_RevertWhen_setRewardsParametersWithMultiplierTooHigh() public {
-        uint32 gasUsedPerTick = 100_000;
-        uint32 otherGasUsed = 200_000;
-        uint64 gasPriceLimit = 8000 * (10 ** 9);
-        uint16 multiplier = 11;
+        uint32 gasUsedPerTick = 500_000;
+        uint32 otherGasUsed = 1_000_000;
+        uint64 gasPriceLimit = 8000 gwei;
+        uint16 multiplier = 10 * liquidationRewardsManager.REWARD_MULTIPLIER_DENOMINATOR() + 1;
 
         // Expect revert when the multiplier is too high
         vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerMultiplierTooHigh.selector, multiplier));
