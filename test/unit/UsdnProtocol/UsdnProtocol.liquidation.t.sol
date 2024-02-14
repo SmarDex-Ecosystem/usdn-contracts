@@ -93,6 +93,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(2000 ether);
         int24 initialTick;
         uint256 initialTickVersion;
+        uint256 initialVaultBalance = protocol.balanceVault();
 
         for (uint256 i; i < 10; i++) {
             vm.startPrank(users[i]);
@@ -120,10 +121,13 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         skip(1 hours);
         priceData = abi.encode(1000 ether);
 
+        uint256 expectedLiquidatorRewards = 5_406_288_000_000_000;
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, 1000 ether, 1_692_533_133_837_250_861_380);
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
 
@@ -131,10 +135,16 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256 wstETHBalanceAfterRewards = wstETH.balanceOf(address(this));
         assertEq(
             wstETHBalanceAfterRewards - wstETHBalanceBeforeRewards,
-            5_406_288_000_000_000,
+            expectedLiquidatorRewards,
             "The liquidator did not receive the right amount of rewards"
         );
 
+        // check if the vault's balance was updated
+        assertEq(
+            initialVaultBalance + 55 ether, // collateral lost in the liquidation
+            protocol.balanceVault() + expectedLiquidatorRewards,
+            "The vault should have the same amount of funds minus the liquidator rewards"
+        );
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
         // check if second total expo is equal expected value

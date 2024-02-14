@@ -311,11 +311,30 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (liquidatedPositions_, liquidatedTicks, liquidatedCollateral) =
             _liquidatePositions(currentPrice.price, iterations);
 
+        if (liquidatedTicks > 0) {
+            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral);
+        }
+    }
+
+    /**
+     * @notice Send rewards to the liquidator.
+     * @dev Should still emit an event if liquidationRewards = 0 to better keep track of those anomalies as rewards for
+     * those will be managed off-chain.
+     * @param liquidatedTicks The number of ticks that were liquidated.
+     * @param liquidatedCollateral The amount of collateral lost due to the liquidations.
+     */
+    function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 liquidatedCollateral) internal {
         // Get how much we should give to the liquidator as rewards
         uint256 liquidationRewards =
             _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, liquidatedCollateral);
+
+        // Update the vault's balance
+        _balanceVault -= liquidationRewards;
+
         // Transfer rewards (wsteth) to the liquidator
-        _asset.transfer(msg.sender, liquidationRewards);
+        _distributeAssetsAndCheckBalance(msg.sender, liquidationRewards);
+
+        emit LiquidatorRewarded(msg.sender, liquidationRewards);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
