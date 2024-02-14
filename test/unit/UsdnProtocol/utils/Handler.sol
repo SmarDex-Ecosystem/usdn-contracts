@@ -59,10 +59,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _vaultAssetAvailable(currentPrice);
     }
 
-    function setMinLeverage(uint256 minLeverage) external {
-        _minLeverage = minLeverage;
-    }
-
     function minimumPrice() external pure returns (uint256) {
         return TickMath.MIN_PRICE;
     }

@@ -77,7 +77,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _maxLeverage = 10 * 10 ** LEVERAGE_DECIMALS;
 
     /// @notice The deadline for a user to confirm their own action
-    uint256 internal _validationDeadline = 60 minutes;
+    uint256 internal _validationDeadline = 20 minutes;
 
     /// @notice The funding rate per second
     int256 internal _fundingRatePerSecond = 3_472_222_222; // 18 decimals (0.03% daily -> 0.0000003472% per second)
@@ -89,7 +89,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _safetyMargin = 200; // divisor is 10_000 -> 2%
 
     /// @notice User current liquidation iteration in tick.
-    uint16 internal _liquidationIteration = 5;
+    uint16 internal _liquidationIteration = 1;
 
     // TODO: Add checks when creating the setter for this variable (!= 0)
     /// @notice The moving average period of the funding rate

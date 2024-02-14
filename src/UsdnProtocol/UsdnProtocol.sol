@@ -5,7 +5,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocol, IOracleMiddleware } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import {
     PendingAction,
     VaultPendingAction,
@@ -15,7 +15,6 @@ import {
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
@@ -39,14 +38,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing)
     { }
 
-    /**
-     * @notice Initialize the protocol.
-     * @dev This function can only be called once. Other external functions can only be called after the initialization.
-     * @param depositAmount The amount of wstETH to deposit.
-     * @param longAmount The amount of wstETH to use for the long.
-     * @param desiredLiqPrice The desired liquidation price for the long.
-     * @param currentPriceData The current price data.
-     */
+    /// @inheritdoc IUsdnProtocol
     function initialize(
         uint128 depositAmount,
         uint128 longAmount,
@@ -106,6 +98,126 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             currentPrice.price.toUint128(),
             getEffectiveTickForPrice(desiredLiqPrice) // no liquidation penalty
         );
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external onlyOwner {
+        // check address zero middleware
+        if (address(newOracleMiddleware) == address(0)) {
+            revert UsdnProtocolZeroMiddlewareAddress();
+        }
+        _oracleMiddleware = newOracleMiddleware;
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setMinLeverage(uint256 newMinLeverage) external onlyOwner {
+        // zero minLeverage
+        if (newMinLeverage == 0) {
+            revert UsdnProtocolZeroMinLeverage();
+        }
+
+        // minLeverage greater or equal maxLeverage
+        if (newMinLeverage >= _maxLeverage) {
+            revert UsdnProtocolMinLeverageGreaterThanMax();
+        }
+
+        _minLeverage = newMinLeverage;
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
+        // maxLeverage lower or equal minLeverage
+        if (newMaxLeverage <= _minLeverage) {
+            revert UsdnProtocolMaxLeverageLowerThanMin();
+        }
+
+        // maxLeverage greater than max 100
+        if (newMaxLeverage > 100 * 10 ** LEVERAGE_DECIMALS) {
+            revert UsdnProtocolMaxLeverageGreaterThanMax();
+        }
+
+        _maxLeverage = newMaxLeverage;
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setValidationDeadline(uint256 newValidationDeadline) external onlyOwner {
+        // validation deadline lower than min 1 minute
+        if (newValidationDeadline < 60) {
+            revert UsdnProtocolValidationDeadlineLowerThanMin();
+        }
+
+        // validation deadline greater than max 1 year
+        if (newValidationDeadline > 365 days) {
+            revert UsdnProtocolValidationDeadlineGreaterThanMax();
+        }
+
+        _validationDeadline = newValidationDeadline;
+    }
+
+    // TODO still required ?
+    /// @inheritdoc IUsdnProtocol
+    function setFundingRatePerSecond(int256 newFundingRatePerSecond) external onlyOwner {
+        _fundingRatePerSecond = newFundingRatePerSecond;
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setLiquidationPenalty(uint24 newLiquidationPenalty) external onlyOwner {
+        // liquidationPenalty greater than max 15
+        if (newLiquidationPenalty > 15) {
+            revert UsdnProtocolLiquidationPenaltyGreaterThanMax();
+        }
+
+        _liquidationPenalty = newLiquidationPenalty;
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setSafetyMargin(uint256 newSafetyMargin) external onlyOwner {
+        // safetyMargin greater than max 2000: 20%
+        if (newSafetyMargin > 2000) {
+            revert UsdnProtocolSafetyMarginGreaterThanMax();
+        }
+
+        _safetyMargin = newSafetyMargin;
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setLiquidationIteration(uint16 newLiquidationIteration) external onlyOwner {
+        // newLiquidationIteration greater than MAX_LIQUIDATION_ITERATION 10
+        if (newLiquidationIteration > MAX_LIQUIDATION_ITERATION) {
+            revert UsdnProtocolLiquidationIterationGreaterThanMax();
+        }
+
+        _liquidationIteration = newLiquidationIteration;
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setEMAPeriod(uint128 newEMAPeriod) external onlyOwner {
+        // EMAPeriod is zero
+        if (newEMAPeriod == 0) {
+            revert UsdnProtocolZeroEMAPeriod();
+        }
+
+        // EMAPeriod is greater than max 3 months
+        if (newEMAPeriod > 90 days) {
+            revert UsdnProtocolEMAPeriodGreaterThanMax();
+        }
+
+        _EMAPeriod = newEMAPeriod;
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setFundingSF(uint256 newFundingSF) external onlyOwner {
+        // newFundingSF is zero
+        if (newFundingSF == 0) {
+            revert UsdnProtocolZeroFundingSF();
+        }
+
+        // newFundingSF is greater than max 1
+        if (newFundingSF > 1000) {
+            revert UsdnProtocolFundingSFGreaterThanMax();
+        }
+
+        _fundingSF = newFundingSF;
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {

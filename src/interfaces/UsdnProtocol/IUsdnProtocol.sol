@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
 /**
  * @title IUsdnProtocol
@@ -26,4 +27,34 @@ interface IUsdnProtocol is IUsdnProtocolActions {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) external payable;
+
+    /// @notice Set the new oracle middleware contract.
+    function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external;
+
+    /// @notice Set the new minimum leverage for a position.
+    function setMinLeverage(uint256 newMinLeverage) external;
+
+    /// @notice Set the new maximum leverage for a position.
+    function setMaxLeverage(uint256 newMaxLeverage) external;
+
+    /// @notice Set the new deadline for a user to confirm their own action.
+    function setValidationDeadline(uint256 newValidationDeadline) external;
+
+    /// @notice Set the new funding rate per second.
+    function setFundingRatePerSecond(int256 newFundingRatePerSecond) external;
+
+    /// @notice Set the new liquidation penalty (in tick spacing units).
+    function setLiquidationPenalty(uint24 newLiquidationPenalty) external;
+
+    /// @notice Set the new safety margin for the liquidation price of newly open positions.
+    function setSafetyMargin(uint256 newSafetyMargin) external;
+
+    /// @notice Set user current liquidation iteration in tick.
+    function setLiquidationIteration(uint16 newLiquidationIteration) external;
+
+    /// @notice Set new moving average period of the funding rate.
+    function setEMAPeriod(uint128 newEMAPeriod) external;
+
+    /// @notice Set the scaling factor (SF) of the funding rate.
+    function setFundingSF(uint256 newFundingSF) external;
 }
