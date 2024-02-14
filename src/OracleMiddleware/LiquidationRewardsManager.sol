@@ -19,8 +19,8 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Basis points for the reward multiplier, will give us a 0.1% precision.
-    uint16 public constant REWARD_MULTIPLIER_DENOMINATOR = 1000;
+    /// @notice Denominator for the reward multiplier, will give us a 0.1% basis point.
+    uint16 public constant REWARDS_MULTIPLIER_DENOMINATOR = 1000;
     /// @notice Fixed amount of gas a transaction consume.
     uint16 public constant BASE_GAS_COST = 21_000;
 
@@ -65,7 +65,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
         // Multiply by the gas price and the rewards multiplier.
         wstETHRewards_ = _wstEth.getWstETHByStETH(
-            gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplierBps / REWARD_MULTIPLIER_DENOMINATOR
+            gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplierBps / REWARDS_MULTIPLIER_DENOMINATOR
         );
     }
 
@@ -87,7 +87,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             revert LiquidationRewardsManagerOtherGasUsedTooHigh(otherGasUsed);
         } else if (gasPriceLimit > 8000 gwei) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
-        } else if (multiplierBps > 10 * REWARD_MULTIPLIER_DENOMINATOR) {
+        } else if (multiplierBps > 10 * REWARDS_MULTIPLIER_DENOMINATOR) {
             revert LiquidationRewardsManagerMultiplierBpsTooHigh(multiplierBps);
         }
 

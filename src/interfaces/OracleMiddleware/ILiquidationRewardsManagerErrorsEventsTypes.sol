@@ -32,7 +32,7 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
         uint32 gasUsedPerTick;
         uint32 otherGasUsed;
         uint64 gasPriceLimit;
-        uint16 multiplierBps; // to be divided by REWARD_MULTIPLIER_DENOMINATOR
+        uint16 multiplierBps; // to be divided by REWARDS_MULTIPLIER_DENOMINATOR
     }
 
     /* -------------------------------------------------------------------------- */
