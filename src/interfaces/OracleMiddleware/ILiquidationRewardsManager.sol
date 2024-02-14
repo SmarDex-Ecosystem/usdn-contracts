@@ -21,10 +21,10 @@ interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTy
 
     /**
      * @notice Set new parameters for the rewards calculation.
-     * @param gasUsedPerTick Gas used per tick to liquidate.
+     * @param gasUsedPerTick Gas used per tick liquidated.
      * @param otherGasUsed Gas used for the rest of the computation.
      * @param gasPriceLimit Upper limit for the gas price.
-     * @param multiplier Multiplier for the liquidators.
+     * @param multiplier Multiplier for the rewards (will be divided by REWARD_MULTIPLIER_DENOMINATOR).
      */
     function setRewardsParameters(uint32 gasUsedPerTick, uint32 otherGasUsed, uint64 gasPriceLimit, uint16 multiplier)
         external;

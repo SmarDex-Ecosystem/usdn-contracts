@@ -58,7 +58,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:and They are both below the gas price limit
      * @custom:and 1 tick was liquidated
      * @custom:and The exchange rate for stETH per wstETH is 1.15
-     * @custom:then It should return an amount of wstETH
+     * @custom:then It should return an amount of wstETH based on the oracle price
      */
     function test_getLiquidationRewardsWithOracleGasPrice() public {
         mockChainlinkOnChain.setLatestRoundData(1, 15 * (10 ** 9), block.timestamp, 1);
@@ -73,7 +73,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:and They are both below the gas price limit
      * @custom:and 1 tick was liquidated
      * @custom:and The exchange rate for stETH per wstETH is 1.15
-     * @custom:then It should return an amount of wstETH
+     * @custom:then It should return an amount of wstETH based on tx.gasprice
      */
     function test_getLiquidationRewardsWithTxGasPrice() public {
         vm.txGasPrice(20 * (10 ** 9));

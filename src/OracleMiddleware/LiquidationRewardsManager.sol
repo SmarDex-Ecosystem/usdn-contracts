@@ -83,7 +83,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         }
 
         RewardsParameters memory rewardsParameters = _rewardsParameters;
-        // Calculate te amount of gas spent during the liquidation.
+        // Calculate the amount of gas spent during the liquidation.
         uint256 gasUsed =
             rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
         // Multiply by the gas price and the rewards multiplier.

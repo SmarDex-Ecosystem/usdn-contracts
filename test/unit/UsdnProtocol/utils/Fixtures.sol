@@ -57,8 +57,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager =
             new LiquidationRewardsManager(address(chainlinkGasPriceFeed), IWstETH(address(wstETH)), 2 days);
-        protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, liquidationRewardsManager, 100); // tick
-            // spacing 100 = 1%
+
+        protocol = new UsdnProtocolHandler(
+            usdn,
+            wstETH,
+            oracleMiddleware,
+            liquidationRewardsManager,
+            100 // tick spacing 100 = 1%
+        );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x

@@ -12,8 +12,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         wstETH.mint(address(this), 100_000 ether);
         wstETH.approve(address(protocol), type(uint256).max);
 
-        chainlinkGasPriceFeed.setLatestRoundData(1, 30 * (10 ** 9), block.timestamp, 1);
-        vm.txGasPrice(30 * (10 ** 9));
+        chainlinkGasPriceFeed.setLatestRoundData(1, 30 * 1e9, block.timestamp, 1);
+        vm.txGasPrice(30 * 1e9);
     }
 
     /**
