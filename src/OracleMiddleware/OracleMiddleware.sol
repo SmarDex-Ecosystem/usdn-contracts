@@ -123,13 +123,13 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     {
         ChainlinkPriceInfo memory chainlinkOnChainPrice = getFormattedChainlinkPrice(DECIMALS);
         // If the chainlink oracle's data is invalid, fetch from pyth
-        if (chainlinkOnChainPrice.neutralPrice <= 0) {
+        if (chainlinkOnChainPrice.price <= 0) {
             return getPythOrChainlinkDataStreamPrice(data, actionTimestamp, conf);
         }
 
         return PriceInfo({
             price: uint256(chainlinkOnChainPrice.price),
-            neutralPrice: uint256(chainlinkOnChainPrice.neutralPrice),
+            neutralPrice: uint256(chainlinkOnChainPrice.price),
             timestamp: chainlinkOnChainPrice.timestamp
         });
     }

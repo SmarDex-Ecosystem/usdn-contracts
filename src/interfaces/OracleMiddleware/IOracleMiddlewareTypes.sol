@@ -20,12 +20,10 @@ struct PriceInfo {
  * @dev The timestamp is the timestamp of the price data, not the timestamp of the request.
  * There is no need for optimization here, the struct is only used in memory and not in storage.
  * @param price The asset price formatted by the middleware.
- * @param neutralPrice The asset price returned by the oracle.
  * @param timestamp The timestamp of the price data.
  */
 struct ChainlinkPriceInfo {
     int256 price;
-    int256 neutralPrice;
     uint256 timestamp;
 }
 

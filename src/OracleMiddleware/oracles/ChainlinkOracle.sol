@@ -33,7 +33,7 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
             price = -1;
         }
 
-        price_ = ChainlinkPriceInfo({ price: price, neutralPrice: price, timestamp: timestamp });
+        price_ = ChainlinkPriceInfo({ price: price, timestamp: timestamp });
     }
 
     /**
@@ -49,7 +49,6 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
         uint256 oracleDecimal = _priceFeed.decimals();
         formattedPrice_ = getChainlinkPrice();
         formattedPrice_.price = formattedPrice_.price * int256(10 ** decimals) / int256(10 ** oracleDecimal);
-        formattedPrice_.neutralPrice = formattedPrice_.price;
     }
 
     /**
