@@ -150,4 +150,58 @@ interface IUsdnProtocolEvents {
      * @param index The index of the position inside the tick array.
      */
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
+
+    /**
+     * @notice Emitted when the oracle middleware changed.
+     * @param newMiddleware The new oracle middleware address.
+     */
+    event OracleMiddlewareChanged(address newMiddleware);
+
+    /**
+     * @notice Emitted when the minLeverage changed.
+     * @param newMinLeverage The new minLeverage.
+     */
+    event MinLeverageChanged(uint256 newMinLeverage);
+
+    /**
+     * @notice Emitted when the maxLeverage changed.
+     * @param newMaxLeverage The new maxLeverage.
+     */
+    event MaxLeverageChanged(uint256 newMaxLeverage);
+
+    /**
+     * @notice Emitted when the validationDeadline changed.
+     * @param newValidationDeadline The new validationDeadline.
+     */
+    event ValidationDeadlineChanged(uint256 newValidationDeadline);
+
+    /**
+     * @notice Emitted when the liquidationPenalty changed.
+     * @param newLiquidationPenalty The new liquidationPenalty.
+     */
+    event LiquidationPenaltyChanged(uint24 newLiquidationPenalty);
+
+    /**
+     * @notice Emitted when the safetyMargin changed.
+     * @param newSafetyMargin The new safetyMargin.
+     */
+    event SafetyMarginChanged(uint256 newSafetyMargin);
+
+    /**
+     * @notice Emitted when the liquidationIteration changed.
+     * @param newLiquidationIteration The new liquidationIteration.
+     */
+    event LiquidationIterationChanged(uint16 newLiquidationIteration);
+
+    /**
+     * @notice Emitted when the EMAPeriod changed.
+     * @param newEMAPeriod The new EMAPeriod.
+     */
+    event EMAPeriodChanged(uint128 newEMAPeriod);
+
+    /**
+     * @notice Emitted when the fundingSF changed.
+     * @param newFundingSF The new fundingSF.
+     */
+    event FundingSFChanged(uint256 newFundingSF);
 }

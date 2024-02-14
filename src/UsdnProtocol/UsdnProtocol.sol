@@ -107,6 +107,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolZeroMiddlewareAddress();
         }
         _oracleMiddleware = newOracleMiddleware;
+        emit OracleMiddlewareChanged(address(_oracleMiddleware));
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -122,6 +123,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _minLeverage = newMinLeverage;
+        emit MinLeverageChanged(_minLeverage);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -137,6 +139,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _maxLeverage = newMaxLeverage;
+        emit MaxLeverageChanged(_maxLeverage);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -152,6 +155,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _validationDeadline = newValidationDeadline;
+        emit ValidationDeadlineChanged(_validationDeadline);
     }
 
     // TODO still required ?
@@ -168,6 +172,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _liquidationPenalty = newLiquidationPenalty;
+        emit LiquidationPenaltyChanged(_liquidationPenalty);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -178,6 +183,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _safetyMargin = newSafetyMargin;
+        emit SafetyMarginChanged(_safetyMargin);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -188,6 +194,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _liquidationIteration = newLiquidationIteration;
+        emit LiquidationIterationChanged(_liquidationIteration);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -203,6 +210,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _EMAPeriod = newEMAPeriod;
+        emit EMAPeriodChanged(_EMAPeriod);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -218,6 +226,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _fundingSF = newFundingSF;
+        emit FundingSFChanged(_fundingSF);
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
