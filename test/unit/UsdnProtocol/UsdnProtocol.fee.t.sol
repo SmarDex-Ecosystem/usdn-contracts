@@ -18,17 +18,18 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         wstETH.approve(address(protocol), type(uint256).max);
     }
 
-    function test_setFeeBips() public {
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidProtocolFeeBips.selector, 10_001));
-        protocol.setFeeBips(10_001);
-        protocol.setFeeBips(0);
+    function test_setFeeBps() public {
+        uint16 BPS_divisor = uint16(protocol.BPS_DIVISOR());
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidProtocolFeeBps.selector, BPS_divisor + 1));
+        protocol.setFeeBps(BPS_divisor + 1);
+        protocol.setFeeBps(0);
         protocol.initiateDeposit(1000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
         assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
     }
 
     function test_setFeeCollector() public {
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidFeeCollector.selector, address(0)));
+        vm.expectRevert(UsdnProtocolInvalidFeeCollector.selector);
         protocol.setFeeCollector(address(0));
         protocol.setFeeCollector(address(this));
     }

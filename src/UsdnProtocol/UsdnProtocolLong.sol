@@ -166,7 +166,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
-        maxLiquidationPrice_ = uint128(price * (PERCENTAGE_DIVISOR - _safetyMargin) / PERCENTAGE_DIVISOR);
+        maxLiquidationPrice_ = uint128(price * (BPS_DIVISOR - _safetyMarginBps) / BPS_DIVISOR);
     }
 
     function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {

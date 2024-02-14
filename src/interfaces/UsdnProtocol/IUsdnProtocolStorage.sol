@@ -22,10 +22,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function FUNDING_SF_DECIMALS() external view returns (uint8);
 
     /**
-     * @notice Divisor for the percentage values (safety margin)
+     * @notice Divisor for the bps values
      * @dev Example: 200 -> 2%
      */
-    function PERCENTAGE_DIVISOR() external view returns (uint256);
+    function BPS_DIVISOR() external view returns (uint256);
 
     /// @notice The maximum number of liquidations per transaction
     function MAX_LIQUIDATION_ITERATION() external view returns (uint16);
@@ -51,11 +51,11 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Set the fee percentage.
-     * @param feeBips The fee percentage (in bips) to be charged.
+     * @param feeBps The fee percentage (in bps) to be charged.
      * @dev Fees are charged when transfers occur between the vault and the long
-     * @dev example: 0.5% -> 50 bips
+     * @dev example: 0.5% -> 50 bps
      */
-    function setFeeBips(uint16 feeBips) external;
+    function setFeeBps(uint16 feeBps) external;
 
     /**
      * @notice Set the fee collector address.

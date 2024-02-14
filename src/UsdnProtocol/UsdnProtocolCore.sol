@@ -396,7 +396,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         returns (uint256, uint256)
     {
         int256 diff = newLongBalance - oldLongBalance;
-        int256 feeAmount = (diff * _toInt256(_protocolFeeBips)) / 10_000;
+        int256 feeAmount = (diff * _toInt256(_protocolFeeBps)) / 10_000;
         uint256 pendingProtocolFee = _pendingProtocolFee;
 
         if (diff > 0) {

@@ -31,7 +31,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant FUNDING_SF_DECIMALS = 3;
 
     /// @inheritdoc IUsdnProtocolStorage
-    uint256 public constant PERCENTAGE_DIVISOR = 10_000;
+    uint256 public constant BPS_DIVISOR = 10_000;
 
     /// @inheritdoc IUsdnProtocolStorage
     uint16 public constant MAX_LIQUIDATION_ITERATION = 10;
@@ -81,8 +81,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The liquidation penalty (in tick spacing units)
     uint24 internal _liquidationPenalty = 2; // 200 ticks -> ~2.02%
 
-    /// @notice Safety margin for the liquidation price of newly open positions
-    uint256 internal _safetyMargin = 200; // divisor is 10_000 -> 2%
+    /// @notice Safety margin for the liquidation price of newly open positions, in basis points
+    uint256 internal _safetyMarginBps = 200; // 2%
 
     /// @notice User current liquidation iteration in tick.
     uint16 internal _liquidationIteration = 5;
@@ -94,8 +94,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The scaling factor (SF) of the funding rate (0.12)
     uint256 internal _fundingSF = 12 * 10 ** (FUNDING_SF_DECIMALS - 2);
 
-    /// @notice The protocol fee percentage (in bips)
-    uint16 internal _protocolFeeBips = 10;
+    /// @notice The protocol fee percentage (in bps)
+    uint16 internal _protocolFeeBps = 10;
 
     /// @notice The fee collector's address
     address internal _feeCollector;
@@ -193,10 +193,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         if (usdn.totalSupply() != 0) {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
-
-        // TODO : do we need to check the feeCollector interface (ERC165) ?
         if (feeCollector == address(0)) {
-            revert UsdnProtocolInvalidFeeCollector(feeCollector);
+            revert UsdnProtocolInvalidFeeCollector();
         }
 
         _usdn = usdn;
@@ -239,18 +237,17 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     // TODO : onlyOwner
     /// @inheritdoc IUsdnProtocolStorage
-    function setFeeBips(uint16 protocolFeeBips) external {
-        if (protocolFeeBips > 10_000) {
-            revert UsdnProtocolInvalidProtocolFeeBips(protocolFeeBips);
+    function setFeeBps(uint16 protocolFeeBps) external {
+        if (protocolFeeBps > BPS_DIVISOR) {
+            revert UsdnProtocolInvalidProtocolFeeBps(protocolFeeBps);
         }
-        _protocolFeeBips = protocolFeeBips;
+        _protocolFeeBps = protocolFeeBps;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function setFeeCollector(address feeCollector) external {
-        // TODO : do we need to check the feeCollector interface (ERC165) ?
         if (feeCollector == address(0)) {
-            revert UsdnProtocolInvalidFeeCollector(feeCollector);
+            revert UsdnProtocolInvalidFeeCollector();
         }
         _feeCollector = feeCollector;
     }
