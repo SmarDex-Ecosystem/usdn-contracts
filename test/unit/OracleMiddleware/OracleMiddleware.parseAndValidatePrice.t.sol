@@ -252,7 +252,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
      * @custom:scenario Parse and validate price
      * @custom:given Pyth and chainlink oracle reverts
      * @custom:and The validationDelay is respected
-     * @custom:then It reverts when validating price for all action using Pyth oracle
+     * @custom:then It reverts when validating price and initiating positions for all actions using Pyth oracle
      */
     function test_RevertWhen_parseAndValidatePriceWhileAllValidationFailed() public {
         // Update price to -1 USD in oracles
@@ -326,6 +326,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
 
         // Give a slightly different price for chainlink to be able to differentiate the oracles responses
         int256 mockedChainlinkPrice = int256(ETH_PRICE - 1);
+        uint256 mockedChainlinkFormattedPrice = FORMATTED_ETH_PRICE - 1e10;
         mockChainlinkOnChain.setLatestRoundData(1, mockedChainlinkPrice, block.timestamp, 1);
 
         /* ----- Get the price from chainlink when the timestamp is close enough ---- */
@@ -334,19 +335,19 @@ contract TestOracleMiddlewareParseAndValidatePrice is
         PriceInfo memory priceInfo = oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
         );
-        assertEq(priceInfo.price, FORMATTED_ETH_PRICE - 1e10);
+        assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 30 minutes);
         priceInfo = oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
         );
-        assertEq(priceInfo.price, FORMATTED_ETH_PRICE - 1e10);
+        assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
 
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 59 minutes);
         priceInfo = oracleMiddleware.parseAndValidatePrice(
             uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
         );
-        assertEq(priceInfo.price, FORMATTED_ETH_PRICE - 1e10);
+        assertEq(priceInfo.price, mockedChainlinkFormattedPrice);
 
         /* -------- Get the price from Pyth when chainlink's price is invalid ------- */
 

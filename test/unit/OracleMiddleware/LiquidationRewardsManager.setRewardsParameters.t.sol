@@ -62,7 +62,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
 
         vm.prank(USER_1);
 
-        // Expect revert when gas used per tick is too high
+        // Revert as USER_1 is not the owner
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
         liquidationRewardsManager.setRewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
     }
@@ -113,7 +113,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
         uint64 gasPriceLimit = 8000 * (10 ** 9) + 1;
         uint16 multiplier = 10;
 
-        // Expect revert when gas used per tick is too high
+        // Expect revert when gas price limit is too high
         vm.expectRevert(abi.encodeWithSelector(LiquidationRewardsManagerGasPriceLimitTooHigh.selector, gasPriceLimit));
         liquidationRewardsManager.setRewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplier);
     }
