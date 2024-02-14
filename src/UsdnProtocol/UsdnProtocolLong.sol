@@ -306,7 +306,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             uint256 length = _positionsInTick[tickHash];
 
             uint256 tickTotalExpo = _totalExpoByTick[tickHash];
-            remainingCollateral += _tickValue(currentPrice, tick, tickTotalExpo);
+            int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
+            remainingCollateral += tickValue;
             unchecked {
                 _totalExpo -= tickTotalExpo;
 
@@ -318,7 +319,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             }
             _tickBitmap.unset(_tickToBitmapIndex(tick));
 
-            emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick));
+            emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue);
         } while (i < iteration);
 
         if (liquidated_ != 0) {
