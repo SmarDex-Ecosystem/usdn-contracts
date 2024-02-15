@@ -81,7 +81,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertEq(action.amount, USDN_AMOUNT, "action amount");
 
         // the pending action should be actionable after the validation deadline
-        skip(protocol.validationDeadline() + 1);
+        skip(protocol.getValidationDeadline() + 1);
         vm.prank(address(0)); // simulate front-end call by someone else
         action = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(this), "pending action user");
@@ -140,7 +140,8 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(initialPrice);
         protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "");
 
-        uint256 vaultBalance = protocol.balanceVault(); // save for withdrawn amount calculation in case price decreases
+        uint256 vaultBalance = protocol.getBalanceVault(); // save for withdrawn amount calculation in case price
+            // decreases
 
         // wait the required delay between initiation and validation
         uint256 validationDelay = oracleMiddleware.validationDelay();

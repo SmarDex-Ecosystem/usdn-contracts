@@ -13,7 +13,7 @@
     "cov": "forge coverage --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",
     "cov:html": "forge coverage --report lcov --no-match-test \"(FFI|Fork|Fuzz|invariant)\" && genhtml -o .coverage lcov.info && open .coverage/index.html",
     "test": "forge test -vvv",
-    "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\"",
+    "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\" --offline",
     "format": "forge fmt",
     "format:js": "npx @biomejs/biome format . --write",
     "lint": "solhint 'src/**/*.sol'",

@@ -219,6 +219,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             "long and vault expos should be equal"
         );
         (int256 fund_,,) = protocol.funding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
-        assertEq(fund_, protocol.EMA(), "funding should be equal to EMA");
+        assertEq(fund_, protocol.getEMA(), "funding should be equal to EMA");
     }
 }

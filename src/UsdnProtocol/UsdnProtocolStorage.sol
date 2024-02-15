@@ -192,157 +192,152 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function tickSpacing() external view returns (int24) {
+    function getTickSpacing() external view returns (int24) {
         return _tickSpacing;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function asset() external view returns (IERC20Metadata) {
+    function getAsset() external view returns (IERC20Metadata) {
         return _asset;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function priceFeedDecimals() external view returns (uint8) {
+    function getPriceFeedDecimals() external view returns (uint8) {
         return _priceFeedDecimals;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function assetDecimals() external view returns (uint8) {
+    function getAssetDecimals() external view returns (uint8) {
         return _assetDecimals;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function usdn() external view returns (IUsdn) {
+    function getUsdn() external view returns (IUsdn) {
         return _usdn;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function usdnDecimals() external view returns (uint8) {
+    function getUsdnDecimals() external view returns (uint8) {
         return _usdnDecimals;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function oracleMiddleware() external view returns (IOracleMiddleware) {
+    function getOracleMiddleware() external view returns (IOracleMiddleware) {
         return _oracleMiddleware;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function minLeverage() external view returns (uint256) {
+    function getMinLeverage() external view returns (uint256) {
         return _minLeverage;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function maxLeverage() external view returns (uint256) {
+    function getMaxLeverage() external view returns (uint256) {
         return _maxLeverage;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function fundingRatePerSecond() external view returns (int256) {
-        return _fundingRatePerSecond;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function liquidationPenalty() external view returns (uint24) {
+    function getLiquidationPenalty() external view returns (uint24) {
         return _liquidationPenalty;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function validationDeadline() external view returns (uint256) {
+    function getValidationDeadline() external view returns (uint256) {
         return _validationDeadline;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function safetyMargin() external view returns (uint256) {
+    function getSafetyMargin() external view returns (uint256) {
         return _safetyMargin;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function liquidationIteration() external view returns (uint16) {
+    function getLiquidationIteration() external view returns (uint16) {
         return _liquidationIteration;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function EMAPeriod() external view returns (uint128) {
+    function getEMAPeriod() external view returns (uint128) {
         return _EMAPeriod;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function fundingSF() external view returns (uint256) {
+    function getFundingSF() external view returns (uint256) {
         return _fundingSF;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function lastFunding() external view returns (int256) {
+    function getLastFunding() external view returns (int256) {
         return _lastFunding;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function lastPrice() external view returns (uint128) {
+    function getLastPrice() external view returns (uint128) {
         return _lastPrice;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function lastUpdateTimestamp() external view returns (uint128) {
+    function getLastUpdateTimestamp() external view returns (uint128) {
         return _lastUpdateTimestamp;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function liquidationMultiplier() external view returns (uint256) {
+    function getLiquidationMultiplier() external view returns (uint256) {
         return _liquidationMultiplier;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function pendingActions(address user) external view returns (uint256) {
+    function getPendingActions(address user) external view returns (uint256) {
         return _pendingActions[user];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function balanceVault() external view returns (uint256) {
+    function getBalanceVault() external view returns (uint256) {
         return _balanceVault;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function EMA() external view returns (int256) {
+    function getEMA() external view returns (int256) {
         return _EMA;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function balanceLong() external view returns (uint256) {
+    function getBalanceLong() external view returns (uint256) {
         return _balanceLong;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function totalExpo() external view returns (uint256) {
+    function getTotalExpo() external view returns (uint256) {
         return _totalExpo;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function tickVersion(int24 tick) external view returns (uint256) {
+    function getTickVersion(int24 tick) external view returns (uint256) {
         return _tickVersion[tick];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function longPositions(bytes32 tickHash, uint256 index) external view returns (Position memory) {
+    function getLongPositions(bytes32 tickHash, uint256 index) external view returns (Position memory) {
         return _longPositions[tickHash][index];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function totalExpoByTick(bytes32 tickHash) external view returns (uint256) {
+    function getTotalExpoByTick(bytes32 tickHash) external view returns (uint256) {
         return _totalExpoByTick[tickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function positionsInTick(bytes32 tickHash) external view returns (uint256) {
+    function getPositionsInTick(bytes32 tickHash) external view returns (uint256) {
         return _positionsInTick[tickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function maxInitializedTick() external view returns (int24) {
+    function getMaxInitializedTick() external view returns (int24) {
         return _maxInitializedTick;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function totalLongPositions() external view returns (uint256) {
+    function getTotalLongPositions() external view returns (uint256) {
         return _totalLongPositions;
     }
 }

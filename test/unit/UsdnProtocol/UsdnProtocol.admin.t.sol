@@ -75,13 +75,13 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // random address
         address randAddress = address(1);
         // cache previous value
-        IOracleMiddleware previousDefault = protocol.oracleMiddleware();
+        IOracleMiddleware previousDefault = protocol.getOracleMiddleware();
         // assert previous middleware different than randAddress
         assertTrue(address(previousDefault) != randAddress);
         // set middleware
         protocol.setOracleMiddleware(IOracleMiddleware(randAddress));
         // assert new middleware equal randAddress
-        assertEq(address(protocol.oracleMiddleware()), randAddress);
+        assertEq(address(protocol.getOracleMiddleware()), randAddress);
     }
 
     /**
@@ -102,7 +102,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because greater than max.
      */
     function test_setMinLeverageRevertMax() external AdminPrank {
-        uint256 maxLeverage = protocol.maxLeverage();
+        uint256 maxLeverage = protocol.getMaxLeverage();
         // minLeverage higher than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolMinLeverageGreaterThanMax.selector);
         // set minLeverage
@@ -117,7 +117,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function test_setMinLeverage() external AdminPrank {
         // set new minLeverage
         // previous minLeverage value
-        uint256 previousValue = protocol.minLeverage();
+        uint256 previousValue = protocol.getMinLeverage();
         // cache the new minLeverage value to assign
         uint256 expectedNewValue = 1;
         // check new value to assign is not equal than current
@@ -125,7 +125,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // assign new minLeverage value
         protocol.setMinLeverage(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.minLeverage(), expectedNewValue);
+        assertEq(protocol.getMinLeverage(), expectedNewValue);
     }
 
     /**
@@ -134,7 +134,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because lower than min.
      */
     function test_setMaxLeverageRevertMin() external AdminPrank {
-        uint256 minLeverage = protocol.minLeverage();
+        uint256 minLeverage = protocol.getMinLeverage();
         // maxLeverage lower than min disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolMaxLeverageLowerThanMin.selector);
         // set maxLeverage
@@ -160,15 +160,15 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_setMaxLeverage() external AdminPrank {
         // previous maxLeverage value
-        uint256 previousValue = protocol.maxLeverage();
+        uint256 previousValue = protocol.getMaxLeverage();
         // cache the new maxLeverage value to assign
-        uint256 expectedNewValue = protocol.minLeverage() + 1;
+        uint256 expectedNewValue = protocol.getMinLeverage() + 1;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
         // assign new maxLeverage value
         protocol.setMaxLeverage(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.maxLeverage(), expectedNewValue);
+        assertEq(protocol.getMaxLeverage(), expectedNewValue);
     }
 
     /**
@@ -202,7 +202,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_validationDeadline() external AdminPrank {
         // previous validationDeadline value
-        uint256 previousValue = protocol.validationDeadline();
+        uint256 previousValue = protocol.getValidationDeadline();
         // cache the new validationDeadline value to assign
         uint256 expectedNewValue = 61;
         // check new value to assign is not equal than current
@@ -210,7 +210,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // assign new validationDeadline value
         protocol.setValidationDeadline(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.validationDeadline(), expectedNewValue);
+        assertEq(protocol.getValidationDeadline(), expectedNewValue);
     }
 
     /**
@@ -232,7 +232,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_liquidationPenalty() external AdminPrank {
         // previous liquidationPenalty value
-        uint24 previousValue = protocol.liquidationPenalty();
+        uint24 previousValue = protocol.getLiquidationPenalty();
         // cache the new liquidationPenalty value to assign
         uint24 expectedNewValue = 0;
         // check new value to assign is not equal than current
@@ -240,7 +240,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // assign new liquidationPenalty value
         protocol.setLiquidationPenalty(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.liquidationPenalty(), expectedNewValue);
+        assertEq(protocol.getLiquidationPenalty(), expectedNewValue);
     }
 
     /**
@@ -262,7 +262,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_safetyMargin() external AdminPrank {
         // previous safetyMargin value
-        uint256 previousValue = protocol.safetyMargin();
+        uint256 previousValue = protocol.getSafetyMargin();
         // cache the new safetyMargin value to assign
         uint256 expectedNewValue = 0;
         // check new value to assign is not equal than current
@@ -270,7 +270,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // assign new safetyMargin value
         protocol.setSafetyMargin(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.safetyMargin(), expectedNewValue);
+        assertEq(protocol.getSafetyMargin(), expectedNewValue);
     }
 
     /**
@@ -292,7 +292,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_liquidationIteration() external AdminPrank {
         // previous liquidationIteration value
-        uint16 previousValue = protocol.liquidationIteration();
+        uint16 previousValue = protocol.getLiquidationIteration();
         // cache the new liquidationIteration value to assign
         uint16 expectedNewValue = 0;
         // check new value to assign is not equal than current
@@ -300,7 +300,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // assign new liquidationIteration value
         protocol.setLiquidationIteration(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.liquidationIteration(), expectedNewValue);
+        assertEq(protocol.getLiquidationIteration(), expectedNewValue);
     }
 
     /**
@@ -334,7 +334,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_EMAPeriod() external AdminPrank {
         // previous EMAPeriod value
-        uint128 previousValue = protocol.EMAPeriod();
+        uint128 previousValue = protocol.getEMAPeriod();
         // cache the new EMAPeriod value to assign
         uint128 expectedNewValue = 1;
         // check new value to assign is not equal than current
@@ -342,7 +342,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // assign new EMAPeriod value
         protocol.setEMAPeriod(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.EMAPeriod(), expectedNewValue);
+        assertEq(protocol.getEMAPeriod(), expectedNewValue);
     }
 
     /**
@@ -376,7 +376,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_fundingSF() external AdminPrank {
         // previous fundingSF value
-        uint256 previousValue = protocol.fundingSF();
+        uint256 previousValue = protocol.getFundingSF();
         // cache the new fundingSF value to assign
         uint256 expectedNewValue = 1;
         // check new value to assign is not equal than current
@@ -384,6 +384,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // assign new fundingSF value
         protocol.setFundingSF(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.fundingSF(), expectedNewValue);
+        assertEq(protocol.getFundingSF(), expectedNewValue);
     }
 }

@@ -35,7 +35,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
          */
         assertEq(
             protocol.getMinLiquidationPrice(10 ** 12),
-            TickMath.getPriceAtTick(protocol.minTick() + protocol.tickSpacing()),
+            TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing()),
             "for price = 1 * 10^12 wei"
         );
     }
@@ -57,7 +57,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         protocol.validateDeposit(priceData, "");
 
         assertGt(
-            protocol.liquidationMultiplier(),
+            protocol.getLiquidationMultiplier(),
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
@@ -79,7 +79,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         protocol.validateDeposit(priceData, "");
 
         assertLt(
-            protocol.liquidationMultiplier(),
+            protocol.getLiquidationMultiplier(),
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
@@ -99,7 +99,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         protocol.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS());
         assertEq(
             protocol.getMinLiquidationPrice(5000 ether),
-            TickMath.getPriceAtTick(protocol.minTick() + protocol.tickSpacing())
+            TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
         );
     }
 

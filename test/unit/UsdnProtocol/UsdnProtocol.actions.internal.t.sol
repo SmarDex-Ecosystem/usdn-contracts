@@ -23,7 +23,7 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
     function test_assetToTransfer() public {
         int24 tick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 4);
         uint256 res = protocol.i_assetToTransfer(
-            tick, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.liquidationMultiplier()
+            tick, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
         );
         assertEq(res, 1.512304848730381401 ether);
     }
@@ -41,7 +41,7 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
         int24 tick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 4);
         uint256 longAvailable = uint256(protocol.longAssetAvailable(DEFAULT_PARAMS.initialPrice)); // 5 ether
         uint256 res = protocol.i_assetToTransfer(
-            tick, 100 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.liquidationMultiplier()
+            tick, 100 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
         );
         assertEq(res, longAvailable);
     }
@@ -56,12 +56,12 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
         // adjust the price to a very low value, meaning that the long balance and long asset available is zero
         skip(60);
         protocol.liquidate(abi.encode(uint128(11_000)), 10);
-        assertEq(protocol.balanceLong(), 0);
+        assertEq(protocol.getBalanceLong(), 0);
         assertEq(protocol.longAssetAvailable(11_000), 0);
 
         int24 tick = protocol.getEffectiveTickForPrice(11_000);
         uint256 res = protocol.i_assetToTransfer(
-            tick, 100 ether, uint128(10 ** protocol.LEVERAGE_DECIMALS()), protocol.liquidationMultiplier()
+            tick, 100 ether, uint128(10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
         );
         assertEq(res, 0);
     }
