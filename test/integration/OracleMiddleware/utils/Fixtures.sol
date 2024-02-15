@@ -47,7 +47,7 @@ contract ActionsIntegrationFixture is IOracleMiddlewareErrors {
  * @title OracleMiddlewareBaseFixture
  * @dev Utils for testing the oracle middleware
  */
-contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationFixture {
+contract OracleMiddlewareBaseIntegrationFixture is BaseFixture, ActionsIntegrationFixture {
     IPyth internal pyth;
     AggregatorV3Interface internal chainlinkOnChain;
     OracleMiddleware public oracleMiddleware;
@@ -94,13 +94,13 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationFixture {
  * @title WstethFixture
  * @dev Utils for testing the oracle middleware
  */
-contract WstethFixture is BaseFixture, ActionsIntegrationFixture {
+contract WstethIntegrationFixture is BaseFixture, ActionsIntegrationFixture {
     IPyth internal pyth;
     AggregatorV3Interface internal chainlinkOnChain;
     WstEthOracleMiddleware public wstethMiddleware;
     IWstETH public constant WST_ETH = IWstETH(WSTETH);
 
-    modifier reSetUp() {
+    modifier reSetUp() virtual {
         setUp();
         _;
     }

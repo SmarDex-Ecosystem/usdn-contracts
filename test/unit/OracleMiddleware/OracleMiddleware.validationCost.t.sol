@@ -13,6 +13,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
 
     function setUp() public override {
         super.setUp();
+        data.push(abi.encode("data"));
     }
 
     /**
