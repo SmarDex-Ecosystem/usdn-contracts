@@ -339,13 +339,19 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 remainingCollateral = int256(_balanceLong);
             }
             _balanceVault += uint256(remainingCollateral);
-            _balanceLong -= uint256(remainingCollateral);
+            unchecked {
+                // underflow not possible thanks to the previous check
+                _balanceLong -= uint256(remainingCollateral);
+            }
         } else {
             if (uint256(-remainingCollateral) > _balanceVault) {
                 // avoid underflow
                 remainingCollateral = -int256(_balanceVault);
             }
-            _balanceVault -= uint256(-remainingCollateral);
+            unchecked {
+                // underflow not possible thanks to the previous check
+                _balanceVault -= uint256(-remainingCollateral);
+            }
             _balanceLong += uint256(-remainingCollateral);
         }
     }
