@@ -25,7 +25,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     function test_getLiquidationRewardsFor1Tick() public {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
-        assertEq(rewards, 6_436_665_000_000_000);
+        assertEq(rewards, 6_435_492_000_000_000);
     }
 
     /**
@@ -51,7 +51,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     function test_getLiquidationRewardsFor3Ticks() public {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(3, 0);
 
-        assertEq(rewards, 10_264_233_000_000_000, "The wrong amount of rewards was given");
+        assertEq(rewards, 10_263_060_000_000_000, "The wrong amount of rewards was given");
 
         assertNotEq(
             rewards,
@@ -73,7 +73,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
         mockChainlinkOnChain.setLatestRoundData(1, 15 gwei, block.timestamp, 1);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
-        assertEq(rewards, 3_218_332_500_000_000);
+        assertEq(rewards, 3_217_746_000_000_000);
     }
 
     /**
@@ -89,7 +89,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
         vm.txGasPrice(20 gwei);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
-        assertEq(rewards, 4_291_110_000_000_000);
+        assertEq(rewards, 4_290_328_000_000_000);
     }
 
     /**
@@ -106,7 +106,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         // With a gas price at 1001 gwei, the result without the limit should have been 180_389_809_600_000_000
-        assertEq(rewards, 214_555_500_000_000_000);
+        assertEq(rewards, 214_516_400_000_000_000);
     }
 
     /**
@@ -123,7 +123,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         // With a gas price at 1001 gwei, the result without the limit should have been 180_389_809_600_000_000
-        assertEq(rewards, 214_555_500_000_000_000);
+        assertEq(rewards, 214_516_400_000_000_000);
     }
 
     /**

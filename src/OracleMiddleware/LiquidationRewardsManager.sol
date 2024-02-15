@@ -22,7 +22,8 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /// @notice Denominator for the reward multiplier, will give us a 0.1% basis point.
     uint16 public constant REWARDS_MULTIPLIER_DENOMINATOR = 1000;
     /// @notice Fixed amount of gas a transaction consume.
-    uint16 public constant BASE_GAS_COST = 21_000;
+    /// @dev Is a uint256 to avoid overflows during gas usage calculations.
+    uint256 public constant BASE_GAS_COST = 21_000;
 
     /* -------------------------------------------------------------------------- */
     /*                              Storage Variables                             */
@@ -43,7 +44,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         // TODO update with the final values
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 27_736,
-            otherGasUsed: 44_549,
+            otherGasUsed: 44_532,
             gasPriceLimit: uint64(1000 gwei),
             multiplierBps: 2000
         });
@@ -61,9 +62,8 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
         RewardsParameters memory rewardsParameters = _rewardsParameters;
         // Calculate the amount of gas spent during the liquidation.
-        // Cast the first element as uint256 to avoid overflows
         uint256 gasUsed =
-            uint256(rewardsParameters.otherGasUsed) + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
+            rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
         // Multiply by the gas price and the rewards multiplier.
         wstETHRewards_ = _wstEth.getWstETHByStETH(
             gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplierBps / REWARDS_MULTIPLIER_DENOMINATOR

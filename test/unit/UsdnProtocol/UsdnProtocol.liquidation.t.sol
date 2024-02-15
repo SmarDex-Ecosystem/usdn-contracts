@@ -383,7 +383,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         priceData = abi.encode(1670 ether);
 
-        uint256 expectedLiquidatorRewards = 6_436_665_000_000_000;
+        uint256 expectedLiquidatorRewards = 6_435_492_000_000_000;
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.balanceVault();
 
