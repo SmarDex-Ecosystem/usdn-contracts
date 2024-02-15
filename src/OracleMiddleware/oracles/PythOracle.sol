@@ -43,20 +43,33 @@ abstract contract PythOracle is IOracleMiddlewareErrors {
         bytes[] memory pricesUpdateData = new bytes[](1);
         pricesUpdateData[0] = priceUpdateData;
 
+        uint256 pythFee = _pyth.getUpdateFee(pricesUpdateData);
+        if (msg.value < pythFee) {
+            revert OracleMiddlewareInsufficientFee();
+        }
         PythStructs.PriceFeed[] memory priceFeeds;
         if (targetTimestamp == 0) {
             // we want to validate that the price is recent
-            priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: msg.value }(
+            priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: pythFee }(
                 pricesUpdateData, priceIds, uint64(block.timestamp) - _recentPriceDelay, uint64(block.timestamp)
             );
         } else {
-            priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: msg.value }(
+            priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: pythFee }(
                 pricesUpdateData, priceIds, targetTimestamp, type(uint64).max
             );
         }
 
         if (priceFeeds[0].price.price < 0) {
             revert OracleMiddlewareWrongPrice(priceFeeds[0].price.price);
+        }
+
+        // refund unused ether
+        if (address(this).balance > 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = payable(msg.sender).call{ value: address(this).balance }("");
+            if (!success) {
+                revert OracleMiddlewareEtherRefundFailed();
+            }
         }
 
         return priceFeeds[0].price;

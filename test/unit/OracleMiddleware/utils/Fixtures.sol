@@ -61,7 +61,9 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
         /* ----------------------------- Test pyth mock ----------------------------- */
         bytes[] memory updateData = new bytes[](1);
         bytes32[] memory priceIds = new bytes32[](1);
-        PythStructs.PriceFeed[] memory priceFeeds = mockPyth.parsePriceFeedUpdatesUnique(updateData, priceIds, 1000, 0);
+        PythStructs.PriceFeed[] memory priceFeeds = mockPyth.parsePriceFeedUpdatesUnique{
+            value: mockPyth.getUpdateFee(updateData)
+        }(updateData, priceIds, 1000, 0);
 
         assertEq(priceFeeds.length, 1);
         assertEq(priceFeeds[0].price.price, 2000 * 1e8);
@@ -105,7 +107,9 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
         /* ----------------------------- Test pyth mock ----------------------------- */
         bytes[] memory updateData = new bytes[](1);
         bytes32[] memory priceIds = new bytes32[](1);
-        PythStructs.PriceFeed[] memory priceFeeds = mockPyth.parsePriceFeedUpdatesUnique(updateData, priceIds, 1000, 0);
+        PythStructs.PriceFeed[] memory priceFeeds = mockPyth.parsePriceFeedUpdatesUnique{
+            value: mockPyth.getUpdateFee(updateData)
+        }(updateData, priceIds, 1000, 0);
 
         assertEq(priceFeeds.length, 1);
         assertEq(priceFeeds[0].price.price, 2000 * 1e8);
