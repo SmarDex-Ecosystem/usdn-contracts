@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { USER_1 } from "test/utils/Constants.sol";
+import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -381,9 +381,13 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.validateOpenPosition(priceData, "");
         vm.stopPrank();
 
+        // Change The rewards calculations parameters to not be dependent of the initial values
+        vm.prank(DEPLOYER);
+        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 1000 gwei, 2000);
+
         priceData = abi.encode(1670 ether);
 
-        uint256 expectedLiquidatorRewards = 6_435_492_000_000_000;
+        uint256 expectedLiquidatorRewards = 4_209_000_000_000_000;
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.balanceVault();
 

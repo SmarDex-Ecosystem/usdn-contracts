@@ -44,7 +44,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         // TODO update with the final values
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 27_736,
-            otherGasUsed: 44_532,
+            otherGasUsed: 42_323,
             gasPriceLimit: uint64(1000 gwei),
             multiplierBps: 2000
         });
