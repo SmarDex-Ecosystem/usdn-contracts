@@ -383,7 +383,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         priceData = abi.encode(1670 ether);
 
-        uint256 expectedLiquidatorRewards = 6_438_597_000_000_000;
+        uint256 expectedLiquidatorRewards = 6_436_665_000_000_000;
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.balanceVault();
 
@@ -464,13 +464,13 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(
             averageGasUsedPerTick,
             rewardsParameters.gasUsedPerTick,
-            "The result should match the parameter set in LiquidationRewardsManager's constructor"
+            "The result should match the gasUsedPerTick parameter set in LiquidationRewardsManager's constructor"
         );
         // Check that the other gas usage matches the otherGasUsed parameter in the LiquidationRewardsManager
         assertEq(
             averageOtherGasUsed,
             rewardsParameters.otherGasUsed,
-            "The result should match the parameter set in LiquidationRewardsManager's constructor"
+            "The result should match the otherGasUsed parameter set in LiquidationRewardsManager's constructor"
         );
     }
 }

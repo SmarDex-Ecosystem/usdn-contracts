@@ -43,7 +43,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         // TODO update with the final values
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 27_736,
-            otherGasUsed: 44_577,
+            otherGasUsed: 44_549,
             gasPriceLimit: uint64(1000 gwei),
             multiplierBps: 2000
         });
@@ -61,8 +61,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
         RewardsParameters memory rewardsParameters = _rewardsParameters;
         // Calculate the amount of gas spent during the liquidation.
+        // Cast the first element as uint256 to avoid overflows
         uint256 gasUsed =
-            rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
+            uint256(rewardsParameters.otherGasUsed) + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
         // Multiply by the gas price and the rewards multiplier.
         wstETHRewards_ = _wstEth.getWstETHByStETH(
             gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplierBps / REWARDS_MULTIPLIER_DENOMINATOR
