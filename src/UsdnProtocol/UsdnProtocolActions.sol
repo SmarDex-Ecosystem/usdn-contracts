@@ -309,7 +309,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
-        liquidated_ = _liquidatePositions(currentPrice.price, iterations);
+        liquidated_ = _liquidatePositions(currentPrice.neutralPrice, iterations);
 
         // TODO: add liquidator incentive if needed
 
