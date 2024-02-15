@@ -327,10 +327,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         _updateEMA(timestamp - lastUpdateTimestamp);
         (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
-        // cache variable for optimization
-        int256 oldLongBalance = _balanceLong.toInt256();
-        int256 totalBalance = oldLongBalance.safeAdd(_balanceVault.toInt256());
-        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAsset);
+        (int256 fee, int256 fundAssetWithFee) = _calculateFee(fundAsset);
+        // we subtract the fee from the total balance
+        int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256()).safeSub(fee);
+        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
         if (newLongBalance < 0) {
             newLongBalance = 0;
         }
@@ -339,7 +339,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             newVaultBalance = 0;
         }
 
-        (_balanceVault, _balanceLong) = _applyFee(newVaultBalance, newLongBalance, oldLongBalance);
+        (_balanceVault, _balanceLong) = (newVaultBalance.toUint256(), newLongBalance.toUint256());
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fund;
@@ -389,6 +389,32 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = _tickVersion[tick];
         hash_ = keccak256(abi.encodePacked(tick, version_));
+    }
+
+    /**
+     * @notice Calculate the protocol fee and apply it to the funding asset amount, distribute the fee to
+     * the fee collector if it exceeds the threshold
+     * @param fundAsset The funding asset amount to be used for the fee calculation
+     * @return fee_ The absolute value of the calculated fee
+     * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
+     */
+    function _calculateFee(int256 fundAsset) internal returns (int256 fee_, int256 fundAssetWithFee_) {
+        fee_ = (fundAsset * _toInt256(_protocolFeeBps)) / int256(BPS_DIVISOR);
+        // fundAsset and fee_ have the same sign, we can safely add them to reduce the absolute amount of asset
+        fundAssetWithFee_ = fundAsset - fee_;
+
+        if (fee_ < 0) {
+            // we want to return the absolute value of the fee
+            fee_ = -fee_;
+        }
+
+        _pendingProtocolFee += uint256(fee_);
+        if (_pendingProtocolFee >= _feesThreshold) {
+            // TO DO : add this to send remaining eth
+            _distributeAssetsAndCheckBalance(_feeCollector, _pendingProtocolFee);
+            emit ProtocolFeeDistributed(_feeCollector, _pendingProtocolFee);
+            _pendingProtocolFee = 0;
+        }
     }
 
     /**
