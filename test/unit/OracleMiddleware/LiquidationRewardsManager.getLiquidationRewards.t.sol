@@ -25,7 +25,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     function test_getLiquidationRewardsFor1Tick() public {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
-        assertEq(rewards, 5_406_288_000_000_000);
+        assertEq(rewards, 6_438_597_000_000_000);
     }
 
     /**
@@ -51,7 +51,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     function test_getLiquidationRewardsFor3Ticks() public {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(3, 0);
 
-        assertEq(rewards, 9_224_886_000_000_000, "The wrong amount of rewards was given");
+        assertEq(rewards, 10_266_165_000_000_000, "The wrong amount of rewards was given");
 
         assertNotEq(
             rewards,
@@ -73,7 +73,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
         mockChainlinkOnChain.setLatestRoundData(1, 15 gwei, block.timestamp, 1);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
-        assertEq(rewards, 2_703_144_000_000_000);
+        assertEq(rewards, 3_219_298_500_000_000);
     }
 
     /**
@@ -89,7 +89,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
         vm.txGasPrice(20 gwei);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
-        assertEq(rewards, 3_604_192_000_000_000);
+        assertEq(rewards, 4_292_398_000_000_000);
     }
 
     /**
@@ -106,7 +106,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         // With a gas price at 1001 gwei, the result without the limit should have been 180_389_809_600_000_000
-        assertEq(rewards, 180_209_600_000_000_000);
+        assertEq(rewards, 214_619_900_000_000_000);
     }
 
     /**
@@ -117,13 +117,13 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:and The exchange rate for stETH per wstETH is 1.15
      * @custom:then It should return an amount of wstETH calculated with a gas price equal to the limit
      */
-    function test_getLiquidationRewardsWithOracleGasPriceFeedAndAboveTheLimit() public {
+    function test_getLiquidationRewardsWithOracleAndAboveTheLimit() public {
         vm.txGasPrice(2000 gwei);
         mockChainlinkOnChain.setLatestRoundData(1, 1001 gwei, block.timestamp, 1);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         // With a gas price at 1001 gwei, the result without the limit should have been 180_389_809_600_000_000
-        assertEq(rewards, 180_209_600_000_000_000);
+        assertEq(rewards, 214_619_900_000_000_000);
     }
 
     /**

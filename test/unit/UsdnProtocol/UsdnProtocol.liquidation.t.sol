@@ -5,6 +5,8 @@ import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { ILiquidationRewardsManagerErrorsEventsTypes } from
+    "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 
 /// @custom:feature The `_liquidatePositions` function of `UsdnProtocol`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
@@ -381,7 +383,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         priceData = abi.encode(1670 ether);
 
-        uint256 expectedLiquidatorRewards = 5_406_288_000_000_000;
+        uint256 expectedLiquidatorRewards = 6_438_597_000_000_000;
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.balanceVault();
 
@@ -403,6 +405,72 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             vaultBalanceBeforeRewards - vaultBalanceAfterRewards,
             expectedLiquidatorRewards,
             "The vault does not contain the right amount of funds"
+        );
+    }
+
+    /**
+     * @custom:scenario The gas usage of UsdnProtocolActions.liquidate(bytes,uint16) matches the values set in
+     * LiquidationRewardsManager.getRewardsParameters
+     * @custom:given There are one or more ticks that can be liquidated
+     * @custom:when A liquidator calls the function liquidate
+     * @custom:then The gas usage matches the LiquidationRewardsManager parameters
+     */
+    function test_gasUsageOfLiquidateFunction() public {
+        bytes memory priceData = abi.encode(4500 ether);
+
+        vm.startPrank(users[0]);
+        protocol.initiateOpenPosition(1 ether, 4000 ether, priceData, "");
+        protocol.validateOpenPosition(priceData, "");
+        protocol.initiateOpenPosition(1 ether, 3000 ether, priceData, "");
+        protocol.validateOpenPosition(priceData, "");
+        protocol.initiateOpenPosition(1 ether, 2000 ether, priceData, "");
+        protocol.validateOpenPosition(priceData, "");
+        vm.stopPrank();
+
+        ILiquidationRewardsManagerErrorsEventsTypes.RewardsParameters memory rewardsParameters =
+            liquidationRewardsManager.getRewardsParameters();
+
+        uint256 snapshotId = vm.snapshot();
+
+        uint256[] memory gasUsedArray = new uint256[](3);
+        for (uint16 ticksToLiquidate = 1; ticksToLiquidate <= 3; ++ticksToLiquidate) {
+            // Get a price that liquidates `ticksToLiquidate` ticks
+            priceData = abi.encode(4950 ether - (1000 ether * ticksToLiquidate));
+
+            uint256 startGas = gasleft();
+            uint256 positionsLiquidated = protocol.liquidate(priceData, ticksToLiquidate);
+            uint256 gasUsed = startGas - gasleft();
+            gasUsedArray[ticksToLiquidate - 1] = gasUsed;
+
+            // Make sure the expected amount of computation was executed
+            assertEq(
+                positionsLiquidated,
+                ticksToLiquidate,
+                "We expect 1, 2 or 3 positions liquidated depending on the iteration"
+            );
+
+            vm.revertTo(snapshotId);
+        }
+
+        // Calculate the average gas used exclusively by a loop of tick liquidation
+        uint256 averageGasUsedPerTick = (gasUsedArray[1] - gasUsedArray[0] + gasUsedArray[2] - gasUsedArray[1]) / 2;
+        // Calculate the average gas used by everything BUT loops of tick liquidation
+        uint256 averageOtherGasUsed = (
+            gasUsedArray[0] - averageGasUsedPerTick + gasUsedArray[1] - (averageGasUsedPerTick * 2) + gasUsedArray[2]
+                - (averageGasUsedPerTick * 3)
+        ) / 3;
+
+        // Check that the gas usage per tick matches the gasUsedPerTick parameter in the LiquidationRewardsManager
+        assertEq(
+            averageGasUsedPerTick,
+            rewardsParameters.gasUsedPerTick,
+            "The result should match the parameter set in LiquidationRewardsManager's constructor"
+        );
+        // Check that the other gas usage matches the otherGasUsed parameter in the LiquidationRewardsManager
+        assertEq(
+            averageOtherGasUsed,
+            rewardsParameters.otherGasUsed,
+            "The result should match the parameter set in LiquidationRewardsManager's constructor"
         );
     }
 }

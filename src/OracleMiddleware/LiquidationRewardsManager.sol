@@ -42,8 +42,8 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         _wstEth = wstETH;
         // TODO update with the final values
         _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 27_671,
-            otherGasUsed: 29_681,
+            gasUsedPerTick: 27_736,
+            otherGasUsed: 44_577,
             gasPriceLimit: uint64(1000 gwei),
             multiplierBps: 2000
         });
