@@ -8,6 +8,8 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 contract MockOracleMiddleware is IOracleMiddleware {
     uint8 internal constant DECIMALS = 18;
     uint256 internal _validationDelay = 24 seconds;
+    // if true, then the middleware requires a payment of 1 wei for any action
+    bool internal _requireValidationCost = false;
 
     /// @inheritdoc IOracleMiddleware
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
@@ -15,7 +17,6 @@ contract MockOracleMiddleware is IOracleMiddleware {
         payable
         returns (PriceInfo memory)
     {
-        // TODO: return different timestamp depending on action?
         uint128 priceValue = abi.decode(data, (uint128));
         uint128 ts = targetTimestamp;
         if (
@@ -47,11 +48,19 @@ contract MockOracleMiddleware is IOracleMiddleware {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function validationCost(bytes calldata, ProtocolAction) external pure returns (uint256) {
-        return 1;
+    function validationCost(bytes calldata, ProtocolAction) external view returns (uint256) {
+        return _requireValidationCost ? 1 : 0;
     }
 
     function updateValidationDelay(uint256 newDelay) external {
         _validationDelay = newDelay;
+    }
+
+    function requireValidationCost() external view returns (bool) {
+        return _requireValidationCost;
+    }
+
+    function setRequireValidationCost(bool req) external {
+        _requireValidationCost = req;
     }
 }
