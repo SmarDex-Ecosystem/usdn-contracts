@@ -41,9 +41,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         bool priceUpdated =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-        // liquidate if pnl applied
+        // liquidate if price is more recent that _lastPrice
         if (priceUpdated) {
-            _liquidatePositions(currentPrice.price, _liquidationIteration);
+            _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration);
         }
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
@@ -94,9 +94,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         bool priceUpdated =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-        // liquidate if pnl applied
+        // liquidate if price is more recent that _lastPrice
         if (priceUpdated) {
-            _liquidatePositions(currentPrice.price, _liquidationIteration);
+            _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration);
         }
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
@@ -156,7 +156,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             bool priceUpdated = _applyPnlAndFunding(neutralPrice, currentPrice.timestamp.toUint128());
             // liquidate if pnl applied
             if (priceUpdated) {
-                _liquidatePositions(currentPrice.price, _liquidationIteration);
+                _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration);
             }
         }
 
@@ -251,7 +251,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
             // liquidate if pnl applied
             if (priceUpdated) {
-                _liquidatePositions(currentPrice.price, _liquidationIteration);
+                _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration);
             }
         }
 
@@ -346,7 +346,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (!initializing) {
             // There is no need to adjust balances during initialization.
             // Also, during initialization, `_lastUpdateTimestamp` and `_lastPrice` are not updated yet.
-            _applyPnlAndFunding(depositPrice_.neutralPrice.toUint128(), depositPrice_.timestamp.toUint128());
+            bool priceUpdated =
+                _applyPnlAndFunding(depositPrice_.neutralPrice.toUint128(), depositPrice_.timestamp.toUint128());
+            // liquidate if price is more recent that _lastPrice
+            if (priceUpdated) {
+                _liquidatePositions(depositPrice_.neutralPrice, _liquidationIteration);
+            }
         }
 
         // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
@@ -415,7 +420,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, priceData);
 
         // adjust balances
-        _applyPnlAndFunding(withdrawalPrice.neutralPrice.toUint128(), withdrawalPrice.timestamp.toUint128());
+        bool priceUpdated =
+            _applyPnlAndFunding(withdrawalPrice.neutralPrice.toUint128(), withdrawalPrice.timestamp.toUint128());
+        // liquidate if price is more recent that _lastPrice
+        if (priceUpdated) {
+            _liquidatePositions(withdrawalPrice.neutralPrice, _liquidationIteration);
+        }
 
         // We calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
@@ -475,7 +485,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             startPrice = price.price.toUint128();
             // adjust balances
-            _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
+            bool priceUpdated = _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
+            if (priceUpdated) {
+                _liquidatePositions(price.neutralPrice, _liquidationIteration);
+            }
         }
 
         (bytes32 tickHash, uint256 version) = _tickHash(long.tick);
@@ -541,7 +554,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PriceInfo memory price = _getOraclePrice(ProtocolAction.ValidateClosePosition, long.timestamp, priceData);
 
         // adjust balances
-        _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
+        bool priceUpdated = _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
+        // liquidate if price is more recent that _lastPrice
+        if (priceUpdated) {
+            _liquidatePositions(price.neutralPrice, _liquidationIteration);
+        }
+
         uint256 assetToTransfer =
             _assetToTransfer(long.tick, long.closeAmount, long.closeLeverage, long.closeLiqMultiplier);
 
