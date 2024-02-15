@@ -38,8 +38,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint40 timestamp = uint40(block.timestamp);
 
-        (PriceInfo memory currentPrice, uint256 validationCost) =
-            _getOraclePrice(ProtocolAction.InitiateDeposit, timestamp, currentPriceData);
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.InitiateDeposit, timestamp, currentPriceData);
 
         bool priceUpdated =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -66,8 +65,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
 
         emit InitiatedDeposit(msg.sender, amount);
-        validationCost += _executePendingAction(previousActionPriceData);
-        _refundExcessEther(validationCost);
+        _executePendingAction(previousActionPriceData);
+        _refundExcessEther();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -76,9 +75,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 validationCost = _validateDeposit(msg.sender, depositPriceData);
-        validationCost += _executePendingAction(previousActionPriceData);
-        _refundExcessEther(validationCost);
+        _validateDeposit(msg.sender, depositPriceData);
+        _executePendingAction(previousActionPriceData);
+        _refundExcessEther();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -93,8 +92,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint40 timestamp = uint40(block.timestamp);
 
-        (PriceInfo memory currentPrice, uint256 validationCost) =
-            _getOraclePrice(ProtocolAction.InitiateWithdrawal, timestamp, currentPriceData);
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.InitiateWithdrawal, timestamp, currentPriceData);
 
         bool priceUpdated =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -123,8 +121,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         emit InitiatedWithdrawal(msg.sender, usdnAmount);
 
-        validationCost += _executePendingAction(previousActionPriceData);
-        _refundExcessEther(validationCost);
+        _executePendingAction(previousActionPriceData);
+        _refundExcessEther();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -133,9 +131,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 validationCost = _validateWithdrawal(msg.sender, withdrawalPriceData);
-        validationCost += _executePendingAction(previousActionPriceData);
-        _refundExcessEther(validationCost);
+        _validateWithdrawal(msg.sender, withdrawalPriceData);
+        _executePendingAction(previousActionPriceData);
+        _refundExcessEther();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -149,12 +147,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolZeroAmount();
         }
 
-        uint256 validationCost;
         uint128 adjustedPrice; // the price returned by the oracle middleware, to be used for the user action
         uint128 neutralPrice;
         {
-            PriceInfo memory currentPrice;
-            (currentPrice, validationCost) =
+            PriceInfo memory currentPrice =
                 _getOraclePrice(ProtocolAction.InitiateOpenPosition, uint40(block.timestamp), currentPriceData);
 
             adjustedPrice = currentPrice.price.toUint128();
@@ -219,8 +215,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
 
-        validationCost += _executePendingAction(previousActionPriceData);
-        _refundExcessEther(validationCost);
+        _executePendingAction(previousActionPriceData);
+        _refundExcessEther();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -229,9 +225,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 validationCost = _validateOpenPosition(msg.sender, openPriceData);
-        validationCost += _executePendingAction(previousActionPriceData);
-        _refundExcessEther(validationCost);
+        _validateOpenPosition(msg.sender, openPriceData);
+        _executePendingAction(previousActionPriceData);
+        _refundExcessEther();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -251,10 +247,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint40 timestamp = uint40(block.timestamp);
 
-        uint256 validationCost;
         {
-            PriceInfo memory currentPrice;
-            (currentPrice, validationCost) =
+            PriceInfo memory currentPrice =
                 _getOraclePrice(ProtocolAction.InitiateClosePosition, timestamp, currentPriceData);
 
             bool priceUpdated =
@@ -293,8 +287,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         emit InitiatedClosePosition(msg.sender, tick, tickVersion, index);
 
-        validationCost += _executePendingAction(previousActionPriceData);
-        _refundExcessEther(validationCost);
+        _executePendingAction(previousActionPriceData);
+        _refundExcessEther();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -303,9 +297,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 validationCost = _validateClosePosition(msg.sender, closePriceData);
-        validationCost += _executePendingAction(previousActionPriceData);
-        _refundExcessEther(validationCost);
+        _validateClosePosition(msg.sender, closePriceData);
+        _executePendingAction(previousActionPriceData);
+        _refundExcessEther();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -314,7 +308,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         returns (uint256 liquidated_)
     {
-        (PriceInfo memory currentPrice, uint256 validationCost) =
+        PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
 
         _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -323,10 +317,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // TODO: add liquidator incentive if needed
 
-        _refundExcessEther(validationCost);
+        _refundExcessEther();
     }
 
-    function _validateDeposit(address user, bytes calldata priceData) internal returns (uint256 validationCost_) {
+    function _validateDeposit(address user, bytes calldata priceData) internal {
         (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
@@ -338,19 +332,19 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        (, validationCost_) = _validateDepositWithAction(pending, priceData, false);
+        _validateDepositWithAction(pending, priceData, false);
     }
 
     function _validateDepositWithAction(PendingAction memory pending, bytes calldata priceData, bool initializing)
         internal
-        returns (PriceInfo memory depositPrice_, uint256 validationCost_)
+        returns (PriceInfo memory depositPrice_)
     {
         VaultPendingAction memory deposit = _toVaultPendingAction(pending);
 
         // During initialization, we might want to use a different oracle, so we have a special action
         ProtocolAction action = initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateDeposit;
 
-        (depositPrice_, validationCost_) = _getOraclePrice(action, deposit.timestamp, priceData);
+        depositPrice_ = _getOraclePrice(action, deposit.timestamp, priceData);
 
         // adjust balances
         if (!initializing) {
@@ -403,7 +397,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
-    function _validateWithdrawal(address user, bytes calldata priceData) internal returns (uint256 validationCost_) {
+    function _validateWithdrawal(address user, bytes calldata priceData) internal {
         (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
@@ -415,17 +409,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        validationCost_ = _validateWithdrawalWithAction(pending, priceData);
+        _validateWithdrawalWithAction(pending, priceData);
     }
 
-    function _validateWithdrawalWithAction(PendingAction memory pending, bytes calldata priceData)
-        internal
-        returns (uint256 validationCost_)
-    {
+    function _validateWithdrawalWithAction(PendingAction memory pending, bytes calldata priceData) internal {
         VaultPendingAction memory withdrawal = _toVaultPendingAction(pending);
 
-        PriceInfo memory withdrawalPrice;
-        (withdrawalPrice, validationCost_) =
+        PriceInfo memory withdrawalPrice =
             _getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, priceData);
 
         // adjust balances
@@ -465,7 +455,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amount);
     }
 
-    function _validateOpenPosition(address user, bytes calldata priceData) internal returns (uint256 validationCost_) {
+    function _validateOpenPosition(address user, bytes calldata priceData) internal {
         (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
@@ -477,19 +467,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        validationCost_ = _validateOpenPositionWithAction(pending, priceData);
+        _validateOpenPositionWithAction(pending, priceData);
     }
 
-    function _validateOpenPositionWithAction(PendingAction memory pending, bytes calldata priceData)
-        internal
-        returns (uint256 validationCost_)
-    {
+    function _validateOpenPositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
         LongPendingAction memory long = _toLongPendingAction(pending);
 
         uint128 startPrice;
         {
-            PriceInfo memory price;
-            (price, validationCost_) = _getOraclePrice(ProtocolAction.ValidateOpenPosition, long.timestamp, priceData);
+            PriceInfo memory price = _getOraclePrice(ProtocolAction.ValidateOpenPosition, long.timestamp, priceData);
 
             startPrice = price.price.toUint128();
             // adjust balances
@@ -501,7 +487,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // The current tick version doesn't match the version from the pending action.
             // This means the position has been liquidated in the mean time
             emit StalePendingActionRemoved(long.user, long.tick, long.tickVersion, long.index);
-            return validationCost_;
+            return;
         }
 
         // Re-calculate leverage
@@ -538,10 +524,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
-    function _validateClosePosition(address user, bytes calldata priceData)
-        internal
-        returns (uint256 validationCost_)
-    {
+    function _validateClosePosition(address user, bytes calldata priceData) internal {
         (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
 
         // check type of action
@@ -553,17 +536,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        validationCost_ = _validateClosePositionWithAction(pending, priceData);
+        _validateClosePositionWithAction(pending, priceData);
     }
 
-    function _validateClosePositionWithAction(PendingAction memory pending, bytes calldata priceData)
-        internal
-        returns (uint256 validationCost_)
-    {
+    function _validateClosePositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
         LongPendingAction memory long = _toLongPendingAction(pending);
 
-        PriceInfo memory price;
-        (price, validationCost_) = _getOraclePrice(ProtocolAction.ValidateClosePosition, long.timestamp, priceData);
+        PriceInfo memory price = _getOraclePrice(ProtocolAction.ValidateClosePosition, long.timestamp, priceData);
 
         // adjust balances
         _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
@@ -590,7 +569,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             emit LiquidatedPosition(
                 long.user, long.tick, long.tickVersion, long.index, price.neutralPrice, liquidationPrice
             );
-            return validationCost_;
+            return;
         }
 
         // send the asset to the user
@@ -641,41 +620,42 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
-    function _executePendingAction(bytes calldata priceData) internal returns (uint256 validationCost_) {
+    function _executePendingAction(bytes calldata priceData) internal {
         PendingAction memory pending = _getActionablePendingAction(0); // use default maxIter
         if (pending.action == ProtocolAction.None) {
             // no pending action
-            return 0;
+            return;
         }
         _clearPendingAction(pending.user);
         if (pending.action == ProtocolAction.ValidateDeposit) {
-            (, validationCost_) = _validateDepositWithAction(pending, priceData, false);
+            _validateDepositWithAction(pending, priceData, false);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
-            validationCost_ = _validateWithdrawalWithAction(pending, priceData);
+            _validateWithdrawalWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
-            validationCost_ = _validateOpenPositionWithAction(pending, priceData);
+            _validateOpenPositionWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateClosePosition) {
-            validationCost_ = _validateClosePositionWithAction(pending, priceData);
+            _validateClosePositionWithAction(pending, priceData);
         }
     }
 
     function _getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
         internal
-        returns (PriceInfo memory price_, uint256 validationCost_)
+        returns (PriceInfo memory price_)
     {
-        validationCost_ = _oracleMiddleware.validationCost(priceData, action);
-        if (msg.value < validationCost_) {
+        uint256 validationCost = _oracleMiddleware.validationCost(priceData, action);
+        if (msg.value < validationCost) {
             // this check is not bulletproof. In case we do two price validations that require a payment in the same
             // transaction, and we don't have enough value for the second one, the second validation will fail with a
             // generic revert.
             revert UsdnProtocolInsufficientFee();
         }
-        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost_ }(timestamp, action, priceData);
+        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(timestamp, action, priceData);
     }
 
-    function _refundExcessEther(uint256 validationCost) internal {
-        if (msg.value > validationCost) {
-            (bool success,) = payable(msg.sender).call{ value: msg.value - validationCost }("");
+    /// @notice Refund any excess ether to the user, making sure we don't lock ETH in the contract.
+    function _refundExcessEther() internal {
+        if (address(this).balance > 0) {
+            (bool success,) = payable(msg.sender).call{ value: address(this).balance }("");
             if (!success) {
                 revert UsdnProtocolEtherRefundFailed();
             }

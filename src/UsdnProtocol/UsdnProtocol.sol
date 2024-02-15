@@ -67,7 +67,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
         // Create vault deposit
         PriceInfo memory currentPrice;
-        uint256 validationCost;
         {
             PendingAction memory pendingAction = _convertVaultPendingAction(
                 VaultPendingAction({
@@ -90,7 +89,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             emit InitiatedDeposit(msg.sender, depositAmount);
             // Mint USDN (a small amount is minted to the dead address)
             // last parameter = initializing
-            (currentPrice, validationCost) = _validateDepositWithAction(pendingAction, currentPriceData, true);
+            currentPrice = _validateDepositWithAction(pendingAction, currentPriceData, true);
         }
 
         _lastUpdateTimestamp = uint40(block.timestamp);
@@ -108,7 +107,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             getEffectiveTickForPrice(desiredLiqPrice) // no liquidation penalty
         );
 
-        _refundExcessEther(validationCost);
+        _refundExcessEther();
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {

@@ -53,9 +53,9 @@ contract PythOracle is IOracleMiddlewareErrors {
         }
 
         // refund unused ether
-        if (msg.value > pythFee) {
+        if (address(this).balance > 0) {
             // slither-disable-next-line arbitrary-send-eth
-            (bool success,) = payable(msg.sender).call{ value: msg.value - pythFee }("");
+            (bool success,) = payable(msg.sender).call{ value: address(this).balance }("");
             if (!success) {
                 revert OracleMiddlewareEtherRefundFailed();
             }

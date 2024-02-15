@@ -203,7 +203,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
         external
         payable
-        returns (PriceInfo memory, uint256)
+        returns (PriceInfo memory)
     {
         return _getOraclePrice(action, timestamp, priceData);
     }
