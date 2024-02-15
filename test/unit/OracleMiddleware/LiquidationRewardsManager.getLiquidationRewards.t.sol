@@ -19,7 +19,8 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:and The tx.gasprice and oracle gas price feed are equals
      * @custom:and They are both below the gas price limit
      * @custom:and The exchange rate for stETH per wstETH is 1.15
-     * @custom:then It should return an amount of wstETH
+     * @custom:then It should return an amount of wstETH based on the gas used by
+     * UsdnProtocolActions.liquidate(bytes,uint16)
      */
     function test_getLiquidationRewardsFor1Tick() public {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
@@ -30,7 +31,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     /**
      * @custom:scenario Call `getLiquidationRewards` function
      * @custom:when No ticks were liquidated
-     * @custom:then It should return 0 as no liquidations means no rewards
+     * @custom:then It should return 0 as we only give rewards on successful liquidations
      */
     function test_getLiquidationRewardsFor0Tick() public {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(0, 0);
@@ -44,12 +45,19 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:and The tx.gasprice and oracle gas price feed are equals
      * @custom:and They are both below the gas price limit
      * @custom:and The exchange rate for stETH per wstETH is 1.15
-     * @custom:then It should return an amount of wstETH
+     * @custom:then It should return more wstETH than for 1 tick as more gas was used by
+     * UsdnProtocolActions.liquidate(bytes,uint16)
      */
     function test_getLiquidationRewardsFor3Ticks() public {
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(3, 0);
 
-        assertEq(rewards, 9_224_886_000_000_000);
+        assertEq(rewards, 9_224_886_000_000_000, "The wrong amount of rewards was given");
+
+        assertNotEq(
+            rewards,
+            liquidationRewardsManager.getLiquidationRewards(1, 0),
+            "Differents amount of ticks liquidated shouldn't give the same amount of rewards"
+        );
     }
 
     /**
@@ -58,10 +66,11 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:and They are both below the gas price limit
      * @custom:and 1 tick was liquidated
      * @custom:and The exchange rate for stETH per wstETH is 1.15
-     * @custom:then It should return an amount of wstETH based on the oracle price
+     * @custom:then It should return an amount of wstETH based on the gas used by
+     * UsdnProtocolActions.liquidate(bytes,uint16) and the gas price from the oracle
      */
     function test_getLiquidationRewardsWithOracleGasPrice() public {
-        mockChainlinkOnChain.setLatestRoundData(1, 15 * (10 ** 9), block.timestamp, 1);
+        mockChainlinkOnChain.setLatestRoundData(1, 15 gwei, block.timestamp, 1);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         assertEq(rewards, 2_703_144_000_000_000);
@@ -73,10 +82,11 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:and They are both below the gas price limit
      * @custom:and 1 tick was liquidated
      * @custom:and The exchange rate for stETH per wstETH is 1.15
-     * @custom:then It should return an amount of wstETH based on tx.gasprice
+     * @custom:then It should return an amount of wstETH based on the gas used by
+     * UsdnProtocolActions.liquidate(bytes,uint16) and the gas price from tx.gasPrice
      */
     function test_getLiquidationRewardsWithTxGasPrice() public {
-        vm.txGasPrice(20 * (10 ** 9));
+        vm.txGasPrice(20 gwei);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         assertEq(rewards, 3_604_192_000_000_000);
@@ -91,8 +101,8 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:then It should return an amount of wstETH calculated with a gas price equal to the limit
      */
     function test_getLiquidationRewardsWithTxGasPriceAndAboveTheLimit() public {
-        vm.txGasPrice(1001 * (10 ** 9));
-        mockChainlinkOnChain.setLatestRoundData(1, 2000 * (10 ** 9), block.timestamp, 1);
+        vm.txGasPrice(1001 gwei);
+        mockChainlinkOnChain.setLatestRoundData(1, 2000 gwei, block.timestamp, 1);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         // With a gas price at 1001 gwei, the result without the limit should have been 180_389_809_600_000_000
@@ -107,9 +117,9 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:and The exchange rate for stETH per wstETH is 1.15
      * @custom:then It should return an amount of wstETH calculated with a gas price equal to the limit
      */
-    function test_getLiquidationRewardsWithOacleGasPriceFeedAndAboveTheLimit() public {
-        vm.txGasPrice(2000 * (10 ** 9));
-        mockChainlinkOnChain.setLatestRoundData(1, 1001 * (10 ** 9), block.timestamp, 1);
+    function test_getLiquidationRewardsWithOracleGasPriceFeedAndAboveTheLimit() public {
+        vm.txGasPrice(2000 gwei);
+        mockChainlinkOnChain.setLatestRoundData(1, 1001 gwei, block.timestamp, 1);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         // With a gas price at 1001 gwei, the result without the limit should have been 180_389_809_600_000_000
@@ -121,8 +131,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:when The oracle returns -1
      * @custom:then It should return 0 to avoid relying solely on tx.gasprice
      */
-    function test_getLiquidationRewardsWithOacleGasPriceFeedBroken() public {
-        vm.txGasPrice(2000 * (10 ** 9));
+    function test_getLiquidationRewardsWithOracleGasPriceFeedBroken() public {
         mockChainlinkOnChain.toggleRevert();
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
