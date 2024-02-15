@@ -20,8 +20,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mint(address(this), INITIAL_WSTETH_BALANCE);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), INITIAL_WSTETH_BALANCE);
         usdn.approve(address(protocol), type(uint256).max);
         // user deposits wstETH at price $2000
         bytes memory currentPrice = abi.encode(uint128(2000 ether));

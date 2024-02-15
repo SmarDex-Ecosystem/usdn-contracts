@@ -78,9 +78,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @return index_ The index of the new position
      */
     function _createStalePendingActionHelper() internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
-        wstETH.mint(address(this), 2 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
-
+        wstETH.mintAndApprove(address(this), 2 ether, address(protocol), type(uint256).max);
         // create a pending action with a liquidation price around $1700
         (tick_, tickVersion_, index_) =
             protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
@@ -168,8 +166,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_retrieveAssets() public {
         uint256 transferAmount = 1 ether;
-        wstETH.mint(address(this), transferAmount);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), transferAmount, address(protocol), type(uint256).max);
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
         uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
         protocol.i_retrieveAssetsAndCheckBalance(address(this), transferAmount);
@@ -199,8 +196,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then fund should be equal to EMA
      */
     function test_fundingWhenEqualExpo() public {
-        wstETH.mint(address(this), 10_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 

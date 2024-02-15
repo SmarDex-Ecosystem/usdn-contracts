@@ -16,8 +16,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mint(address(this), INITIAL_WSTETH_BALANCE);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
     }
 
     /**

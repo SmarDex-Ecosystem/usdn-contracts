@@ -54,4 +54,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The address of the fee collector
     function feeCollector() external view returns (address);
+
+    /// @notice The protocol fee in bps
+    function protocolFeeBps() external view returns (uint16);
 }

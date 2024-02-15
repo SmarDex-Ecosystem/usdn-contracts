@@ -16,14 +16,13 @@ import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdn
 contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mint(address(this), 100_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
     }
 
     function test_setFeeBps() public {
-        // TO DO : ADMIN
-        vm.startPrank(DEPLOYER);
+        wstETH.mintAndApprove(ADMIN, 1000 ether, address(protocol), 1000 ether);
         uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
+
+        vm.startPrank(ADMIN);
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidProtocolFeeBps.selector, bpsDivisor + 1));
         protocol.setFeeBps(bpsDivisor + 1);
         protocol.setFeeBps(0);
@@ -34,7 +33,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     function test_setFeeCollector() public {
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(ADMIN);
         vm.expectRevert(UsdnProtocolInvalidFeeCollector.selector);
         protocol.setFeeCollector(address(0));
         protocol.setFeeCollector(address(this));
@@ -43,7 +42,17 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     function test_pendingProtocolFee() public {
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
+
         assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
+        protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        assertGt(protocol.pendingProtocolFee(), 0, "pending protocol fee after deposit");
+    }
+
+    function test_feeHitThreshhold() public {
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
+
         protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
         skip(4 days);

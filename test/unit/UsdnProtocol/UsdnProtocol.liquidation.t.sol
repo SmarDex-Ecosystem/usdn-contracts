@@ -9,8 +9,7 @@ import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEv
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mint(address(this), 100_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /* @custom:scenario Simulate user open positions then
@@ -269,8 +268,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function test_liquidatedByFundingRates() public {
         uint128 currentPrice = 2000 ether;
 
-        wstETH.mint(address(this), 1_000_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 1_000_000 ether, address(protocol), type(uint256).max);
 
         bytes memory priceData = abi.encode(uint128(currentPrice));
 

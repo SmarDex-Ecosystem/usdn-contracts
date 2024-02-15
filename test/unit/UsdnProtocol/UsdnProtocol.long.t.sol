@@ -13,8 +13,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mint(address(this), 100_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /**

@@ -125,6 +125,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setFeeBps(uint16 protocolFeeBps) external onlyOwner {
+        // TO DO : add event
         if (protocolFeeBps > BPS_DIVISOR) {
             revert UsdnProtocolInvalidProtocolFeeBps(protocolFeeBps);
         }
@@ -133,6 +134,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setFeeCollector(address feeCollector) external onlyOwner {
+        // TO DO : add event
         if (feeCollector == address(0)) {
             revert UsdnProtocolInvalidFeeCollector();
         }

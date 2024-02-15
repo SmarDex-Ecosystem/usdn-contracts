@@ -60,15 +60,17 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
-        usdnInitialTotalSupply = usdn.totalSupply();
         Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0, 0);
-        defaultPosLeverage = defaultPos.leverage;
         Position memory firstPos =
             protocol.getLongPosition(protocol.getEffectiveTickForPrice(testParams.initialPrice / 2), 0, 0);
-        initialLongLeverage = firstPos.leverage;
+        // separate the roles ADMIN and DEPLOYER
+        protocol.transferOwnership(ADMIN);
         vm.stopPrank();
-        params = testParams;
 
+        usdnInitialTotalSupply = usdn.totalSupply();
+        defaultPosLeverage = defaultPos.leverage;
+        initialLongLeverage = firstPos.leverage;
+        params = testParams;
         // initialize x10 EOA addresses with 10K ETH and ~8.5K WSTETH
         createAndFundUsers(10, 10_000 ether);
     }
@@ -94,6 +96,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong - protocol.FIRST_LONG_AMOUNT(), "first pos amount");
+        assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
+        assertEq(protocol.feeCollector(), ADMIN, "fee collector");
+        assertEq(protocol.protocolFeeBps(), 10, "fee bps");
+        assertEq(protocol.feesThreshold(), 1 ether, "fees threshold");
+        assertEq(protocol.owner(), ADMIN, "protocol owner");
     }
 
     // create userCount funded addresses with ETH and underlying

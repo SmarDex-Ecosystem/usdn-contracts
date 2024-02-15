@@ -245,4 +245,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     function feeCollector() external view returns (address) {
         return _feeCollector;
     }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function protocolFeeBps() external view returns (uint16) {
+        return _protocolFeeBps;
+    }
 }
