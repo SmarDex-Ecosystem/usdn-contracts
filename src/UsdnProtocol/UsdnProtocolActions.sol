@@ -640,7 +640,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         uint256 validationCost = _oracleMiddleware.validationCost(priceData, action);
         if (address(this).balance < validationCost) {
-            revert UsdnProtocolInsufficientFee();
+            revert UsdnProtocolInsufficientOracleFee();
         }
         price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(timestamp, action, priceData);
     }

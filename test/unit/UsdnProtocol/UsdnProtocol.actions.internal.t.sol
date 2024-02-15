@@ -108,7 +108,7 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
             ProtocolAction action = ProtocolAction(i);
             uint128 currentPrice = 2000 ether;
             bytes memory priceData = abi.encode(currentPrice);
-            vm.expectRevert(UsdnProtocolInsufficientFee.selector);
+            vm.expectRevert(UsdnProtocolInsufficientOracleFee.selector);
             protocol.i_getOraclePrice(action, uint40(block.timestamp), priceData);
         }
     }
