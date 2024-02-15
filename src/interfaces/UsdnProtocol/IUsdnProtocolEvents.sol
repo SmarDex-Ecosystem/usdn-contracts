@@ -36,10 +36,11 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user validates a withdrawal.
      * @param user The user address.
+     * @param to The address that received the assets.
      * @param amountWithdrawn The amount of asset that were withdrawn.
      * @param usdnBurned The amount of USDN that were burned.
      */
-    event ValidatedWithdrawal(address indexed user, uint256 amountWithdrawn, uint256 usdnBurned);
+    event ValidatedWithdrawal(address indexed user, address indexed to, uint256 amountWithdrawn, uint256 usdnBurned);
 
     /**
      * @notice Emitted when a user initiates the opening of a long position.

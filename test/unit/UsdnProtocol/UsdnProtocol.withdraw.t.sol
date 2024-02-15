@@ -138,7 +138,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      */
     function test_validateWithdrawPriceUp() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.425407470110072161 ether);
+        _checkValidateWithdrawWithPrice(
+            uint128(2500 ether), uint128(3000 ether), 0.425407470110072161 ether, address(this)
+        );
     }
 
     /**
@@ -153,7 +155,22 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      */
     function test_validateWithdrawPriceDown() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.455215966583936249 ether);
+        _checkValidateWithdrawWithPrice(
+            uint128(2500 ether), uint128(2000 ether), 0.455215966583936249 ether, address(this)
+        );
+    }
+
+    /**
+     * @custom:scenario The user validates a withdrawal for 1000 USDN with another address as the beneficiary
+     * @custom:given The user initiated a withdrawal for 1000 USDN
+     * @custom:and The price of the asset is $2000 at the moment of initiation
+     * @custom:and The price of the asset is $2000 at the moment of validation
+     * @custom:when The user validates the withdrawal with another address as the beneficiary
+     * @custom:then The protocol emits a `ValidatedWithdrawal` event with the right beneficiary
+     */
+    function test_validateWithdrawDifferentToAddress() public {
+        skip(3600);
+        _checkValidateWithdrawWithPrice(uint128(2000 ether), uint128(2000 ether), 0.499963458792798571 ether, USER_1);
     }
 
     /**
@@ -163,11 +180,14 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @param assetPrice price of the asset at the time of withdrawal validation
      * @param expectedAssetAmount expected amount of asset withdrawn
      */
-    function _checkValidateWithdrawWithPrice(uint128 initialPrice, uint128 assetPrice, uint256 expectedAssetAmount)
-        public
-    {
+    function _checkValidateWithdrawWithPrice(
+        uint128 initialPrice,
+        uint128 assetPrice,
+        uint256 expectedAssetAmount,
+        address to
+    ) public {
         bytes memory currentPrice = abi.encode(initialPrice);
-        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "", address(this));
+        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "", to);
 
         uint256 vaultBalance = protocol.balanceVault(); // save for withdrawn amount calculation in case price decreases
 
@@ -187,10 +207,15 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertEq(withdrawnAmount, expectedAssetAmount, "asset amount");
 
         vm.expectEmit();
-        emit ValidatedWithdrawal(address(this), withdrawnAmount, USDN_AMOUNT); // expected event
+        emit ValidatedWithdrawal(address(this), to, withdrawnAmount, USDN_AMOUNT); // expected event
         protocol.validateWithdrawal(currentPrice, "");
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");
-        assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance + withdrawnAmount, "final wstETH balance");
+        if (to == address(this)) {
+            assertEq(wstETH.balanceOf(to), initialWstETHBalance + withdrawnAmount, "final wstETH balance");
+        } else {
+            assertEq(wstETH.balanceOf(to), withdrawnAmount, "final wstETH balance");
+            assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance, "final wstETH balance");
+        }
     }
 }

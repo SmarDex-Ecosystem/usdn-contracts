@@ -456,9 +456,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _usdn.burn(withdrawal.amount);
 
         // send the asset to the user
-        _distributeAssetsAndCheckBalance(withdrawal.user, assetToTransfer);
+        _distributeAssetsAndCheckBalance(withdrawal.to, assetToTransfer);
 
-        emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amount);
+        emit ValidatedWithdrawal(withdrawal.user, withdrawal.to, assetToTransfer, withdrawal.amount);
     }
 
     function _validateOpenPosition(address user, bytes calldata priceData) internal {
