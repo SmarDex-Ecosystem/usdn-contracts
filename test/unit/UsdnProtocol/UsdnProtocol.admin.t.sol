@@ -39,9 +39,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setValidationDeadline(0);
 
         vm.expectRevert(customError);
-        protocol.setFundingRatePerSecond(0);
-
-        vm.expectRevert(customError);
         protocol.setLiquidationPenalty(0);
 
         vm.expectRevert(customError);

@@ -5,7 +5,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { IUsdnProtocol, IOracleMiddleware } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import {
     PendingAction,
     VaultPendingAction,
@@ -15,6 +15,7 @@ import {
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
@@ -156,12 +157,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
         _validationDeadline = newValidationDeadline;
         emit ValidationDeadlineChanged(_validationDeadline);
-    }
-
-    // TODO still required ?
-    /// @inheritdoc IUsdnProtocol
-    function setFundingRatePerSecond(int256 newFundingRatePerSecond) external onlyOwner {
-        _fundingRatePerSecond = newFundingRatePerSecond;
     }
 
     /// @inheritdoc IUsdnProtocol

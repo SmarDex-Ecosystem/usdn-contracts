@@ -40,9 +40,6 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     /// @notice Set the new deadline for a user to confirm their own action.
     function setValidationDeadline(uint256 newValidationDeadline) external;
 
-    /// @notice Set the new funding rate per second.
-    function setFundingRatePerSecond(int256 newFundingRatePerSecond) external;
-
     /// @notice Set the new liquidation penalty (in tick spacing units).
     function setLiquidationPenalty(uint24 newLiquidationPenalty) external;
 
