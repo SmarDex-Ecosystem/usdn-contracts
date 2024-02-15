@@ -80,12 +80,13 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function _createStalePendingActionHelper() internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         wstETH.mintAndApprove(address(this), 2 ether, address(protocol), type(uint256).max);
         // create a pending action with a liquidation price around $1700
-        (tick_, tickVersion_, index_) =
-            protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
+        bytes memory priceData = abi.encode(uint128(2000 ether));
+        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(1 ether, 1700 ether, priceData, "");
 
         // the price drops to $1500 and the position gets liquidated
         skip(30);
-        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
+        priceData = abi.encode(uint128(1500 ether));
+        protocol.liquidate(priceData, 10);
 
         // the pending action is stale
         (, uint256 currentTickVersion) = protocol.tickHash(tick_);
@@ -105,10 +106,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_stalePendingActionReInit() public {
         (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
 
+        bytes memory priceData = abi.encode(uint128(1500 ether));
         // we should be able to open a new position
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(uint128(1500 ether)), "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
     }
 
     /**
@@ -122,10 +124,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_stalePendingActionValidate() public {
         (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
 
+        bytes memory priceData = abi.encode(uint128(1500 ether));
         // validating the action emits the proper event
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.validateOpenPosition(abi.encode(uint128(1500 ether)), "");
+        protocol.validateOpenPosition(priceData, "");
     }
 
     /**

@@ -110,6 +110,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             currentPrice.price.toUint128(),
             getEffectiveTickForPrice(desiredLiqPrice) // no liquidation penalty
         );
+
+        _refundExcessEther();
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
