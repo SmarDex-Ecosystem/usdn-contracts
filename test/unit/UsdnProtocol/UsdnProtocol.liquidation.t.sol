@@ -51,10 +51,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(protocol.totalLongPositions(), 12, "wrong first totalLongPositions");
 
         skip(1 hours);
-        priceData = abi.encode(1000 ether);
+        priceData = abi.encode(1650 ether);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, 1000 ether, 1_689_332_686_299_800_182_465);
+        emit IUsdnProtocolEvents.LiquidatedTick(
+            74_300, 0, 1650 ether, 1_688_815_697_364_501_907_167, -937_114_401_579_540_884
+        );
         // initiate a position to liquidate all other positions
         protocol.initiateOpenPosition(5 ether, 500 ether, priceData, "");
         protocol.validateOpenPosition(priceData, "");
@@ -62,7 +64,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
         // check if second total expo is equal expected value
-        assertEq(protocol.totalExpo(), 19.702725157982303337 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 17.024364708070820361 ether, "wrong second totalExpo");
         // check if second total expo by tick is equal expected value
         assertEq(protocol.totalExpoByTick(initialTick), 0, "wrong second totalExpoByTick");
         // check if second long position length is equal expected value
@@ -116,7 +118,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         priceData = abi.encode(1000 ether);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, 1000 ether, 1_692_533_133_837_250_861_380);
+        emit IUsdnProtocolEvents.LiquidatedTick(
+            74_300, 0, 1000 ether, 1_692_533_133_837_250_861_380, -189_526_878_030_469_069_247
+        );
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
 
@@ -184,7 +188,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         priceData = abi.encode(1000 ether);
         skip(1 hours);
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(73_700, 0, 1000 ether, 1_670_744_473_580_842_463_528);
+        emit IUsdnProtocolEvents.LiquidatedTick(
+            73_700, 0, 1000 ether, 1_670_744_473_580_842_463_528, -57_398_622_534_904_956_169
+        );
         // liquidator first liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
 
