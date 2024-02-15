@@ -100,7 +100,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The fee collector's address
     address internal _feeCollector;
 
-    uint256 internal _feesThreshold = 1 ether;
+    uint256 internal _feeThreshold = 1 ether;
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
@@ -237,8 +237,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function feesThreshold() external view returns (uint256) {
-        return _feesThreshold;
+    function feeThreshold() external view returns (uint256) {
+        return _feeThreshold;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

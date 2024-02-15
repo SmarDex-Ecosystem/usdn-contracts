@@ -50,7 +50,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function pendingProtocolFee() external view returns (uint256);
 
     /// @notice The fee threshold before fees are sent to the fee collector
-    function feesThreshold() external view returns (uint256);
+    function feeThreshold() external view returns (uint256);
 
     /// @notice The address of the fee collector
     function feeCollector() external view returns (address);

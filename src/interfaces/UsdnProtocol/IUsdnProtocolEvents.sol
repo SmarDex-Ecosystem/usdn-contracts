@@ -162,4 +162,22 @@ interface IUsdnProtocolEvents {
      * @param amount The amount of fee transferred.
      */
     event ProtocolFeeDistributed(address feeCollector, uint256 amount);
+
+    /**
+     * @notice Emitted when the protocol fee is updated.
+     * @param feeBps The new fee in basis points.
+     */
+    event FeeBpsUpdated(uint256 feeBps);
+
+    /**
+     * @notice Emitted when the fee collector is updated.
+     * @param feeCollector The new fee collector address.
+     */
+    event FeeCollectorUpdated(address feeCollector);
+
+    /**
+     * @notice Emitted when the fee threshold is updated.
+     * @param feeThreshold The new fee threshold.
+     */
+    event FeeThresholdUpdated(uint256 feeThreshold);
 }

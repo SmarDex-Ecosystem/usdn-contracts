@@ -58,8 +58,11 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolOutdatedTick(uint256 currentVersion, uint256 providedVersion);
 
     /// @dev Indicates that the provided fee percentage is invalid (< 0% or > 100%)
-    error UsdnProtocolInvalidProtocolFeeBps(uint16 protocolFeeBps);
+    error UsdnProtocolInvalidProtocolFeeBps();
 
     /// @dev Indicates that the provided fee collector address is invalid
     error UsdnProtocolInvalidFeeCollector();
+
+    /// @dev Indicates that the provided fee threshold is invalid
+    error UsdnProtocolInvalidFeeThreshold();
 }

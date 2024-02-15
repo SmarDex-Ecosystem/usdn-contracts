@@ -18,29 +18,77 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         super._setUp(DEFAULT_PARAMS);
     }
 
+    /**
+     * @custom:scenario Check setFeeBps() function
+     * @custom:given The first value is > BPS_DIVISOR
+     * @custom:then The protocol reverts with `UsdnProtocolInvalidProtocolFeeBps`
+     * @custom:and The second value is 0
+     * @custom:then The protocol emits `FeeBpsUpdated` event with 0
+     * @custom:and Pending protocol fee is 0 after action
+     */
     function test_setFeeBps() public {
         wstETH.mintAndApprove(ADMIN, 1000 ether, address(protocol), 1000 ether);
         uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
 
         vm.startPrank(ADMIN);
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidProtocolFeeBps.selector, bpsDivisor + 1));
+        vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
         protocol.setFeeBps(bpsDivisor + 1);
+
+        vm.expectEmit();
+        emit FeeBpsUpdated(0);
         protocol.setFeeBps(0);
+
         protocol.initiateDeposit(1000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
         assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
         vm.stopPrank();
     }
 
+    /**
+     * @custom:scenario Check setFeeCollector() function
+     * @custom:given The first value is address(0)
+     * @custom:then The protocol reverts with `UsdnProtocolInvalidFeeCollector`
+     * @custom:and The second value is address(this)
+     * @custom:then The protocol emits `FeeCollectorUpdated` event with address(this)
+     */
     function test_setFeeCollector() public {
         vm.startPrank(ADMIN);
         vm.expectRevert(UsdnProtocolInvalidFeeCollector.selector);
         protocol.setFeeCollector(address(0));
+
+        vm.expectEmit();
+        emit FeeCollectorUpdated(address(this));
         protocol.setFeeCollector(address(this));
         vm.stopPrank();
         assertEq(protocol.feeCollector(), address(this));
     }
 
+    /**
+     * @custom:scenario Check setFeeThreshold() function
+     * @custom:given The first value is 0
+     * @custom:then The protocol reverts with `UsdnProtocolInvalidFeeThreshold`
+     * @custom:and The second value is 5 ether
+     * @custom:then The protocol emits `FeeThresholdUpdated` event with address(this)
+     */
+    function test_setFeeThreshold() public {
+        vm.startPrank(ADMIN);
+        vm.expectRevert(UsdnProtocolInvalidFeeThreshold.selector);
+        protocol.setFeeThreshold(0);
+
+        vm.expectEmit();
+        emit FeeThresholdUpdated(5 ether);
+        protocol.setFeeThreshold(5 ether);
+        vm.stopPrank();
+        assertEq(protocol.feeThreshold(), 5 ether);
+    }
+
+    /**
+     * @custom:scenario Check that the pending protocol fee is updated after an action
+     * @custom:given The pending protocol fee is 0
+     * @custom:then A deposit of 100_000 wstETH
+     * @custom:and A validation of the deposit
+     * @custom:then The pending protocol fee is > 0
+     */
     function test_pendingProtocolFee() public {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
 
@@ -50,6 +98,13 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         assertGt(protocol.pendingProtocolFee(), 0, "pending protocol fee after deposit");
     }
 
+    /**
+     * @custom:scenario Check that the pending protocol fee is distributed to the fee collector
+     * after the threshold is reached
+     * @custom:given The pending protocol fee is 0
+     * @custom:and Multiple actions are performed to reach the fee threshold
+     * @custom:then The pending protocol fee is distributed to the fee collector
+     */
     function test_feeHitThreshhold() public {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
 

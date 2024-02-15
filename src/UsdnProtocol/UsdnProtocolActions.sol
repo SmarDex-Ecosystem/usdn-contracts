@@ -462,7 +462,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // if pending protocol fee is above threshold, send it to the fee collector
-        if (_pendingProtocolFee >= _feesThreshold) {
+        // TO DO :
+        if (_pendingProtocolFee >= _feeThreshold) {
             _asset.safeTransfer(_feeCollector, _pendingProtocolFee);
             emit ProtocolFeeDistributed(_feeCollector, _pendingProtocolFee);
             _pendingProtocolFee = 0;
@@ -679,7 +680,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     function _checkPendingFee() internal {
         // if pending protocol fee is above threshold, send it to the fee collector
-        if (_pendingProtocolFee >= _feesThreshold) {
+        if (_pendingProtocolFee >= _feeThreshold) {
             _asset.safeTransfer(_feeCollector, _pendingProtocolFee);
             emit ProtocolFeeDistributed(_feeCollector, _pendingProtocolFee);
             _pendingProtocolFee = 0;

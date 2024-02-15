@@ -129,19 +129,31 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setFeeBps(uint16 protocolFeeBps) external onlyOwner {
-        // TO DO : add event
         if (protocolFeeBps > BPS_DIVISOR) {
-            revert UsdnProtocolInvalidProtocolFeeBps(protocolFeeBps);
+            revert UsdnProtocolInvalidProtocolFeeBps();
         }
         _protocolFeeBps = protocolFeeBps;
+        emit FeeBpsUpdated(protocolFeeBps);
+        // TO DO : add test
     }
 
     /// @inheritdoc IUsdnProtocol
     function setFeeCollector(address feeCollector) external onlyOwner {
-        // TO DO : add event
         if (feeCollector == address(0)) {
             revert UsdnProtocolInvalidFeeCollector();
         }
         _feeCollector = feeCollector;
+        emit FeeCollectorUpdated(feeCollector);
+        // TO DO : add test
+    }
+
+    // / @inheritdoc IUsdnProtocol
+    function setFeeThreshold(uint256 feeThreshold) external onlyOwner {
+        if (feeThreshold == 0) {
+            revert UsdnProtocolInvalidFeeThreshold();
+        }
+        _feeThreshold = feeThreshold;
+        emit FeeThresholdUpdated(feeThreshold);
+        // TO DO : add test
     }
 }
