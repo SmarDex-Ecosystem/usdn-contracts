@@ -36,9 +36,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolZeroAmount();
         }
 
-        uint40 timestamp = uint40(block.timestamp);
-
-        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.InitiateDeposit, timestamp, currentPriceData);
+        PriceInfo memory currentPrice =
+            _getOraclePrice(ProtocolAction.InitiateDeposit, uint40(block.timestamp), currentPriceData);
 
         bool priceUpdated =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -49,7 +48,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateDeposit,
-            timestamp: timestamp,
+            timestamp: uint40(block.timestamp),
             user: msg.sender,
             _unused: 0,
             amount: amount,
@@ -90,9 +89,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolZeroAmount();
         }
 
-        uint40 timestamp = uint40(block.timestamp);
-
-        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.InitiateWithdrawal, timestamp, currentPriceData);
+        PriceInfo memory currentPrice =
+            _getOraclePrice(ProtocolAction.InitiateWithdrawal, uint40(block.timestamp), currentPriceData);
 
         bool priceUpdated =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -103,7 +101,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateWithdrawal,
-            timestamp: timestamp,
+            timestamp: uint40(block.timestamp),
             user: msg.sender,
             _unused: 0,
             amount: usdnAmount,
@@ -245,11 +243,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolUnauthorized();
         }
 
-        uint40 timestamp = uint40(block.timestamp);
-
         {
             PriceInfo memory currentPrice =
-                _getOraclePrice(ProtocolAction.InitiateClosePosition, timestamp, currentPriceData);
+                _getOraclePrice(ProtocolAction.InitiateClosePosition, uint40(block.timestamp), currentPriceData);
 
             bool priceUpdated =
                 _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -265,7 +261,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
-                timestamp: timestamp,
+                timestamp: uint40(block.timestamp),
                 user: msg.sender,
                 tick: tick,
                 closeAmount: pos.amount,
