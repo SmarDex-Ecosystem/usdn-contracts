@@ -132,36 +132,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Distributing assets upon closing a position or withdrawing from the vault
-     * @custom:when The protocol distributes 1 wstETH to a user
-     * @custom:then The user's balance should increase by the amount distributed
-     * @custom:and The protocol's balance should decrease by the amount distributed
-     */
-    function test_distributeAssets() public {
-        uint256 transferAmount = 1 ether;
-        uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
-        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
-        protocol.i_distributeAssetsAndCheckBalance(address(this), transferAmount);
-        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore - transferAmount, "protocol balance");
-        assertEq(wstETH.balanceOf(address(this)), userBalanceBefore + transferAmount, "user balance");
-    }
-
-    /**
-     * @custom:scenario Distributing assets with a zero amount
-     * @custom:when The protocol distributes 0 tokens to a user
-     * @custom:then The transaction should not revert
-     * @custom:and The user's balance should remain the same
-     * @custom:and The protocol's balance should remain the same
-     */
-    function test_distributeAssetsZeroAmount() public {
-        uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
-        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
-        protocol.i_distributeAssetsAndCheckBalance(address(this), 0);
-        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore, "protocol balance");
-        assertEq(wstETH.balanceOf(address(this)), userBalanceBefore, "user balance");
-    }
-
-    /**
      * @custom:scenario Retrieving assets from the user
      * @custom:when The protocol retrieves 1 wstETH from the user
      * @custom:then The user's balance should decrease by the amount retrieved

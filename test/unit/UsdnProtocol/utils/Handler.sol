@@ -184,10 +184,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _retrieveAssetsAndCheckBalance(from, amount);
     }
 
-    function i_distributeAssetsAndCheckBalance(address to, uint256 amount) external {
-        _distributeAssetsAndCheckBalance(to, amount);
-    }
-
     function i_assetToTransfer(int24 tick, uint256 amount, uint128 leverage, uint256 liqMultiplier)
         external
         view

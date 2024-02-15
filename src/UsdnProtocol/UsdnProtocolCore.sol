@@ -357,19 +357,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
     }
 
-    function _distributeAssetsAndCheckBalance(address to, uint256 amount) internal {
-        // slither-disable-next-line incorrect-equality
-        if (amount == 0) {
-            return;
-        }
-        uint256 balanceBefore = _asset.balanceOf(to);
-        _asset.safeTransfer(to, amount);
-        uint256 expectedBalance = balanceBefore + amount;
-        if (_asset.balanceOf(to) != expectedBalance) {
-            revert UsdnProtocolIncompleteTransfer(to, _asset.balanceOf(to), expectedBalance);
-        }
-    }
-
     /**
      * @notice Update the Exponential Moving Average (EMA) of the funding
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
@@ -409,50 +396,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
 
         _pendingProtocolFee += uint256(fee_);
-        if (_pendingProtocolFee >= _feesThreshold) {
-            // TO DO : add this to send remaining eth
-            _distributeAssetsAndCheckBalance(_feeCollector, _pendingProtocolFee);
-            emit ProtocolFeeDistributed(_feeCollector, _pendingProtocolFee);
-            _pendingProtocolFee = 0;
-        }
-    }
-
-    /**
-     * @notice Apply the protocol fee to the balances and distribute the fee to
-     * the fee collector if it exceeds the threshold
-     * @param newVaultBalance The new vault balance after applying pnl and funding
-     * @param newLongBalance The new long balance after applying pnl and funding
-     * @param oldLongBalance The old long balance before applying pnl and funding
-     * @return vaultBalanceWithFee_ The updated vault balance after applying the fee
-     * @return longBalanceWithFee_ The updated long balance after applying the fee
-     */
-    function _applyFee(int256 newVaultBalance, int256 newLongBalance, int256 oldLongBalance)
-        internal
-        returns (uint256 vaultBalanceWithFee_, uint256 longBalanceWithFee_)
-    {
-        int256 diff = newLongBalance - oldLongBalance;
-        int256 feeAmount = (diff * _toInt256(_protocolFeeBps)) / 10_000;
-        uint256 pendingProtocolFee = _pendingProtocolFee;
-
-        // if diff > 0, vault sends to long so we take fee from long
-        if (diff > 0) {
-            newLongBalance -= feeAmount;
-            pendingProtocolFee += uint256(feeAmount);
-        } else if (diff < 0) {
-            newVaultBalance += feeAmount;
-            // This cast is safe because `diff` is negative
-            pendingProtocolFee += uint256(-feeAmount);
-        }
-
-        if (pendingProtocolFee >= _feesThreshold) {
-            _distributeAssetsAndCheckBalance(_feeCollector, pendingProtocolFee);
-            emit ProtocolFeeDistributed(_feeCollector, pendingProtocolFee);
-            _pendingProtocolFee = 0;
-        } else {
-            _pendingProtocolFee = pendingProtocolFee;
-        }
-
-        return (uint256(newVaultBalance), uint256(newLongBalance));
     }
 
     /* -------------------------- Pending actions queue ------------------------- */
