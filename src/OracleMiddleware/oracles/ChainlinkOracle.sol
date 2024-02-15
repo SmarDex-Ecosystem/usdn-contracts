@@ -29,10 +29,6 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
         // slither-disable-next-line unused-return
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
-        if (timestamp < block.timestamp - _timeElapsedLimit) {
-            price = -1;
-        }
-
         price_ = ChainlinkPriceInfo({ price: price, timestamp: timestamp });
     }
 

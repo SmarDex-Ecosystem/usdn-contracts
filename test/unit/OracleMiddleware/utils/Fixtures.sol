@@ -44,14 +44,16 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
     MockChainlinkOnChain internal mockChainlinkOnChain;
     OracleMiddleware public oracleMiddleware;
+    uint256 chainlinkTimeElapsedLimit = 1 hours;
 
     function setUp() public virtual {
         vm.warp(1_704_063_600); // 01/01/2024 @ 12:00am (UTC+2)
 
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
-        oracleMiddleware =
-            new OracleMiddleware(address(mockPyth), PYTH_WSTETH_USD, address(mockChainlinkOnChain), 1 hours);
+        oracleMiddleware = new OracleMiddleware(
+            address(mockPyth), PYTH_WSTETH_USD, address(mockChainlinkOnChain), chainlinkTimeElapsedLimit
+        );
     }
 
     function test_setUp() public {

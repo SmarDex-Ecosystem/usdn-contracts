@@ -116,15 +116,26 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         price_.neutralPrice = uint256(pythPrice.price);
     }
 
-    /// @dev Get the price from Chainlink onChain or, if data is invalid, get the price from pyth.
+    /// @dev If the data parameter is not empty, get the price from pyth, else, get it from chainlink.
     function getOnChainPrice(bytes calldata data, uint64 actionTimestamp, ConfidenceInterval conf)
         private
         returns (PriceInfo memory)
     {
-        ChainlinkPriceInfo memory chainlinkOnChainPrice = getFormattedChainlinkPrice(DECIMALS);
-        // If the chainlink oracle's data is invalid, fetch from pyth
-        if (chainlinkOnChainPrice.price <= 0) {
+        // If data is not empty, use pyth
+        if (data.length > 0) {
             return getPythOrChainlinkDataStreamPrice(data, actionTimestamp, conf);
+        }
+
+        ChainlinkPriceInfo memory chainlinkOnChainPrice = getFormattedChainlinkPrice(DECIMALS);
+
+        // If the price is older than the tolerated time, revert.
+        if (chainlinkOnChainPrice.timestamp < block.timestamp - _timeElapsedLimit) {
+            revert OracleMiddlewarePriceTooOld(chainlinkOnChainPrice.price, chainlinkOnChainPrice.timestamp);
+        }
+
+        // If the price is less than 0, revert.
+        if (chainlinkOnChainPrice.price < 0) {
+            revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
         }
 
         return PriceInfo({

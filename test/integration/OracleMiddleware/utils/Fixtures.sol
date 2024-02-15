@@ -34,12 +34,19 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * @dev required integration actions tests
  */
 contract ActionsIntegrationFixture is IOracleMiddlewareErrors {
-    // action types for integration tests
+    // all action types
     ProtocolAction[] public actions = [
         ProtocolAction.None,
+        ProtocolAction.Initialize,
         ProtocolAction.InitiateDeposit,
         ProtocolAction.ValidateDeposit,
-        ProtocolAction.ValidateOpenPosition
+        ProtocolAction.InitiateWithdrawal,
+        ProtocolAction.ValidateWithdrawal,
+        ProtocolAction.InitiateOpenPosition,
+        ProtocolAction.ValidateOpenPosition,
+        ProtocolAction.InitiateClosePosition,
+        ProtocolAction.ValidateClosePosition,
+        ProtocolAction.Liquidation
     ];
 }
 

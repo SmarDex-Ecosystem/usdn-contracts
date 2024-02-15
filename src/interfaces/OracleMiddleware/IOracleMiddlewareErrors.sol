@@ -22,4 +22,7 @@ interface IOracleMiddlewareErrors {
 
     /// @notice The oracle price is invalid (negative)
     error OracleMiddlewareWrongPrice(int256 price);
+
+    /// @notice The oracle price is invalid (too old)
+    error OracleMiddlewarePriceTooOld(int256 price, uint256 timestamp);
 }
