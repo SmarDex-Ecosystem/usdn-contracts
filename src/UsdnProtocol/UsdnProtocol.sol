@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -19,6 +20,7 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
+    using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
     /// @dev The minimum amount of wstETH for the initialization deposit and long.
@@ -88,7 +90,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             );
 
             // Transfer the wstETH for the deposit
-            _retrieveAssetsAndCheckBalance(msg.sender, depositAmount);
+            _asset.safeTransferFrom(msg.sender, address(this), depositAmount);
 
             emit InitiatedDeposit(msg.sender, depositAmount);
             // Mint USDN (a small amount is minted to the dead address)
@@ -100,7 +102,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _lastPrice = currentPrice.price.toUint128();
 
         // Transfer the wstETH for the long
-        _retrieveAssetsAndCheckBalance(msg.sender, longAmount);
+        _asset.safeTransferFrom(msg.sender, address(this), longAmount);
 
         // Create long positions with min leverage
         _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), minTick());

@@ -132,38 +132,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Retrieving assets from the user
-     * @custom:when The protocol retrieves 1 wstETH from the user
-     * @custom:then The user's balance should decrease by the amount retrieved
-     * @custom:and The protocol's balance should increase by the amount retrieved
-     */
-    function test_retrieveAssets() public {
-        uint256 transferAmount = 1 ether;
-        wstETH.mintAndApprove(address(this), transferAmount, address(protocol), type(uint256).max);
-        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
-        uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
-        protocol.i_retrieveAssetsAndCheckBalance(address(this), transferAmount);
-        assertEq(wstETH.balanceOf(address(this)), userBalanceBefore - transferAmount, "user balance");
-        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + transferAmount, "protocol balance");
-    }
-
-    /**
-     * @custom:scenario Retrieving assets from the user with a zero amount
-     * @custom:when The protocol retrieves 0 tokens from the user
-     * @custom:then The transaction should not revert
-     * @custom:and The user's balance should remain the same
-     * @custom:and The protocol's balance should remain the same
-     */
-    function test_retrieveAssetsZeroAmount() public {
-        wstETH.approve(address(protocol), type(uint256).max);
-        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
-        uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
-        protocol.i_retrieveAssetsAndCheckBalance(address(this), 0);
-        assertEq(wstETH.balanceOf(address(this)), userBalanceBefore, "user balance");
-        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore, "protocol balance");
-    }
-
-    /**
      * @custom:scenario Funding calculation
      * @custom:when long and vault expos are equal
      * @custom:then fund should be equal to EMA

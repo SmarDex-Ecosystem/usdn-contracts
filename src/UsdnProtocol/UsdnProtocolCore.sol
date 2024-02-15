@@ -348,15 +348,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         priceUpdated_ = true;
     }
 
-    function _retrieveAssetsAndCheckBalance(address from, uint256 amount) internal {
-        uint256 balanceBefore = _asset.balanceOf(address(this));
-        _asset.safeTransferFrom(from, address(this), amount);
-        uint256 expectedBalance = balanceBefore + amount;
-        if (_asset.balanceOf(address(this)) != expectedBalance) {
-            revert UsdnProtocolIncompleteTransfer(address(this), _asset.balanceOf(address(this)), expectedBalance);
-        }
-    }
-
     /**
      * @notice Update the Exponential Moving Average (EMA) of the funding
      * @param secondsElapsed The number of seconds elapsed since the last protocol action

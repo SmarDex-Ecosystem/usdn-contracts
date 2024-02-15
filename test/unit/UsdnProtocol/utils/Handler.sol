@@ -180,10 +180,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _convertLongPendingAction(action);
     }
 
-    function i_retrieveAssetsAndCheckBalance(address from, uint256 amount) external {
-        _retrieveAssetsAndCheckBalance(from, amount);
-    }
-
     function i_assetToTransfer(int24 tick, uint256 amount, uint128 leverage, uint256 liqMultiplier)
         external
         view

@@ -63,7 +63,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _addPendingAction(msg.sender, _convertVaultPendingAction(pendingAction));
 
-        _retrieveAssetsAndCheckBalance(msg.sender, amount);
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         emit InitiatedDeposit(msg.sender, amount);
         _executePendingAction(previousActionPriceData);
@@ -217,7 +217,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 msg.sender, long.timestamp, long.leverage, long.amount, adjustedPrice, tick_, tickVersion_, index_
             );
         }
-        _retrieveAssetsAndCheckBalance(msg.sender, amount);
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
