@@ -66,10 +66,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
                 );
             }
             // Price - conf
-            else if (
-                action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.Liquidation
-            ) {
+            else if (action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.ValidateDeposit) {
                 assertEq(
                     price.price,
                     stethToWsteth(FORMATTED_STETH_PRICE - FORMATTED_STETH_CONF, STETH_PER_TOKEN),
