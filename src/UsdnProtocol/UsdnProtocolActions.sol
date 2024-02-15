@@ -639,10 +639,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (PriceInfo memory price_)
     {
         uint256 validationCost = _oracleMiddleware.validationCost(priceData, action);
-        if (msg.value < validationCost) {
-            // this check is not bulletproof. In case we do two price validations that require a payment in the same
-            // transaction, and we don't have enough value for the second one, the second validation will fail with a
-            // generic revert.
+        if (address(this).balance < validationCost) {
             revert UsdnProtocolInsufficientFee();
         }
         price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(timestamp, action, priceData);
