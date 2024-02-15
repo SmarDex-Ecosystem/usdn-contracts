@@ -1,4 +1,5 @@
 BaseFixture:test() (gas: 164)
+CommonBaseFixture:test() (gas: 164)
 DequeFixture:test() (gas: 186)
 LiquidationRewardsManagerBaseFixture:test() (gas: 186)
 LiquidationRewardsManagerGetLiquidationRewards:test() (gas: 186)

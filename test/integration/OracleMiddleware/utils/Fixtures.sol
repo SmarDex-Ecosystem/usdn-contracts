@@ -50,31 +50,10 @@ contract ActionsIntegrationFixture is IOracleMiddlewareErrors {
     ];
 }
 
-/**
- * @title OracleMiddlewareBaseFixture
- * @dev Utils for testing the oracle middleware
- */
-contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationFixture {
-    IPyth internal pyth;
+contract CommonBaseFixture is BaseFixture {
     AggregatorV3Interface internal chainlinkOnChain;
-    OracleMiddleware public oracleMiddleware;
 
-    modifier reSetUp() {
-        setUp();
-        _;
-    }
-
-    function setUp() public virtual {
-        pyth = IPyth(PYTH_ORACLE);
-        chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE);
-        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_WSTETH_USD, address(chainlinkOnChain), 1 hours);
-    }
-
-    function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
-        return (PYTH_DATA_PRICE, PYTH_DATA_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA);
-    }
-
-    function getHermesApiSignature(bytes32 feed, uint256 timestamp)
+    function _getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
         returns (uint256, uint256, uint256, bytes memory)
     {
@@ -92,18 +71,48 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationFixture {
         return (uint256(price), uint256(timestamp));
     }
 
+    function getHermesApiSignature(bytes32 feed, uint256 timestamp)
+        internal
+        returns (uint256, uint256, uint256, bytes memory)
+    {
+        return _getHermesApiSignature(feed, timestamp);
+    }
+
     // force ignore from coverage report
     // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
     function test() public virtual override { }
 }
 
 /**
+ * @title OracleMiddlewareBaseFixture
+ * @dev Utils for testing the oracle middleware
+ */
+contract OracleMiddlewareBaseFixture is CommonBaseFixture, ActionsIntegrationFixture {
+    IPyth internal pyth;
+    OracleMiddleware public oracleMiddleware;
+
+    modifier reSetUp() {
+        setUp();
+        _;
+    }
+
+    function setUp() public virtual {
+        pyth = IPyth(PYTH_ORACLE);
+        chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE);
+        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_WSTETH_USD, address(chainlinkOnChain), 1 hours);
+    }
+
+    function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
+        return (PYTH_DATA_PRICE, PYTH_DATA_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA);
+    }
+}
+
+/**
  * @title WstethFixture
  * @dev Utils for testing the oracle middleware
  */
-contract WstethFixture is BaseFixture, ActionsIntegrationFixture {
+contract WstethFixture is CommonBaseFixture, ActionsIntegrationFixture {
     IPyth internal pyth;
-    AggregatorV3Interface internal chainlinkOnChain;
     WstEthOracleMiddleware public wstethMiddleware;
     IWstETH public constant WST_ETH = IWstETH(WSTETH);
 
@@ -123,29 +132,7 @@ contract WstethFixture is BaseFixture, ActionsIntegrationFixture {
         return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
     }
 
-    function getHermesApiSignature(bytes32 feed, uint256 timestamp)
-        internal
-        returns (uint256, uint256, uint256, bytes memory)
-    {
-        string[] memory cmds = new string[](4);
-        cmds[0] = "./test_utils/target/release/test_utils";
-        cmds[1] = "pyth-price";
-        cmds[2] = vm.toString(feed);
-        cmds[3] = vm.toString(timestamp);
-        bytes memory result = vm.ffi(cmds);
-        return abi.decode(result, (uint256, uint256, uint256, bytes));
-    }
-
-    function getChainlinkPrice() internal view returns (uint256, uint256) {
-        (, int256 price,, uint256 timestamp,) = chainlinkOnChain.latestRoundData();
-        return (uint256(price), uint256(timestamp));
-    }
-
     function stethToWsteth(uint256 amount) public view returns (uint256) {
         return amount * WST_ETH.stEthPerToken() / 1 ether;
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public virtual override { }
 }
