@@ -4,12 +4,16 @@ pragma solidity 0.8.20;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {
-    PendingAction, VaultPendingAction, LongPendingAction
+    PendingAction,
+    VaultPendingAction,
+    LongPendingAction,
+    ProtocolAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 /**
@@ -198,5 +202,13 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {
         return _tickValue(currentPrice, tick, tickTotalExpo);
+    }
+
+    function i_getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
+        external
+        payable
+        returns (PriceInfo memory)
+    {
+        return _getOraclePrice(action, timestamp, priceData);
     }
 }

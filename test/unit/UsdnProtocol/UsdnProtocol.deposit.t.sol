@@ -72,8 +72,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with `UsdnProtocolZeroAmount`
      */
     function test_RevertWhen_zeroAmount() public {
+        bytes memory priceData = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateDeposit(0, abi.encode(uint128(2000 ether)), "");
+        protocol.initiateDeposit(0, priceData, "");
     }
 
     /**
@@ -102,6 +103,42 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      */
     function test_validateDepositPriceDecrease() public {
         _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048223628563225 ether);
+    }
+
+    /**
+     * @custom:scenario The user sends too much ether when initiating a deposit
+     * @custom:given The user deposits 1 wstETH
+     * @custom:when The user sends 0.5 ether as value in the `initiateDeposit` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_initiateDepositEtherRefund() public {
+        oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
+        uint256 balanceBefore = address(this).balance;
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
+        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, "");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario The user sends too much ether when validating a deposit
+     * @custom:given The user initiated a deposit of 1 wstETH and validates it
+     * @custom:when The user sends 0.5 ether as value in the `validateDeposit` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_validateDepositEtherRefund() public {
+        oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
+        // initiate
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
+        protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, "");
+
+        skip(oracleMiddleware.validationDelay() + 1);
+        // validate
+        validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
+        uint256 balanceBefore = address(this).balance;
+        protocol.validateDeposit{ value: 0.5 ether }(currentPrice, "");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
     /**
@@ -143,4 +180,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(usdn.balanceOf(address(this)), mintedAmount, "USDN user balance");
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply");
     }
+
+    // test refunds
+    receive() external payable { }
 }
