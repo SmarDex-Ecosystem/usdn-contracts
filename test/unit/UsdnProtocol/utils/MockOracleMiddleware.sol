@@ -15,7 +15,6 @@ contract MockOracleMiddleware is IOracleMiddleware {
         payable
         returns (PriceInfo memory)
     {
-        // TODO: return different timestamp depending on action?
         uint128 priceValue = abi.decode(data, (uint128));
         uint128 ts = targetTimestamp;
         if (
@@ -26,9 +25,12 @@ contract MockOracleMiddleware is IOracleMiddleware {
             if (ts < 30 minutes) {
                 ts = 0;
             } else {
-                ts = ts - 30 minutes; // simulate that we got the price 30 minutes ago
+                ts -= 30 minutes; // simulate that we got the price 30 minutes ago
             }
+        } else if (action == ProtocolAction.Liquidation) {
+            ts -= 30 seconds; // for liquidation, simulate we got a recent timestamp
         } else {
+            // for other actions, simulate we got the price from 24s after the initiate action
             ts += uint128(_validationDelay);
         }
 
