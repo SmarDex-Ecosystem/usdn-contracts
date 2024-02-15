@@ -61,7 +61,6 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
      */
     function test_assetToTransferZeroBalance() public {
         int24 firstPosTick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2);
-        skip(60);
         // liquidate the default position
         uint128 liqPrice = protocol.getEffectivePriceForTick(firstPosTick);
         protocol.liquidate(abi.encode(liqPrice), 10);
