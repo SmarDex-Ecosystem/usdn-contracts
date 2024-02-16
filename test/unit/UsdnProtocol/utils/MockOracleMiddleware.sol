@@ -25,12 +25,18 @@ contract MockOracleMiddleware is IOracleMiddleware {
                 || action == ProtocolAction.Initialize
         ) {
             if (ts < 30 minutes) {
+                // avoid underflow
                 ts = 0;
             } else {
                 ts -= 30 minutes; // simulate that we got the price 30 minutes ago
             }
         } else if (action == ProtocolAction.Liquidation) {
-            ts -= 30 seconds; // for liquidation, simulate we got a recent timestamp
+            if (ts < 30 seconds) {
+                // avoid underflow
+                ts = 0;
+            } else {
+                ts -= 30 seconds; // for liquidation, simulate we got a recent timestamp
+            }
         } else {
             // for other actions, simulate we got the price from 24s after the initiate action
             ts += uint128(_validationDelay);
