@@ -140,4 +140,16 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
 
         assertEq(rewards, 0, "The function should return 0");
     }
+
+    /**
+     * @custom:scenario Call `getLiquidationRewards` function return 0 if chainlink data is too old
+     * @custom:when The oracle returns data with a timestamp farther than our tolerated time.
+     * @custom:then It should return 0 to avoid relying solely on tx.gasprice or old data
+     */
+    function test_getLiquidationRewardsWithOracleGasPriceTooOld() public {
+        mockChainlinkOnChain.updateLastPublishTime(0);
+        uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
+
+        assertEq(rewards, 0, "The function should return 0");
+    }
 }

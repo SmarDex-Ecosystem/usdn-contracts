@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IWstETH } from "src/interfaces/IWstETH.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 
@@ -43,7 +43,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 32_043,
-            otherGasUsed: 41_327,
+            otherGasUsed: 43_553,
             gasPriceLimit: uint64(1000 gwei),
             multiplierBps: 20_000
         });
@@ -102,15 +102,15 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * @return gasPrice_ The gas price.
      */
     function _getGasPrice(RewardsParameters memory rewardsParameters) private view returns (uint256 gasPrice_) {
-        int256 rawGasPrice = (getChainlinkPrice()).price;
+        ChainlinkPriceInfo memory priceInfo = getChainlinkPrice();
 
-        // If the gas price is invalid, return 0 and do not distribute rewards.
-        if (rawGasPrice <= 0) {
+        // If the gas price is invalid or the timestamp is too old, return 0 and do not distribute rewards.
+        if (priceInfo.price <= 0 || priceInfo.timestamp < block.timestamp - _timeElapsedLimit) {
             return 0;
         }
 
         // We can safely cast as rawGasPrice cannot be below 0
-        gasPrice_ = uint256(rawGasPrice);
+        gasPrice_ = uint256(priceInfo.price);
         if (tx.gasprice < gasPrice_) {
             gasPrice_ = tx.gasprice;
         }
