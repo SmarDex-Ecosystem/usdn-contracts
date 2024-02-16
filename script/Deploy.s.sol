@@ -60,16 +60,17 @@ contract Deploy is Script {
             address pythAddress = vm.envAddress("PYTH_ADDRESS");
             bytes32 pythPriceId = vm.envBytes32("PYTH_STETH_PRICE_ID");
             address chainlinkPriceAddress = vm.envAddress("CHAINLINK_STETH_PRICE_ADDRESS");
+            uint256 chainlinkPriceValidity = vm.envUint("CHAINLINK_STETH_PRICE_VALIDITY");
 
             // prod
             if (isProdEnv) {
                 middleware = new WstEthOracleMiddleware(
-                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, 1 hours + 2 minutes
+                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
                 );
                 // fork
             } else {
                 middleware = new MockWstEthOracleMiddleware(
-                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, 1 hours + 10 minutes
+                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
                 );
             }
 
@@ -87,13 +88,13 @@ contract Deploy is Script {
             }
         } else {
             address chainlinkGasPriceFeed = vm.envAddress("CHAINLINK_GAS_PRICE_ADDRESS");
+            uint256 chainlinkPriceValidity = vm.envUint("CHAINLINK_GAS_PRICE_VALIDITY");
             if (isProdEnv) {
-                // Heartbeat is 2 hours but I've seen the aggregator takes a bit more time to process the update TX.
                 liquidationRewardsManager =
-                    new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), (2 hours + 10 minutes));
+                    new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity);
             } else {
                 liquidationRewardsManager = new MockLiquidationRewardsManager(
-                    chainlinkGasPriceFeed, IWstETH(wstETHAddress), (2 hours + 10 minutes)
+                    chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity
                 );
             }
 

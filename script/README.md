@@ -11,8 +11,10 @@ Environment variables can be used to control the script execution:
 - `PYTH_WSTETH_PRICE_ID`: required if middleware address not provided, the price id of the wstETH pyth oracle
 - `PYTH_STETH_PRICE_ID`: required if middleware address not provided, the price id of the wstETH pyth oracle
 - `CHAINLINK_STETH_PRICE_ADDRESS`: required if middleware address not provided, the address of the stETH chainlink oracle
+- `CHAINLINK_STETH_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance is added to avoid reverting if chainlink misses the heartbeat by a few minutes
 - `LIQUIDATION_REWARDS_MANAGER_ADDRESS`: if provided, skips deployment of the liquidation rewards manager
 - `CHAINLINK_GAS_PRICE_ADDRESS`: required if liquidation rewards manager address not provided, the address of the gas price chainlink oracle
+- `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance is added to avoid reverting if chainlink misses the heartbeat by a few minutes
 - `USDN_ADDRESS`: if provided, skips deployment of the USDN token
 - `INIT_DEPOSIT_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
 - `INIT_LONG_AMOUNT`: amount to use for the `initialize` function call (if not provided, then initialization is skipped).
@@ -29,7 +31,10 @@ export INIT_LONG_AMOUNT=1000000000000000000
 export PYTH_ADDRESS=0x4305FB66699C3B2702D4d05CF36551390A4c69C6
 export PYTH_WSTETH_PRICE_ID=0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784
 export PYTH_STETH_PRICE_ID=0x846ae1bdb6300b817cee5fdee2a6da192775030db5615b94a465f53bd40850b5
-export CHAINLINK_STETH_PRICE_ADDRESS=0xcfe54b5cd566ab89272946f602d76ea879cab4a8
+export CHAINLINK_STETH_PRICE_ADDRESS=0xCfE54B5cD566aB89272946F602D76Ea879CAb4a8
+export CHAINLINK_STETH_PRICE_VALIDITY=3720
+export CHAINLINK_GAS_PRICE_ADDRESS=0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C
+export CHAINLINK_GAS_PRICE_VALIDITY=7500
 export GET_WSTETH=true
 ```
 
