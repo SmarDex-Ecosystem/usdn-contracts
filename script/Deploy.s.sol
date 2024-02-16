@@ -13,6 +13,7 @@ import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
+import { MockLiquidationRewardsManager } from "src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
 
 contract Deploy is Script {
     function run() external {
@@ -79,16 +80,24 @@ contract Deploy is Script {
         address liquidationRewardsManagerAddress = vm.envOr("LIQUIDATION_REWARDS_MANAGER_ADDRESS", address(0));
         LiquidationRewardsManager liquidationRewardsManager;
         if (liquidationRewardsManagerAddress != address(0)) {
-            liquidationRewardsManager = LiquidationRewardsManager(liquidationRewardsManagerAddress);
+            if (isProdEnv) {
+                liquidationRewardsManager = LiquidationRewardsManager(liquidationRewardsManagerAddress);
+            } else {
+                liquidationRewardsManager = MockLiquidationRewardsManager(liquidationRewardsManagerAddress);
+            }
         } else {
             address chainlinkGasPriceFeed = vm.envAddress("CHAINLINK_GAS_PRICE_ADDRESS");
-            if (!isProdEnv) {
-                chainlinkGasPriceFeed = address(new MockChainlinkOnChain());
+            if (isProdEnv) {
+                // Heartbeat is 2 hours but I've seen the aggregator takes a bit more time to process the update TX.
+                liquidationRewardsManager =
+                    new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), (2 hours + 10 minutes));
+            } else {
+                liquidationRewardsManager = new MockLiquidationRewardsManager(
+                    chainlinkGasPriceFeed, IWstETH(wstETHAddress), (2 hours + 10 minutes)
+                );
             }
 
-            // Heartbeat is 2 hours but I've seen the aggregator takes a bit more time to process the update TX.
-            liquidationRewardsManager =
-                new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), (2 hours + 10 minutes));
+            liquidationRewardsManagerAddress = address(liquidationRewardsManager);
         }
 
         // Deploy USDN token, without a specific minter or adjuster for now
