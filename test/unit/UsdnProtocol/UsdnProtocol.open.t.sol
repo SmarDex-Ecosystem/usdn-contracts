@@ -43,7 +43,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
                 )
         );
 
-        // state before openinng the position
+        // state before opening the position
         uint256 balanceBefore = wstETH.balanceOf(address(this));
         uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
         uint256 totalPositionsBefore = protocol.totalLongPositions();
