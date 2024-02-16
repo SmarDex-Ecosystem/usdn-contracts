@@ -13,6 +13,8 @@ import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdn
  */
 contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
+    uint256 internal constant LONG_AMOUNT = 1 ether;
+    uint128 internal constant CURRENT_PRICE = 2000 ether;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -29,14 +31,12 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
      * @custom:and the state changes are as expected
      */
     function test_initiateOpenPosition() public {
-        uint96 longAmount = 1 ether;
-        uint128 currentPrice = 2000 ether;
-        uint128 desiredLiqPrice = currentPrice * 2 / 3; // leverage approx 3x
+        uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
         uint128 expectedLeverage = uint128(
-            (10 ** protocol.LEVERAGE_DECIMALS() * currentPrice)
+            (10 ** protocol.LEVERAGE_DECIMALS() * CURRENT_PRICE)
                 / (
-                    currentPrice
+                    CURRENT_PRICE
                         - protocol.getEffectivePriceForTick(
                             expectedTick - int24(protocol.liquidationPenalty()) * protocol.tickSpacing()
                         )
@@ -47,36 +47,41 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
         uint256 totalPositionsBefore = protocol.totalLongPositions();
         uint256 totalExpoBefore = protocol.totalExpo();
-        uint256 balanceLongBefore = uint256(protocol.longAssetAvailable(currentPrice));
+        uint256 balanceLongBefore = uint256(protocol.longAssetAvailable(CURRENT_PRICE));
 
-        {
-            vm.expectEmit();
-            emit InitiatedOpenPosition(
-                address(this), uint40(block.timestamp), expectedLeverage, longAmount, currentPrice, expectedTick, 0, 0
-            ); // expected event
-            (int24 tick, uint256 tickVersion, uint256 index) =
-                protocol.initiateOpenPosition(longAmount, desiredLiqPrice, abi.encode(currentPrice), "");
+        vm.expectEmit();
+        emit InitiatedOpenPosition(
+            address(this),
+            uint40(block.timestamp),
+            expectedLeverage,
+            uint128(LONG_AMOUNT),
+            CURRENT_PRICE,
+            expectedTick,
+            0,
+            0
+        ); // expected event
+        (int24 tick, uint256 tickVersion, uint256 index) =
+            protocol.initiateOpenPosition(uint96(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), "");
 
-            assertEq(tick, expectedTick, "tick number");
-            assertEq(tickVersion, 0, "tick version");
-            assertEq(index, 0, "index");
-        }
+        assertEq(tick, expectedTick, "tick number");
+        assertEq(tickVersion, 0, "tick version");
+        assertEq(index, 0, "index");
 
-        assertEq(wstETH.balanceOf(address(this)), balanceBefore - longAmount, "user wstETH balance");
-        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + longAmount, "protocol wstETH balance");
+        assertEq(wstETH.balanceOf(address(this)), balanceBefore - LONG_AMOUNT, "user wstETH balance");
+        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + LONG_AMOUNT, "protocol wstETH balance");
         assertEq(protocol.totalLongPositions(), totalPositionsBefore + 1, "total long positions");
         assertEq(
             protocol.totalExpo(),
-            totalExpoBefore + uint256(longAmount) * expectedLeverage / uint256(10) ** protocol.LEVERAGE_DECIMALS(),
+            totalExpoBefore + LONG_AMOUNT * expectedLeverage / uint256(10) ** protocol.LEVERAGE_DECIMALS(),
             "protocol total expo"
         );
         assertEq(
             protocol.totalExpoByTick(expectedTick),
-            uint256(longAmount) * expectedLeverage / uint256(10) ** protocol.LEVERAGE_DECIMALS(),
+            LONG_AMOUNT * expectedLeverage / uint256(10) ** protocol.LEVERAGE_DECIMALS(),
             "total expo in tick"
         );
         assertEq(protocol.positionsInTick(expectedTick), 1, "positions in tick");
-        assertEq(protocol.balanceLong(), balanceLongBefore + longAmount, "balance of long side");
+        assertEq(protocol.balanceLong(), balanceLongBefore + LONG_AMOUNT, "balance of long side");
     }
 
     // test refunds
