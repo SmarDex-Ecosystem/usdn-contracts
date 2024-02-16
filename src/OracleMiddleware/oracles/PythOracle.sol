@@ -50,10 +50,14 @@ abstract contract PythOracle is IOracleMiddlewareErrors {
         PythStructs.PriceFeed[] memory priceFeeds;
         if (targetTimestamp == 0) {
             // we want to validate that the price is recent
-            priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: pythFee }(
+            // we don't enforce that the price update is the first one in a given second
+            priceFeeds = _pyth.parsePriceFeedUpdates{ value: pythFee }(
                 pricesUpdateData, priceIds, uint64(block.timestamp) - _recentPriceDelay, uint64(block.timestamp)
             );
         } else {
+            // we want to validate that the price is exactly at targetTimestamp (first in the second) or the next
+            // available price in the future, as identified by the prevPublishTime being strictly less than
+            // targetTimestamp
             priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: pythFee }(
                 pricesUpdateData, priceIds, targetTimestamp, type(uint64).max
             );
