@@ -161,33 +161,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /**
      * @notice Returns the ETH cost of one price validation for the given action
+     * @dev We don't use the protocol action parameter for now
      * @param data The data used to get the price
-     * @param action The action to validate
      */
-    function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256 _result) {
-        // TODO: Validate each ConfidenceInterval
-        if (action == ProtocolAction.None) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.Initialize) {
-            return 0;
-        } else if (action == ProtocolAction.ValidateDeposit) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.ValidateWithdrawal) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.ValidateOpenPosition) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.ValidateClosePosition) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.Liquidation) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.InitiateDeposit) {
-            return 0;
-        } else if (action == ProtocolAction.InitiateWithdrawal) {
-            return 0;
-        } else if (action == ProtocolAction.InitiateOpenPosition) {
-            return 0;
-        } else if (action == ProtocolAction.InitiateClosePosition) {
-            return 0;
+    function validationCost(bytes calldata data, ProtocolAction) external view returns (uint256 _result) {
+        if (data.length > 0) {
+            _result = getPythUpdateFee(data);
         }
     }
 

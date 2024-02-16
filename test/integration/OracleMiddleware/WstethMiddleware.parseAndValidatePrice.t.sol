@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { WstethFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
+import { WstethIntegrationFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
 import { PYTH_WSTETH_USD, PYTH_STETH_USD } from "test/utils/Constants.sol";
 
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -15,7 +15,7 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * @custom:and The confidence interval is 20 USD
  * @custom:and The oracles are not mocked
  */
-contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
+contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationFixture {
     using Strings for uint256;
 
     function setUp() public override {
@@ -46,8 +46,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
                 string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
 
             // pyth data
-            (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
-                super.getMockedPythSignature();
+            (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = getMockedPythSignature();
 
             // middleware data
             PriceInfo memory middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(
@@ -116,7 +115,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
                 string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
 
             // chainlink data
-            (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = super.getChainlinkPrice();
+            (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
             PriceInfo memory middlewarePrice =
                 wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(uint128(block.timestamp), action, "");
@@ -158,7 +157,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
 
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
-                super.getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
+                getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
 
             // middleware data
             PriceInfo memory middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(
@@ -199,7 +198,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
                     uint256 pythWstethPrice,
                     uint256 pythWstethConf, // price difference should be less than conf
                     uint256 pythWstethTimestamp,
-                ) = super.getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
+                ) = getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
 
                 assertEq(middlewarePrice.timestamp, pythWstethTimestamp, "Wrong similar timestamp");
 
@@ -246,7 +245,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
                 string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
 
             // chainlink data
-            (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = super.getChainlinkPrice();
+            (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
             PriceInfo memory middlewarePrice =
                 wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(uint128(block.timestamp), action, "");
@@ -262,4 +261,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethFixture {
             );
         }
     }
+
+    // receive ether refunds
+    receive() external payable { }
 }

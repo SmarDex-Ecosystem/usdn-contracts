@@ -50,7 +50,7 @@ contract ActionsIntegrationFixture is IOracleMiddlewareErrors {
     ];
 }
 
-contract CommonBaseFixture is BaseFixture {
+contract CommonBaseIntegrationFixture is BaseFixture {
     AggregatorV3Interface internal chainlinkOnChain;
 
     function _getHermesApiSignature(bytes32 feed, uint256 timestamp)
@@ -84,10 +84,10 @@ contract CommonBaseFixture is BaseFixture {
 }
 
 /**
- * @title OracleMiddlewareBaseFixture
+ * @title OracleMiddlewareBaseIntegrationFixture
  * @dev Utils for testing the oracle middleware
  */
-contract OracleMiddlewareBaseFixture is CommonBaseFixture, ActionsIntegrationFixture {
+contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegrationFixture {
     IPyth internal pyth;
     OracleMiddleware public oracleMiddleware;
 
@@ -108,15 +108,15 @@ contract OracleMiddlewareBaseFixture is CommonBaseFixture, ActionsIntegrationFix
 }
 
 /**
- * @title WstethFixture
+ * @title WstethIntegrationFixture
  * @dev Utils for testing the oracle middleware
  */
-contract WstethFixture is CommonBaseFixture, ActionsIntegrationFixture {
+contract WstethIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegrationFixture {
     IPyth internal pyth;
     WstEthOracleMiddleware public wstethMiddleware;
     IWstETH public constant WST_ETH = IWstETH(WSTETH);
 
-    modifier reSetUp() {
+    modifier reSetUp() virtual {
         setUp();
         _;
     }

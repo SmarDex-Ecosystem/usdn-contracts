@@ -41,10 +41,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         ChainlinkOracle(chainlinkGasPriceFeed, chainlinkElapsedTimeLimit)
     {
         _wstEth = wstETH;
-        // TODO update with the final values
         _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 27_736,
-            otherGasUsed: 42_323,
+            gasUsedPerTick: 32_043,
+            otherGasUsed: 43_317,
             gasPriceLimit: uint64(1000 gwei),
             multiplierBps: 2000
         });

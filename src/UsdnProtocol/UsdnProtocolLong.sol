@@ -154,6 +154,30 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         );
     }
 
+    /**
+     * @notice Calculate the value of a tick, knowing its contained total expo and the current asset price
+     * @param currentPrice The current price of the asset
+     * @param tick The tick number
+     * @param tickTotalExpo The total expo of the positions in the tick
+     */
+    function _tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo)
+        internal
+        view
+        returns (int256 value_)
+    {
+        // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
+        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
+
+        // if the current price is lower than the liquidation price, we have effectively a negative value
+        if (currentPrice <= liqPriceWithoutPenalty) {
+            // we calculate the inverse and then change the sign
+            value_ = -int256(FixedPointMathLib.fullMulDiv(tickTotalExpo, liqPriceWithoutPenalty - currentPrice, currentPrice));
+        } else {
+            value_ =
+                int256(FixedPointMathLib.fullMulDiv(tickTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice));
+        }
+    }
+
     /// @dev This does not take into account the liquidation penalty
     function _getLeverage(uint128 startPrice, uint128 liquidationPrice) internal pure returns (uint128 leverage_) {
         if (startPrice <= liquidationPrice) {
@@ -205,22 +229,24 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         tickArray.push(long);
     }
 
-    function _removePosition(int24 tick, uint256 tickVersion, uint256 index, Position memory long) internal {
+    function _removePosition(int24 tick, uint256 tickVersion, uint256 index) internal returns (Position memory pos_) {
         (bytes32 tickHash, uint256 version) = _tickHash(tick);
 
         if (version != tickVersion) {
             revert UsdnProtocolOutdatedTick(version, tickVersion);
         }
 
+        Position[] storage tickArray = _longPositions[tickHash];
+        pos_ = tickArray[index];
+
         // Adjust state
-        uint256 removeExpo = FixedPointMathLib.fullMulDiv(long.amount, long.leverage, 10 ** LEVERAGE_DECIMALS);
+        uint256 removeExpo = FixedPointMathLib.fullMulDiv(pos_.amount, pos_.leverage, 10 ** LEVERAGE_DECIMALS);
         _totalExpo -= removeExpo;
         _totalExpoByTick[tickHash] -= removeExpo;
         --_positionsInTick[tickHash];
         --_totalLongPositions;
 
         // Remove from tick array (set to zero to avoid shifting indices)
-        Position[] storage tickArray = _longPositions[tickHash];
         delete tickArray[index];
         if (_positionsInTick[tickHash] == 0) {
             // we removed the last position in the tick
@@ -252,7 +278,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     function _liquidatePositions(uint256 currentPrice, uint16 iteration)
         internal
-        returns (uint256 liquidatedPositions_, uint16 liquidatedTicks_, int256 liquidatedCollateral_)
+        returns (uint256 liquidatedPositions_, uint16 liquidatedTicks_, int256 remainingCollateral_)
     {
         // max iteration limit
         if (iteration > MAX_LIQUIDATION_ITERATION) {
@@ -280,8 +306,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             (bytes32 tickHash,) = _tickHash(tick);
             uint256 length = _positionsInTick[tickHash];
 
+            uint256 tickTotalExpo = _totalExpoByTick[tickHash];
+            int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
+            remainingCollateral_ += tickValue;
             unchecked {
-                _totalExpo -= _totalExpoByTick[tickHash];
+                _totalExpo -= tickTotalExpo;
 
                 _totalLongPositions -= length;
                 liquidatedPositions_ += length;
@@ -291,7 +320,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             }
             _tickBitmap.unset(_tickToBitmapIndex(tick));
 
-            emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick));
+            emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue);
         } while (liquidatedTicks_ < iteration);
 
         if (liquidatedPositions_ != 0) {
@@ -303,8 +332,28 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 _maxInitializedTick = _findMaxInitializedTick(tick);
             }
         }
-        // TODO transfer remaining collat to vault
-        // TODO assign the remaining collat amount to liquidatedCollateral_
-        liquidatedCollateral_ = 0;
+
+        // Transfer remaining collateral to vault or pay bad debt
+        if (remainingCollateral_ >= 0) {
+            if (uint256(remainingCollateral_) > _balanceLong) {
+                // avoid underflow
+                remainingCollateral_ = int256(_balanceLong);
+            }
+            _balanceVault += uint256(remainingCollateral_);
+            unchecked {
+                // underflow not possible thanks to the previous check
+                _balanceLong -= uint256(remainingCollateral_);
+            }
+        } else {
+            if (uint256(-remainingCollateral_) > _balanceVault) {
+                // avoid underflow
+                remainingCollateral_ = -int256(_balanceVault);
+            }
+            unchecked {
+                // underflow not possible thanks to the previous check
+                _balanceVault -= uint256(-remainingCollateral_);
+            }
+            _balanceLong += uint256(-remainingCollateral_);
+        }
     }
 }

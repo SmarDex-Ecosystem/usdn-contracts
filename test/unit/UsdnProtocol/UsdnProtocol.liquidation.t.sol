@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import "forge-std/console.sol";
 import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
+import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature The `_liquidatePositions` function of `UsdnProtocol`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
@@ -57,10 +59,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(protocol.totalLongPositions(), 12, "wrong first totalLongPositions");
 
         skip(1 hours);
-        priceData = abi.encode(1000 ether);
+        priceData = abi.encode(1650 ether);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, 1000 ether, 1_689_332_686_299_800_182_465);
+        emit IUsdnProtocolEvents.LiquidatedTick(
+            74_300, 0, 1650 ether, 1_688_815_697_364_501_907_167, -937_114_401_579_540_884
+        );
         // initiate a position to liquidate all other positions
         protocol.initiateOpenPosition(5 ether, 500 ether, priceData, "");
         protocol.validateOpenPosition(priceData, "");
@@ -68,7 +72,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
         // check if second total expo is equal expected value
-        assertEq(protocol.totalExpo(), 19.702725157982303337 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 17.024364708070820361 ether, "wrong second totalExpo");
         // check if second total expo by tick is equal expected value
         assertEq(protocol.totalExpoByTick(initialTick), 0, "wrong second totalExpoByTick");
         // check if second long position length is equal expected value
@@ -123,7 +127,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         priceData = abi.encode(1000 ether);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, 1000 ether, 1_692_533_133_837_250_861_380);
+        emit IUsdnProtocolEvents.LiquidatedTick(
+            74_300, 0, 1000 ether, 1_692_533_133_837_250_861_380, -189_526_878_030_469_069_247
+        );
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
 
@@ -193,8 +199,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         skip(1 hours);
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(73_700, 0, 1000 ether, 1_670_744_473_580_842_463_528);
-
+        emit IUsdnProtocolEvents.LiquidatedTick(
+            73_200, 0, 1000 ether, 1_589_265_276_985_422_417_883, -51_663_335_551_287_910_833
+        );
         // liquidator first liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
 
@@ -385,8 +392,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.prank(DEPLOYER);
         liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 1000 gwei, 2000);
 
-        priceData = abi.encode(1670 ether);
+        priceData = abi.encode(1680 ether);
 
+        uint256 collateralRemainingAfterLiquidation = 464_558_964_785_558_438;
         uint256 expectedLiquidatorRewards = 4_209_000_000_000_000;
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.balanceVault();
@@ -406,7 +414,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check that the vault balance got updated
         uint256 vaultBalanceAfterRewards = protocol.balanceVault();
         assertEq(
-            vaultBalanceBeforeRewards - vaultBalanceAfterRewards,
+            vaultBalanceAfterRewards - vaultBalanceBeforeRewards - collateralRemainingAfterLiquidation,
             expectedLiquidatorRewards,
             "The vault does not contain the right amount of funds"
         );
@@ -425,9 +433,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.startPrank(users[0]);
         protocol.initiateOpenPosition(1 ether, 4000 ether, priceData, "");
         protocol.validateOpenPosition(priceData, "");
-        protocol.initiateOpenPosition(1 ether, 3000 ether, priceData, "");
+        protocol.initiateOpenPosition(1 ether, 3950 ether, priceData, "");
         protocol.validateOpenPosition(priceData, "");
-        protocol.initiateOpenPosition(1 ether, 2000 ether, priceData, "");
+        protocol.initiateOpenPosition(1 ether, 3900 ether, priceData, "");
         protocol.validateOpenPosition(priceData, "");
         vm.stopPrank();
 
@@ -439,7 +447,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256[] memory gasUsedArray = new uint256[](3);
         for (uint16 ticksToLiquidate = 1; ticksToLiquidate <= 3; ++ticksToLiquidate) {
             // Get a price that liquidates `ticksToLiquidate` ticks
-            priceData = abi.encode(4950 ether - (1000 ether * ticksToLiquidate));
+            priceData = abi.encode(4010 ether - (50 ether * ticksToLiquidate));
 
             uint256 startGas = gasleft();
             uint256 positionsLiquidated = protocol.liquidate(priceData, ticksToLiquidate);
@@ -477,4 +485,42 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             "The result should match the otherGasUsed parameter set in LiquidationRewardsManager's constructor"
         );
     }
+
+    /**
+     * @custom:scenario The user sends too much ether when liquidating positions
+     * @custom:given The user performs a liquidation
+     * @custom:when The user sends 0.5 ether as value in the `liquidate` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_liquidateEtherRefund() public {
+        uint256 initialTotalPos = protocol.totalLongPositions();
+        uint128 currentPrice = 2000 ether;
+        bytes memory priceData = abi.encode(currentPrice);
+
+        wstETH.mint(address(this), 1_000_000 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
+
+        // create high risk position
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(5 ether, 9 * currentPrice / 10, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        protocol.validateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
+        }(priceData, "");
+        assertEq(protocol.totalLongPositions(), initialTotalPos + 1, "total positions after create");
+
+        // liquidate
+        currentPrice = 1750 ether;
+        priceData = abi.encode(currentPrice);
+
+        uint256 balanceBefore = address(this).balance;
+        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation);
+        protocol.liquidate{ value: 0.5 ether }(priceData, 1);
+        assertEq(protocol.totalLongPositions(), initialTotalPos, "total positions after liquidate");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    // test refunds
+    receive() external payable { }
 }
