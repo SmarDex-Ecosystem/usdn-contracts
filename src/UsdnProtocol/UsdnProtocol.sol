@@ -134,7 +134,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _protocolFeeBps = protocolFeeBps;
         emit FeeBpsUpdated(protocolFeeBps);
-        // TO DO : add test
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -144,16 +143,14 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _feeCollector = feeCollector;
         emit FeeCollectorUpdated(feeCollector);
-        // TO DO : add test
     }
 
-    // / @inheritdoc IUsdnProtocol
+    /// @inheritdoc IUsdnProtocol
     function setFeeThreshold(uint256 feeThreshold) external onlyOwner {
         if (feeThreshold == 0) {
             revert UsdnProtocolInvalidFeeThreshold();
         }
         _feeThreshold = feeThreshold;
         emit FeeThresholdUpdated(feeThreshold);
-        // TO DO : add test
     }
 }

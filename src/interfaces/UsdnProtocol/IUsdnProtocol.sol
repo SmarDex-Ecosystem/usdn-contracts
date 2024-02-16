@@ -42,4 +42,10 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @dev The fee collector must be different from the zero address
      */
     function setFeeCollector(address feeCollector) external;
+
+    /**
+     * @notice Set the minimum amount of fees to be collected before they can be withdrawn
+     * @param feeThreshold The minimum amount of fees to be collected before they can be withdrawn
+     */
+    function setFeeThreshold(uint256 feeThreshold) external;
 }
