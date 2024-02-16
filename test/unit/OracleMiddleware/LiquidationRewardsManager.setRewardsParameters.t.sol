@@ -21,7 +21,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` setter
+     * @custom:scenario Call `setRewardsParameters` with valid values
      * @custom:when The values are within the limits
      * @custom:then It should succeed
      * @custom:and The `getRewardsParameters` should return the newly set values
@@ -46,7 +46,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` setter
+     * @custom:scenario Call `setRewardsParameters` reverts when caller is not the owner
      * @custom:when The caller is not the owner
      * @custom:then It reverts with a OwnableUnauthorizedAccount error
      */
@@ -64,7 +64,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` setter
+     * @custom:scenario Call `setRewardsParameters` reverts when the gasUsedPerTick is too high
      * @custom:when The value of gasUsedPerTick is bigger than the limit
      * @custom:and The other parameters are within the limits
      * @custom:then It reverts with a LiquidationRewardsManagerGasUsedPerTickTooHigh error
@@ -81,7 +81,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` setter
+     * @custom:scenario Call `setRewardsParameters` reverts when the otherGasUsed is too high
      * @custom:when The value of otherGasUsed is bigger than the limit
      * @custom:and The other parameters are within the limits
      * @custom:then It reverts with a LiquidationRewardsManagerOtherGasUsedTooHigh error
@@ -98,7 +98,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` setter
+     * @custom:scenario Call `setRewardsParameters` reverts when the gasPriceLimit is too high
      * @custom:when The value of gasPriceLimit is bigger than the limit
      * @custom:and The other parameters are within the limits
      * @custom:then It reverts with a LiquidationRewardsManagerGasPriceLimitTooHigh error
@@ -115,7 +115,7 @@ contract LiquidationRewardsManagerSetRewardsParameters is
     }
 
     /**
-     * @custom:scenario Call `setRewardsParameters` setter
+     * @custom:scenario Call `setRewardsParameters` reverts when the multiplierBps is too high
      * @custom:when The value of multiplierBps is bigger than the limit
      * @custom:and The other parameters are within the limits
      * @custom:then It reverts with a LiquidationRewardsManagerMultiplierBpsTooHigh error

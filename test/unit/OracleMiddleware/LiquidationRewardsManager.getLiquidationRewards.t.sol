@@ -17,7 +17,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     }
 
     /**
-     * @custom:scenario Call `getLiquidationRewards` function
+     * @custom:scenario Call `getLiquidationRewards` when 1 tick was liquidated
      * @custom:when 1 tick was liquidated
      * @custom:and The tx.gasprice and oracle gas price feed are equals
      * @custom:and They are both below the gas price limit
@@ -32,7 +32,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     }
 
     /**
-     * @custom:scenario Call `getLiquidationRewards` function
+     * @custom:scenario Call `getLiquidationRewards` when 0 ticks were liquidated
      * @custom:when No ticks were liquidated
      * @custom:then It should return 0 as we only give rewards on successful liquidations
      */
@@ -43,7 +43,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     }
 
     /**
-     * @custom:scenario Call `getLiquidationRewards` function
+     * @custom:scenario Call `getLiquidationRewards` when 3 ticks were liquidated
      * @custom:when 3 ticks were liquidated
      * @custom:and The tx.gasprice and oracle gas price feed are equals
      * @custom:and They are both below the gas price limit
@@ -59,12 +59,12 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
         assertNotEq(
             rewards,
             liquidationRewardsManager.getLiquidationRewards(1, 0),
-            "Differents amount of ticks liquidated shouldn't give the same amount of rewards"
+            "Differents amount of ticks liquidated should not give the same amount of rewards"
         );
     }
 
     /**
-     * @custom:scenario Call `getLiquidationRewards` function
+     * @custom:scenario Call `getLiquidationRewards` when the oracle's value is lower than tx.gasPrice
      * @custom:when The oracle gas price feed is lower than the tx.gasprice
      * @custom:and They are both below the gas price limit
      * @custom:and 1 tick was liquidated
@@ -80,7 +80,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     }
 
     /**
-     * @custom:scenario Call `getLiquidationRewards` function
+     * @custom:scenario Call `getLiquidationRewards` when tx.gasPrice is lower than the oracle's value
      * @custom:when The tx.gasprice is lower than the oracle gas price feed
      * @custom:and They are both below the gas price limit
      * @custom:and 1 tick was liquidated
@@ -96,7 +96,8 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     }
 
     /**
-     * @custom:scenario Call `getLiquidationRewards` function
+     * @custom:scenario Call `getLiquidationRewards` when tx.gasPrice is lower than the oracle's value but both are
+     * above the limit
      * @custom:when The tx.gasprice is lower than the oracle gas price feed
      * @custom:and They are both above the gas price limit
      * @custom:and 1 tick was liquidated
@@ -108,12 +109,13 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
         mockChainlinkOnChain.setLatestRoundData(1, 2000 gwei, block.timestamp, 1);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
-        // With a gas price at 1001 gwei, the result without the limit should have been 180_389_809_600_000_000
+        // With a gas price at 1001 gwei, the result without the limit should have been 140_440_300_000_000_000
         assertEq(rewards, 140_300_000_000_000_000);
     }
 
     /**
-     * @custom:scenario Call `getLiquidationRewards` function
+     * @custom:scenario Call `getLiquidationRewards` when the oracle's value is lower than tx.gasPrice but both are
+     * above the limit
      * @custom:when The oracle gas price feed is lower than tx.gasprice
      * @custom:and They are both above the gas price limit
      * @custom:and 1 tick was liquidated
@@ -125,12 +127,12 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
         mockChainlinkOnChain.setLatestRoundData(1, 1001 gwei, block.timestamp, 1);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
-        // With a gas price at 1001 gwei, the result without the limit should have been 180_389_809_600_000_000
+        // With a gas price at 1001 gwei, the result without the limit should have been 140_440_300_000_000_000
         assertEq(rewards, 140_300_000_000_000_000);
     }
 
     /**
-     * @custom:scenario Call `getLiquidationRewards` function
+     * @custom:scenario Call `getLiquidationRewards` when the oracle returns a negative value
      * @custom:when The oracle returns -1
      * @custom:then It should return 0 to avoid relying solely on tx.gasprice
      */
@@ -142,7 +144,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
     }
 
     /**
-     * @custom:scenario Call `getLiquidationRewards` function return 0 if chainlink data is too old
+     * @custom:scenario Call `getLiquidationRewards` return 0 if chainlink data is too old
      * @custom:when The oracle returns data with a timestamp farther than our tolerated time.
      * @custom:then It should return 0 to avoid relying solely on tx.gasprice or old data
      */

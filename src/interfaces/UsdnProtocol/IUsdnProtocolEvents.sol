@@ -164,7 +164,7 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user (liquidator) successfully liquidated positions.
-     * @param liquidator The address that inittiated the liquidation.
+     * @param liquidator The address that initiated the liquidation.
      * @param rewards The amount of tokens the liquidator received in rewards.
      */
     event LiquidatorRewarded(address indexed liquidator, uint256 rewards);
