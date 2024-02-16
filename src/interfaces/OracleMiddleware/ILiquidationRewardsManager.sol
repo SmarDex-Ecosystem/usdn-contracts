@@ -31,6 +31,6 @@ interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTy
         uint32 gasUsedPerTick,
         uint32 otherGasUsed,
         uint64 gasPriceLimit,
-        uint16 multiplierBps
+        uint32 multiplierBps
     ) external;
 }

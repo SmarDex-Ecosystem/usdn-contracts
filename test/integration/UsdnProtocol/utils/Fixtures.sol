@@ -62,13 +62,8 @@ contract UsdnProtocolBaseIntegrationFixture is WstethIntegrationFixture, IUsdnPr
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         WST_ETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
-        protocol.initialize{
-            value: wstethMiddleware.validationCost(abi.encode(testParams.initialPrice), ProtocolAction.Initialize)
-        }(
-            testParams.initialDeposit,
-            testParams.initialLong,
-            testParams.initialPrice / 2,
-            abi.encode(testParams.initialPrice)
+        protocol.initialize{ value: wstethMiddleware.validationCost("", ProtocolAction.Initialize) }(
+            testParams.initialDeposit, testParams.initialLong, testParams.initialPrice / 2, ""
         );
         vm.stopPrank();
         params = testParams;

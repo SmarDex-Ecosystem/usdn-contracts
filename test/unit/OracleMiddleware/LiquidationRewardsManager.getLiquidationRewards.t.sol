@@ -13,7 +13,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
         mockChainlinkOnChain.updateLastPublishTime(block.timestamp);
 
         // Change The rewards calculations parameters to not be dependent of the initial values
-        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 1000 gwei, 2000);
+        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 1000 gwei, 20_000);
     }
 
     /**

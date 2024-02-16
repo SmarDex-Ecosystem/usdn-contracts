@@ -14,7 +14,7 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param multiplierBps Multiplier for the liquidators.
      */
     event RewardsParametersUpdated(
-        uint32 gasUsedPerTick, uint32 otherGasUsed, uint64 gasPriceLimit, uint16 multiplierBps
+        uint32 gasUsedPerTick, uint32 otherGasUsed, uint64 gasPriceLimit, uint32 multiplierBps
     );
 
     /* -------------------------------------------------------------------------- */
@@ -32,7 +32,7 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
         uint32 gasUsedPerTick;
         uint32 otherGasUsed;
         uint64 gasPriceLimit;
-        uint16 multiplierBps; // to be divided by REWARDS_MULTIPLIER_DENOMINATOR
+        uint32 multiplierBps; // to be divided by REWARDS_MULTIPLIER_DENOMINATOR
     }
 
     /* -------------------------------------------------------------------------- */

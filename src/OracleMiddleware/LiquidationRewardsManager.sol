@@ -19,8 +19,8 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Denominator for the reward multiplier, will give us a 0.1% basis point.
-    uint16 public constant REWARDS_MULTIPLIER_DENOMINATOR = 1000;
+    /// @notice Denominator for the reward multiplier, will give us a 0.01% basis point.
+    uint32 public constant REWARDS_MULTIPLIER_DENOMINATOR = 10_000;
     /// @notice Fixed amount of gas a transaction consume.
     /// @dev Is a uint256 to avoid overflows during gas usage calculations.
     uint256 public constant BASE_GAS_COST = 21_000;
@@ -43,9 +43,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 32_043,
-            otherGasUsed: 43_317,
+            otherGasUsed: 43_270,
             gasPriceLimit: uint64(1000 gwei),
-            multiplierBps: 2000
+            multiplierBps: 20_000
         });
     }
 
@@ -79,7 +79,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         uint32 gasUsedPerTick,
         uint32 otherGasUsed,
         uint64 gasPriceLimit,
-        uint16 multiplierBps
+        uint32 multiplierBps
     ) external onlyOwner {
         if (gasUsedPerTick > 500_000) {
             revert LiquidationRewardsManagerGasUsedPerTickTooHigh(gasUsedPerTick);

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import "forge-std/console.sol";
 import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
@@ -390,7 +389,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 1000 gwei, 2000);
+        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 1000 gwei, 20_000);
 
         priceData = abi.encode(1680 ether);
 
