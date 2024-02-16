@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PendingAction, ProtocolAction, LongPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The open position function of the USDN Protocol
@@ -43,6 +43,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
                 )
         );
 
+        // state before openinng the position
         uint256 balanceBefore = wstETH.balanceOf(address(this));
         uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
         uint256 totalPositionsBefore = protocol.totalLongPositions();
@@ -63,6 +64,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion, uint256 index) =
             protocol.initiateOpenPosition(uint96(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), "");
 
+        // check state after opening the position
         assertEq(tick, expectedTick, "tick number");
         assertEq(tickVersion, 0, "tick version");
         assertEq(index, 0, "index");
@@ -82,6 +84,25 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         );
         assertEq(protocol.positionsInTick(expectedTick), 1, "positions in tick");
         assertEq(protocol.balanceLong(), balanceLongBefore + LONG_AMOUNT, "balance of long side");
+
+        // the pending action should not yet be actionable by a third party
+        vm.startPrank(address(0)); // simulate front-end calls by someone else
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getActionablePendingAction(0));
+        assertTrue(action.action == ProtocolAction.None, "no pending action");
+
+        action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        assertTrue(action.action == ProtocolAction.ValidateOpenPosition, "action type");
+        assertEq(action.timestamp, block.timestamp, "action timestamp");
+        assertEq(action.user, address(this), "action user");
+        assertEq(action.tick, expectedTick, "action tick");
+        assertEq(action.tickVersion, 0, "action tickVersion");
+        assertEq(action.index, 0, "action index");
+
+        // the pending action should be actionable after the validation deadline
+        skip(protocol.validationDeadline() + 1);
+        action = protocol.i_toLongPendingAction(protocol.getActionablePendingAction(0));
+        assertEq(action.user, address(this), "pending action user");
+        vm.stopPrank();
     }
 
     // test refunds
