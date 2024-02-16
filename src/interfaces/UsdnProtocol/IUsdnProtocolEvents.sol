@@ -124,9 +124,15 @@ interface IUsdnProtocolEvents {
      * @param oldTickVersion The liquidated tick version.
      * @param liquidationPrice The asset price at the moment of liquidation.
      * @param effectiveTickPrice The effective liquidated tick price.
+     * @param remainingCollateral The amount of asset that was left in the tick, which was transferred to the vault if
+     * positive, or was taken from the vault if negative.
      */
     event LiquidatedTick(
-        int24 indexed tick, uint256 indexed oldTickVersion, uint256 liquidationPrice, uint256 effectiveTickPrice
+        int24 indexed tick,
+        uint256 indexed oldTickVersion,
+        uint256 liquidationPrice,
+        uint256 effectiveTickPrice,
+        int256 remainingCollateral
     );
 
     /**

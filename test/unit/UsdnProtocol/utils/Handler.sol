@@ -196,6 +196,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _positionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
     }
 
+    function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {
+        return _tickValue(currentPrice, tick, tickTotalExpo);
+    }
+
     function i_getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
         external
         payable

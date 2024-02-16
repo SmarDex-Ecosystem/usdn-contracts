@@ -66,8 +66,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (numerator == 0) {
             return (_EMA, longExpo_, vaultExpo_);
         }
-        int256 elapsedSeconds = _toInt256(timestamp - _lastUpdateTimestamp);
-        numerator *= numerator;
+        uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
+        uint256 numerator_squared = uint256(numerator * numerator);
 
         uint256 denominator;
         if (vaultExpo_ > longExpo_) {
@@ -75,7 +75,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             denominator = uint256(vaultExpo_ * vaultExpo_) * 1 days;
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
-                    uint256(numerator * elapsedSeconds),
+                    numerator_squared * elapsedSeconds,
                     _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
                     denominator
                 )
@@ -85,7 +85,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             denominator = uint256(longExpo_ * longExpo_) * 1 days;
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
-                    uint256(numerator * elapsedSeconds),
+                    numerator_squared * elapsedSeconds,
                     _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
                     denominator
                 )
