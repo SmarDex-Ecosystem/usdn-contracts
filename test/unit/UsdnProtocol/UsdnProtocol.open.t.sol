@@ -57,24 +57,26 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             (int24 tick, uint256 tickVersion, uint256 index) =
                 protocol.initiateOpenPosition(longAmount, desiredLiqPrice, abi.encode(currentPrice), "");
 
-            assertEq(tick, expectedTick);
-            assertEq(tickVersion, 0);
-            assertEq(index, 0);
+            assertEq(tick, expectedTick, "tick number");
+            assertEq(tickVersion, 0, "tick version");
+            assertEq(index, 0, "index");
         }
 
-        assertEq(wstETH.balanceOf(address(this)), balanceBefore - longAmount);
-        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + longAmount);
-        assertEq(protocol.totalLongPositions(), totalPositionsBefore + 1);
+        assertEq(wstETH.balanceOf(address(this)), balanceBefore - longAmount, "user wstETH balance");
+        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + longAmount, "protocol wstETH balance");
+        assertEq(protocol.totalLongPositions(), totalPositionsBefore + 1, "total long positions");
         assertEq(
             protocol.totalExpo(),
-            totalExpoBefore + uint256(longAmount) * expectedLeverage / uint256(10) ** protocol.LEVERAGE_DECIMALS()
+            totalExpoBefore + uint256(longAmount) * expectedLeverage / uint256(10) ** protocol.LEVERAGE_DECIMALS(),
+            "protocol total expo"
         );
         assertEq(
             protocol.totalExpoByTick(expectedTick),
-            uint256(longAmount) * expectedLeverage / uint256(10) ** protocol.LEVERAGE_DECIMALS()
+            uint256(longAmount) * expectedLeverage / uint256(10) ** protocol.LEVERAGE_DECIMALS(),
+            "total expo in tick"
         );
-        assertEq(protocol.positionsInTick(expectedTick), 1);
-        assertEq(protocol.balanceLong(), balanceLongBefore + longAmount);
+        assertEq(protocol.positionsInTick(expectedTick), 1, "positions in tick");
+        assertEq(protocol.balanceLong(), balanceLongBefore + longAmount, "balance of long side");
     }
 
     // test refunds
