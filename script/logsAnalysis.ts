@@ -1,3 +1,4 @@
+// The ABIs are required a must be generated with `npm run exportAbi` prior to launching this script
 import { Command } from 'commander';
 import { DateTime } from 'luxon';
 import pc from 'picocolors';
