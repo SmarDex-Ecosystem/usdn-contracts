@@ -43,7 +43,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 32_043,
-            otherGasUsed: 43_468,
+            otherGasUsed: 43_251,
             gasPriceLimit: uint64(1000 gwei),
             multiplierBps: 20_000
         });
@@ -104,8 +104,8 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     function _getGasPrice(RewardsParameters memory rewardsParameters) private view returns (uint256 gasPrice_) {
         ChainlinkPriceInfo memory priceInfo = getChainlinkPrice();
 
-        // If the gas price is invalid or the timestamp is too old, return 0 and do not distribute rewards.
-        if (priceInfo.price <= 0 || priceInfo.timestamp < block.timestamp - _timeElapsedLimit) {
+        // If the gas price is invalid, return 0 and do not distribute rewards.
+        if (priceInfo.price <= 0) {
             return 0;
         }
 
