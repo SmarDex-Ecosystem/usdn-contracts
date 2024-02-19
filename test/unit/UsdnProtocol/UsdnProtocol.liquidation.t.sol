@@ -118,7 +118,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(
-            74_300, 0, 1000 ether, 1_692_533_134_035_435_388_114, -189_526_878_086_336_184_233
+            74_300, 0, 1000 ether, 1_692_438_383_940_893_356_380, -189_500_168_562_066_025_611
         );
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
@@ -188,7 +188,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         skip(1 hours);
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(
-            73_700, 0, 1000 ether, 1_670_747_845_934_171_667_858, -57_398_920_083_402_933_278
+            73_700, 0, 1000 ether, 1_670_658_741_688_949_105_099, -57_391_058_263_557_498_225
         );
         // liquidator first liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
