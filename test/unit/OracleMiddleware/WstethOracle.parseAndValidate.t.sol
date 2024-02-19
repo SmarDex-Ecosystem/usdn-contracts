@@ -53,9 +53,14 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
             string memory errorMessage =
                 string.concat("Wrong wsteth oracle middleware price for action: ", uint256(action).toString());
 
+            uint128 timestamp = uint128(block.timestamp);
+            if (action != ProtocolAction.Liquidation) {
+                timestamp -= uint128(wstethOracle.validationDelay());
+            }
+
             PriceInfo memory price = wstethOracle.parseAndValidatePrice{
                 value: wstethOracle.validationCost(abi.encode("data"), action)
-            }(uint128(block.timestamp - wstethOracle.validationDelay()), action, abi.encode("data"));
+            }(timestamp, action, abi.encode("data"));
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {

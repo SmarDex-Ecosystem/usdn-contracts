@@ -102,13 +102,16 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         private
         returns (PriceInfo memory price_)
     {
+        // If actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
+        if (actionTimestamp > 0) {
+            actionTimestamp += uint64(_validationDelay);
+        }
         /**
          * @dev Fetch the price from Pyth, return a price at -1 if it fails
          * Add the validation delay to the action timestamp to get the timestamp of the price data used to
          * validate
          */
-        FormattedPythPrice memory pythPrice =
-            getFormattedPythPrice(data, actionTimestamp + uint64(_validationDelay), DECIMALS);
+        FormattedPythPrice memory pythPrice = getFormattedPythPrice(data, actionTimestamp, DECIMALS);
 
         if (conf == ConfidenceInterval.Down) {
             price_.price = uint256(pythPrice.price) - pythPrice.conf;
@@ -134,9 +137,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
         ChainlinkPriceInfo memory chainlinkOnChainPrice = getFormattedChainlinkPrice(DECIMALS);
 
-        // If the price is older than the tolerated time, revert.
-        if (chainlinkOnChainPrice.timestamp < block.timestamp - _timeElapsedLimit) {
-            revert OracleMiddlewarePriceTooOld(chainlinkOnChainPrice.price, chainlinkOnChainPrice.timestamp);
+        // If the price equals PRICE_TOO_OLD then the tolerated time elapsed for price validity was exceeded, revert.
+        if (chainlinkOnChainPrice.price == PRICE_TOO_OLD) {
+            revert OracleMiddlewarePriceTooOld(chainlinkOnChainPrice.timestamp);
         }
 
         // If the price is less than 0, revert.

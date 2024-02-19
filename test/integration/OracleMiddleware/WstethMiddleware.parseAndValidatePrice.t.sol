@@ -49,9 +49,16 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = getMockedPythSignature();
 
             // middleware data
-            PriceInfo memory middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(
-                uint128(pythTimestamp - wstethMiddleware.validationDelay()), action, data
-            );
+            PriceInfo memory middlewarePrice;
+            if (action == ProtocolAction.Liquidation) {
+                // Pyth requires that the price data timestamp is recent compared to block.timestamp
+                vm.warp(pythTimestamp);
+                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
+            } else {
+                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                    uint128(pythTimestamp - wstethMiddleware.validationDelay()), action, data
+                );
+            }
 
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
@@ -70,10 +77,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
 
                 // Price - conf
-            } else if (
-                action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition
-                    || action == ProtocolAction.Liquidation
-            ) {
+            } else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
 
@@ -160,9 +164,16 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
 
             // middleware data
-            PriceInfo memory middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(
-                uint128(pythTimestamp - wstethMiddleware.validationDelay()), action, data
-            );
+            PriceInfo memory middlewarePrice;
+            if (action == ProtocolAction.Liquidation) {
+                // Pyth requires that the price data timestamp is recent compared to block.timestamp
+                vm.warp(pythTimestamp);
+                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
+            } else {
+                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                    uint128(pythTimestamp - wstethMiddleware.validationDelay()), action, data
+                );
+            }
 
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
@@ -181,10 +192,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
 
                 // Price - conf
-            } else if (
-                action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition
-                    || action == ProtocolAction.Liquidation
-            ) {
+            } else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
 

@@ -48,9 +48,17 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = getMockedPythSignature();
 
             // middleware data
-            PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-                uint128(pythTimestamp - oracleMiddleware.validationDelay()), action, data
-            );
+            PriceInfo memory middlewarePrice;
+
+            if (action == ProtocolAction.Liquidation) {
+                // Pyth requires that the price data timestamp is recent compared to block.timestamp
+                vm.warp(pythTimestamp);
+                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
+            } else {
+                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                    uint128(pythTimestamp - oracleMiddleware.validationDelay()), action, data
+                );
+            }
 
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
@@ -65,10 +73,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 assertEq(middlewareFormattedPrice, pythPrice + pythConf, priceError);
 
                 // Price - conf
-            } else if (
-                action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition
-                    || action == ProtocolAction.Liquidation
-            ) {
+            } else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
                 // check price
                 assertEq(middlewareFormattedPrice, pythPrice - pythConf, priceError);
 
@@ -151,9 +156,16 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
 
             // middleware data
-            PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-                uint128(pythTimestamp - oracleMiddleware.validationDelay()), action, data
-            );
+            PriceInfo memory middlewarePrice;
+            if (action == ProtocolAction.Liquidation) {
+                // Pyth requires that the price data timestamp is recent compared to block.timestamp
+                vm.warp(pythTimestamp);
+                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
+            } else {
+                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                    uint128(pythTimestamp - oracleMiddleware.validationDelay()), action, data
+                );
+            }
 
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
@@ -168,10 +180,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 assertEq(middlewareFormattedPrice, pythPrice + pythConf, priceError);
 
                 // Price - conf
-            } else if (
-                action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition
-                    || action == ProtocolAction.Liquidation
-            ) {
+            } else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
                 // check price
                 assertEq(middlewareFormattedPrice, pythPrice - pythConf, priceError);
 

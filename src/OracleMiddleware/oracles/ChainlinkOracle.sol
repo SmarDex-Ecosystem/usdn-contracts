@@ -12,6 +12,9 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
  * price of the USDN underlying asset, and by the LiquidationRewardsManager to get the price of the gas.
  */
 abstract contract ChainlinkOracle is IOracleMiddlewareErrors {
+    /// @notice Price that indicates that the data returned by the oracle is too old
+    int256 public constant PRICE_TOO_OLD = type(int256).min;
+
     /// @notice Chainlink price feed aggregator contract
     AggregatorV3Interface internal immutable _priceFeed;
     /// @notice Tolerated elapsed time until we consider the data too old
@@ -28,11 +31,16 @@ abstract contract ChainlinkOracle is IOracleMiddlewareErrors {
 
     /**
      * @notice Get the price of the asset from Chainlink
+     * @dev If the price returned equals PRICE_TOO_OLD, it means the price is too old
      * @return price_ The price of the asset
      */
     function getChainlinkPrice() internal view virtual returns (ChainlinkPriceInfo memory price_) {
         // slither-disable-next-line unused-return
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
+
+        if (timestamp < block.timestamp - _timeElapsedLimit) {
+            price = PRICE_TOO_OLD;
+        }
 
         price_ = ChainlinkPriceInfo({ price: price, timestamp: timestamp });
     }
@@ -49,6 +57,10 @@ abstract contract ChainlinkOracle is IOracleMiddlewareErrors {
     {
         uint256 oracleDecimal = _priceFeed.decimals();
         formattedPrice_ = getChainlinkPrice();
+        if (formattedPrice_.price == PRICE_TOO_OLD) {
+            return formattedPrice_;
+        }
+
         formattedPrice_.price = formattedPrice_.price * int256(10 ** decimals) / int256(10 ** oracleDecimal);
     }
 

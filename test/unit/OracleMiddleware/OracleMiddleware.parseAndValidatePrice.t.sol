@@ -415,48 +415,39 @@ contract TestOracleMiddlewareParseAndValidatePrice is
      * @custom:then It reverts with a OracleMiddlewarePriceTooOld error
      */
     function test_RevertWhen_ChainlinkPriceIsTooOld() public {
-        uint256 timestamp = block.timestamp - 1 hours;
+        uint256 timestamp = block.timestamp - oracleMiddleware.getChainlinkTimeElapsedLimit();
         uint256 tooOldTimestamp = timestamp - 1;
 
         // Set chainlink's data's last timestamp to something too old
         mockChainlinkOnChain.updateLastPublishTime(tooOldTimestamp);
+        mockChainlinkOnChain.setLatestRoundData(1, oracleMiddleware.PRICE_TOO_OLD(), tooOldTimestamp, 1);
 
         uint256 validationCost = oracleMiddleware.validationCost("", ProtocolAction.Initialize);
-        vm.expectRevert(
-            abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, FORMATTED_ETH_PRICE, tooOldTimestamp)
-        );
+        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, tooOldTimestamp));
         PriceInfo memory priceInfo = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.Initialize, ""
         );
 
         validationCost = oracleMiddleware.validationCost("", ProtocolAction.InitiateDeposit);
-        vm.expectRevert(
-            abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, FORMATTED_ETH_PRICE, tooOldTimestamp)
-        );
+        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, tooOldTimestamp));
         priceInfo = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.InitiateDeposit, ""
         );
 
         validationCost = oracleMiddleware.validationCost("", ProtocolAction.InitiateWithdrawal);
-        vm.expectRevert(
-            abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, FORMATTED_ETH_PRICE, tooOldTimestamp)
-        );
+        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, tooOldTimestamp));
         priceInfo = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.InitiateWithdrawal, ""
         );
 
         validationCost = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition);
-        vm.expectRevert(
-            abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, FORMATTED_ETH_PRICE, tooOldTimestamp)
-        );
+        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, tooOldTimestamp));
         priceInfo = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.InitiateOpenPosition, ""
         );
 
         validationCost = oracleMiddleware.validationCost("", ProtocolAction.InitiateClosePosition);
-        vm.expectRevert(
-            abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, FORMATTED_ETH_PRICE, tooOldTimestamp)
-        );
+        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, tooOldTimestamp));
         priceInfo = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.InitiateClosePosition, ""
         );
