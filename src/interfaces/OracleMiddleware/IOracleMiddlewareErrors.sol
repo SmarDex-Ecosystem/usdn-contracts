@@ -17,4 +17,7 @@ interface IOracleMiddlewareErrors {
 
     /// @notice The sender could not accept the ether refund
     error OracleMiddlewareEtherRefundFailed();
+
+    /// @notice The recent price delay is invalid
+    error OracleMiddlewareInvalidRecentPriceDelay(uint64 newDelay);
 }

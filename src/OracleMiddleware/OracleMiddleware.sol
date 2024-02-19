@@ -26,6 +26,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     // slither-disable-next-line shadowing-state
     uint8 private constant DECIMALS = 18;
 
+    /**
+     * @param pythContract Address of the Pyth contract
+     * @param pythPriceID The price ID of the asset in Pyth
+     * @param chainlinkPriceFeed Address of the Chainlink price feed
+     * @param chainlinkTimeElapsedLimit Elapsed time tolerated for chainlink's data validity
+     */
     constructor(
         address pythContract,
         bytes32 pythPriceID,
@@ -68,9 +74,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             // of price inaccuracies
             return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.Down);
         } else if (action == ProtocolAction.Liquidation) {
-            // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies
-            return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.Down);
+            // Special case, if we pass a timestamp of zero, then we accept all prices newer than `_recentPriceDelay`
+            return getPythOrChainlinkDataStreamPrice(data, 0, ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateDeposit) {
             return getOnChainPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateWithdrawal) {
@@ -89,7 +94,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /**
      * @dev Get the price from Pyth or Chainlink, depending on the data.
      * @param data The data used to get the price.
-     * @param actionTimestamp The timestamp of the action corresponding to the price.
+     * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
+     * recent prices.
      * @param conf The confidence interval to use.
      */
     function getPythOrChainlinkDataStreamPrice(bytes calldata data, uint64 actionTimestamp, ConfidenceInterval conf)
@@ -189,5 +195,19 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         _timeElapsedLimit = timeElapsedLimit;
 
         emit TimeElapsedLimitUpdated(timeElapsedLimit);
+    }
+
+    /**
+     * @notice Set the recent price delay
+     * @param newDelay The maximum age of a recent price to be considered valid
+     */
+    function setRecentPriceDelay(uint64 newDelay) external onlyOwner {
+        if (newDelay < 10 seconds) {
+            revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
+        }
+        if (newDelay > 10 minutes) {
+            revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
+        }
+        _recentPriceDelay = newDelay;
     }
 }

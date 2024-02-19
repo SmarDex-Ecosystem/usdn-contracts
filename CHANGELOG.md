@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.6.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.5.0...v0.6.0) (2024-02-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* transfer remaining collateral to vault upon liquidation ([#89](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/89))
+* **events:** `Position` has no `startPrice` anymore, `InitiatedOpenPosition` and `ValidatedOpenPosition` have different fields
+* **middleware:** some unused errors don't exist anymore
+
+### Features
+
+* transfer remaining collateral to vault upon liquidation ([#89](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/89)) ([92f43e7](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/92f43e79538872afed48f441a41b44d9472db302))
+* update position tick if leverage exceeds max leverage ([#76](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/76)) ([aad0e50](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/aad0e501d0787e7e1cc67d7f25828a34379f0617))
+
+
+### Bug Fixes
+
+* **liquidation:** use neutral price and liquidate whenever possible ([#94](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/94)) ([92f13b5](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/92f13b55eca6e351e928c046734d56fdb68b5621))
+* **middleware:** remove unused errors ([#83](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/83)) ([6a95a11](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/6a95a11ce822fddd4e2f5b804ef796d9986fa61f))
+* only pass required ether to middleware and refund excess ([#87](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/87)) ([7c777e4](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/7c777e4b8c62e7729ca6f1c1b788195bdc9c7d1a))
+
+
+### Code Refactoring
+
+* **events:** remove unused or unneeded fields from events and structs ([#88](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/88)) ([672e4f7](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/672e4f7c07bf9ec305d0c3c4e70cc631e367e73d))
+
 ## [0.5.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.4.0...v0.5.0) (2024-02-08)
 
 

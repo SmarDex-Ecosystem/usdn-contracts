@@ -95,10 +95,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
                 assertEq(price.price, FORMATTED_ETH_PRICE + FORMATTED_ETH_CONF, errorMessage);
             }
             // Price - conf
-            else if (
-                action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.Liquidation
-            ) {
+            else if (action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.ValidateDeposit) {
                 assertEq(price.price, FORMATTED_ETH_PRICE - FORMATTED_ETH_CONF, errorMessage);
             } else {
                 assertEq(price.price, FORMATTED_ETH_PRICE, errorMessage);
