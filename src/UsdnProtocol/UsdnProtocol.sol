@@ -147,9 +147,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setFeeThreshold(uint256 feeThreshold) external onlyOwner {
-        if (feeThreshold == 0) {
-            revert UsdnProtocolInvalidFeeThreshold();
-        }
         _feeThreshold = feeThreshold;
         emit FeeThresholdUpdated(feeThreshold);
     }

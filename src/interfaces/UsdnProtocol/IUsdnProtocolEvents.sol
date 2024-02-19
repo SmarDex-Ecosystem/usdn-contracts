@@ -163,7 +163,7 @@ interface IUsdnProtocolEvents {
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
 
     /**
-     * @notice Emitted when a user initiates a deposit to the protocol fee vault.
+     * @notice Emitted when the pending protocol fee is distributed.
      * @param feeCollector The collector address.
      * @param amount The amount of fee transferred.
      */

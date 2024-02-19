@@ -462,12 +462,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         uint256 assetToTransfer = FixedPointMathLib.fullMulDiv(withdrawal.amount, available, withdrawal.usdnTotalSupply);
 
-        _balanceVault -= assetToTransfer;
         // we have the USDN in the contract already
         _usdn.burn(withdrawal.amount);
 
         // send the asset to the user
         if (assetToTransfer > 0) {
+            _balanceVault -= assetToTransfer;
             _asset.safeTransfer(withdrawal.user, assetToTransfer);
         }
 

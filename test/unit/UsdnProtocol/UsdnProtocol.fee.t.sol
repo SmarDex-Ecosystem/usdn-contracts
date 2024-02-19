@@ -19,21 +19,28 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check setFeeBps() function
-     * @custom:given The first value is > BPS_DIVISOR
+     * @custom:scenario Check setFeeBps() reverts when the value is too big
+     * @custom:given The fee value is > BPS_DIVISOR
      * @custom:then The protocol reverts with `UsdnProtocolInvalidProtocolFeeBps`
-     * @custom:and The second value is 0
+     */
+    function test_RevertWhen_setFeeBps_tooBig() public {
+        uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
+        vm.startPrank(ADMIN);
+        vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
+        protocol.setFeeBps(bpsDivisor + 1);
+        vm.stopPrank();
+    }
+
+    /**
+     * @custom:scenario Check setFeeBps() function
+     * @custom:given The fee bps is 0
      * @custom:then The protocol emits `FeeBpsUpdated` event with 0
      * @custom:and Pending protocol fee is 0 after action
      */
     function test_setFeeBps() public {
         wstETH.mintAndApprove(ADMIN, 1000 ether, address(protocol), 1000 ether);
-        uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
 
         vm.startPrank(ADMIN);
-        vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
-        protocol.setFeeBps(bpsDivisor + 1);
-
         vm.expectEmit();
         emit FeeBpsUpdated(0);
         protocol.setFeeBps(0);
@@ -45,17 +52,25 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check setFeeCollector() function
-     * @custom:given The first value is address(0)
+     * @custom:scenario Check setFeeCollector() reverts when the value is address(0)
+     * @custom:given The feeCollector is address(0)
      * @custom:then The protocol reverts with `UsdnProtocolInvalidFeeCollector`
-     * @custom:and The second value is address(this)
-     * @custom:then The protocol emits `FeeCollectorUpdated` event with address(this)
      */
-    function test_setFeeCollector() public {
+    function test_RevertWhen_setFeeCollector_addressZero() public {
         vm.startPrank(ADMIN);
         vm.expectRevert(UsdnProtocolInvalidFeeCollector.selector);
         protocol.setFeeCollector(address(0));
+        vm.stopPrank();
+    }
 
+    /**
+     * @custom:scenario Check setFeeCollector() function
+     * @custom:given The feeCollector is address(this)
+     * @custom:then The protocol emits `FeeCollectorUpdated` event with address(this)
+     * @custom:and The _feeCollector is address(this)
+     */
+    function test_setFeeCollector() public {
+        vm.startPrank(ADMIN);
         vm.expectEmit();
         emit FeeCollectorUpdated(address(this));
         protocol.setFeeCollector(address(this));
@@ -65,16 +80,12 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Check setFeeThreshold() function
-     * @custom:given The first value is 0
-     * @custom:then The protocol reverts with `UsdnProtocolInvalidFeeThreshold`
-     * @custom:and The second value is 5 ether
+     * @custom:given The feeThreshold value is 5 ether
      * @custom:then The protocol emits `FeeThresholdUpdated` event with address(this)
+     * @custom:and The _feeThreshold is 5 ether
      */
     function test_setFeeThreshold() public {
         vm.startPrank(ADMIN);
-        vm.expectRevert(UsdnProtocolInvalidFeeThreshold.selector);
-        protocol.setFeeThreshold(0);
-
         vm.expectEmit();
         emit FeeThresholdUpdated(5 ether);
         protocol.setFeeThreshold(5 ether);
@@ -105,7 +116,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:and Multiple actions are performed to reach the fee threshold
      * @custom:then The pending protocol fee is distributed to the fee collector
      */
-    function test_feeHitThreshhold() public {
+    function test_feeHitThreshold() public {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
 
         protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
@@ -118,6 +129,6 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         skip(8 days);
         assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");
         protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        assertGt(wstETH.balanceOf(ADMIN), 0, "fee collector balance after collect");
+        assertGt(wstETH.balanceOf(ADMIN), protocol.feeThreshold(), "fee collector balance after collect");
     }
 }

@@ -339,7 +339,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             newVaultBalance = 0;
         }
 
-        (_balanceVault, _balanceLong) = (newVaultBalance.toUint256(), newLongBalance.toUint256());
+        (_balanceVault, _balanceLong) = (uint256(newVaultBalance), uint256(newLongBalance));
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fund;
@@ -370,15 +370,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Calculate the protocol fee and apply it to the funding asset amount, distribute the fee to
-     * the fee collector if it exceeds the threshold
+     * @notice Calculate the protocol fee and apply it to the funding asset amount
      * @param fundAsset The funding asset amount to be used for the fee calculation
      * @return fee_ The absolute value of the calculated fee
      * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
      */
     function _calculateFee(int256 fundAsset) internal returns (int256 fee_, int256 fundAssetWithFee_) {
         fee_ = (fundAsset * _toInt256(_protocolFeeBps)) / int256(BPS_DIVISOR);
-        // fundAsset and fee_ have the same sign, we can safely add them to reduce the absolute amount of asset
+        // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
         fundAssetWithFee_ = fundAsset - fee_;
 
         if (fee_ < 0) {

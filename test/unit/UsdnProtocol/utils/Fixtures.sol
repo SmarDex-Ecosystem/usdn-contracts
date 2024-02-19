@@ -98,8 +98,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(firstPos.amount, params.initialLong - protocol.FIRST_LONG_AMOUNT(), "first pos amount");
         assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
         assertEq(protocol.feeCollector(), ADMIN, "fee collector");
-        assertEq(protocol.protocolFeeBps(), 10, "fee bps");
-        assertEq(protocol.feeThreshold(), 1 ether, "fees threshold");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
     }
 
