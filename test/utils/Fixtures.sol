@@ -17,6 +17,12 @@ contract BaseFixture is Test {
         _;
     }
 
+    modifier adminPrank() {
+        vm.startPrank(constants.ADMIN);
+        _;
+        vm.stopPrank();
+    }
+
     constructor() {
         /* -------------------------------------------------------------------------- */
         /*                                  Accounts                                  */
