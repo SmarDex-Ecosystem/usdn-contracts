@@ -35,7 +35,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:then The protocol emits `FeeBpsUpdated` event with 0
      * @custom:and Pending protocol fee is 0 after action
      */
-    function test_setFeeBps() public AdminPrank {
+    function test_setFeeBps() public adminPrank {
         wstETH.mintAndApprove(ADMIN, 1000 ether, address(protocol), 1000 ether);
 
         vm.expectEmit();
@@ -52,7 +52,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:given The feeCollector is address(0)
      * @custom:then The protocol reverts with `UsdnProtocolInvalidFeeCollector`
      */
-    function test_RevertWhen_setFeeCollector_addressZero() public AdminPrank {
+    function test_RevertWhen_setFeeCollector_addressZero() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidFeeCollector.selector);
         protocol.setFeeCollector(address(0));
     }
@@ -63,7 +63,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:then The protocol emits `FeeCollectorUpdated` event with address(this)
      * @custom:and The _feeCollector is address(this)
      */
-    function test_setFeeCollector() public AdminPrank {
+    function test_setFeeCollector() public adminPrank {
         vm.expectEmit();
         emit FeeCollectorUpdated(address(this));
         protocol.setFeeCollector(address(this));
@@ -76,7 +76,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:then The protocol emits `FeeThresholdUpdated` event with address(this)
      * @custom:and The _feeThreshold is 5 ether
      */
-    function test_setFeeThreshold() public AdminPrank {
+    function test_setFeeThreshold() public adminPrank {
         vm.expectEmit();
         emit FeeThresholdUpdated(5 ether);
         protocol.setFeeThreshold(5 ether);
