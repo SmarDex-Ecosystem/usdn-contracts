@@ -17,6 +17,8 @@ interface IMockPythError {
 /**
  * @title MockPyth contract
  * @dev This contract is used to test the OracleMiddleware contract.
+ * The original coed can be found here:
+ * https://github.com/pyth-network/pyth-crosschain/blob/main/target_chains/ethereum/contracts/contracts/pyth/Pyth.sol
  */
 contract MockPyth is IMockPythError {
     bool private alwaysRevertOnCall;
