@@ -44,13 +44,11 @@ function getClient(rpcUrl: string) {
     },
   });
 
-  const client = createTestClient({
+  return createTestClient({
     chain: foundry,
     mode: 'anvil',
     transport: http(),
   }).extend(publicActions);
-
-  return client;
 }
 
 async function main() {
