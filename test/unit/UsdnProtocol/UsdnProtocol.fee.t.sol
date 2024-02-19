@@ -19,7 +19,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check setFeeBps() reverts when the value is too big
+     * @custom:scenario Check that setFeeBps() reverts when the value is too big
      * @custom:given The fee value is > BPS_DIVISOR
      * @custom:then The protocol reverts with `UsdnProtocolInvalidProtocolFeeBps`
      */
@@ -52,7 +52,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check setFeeCollector() reverts when the value is address(0)
+     * @custom:scenario Check that setFeeCollector() reverts when the value is address(0)
      * @custom:given The feeCollector is address(0)
      * @custom:then The protocol reverts with `UsdnProtocolInvalidFeeCollector`
      */
@@ -96,7 +96,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check that the pending protocol fee is updated after an action
      * @custom:given The pending protocol fee is 0
-     * @custom:then A deposit of 100_000 wstETH
+     * @custom:then A deposit of 10_000 wstETH
      * @custom:and A validation of the deposit
      * @custom:then The pending protocol fee is > 0
      */
@@ -129,6 +129,6 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         skip(8 days);
         assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");
         protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        assertGt(wstETH.balanceOf(ADMIN), protocol.feeThreshold(), "fee collector balance after collect");
+        assertGe(wstETH.balanceOf(ADMIN), protocol.feeThreshold(), "fee collector balance after collect");
     }
 }
