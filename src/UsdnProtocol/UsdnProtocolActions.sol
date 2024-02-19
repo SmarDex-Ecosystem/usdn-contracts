@@ -17,6 +17,7 @@ import {
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { UsdnProtocolActionLib } from "src/libraries/UsdnProtocolActionLib.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IUsdn;
@@ -49,23 +50,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _liquidatePositions(currentPrice.price, _liquidationIteration);
         }
 
-        // Apply fees on price
-        // we use `_lastPrice` because it might be more recent than `currentPrice.price`
-        uint256 pendingActionPrice = _lastPrice;
-        pendingActionPrice += (pendingActionPrice * _protocolFee) / PROTOCOL_FEE_DENOMINATOR;
-
-        VaultPendingAction memory pendingAction = VaultPendingAction({
-            action: ProtocolAction.ValidateDeposit,
-            timestamp: timestamp,
-            user: msg.sender,
-            _unused: 0,
-            amount: amount,
-            assetPrice: pendingActionPrice.toUint128(),
-            totalExpo: _totalExpo,
-            balanceVault: _balanceVault,
-            balanceLong: _balanceLong,
-            usdnTotalSupply: _usdn.totalSupply()
-        });
+        VaultPendingAction memory pendingAction = UsdnProtocolActionLib.computePendingActionForInitialDeposit(
+            amount,
+            timestamp,
+            _lastPrice,
+            _protocolFee,
+            PROTOCOL_FEE_DENOMINATOR,
+            _totalExpo,
+            _balanceVault,
+            _balanceLong,
+            _usdn
+        );
 
         _addPendingAction(msg.sender, _convertVaultPendingAction(pendingAction));
 
@@ -349,49 +344,45 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         VaultPendingAction memory deposit = _toVaultPendingAction(pending);
 
-        // During initialization, we might want to use a different oracle, so we have a special action
-        ProtocolAction action = initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateDeposit;
-
-        depositPrice_ =
-            _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(deposit.timestamp, action, priceData);
-
-        // adjust balances
-        if (!initializing) {
-            // There is no need to adjust balances during initialization.
-            // Also, during initialization, `_lastUpdateTimestamp` and `_lastPrice` are not updated yet.
-            _applyPnlAndFunding(depositPrice_.neutralPrice.toUint128(), depositPrice_.timestamp.toUint128());
-        }
-
-        // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
-        // action, or the current price provided for validation. We will use the lower of the two amounts to mint.
-
-        // During initialization, the deposit.assetPrice is zero, so we use the price provided for validation.
-        uint256 oldPrice = initializing ? depositPrice_.price : deposit.assetPrice;
-
-        // The last parameter (price) is only used during initialization
-        uint256 usdnToMint1 = _calcMintUsdn(deposit.amount, deposit.balanceVault, deposit.usdnTotalSupply, oldPrice);
-        uint256 usdnToMint2 = _calcMintUsdn(
-            deposit.amount,
-            uint256(
-                _vaultAssetAvailable(
-                    deposit.totalExpo,
-                    deposit.balanceVault,
-                    deposit.balanceLong,
-                    // Price with fees (Inline calculation to avoid stack too deep)
-                    (depositPrice_.price + (depositPrice_.price * _protocolFee) / PROTOCOL_FEE_DENOMINATOR).toUint128(), // new
-                        // price
-                    deposit.assetPrice // old price
-                )
-            ),
-            deposit.usdnTotalSupply,
-            // Price with fees (Inline calculation to avoid stack too deep)
-            depositPrice_.price + (depositPrice_.price * _protocolFee) / PROTOCOL_FEE_DENOMINATOR
-        );
         uint256 usdnToMint;
-        if (usdnToMint1 <= usdnToMint2) {
-            usdnToMint = usdnToMint1;
-        } else {
-            usdnToMint = usdnToMint2;
+        {
+            depositPrice_ = _oracleMiddleware.parseAndValidatePrice{ value: msg.value }(
+                deposit.timestamp,
+                // During initialization, we might want to use a different oracle, so we have a special action
+                initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateDeposit,
+                priceData
+            );
+
+            // adjust balances
+            if (!initializing) {
+                // There is no need to adjust balances during initialization.
+                // Also, during initialization, `_lastUpdateTimestamp` and `_lastPrice` are not updated yet.
+                _applyPnlAndFunding(depositPrice_.neutralPrice.toUint128(), depositPrice_.timestamp.toUint128());
+            }
+
+            {
+                uint128 priceWithFees =
+                    (depositPrice_.price + (depositPrice_.price * _protocolFee) / PROTOCOL_FEE_DENOMINATOR).toUint128();
+
+                usdnToMint = UsdnProtocolActionLib.computeUsdnToMint(
+                    initializing,
+                    deposit,
+                    depositPrice_,
+                    priceWithFees,
+                    uint256(
+                        _vaultAssetAvailable(
+                            deposit.totalExpo,
+                            deposit.balanceVault,
+                            deposit.balanceLong,
+                            priceWithFees, // new price
+                            deposit.assetPrice // old price
+                        )
+                    ),
+                    _assetDecimals,
+                    _priceFeedDecimals,
+                    _usdnDecimals
+                );
+            }
         }
 
         _balanceVault += deposit.amount;
