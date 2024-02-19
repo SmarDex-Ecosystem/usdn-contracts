@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { DateTime } from 'luxon';
-import { http, createTestClient, defineChain, formatEther, getAbiItem, publicActions } from 'viem';
+import pc from 'picocolors';
+import { http, createTestClient, defineChain, formatEther, isAddressEqual, publicActions } from 'viem';
 import { OracleMiddlewareAbi, UsdnAbi, UsdnProtocolAbi } from '../dist/abi';
 
 function parseArgs() {
@@ -91,28 +92,29 @@ async function main() {
   });
 
   for (const log of logs) {
-    console.log('-------------------------');
-    const contractName =
-      log.address === options.protocol
-        ? 'USDN Protocol'
-        : log.address === options.usdn
-          ? 'USDN token'
-          : 'Oracle Middleware';
-    console.log('Contract:', contractName);
+    console.log(pc.dim('-------------------------'));
+    const contractName = isAddressEqual(log.address, options.protocol)
+      ? pc.green('USDN Protocol')
+      : isAddressEqual(log.address, options.usdn)
+        ? pc.blue('USDN token')
+        : pc.red('Oracle Middleware');
+    console.log('Contract:', contractName, pc.dim(`(${log.address})`));
     const block = await client.getBlock({ blockNumber: log.blockNumber });
     console.log('Timestamp:', block.timestamp.toString());
     console.log(
       'DateTime:',
-      DateTime.fromSeconds(Number(block.timestamp)).setLocale('en-GB').toLocaleString(DateTime.DATETIME_FULL),
+      pc.magenta(
+        DateTime.fromSeconds(Number(block.timestamp)).setLocale('en-GB').toLocaleString(DateTime.DATETIME_FULL),
+      ),
     );
     console.log('Block number:', log.blockNumber.toString());
-    console.log('Event name:', log.eventName);
+    console.log('Event name:', pc.yellow(pc.bold(log.eventName)));
     console.log('Args:');
     for (const arg of Object.entries(log.args)) {
-      const formattedValue = typeof arg[1] === 'bigint' && arg[1] > 0n ? ` (${formatEther(arg[1])})` : '';
-      console.log(`  ${arg[0]}: ${arg[1]}${formattedValue}`);
+      const formattedValue = typeof arg[1] === 'bigint' && arg[1] > 0n ? pc.dim(` (${formatEther(arg[1])})`) : '';
+      console.log(pc.cyan(`  ${arg[0]}:`), `${arg[1]}${formattedValue}`);
     }
-    console.log('-------------------------');
+    console.log(pc.dim('-------------------------'));
   }
 }
 
