@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -19,6 +20,7 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
+    using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
     /// @dev The minimum amount of wstETH for the initialization deposit and long.
@@ -33,11 +35,15 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
      * @param tickSpacing The positions tick spacing.
+     * @param feeCollector The address of the fee collector.
      */
-    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
-        Ownable(msg.sender)
-        UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing)
-    { }
+    constructor(
+        IUsdn usdn,
+        IERC20Metadata asset,
+        IOracleMiddleware oracleMiddleware,
+        int24 tickSpacing,
+        address feeCollector
+    ) Ownable(msg.sender) UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing, feeCollector) { }
 
     /**
      * @notice Initialize the protocol.
@@ -84,7 +90,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             );
 
             // Transfer the wstETH for the deposit
-            _retrieveAssetsAndCheckBalance(msg.sender, depositAmount);
+            _asset.safeTransferFrom(msg.sender, address(this), depositAmount);
 
             emit InitiatedDeposit(msg.sender, depositAmount);
             // Mint USDN (a small amount is minted to the dead address)
@@ -96,7 +102,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _lastPrice = currentPrice.price.toUint128();
 
         // Transfer the wstETH for the long
-        _retrieveAssetsAndCheckBalance(msg.sender, longAmount);
+        _asset.safeTransferFrom(msg.sender, address(this), longAmount);
 
         // Create long positions with min leverage
         _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), minTick());
@@ -119,5 +125,29 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
         emit InitiatedOpenPosition(user, long.timestamp, long.leverage, long.amount, price, tick, tickVersion, index);
         emit ValidatedOpenPosition(user, long.leverage, price, tick, tickVersion, index);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setFeeBps(uint16 protocolFeeBps) external onlyOwner {
+        if (protocolFeeBps > BPS_DIVISOR) {
+            revert UsdnProtocolInvalidProtocolFeeBps();
+        }
+        _protocolFeeBps = protocolFeeBps;
+        emit FeeBpsUpdated(protocolFeeBps);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setFeeCollector(address feeCollector) external onlyOwner {
+        if (feeCollector == address(0)) {
+            revert UsdnProtocolInvalidFeeCollector();
+        }
+        _feeCollector = feeCollector;
+        emit FeeCollectorUpdated(feeCollector);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setFeeThreshold(uint256 feeThreshold) external onlyOwner {
+        _feeThreshold = feeThreshold;
+        emit FeeThresholdUpdated(feeThreshold);
     }
 }
