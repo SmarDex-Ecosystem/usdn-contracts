@@ -350,18 +350,16 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.liquidate(priceData, 1);
 
         // check that the liquidator didn't receive any rewards
-        uint256 wstETHBalanceAfterRewards = wstETH.balanceOf(address(this));
         assertEq(
             wstETHBalanceBeforeRewards,
-            wstETHBalanceAfterRewards,
+            wstETH.balanceOf(address(this)),
             "The liquidator should not receive rewards if there were no liquidations"
         );
 
         // check that the vault balance did not change
-        uint256 vaultBalanceAfterRewards = protocol.balanceVault();
         assertEq(
             vaultBalanceBeforeRewards,
-            vaultBalanceAfterRewards,
+            protocol.balanceVault(),
             "The vault balance should not change if there were no liquidations"
         );
 
@@ -403,17 +401,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.liquidate(priceData, 1);
 
         // check that the liquidator received its rewards
-        uint256 wstETHBalanceAfterRewards = wstETH.balanceOf(address(this));
         assertEq(
-            wstETHBalanceAfterRewards - wstETHBalanceBeforeRewards,
+            wstETH.balanceOf(address(this)) - wstETHBalanceBeforeRewards,
             expectedLiquidatorRewards,
             "The liquidator did not receive the right amount of rewards"
         );
 
         // check that the vault balance got updated
-        uint256 vaultBalanceAfterRewards = protocol.balanceVault();
         assertEq(
-            vaultBalanceAfterRewards - vaultBalanceBeforeRewards - collateralRemainingAfterLiquidation,
+            protocol.balanceVault() - vaultBalanceBeforeRewards - collateralRemainingAfterLiquidation,
             expectedLiquidatorRewards,
             "The vault does not contain the right amount of funds"
         );

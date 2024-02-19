@@ -56,10 +56,10 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
 
         assertEq(rewards, 5_589_000_000_000_000, "The wrong amount of rewards was given");
 
-        assertNotEq(
+        assertGt(
             rewards,
             liquidationRewardsManager.getLiquidationRewards(1, 0),
-            "Differents amount of ticks liquidated should not give the same amount of rewards"
+            "More rewards should be given if more ticks are liquidated"
         );
     }
 
