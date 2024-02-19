@@ -2,13 +2,14 @@
 pragma solidity ^0.8.20;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import { PriceInfo, ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+
+import { ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
 /**
  * @title ChainlinkOracle contract
  * @notice This contract is used to get the price of an asset from Chainlink. It is used by the USDN protocol to get the
- * price of the USDN underlying asset.
+ * price of the USDN underlying asset, and by the LiquidationRewardsManager to get the price of the gas.
  */
 contract ChainlinkOracle is IOracleMiddlewareErrors {
     /// @notice Chainlink price feed aggregator contract
@@ -16,6 +17,10 @@ contract ChainlinkOracle is IOracleMiddlewareErrors {
     /// @notice Tolerated elapsed time until we consider the data too old
     uint256 internal _timeElapsedLimit;
 
+    /**
+     * @param chainlinkPriceFeed Address of the price feed
+     * @param timeElapsedLimit Tolerated elapsed time before that data is considered invalid
+     */
     constructor(address chainlinkPriceFeed, uint256 timeElapsedLimit) {
         _priceFeed = AggregatorV3Interface(chainlinkPriceFeed);
         _timeElapsedLimit = timeElapsedLimit;

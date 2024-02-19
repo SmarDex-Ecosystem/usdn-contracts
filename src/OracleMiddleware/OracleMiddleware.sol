@@ -154,6 +154,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         return _validationDelay;
     }
 
+    /// @inheritdoc IOracleMiddleware
+    function getChainlinkTimeElapsedLimit() external view returns (uint256) {
+        return _timeElapsedLimit;
+    }
+
     /// @notice Returns the number of decimals for the price (constant)
     function decimals() external pure returns (uint8) {
         return DECIMALS;
@@ -164,9 +169,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
      * @dev We don't use the protocol action parameter for now
      * @param data The data used to get the price
      */
-    function validationCost(bytes calldata data, ProtocolAction) external view returns (uint256 _result) {
+    function validationCost(bytes calldata data, ProtocolAction) external view returns (uint256 result_) {
         if (data.length > 0) {
-            _result = getPythUpdateFee(data);
+            result_ = getPythUpdateFee(data);
         }
     }
 
@@ -177,5 +182,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @inheritdoc IOracleMiddleware
     function updateValidationDelay(uint256 _newValidationDelay) external onlyOwner {
         _validationDelay = _newValidationDelay;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function updateChainlinkTimeElapsedLimit(uint256 timeElapsedLimit) external onlyOwner {
+        _timeElapsedLimit = timeElapsedLimit;
+
+        emit TimeElapsedLimitUpdated(timeElapsedLimit);
     }
 }

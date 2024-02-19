@@ -314,7 +314,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint16 liquidatedTicks;
         int256 liquidatedCollateral;
         (liquidatedPositions_, liquidatedTicks, liquidatedCollateral) =
-            _liquidatePositions(currentPrice.price, iterations);
+            _liquidatePositions(currentPrice.neutralPrice, iterations);
 
         _refundExcessEther();
 
