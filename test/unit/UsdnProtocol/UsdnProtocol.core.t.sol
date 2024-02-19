@@ -156,6 +156,27 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             "long and vault expos should be equal"
         );
         (int256 fund_,,) = protocol.funding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
-        assertEq(fund_, protocol.EMA(), "funding should be equal to EMA");
+        assertEq(fund_, protocol.i_EMA(), "funding should be equal to EMA");
+    }
+
+    /**
+     * @custom:scenario No protocol actions during a greater period than the EMA period
+     * @custom:given a non zero funding
+     * @custom:and no actions for a period greater than the EMA period
+     * @custom:then EMA should be equal to the last funding
+     */
+    function test_updateEma_whenTimeGtEMAPeriod() public {
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        // we skip 1 day and call liquidate() to have a non-zero funding
+        skip(1 days);
+        protocol.liquidate(priceData, 1);
+
+        int256 lastFunding = protocol.i_lastFunding();
+        skip(protocol.i_EMAPeriod() + 1);
+        // we call liquidate() to update the EMA
+        protocol.liquidate(priceData, 1);
+
+        assertEq(protocol.i_EMA(), lastFunding, "EMA should be equal to last funding");
     }
 }
