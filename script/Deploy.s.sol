@@ -60,7 +60,7 @@ contract Deploy is Script {
             address pythAddress = vm.envAddress("PYTH_ADDRESS");
             bytes32 pythPriceId = vm.envBytes32("PYTH_STETH_PRICE_ID");
             address chainlinkPriceAddress = vm.envAddress("CHAINLINK_STETH_PRICE_ADDRESS");
-            uint256 chainlinkPriceValidity = vm.envUint("CHAINLINK_STETH_PRICE_VALIDITY");
+            uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_STETH_PRICE_VALIDITY", uint256(1 hours + 2 minutes));
 
             // prod
             if (isProdEnv) {
@@ -88,7 +88,7 @@ contract Deploy is Script {
             }
         } else {
             address chainlinkGasPriceFeed = vm.envAddress("CHAINLINK_GAS_PRICE_ADDRESS");
-            uint256 chainlinkPriceValidity = vm.envUint("CHAINLINK_GAS_PRICE_VALIDITY");
+            uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", uint256(2 hours + 5 minutes));
             if (isProdEnv) {
                 liquidationRewardsManager =
                     new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity);
