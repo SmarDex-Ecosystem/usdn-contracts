@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
+import { ADMIN } from "test/utils/Constants.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-
-import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature All fees functionality of the USDN Protocol
@@ -37,10 +35,9 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:then The protocol emits `FeeBpsUpdated` event with 0
      * @custom:and Pending protocol fee is 0 after action
      */
-    function test_setFeeBps() public {
+    function test_setFeeBps() public AdminPrank {
         wstETH.mintAndApprove(ADMIN, 1000 ether, address(protocol), 1000 ether);
 
-        vm.startPrank(ADMIN);
         vm.expectEmit();
         emit FeeBpsUpdated(0);
         protocol.setFeeBps(0);
@@ -48,7 +45,6 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         protocol.initiateDeposit(1000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
         assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
-        vm.stopPrank();
     }
 
     /**
@@ -56,11 +52,9 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:given The feeCollector is address(0)
      * @custom:then The protocol reverts with `UsdnProtocolInvalidFeeCollector`
      */
-    function test_RevertWhen_setFeeCollector_addressZero() public {
-        vm.startPrank(ADMIN);
+    function test_RevertWhen_setFeeCollector_addressZero() public AdminPrank {
         vm.expectRevert(UsdnProtocolInvalidFeeCollector.selector);
         protocol.setFeeCollector(address(0));
-        vm.stopPrank();
     }
 
     /**
@@ -69,12 +63,10 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:then The protocol emits `FeeCollectorUpdated` event with address(this)
      * @custom:and The _feeCollector is address(this)
      */
-    function test_setFeeCollector() public {
-        vm.startPrank(ADMIN);
+    function test_setFeeCollector() public AdminPrank {
         vm.expectEmit();
         emit FeeCollectorUpdated(address(this));
         protocol.setFeeCollector(address(this));
-        vm.stopPrank();
         assertEq(protocol.feeCollector(), address(this));
     }
 
@@ -84,12 +76,10 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:then The protocol emits `FeeThresholdUpdated` event with address(this)
      * @custom:and The _feeThreshold is 5 ether
      */
-    function test_setFeeThreshold() public {
-        vm.startPrank(ADMIN);
+    function test_setFeeThreshold() public AdminPrank {
         vm.expectEmit();
         emit FeeThresholdUpdated(5 ether);
         protocol.setFeeThreshold(5 ether);
-        vm.stopPrank();
         assertEq(protocol.feeThreshold(), 5 ether);
     }
 

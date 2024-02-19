@@ -43,6 +43,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     uint128 public initialLongLeverage;
     address[] public users;
 
+    modifier AdminPrank() {
+        vm.startPrank(ADMIN);
+        _;
+        vm.stopPrank();
+    }
+
     function _setUp(SetUpParams memory testParams) public virtual {
         vm.warp(testParams.initialTimestamp);
         vm.startPrank(DEPLOYER);
