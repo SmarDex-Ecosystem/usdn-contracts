@@ -111,7 +111,7 @@ async function main() {
     console.log('Event name:', pc.yellow(pc.bold(log.eventName)));
     console.log('Args:');
     for (const arg of Object.entries(log.args)) {
-      const formattedValue = typeof arg[1] === 'bigint' && arg[1] > 0n ? pc.dim(` (${formatEther(arg[1])})`) : '';
+      const formattedValue = typeof arg[1] === 'bigint' && arg[1] !== 0n ? pc.dim(` (${formatEther(arg[1])})`) : '';
       console.log(pc.cyan(`  ${arg[0]}:`), `${arg[1]}${formattedValue}`);
     }
     console.log(pc.dim('-------------------------'));
