@@ -55,3 +55,17 @@ The `anvil` fork should be launched with at least the following parameters:
 ```
 anvil -a 100 -f [Mainnet RPC] --chain-id 31337 --code-size-limit 50000
 ```
+
+## Logs analysis command
+
+This utility gathers all the logs emitted from the deployed contracts and prints them nicely into the console.
+
+The script first requires that the ABIs have been exported with `npm run exportAbi`.
+
+Then, it can be used like so:
+
+```
+npx ts-node script/logsAnalysis.ts -r https://fork-rpc-url.com/ --protocol 0x24EcC5E6EaA700368B8FAC259d3fBD045f695A08 --usdn 0x0D92d35D311E54aB8EEA0394d7E773Fc5144491a --middleware 0x4278C5d322aB92F1D876Dd7Bd9b44d1748b88af2
+```
+
+The parameters are the RPC URL and the deployed addresses of the 3 main contracts.
