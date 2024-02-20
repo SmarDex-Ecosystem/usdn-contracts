@@ -72,8 +72,7 @@ interface IOracleMiddleware is IOracleMiddlewareErrors {
 
     /**
      * @notice Emitted when the confidence ratio is updated.
-     * @param oldConfRatio old confidence ratio.
      * @param newConfRatio new confidence ratio.
      */
-    event ConfRatioSet(uint256 oldConfRatio, uint256 newConfRatio);
+    event ConfRatioSet(uint256 newConfRatio);
 }

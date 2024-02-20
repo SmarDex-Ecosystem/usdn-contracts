@@ -200,10 +200,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             revert OracleMiddlewareConfRatioTooHigh();
         }
 
-        uint256 oldConfRatio = _confRatio;
         _confRatio = newConfRatio;
 
-        emit ConfRatioSet(oldConfRatio, newConfRatio);
+        emit ConfRatioSet(newConfRatio);
     }
 
     /* -------------------------------------------------------------------------- */
