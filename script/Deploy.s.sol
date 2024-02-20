@@ -94,8 +94,8 @@ contract Deploy is Script {
             if (isProdEnv) {
                 desiredLiqPrice = vm.envUint("INIT_LONG_LIQPRICE");
             } else {
-                // for forks, we want a leverage of ~2x so we get the current price from the middleware and divide it by
-                // two
+                // for forks, we want a leverage of ~2x so we get the current
+                // price from the middleware and divide it by two
                 desiredLiqPrice =
                     middleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.Initialize, "").price / 2;
             }
