@@ -51,7 +51,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Apply fees on price
         // we use `_lastPrice` because it might be more recent than `currentPrice.price`
         uint256 pendingActionPrice = _lastPrice;
-        pendingActionPrice += (pendingActionPrice * _protocolFeeBps) / BPS_DIVISOR;
+        pendingActionPrice += (pendingActionPrice * _positionFeeBps) / PROTOCOL_FEE_DENOMINATOR;
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateDeposit,
@@ -111,7 +111,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Apply fees on price
         // we use `_lastPrice` because it might be more recent than `currentPrice.price`
         uint256 pendingActionPrice = _lastPrice;
-        pendingActionPrice -= (pendingActionPrice * _protocolFeeBps) / BPS_DIVISOR;
+        pendingActionPrice -= (pendingActionPrice * _positionFeeBps) / PROTOCOL_FEE_DENOMINATOR;
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateWithdrawal,
@@ -168,7 +168,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _getOraclePrice(ProtocolAction.InitiateOpenPosition, uint40(block.timestamp), currentPriceData);
 
             // Apply fees on price
-            adjustedPrice = (currentPrice.price + (currentPrice.price * _protocolFeeBps) / BPS_DIVISOR).toUint128();
+            adjustedPrice =
+                (currentPrice.price + (currentPrice.price * _positionFeeBps) / PROTOCOL_FEE_DENOMINATOR).toUint128();
 
             neutralPrice = currentPrice.neutralPrice.toUint128();
             bool priceUpdated = _applyPnlAndFunding(neutralPrice, currentPrice.timestamp.toUint128());
@@ -385,9 +386,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Apply fees on price
         uint128 priceWithFees =
-            (depositPrice_.price + (depositPrice_.price * _protocolFeeBps) / BPS_DIVISOR).toUint128();
+            (depositPrice_.price + (depositPrice_.price * _positionFeeBps) / PROTOCOL_FEE_DENOMINATOR).toUint128();
 
-        // Compute the amount of USDN to mint according to the deposit data
+        // Comupute the amount of USDN to mint according to the deposit data
         uint256 usdnToMint1 = _calcMintUsdn(deposit.amount, deposit.balanceVault, deposit.usdnTotalSupply, oldPrice);
 
         // Calculate the amount of USDN to mint using the storage data
@@ -466,7 +467,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Apply fees on price
         uint256 withdrawalPriceWithFees =
-            withdrawalPrice.price - (withdrawalPrice.price * _protocolFeeBps) / BPS_DIVISOR;
+            withdrawalPrice.price - (withdrawalPrice.price * _positionFeeBps) / PROTOCOL_FEE_DENOMINATOR;
 
         // We calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
@@ -526,7 +527,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             PriceInfo memory price = _getOraclePrice(ProtocolAction.ValidateOpenPosition, long.timestamp, priceData);
 
             // Apply fees on price
-            startPrice = (price.price + (price.price * _protocolFeeBps) / BPS_DIVISOR).toUint128();
+            startPrice = (price.price + (price.price * _positionFeeBps) / PROTOCOL_FEE_DENOMINATOR).toUint128();
 
             // adjust balances
             bool priceUpdated = _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
@@ -666,7 +667,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // Apply fees on lastPrice
-        uint256 positionPriceWithFees = lastPrice - (lastPrice * _protocolFeeBps) / BPS_DIVISOR;
+        uint256 positionPriceWithFees = lastPrice - (lastPrice * _positionFeeBps) / PROTOCOL_FEE_DENOMINATOR;
 
         // Calculate position value
         int256 value = _positionValue(

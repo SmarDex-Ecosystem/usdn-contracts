@@ -37,8 +37,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint16 public constant MAX_LIQUIDATION_ITERATION = 10;
 
     /// @inheritdoc IUsdnProtocolStorage
+    uint16 public constant PROTOCOL_FEE_DENOMINATOR = 10_000;
+
+    /// @inheritdoc IUsdnProtocolStorage
     /// @dev The maximum protocol fee is 1%
-    uint16 public constant MAX_PROTOCOL_FEE = 100;
+    uint16 public constant MAX_POSITION_FEE = 100;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
@@ -140,6 +143,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The pending actions queue.
     DoubleEndedQueue.Deque internal _pendingActionsQueue;
+
+    /* ---------------------------------- Fees ---------------------------------- */
+
+    /// @notice The protocol fee (in percentage)
+    uint16 internal _positionFeeBps = 4; // 0.04%
 
     /* ---------------------------------- Vault --------------------------------- */
 

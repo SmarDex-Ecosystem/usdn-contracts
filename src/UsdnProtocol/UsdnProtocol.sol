@@ -150,4 +150,16 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _feeThreshold = feeThreshold;
         emit FeeThresholdUpdated(feeThreshold);
     }
+
+    /**
+     * @notice Update the protocol fees.
+     * @param protocolFee The new protocol fee (in percentage).
+     */
+    function updateProtocolFees(uint16 protocolFee) external onlyOwner {
+        if (protocolFee > MAX_POSITION_FEE) {
+            revert UsdnProtocolMaxProtocolFeeExceeded();
+        }
+        _positionFeeBps = protocolFee;
+        emit UpdatedProtocolFees(protocolFee);
+    }
 }
