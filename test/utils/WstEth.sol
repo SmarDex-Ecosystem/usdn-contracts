@@ -14,6 +14,12 @@ contract WstETH is ERC20, ERC20Permit {
         _mint(to, amount);
     }
 
+    /// @dev Mint wstETH to the specified address and approve the spender
+    function mintAndApprove(address to, uint256 amount, address spender, uint256 value) external {
+        _mint(to, amount);
+        _approve(to, spender, value);
+    }
+
     /// @dev Returns the amount of ETH per stETH (mock value)
     function stEthPerToken() public pure returns (uint256) {
         return 1.15 ether;

@@ -112,7 +112,8 @@ contract Deploy is Script {
         }
 
         // Deploy the protocol with tick spacing 100 = 1%
-        UsdnProtocol protocol = new UsdnProtocol(usdn, wstETH, middleware, liquidationRewardsManager, 100);
+        UsdnProtocol protocol =
+            new UsdnProtocol(usdn, wstETH, middleware, liquidationRewardsManager, 100, vm.envAddress("FEE_COLLECTOR"));
 
         // Grant USDN minter role to protocol and approve wstETH spending
 

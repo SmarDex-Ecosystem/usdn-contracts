@@ -59,4 +59,10 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided address for the LiquidationRewardsManager contract is the 0 address
     error UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
+
+    /// @dev Indicates that the provided fee percentage is invalid (> 100%)
+    error UsdnProtocolInvalidProtocolFeeBps();
+
+    /// @dev Indicates that the provided fee collector address is invalid
+    error UsdnProtocolInvalidFeeCollector();
 }

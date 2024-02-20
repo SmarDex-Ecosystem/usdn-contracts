@@ -13,8 +13,7 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mint(address(this), 100_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
 
         chainlinkGasPriceFeed.setLatestRoundData(1, 30 gwei, block.timestamp, 1);
         vm.txGasPrice(30 gwei);
@@ -62,7 +61,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(
-            74_300, 0, 1650 ether, 1_688_815_697_364_501_907_167, -937_114_401_579_540_884
+            74_300, 0, 1650 ether, 1_688_815_697_758_784_379_410, -937_114_468_940_773_818
         );
         // initiate a position to liquidate all other positions
         protocol.initiateOpenPosition(5 ether, 500 ether, priceData, "");
@@ -71,7 +70,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
         // check if second total expo is equal expected value
-        assertEq(protocol.totalExpo(), 17.024364708070820361 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 17.024364708768907152 ether, "wrong second totalExpo");
         // check if second total expo by tick is equal expected value
         assertEq(protocol.totalExpoByTick(initialTick), 0, "wrong second totalExpoByTick");
         // check if second long position length is equal expected value
@@ -127,7 +126,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(
-            74_300, 0, 1000 ether, 1_692_438_383_745_681_597_454, -189_500_168_507_036_917_323
+            74_300, 0, 1000 ether, 1_692_438_383_940_893_356_380, -189_500_168_562_066_025_611
         );
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
@@ -188,7 +187,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             assertEq(protocol.positionsInTick(initialTicks[i]), 1, "wrong first positionsInTick");
         }
         // check if first total expo match initial value
-        assertEq(protocol.totalExpo(), 920.914375905471690365 ether, "wrong first totalExpo");
+        assertEq(protocol.totalExpo(), 920.916195233143927215 ether, "wrong first totalExpo");
         // check if first max initialized match initial value
         assertEq(protocol.maxInitializedTick(), 73_700, "wrong first maxInitializedTick");
         // check if first total long positions match initial value
@@ -199,7 +198,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         skip(1 hours);
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(
-            73_700, 0, 1000 ether, 1_670_655_371_566_172_095_768, -57_390_760_911_864_953_551
+            73_700, 0, 1000 ether, 1_670_658_741_688_949_105_099, -57_391_058_263_557_498_225
         );
         // liquidator first liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
@@ -215,7 +214,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         }
 
         // check if second total expo match expected value
-        assertEq(protocol.totalExpo(), 464.175881003526486876 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 464.17754310293132502 ether, "wrong second totalExpo");
         // check if second max initialized match expected value
         assertEq(protocol.maxInitializedTick(), 73_000, "wrong second maxInitializedTick");
         // check if second total long positions match expected value
@@ -289,8 +288,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function test_liquidatedByFundingRates() public {
         uint128 currentPrice = 2000 ether;
 
-        wstETH.mint(address(this), 1_000_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 1_000_000 ether, address(protocol), type(uint256).max);
 
         bytes memory priceData = abi.encode(uint128(currentPrice));
 

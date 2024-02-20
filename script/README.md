@@ -5,6 +5,7 @@
 Environment variables can be used to control the script execution:
 
 - `DEPLOYER_ADDRESS`: required, the address that is used for simulating the transactions on the network fork (needs to have a sufficient balance).
+- `FEE_COLLECTOR` : required, the receiver of all protocol fees
 - `WSTETH_ADDRESS`: if provided, skips deployment of the mock wstETH token
 - `MIDDLEWARE_ADDRESS`: if provided, skips deployment of the oracle middleware
 - `PYTH_ADDRESS`: required if middleware address not provided, the contract address of the pyth oracle
@@ -25,6 +26,7 @@ Will also link oracles to the real mainnet configuration:
 
 ```
 export DEPLOYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+export FEE_COLLECTOR=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 export WSTETH_ADDRESS=0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0
 export INIT_DEPOSIT_AMOUNT=1000000000000000000
 export INIT_LONG_AMOUNT=1000000000000000000

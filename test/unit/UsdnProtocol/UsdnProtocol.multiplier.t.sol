@@ -23,8 +23,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
                 initialBlock: DEFAULT_PARAMS.initialBlock
             })
         );
-        wstETH.mint(address(this), 100_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /**

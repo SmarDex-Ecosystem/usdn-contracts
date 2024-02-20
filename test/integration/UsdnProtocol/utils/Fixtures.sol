@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-import { DEPLOYER, CHAINLINK_ORACLE_GAS } from "test/utils/Constants.sol";
+import { ADMIN, DEPLOYER, CHAINLINK_ORACLE_GAS } from "test/utils/Constants.sol";
 import { WstethIntegrationFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
@@ -56,7 +56,8 @@ contract UsdnProtocolBaseIntegrationFixture is WstethIntegrationFixture, IUsdnPr
             WST_ETH,
             wstethMiddleware,
             liquidationRewardsManager,
-            100 // tick spacing 100 = 1%
+            100, // tick spacing 100 = 1%
+            ADMIN
         );
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
