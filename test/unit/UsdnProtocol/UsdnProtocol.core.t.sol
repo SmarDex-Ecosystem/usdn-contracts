@@ -156,7 +156,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             "long and vault expos should be equal"
         );
         (int256 fund_,,) = protocol.funding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
-        assertEq(fund_, protocol.i_EMA(), "funding should be equal to EMA");
+        assertEq(fund_, protocol.getEMA(), "funding should be equal to EMA");
     }
 
     /**
@@ -173,10 +173,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         protocol.liquidate(priceData, 1);
 
         int256 lastFunding = protocol.i_lastFunding();
-        skip(protocol.i_EMAPeriod() + 1);
+        skip(protocol.getEMAPeriod() + 1);
         // we call liquidate() to update the EMA
         protocol.liquidate(priceData, 1);
 
-        assertEq(protocol.i_EMA(), lastFunding, "EMA should be equal to last funding");
+        assertEq(protocol.getEMA(), lastFunding, "EMA should be equal to last funding");
     }
 }

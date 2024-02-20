@@ -65,7 +65,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     // Exponential Moving Average
-    function i_EMA() external view returns (int256) {
+    function getEMA() external view returns (int256) {
         return _EMA;
     }
 
@@ -160,7 +160,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _lastFunding;
     }
 
-    function i_EMAPeriod() external view returns (uint256) {
+    function getEMAPeriod() external view returns (uint256) {
         return _EMAPeriod;
     }
 
