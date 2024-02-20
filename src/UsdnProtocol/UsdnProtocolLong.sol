@@ -55,14 +55,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getPositionValue(int24 tick, uint256 tickVersion, uint256 index, uint128 currentPrice)
+    function getPositionValue(int24 tick, uint256 tickVersion, uint256 index, uint128 price, uint128 timestamp)
         external
         view
         returns (uint256 value_)
     {
         Position memory pos = getLongPosition(tick, tickVersion, index);
-        uint128 liqPrice = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
-        value_ = _positionValue(currentPrice, liqPrice, pos.amount, pos.leverage);
+        uint256 liquidationMultiplier = getLiquidationMultiplier(price, timestamp);
+        uint128 liqPrice =
+            _getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liquidationMultiplier);
+        value_ = _positionValue(price, liqPrice, pos.amount, pos.leverage);
     }
 
     /// @inheritdoc IUsdnProtocolLong

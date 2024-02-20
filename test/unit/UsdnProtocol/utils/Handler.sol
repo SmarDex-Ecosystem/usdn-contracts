@@ -207,4 +207,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
     {
         return _getOraclePrice(action, timestamp, priceData);
     }
+
+    function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external pure returns (uint128 price_) {
+        return _getEffectivePriceForTick(tick, liqMultiplier);
+    }
 }

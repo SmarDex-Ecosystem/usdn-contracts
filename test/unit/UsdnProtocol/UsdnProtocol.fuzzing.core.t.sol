@@ -71,7 +71,8 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         // calculate the value of all new long positions (simulating taking the low bound of the confidence interval)
         uint256 longPosValue;
         for (uint256 i = 0; i < 10; i++) {
-            longPosValue += protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice - 5 ether);
+            longPosValue +=
+                protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice - 5 ether, uint128(block.timestamp));
         }
         // calculate the value of the init position (we use the low-level pure function because there is no liquidation
         // penalty for those)

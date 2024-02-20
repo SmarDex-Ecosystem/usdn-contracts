@@ -33,7 +33,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /* -------------------------- Public view functions ------------------------- */
 
     /// @inheritdoc IUsdnProtocolCore
-    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) external view returns (uint256) {
+    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) public view returns (uint256) {
         if (timestamp <= _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
