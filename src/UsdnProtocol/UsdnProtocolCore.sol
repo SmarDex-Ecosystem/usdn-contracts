@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { console2 } from "forge-std/Test.sol";
+
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -58,7 +60,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return (0, longExpo_, vaultExpo_);
         }
 
-        // fund = (+-) ((longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
+        // ImbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
+        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) + _EMA
+        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
         int256 numerator = longExpo_ - vaultExpo_;
@@ -66,6 +70,26 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (numerator == 0) {
             return (_EMA, longExpo_, vaultExpo_);
         }
+
+        int256 mulRes = vaultExpo_ * longExpo_;
+        if (mulRes < 0) {
+            // if the product is negative, then vaultExpo_ or longExpo_ is negative
+            if (vaultExpo_ < 0) {
+                // if vaultExpo_ is negative, then we cap the inbalance index to 1
+                return (int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
+            } else {
+                // if longExpo_ is negative, then we cap the inbalance index to -1
+                return (-int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
+            }
+        } else if (mulRes == 0 && (vaultExpo_ < 0 || longExpo_ < 0)) {
+            // if the product is zero, then vaultExpo_ or longExpo_ is zero
+            if (vaultExpo_ < 0) {
+                return (int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
+            } else {
+                return (-int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
+            }
+        }
+
         uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
         uint256 numerator_squared = uint256(numerator * numerator);
 
