@@ -27,13 +27,13 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     function _getActionablePendingActionHelper(function (uint256) external returns (PendingAction memory) func)
         internal
     {
-        wstETH.mint(address(this), 100_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         // there should be no pending action at this stage
         PendingAction memory action = func(0);
         assertTrue(action.action == ProtocolAction.None, "pending action before initiate");
         // initiate long
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        bytes memory priceData = abi.encode(2000 ether);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
         // the pending action is not yet actionable
         vm.prank(address(0)); // simulate front-end call by someone else
         action = func(0);
@@ -78,18 +78,19 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         wstETH.mint(USER_1, 100_000 ether);
         wstETH.mint(USER_2, 100_000 ether);
         wstETH.mint(USER_3, 100_000 ether);
+        bytes memory priceData = abi.encode(2000 ether);
         // Setup 3 pending actions
         vm.startPrank(USER_1);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
         vm.stopPrank();
         vm.startPrank(USER_2);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
         vm.stopPrank();
         vm.startPrank(USER_3);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
         vm.stopPrank();
 
         // Simulate the second item in the queue being empty (sets it to zero values)
@@ -182,7 +183,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         wstETH.mint(address(this), 100_000 ether);
         wstETH.approve(address(protocol), type(uint256).max);
         // initiate long
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), "");
+        bytes memory priceData = abi.encode(2000 ether);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
         // the pending action is actionable after the validation deadline
         skip(protocol.validationDeadline() + 1);
         vm.prank(address(0)); // simulate front-end call by someone else
@@ -258,5 +260,40 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(longAction.closeTempTransfer, action.var6, "action transfer");
         PendingAction memory result = protocol.i_convertLongPendingAction(longAction);
         _assertActionsEqual(action, result, "long pending action conversion");
+    }
+
+    /**
+     * @custom:scenario Validate a user's pending position which is actionable at the same time as another user's
+     * pending action.
+     * @custom:given Two users have initiated deposits
+     * @custom:and The validation deadline has elapsed for both of them
+     * @custom:when The second user validates their pending position
+     * @custom:then Both positions are validated
+     */
+    function test_twoPending() public {
+        wstETH.mint(USER_1, 100_000 ether);
+        wstETH.mint(USER_2, 100_000 ether);
+        bytes memory data1 = abi.encode(2000 ether);
+        bytes memory data2 = abi.encode(2100 ether);
+        // Setup 2 pending actions
+        vm.startPrank(USER_1);
+        wstETH.approve(address(protocol), type(uint256).max);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, data1, "");
+        vm.stopPrank();
+        skip(30);
+        vm.startPrank(USER_2);
+        wstETH.approve(address(protocol), type(uint256).max);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, data2, "");
+        vm.stopPrank();
+
+        // Wait
+        skip(protocol.validationDeadline() + 1);
+
+        // Second user tries to validate their action
+        vm.prank(USER_2);
+        protocol.validateOpenPosition(data2, data1);
+        // No more pending action
+        PendingAction memory action = protocol.getActionablePendingAction(0);
+        assertEq(action.user, address(0));
     }
 }

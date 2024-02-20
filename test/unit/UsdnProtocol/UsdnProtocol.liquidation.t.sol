@@ -1,40 +1,45 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature The `_liquidatePositions` function of `UsdnProtocol`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
-    using Strings for uint256;
-
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /* @custom:scenario Simulate user open positions then
      * a price drawdown and liquidations by other user action.
      * @custom:given User open positions
-     * @custom:and Block number increase 20
-     * @custom:and Simulate a -20% asset price drawdown
+     * @custom:and Simulate a price drawdown
      * @custom:when User execute any protocol action
      * @custom:then Should execute liquidations.
      * @custom:and Change contract state.
      */
     function test_openUserLiquidation() public {
-        // mock initiate open
-        (int24 initialTick, uint256 initialTickVersion) =
-            mockInitiateOpenPosition(20 ether, true, getUsers(users.length));
+        bytes memory priceData = abi.encode(2000 ether);
+        int24 initialTick;
+        uint256 initialTickVersion;
+
+        for (uint256 i; i < 10; i++) {
+            vm.startPrank(users[i]);
+            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            protocol.validateOpenPosition(priceData, "");
+            vm.stopPrank();
+        }
+
         assertEq(protocol.tickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
         // check if first total expo match initial value
-        assertEq(protocol.totalExpo(), 1279.160193290303186162 ether, "wrong first totalExpo");
+        assertEq(protocol.totalExpo(), 296.963358326784799008 ether, "wrong first totalExpo");
         // check if first tick match initial value
         assertEq(initialTick, 74_300, "wrong first tick");
         // check if first total expo by tick match initial value
-        assertEq(protocol.totalExpoByTick(initialTick), 1269.24022302059972399 ether, "wrong first totalExpoByTick");
+        assertEq(protocol.totalExpoByTick(initialTick), 287.043388057081336836 ether, "wrong first totalExpoByTick");
         // check if first long position length match initial value
         assertEq(protocol.longPositionsLength(initialTick), 10, "wrong first longPositionsLength");
         // check if first position in tick match initial value
@@ -44,25 +49,21 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if first total long positions match initial value
         assertEq(protocol.totalLongPositions(), 12, "wrong first totalLongPositions");
 
-        uint8 blockDiff = 20;
-        // increment 20 block (20% drawdown)
-        // to reach liquidation price
-        vm.roll(block.number + blockDiff); // block number
-        // increment timestamp equivalent required by pnl
-        vm.warp(block.timestamp + blockDiff * 12);
-
-        // get price info
-        (uint256 price,) = getPriceInfo(block.number);
+        skip(1 hours);
+        priceData = abi.encode(1650 ether);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, price, 1_685_288_110_474_005_806_012);
-        // second mock init open position
-        mockInitiateOpenPosition(20 ether, true, getUsers(users.length / 2));
+        emit IUsdnProtocolEvents.LiquidatedTick(
+            74_300, 0, 1650 ether, 1_688_815_144_732_329_473_166, -935_242_956_302_638_122
+        );
+        // initiate a position to liquidate all other positions
+        protocol.initiateOpenPosition(5 ether, 500 ether, priceData, "");
+        protocol.validateOpenPosition(priceData, "");
 
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
         // check if second total expo is equal expected value
-        assertEq(protocol.totalExpo(), 674.259791896018391982 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 17.023168373873640093 ether, "wrong second totalExpo");
         // check if second total expo by tick is equal expected value
         assertEq(protocol.totalExpoByTick(initialTick), 0, "wrong second totalExpoByTick");
         // check if second long position length is equal expected value
@@ -70,9 +71,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if second position in tick is equal expected value
         assertEq(protocol.positionsInTick(initialTick), 0, "wrong second positionsInTick");
         // check if second max initialized is equal expected value
-        assertEq(protocol.maxInitializedTick(), 72_100, "wrong second maxInitializedTick");
+        assertEq(protocol.maxInitializedTick(), 69_000, "wrong second maxInitializedTick");
         // check if second total long positions is equal expected value
-        assertEq(protocol.totalLongPositions(), 7, "wrong second totalLongPositions");
+        assertEq(protocol.totalLongPositions(), 3, "wrong second totalLongPositions");
     }
 
     /* @custom:scenario Simulate user open positions then
@@ -85,16 +86,24 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and Change contract state.
      */
     function test_openLiquidatorLiquidation() public {
-        // mock initiate open
-        (int24 initialTick, uint256 initialTickVersion) =
-            mockInitiateOpenPosition(20 ether, true, getUsers(users.length));
+        bytes memory priceData = abi.encode(2000 ether);
+        int24 initialTick;
+        uint256 initialTickVersion;
+
+        for (uint256 i; i < 10; i++) {
+            vm.startPrank(users[i]);
+            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            protocol.validateOpenPosition(priceData, "");
+            vm.stopPrank();
+        }
+
         assertEq(protocol.tickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
         // check if first total expo match initial value
-        assertEq(protocol.totalExpo(), 1279.160193290303186162 ether, "wrong first totalExpo");
+        assertEq(protocol.totalExpo(), 296.963358326784799008 ether, "wrong first totalExpo");
         // check if first tick match initial value
         assertEq(initialTick, 74_300, "wrong first tick");
         // check if first total expo by tick match initial value
-        assertEq(protocol.totalExpoByTick(initialTick), 1269.24022302059972399 ether, "wrong first totalExpoByTick");
+        assertEq(protocol.totalExpoByTick(initialTick), 287.043388057081336836 ether, "wrong first totalExpoByTick");
         // check if first long position length match initial value
         assertEq(protocol.longPositionsLength(initialTick), 10, "wrong first longPositionsLength");
         // check if first position in tick match initial value
@@ -104,17 +113,13 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if first total long positions match initial value
         assertEq(protocol.totalLongPositions(), 12, "wrong first totalLongPositions");
 
-        uint8 blockDiff = 20;
-        // increment 20 block (20% drawdown)
-        // to reach liquidation price
-        vm.roll(block.number + blockDiff); // block number
-        // increment timestamp equivalent required by pnl
-        vm.warp(block.timestamp + blockDiff * 12);
-        // get price info
-        (uint256 price, bytes memory priceData) = getPriceInfo(block.number);
+        skip(1 hours);
+        priceData = abi.encode(1000 ether);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, price, 1_685_288_110_474_005_806_012);
+        emit IUsdnProtocolEvents.LiquidatedTick(
+            74_300, 0, 1000 ether, 1_692_433_992_483_044_329_810, -189_139_551_501_115_192_972
+        );
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
 
@@ -137,8 +142,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     /* @custom:scenario Simulate user open positions on many different tick then
      * a price drawdown and liquidations by liquidators.
      * @custom:given User open positions
-     * @custom:and Block number increase 20
-     * @custom:and Simulate a -20% asset price drawdown
+     * @custom:and Simulate a 20 price drawdown
      * @custom:when Liquidators execute liquidate once
      * @custom:then Should execute liquidations partially.
      * @custom:and Change contract state.
@@ -147,139 +151,62 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and Change contract state.
      */
     function test_openLiquidatorPartialLiquidation() public {
-        // get all funded users
-        address[] memory allUsers = getUsers(users.length);
-        // users count
-        uint256 length = allUsers.length;
-        // sorted user array
-        address[][] memory splitUsers = new address[][](length);
-        // users split into many single user arrays
-        for (uint256 i; i != length; i++) {
-            // array of unique user
-            address[] memory standaloneUser = new address[](1);
-            // store user
-            standaloneUser[0] = allUsers[i];
-            // store array
-            splitUsers[i] = standaloneUser;
-        }
-
-        // array of initials tick by user
+        uint256 length = users.length;
         int24[] memory initialTicks = new int24[](length);
+        uint256 actualPrice = 2000 ether;
+        bytes memory priceData = abi.encode(actualPrice);
 
-        // all open positions
-        for (uint256 i; i != length; i++) {
-            // open user position and store related initial tick
-            (initialTicks[i],) = mockInitiateOpenPosition(20 ether, true, splitUsers[i]);
-            // block change to move price below
-            uint8 blockJump = 1;
-            // increment 1 block (1% drawdown)
-            vm.roll(block.number + blockJump);
-            // increment timestamp equivalent required by pnl
-            vm.warp(block.timestamp + blockJump * 12);
+        for (uint256 i; i < length; i++) {
+            vm.startPrank(users[i]);
+            (initialTicks[i],,) =
+                protocol.initiateOpenPosition(20 ether, uint128(actualPrice * 80 / 100), priceData, "");
+            protocol.validateOpenPosition(priceData, "");
+            vm.stopPrank();
+            // 20 eth drawdown
+            actualPrice -= 20 ether;
+            priceData = abi.encode(actualPrice);
+            skip(1 hours);
         }
 
         // check if positions aren't liquidated
         for (uint256 i; i != length; i++) {
-            // check if first tickVersion
-            // match initial value
-            assertEq(
-                protocol.tickVersion(initialTicks[i]),
-                0,
-                string.concat(
-                    "wrong first tickVersion of user index ",
-                    i.toString(),
-                    " in tick ",
-                    uint256(uint24(initialTicks[i])).toString()
-                )
-            );
-            // check if first long position
-            // length match initial value
-            assertEq(
-                protocol.longPositionsLength(initialTicks[i]),
-                1,
-                string.concat(
-                    "wrong first longPositionsLength of user index ",
-                    i.toString(),
-                    " in tick ",
-                    uint256(uint24(initialTicks[i])).toString()
-                )
-            );
-            // check if first position
-            // in tick match initial value
-            assertEq(
-                protocol.positionsInTick(initialTicks[i]),
-                1,
-                string.concat(
-                    "wrong first positionsInTick of user index ",
-                    i.toString(),
-                    " in tick ",
-                    uint256(uint24(initialTicks[i])).toString()
-                )
-            );
+            // check if first tickVersion match initial value
+            assertEq(protocol.tickVersion(initialTicks[i]), 0, "wrong first tickVersion");
+            // check if first long position length match initial value
+            assertEq(protocol.longPositionsLength(initialTicks[i]), 1, "wrong first longPositionsLength");
+            // check if first position in tick match initial value
+            assertEq(protocol.positionsInTick(initialTicks[i]), 1, "wrong first positionsInTick");
         }
         // check if first total expo match initial value
-        assertEq(protocol.totalExpo(), 1296.493905149732798864 ether, "wrong first totalExpo");
+        assertEq(protocol.totalExpo(), 919.612850158895235602 ether, "wrong first totalExpo");
         // check if first max initialized match initial value
-        assertEq(protocol.maxInitializedTick(), 74_300, "wrong first maxInitializedTick");
+        assertEq(protocol.maxInitializedTick(), 73_700, "wrong first maxInitializedTick");
         // check if first total long positions match initial value
         assertEq(protocol.totalLongPositions(), 12, "wrong first totalLongPositions");
 
-        uint16 blockDiff = 20;
-        // increment 20 block (20% drawdown)
-        // to reach liquidation price
-        vm.roll(block.number + blockDiff); // block number
-        // increment timestamp equivalent required by pnl
-        vm.warp(block.timestamp + blockDiff * 12);
-        // get price info
-        (uint256 price, bytes memory priceData) = getPriceInfo(block.number);
-
+        priceData = abi.encode(1000 ether);
+        skip(1 hours);
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, price, 1_685_353_682_060_324_318_474);
-
+        emit IUsdnProtocolEvents.LiquidatedTick(
+            73_700, 0, 1000 ether, 1_670_642_472_857_010_068_786, -57_309_405_688_495_992_160
+        );
         // liquidator first liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
 
         // half users should be liquidated
         for (uint256 i; i != length / 2; i++) {
             // check if second tickVersion is updated
-            assertEq(
-                protocol.tickVersion(initialTicks[i]),
-                1,
-                string.concat(
-                    "wrong second tickVersion of user index ",
-                    i.toString(),
-                    " in tick ",
-                    uint256(uint24(initialTicks[i])).toString()
-                )
-            );
+            assertEq(protocol.tickVersion(initialTicks[i]), 1, "wrong second tickVersion");
             // check if second long position is updated
-            assertEq(
-                protocol.longPositionsLength(initialTicks[i]),
-                0,
-                string.concat(
-                    "wrong second longPositionsLength of user index ",
-                    i.toString(),
-                    " in tick ",
-                    uint256(uint24(initialTicks[i])).toString()
-                )
-            );
+            assertEq(protocol.longPositionsLength(initialTicks[i]), 0, "wrong second longPositionsLength");
             // check if second long position is updated
-            assertEq(
-                protocol.positionsInTick(initialTicks[i]),
-                0,
-                string.concat(
-                    "wrong second positionsInTick of user index ",
-                    i.toString(),
-                    " in tick ",
-                    uint256(uint24(initialTicks[i])).toString()
-                )
-            );
+            assertEq(protocol.positionsInTick(initialTicks[i]), 0, "wrong second positionsInTick");
         }
 
         // check if second total expo match expected value
-        assertEq(protocol.totalExpo(), 659.375302525282236974 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 463.527850795228512713 ether, "wrong second totalExpo");
         // check if second max initialized match expected value
-        assertEq(protocol.maxInitializedTick(), 73_800, "wrong second maxInitializedTick");
+        assertEq(protocol.maxInitializedTick(), 73_000, "wrong second maxInitializedTick");
         // check if second total long positions match expected value
         assertEq(protocol.totalLongPositions(), 7, "wrong second totalLongPositions");
 
@@ -289,38 +216,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // all users should be liquidated
         for (uint256 i = length / 2; i != length; i++) {
             // check if second tickVersion is updated
-            assertEq(
-                protocol.tickVersion(initialTicks[i]),
-                1,
-                string.concat(
-                    "wrong second tickVersion of user index ",
-                    i.toString(),
-                    " in tick ",
-                    uint256(uint24(initialTicks[i])).toString()
-                )
-            );
+            assertEq(protocol.tickVersion(initialTicks[i]), 1, "wrong second tickVersion in tick");
             // check if second long position is updated
-            assertEq(
-                protocol.longPositionsLength(initialTicks[i]),
-                0,
-                string.concat(
-                    "wrong second longPositionsLength of user index ",
-                    i.toString(),
-                    " in tick ",
-                    uint256(uint24(initialTicks[i])).toString()
-                )
-            );
+            assertEq(protocol.longPositionsLength(initialTicks[i]), 0, "wrong second longPositionsLength in tick");
             // check if second long position is updated
-            assertEq(
-                protocol.positionsInTick(initialTicks[i]),
-                0,
-                string.concat(
-                    "wrong second positionsInTick of user index ",
-                    i.toString(),
-                    " in tick ",
-                    uint256(uint24(initialTicks[i])).toString()
-                )
-            );
+            assertEq(protocol.positionsInTick(initialTicks[i]), 0, "wrong second positionsInTick in tick");
         }
 
         // check if second total expo match expected value
@@ -331,33 +231,31 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(protocol.totalLongPositions(), 2, "wrong second totalLongPositions");
     }
 
-    /* @custom:scenario Simulate user open positions then
-     * a price drawdown and liquidations by liquidators.
-     * @custom:given User open positions
-     * @custom:and Block number increase 20
-     * @custom:and Simulate a -20% asset price drawdown
-     * @custom:when Liquidators execute liquidate
-     * @custom:then Should execute liquidations.
-     * @custom:and Change contract state.
+    /* @custom:scenario Simulate user open positions on many different tick then
+     * a price drawdown and liquidation with maxLiquidationIteration + 1
+     * @custom:given Users open positions
+     * @custom:and Simulate a 50% price drawdown
+     * @custom:when Liquidators execute liquidate with maxLiquidationIteration + 1
      */
     function test_openLiquidatorLiquidationAboveMax() public {
-        // mock initiate open
-        (int24 initialTick, uint256 initialTickVersion) =
-            mockInitiateOpenPosition(20 ether, true, getUsers(users.length));
+        bytes memory priceData = abi.encode(2000 ether);
+        int24 initialTick;
+        uint256 initialTickVersion;
+
+        for (uint256 i; i < 10; i++) {
+            vm.startPrank(users[i]);
+            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            protocol.validateOpenPosition(priceData, "");
+            vm.stopPrank();
+        }
+
         // max liquidation iteration constant
         uint16 maxLiquidationIteration = protocol.maxLiquidationIteration();
         // check if first tick version match initial value
         assertEq(protocol.tickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
 
-        uint8 blockDiff = 20;
-        // increment 20 block (20% drawdown)
-        // to reach liquidation price
-        vm.roll(block.number + blockDiff); // block number
-        // increment timestamp equivalent required by pnl
-        vm.warp(block.timestamp + blockDiff * 12);
-        // get price info
-        (, bytes memory priceData) = getPriceInfo(block.number);
-        // liquidator liquidation
+        skip(1 hours);
+        priceData = abi.encode(1000 ether);
         protocol.liquidate(priceData, maxLiquidationIteration + 1);
 
         // check if second tick version is updated properly
@@ -377,8 +275,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function test_liquidatedByFundingRates() public {
         uint128 currentPrice = 2000 ether;
 
-        wstETH.mint(address(this), 1_000_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 1_000_000 ether, address(protocol), type(uint256).max);
 
         bytes memory priceData = abi.encode(uint128(currentPrice));
 
@@ -396,21 +293,60 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256 initialMultiplier = protocol.liquidationMultiplier();
 
         uint128 liqPrice = protocol.getEffectivePriceForTick(tick);
-        assertLt(liqPrice, currentPrice);
+        assertLt(liqPrice, currentPrice, "liquidation price >= current price");
 
-        // Wait 4 days so that funding rates make the liquidation price of those positions go up
-        skip(4 days);
+        // Wait 1 day so that funding rates make the liquidation price of those positions go up
+        skip(1 days);
 
         // Adjust balances, multiplier and liquidate positions
         uint256 liquidated = protocol.liquidate(priceData, 0);
 
-        assertEq(liquidated, 1); // the liquidation price for the high risk position went above the current price
+        // the liquidation price for the high risk position went above the current price
+        assertEq(liquidated, 1, "liquidation failed");
         liqPrice = protocol.getEffectivePriceForTick(tick);
-        assertGt(liqPrice, currentPrice);
-        assertGt(protocol.liquidationMultiplier(), initialMultiplier);
+        assertGt(liqPrice, currentPrice, "liquidation price <= current price");
+        assertGt(protocol.liquidationMultiplier(), initialMultiplier, "multiplier did not grow");
 
         // the position doesn't exist anymore
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion));
         protocol.getLongPosition(tick, tickVersion, index);
     }
+
+    /**
+     * @custom:scenario The user sends too much ether when liquidating positions
+     * @custom:given The user performs a liquidation
+     * @custom:when The user sends 0.5 ether as value in the `liquidate` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_liquidateEtherRefund() public {
+        uint256 initialTotalPos = protocol.totalLongPositions();
+        uint128 currentPrice = 2000 ether;
+        bytes memory priceData = abi.encode(currentPrice);
+
+        wstETH.mint(address(this), 1_000_000 ether);
+        wstETH.approve(address(protocol), type(uint256).max);
+
+        // create high risk position
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(5 ether, 9 * currentPrice / 10, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        protocol.validateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
+        }(priceData, "");
+        assertEq(protocol.totalLongPositions(), initialTotalPos + 1, "total positions after create");
+
+        // liquidate
+        currentPrice = 1000 ether;
+        priceData = abi.encode(currentPrice);
+
+        uint256 balanceBefore = address(this).balance;
+        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation);
+        protocol.liquidate{ value: 0.5 ether }(priceData, 1);
+        assertEq(protocol.totalLongPositions(), initialTotalPos, "total positions after liquidate");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    // test refunds
+    receive() external payable { }
 }

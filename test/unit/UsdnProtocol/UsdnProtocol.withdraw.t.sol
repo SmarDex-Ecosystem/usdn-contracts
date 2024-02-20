@@ -20,8 +20,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mint(address(this), INITIAL_WSTETH_BALANCE);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), INITIAL_WSTETH_BALANCE);
         usdn.approve(address(protocol), type(uint256).max);
         // user deposits wstETH at price $2000
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
@@ -93,8 +92,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with `UsdnProtocolZeroAmount`
      */
     function test_RevertWhen_zeroAmount() public {
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateWithdrawal(0, abi.encode(uint128(2000 ether)), "");
+        protocol.initiateWithdrawal(0, currentPrice, "");
     }
 
     /**
@@ -103,13 +103,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $3000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.425342622211128970
+     * @custom:then The user's wstETH balance increases by 0.425407343332072355
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425342622211128970
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425407343332072355
      */
     function test_validateWithdrawPriceUp() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.42534262221112897 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.425407343332072355 ether);
     }
 
     /**
@@ -118,13 +118,49 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $2000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.455138149105204420
+     * @custom:then The user's wstETH balance increases by 0.455215849315210042
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.455138149105204420
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.455215849315210042
      */
     function test_validateWithdrawPriceDown() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.45513814910520442 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.455215849315210042 ether);
+    }
+
+    /**
+     * @custom:scenario The user sends too much ether when initiating a withdrawal
+     * @custom:given The user withdraws 1 wstETH
+     * @custom:when The user sends 0.5 ether as value in the `initiateWithdrawal` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_initiateWithdrawEtherRefund() public {
+        oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
+        uint256 balanceBefore = address(this).balance;
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
+        protocol.initiateWithdrawal{ value: validationCost }(USDN_AMOUNT, currentPrice, "");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario The user sends too much ether when validating a withdrawal
+     * @custom:given The user initiated a withdrawal of 1000 USDN and validates it
+     * @custom:when The user sends 0.5 ether as value in the `validateWithdrawal` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_validateWithdrawEtherRefund() public {
+        oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
+        // initiate
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
+        protocol.initiateWithdrawal{ value: validationCost }(USDN_AMOUNT, currentPrice, "");
+
+        skip(oracleMiddleware.validationDelay() + 1);
+        // validate
+        validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateWithdrawal);
+        uint256 balanceBefore = address(this).balance;
+        protocol.validateWithdrawal{ value: 0.5 ether }(currentPrice, "");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
     /**
@@ -164,4 +200,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");
         assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance + withdrawnAmount, "final wstETH balance");
     }
+
+    // test refunds
+    receive() external payable { }
 }

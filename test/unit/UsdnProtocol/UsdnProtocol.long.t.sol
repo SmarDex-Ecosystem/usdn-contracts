@@ -13,8 +13,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mint(address(this), 100_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /**
@@ -61,7 +60,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_031_271_466_416, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_002_844_036_506, "wrong minimum liquidation price");
     }
 
     /**
@@ -72,9 +71,9 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_getMinLiquidationPrice_multiplierLtOne() public {
         bytes memory priceData = abi.encode(4000 ether);
 
-        protocol.initiateDeposit(500 ether, priceData, "");
+        protocol.initiateDeposit(5000 ether, priceData, "");
         protocol.validateDeposit(priceData, "");
-        skip(1 days);
+        skip(6 days);
         protocol.initiateDeposit(1, priceData, "");
         protocol.validateDeposit(priceData, "");
 
@@ -83,7 +82,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_032_796_759_627, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_032_217_700_168, "wrong minimum liquidation price");
     }
 
     /**
@@ -145,5 +144,36 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         value = protocol.positionValue(2000 ether, 750 ether, 1 ether, uint128(4 * 10 ** protocol.LEVERAGE_DECIMALS()));
         assertEq(value, 2.5 ether, "current price 2000 leverage 4x");
+    }
+
+    /**
+     * @custom:scenario Check calculations of the `tickValue` function
+     * @custom:given A tick with total expo 10 wstETH and a liquidation price around $500
+     * @custom:when The current price is equal to the liquidation price without penalty
+     * @custom:or the current price is 2x the liquidation price without penalty
+     * @custom:or the current price is 0.5x the liquidation price without penalty
+     * @custom:or the current price is equal to the liquidation price with penalty
+     * @custom:then The tick value is 0 if the price is equal to the liquidation price without penalty
+     * @custom:or the tick value is 5 wstETH if the price is 2x the liquidation price without penalty
+     * @custom:or the tick value is -10 wstETH if the price is 0.5x the liquidation price without penalty
+     * @custom:or the tick value is 0.198003465594229687 wstETH if the price is equal to the liquidation price with
+     * penalty
+     */
+    function test_tickValue() public {
+        int24 tick = protocol.getEffectiveTickForPrice(500 ether);
+        uint128 liqPriceWithoutPenalty =
+            protocol.getEffectivePriceForTick(tick - int24(protocol.liquidationPenalty()) * protocol.tickSpacing());
+
+        int256 value = protocol.i_tickValue(liqPriceWithoutPenalty, tick, 10 ether);
+        assertEq(value, 0, "current price = liq price");
+
+        value = protocol.i_tickValue(liqPriceWithoutPenalty * 2, tick, 10 ether);
+        assertEq(value, 5 ether, "current price = 2x liq price");
+
+        value = protocol.i_tickValue(liqPriceWithoutPenalty / 2, tick, 10 ether);
+        assertEq(value, -10 ether, "current price = 0.5x liq price");
+
+        value = protocol.i_tickValue(protocol.getEffectivePriceForTick(tick), tick, 10 ether);
+        assertEq(value, 0.198003465594229687 ether, "current price = liq price with penalty");
     }
 }

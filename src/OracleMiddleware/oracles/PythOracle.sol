@@ -12,11 +12,14 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
  * @notice This contract is used to get the price of an asset from pyth. It is used by the USDN protocol to get the
  * price of the USDN underlying asset.
  */
-contract PythOracle is IOracleMiddlewareErrors {
+abstract contract PythOracle is IOracleMiddlewareErrors {
     uint256 private constant DECIMALS = 8;
 
     bytes32 internal immutable _priceID;
     IPyth internal immutable _pyth;
+
+    /// @notice The maximum age of a recent price to be considered valid
+    uint64 internal _recentPriceDelay = 45 seconds;
 
     constructor(address pythAddress, bytes32 pythPriceID) {
         _pyth = IPyth(pythAddress);
@@ -26,6 +29,7 @@ contract PythOracle is IOracleMiddlewareErrors {
     /**
      * @notice Get the price of the asset from pyth
      * @param priceUpdateData The data required to update the price feed
+     * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices.
      * @return price_ The price of the asset
      */
     function getPythPrice(bytes calldata priceUpdateData, uint64 targetTimestamp)
@@ -39,12 +43,37 @@ contract PythOracle is IOracleMiddlewareErrors {
         bytes[] memory pricesUpdateData = new bytes[](1);
         pricesUpdateData[0] = priceUpdateData;
 
-        PythStructs.PriceFeed[] memory priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: msg.value }(
-            pricesUpdateData, priceIds, targetTimestamp, type(uint64).max
-        );
+        uint256 pythFee = _pyth.getUpdateFee(pricesUpdateData);
+        if (msg.value < pythFee) {
+            revert OracleMiddlewareInsufficientFee();
+        }
+        PythStructs.PriceFeed[] memory priceFeeds;
+        if (targetTimestamp == 0) {
+            // we want to validate that the price is recent
+            // we don't enforce that the price update is the first one in a given second
+            priceFeeds = _pyth.parsePriceFeedUpdates{ value: pythFee }(
+                pricesUpdateData, priceIds, uint64(block.timestamp) - _recentPriceDelay, uint64(block.timestamp)
+            );
+        } else {
+            // we want to validate that the price is exactly at targetTimestamp (first in the second) or the next
+            // available price in the future, as identified by the prevPublishTime being strictly less than
+            // targetTimestamp
+            priceFeeds = _pyth.parsePriceFeedUpdatesUnique{ value: pythFee }(
+                pricesUpdateData, priceIds, targetTimestamp, type(uint64).max
+            );
+        }
 
         if (priceFeeds[0].price.price < 0) {
             revert OracleMiddlewareWrongPrice(priceFeeds[0].price.price);
+        }
+
+        // refund unused ether
+        if (address(this).balance > 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = payable(msg.sender).call{ value: address(this).balance }("");
+            if (!success) {
+                revert OracleMiddlewareEtherRefundFailed();
+            }
         }
 
         return priceFeeds[0].price;
@@ -53,6 +82,7 @@ contract PythOracle is IOracleMiddlewareErrors {
     /**
      * @notice Get the price of the asset from pyth, formatted to the specified number of decimals
      * @param priceUpdateData The data required to update the price feed
+     * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices.
      * @param _decimals The number of decimals to format the price to
      */
     function getFormattedPythPrice(bytes calldata priceUpdateData, uint64 targetTimestamp, uint256 _decimals)
@@ -103,5 +133,13 @@ contract PythOracle is IOracleMiddlewareErrors {
      */
     function priceID() public view returns (bytes32) {
         return _priceID;
+    }
+
+    /**
+     * @notice Get the recent price delay
+     * @return recentPriceDelay_ The maximum age of a recent price to be considered valid
+     */
+    function getRecentPriceDelay() external view returns (uint64) {
+        return _recentPriceDelay;
     }
 }

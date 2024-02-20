@@ -1,19 +1,19 @@
 {
   "name": "@usdn/usdn-contracts",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:Blockchain-RA2-Tech/usdn-contracts.git",
   "author": "RA2 Tech",
   "license": "BUSL-1.1",
   "scripts": {
     "prepare": "husky install",
-    "snapshot": "FOUNDRY_PROFILE=ci forge clean && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\"",
-    "snapshot:check": "FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --check",
+    "snapshot": "FOUNDRY_PROFILE=ci forge clean && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --offline",
+    "snapshot:check": "FOUNDRY_PROFILE=ci forge build && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --check --offline",
     "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",
     "cov": "forge coverage --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",
     "cov:html": "forge coverage --report lcov --no-match-test \"(FFI|Fork|Fuzz|invariant)\" && genhtml -o .coverage lcov.info && open .coverage/index.html",
     "test": "forge test -vvv",
-    "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\"",
+    "quicktest": "forge test -vvv --no-match-test \"(FFI|Fuzz|invariant)\" --offline",
     "format": "forge fmt",
     "format:js": "npx @biomejs/biome format . --write",
     "lint": "solhint 'src/**/*.sol'",
@@ -23,9 +23,13 @@
     "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf lib && forge clean && npm i && forge install"
   },
   "main": "dist/index.js",
-  "files": ["dist", "broadcast", "docs"],
+  "files": [
+    "dist",
+    "broadcast",
+    "docs"
+  ],
   "devDependencies": {
-    "@biomejs/biome": "1.4.0",
+    "@biomejs/biome": "^1.5.3",
     "@chainlink/contracts": "^0.8.0",
     "@openzeppelin/contracts": "^5.0.0",
     "@pythnetwork/pyth-sdk-solidity": "^2.3.0",

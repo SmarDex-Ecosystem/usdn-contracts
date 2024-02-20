@@ -6,6 +6,12 @@ pragma solidity 0.8.20;
  * @notice Errors for the USDN Protocol
  */
 interface IUsdnProtocolErrors {
+    /// @notice Not enough ether was provided to cover the cost of price validation
+    error UsdnProtocolInsufficientOracleFee();
+
+    /// @dev Indicates that the sender could not accept the ether refund
+    error UsdnProtocolEtherRefundFailed();
+
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();
 
@@ -14,6 +20,9 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided USDN contract has a total supply above zero at deployment
     error UsdnProtocolInvalidUsdn(address usdnAddress);
+
+    /// @dev Indicates that the asset decimals are invalid
+    error UsdnProtocolInvalidAssetDecimals(uint8 assetDecimals);
 
     /// @dev Indicates that the user is not allowed to perform an action
     error UsdnProtocolUnauthorized();
@@ -50,4 +59,10 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided protocol fee exceeds the maximum allowed
     error UsdnProtocolMaxProtocolFeeExceeded();
+
+    /// @dev Indicates that the provided fee percentage is invalid (> 100%)
+    error UsdnProtocolInvalidProtocolFeeBps();
+
+    /// @dev Indicates that the provided fee collector address is invalid
+    error UsdnProtocolInvalidFeeCollector();
 }

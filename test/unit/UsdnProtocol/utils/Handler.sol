@@ -4,12 +4,16 @@ pragma solidity 0.8.20;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {
-    PendingAction, VaultPendingAction, LongPendingAction
+    PendingAction,
+    VaultPendingAction,
+    LongPendingAction,
+    ProtocolAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 /**
@@ -19,9 +23,13 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 contract UsdnProtocolHandler is UsdnProtocol {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
-    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
-        UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing)
-    { }
+    constructor(
+        IUsdn usdn,
+        IERC20Metadata asset,
+        IOracleMiddleware oracleMiddleware,
+        int24 tickSpacing,
+        address feeCollector
+    ) UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing, feeCollector) { }
 
     // tick version
     function tickVersion(int24 _tick) external view returns (uint256) {
@@ -54,6 +62,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
     // max initialized tick
     function maxInitializedTick() external view returns (int24) {
         return _maxInitializedTick;
+    }
+
+    // Exponential Moving Average
+    function EMA() external view returns (int256) {
+        return _EMA;
     }
 
     // total long position
@@ -143,6 +156,18 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return PROTOCOL_FEE_DENOMINATOR;
     }
 
+    function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
+        return _vaultTradingExpo(currentPrice);
+    }
+
+    function i_longTradingExpo(uint128 currentPrice) external view returns (int256) {
+        return _longTradingExpo(currentPrice);
+    }
+
+    function i_lastFunding() external view returns (int256) {
+        return _lastFunding;
+    }
+
     function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {
         return _toVaultPendingAction(action);
     }
@@ -163,14 +188,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _convertLongPendingAction(action);
     }
 
-    function i_retrieveAssetsAndCheckBalance(address from, uint256 amount) external {
-        _retrieveAssetsAndCheckBalance(from, amount);
-    }
-
-    function i_distributeAssetsAndCheckBalance(address to, uint256 amount) external {
-        _distributeAssetsAndCheckBalance(to, amount);
-    }
-
     function i_assetToTransfer(int24 tick, uint256 amount, uint128 leverage, uint256 liqMultiplier)
         external
         view
@@ -185,5 +202,17 @@ contract UsdnProtocolHandler is UsdnProtocol {
         returns (uint256 value_)
     {
         return _positionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
+    }
+
+    function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {
+        return _tickValue(currentPrice, tick, tickTotalExpo);
+    }
+
+    function i_getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
+        external
+        payable
+        returns (PriceInfo memory)
+    {
+        return _getOraclePrice(action, timestamp, priceData);
     }
 }

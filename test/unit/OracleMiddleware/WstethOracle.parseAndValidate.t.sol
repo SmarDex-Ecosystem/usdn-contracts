@@ -54,9 +54,9 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
             string memory errorMessage =
                 string.concat("Wrong wsteth oracle middleware price for action: ", uint256(action).toString());
 
-            PriceInfo memory price = wstethOracle.parseAndValidatePrice(
-                uint128(block.timestamp - wstethOracle.validationDelay()), action, abi.encode("data")
-            );
+            PriceInfo memory price = wstethOracle.parseAndValidatePrice{
+                value: wstethOracle.validationCost(abi.encode("data"), action)
+            }(uint128(block.timestamp - wstethOracle.validationDelay()), action, abi.encode("data"));
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
@@ -65,10 +65,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
                 );
             }
             // Price - conf
-            else if (
-                action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.ValidateDeposit
-                    || action == ProtocolAction.Liquidation
-            ) {
+            else if (action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.ValidateDeposit) {
                 assertEq(
                     price.price, stethToWsteth(FORMATTED_STETH_PRICE - STETH_CONF_RATIO, STETH_PER_TOKEN), errorMessage
                 );

@@ -10,7 +10,7 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
  * @notice This contract is used to get the price of an asset from Chainlink. It is used by the USDN protocol to get the
  * price of the USDN underlying asset.
  */
-contract ChainlinkOracle is IOracleMiddlewareErrors {
+abstract contract ChainlinkOracle is IOracleMiddlewareErrors {
     /// @notice Chainlink price feed aggregator contract
     AggregatorV3Interface internal immutable _priceFeed;
 

@@ -11,28 +11,47 @@ import {
 } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware, Ownable {
-    uint8 constant DECIMALS = 18;
+    uint8 internal constant DECIMALS = 18;
     uint256 internal constant VALIDATION_DELAY = 24 seconds;
     uint16 private constant CONF_RATIO_DENOM = 10_000;
     uint16 private constant MAX_CONF_RATIO = CONF_RATIO_DENOM * 2;
     uint16 private _confRatio = 4000; // to divide by CONF_RATIO_DENOM
+    // if true, then the middleware requires a payment of 1 wei for any action
+    bool internal _requireValidationCost = false;
 
     constructor() Ownable(msg.sender) { }
 
     /// @inheritdoc IOracleMiddleware
-    function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction, bytes calldata data)
+    function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         external
         payable
         returns (PriceInfo memory)
     {
-        // TODO: return different timestamp depending on action?
         uint128 priceValue = abi.decode(data, (uint128));
         uint128 ts = targetTimestamp;
-        if (ts >= VALIDATION_DELAY) {
-            ts = ts - uint128(VALIDATION_DELAY); // simulate that we got the price 24 seconds ago
+        if (
+            action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
+                || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+                || action == ProtocolAction.Initialize
+        ) {
+            if (ts < 30 minutes) {
+                // avoid underflow
+                ts = 0;
+            } else {
+                ts -= 30 minutes; // simulate that we got the price 30 minutes ago
+            }
+        } else if (action == ProtocolAction.Liquidation) {
+            if (ts < 30 seconds) {
+                // avoid underflow
+                ts = 0;
+            } else {
+                ts -= 30 seconds; // for liquidation, simulate we got a recent timestamp
+            }
         } else {
-            ts = 0;
+            // for other actions, simulate we got the price from 24s after the initiate action
+            ts += uint128(VALIDATION_DELAY);
         }
+
         PriceInfo memory price = PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: uint48(ts) });
         return price;
     }
@@ -48,8 +67,8 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function validationCost(bytes calldata, ProtocolAction) external pure returns (uint256) {
-        return 1;
+    function validationCost(bytes calldata, ProtocolAction) external view returns (uint256) {
+        return _requireValidationCost ? 1 : 0;
     }
 
     /// @inheritdoc IOracleMiddleware
@@ -77,5 +96,13 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
             revert IOracleMiddlewareErrors.OracleMiddlewareConfRatioTooHigh();
         }
         _confRatio = newConfRatio;
+    }
+
+    function requireValidationCost() external view returns (bool) {
+        return _requireValidationCost;
+    }
+
+    function setRequireValidationCost(bool req) external {
+        _requireValidationCost = req;
     }
 }
