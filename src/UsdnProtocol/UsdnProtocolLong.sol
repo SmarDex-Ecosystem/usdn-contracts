@@ -276,50 +276,66 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         tick_ = compactTick * _tickSpacing;
     }
 
-    function _liquidatePositions(uint256 currentPrice, uint16 iteration) internal returns (uint256 liquidated_) {
+    function _liquidatePositions(
+        uint256 currentPrice,
+        uint16 iteration,
+        int256 tempLongBalance,
+        int256 tempVaultBalance
+    ) internal returns (uint256 liquidated_, uint256 newLongBalance_, uint256 newVaultBalance_) {
         // max iteration limit
         if (iteration > MAX_LIQUIDATION_ITERATION) {
             iteration = MAX_LIQUIDATION_ITERATION;
         }
 
-        uint256 priceWithMultiplier =
-            FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
-        int24 currentTick = TickMath.getClosestTickAtPrice(priceWithMultiplier);
+        int24 currentTick = TickMath.getClosestTickAtPrice(
+            FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier)
+        );
         int24 tick = _maxInitializedTick;
         int256 remainingCollateral;
 
         uint256 i;
         do {
-            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
-            if (index == LibBitmap.NOT_FOUND) {
-                // no populated ticks left
-                break;
-            }
+            {
+                uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+                if (index == LibBitmap.NOT_FOUND) {
+                    // no populated ticks left
+                    break;
+                }
 
-            tick = _bitmapIndexToTick(index);
-            if (tick < currentTick) {
-                break;
+                tick = _bitmapIndexToTick(index);
+                if (tick < currentTick) {
+                    break;
+                }
             }
 
             // we have found a non-empty tick that needs to be liquidated
-            (bytes32 tickHash,) = _tickHash(tick);
-            uint256 length = _positionsInTick[tickHash];
 
-            uint256 tickTotalExpo = _totalExpoByTick[tickHash];
-            int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
-            remainingCollateral += tickValue;
-            unchecked {
-                _totalExpo -= tickTotalExpo;
+            uint256 tickTotalExpo;
+            {
+                (bytes32 tickHash,) = _tickHash(tick);
+                tickTotalExpo = _totalExpoByTick[tickHash];
+                uint256 length = _positionsInTick[tickHash];
+                unchecked {
+                    _totalExpo -= tickTotalExpo;
 
-                _totalLongPositions -= length;
-                liquidated_ += length;
+                    _totalLongPositions -= length;
+                    liquidated_ += length;
 
-                ++_tickVersion[tick];
-                ++i;
+                    ++_tickVersion[tick];
+                    ++i;
+                }
             }
+
             _tickBitmap.unset(_tickToBitmapIndex(tick));
 
-            emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue);
+            {
+                int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
+                remainingCollateral += tickValue;
+
+                emit LiquidatedTick(
+                    tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue
+                );
+            }
         } while (i < iteration);
 
         if (liquidated_ != 0) {
@@ -333,26 +349,22 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
 
         // Transfer remaining collateral to vault or pay bad debt
-        if (remainingCollateral >= 0) {
-            if (uint256(remainingCollateral) > _balanceLong) {
-                // avoid underflow
-                remainingCollateral = int256(_balanceLong);
-            }
-            _balanceVault += uint256(remainingCollateral);
-            unchecked {
-                // underflow not possible thanks to the previous check
-                _balanceLong -= uint256(remainingCollateral);
-            }
-        } else {
-            if (uint256(-remainingCollateral) > _balanceVault) {
-                // avoid underflow
-                remainingCollateral = -int256(_balanceVault);
-            }
-            unchecked {
-                // underflow not possible thanks to the previous check
-                _balanceVault -= uint256(-remainingCollateral);
-            }
-            _balanceLong += uint256(-remainingCollateral);
+        tempVaultBalance += remainingCollateral;
+        tempLongBalance -= remainingCollateral;
+
+        // FIXME: this is not a really good solution.
+        // If the vault balance becomes negative, it means we don't have enough to pay the profits of the long positions
+        // If the long balance becomes negative, it means we don't have enough in the vault to repay the bad debt
+        if (tempVaultBalance < 0) {
+            tempLongBalance += tempVaultBalance;
+            tempVaultBalance = 0;
         }
+        if (tempLongBalance < 0) {
+            tempVaultBalance += tempLongBalance;
+            tempLongBalance = 0;
+        }
+
+        newLongBalance_ = uint256(tempLongBalance);
+        newVaultBalance_ = uint256(tempVaultBalance);
     }
 }

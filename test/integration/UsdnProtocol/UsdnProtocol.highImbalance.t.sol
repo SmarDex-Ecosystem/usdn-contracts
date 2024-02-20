@@ -18,13 +18,6 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
     }
 
     function test_highImbalance() public {
-        emit log_named_decimal_int(
-            "long expo", protocol.longTradingExpoWithFunding(params.initialPrice, uint128(block.timestamp)), 18
-        );
-        emit log_named_decimal_int(
-            "vault expo", protocol.vaultTradingExpoWithFunding(params.initialPrice, uint128(block.timestamp)), 18
-        );
-
         vm.warp(1_708_090_186);
         mockChainlinkOnChain.setLastPublishTime(1_708_090_186 - 10 minutes);
         mockChainlinkOnChain.setLastPrice(3290e8);
@@ -38,26 +31,12 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
             132 ether, 2563 ether, "", ""
         );
 
-        emit log_named_decimal_int(
-            "long expo", protocol.longTradingExpoWithFunding(3290 ether, uint128(block.timestamp)), 18
-        );
-        emit log_named_decimal_int(
-            "vault expo", protocol.vaultTradingExpoWithFunding(3290 ether, uint128(block.timestamp)), 18
-        );
-
         vm.warp(1_708_090_246);
         mockPyth.updatePrice(3290e8);
         mockPyth.setLastPublishTime(1_708_090_186 + 24);
 
         protocol.validateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.ValidateOpenPosition) }(
             "beef", ""
-        );
-
-        emit log_named_decimal_int(
-            "long expo", protocol.longTradingExpoWithFunding(3290 ether, uint128(block.timestamp)), 18
-        );
-        emit log_named_decimal_int(
-            "vault expo", protocol.vaultTradingExpoWithFunding(3290 ether, uint128(block.timestamp)), 18
         );
 
         vm.warp(1_708_090_342);
@@ -68,13 +47,6 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
             1 ether, 2674 ether, "", ""
         );
 
-        emit log_named_decimal_int(
-            "long expo", protocol.longTradingExpoWithFunding(3290 ether, uint128(block.timestamp)), 18
-        );
-        emit log_named_decimal_int(
-            "vault expo", protocol.vaultTradingExpoWithFunding(3290 ether, uint128(block.timestamp)), 18
-        );
-
         vm.warp(1_708_090_438);
         mockPyth.updatePrice(3281e8);
         mockPyth.setLastPublishTime(1_708_090_342 + 24);
@@ -83,12 +55,6 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
             "beef", ""
         );
 
-        emit log_named_decimal_int(
-            "long expo", protocol.longTradingExpoWithFunding(3281 ether, uint128(block.timestamp)), 18
-        );
-        emit log_named_decimal_int(
-            "vault expo", protocol.vaultTradingExpoWithFunding(3281 ether, uint128(block.timestamp)), 18
-        );
         vm.stopPrank();
 
         vm.warp(1_708_530_066); // had to add 200_000 seconds compared to real case to make it liquidate both ticks
@@ -103,12 +69,8 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
             1 ether, 1684 ether, "", ""
         );
+        vm.stopPrank();
 
-        emit log_named_decimal_int(
-            "long expo", protocol.longTradingExpoWithFunding(3381 ether, uint128(block.timestamp)), 18
-        );
-        emit log_named_decimal_int(
-            "vault expo", protocol.vaultTradingExpoWithFunding(3381 ether, uint128(block.timestamp)), 18
-        );
+        assertGe(protocol.longTradingExpoWithFunding(3381 ether, uint128(block.timestamp)), 0, "long expo is negative");
     }
 }

@@ -297,13 +297,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     ) internal pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
         int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
-        if (newLongBalance < 0) {
+        /* if (newLongBalance < 0) {
             newLongBalance = 0;
-        }
+        } */
         available_ = totalBalance.safeSub(newLongBalance);
-        if (available_ < 0) {
+        /* if (available_ < 0) {
             available_ = 0;
-        }
+        } */
     }
 
     /// @dev At the time of the last balance update (without taking funding into account)
@@ -316,12 +316,15 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         expo_ = _vaultAssetAvailable(currentPrice);
     }
 
-    function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) internal returns (bool priceUpdated_) {
+    function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
+        internal
+        returns (bool priceUpdated_, int256 newLongBalance, int256 newVaultBalance)
+    {
         // cache variable for optimization
         uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
         // If the price is not fresh, do nothing
         if (timestamp <= lastUpdateTimestamp) {
-            return false;
+            return (false, _balanceLong.toInt256(), _balanceVault.toInt256());
         }
 
         _updateEMA(timestamp - lastUpdateTimestamp);
@@ -330,16 +333,16 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         (int256 fee, int256 fundAssetWithFee) = _calculateFee(fundAsset);
         // we subtract the fee from the total balance
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256()).safeSub(fee);
-        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
-        if (newLongBalance < 0) {
+        newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
+        /* if (newLongBalance < 0) {
             newLongBalance = 0;
-        }
-        int256 newVaultBalance = totalBalance.safeSub(newLongBalance);
-        if (newVaultBalance < 0) {
+        } */
+        newVaultBalance = totalBalance.safeSub(newLongBalance);
+        /* if (newVaultBalance < 0) {
             newVaultBalance = 0;
-        }
+        } */
 
-        (_balanceVault, _balanceLong) = (uint256(newVaultBalance), uint256(newLongBalance));
+        //(_balanceVault, _balanceLong) = (uint256(newVaultBalance), uint256(newLongBalance));
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fund;
