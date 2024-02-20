@@ -316,9 +316,20 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         expo_ = _vaultAssetAvailable(currentPrice);
     }
 
+    /**
+     * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
+     * calculate the new liquidation multiplier and the temporary new balances for each side.
+     * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding` and
+     * `_liquidationMultiplier`, but does not update the balances. This is left to the caller.
+     * @param currentPrice The current price
+     * @param timestamp The timestamp of the current price
+     * @return priceUpdated_ Whether the price was updated
+     * @return tempLongBalance The new balance of the long side, could be negative (temporarily)
+     * @return tempVaultBalance The new balance of the vault side, could be negative (temporarily)
+     */
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         internal
-        returns (bool priceUpdated_, int256 newLongBalance, int256 newVaultBalance)
+        returns (bool priceUpdated_, int256 tempLongBalance, int256 tempVaultBalance)
     {
         // cache variable for optimization
         uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
@@ -333,16 +344,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         (int256 fee, int256 fundAssetWithFee) = _calculateFee(fundAsset);
         // we subtract the fee from the total balance
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256()).safeSub(fee);
-        newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
-        /* if (newLongBalance < 0) {
-            newLongBalance = 0;
-        } */
-        newVaultBalance = totalBalance.safeSub(newLongBalance);
-        /* if (newVaultBalance < 0) {
-            newVaultBalance = 0;
-        } */
+        tempLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
+        tempVaultBalance = totalBalance.safeSub(tempLongBalance);
 
-        //(_balanceVault, _balanceLong) = (uint256(newVaultBalance), uint256(newLongBalance));
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fund;

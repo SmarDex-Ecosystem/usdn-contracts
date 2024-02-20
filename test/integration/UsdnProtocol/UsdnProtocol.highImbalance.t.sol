@@ -6,6 +6,14 @@ import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtoco
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
+/**
+ * @custom:feature A long position is in large bad debt
+ * @custom:background This test replicates the transactions observed on a testing fork which resulted in a negative
+ * long trading expo. This was due to an erroneous clamping of the balances to remain positive, before any bad debt
+ * could be repaid by the vault. The long balance (which was clamped to zero) was thus increased by the amount of the
+ * bad debt and became larger than the total expo of the remaining positions. This resulted in a negative trading expo.
+ * The fix is now to allow balances to become negative temporarily during calculations.
+ */
 contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -17,6 +25,15 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         _setUp(params);
     }
 
+    /**
+     * @custom:scenario A very large long position is in large bad debt and gets liquidated
+     * @custom:given An initial position of 1 ether with leverage ~1x
+     * @custom:and A user position of 132 ether with leverage ~4.5x
+     * @custom:and A user position of 1 ether with leverage ~5.3x
+     * @custom:when The funding rates make the liquidation prices of both positions go up
+     * @custom:and The positions get liquidated by a new user action, way too late
+     * @custom:then The bad debt should be paid by the vault side and the long trading expo should be positive
+     */
     function test_highImbalance() public {
         vm.warp(1_708_090_186);
         mockChainlinkOnChain.setLastPublishTime(1_708_090_186 - 10 minutes);
@@ -71,6 +88,6 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         );
         vm.stopPrank();
 
-        assertGe(protocol.longTradingExpoWithFunding(3381 ether, uint128(block.timestamp)), 0, "long expo is negative");
+        assertGe(protocol.longTradingExpoWithFunding(3381 ether, uint128(block.timestamp)), 0, "long expo");
     }
 }

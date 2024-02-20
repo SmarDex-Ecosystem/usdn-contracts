@@ -276,6 +276,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         tick_ = compactTick * _tickSpacing;
     }
 
+    /**
+     * @notice Liquidate positions which have a liquidation price lower than the current price
+     * @param currentPrice The current price of the asset
+     * @param iteration The maximum number of ticks to liquidate (minimum is 1)
+     * @param tempLongBalance The temporary long balance as calculated when applying PnL and funding
+     * @param tempVaultBalance The temporary vault balance as calculated when applying PnL and funding
+     * @return liquidated_ The number of positions that were liquidated
+     * @return newLongBalance_ The new long balance after handling of the remaining collateral or bad debt
+     * @return newVaultBalance_ The new vault balance after handling of the remaining collateral or bad debt
+     */
     function _liquidatePositions(
         uint256 currentPrice,
         uint16 iteration,
