@@ -159,7 +159,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         if (protocolFee > MAX_PROTOCOL_FEE) {
             revert UsdnProtocolMaxProtocolFeeExceeded();
         }
-        _protocolFee = protocolFee;
+        _protocolFeeBps = protocolFee;
         emit UpdatedProtocolFees(protocolFee);
     }
 }

@@ -32,7 +32,7 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
         uint256 res = protocol.i_assetToTransfer(
             tick, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.liquidationMultiplier()
         );
-        assertEq(res, 1.512109692607424371 ether);
+        assertEq(res, 1.511816665395777179 ether);
     }
 
     /**

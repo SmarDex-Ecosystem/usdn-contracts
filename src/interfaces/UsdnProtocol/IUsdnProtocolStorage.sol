@@ -30,9 +30,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The maximum number of liquidations per transaction
     function MAX_LIQUIDATION_ITERATION() external view returns (uint16);
 
-    /// @notice The protocol fee denominator
-    function PROTOCOL_FEE_DENOMINATOR() external view returns (uint16);
-
     /// @notice The maximum protocol fee
     function MAX_PROTOCOL_FEE() external view returns (uint16);
     /**

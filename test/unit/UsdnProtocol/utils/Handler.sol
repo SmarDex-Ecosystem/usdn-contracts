@@ -149,11 +149,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     function protocolFee() public view returns (uint256) {
-        return _protocolFee;
+        return _protocolFeeBps;
     }
 
     function protocolFeeDenominator() public pure returns (uint256) {
-        return PROTOCOL_FEE_DENOMINATOR;
+        return BPS_DIVISOR;
     }
 
     function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
