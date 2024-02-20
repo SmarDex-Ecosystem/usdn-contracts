@@ -364,24 +364,24 @@ contract TestOracleMiddlewareParseAndValidatePrice is
 
         /* ------------ Doesn't revert when the timestamp is not too old ------------ */
 
-        mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 1 minutes);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp - 1 minutes);
         oracleMiddleware.parseAndValidatePrice{
             value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit)
         }(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
 
-        mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 30 minutes);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp - 30 minutes);
         oracleMiddleware.parseAndValidatePrice{
             value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit)
         }(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
 
-        mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 59 minutes);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp - 59 minutes);
         oracleMiddleware.parseAndValidatePrice{
             value: oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit)
         }(uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data"));
 
         /* ------------------ Revert when the timestamp is too old ------------------ */
 
-        mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 3601 seconds);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp - 3601 seconds);
         uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.InitiateDeposit);
         vm.expectRevert(
             abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, ETH_PRICE, block.timestamp - 3601 seconds)
@@ -390,7 +390,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
             uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
         );
 
-        mockChainlinkOnChain.updateLastPublishTime(block.timestamp - 2 hours);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp - 2 hours);
         vm.expectRevert(
             abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, ETH_PRICE, block.timestamp - 2 hours)
         );
@@ -398,7 +398,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
             uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")
         );
 
-        mockChainlinkOnChain.updateLastPublishTime(0);
+        mockChainlinkOnChain.setLastPublishTime(0);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, ETH_PRICE, 0));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(timestamp), ProtocolAction.InitiateDeposit, abi.encode("data")

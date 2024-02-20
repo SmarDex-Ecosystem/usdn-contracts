@@ -9,6 +9,7 @@ contract MockChainlinkOnChain {
     bool private alwaysRevertOnCall;
 
     uint64 public lastPublishTime;
+    int256 public lastPrice = 2000e8;
 
     constructor() {
         lastPublishTime = uint64(block.timestamp);
@@ -18,8 +19,12 @@ contract MockChainlinkOnChain {
      * @notice Update manually the last publish time.
      * @param _lastPublishTime New last publish time.
      */
-    function updateLastPublishTime(uint256 _lastPublishTime) external {
+    function setLastPublishTime(uint256 _lastPublishTime) external {
         lastPublishTime = uint64(_lastPublishTime);
+    }
+
+    function setLastPrice(int256 _lastPrice) external {
+        lastPrice = _lastPrice;
     }
 
     /**
@@ -42,7 +47,7 @@ contract MockChainlinkOnChain {
         view
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        return (0, alwaysRevertOnCall ? int256(-1) : int256(2000 * 1e8), 0, lastPublishTime, 0);
+        return (0, alwaysRevertOnCall ? int256(-1) : lastPrice, 0, lastPublishTime, 0);
     }
 
     /**
