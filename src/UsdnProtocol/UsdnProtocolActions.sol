@@ -595,10 +595,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
         // liquidate if price is more recent that _lastPrice
         if (priceUpdated) {
-            (, uint256 newLongBalance, uint256 newVaultBalance) =
+            (, _balanceLong, _balanceVault) =
                 _liquidatePositions(price.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
-            _balanceLong = newLongBalance;
-            _balanceVault = newVaultBalance;
         }
 
         uint256 assetToTransfer =

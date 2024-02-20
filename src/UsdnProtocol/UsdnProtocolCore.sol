@@ -297,13 +297,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     ) internal pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
         int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
-        /* if (newLongBalance < 0) {
-            newLongBalance = 0;
-        } */
+
         available_ = totalBalance.safeSub(newLongBalance);
-        /* if (available_ < 0) {
-            available_ = 0;
-        } */
     }
 
     /// @dev At the time of the last balance update (without taking funding into account)
@@ -324,12 +319,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
      * @return priceUpdated_ Whether the price was updated
-     * @return tempLongBalance The new balance of the long side, could be negative (temporarily)
-     * @return tempVaultBalance The new balance of the vault side, could be negative (temporarily)
+     * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
+     * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
      */
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         internal
-        returns (bool priceUpdated_, int256 tempLongBalance, int256 tempVaultBalance)
+        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
     {
         // cache variable for optimization
         uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
@@ -338,15 +333,21 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return (false, _balanceLong.toInt256(), _balanceVault.toInt256());
         }
 
+        // Update the funding EMA
         _updateEMA(timestamp - lastUpdateTimestamp);
+
+        // Calculate the funding
         (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
+        // Take protocol fee on the funding value
         (int256 fee, int256 fundAssetWithFee) = _calculateFee(fundAsset);
         // we subtract the fee from the total balance
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256()).safeSub(fee);
-        tempLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
-        tempVaultBalance = totalBalance.safeSub(tempLongBalance);
+        // Calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
+        tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
+        tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
 
+        // Update state variables
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fund;

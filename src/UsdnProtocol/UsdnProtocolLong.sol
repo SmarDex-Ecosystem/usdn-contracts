@@ -366,15 +366,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // If the vault balance becomes negative, it means we don't have enough to pay the profits of the long positions
         // If the long balance becomes negative, it means we don't have enough in the vault to repay the bad debt
         if (tempVaultBalance < 0) {
-            tempLongBalance += tempVaultBalance;
-            tempVaultBalance = 0;
+            // should not happen, except maybe due to protocol fees taken on the funding?
+            /* tempLongBalance += tempVaultBalance;
+            tempVaultBalance = 0; */
         }
         if (tempLongBalance < 0) {
             tempVaultBalance += tempLongBalance;
             tempLongBalance = 0;
         }
 
-        newLongBalance_ = uint256(tempLongBalance);
-        newVaultBalance_ = uint256(tempVaultBalance);
+        newLongBalance_ = tempLongBalance.toUint256();
+        newVaultBalance_ = tempVaultBalance.toUint256();
     }
 }
