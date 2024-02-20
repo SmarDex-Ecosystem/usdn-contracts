@@ -287,7 +287,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getPendingActions(address user) external view returns (uint256) {
+    function getPendingAction(address user) external view returns (uint256) {
         return _pendingActions[user];
     }
 

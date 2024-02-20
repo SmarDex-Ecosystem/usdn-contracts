@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
 import { UsdnProtocolBaseFixture, IUsdnProtocolErrors } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { DEPLOYER } from "test/utils/Constants.sol";
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-
 /**
- * @custom:feature The functions admin of the protocol
+ * @custom:feature The admin functions of the protocol
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
  */
 contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
@@ -18,7 +18,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Call both admin functions from non contract admin.
+     * @custom:scenario Call all admin functions from non contract admin.
      * @custom:given The initial usdnProtocol state.
      * @custom:then Each functions should revert with the same custom Ownable error.
      */

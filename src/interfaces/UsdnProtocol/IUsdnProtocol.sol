@@ -46,10 +46,10 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     /// @notice Set the new safety margin for the liquidation price of newly open positions.
     function setSafetyMargin(uint256 newSafetyMargin) external;
 
-    /// @notice Set user current liquidation iteration in tick.
+    /// @notice Set the new user current liquidation iteration in tick.
     function setLiquidationIteration(uint16 newLiquidationIteration) external;
 
-    /// @notice Set new moving average period of the funding rate.
+    /// @notice Set the new exponential moving average period of the funding rate.
     function setEMAPeriod(uint128 newEMAPeriod) external;
 
     /// @notice Set the scaling factor (SF) of the funding rate.

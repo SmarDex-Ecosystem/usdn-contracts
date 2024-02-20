@@ -8,11 +8,11 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 /**
  * @title IUsdnProtocolStorage
  * @notice Interface for the storage layer of the USDN protocol.
  */
-
 interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The number of decimals for leverage values
     function LEVERAGE_DECIMALS() external view returns (uint8);
@@ -45,10 +45,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The asset ERC20 contract (wstETH).
     function getAsset() external view returns (IERC20Metadata);
 
-    /// @notice The asset decimals (wstETH => 18).
+    /// @notice The asset decimals.
     function getAssetDecimals() external view returns (uint8);
 
-    /// @notice The price feed decimals (middleware => 18).
+    /// @notice The price feed decimals.
     function getPriceFeedDecimals() external view returns (uint8);
 
     /// @notice The USDN ERC20 contract.
@@ -60,7 +60,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The oracle middleware contract.
     function getOracleMiddleware() external view returns (IOracleMiddleware);
 
-    /// @notice The minimum leverage for a position (1.000000001)
+    /// @notice The minimum leverage for a position
     function getMinLeverage() external view returns (uint256);
 
     /// @notice The maximum leverage value
@@ -81,7 +81,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The moving average period of the funding rate
     function getEMAPeriod() external view returns (uint128);
 
-    /// @notice The scaling factor (SF) of the funding rate (0.12)
+    /// @notice The scaling factor (SF) of the funding rate
     function getFundingSF() external view returns (uint256);
 
     /// @notice The funding corresponding to the last update timestamp
@@ -99,15 +99,15 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /**
      * @notice The pending action by user (1 per user max).
      * @dev The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
-     * @param user The user address.
      * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one.
+     * @param user The user address.
      */
-    function getPendingActions(address user) external view returns (uint256);
+    function getPendingAction(address user) external view returns (uint256);
 
     /// @notice The balance of deposits (with asset decimals)
     function getBalanceVault() external view returns (uint256);
 
-    /// @notice The exponential moving average of the funding (0.0003 at initialization)
+    /// @notice The exponential moving average of the funding
     function getEMA() external view returns (int256);
 
     /// @notice The balance of long positions (with asset decimals)
