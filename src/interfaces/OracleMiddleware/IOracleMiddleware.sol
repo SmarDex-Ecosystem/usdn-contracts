@@ -69,4 +69,11 @@ interface IOracleMiddleware is IOracleMiddlewareErrors {
      * @dev New value should be lower than max confidence ratio.
      */
     function setConfRatio(uint16 newConfRatio) external;
+
+    /**
+     * @notice Emitted when the confidence ratio is updated.
+     * @param oldConfRatio old confidence ratio.
+     * @param newConfRatio new confidence ratio.
+     */
+    event ConfRatioSet(uint256 oldConfRatio, uint256 newConfRatio);
 }

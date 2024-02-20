@@ -139,7 +139,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _protocolFee;
     }
 
-    function protocolFeeDenominator() public view returns (uint256) {
+    function protocolFeeDenominator() public pure returns (uint256) {
         return PROTOCOL_FEE_DENOMINATOR;
     }
 

@@ -12,7 +12,7 @@ import {
 
 contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     uint8 constant DECIMALS = 18;
-    uint256 constant VALIDATION_DELAY = 24 seconds;
+    uint256 internal constant VALIDATION_DELAY = 24 seconds;
     uint16 private constant CONF_RATIO_DENOM = 10_000;
     uint16 private constant MAX_CONF_RATIO = CONF_RATIO_DENOM * 2;
     uint16 private _confRatio = 4000; // to divide by CONF_RATIO_DENOM

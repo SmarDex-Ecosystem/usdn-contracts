@@ -128,7 +128,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @notice Update the protocol fees.
      * @param protocolFee The new protocol fee (in percentage).
      */
-    function updateProtocolFees(uint256 protocolFee) external onlyOwner {
+    function updateProtocolFees(uint16 protocolFee) external onlyOwner {
         if (protocolFee > MAX_PROTOCOL_FEE) {
             revert UsdnProtocolMaxProtocolFeeExceeded();
         }

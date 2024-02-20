@@ -116,9 +116,6 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
         price_.timestamp = pythPrice.publishTime;
         price_.neutralPrice = uint256(pythPrice.price);
-
-        price_.timestamp = pythPrice.publishTime;
-        price_.neutralPrice = uint256(pythPrice.price);
     }
 
     /// @dev Get the price from Chainlink onChain.
@@ -197,7 +194,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         if (newConfRatio > MAX_CONF_RATIO) {
             revert OracleMiddlewareConfRatioTooHigh();
         }
+
+        uint256 oldConfRatio = _confRatio;
         _confRatio = newConfRatio;
+
+        emit ConfRatioSet(oldConfRatio, newConfRatio);
     }
 
     /* -------------------------------------------------------------------------- */

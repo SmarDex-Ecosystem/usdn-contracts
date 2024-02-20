@@ -31,10 +31,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function MAX_LIQUIDATION_ITERATION() external view returns (uint16);
 
     /// @notice The protocol fee denominator
-    function PROTOCOL_FEE_DENOMINATOR() external view returns (uint256);
+    function PROTOCOL_FEE_DENOMINATOR() external view returns (uint16);
 
     /// @notice The maximum protocol fee
-    function MAX_PROTOCOL_FEE() external view returns (uint256);
+    function MAX_PROTOCOL_FEE() external view returns (uint16);
     /**
      * @notice The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
