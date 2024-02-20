@@ -16,6 +16,7 @@ import {
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
@@ -34,6 +35,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param usdn The USDN ERC20 contract.
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
+     * @param liquidationRewardsManager The liquidation rewards manager contract.
      * @param tickSpacing The positions tick spacing.
      * @param feeCollector The address of the fee collector.
      */
@@ -41,9 +43,13 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         IUsdn usdn,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
+        ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
-    ) Ownable(msg.sender) UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing, feeCollector) { }
+    )
+        Ownable(msg.sender)
+        UsdnProtocolStorage(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
+    { }
 
     /**
      * @notice Initialize the protocol.
@@ -125,6 +131,21 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
         emit InitiatedOpenPosition(user, long.timestamp, long.leverage, long.amount, price, tick, tickVersion, index);
         emit ValidatedOpenPosition(user, long.leverage, price, tick, tickVersion, index);
+    }
+
+    /**
+     * @notice Replace the LiquidationRewardsManager contract with a new implementation.
+     * @dev Cannot be the 0 address.
+     * @param newLiquidationRewardsManager the address of the new contract.
+     */
+    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external onlyOwner {
+        if (newLiquidationRewardsManager == address(0)) {
+            revert UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
+        }
+
+        _liquidationRewardsManager = ILiquidationRewardsManager(newLiquidationRewardsManager);
+
+        emit LiquidationRewardsManagerUpdated(newLiquidationRewardsManager);
     }
 
     /// @inheritdoc IUsdnProtocol

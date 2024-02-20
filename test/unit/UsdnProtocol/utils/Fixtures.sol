@@ -5,8 +5,11 @@ import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
+import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -37,6 +40,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     Usdn public usdn;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
+    MockChainlinkOnChain public chainlinkGasPriceFeed;
+    LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
     uint128 public defaultPosLeverage;
@@ -49,8 +54,18 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdn = new Usdn(address(0), address(0));
         wstETH = new WstETH();
         oracleMiddleware = new MockOracleMiddleware();
-        // tick spacing 100 = 1%, feeCollector = ADMIN
-        protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 100, ADMIN);
+        chainlinkGasPriceFeed = new MockChainlinkOnChain();
+        liquidationRewardsManager =
+            new LiquidationRewardsManager(address(chainlinkGasPriceFeed), IWstETH(address(wstETH)), 2 days);
+
+        protocol = new UsdnProtocolHandler(
+            usdn,
+            wstETH,
+            oracleMiddleware,
+            liquidationRewardsManager,
+            100, // tick spacing 100 = 1%
+            ADMIN // Fee collector
+        );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x

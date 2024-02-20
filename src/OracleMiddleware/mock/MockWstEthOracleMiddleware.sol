@@ -22,9 +22,13 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
      */
     uint256 internal _wstethMockedPrice;
 
-    constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed, address wsteth)
-        WstEthOracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, wsteth)
-    { }
+    constructor(
+        address pythContract,
+        bytes32 pythPriceID,
+        address chainlinkPriceFeed,
+        address wsteth,
+        uint256 chainlinkTimeElapsedLimit
+    ) WstEthOracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, wsteth, chainlinkTimeElapsedLimit) { }
 
     /**
      * @notice Parses and validates price data by returning current wsteth mocked price.

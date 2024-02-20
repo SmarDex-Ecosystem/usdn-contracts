@@ -17,6 +17,8 @@ interface IMockPythError {
 /**
  * @title MockPyth contract
  * @dev This contract is used to test the OracleMiddleware contract.
+ * The original coed can be found here:
+ * https://github.com/pyth-network/pyth-crosschain/blob/main/target_chains/ethereum/contracts/contracts/pyth/Pyth.sol
  */
 contract MockPyth is IMockPythError {
     bool private alwaysRevertOnCall;
@@ -56,12 +58,25 @@ contract MockPyth is IMockPythError {
     /// @param priceIds Array of price ids.
     /// @param minPublishTime minimum acceptable publishTime for the given `priceIds`.
     /// @return priceFeeds Array of the price feeds corresponding to the given `priceIds` (with the same order).
+    function parsePriceFeedUpdates(
+        bytes[] calldata updateData,
+        bytes32[] calldata priceIds,
+        uint64 minPublishTime,
+        uint64 maxPublishTime
+    ) external payable returns (PythStructs.PriceFeed[] memory priceFeeds) {
+        return parsePriceFeedUpdatesUnique(updateData, priceIds, minPublishTime, maxPublishTime);
+    }
+
+    /// @notice Mock of the real parsePriceFeedUpdatesUnique function.
+    /// @param priceIds Array of price ids.
+    /// @param minPublishTime minimum acceptable publishTime for the given `priceIds`.
+    /// @return priceFeeds Array of the price feeds corresponding to the given `priceIds` (with the same order).
     function parsePriceFeedUpdatesUnique(
         bytes[] calldata updateData,
         bytes32[] calldata priceIds,
         uint64 minPublishTime,
         uint64
-    ) external payable returns (PythStructs.PriceFeed[] memory priceFeeds) {
+    ) public payable returns (PythStructs.PriceFeed[] memory priceFeeds) {
         if (alwaysRevertOnCall) revert MockedPythError();
 
         uint256 requiredFee = getUpdateFee(updateData);
