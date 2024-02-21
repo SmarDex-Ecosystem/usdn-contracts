@@ -56,6 +56,16 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _positionsInTick[tHash];
     }
 
+    // max initialized tick
+    function maxInitializedTick() external view returns (int24) {
+        return _maxInitializedTick;
+    }
+
+    // total long position
+    function totalLongPositions() external view returns (uint256) {
+        return _totalLongPositions;
+    }
+
     // fetch max liquidation execution
     function maxLiquidationIteration() external pure returns (uint16) {
         return MAX_LIQUIDATION_ITERATION;

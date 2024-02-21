@@ -132,6 +132,46 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario EMA updated correctly
+     * @custom:given a negative funding
+     * @custom:and an action for a smaller period than the EMA period
+     * @custom:then EMA should be greater than the last funding
+     */
+    function test_updateEma_negFunding() public {
+        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        // we skip 1 day and call liquidate() to have a negative funding
+        skip(1 days);
+        protocol.liquidate(priceData, 1);
+
+        int256 lastFunding = protocol.i_lastFunding();
+        skip(protocol.getEMAPeriod() - 1);
+        // we call liquidate() to update the EMA
+        protocol.liquidate(priceData, 1);
+
+        assertGt(protocol.getEMA(), lastFunding);
+    }
+
+    /**
+     * @custom:scenario EMA updated correctly
+     * @custom:given a positive funding
+     * @custom:and an action for a smaller period than the EMA period
+     * @custom:then EMA should be lower than the last funding
+     */
+    function test_updateEma_posFunding() public {
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        protocol.initiateOpenPosition(200 ether, DEFAULT_PARAMS.initialPrice / 2, priceData, "");
+        protocol.validateOpenPosition(priceData, "");
+
+        int256 lastFunding = protocol.i_lastFunding();
+        skip(protocol.getEMAPeriod() - 1);
+        // we call liquidate() to update the EMA
+        protocol.liquidate(priceData, 1);
+
+        assertLt(protocol.getEMA(), lastFunding);
+    }
+
+    /**
      * @custom:scenario Funding calculation
      * @custom:when long and vault expos are equal
      * @custom:then fund should be equal to EMA
@@ -157,5 +197,26 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         );
         (int256 fund_,,) = protocol.funding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
         assertEq(fund_, protocol.getEMA(), "funding should be equal to EMA");
+    }
+
+    /**
+     * @custom:scenario No protocol actions during a greater period than the EMA period
+     * @custom:given a non-zero funding
+     * @custom:and no actions for a period greater than the EMA period
+     * @custom:then EMA should be equal to the last funding
+     */
+    function test_updateEma_whenTimeGtEMAPeriod() public {
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        // we skip 1 day and call liquidate() to have a non-zero funding
+        skip(1 days);
+        protocol.liquidate(priceData, 1);
+
+        int256 lastFunding = protocol.i_lastFunding();
+        skip(protocol.getEMAPeriod() + 1);
+        // we call liquidate() to update the EMA
+        protocol.liquidate(priceData, 1);
+
+        assertEq(protocol.getEMA(), lastFunding, "EMA should be equal to last funding");
     }
 }
