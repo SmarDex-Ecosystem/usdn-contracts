@@ -284,7 +284,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param iteration The maximum number of ticks to liquidate (minimum is 1)
      * @param tempLongBalance The temporary long balance as calculated when applying PnL and funding
      * @param tempVaultBalance The temporary vault balance as calculated when applying PnL and funding
-     * @return liquidated_ The number of positions that were liquidated
+     * @return liquidatedPositions_ The number of positions that were liquidated
+     * @return liquidatedTicks_ The number of ticks that were liquidated
+     * @return remainingCollateral_ The remaining collateral after handling of the liquidated positions
      * @return newLongBalance_ The new long balance after handling of the remaining collateral or bad debt
      * @return newVaultBalance_ The new vault balance after handling of the remaining collateral or bad debt
      */
@@ -293,7 +295,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint16 iteration,
         int256 tempLongBalance,
         int256 tempVaultBalance
-    ) internal returns (uint256 liquidated_, uint256 newLongBalance_, uint256 newVaultBalance_) {
+    )
+        internal
+        returns (
+            uint256 liquidatedPositions_,
+            uint16 liquidatedTicks_,
+            int256 remainingCollateral_,
+            uint256 newLongBalance_,
+            uint256 newVaultBalance_
+        )
+    {
         // max iteration limit
         if (iteration > MAX_LIQUIDATION_ITERATION) {
             iteration = MAX_LIQUIDATION_ITERATION;
@@ -303,54 +314,41 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier)
         );
         int24 tick = _maxInitializedTick;
-        int256 remainingCollateral;
 
-        uint256 i;
         do {
-            {
-                uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
-                if (index == LibBitmap.NOT_FOUND) {
-                    // no populated ticks left
-                    break;
-                }
+            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+            if (index == LibBitmap.NOT_FOUND) {
+                // no populated ticks left
+                break;
+            }
 
-                tick = _bitmapIndexToTick(index);
-                if (tick < currentTick) {
-                    break;
-                }
+            tick = _bitmapIndexToTick(index);
+            if (tick < currentTick) {
+                break;
             }
 
             // we have found a non-empty tick that needs to be liquidated
+            (bytes32 tickHash,) = _tickHash(tick);
+            uint256 length = _positionsInTick[tickHash];
 
-            uint256 tickTotalExpo;
-            {
-                (bytes32 tickHash,) = _tickHash(tick);
-                tickTotalExpo = _totalExpoByTick[tickHash];
-                uint256 length = _positionsInTick[tickHash];
-                unchecked {
-                    _totalExpo -= tickTotalExpo;
+            uint256 tickTotalExpo = _totalExpoByTick[tickHash];
+            int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
+            remainingCollateral_ += tickValue;
+            unchecked {
+                _totalExpo -= tickTotalExpo;
 
-                    _totalLongPositions -= length;
-                    liquidated_ += length;
+                _totalLongPositions -= length;
+                liquidatedPositions_ += length;
 
-                    ++_tickVersion[tick];
-                    ++i;
-                }
+                ++_tickVersion[tick];
+                ++liquidatedTicks_;
             }
-
             _tickBitmap.unset(_tickToBitmapIndex(tick));
 
-            {
-                int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
-                remainingCollateral += tickValue;
+            emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue);
+        } while (liquidatedTicks_ < iteration);
 
-                emit LiquidatedTick(
-                    tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue
-                );
-            }
-        } while (i < iteration);
-
-        if (liquidated_ != 0) {
+        if (liquidatedPositions_ != 0) {
             if (tick < currentTick) {
                 // all ticks above the current tick were liquidated
                 _maxInitializedTick = _findMaxInitializedTick(currentTick);
@@ -361,8 +359,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
 
         // Transfer remaining collateral to vault or pay bad debt
-        tempVaultBalance += remainingCollateral;
-        tempLongBalance -= remainingCollateral;
+        tempVaultBalance += remainingCollateral_;
+        tempLongBalance -= remainingCollateral_;
 
         // FIXME: this is not a really good solution.
         // If the vault balance becomes negative, it means we don't have enough to pay the profits of the long positions

@@ -8,6 +8,7 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 contract MockOracleMiddleware is IOracleMiddleware {
     uint8 internal constant DECIMALS = 18;
     uint256 internal _validationDelay = 24 seconds;
+    uint256 internal _timeElapsedLimit = 1 hours;
     // if true, then the middleware requires a payment of 1 wei for any action
     bool internal _requireValidationCost = false;
 
@@ -61,8 +62,19 @@ contract MockOracleMiddleware is IOracleMiddleware {
         return _requireValidationCost ? 1 : 0;
     }
 
+    /// @inheritdoc IOracleMiddleware
+    function getChainlinkTimeElapsedLimit() external view returns (uint256) {
+        return _timeElapsedLimit;
+    }
+
+    /// @inheritdoc IOracleMiddleware
     function updateValidationDelay(uint256 newDelay) external {
         _validationDelay = newDelay;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function updateChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external {
+        _timeElapsedLimit = newTimeElapsedLimit;
     }
 
     function requireValidationCost() external view returns (bool) {

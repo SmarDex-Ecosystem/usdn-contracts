@@ -9,8 +9,10 @@ import { DEPLOYER, ADMIN, WSTETH, PYTH_STETH_USD, PYTH_ORACLE, CHAINLINK_ORACLE_
 import { WstETH } from "test/utils/WstEth.sol";
 import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
-
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
+
+import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -45,6 +47,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     MockPyth public mockPyth;
     MockChainlinkOnChain public mockChainlinkOnChain;
     WstEthOracleMiddleware public oracleMiddleware;
+    LiquidationRewardsManager public liquidationRewardsManager;
 
     function _setUp(SetUpParams memory testParams) public virtual {
         if (testParams.fork) {
@@ -71,7 +74,17 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         (bool success,) = address(wstETH).call{ value: 1000 ether }("");
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
-        protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 100, ADMIN); // tick spacing 100 = 1%
+        AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
+        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), WST_ETH, 2 days);
+        protocol = new UsdnProtocolHandler(
+            usdn,
+            WST_ETH,
+            wstethMiddleware,
+            liquidationRewardsManager,
+            100, // tick spacing 100 = 1%
+            ADMIN
+        );
+
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x

@@ -22,6 +22,7 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
+    using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
     using LibBitmap for LibBitmap.Bitmap;
 
@@ -46,7 +47,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
         // liquidate if price is more recent that _lastPrice
         if (priceUpdated) {
-            (, _balanceLong, _balanceVault) =
+            (,,, _balanceLong, _balanceVault) =
                 _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
         }
 
@@ -103,7 +104,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
         // liquidate if price is more recent that _lastPrice
         if (priceUpdated) {
-            (, _balanceLong, _balanceVault) =
+            (,,, _balanceLong, _balanceVault) =
                 _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
         }
 
@@ -169,7 +170,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _applyPnlAndFunding(neutralPrice, currentPrice.timestamp.toUint128());
             // liquidate if price is more recent that _lastPrice
             if (priceUpdated) {
-                (, _balanceLong, _balanceVault) = _liquidatePositions(
+                (,,, _balanceLong, _balanceVault) = _liquidatePositions(
                     currentPrice.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance
                 );
             }
@@ -269,7 +270,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
             // liquidate if price is more recent that _lastPrice
             if (priceUpdated) {
-                (, _balanceLong, _balanceVault) = _liquidatePositions(
+                (,,, _balanceLong, _balanceVault) = _liquidatePositions(
                     currentPrice.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance
                 );
             }
@@ -324,7 +325,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
-        returns (uint256 liquidated_)
+        returns (uint256 liquidatedPositions_)
     {
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
@@ -332,13 +333,45 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
-        (liquidated_, _balanceLong, _balanceVault) =
+        uint16 liquidatedTicks;
+        int256 liquidatedCollateral;
+        (liquidatedPositions_, liquidatedTicks, liquidatedCollateral, _balanceLong, _balanceVault) =
             _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
-
-        // TODO: add liquidator incentive if needed
 
         _refundExcessEther();
         _checkPendingFee();
+
+        if (liquidatedTicks > 0) {
+            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral);
+        }
+    }
+
+    /**
+     * @notice Send rewards to the liquidator.
+     * @dev Should still emit an event if liquidationRewards = 0 to better keep track of those anomalies as rewards for
+     * those will be managed off-chain.
+     * @param liquidatedTicks The number of ticks that were liquidated.
+     * @param liquidatedCollateral The amount of collateral lost due to the liquidations.
+     */
+    function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 liquidatedCollateral) internal {
+        // Get how much we should give to the liquidator as rewards
+        uint256 liquidationRewards =
+            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, liquidatedCollateral);
+
+        // Avoid underflows in situation of extreme bad debt
+        if (_balanceVault < liquidationRewards) {
+            liquidationRewards = _balanceVault;
+        }
+
+        // Update the vault's balance
+        unchecked {
+            _balanceVault -= liquidationRewards;
+        }
+
+        // Transfer rewards (wsteth) to the liquidator
+        _asset.safeTransfer(msg.sender, liquidationRewards);
+
+        emit LiquidatorRewarded(msg.sender, liquidationRewards);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
@@ -377,7 +410,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _applyPnlAndFunding(depositPrice_.neutralPrice.toUint128(), depositPrice_.timestamp.toUint128());
             // liquidate if price is more recent that _lastPrice
             if (priceUpdated) {
-                (, _balanceLong, _balanceVault) = _liquidatePositions(
+                (,,, _balanceLong, _balanceVault) = _liquidatePositions(
                     depositPrice_.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance
                 );
             }
@@ -453,7 +486,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _applyPnlAndFunding(withdrawalPrice.neutralPrice.toUint128(), withdrawalPrice.timestamp.toUint128());
         // liquidate if price is more recent that _lastPrice
         if (priceUpdated) {
-            (, _balanceLong, _balanceVault) = _liquidatePositions(
+            (,,, _balanceLong, _balanceVault) = _liquidatePositions(
                 withdrawalPrice.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance
             );
         }
@@ -523,7 +556,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
             // liquidate if price is more recent that _lastPrice
             if (priceUpdated) {
-                (, _balanceLong, _balanceVault) =
+                (,,, _balanceLong, _balanceVault) =
                     _liquidatePositions(price.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
             }
         }
@@ -595,7 +628,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
         // liquidate if price is more recent that _lastPrice
         if (priceUpdated) {
-            (, _balanceLong, _balanceVault) =
+            (,,, _balanceLong, _balanceVault) =
                 _liquidatePositions(price.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
         }
 
