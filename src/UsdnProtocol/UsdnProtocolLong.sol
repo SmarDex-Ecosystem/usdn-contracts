@@ -63,15 +63,19 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         Position memory pos = getLongPosition(tick, tickVersion, index);
         uint256 liquidationMultiplier = getLiquidationMultiplier(price, timestamp);
         uint128 liqPrice =
-            _getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liquidationMultiplier);
+            getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liquidationMultiplier);
         value_ = _positionValue(price, liqPrice, pos.amount, pos.leverage);
     }
 
     /// @inheritdoc IUsdnProtocolLong
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
+        tick_ = getEffectiveTickForPrice(price, _liquidationMultiplier);
+    }
+
+    function getEffectiveTickForPrice(uint128 price, uint256 liquidationMultiplier) public view returns (int24 tick_) {
         // adjusted price with liquidation multiplier
         uint256 priceWithMultiplier =
-            FixedPointMathLib.fullMulDiv(price, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
+            FixedPointMathLib.fullMulDiv(price, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, liquidationMultiplier);
 
         if (priceWithMultiplier < TickMath.MIN_PRICE) {
             return minTick();
@@ -100,10 +104,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     /// @inheritdoc IUsdnProtocolLong
     function getEffectivePriceForTick(int24 tick) public view returns (uint128 price_) {
         // adjusted price with liquidation multiplier
-        price_ = _getEffectivePriceForTick(tick, _liquidationMultiplier);
+        price_ = getEffectivePriceForTick(tick, _liquidationMultiplier);
     }
 
-    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) internal pure returns (uint128 price_) {
+    function getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public pure returns (uint128 price_) {
         // adjusted price with liquidation multiplier
         price_ = FixedPointMathLib.fullMulDiv(
             TickMath.getPriceAtTick(tick), liqMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
@@ -372,14 +376,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         tempVaultBalance += remainingCollateral_;
         tempLongBalance -= remainingCollateral_;
 
-        // FIXME: this is not a really good solution.
-        // If the vault balance becomes negative, it means we don't have enough to pay the profits of the long positions
-        // If the long balance becomes negative, it means we don't have enough in the vault to repay the bad debt
-        if (tempVaultBalance < 0) {
-            // should not happen, except maybe due to protocol fees taken on the funding?
-            /* tempLongBalance += tempVaultBalance;
-            tempVaultBalance = 0; */
-        }
+        // TODO: check if this is an acceptable solution
+        // This can happen if the funding is larger than the remaining balance in the long side after applying PnL.
+        // Test case: test_assetToTransferZeroBalance()
         if (tempLongBalance < 0) {
             tempVaultBalance += tempLongBalance;
             tempLongBalance = 0;
