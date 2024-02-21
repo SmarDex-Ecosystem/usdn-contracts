@@ -73,21 +73,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
         console2.log("vaultExpo_:", vaultExpo_);
         console2.log("longExpo_:", longExpo_);
-        int256 mulRes = vaultExpo_ * longExpo_;
-        if (mulRes < 0) {
+        if ((vaultExpo_ * longExpo_) <= 0 && (vaultExpo_ < 0 || longExpo_ < 0)) {
             // if the product is negative, then vaultExpo_ or longExpo_ is negative
+            // if it's zero, we check if one of the two is negative
             if (vaultExpo_ < 0) {
                 // if vaultExpo_ is negative, then we cap the inbalance index to 1
                 return (int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
             } else {
                 // if longExpo_ is negative, then we cap the inbalance index to -1
-                return (-int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
-            }
-        } else if (mulRes == 0 && (vaultExpo_ < 0 || longExpo_ < 0)) {
-            // if the product is zero, then vaultExpo_ or longExpo_ is zero
-            if (vaultExpo_ < 0) {
-                return (int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
-            } else {
                 return (-int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
             }
         }
