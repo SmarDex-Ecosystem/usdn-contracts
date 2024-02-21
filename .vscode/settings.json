@@ -1,0 +1,9 @@
+{
+  "cSpell.enableFiletypes": ["solidity"],
+  "grammarly.selectors": [
+    {
+      "language": "solidity",
+      "scheme": "file"
+    }
+  ]
+}
