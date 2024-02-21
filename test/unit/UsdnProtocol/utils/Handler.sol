@@ -141,6 +141,14 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _positionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
     }
 
+    function setMaxLeverage(uint128 maxLeverage) external {
+        _maxLeverage = maxLeverage;
+    }
+
+    function getSafetyMarginBps() external view returns (uint256) {
+        return _safetyMarginBps;
+    }
+
     function removePendingAction(uint128 rawIndex, address user) external {
         _pendingActionsQueue.clearAt(rawIndex);
         delete _pendingActions[user];

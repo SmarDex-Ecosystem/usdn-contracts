@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { PendingAction, ProtocolAction, LongPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, LongPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The open position function of the USDN Protocol
@@ -103,6 +103,71 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         action = protocol.i_toLongPendingAction(protocol.getActionablePendingAction(0));
         assertEq(action.user, address(this), "pending action user");
         vm.stopPrank();
+    }
+
+    /**
+     * @custom:scenario The user initiates an open position action with a zero amount
+     * @custom:when The user initiates an open position with 0 wstETH
+     * @custom:then The protocol reverts with UsdnProtocolZeroAmount
+     */
+    function test_RevertWhen_initiateOpenPositionZeroAmount() public {
+        vm.expectRevert(UsdnProtocolZeroAmount.selector);
+        protocol.initiateOpenPosition(0, 2000 ether, abi.encode(CURRENT_PRICE), "");
+    }
+
+    /**
+     * @custom:scenario The user initiates an open position action with a leverage that's too low
+     * @custom:when The user initiates an open position with a desired liquidation price of $0.0000000000001
+     * @custom:then The protocol reverts with UsdnProtocolLeverageTooLow
+     */
+    function test_RevertWhen_initiateOpenPositionLowLeverage() public {
+        vm.expectRevert(UsdnProtocolLeverageTooLow.selector);
+        protocol.initiateOpenPosition(uint96(LONG_AMOUNT), 100_000, abi.encode(CURRENT_PRICE), "");
+    }
+
+    /**
+     * @custom:scenario The user initiates an open position action with a leverage that's too high
+     * @custom:given The maximum leverage is 10x and the current price is $2000
+     * @custom:when The user initiates an open position with a desired liquidation price of $1854
+     * @custom:then The protocol reverts with UsdnProtocolLeverageTooHigh
+     */
+    function test_RevertWhen_initiateOpenPositionHighLeverage() public {
+        // max liquidation price without liquidation penalty
+        uint256 maxLiquidationPrice = protocol.getLiquidationPrice(CURRENT_PRICE, uint128(protocol.maxLeverage()));
+        // add 3% to be above max liquidation price including penalty
+        uint128 desiredLiqPrice = uint128(maxLiquidationPrice * 1.03 ether / 1 ether);
+
+        vm.expectRevert(UsdnProtocolLeverageTooHigh.selector);
+        protocol.initiateOpenPosition(uint96(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), "");
+    }
+
+    /**
+     * @custom:scenario The user initiates an open position action with not enough safety margin
+     * @custom:given The safety margin is 2% and the current price is $2000
+     * @custom:and The maximum leverage is 1000x
+     * @custom:when The user initiates an open position with a desired liquidation price of $2000
+     * @custom:then The protocol reverts with UsdnProtocolLiquidationPriceSafetyMargin
+     */
+    function test_RevertWhen_initiateOpenPositionSafetyMargin() public {
+        // set the max leverage very high to allow for such a case
+        protocol.setMaxLeverage(uint128(1000 * 10 ** protocol.LEVERAGE_DECIMALS()));
+
+        // calculate expected error values
+        uint128 expectedMaxLiqPrice =
+            uint128(CURRENT_PRICE * (protocol.BPS_DIVISOR() - protocol.getSafetyMarginBps()) / protocol.BPS_DIVISOR());
+        // the oracle gives a timestamp 30 minutes in the past, we need the liq multiplier at that time to calculate
+        // the tick price
+        uint256 liqMultiplierAtPriceTimestamp =
+            protocol.getLiquidationMultiplier(CURRENT_PRICE, uint128(block.timestamp - 30 minutes));
+        int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE, liqMultiplierAtPriceTimestamp);
+        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick, liqMultiplierAtPriceTimestamp);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                UsdnProtocolLiquidationPriceSafetyMargin.selector, expectedLiqPrice, expectedMaxLiqPrice
+            )
+        );
+        protocol.initiateOpenPosition(uint96(LONG_AMOUNT), CURRENT_PRICE, abi.encode(CURRENT_PRICE), "");
     }
 
     // test refunds
