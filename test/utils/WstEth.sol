@@ -53,8 +53,8 @@ contract WstETH is ERC20, ERC20Permit, IWstETH {
     }
 
     /// @dev Needed for interface compatibility
-    function wrap(uint256 _stETHAmount) external returns (uint256) { }
+    function wrap(uint256) external returns (uint256) { }
 
     /// @dev Needed for interface compatibility
-    function unwrap(uint256 _wstETHAmount) external returns (uint256) { }
+    function unwrap(uint256) external returns (uint256) { }
 }
