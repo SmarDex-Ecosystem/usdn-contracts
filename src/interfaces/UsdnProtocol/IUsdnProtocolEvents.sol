@@ -163,6 +163,19 @@ interface IUsdnProtocolEvents {
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
 
     /**
+     * @notice Emitted when a user (liquidator) successfully liquidated positions.
+     * @param liquidator The address that initiated the liquidation.
+     * @param rewards The amount of tokens the liquidator received in rewards.
+     */
+    event LiquidatorRewarded(address indexed liquidator, uint256 rewards);
+
+    /**
+     * @notice Emitted when the LiquidationRewardsManager contract is updated.
+     * @param newAddress The address of the new (current) contract.
+     */
+    event LiquidationRewardsManagerUpdated(address newAddress);
+
+    /**
      * @notice Emitted when the pending protocol fee is distributed.
      * @param feeCollector The collector address.
      * @param amount The amount of fee transferred.

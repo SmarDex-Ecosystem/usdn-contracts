@@ -46,6 +46,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The multiplier for liquidation price calculations
     function liquidationMultiplier() external view returns (uint256);
 
+    /// @notice The liquidation rewards manager contract
+    function liquidationRewardsManager() external view returns (address);
+
     /// @notice The pending fees that are accumulated in the protocol
     function pendingProtocolFee() external view returns (uint256);
 

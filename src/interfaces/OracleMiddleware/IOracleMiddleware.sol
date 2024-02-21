@@ -4,13 +4,14 @@ pragma solidity 0.8.20;
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 /**
  * @title Oracle Middleware interface
  * @notice The oracle middleware is a contract that is called by the USDN protocol to validate price data. Using a
  * middleware allows the protocol to later upgrade to a new oracle logic without having modify the vault contract.
  */
-interface IOracleMiddleware is IOracleMiddlewareErrors {
+interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents {
     /**
      * @notice Parses and validates price data.
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
@@ -33,6 +34,9 @@ interface IOracleMiddleware is IOracleMiddlewareErrors {
      */
     function validationDelay() external returns (uint256);
 
+    /// @notice Returns the amount of time we consider the data from Chainlink valid.
+    function getChainlinkTimeElapsedLimit() external view returns (uint256);
+
     /// @notice Returns the number of decimals for the price (constant)
     function decimals() external view returns (uint8);
 
@@ -50,4 +54,10 @@ interface IOracleMiddleware is IOracleMiddlewareErrors {
      * @param newDelay The new validation delay
      */
     function updateValidationDelay(uint256 newDelay) external;
+
+    /**
+     * @notice Update the elapsed time tolerated before we consider the price invalid for the chainlink oracle.
+     * @param newTimeElapsedLimit The new time elapsed limit
+     */
+    function updateChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external;
 }
