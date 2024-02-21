@@ -5,7 +5,11 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
-import { UsdnProtocolBaseFixture, IUsdnProtocolErrors } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import {
+    UsdnProtocolBaseFixture,
+    IUsdnProtocolErrors,
+    IUsdnProtocolEvents
+} from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { DEPLOYER } from "test/utils/Constants.sol";
 
 /**
@@ -90,6 +94,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         IOracleMiddleware previousDefault = protocol.getOracleMiddleware();
         // assert previous middleware different than randAddress
         assertTrue(address(previousDefault) != randAddress);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.OracleMiddlewareUpdated(randAddress);
         // set middleware
         protocol.setOracleMiddleware(IOracleMiddleware(randAddress));
         // assert new middleware equal randAddress
@@ -134,6 +141,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         uint256 expectedNewValue = 1;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.MinLeverageUpdated(expectedNewValue);
         // assign new minLeverage value
         protocol.setMinLeverage(expectedNewValue);
         // check new value is equal than expected
@@ -177,6 +187,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         uint256 expectedNewValue = protocol.getMinLeverage() + 1;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.MaxLeverageUpdated(expectedNewValue);
         // assign new maxLeverage value
         protocol.setMaxLeverage(expectedNewValue);
         // check new value is equal than expected
@@ -219,6 +232,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         uint256 expectedNewValue = 61;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.ValidationDeadlineUpdated(expectedNewValue);
         // assign new validationDeadline value
         protocol.setValidationDeadline(expectedNewValue);
         // check new value is equal than expected
@@ -249,6 +265,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         uint24 expectedNewValue = 0;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.LiquidationPenaltyUpdated(expectedNewValue);
         // assign new liquidationPenalty value
         protocol.setLiquidationPenalty(expectedNewValue);
         // check new value is equal than expected
@@ -279,6 +298,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         uint256 expectedNewValue = 0;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.SafetyMarginBpsUpdated(expectedNewValue);
         // assign new safetyMargin value
         protocol.setSafetyMarginBps(expectedNewValue);
         // check new value is equal than expected
@@ -310,6 +332,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         uint16 expectedNewValue = 0;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.LiquidationIterationUpdated(expectedNewValue);
         // assign new liquidationIteration value
         protocol.setLiquidationIteration(expectedNewValue);
         // check new value is equal than expected
@@ -352,6 +377,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         uint128 expectedNewValue = 1;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.EMAPeriodUpdated(expectedNewValue);
         // assign new EMAPeriod value
         protocol.setEMAPeriod(expectedNewValue);
         // check new value is equal than expected
@@ -394,6 +422,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         uint256 expectedNewValue = 1;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.FundingSFUpdated(expectedNewValue);
         // assign new fundingSF value
         protocol.setFundingSF(expectedNewValue);
         // check new value is equal than expected
@@ -426,6 +457,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         uint16 expectedNewValue;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.FeeBpsUpdated(expectedNewValue);
         // assign new feeBps value
         protocol.setFeeBps(expectedNewValue);
         // check new value is equal than expected
@@ -456,6 +490,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         address expectedNewValue = address(this);
         // check new address to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.FeeCollectorUpdated(expectedNewValue);
         // assign new feeCollector address
         protocol.setFeeCollector(expectedNewValue);
         // check new address is equal than expected
@@ -474,6 +511,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         uint256 expectedNewValue = type(uint256).max;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.FeeThresholdUpdated(expectedNewValue);
         // assign new feeThreshold value
         protocol.setFeeThreshold(expectedNewValue);
         // check new value is equal than expected
@@ -498,15 +538,18 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Value should be updated.
      */
     function test_setLiquidationRewardsManager() external AdminPrank {
-        // random address
-        address randAddress = address(this);
+        // expected new value
+        address expectedNewValue = address(this);
         // cache previous address
         address previousDefault = protocol.getLiquidationRewardsManager();
-        // assert previous liquidation reward manager different than randAddress
-        assertTrue(address(previousDefault) != randAddress);
+        // assert previous liquidation reward manager different than expectedNewValue
+        assertTrue(address(previousDefault) != expectedNewValue);
+        // expected event
+        vm.expectEmit(address(protocol));
+        emit IUsdnProtocolEvents.LiquidationRewardsManagerUpdated(expectedNewValue);
         // set liquidation reward manager
-        protocol.setLiquidationRewardsManager(randAddress);
-        // assert new liquidation reward manager equal randAddress
-        assertEq(protocol.getLiquidationRewardsManager(), randAddress);
+        protocol.setLiquidationRewardsManager(expectedNewValue);
+        // assert new liquidation reward manager equal expectedNewValue
+        assertEq(protocol.getLiquidationRewardsManager(), expectedNewValue);
     }
 }
