@@ -45,7 +45,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // adjust balances
         (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-        // liquidate if price is more recent that _lastPrice
+        // liquidate if price is more recent than _lastPrice
         if (priceUpdated) {
             (,,, _balanceLong, _balanceVault) =
                 _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
@@ -102,7 +102,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // adjust balances
         (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-        // liquidate if price is more recent that _lastPrice
+        // liquidate if price is more recent than _lastPrice
         if (priceUpdated) {
             (,,, _balanceLong, _balanceVault) =
                 _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
@@ -168,7 +168,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // adjust balances
             (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
                 _applyPnlAndFunding(neutralPrice, currentPrice.timestamp.toUint128());
-            // liquidate if price is more recent that _lastPrice
+            // liquidate if price is more recent than _lastPrice
             if (priceUpdated) {
                 (,,, _balanceLong, _balanceVault) = _liquidatePositions(
                     currentPrice.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance
@@ -268,7 +268,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // adjust balances
             (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
                 _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-            // liquidate if price is more recent that _lastPrice
+            // liquidate if price is more recent than _lastPrice
             if (priceUpdated) {
                 (,,, _balanceLong, _balanceVault) = _liquidatePositions(
                     currentPrice.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance
@@ -408,7 +408,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // adjust balances
             (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
                 _applyPnlAndFunding(depositPrice_.neutralPrice.toUint128(), depositPrice_.timestamp.toUint128());
-            // liquidate if price is more recent that _lastPrice
+            // liquidate if price is more recent than _lastPrice
             if (priceUpdated) {
                 (,,, _balanceLong, _balanceVault) = _liquidatePositions(
                     depositPrice_.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance
@@ -484,7 +484,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // adjust balances
         (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(withdrawalPrice.neutralPrice.toUint128(), withdrawalPrice.timestamp.toUint128());
-        // liquidate if price is more recent that _lastPrice
+        // liquidate if price is more recent than _lastPrice
         if (priceUpdated) {
             (,,, _balanceLong, _balanceVault) = _liquidatePositions(
                 withdrawalPrice.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance
@@ -554,7 +554,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // adjust balances
             (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
                 _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
-            // liquidate if price is more recent that _lastPrice
+            // liquidate if price is more recent than _lastPrice
             if (priceUpdated) {
                 (,,, _balanceLong, _balanceVault) =
                     _liquidatePositions(price.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
@@ -626,7 +626,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // adjust balances
         (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(price.neutralPrice.toUint128(), price.timestamp.toUint128());
-        // liquidate if price is more recent that _lastPrice
+        // liquidate if price is more recent than _lastPrice
         if (priceUpdated) {
             (,,, _balanceLong, _balanceVault) =
                 _liquidatePositions(price.neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
