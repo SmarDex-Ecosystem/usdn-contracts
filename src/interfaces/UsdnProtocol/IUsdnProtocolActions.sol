@@ -89,6 +89,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionPriceData The price data of an actionable pending action.
+     * @param to The address that will be the owner of the position
      * @return tick_ The tick containing the new position
      * @return tickVersion_ The tick version
      * @return index_ The index of the new position inside the tick array
@@ -97,7 +98,8 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         uint96 amount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
-        bytes calldata previousActionPriceData
+        bytes calldata previousActionPriceData,
+        address to
     ) external payable returns (int24 tick_, uint256 tickVersion_, uint256 index_);
 
     /**

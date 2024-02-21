@@ -47,13 +47,14 @@ interface IUsdnProtocolEvents {
      * @dev The combination of the tick number, the tick version, and the index constitutes a unique identifier for the
      * position.
      * @param user The user address.
+     * @param to The address that will be the owner of the position.
      * @param position The position that was opened (pending validation).
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
      */
     event InitiatedOpenPosition(
-        address indexed user, Position position, int24 tick, uint256 tickVersion, uint256 index
+        address indexed user, address indexed to, Position position, int24 tick, uint256 tickVersion, uint256 index
     );
 
     /**

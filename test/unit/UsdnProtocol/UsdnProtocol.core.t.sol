@@ -83,7 +83,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         // create a pending action with a liquidation price around $1700
         (tick_, tickVersion_, index_) =
-            protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
+            protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "", address(this));
 
         // the price drops to $1500 and the position gets liquidated
         skip(30);
@@ -110,7 +110,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // we should be able to open a new position
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(uint128(1500 ether)), "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(uint128(1500 ether)), "", address(this));
     }
 
     /**
@@ -204,7 +204,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(20 ether, price / 2, priceData, "");
+        protocol.initiateOpenPosition(20 ether, price / 2, priceData, "", address(this));
         protocol.validateOpenPosition(priceData, "");
 
         // we create a deposit to make the long and vault expos equal

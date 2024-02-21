@@ -121,7 +121,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         });
         // Save the position and update the state
         (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
-        emit InitiatedOpenPosition(user, long, tick, tickVersion, index);
+        emit InitiatedOpenPosition(user, user, long, tick, tickVersion, index);
         emit ValidatedOpenPosition(user, long, tick, tickVersion, index, liquidationPrice);
     }
 }

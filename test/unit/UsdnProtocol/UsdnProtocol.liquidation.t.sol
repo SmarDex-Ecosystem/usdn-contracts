@@ -28,7 +28,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         for (uint256 i; i < 10; i++) {
             vm.startPrank(users[i]);
-            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            (initialTick, initialTickVersion,) =
+                protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "", address(this));
             protocol.validateOpenPosition(priceData, "");
             vm.stopPrank();
         }
@@ -55,7 +56,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(74_300, 0, 1000 ether, 1_689_332_686_299_800_182_465);
         // initiate a position to liquidate all other positions
-        protocol.initiateOpenPosition(5 ether, 500 ether, priceData, "");
+        protocol.initiateOpenPosition(5 ether, 500 ether, priceData, "", address(this));
         protocol.validateOpenPosition(priceData, "");
 
         // check if second tick version is updated properly
@@ -90,7 +91,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         for (uint256 i; i < 10; i++) {
             vm.startPrank(users[i]);
-            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            (initialTick, initialTickVersion,) =
+                protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "", address(this));
             protocol.validateOpenPosition(priceData, "");
             vm.stopPrank();
         }
@@ -155,7 +157,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         for (uint256 i; i < length; i++) {
             vm.startPrank(users[i]);
             (initialTicks[i],,) =
-                protocol.initiateOpenPosition(20 ether, uint128(actualPrice * 80 / 100), priceData, "");
+                protocol.initiateOpenPosition(20 ether, uint128(actualPrice * 80 / 100), priceData, "", address(this));
             protocol.validateOpenPosition(priceData, "");
             vm.stopPrank();
             // 20 eth drawdown
@@ -238,7 +240,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         for (uint256 i; i < 10; i++) {
             vm.startPrank(users[i]);
-            (initialTick, initialTickVersion,) = protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "");
+            (initialTick, initialTickVersion,) =
+                protocol.initiateOpenPosition(5 ether, 1700 ether, priceData, "", address(this));
             protocol.validateOpenPosition(priceData, "");
             vm.stopPrank();
         }
@@ -260,7 +263,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:scenario A position gets liquidated due to funding rates without price change
      * @custom:given A small high risk position (leverage ~10x) and a very large low risk position (leverage ~2x)
      * @custom:and A large imbalance in the trading expo of the long side vs vault side
-     * @custom:when We wait for 4 days and the price stays contant
+     * @custom:when We wait for 4 days and the price stays constant
      * @custom:and We then call `liquidate`
      * @custom:then Funding rates make the liquidation price of the high risk positions go up (the liquidation
      * multiplier increases)
@@ -276,12 +279,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // create high risk position
         (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(5 ether, 9 * currentPrice / 10, priceData, "");
+            protocol.initiateOpenPosition(5 ether, 9 * currentPrice / 10, priceData, "", address(this));
         skip(oracleMiddleware.validationDelay() + 1);
         protocol.validateOpenPosition(priceData, "");
 
         // create large low-risk position to affect funding rates
-        protocol.initiateOpenPosition(500_000 ether, currentPrice / 2, priceData, "");
+        protocol.initiateOpenPosition(500_000 ether, currentPrice / 2, priceData, "", address(this));
         skip(oracleMiddleware.validationDelay() + 1);
         protocol.validateOpenPosition(priceData, "");
 

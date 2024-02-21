@@ -2,19 +2,80 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { TickMath } from "src/libraries/TickMath.sol";
+import { USER_1 } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature The getter functions of the USDN Protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x.
  */
+
 contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
+    uint96 internal constant LONG_POSITION_AMOUNT = 5 ether;
+    uint256 internal initialWstETHBalance;
+    uint256 internal initialUsdnBalance;
+    uint256 internal initialWstETHBalanceProtocol;
+
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
         wstETH.mint(address(this), 100_000 ether);
         wstETH.approve(address(protocol), type(uint256).max);
+        initialUsdnBalance = usdn.balanceOf(address(this));
+        initialWstETHBalance = wstETH.balanceOf(address(this));
+        initialWstETHBalanceProtocol = wstETH.balanceOf(address(protocol));
+    }
+
+    function test_initiateLongPosition() public {
+        _initiateLongPosition(address(this));
+    }
+
+    function test_initiateLongPositionWithAnotherTo() public {
+        _initiateLongPosition(USER_1);
+    }
+
+    function _initiateLongPosition(address to) internal {
+        skip(3600);
+        bytes memory currentPrice = abi.encode(uint128(3000 ether));
+        uint128 desiredLiqPrice = 500 ether;
+        PendingAction memory action = protocol.getActionablePendingAction(0);
+        assertTrue(action.action == ProtocolAction.None, "no pending action");
+
+        int24 tick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
+        //        vm.expectEmit();
+        //        emit InitiatedOpenPosition(address(this), to, USDN_AMOUNT); // expected event
+        protocol.initiateOpenPosition(LONG_POSITION_AMOUNT, desiredLiqPrice, currentPrice, "", to);
+
+        assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance - LONG_POSITION_AMOUNT, "wsteth user balance");
+        assertEq(
+            wstETH.balanceOf(address(protocol)),
+            initialWstETHBalanceProtocol + LONG_POSITION_AMOUNT,
+            "wstETH protocol balance"
+        );
+        // no usdn in the balance of the user
+        assertEq(usdn.balanceOf(address(this)), 0, "usdn user balance");
+        assertEq(usdn.totalSupply(), usdnInitialTotalSupply, "usdn total supply");
+
+        // the pending action should not yet be actionable by a third party
+        vm.prank(address(0)); // simulate front-end call by someone else
+        action = protocol.getActionablePendingAction(0);
+        assertTrue(action.action == ProtocolAction.None, "no pending action");
+
+        action = protocol.getUserPendingAction(address(this));
+        assertTrue(action.action == ProtocolAction.ValidateOpenPosition, "action type");
+        assertEq(action.timestamp, block.timestamp, "action timestamp");
+        assertEq(action.user, address(this), "action user");
+        assertEq(action.to, to, "action to");
+        assertEq(action.var1, tick, "action tick");
+
+        //        // the pending action should be actionable after the validation deadline
+        skip(protocol.validationDeadline() + 1);
+        vm.prank(address(0)); // simulate front-end call by someone else
+        action = protocol.getActionablePendingAction(0);
+        assertEq(action.user, address(this), "pending action user");
+        assertEq(action.to, to, "pending action user");
     }
 
     /**
@@ -50,7 +111,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice =
             protocol.getLiquidationPrice(4000 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
 
-        protocol.initiateOpenPosition(500 ether, desiredLiqPrice, priceData, "");
+        protocol.initiateOpenPosition(500 ether, desiredLiqPrice, priceData, "", address(this));
         protocol.validateOpenPosition(priceData, "");
         skip(1 days);
         protocol.initiateDeposit(1, priceData, "", address(this));

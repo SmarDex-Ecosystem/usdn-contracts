@@ -151,10 +151,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint96 amount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
-        bytes calldata previousActionPriceData
+        bytes calldata previousActionPriceData,
+        address to
     ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
+        }
+        if (to == address(0)) {
+            revert UsdnProtocolZeroAddressTo();
         }
 
         uint40 timestamp = uint40(block.timestamp);
@@ -191,16 +195,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             }
         }
 
-        // Calculate effective liquidation price
-        uint128 liquidationPrice = getEffectivePriceForTick(tick_);
+        {
+            // Calculate effective liquidation price
+            uint128 liquidationPrice = getEffectivePriceForTick(tick_);
 
-        // Liquidation price must be at least x% below current price
-        _checkSafetyMargin(currentPrice.price.toUint128(), liquidationPrice);
+            // Liquidation price must be at least x% below current price
+            _checkSafetyMargin(currentPrice.price.toUint128(), liquidationPrice);
+        }
 
         // Register position and adjust contract state
         {
             Position memory long = Position({
-                user: msg.sender,
+                user: to,
                 amount: amount,
                 startPrice: currentPrice.price.toUint128(),
                 leverage: leverage,
@@ -213,7 +219,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 action: ProtocolAction.ValidateOpenPosition,
                 timestamp: timestamp,
                 user: msg.sender,
-                to: address(0),
+                to: to,
                 tick: tick_,
                 closeAmount: 0,
                 closeLeverage: 0,
@@ -223,7 +229,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 closeTempTransfer: 0
             });
             _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
-            emit InitiatedOpenPosition(msg.sender, long, tick_, tickVersion_, index_);
+            emit InitiatedOpenPosition(msg.sender, to, long, tick_, tickVersion_, index_);
         }
         _retrieveAssetsAndCheckBalance(msg.sender, amount);
 
