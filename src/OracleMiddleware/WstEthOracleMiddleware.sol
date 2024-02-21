@@ -14,9 +14,13 @@ contract WstEthOracleMiddleware is OracleMiddleware {
     /// @notice wsteth instance
     IWstETH internal immutable _wstEth;
 
-    constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed, address wsteth)
-        OracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed)
-    {
+    constructor(
+        address pythContract,
+        bytes32 pythPriceID,
+        address chainlinkPriceFeed,
+        address wsteth,
+        uint256 chainlinkTimeElapsedLimit
+    ) OracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, chainlinkTimeElapsedLimit) {
         _wstEth = IWstETH(wsteth);
     }
 

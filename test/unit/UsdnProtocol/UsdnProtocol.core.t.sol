@@ -78,16 +78,15 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @return index_ The index of the new position
      */
     function _createStalePendingActionHelper() internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
-        wstETH.mint(address(this), 2 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
-
+        wstETH.mintAndApprove(address(this), 2 ether, address(protocol), type(uint256).max);
         // create a pending action with a liquidation price around $1700
-        (tick_, tickVersion_, index_) =
-            protocol.initiateOpenPosition(1 ether, 1700 ether, abi.encode(uint128(2000 ether)), "");
+        bytes memory priceData = abi.encode(uint128(2000 ether));
+        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(1 ether, 1700 ether, priceData, "");
 
         // the price drops to $1500 and the position gets liquidated
         skip(30);
-        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
+        priceData = abi.encode(uint128(1500 ether));
+        protocol.liquidate(priceData, 10);
 
         // the pending action is stale
         (, uint256 currentTickVersion) = protocol.tickHash(tick_);
@@ -107,10 +106,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_stalePendingActionReInit() public {
         (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
 
+        bytes memory priceData = abi.encode(uint128(1500 ether));
         // we should be able to open a new position
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(uint128(1500 ether)), "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
     }
 
     /**
@@ -124,73 +124,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_stalePendingActionValidate() public {
         (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
 
+        bytes memory priceData = abi.encode(uint128(1500 ether));
         // validating the action emits the proper event
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.validateOpenPosition(abi.encode(uint128(1500 ether)), "");
-    }
-
-    /**
-     * @custom:scenario Distributing assets upon closing a position or withdrawing from the vault
-     * @custom:when The protocol distributes 1 wstETH to a user
-     * @custom:then The user's balance should increase by the amount distributed
-     * @custom:and The protocol's balance should decrease by the amount distributed
-     */
-    function test_distributeAssets() public {
-        uint256 transferAmount = 1 ether;
-        uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
-        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
-        protocol.i_distributeAssetsAndCheckBalance(address(this), transferAmount);
-        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore - transferAmount, "protocol balance");
-        assertEq(wstETH.balanceOf(address(this)), userBalanceBefore + transferAmount, "user balance");
-    }
-
-    /**
-     * @custom:scenario Distributing assets with a zero amount
-     * @custom:when The protocol distributes 0 tokens to a user
-     * @custom:then The transaction should not revert
-     * @custom:and The user's balance should remain the same
-     * @custom:and The protocol's balance should remain the same
-     */
-    function test_distributeAssetsZeroAmount() public {
-        uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
-        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
-        protocol.i_distributeAssetsAndCheckBalance(address(this), 0);
-        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore, "protocol balance");
-        assertEq(wstETH.balanceOf(address(this)), userBalanceBefore, "user balance");
-    }
-
-    /**
-     * @custom:scenario Retrieving assets from the user
-     * @custom:when The protocol retrieves 1 wstETH from the user
-     * @custom:then The user's balance should decrease by the amount retrieved
-     * @custom:and The protocol's balance should increase by the amount retrieved
-     */
-    function test_retrieveAssets() public {
-        uint256 transferAmount = 1 ether;
-        wstETH.mint(address(this), transferAmount);
-        wstETH.approve(address(protocol), type(uint256).max);
-        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
-        uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
-        protocol.i_retrieveAssetsAndCheckBalance(address(this), transferAmount);
-        assertEq(wstETH.balanceOf(address(this)), userBalanceBefore - transferAmount, "user balance");
-        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + transferAmount, "protocol balance");
-    }
-
-    /**
-     * @custom:scenario Retrieving assets from the user with a zero amount
-     * @custom:when The protocol retrieves 0 tokens from the user
-     * @custom:then The transaction should not revert
-     * @custom:and The user's balance should remain the same
-     * @custom:and The protocol's balance should remain the same
-     */
-    function test_retrieveAssetsZeroAmount() public {
-        wstETH.approve(address(protocol), type(uint256).max);
-        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
-        uint256 protocolBalanceBefore = wstETH.balanceOf(address(protocol));
-        protocol.i_retrieveAssetsAndCheckBalance(address(this), 0);
-        assertEq(wstETH.balanceOf(address(this)), userBalanceBefore, "user balance");
-        assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore, "protocol balance");
+        protocol.validateOpenPosition(priceData, "");
     }
 
     /**
@@ -199,8 +137,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then fund should be equal to EMA
      */
     function test_fundingWhenEqualExpo() public {
-        wstETH.mint(address(this), 10_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 

@@ -27,10 +27,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function FUNDING_SF_DECIMALS() external view returns (uint8);
 
     /**
-     * @notice Divisor for the percentage values (safety margin)
+     * @notice Divisor for the bps values
      * @dev Example: 200 -> 2%
      */
-    function PERCENTAGE_DIVISOR() external view returns (uint256);
+    function BPS_DIVISOR() external view returns (uint256);
 
     /// @notice The maximum number of liquidations per transaction
     function MAX_LIQUIDATION_ITERATION() external view returns (uint16);
@@ -73,7 +73,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getLiquidationPenalty() external view returns (uint24);
 
     /// @notice Safety margin for the liquidation price of newly open positions
-    function getSafetyMargin() external view returns (uint256);
+    function getSafetyMarginBps() external view returns (uint256);
 
     /// @notice User current liquidation iteration in tick.
     function getLiquidationIteration() external view returns (uint16);
@@ -146,4 +146,19 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice Cache of the total long positions count
     function getTotalLongPositions() external view returns (uint256);
+
+    /// @notice The liquidation rewards manager contract
+    function getLiquidationRewardsManager() external view returns (address);
+
+    /// @notice The pending fees that are accumulated in the protocol
+    function getPendingProtocolFee() external view returns (uint256);
+
+    /// @notice The fee threshold before fees are sent to the fee collector
+    function getFeeThreshold() external view returns (uint256);
+
+    /// @notice The address of the fee collector
+    function getFeeCollector() external view returns (address);
+
+    /// @notice The protocol fee in bps
+    function getProtocolFeeBps() external view returns (uint16);
 }

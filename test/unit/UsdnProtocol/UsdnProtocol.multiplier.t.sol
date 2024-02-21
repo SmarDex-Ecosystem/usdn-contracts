@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
+import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 /**
  * @custom:feature The `multiplier` variable of the USDN Protocol
@@ -23,8 +23,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
                 initialBlock: DEFAULT_PARAMS.initialBlock
             })
         );
-        wstETH.mint(address(this), 100_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /**
@@ -49,6 +48,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         assertGt(protocol.getLiquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
 
         skip(10 days);
+
         // We need to call liquidate to trigger the refresh of the multiplier
         protocol.liquidate(priceData, 0);
         // Here, we have vaultExpo > longExpo and fund < 0, so we should have multiplier < 1

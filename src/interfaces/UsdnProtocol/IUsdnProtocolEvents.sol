@@ -43,34 +43,39 @@ interface IUsdnProtocolEvents {
      * @dev The combination of the tick number, the tick version, and the index constitutes a unique identifier for the
      * position.
      * @param user The user address.
-     * @param position The position that was opened (pending validation).
+     * @param timestamp The timestamp of the action.
+     * @param leverage The initial leverage of the position (pending validation).
+     * @param amount The amount of asset that were deposited as collateral.
+     * @param startPrice The asset price at the moment of the position creation (pending validation).
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
      */
     event InitiatedOpenPosition(
-        address indexed user, Position position, int24 tick, uint256 tickVersion, uint256 index
+        address indexed user,
+        uint40 timestamp,
+        uint128 leverage,
+        uint128 amount,
+        uint128 startPrice,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index
     );
 
     /**
      * @notice Emitted when a user validates the opening of a long position.
      * @param user The user address.
-     * @param position The position that was opened (final).
+     * @param newLeverage The initial leverage of the position (final).
+     * @param newStartPrice The asset price at the moment of the position creation (final).
      * @param tick The tick containing the position.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      * @param tickVersion The tick version.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      * @param index The index of the position inside the tick array.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
-     * @param liquidationPrice The liquidation price of the position (final).
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      */
     event ValidatedOpenPosition(
-        address indexed user,
-        Position position,
-        int24 tick,
-        uint256 tickVersion,
-        uint256 index,
-        uint128 liquidationPrice
+        address indexed user, uint128 newLeverage, uint128 newStartPrice, int24 tick, uint256 tickVersion, uint256 index
     );
 
     /**
@@ -82,7 +87,7 @@ interface IUsdnProtocolEvents {
      * @param newTickVersion The new tick version.
      * @param newIndex The new index of the position inside the `newTick` array.
      */
-    event LiquidationPriceChanged(
+    event LiquidationPriceUpdated(
         int24 indexed oldTick,
         uint256 indexed oldTickVersion,
         uint256 indexed oldIndex,
@@ -119,9 +124,15 @@ interface IUsdnProtocolEvents {
      * @param oldTickVersion The liquidated tick version.
      * @param liquidationPrice The asset price at the moment of liquidation.
      * @param effectiveTickPrice The effective liquidated tick price.
+     * @param remainingCollateral The amount of asset that was left in the tick, which was transferred to the vault if
+     * positive, or was taken from the vault if negative.
      */
     event LiquidatedTick(
-        int24 indexed tick, uint256 indexed oldTickVersion, uint256 liquidationPrice, uint256 effectiveTickPrice
+        int24 indexed tick,
+        uint256 indexed oldTickVersion,
+        uint256 liquidationPrice,
+        uint256 effectiveTickPrice,
+        int256 remainingCollateral
     );
 
     /**
@@ -152,56 +163,94 @@ interface IUsdnProtocolEvents {
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
 
     /**
-     * @notice Emitted when the oracle middleware changed.
+     * @notice Emitted when the oracle middleware is updated.
      * @param newMiddleware The new oracle middleware address.
      */
-    event OracleMiddlewareChanged(address newMiddleware);
+    event OracleMiddlewareUpdated(address newMiddleware);
 
     /**
-     * @notice Emitted when the minLeverage changed.
+     * @notice Emitted when the minLeverage is updated.
      * @param newMinLeverage The new minLeverage.
      */
-    event MinLeverageChanged(uint256 newMinLeverage);
+    event MinLeverageUpdated(uint256 newMinLeverage);
 
     /**
-     * @notice Emitted when the maxLeverage changed.
+     * @notice Emitted when the maxLeverage is updated.
      * @param newMaxLeverage The new maxLeverage.
      */
-    event MaxLeverageChanged(uint256 newMaxLeverage);
+    event MaxLeverageUpdated(uint256 newMaxLeverage);
 
     /**
-     * @notice Emitted when the validationDeadline changed.
+     * @notice Emitted when the validationDeadline is updated.
      * @param newValidationDeadline The new validationDeadline.
      */
-    event ValidationDeadlineChanged(uint256 newValidationDeadline);
+    event ValidationDeadlineUpdated(uint256 newValidationDeadline);
 
     /**
-     * @notice Emitted when the liquidationPenalty changed.
+     * @notice Emitted when the liquidationPenalty is updated.
      * @param newLiquidationPenalty The new liquidationPenalty.
      */
-    event LiquidationPenaltyChanged(uint24 newLiquidationPenalty);
+    event LiquidationPenaltyUpdated(uint24 newLiquidationPenalty);
 
     /**
-     * @notice Emitted when the safetyMargin changed.
+     * @notice Emitted when the safetyMargin is updated.
      * @param newSafetyMargin The new safetyMargin.
      */
-    event SafetyMarginChanged(uint256 newSafetyMargin);
+    event SafetyMarginBpsUpdated(uint256 newSafetyMargin);
 
     /**
-     * @notice Emitted when the liquidationIteration changed.
+     * @notice Emitted when the liquidationIteration is updated.
      * @param newLiquidationIteration The new liquidationIteration.
      */
-    event LiquidationIterationChanged(uint16 newLiquidationIteration);
+    event LiquidationIterationUpdated(uint16 newLiquidationIteration);
 
     /**
-     * @notice Emitted when the EMAPeriod changed.
+     * @notice Emitted when the EMAPeriod is updated.
      * @param newEMAPeriod The new EMAPeriod.
      */
-    event EMAPeriodChanged(uint128 newEMAPeriod);
+    event EMAPeriodUpdated(uint128 newEMAPeriod);
 
     /**
-     * @notice Emitted when the fundingSF changed.
+     * @notice Emitted when the fundingSF is updated.
      * @param newFundingSF The new fundingSF.
      */
-    event FundingSFChanged(uint256 newFundingSF);
+    event FundingSFUpdated(uint256 newFundingSF);
+
+    /**
+     * @notice Emitted when a user (liquidator) successfully liquidated positions.
+     * @param liquidator The address that initiated the liquidation.
+     * @param rewards The amount of tokens the liquidator received in rewards.
+     */
+    event LiquidatorRewarded(address indexed liquidator, uint256 rewards);
+
+    /**
+     * @notice Emitted when the LiquidationRewardsManager contract is updated.
+     * @param newAddress The address of the new (current) contract.
+     */
+    event LiquidationRewardsManagerUpdated(address newAddress);
+
+    /**
+     * @notice Emitted when the pending protocol fee is distributed.
+     * @param feeCollector The collector address.
+     * @param amount The amount of fee transferred.
+     */
+    event ProtocolFeeDistributed(address feeCollector, uint256 amount);
+
+    /**
+     * @notice Emitted when the protocol fee is updated.
+     * @param feeBps The new fee in basis points.
+     */
+    event FeeBpsUpdated(uint256 feeBps);
+
+    /**
+     * @notice Emitted when the fee collector is updated.
+     * @param feeCollector The new fee collector address.
+     */
+    event FeeCollectorUpdated(address feeCollector);
+
+    /**
+     * @notice Emitted when the fee threshold is updated.
+     * @param feeThreshold The new fee threshold.
+     */
+    event FeeThresholdUpdated(uint256 feeThreshold);
 }

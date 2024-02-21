@@ -7,6 +7,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { IUsdnProtocolStorage } from "src/interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
@@ -31,7 +32,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant FUNDING_SF_DECIMALS = 3;
 
     /// @inheritdoc IUsdnProtocolStorage
-    uint256 public constant PERCENTAGE_DIVISOR = 10_000;
+    uint256 public constant BPS_DIVISOR = 10_000;
 
     /// @inheritdoc IUsdnProtocolStorage
     uint16 public constant MAX_LIQUIDATION_ITERATION = 10;
@@ -69,6 +70,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The oracle middleware contract.
     IOracleMiddleware internal _oracleMiddleware;
 
+    /// @notice The liquidation rewards manager contract.
+    ILiquidationRewardsManager internal _liquidationRewardsManager;
+
     /// @notice The minimum leverage for a position (1.000000001)
     uint256 internal _minLeverage = 10 ** LEVERAGE_DECIMALS + 10 ** 12;
 
@@ -78,14 +82,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The deadline for a user to confirm their own action
     uint256 internal _validationDeadline = 20 minutes;
 
-    /// @notice The funding rate per second
-    int256 internal _fundingRatePerSecond = 3_472_222_222; // 18 decimals (0.03% daily -> 0.0000003472% per second)
-
     /// @notice The liquidation penalty (in tick spacing units)
     uint24 internal _liquidationPenalty = 2; // 200 ticks -> ~2.02%
 
-    /// @notice Safety margin for the liquidation price of newly open positions
-    uint256 internal _safetyMargin = 200; // divisor is 10_000 -> 2%
+    /// @notice Safety margin for the liquidation price of newly open positions, in basis points
+    uint256 internal _safetyMarginBps = 200; // 2%
 
     /// @notice User current liquidation iteration in tick.
     uint16 internal _liquidationIteration = 1;
@@ -96,6 +97,14 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The scaling factor (SF) of the funding rate (0.12)
     uint256 internal _fundingSF = 12 * 10 ** (FUNDING_SF_DECIMALS - 2);
+
+    /// @notice The protocol fee percentage (in bps)
+    uint16 internal _protocolFeeBps = 10;
+
+    /// @notice The fee collector's address
+    address internal _feeCollector;
+
+    uint256 internal _feeThreshold = 1 ether;
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
@@ -116,6 +125,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * tends to 0 and high values (uint256.max have 78 digits).
      */
     uint256 internal _liquidationMultiplier = 100_000_000_000_000_000_000_000_000_000_000_000_000;
+
+    /// @notice The pending protocol fee accumulator
+    uint256 internal _pendingProtocolFee;
 
     /* -------------------------- Pending actions queue ------------------------- */
 
@@ -169,26 +181,41 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /**
      * @notice Constructor.
-     * @param usdn_ The USDN ERC20 contract.
-     * @param asset_ The asset ERC20 contract (wstETH).
-     * @param oracleMiddleware_ The oracle middleware contract.
-     * @param tickSpacing_ The positions tick spacing.
+     * @param usdn The USDN ERC20 contract.
+     * @param asset The asset ERC20 contract (wstETH).
+     * @param oracleMiddleware The oracle middleware contract.
+     * @param liquidationRewardsManager The liquidation rewards manager contract.
+     * @param tickSpacing The positions tick spacing.
+     * @param feeCollector The address of the fee collector.
      */
-    constructor(IUsdn usdn_, IERC20Metadata asset_, IOracleMiddleware oracleMiddleware_, int24 tickSpacing_) {
+    constructor(
+        IUsdn usdn,
+        IERC20Metadata asset,
+        IOracleMiddleware oracleMiddleware,
+        ILiquidationRewardsManager liquidationRewardsManager,
+        int24 tickSpacing,
+        address feeCollector
+    ) {
         // Since all USDN must be minted by the protocol, we check that the total supply is 0
-        if (usdn_.totalSupply() != 0) {
-            revert UsdnProtocolInvalidUsdn(address(usdn_));
+        if (usdn.totalSupply() != 0) {
+            revert UsdnProtocolInvalidUsdn(address(usdn));
         }
-        _usdn = usdn_;
-        _usdnDecimals = usdn_.decimals();
-        _asset = asset_;
-        _assetDecimals = asset_.decimals();
+        if (feeCollector == address(0)) {
+            revert UsdnProtocolInvalidFeeCollector();
+        }
+
+        _usdn = usdn;
+        _usdnDecimals = usdn.decimals();
+        _asset = asset;
+        _assetDecimals = asset.decimals();
         if (_assetDecimals < FUNDING_SF_DECIMALS) {
             revert UsdnProtocolInvalidAssetDecimals(_assetDecimals);
         }
-        _oracleMiddleware = oracleMiddleware_;
-        _priceFeedDecimals = oracleMiddleware_.decimals();
-        _tickSpacing = tickSpacing_;
+        _oracleMiddleware = oracleMiddleware;
+        _priceFeedDecimals = oracleMiddleware.decimals();
+        _liquidationRewardsManager = liquidationRewardsManager;
+        _tickSpacing = tickSpacing;
+        _feeCollector = feeCollector;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -247,8 +274,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getSafetyMargin() external view returns (uint256) {
-        return _safetyMargin;
+    function getSafetyMarginBps() external view returns (uint256) {
+        return _safetyMarginBps;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -339,5 +366,29 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getTotalLongPositions() external view returns (uint256) {
         return _totalLongPositions;
+    }
+
+    function getLiquidationRewardsManager() external view returns (address) {
+        return address(_liquidationRewardsManager);
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getPendingProtocolFee() external view returns (uint256) {
+        return _pendingProtocolFee;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getFeeThreshold() external view returns (uint256) {
+        return _feeThreshold;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getFeeCollector() external view returns (address) {
+        return _feeCollector;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getProtocolFeeBps() external view returns (uint16) {
+        return _protocolFeeBps;
     }
 }

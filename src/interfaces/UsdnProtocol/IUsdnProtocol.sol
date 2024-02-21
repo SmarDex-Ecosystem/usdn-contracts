@@ -43,8 +43,8 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     /// @notice Set the new liquidation penalty (in tick spacing units).
     function setLiquidationPenalty(uint24 newLiquidationPenalty) external;
 
-    /// @notice Set the new safety margin for the liquidation price of newly open positions.
-    function setSafetyMargin(uint256 newSafetyMargin) external;
+    /// @notice Set the new safety margin bps for the liquidation price of newly open positions.
+    function setSafetyMarginBps(uint256 newSafetyMarginBps) external;
 
     /// @notice Set the new user current liquidation iteration in tick.
     function setLiquidationIteration(uint16 newLiquidationIteration) external;
@@ -52,6 +52,28 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     /// @notice Set the new exponential moving average period of the funding rate.
     function setEMAPeriod(uint128 newEMAPeriod) external;
 
-    /// @notice Set the scaling factor (SF) of the funding rate.
+    /// @notice Set the new scaling factor (SF) of the funding rate.
     function setFundingSF(uint256 newFundingSF) external;
+
+    /**
+     * @notice Set the fee basis points (0.01%).
+     * @param feeBps The fee bps to be charged.
+     * @dev Fees are charged when transfers occur between the vault and the long
+     * @dev example: 50 bps -> 0.5%
+     */
+    function setFeeBps(uint16 feeBps) external;
+
+    /**
+     * @notice Set the fee collector address.
+     * @param feeCollector The address of the fee collector.
+     * @dev The fee collector is the address that receives the fees charged by the protocol
+     * @dev The fee collector must be different from the zero address
+     */
+    function setFeeCollector(address feeCollector) external;
+
+    /**
+     * @notice Set the minimum amount of fees to be collected before they can be withdrawn
+     * @param feeThreshold The minimum amount of fees to be collected before they can be withdrawn
+     */
+    function setFeeThreshold(uint256 feeThreshold) external;
 }

@@ -42,7 +42,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setLiquidationPenalty(0);
 
         vm.expectRevert(customError);
-        protocol.setSafetyMargin(0);
+        protocol.setSafetyMarginBps(0);
 
         vm.expectRevert(customError);
         protocol.setLiquidationIteration(0);
@@ -244,33 +244,33 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Call "setSafetyMargin" from admin.
+     * @custom:scenario Call "setSafetyMarginBps" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
      * @custom:then Revert because greater than max.
      */
     function test_safetyMarginRevertMax() external AdminPrank {
         // safetyMargin greater than max (20%) disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolSafetyMarginGreaterThanMax.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolSafetyMarginBpsGreaterThanMax.selector);
         // set safetyMargin
-        protocol.setSafetyMargin(2001);
+        protocol.setSafetyMarginBps(2001);
     }
 
     /**
-     * @custom:scenario Call "setSafetyMargin" from admin.
+     * @custom:scenario Call "setSafetyMarginBps" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
      * @custom:then Value should be updated.
      */
     function test_safetyMargin() external AdminPrank {
         // previous safetyMargin value
-        uint256 previousValue = protocol.getSafetyMargin();
+        uint256 previousValue = protocol.getSafetyMarginBps();
         // cache the new safetyMargin value to assign
         uint256 expectedNewValue = 0;
         // check new value to assign is not equal than current
         assertTrue(previousValue != expectedNewValue);
         // assign new safetyMargin value
-        protocol.setSafetyMargin(expectedNewValue);
+        protocol.setSafetyMarginBps(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.getSafetyMargin(), expectedNewValue);
+        assertEq(protocol.getSafetyMarginBps(), expectedNewValue);
     }
 
     /**

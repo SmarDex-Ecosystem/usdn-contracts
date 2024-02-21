@@ -104,7 +104,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * (from the oracle middleware) to the timestamp of the initiate action.
      * This operation adjusts the entry price and initial leverage of the position.
      * It is also possible for this operation to change the tick, tickVersion and index of the position, in which case
-     * we emit the `LiquidationPriceChanged` event.
+     * we emit the `LiquidationPriceUpdated` event.
      * @param openPriceData The price data corresponding to the sender's pending open position action.
      * @param previousActionPriceData The price data of an actionable pending action.
      */
@@ -164,10 +164,10 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * At least one tick will be liquidated, even if the `iterations` parameter is zero.
      * @param currentPriceData The most recent price data
      * @param iterations The maximum number of ticks to liquidate
-     * @return liquidated_ The number of ticks that were liquidated
+     * @return liquidatedPositions_ The number of positions that were liquidated
      */
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
-        returns (uint256 liquidated_);
+        returns (uint256 liquidatedPositions_);
 }
