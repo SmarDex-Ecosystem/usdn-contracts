@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -19,7 +20,9 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
+    using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
+    using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
     using LibBitmap for LibBitmap.Bitmap;
 
@@ -61,11 +64,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _addPendingAction(msg.sender, _convertVaultPendingAction(pendingAction));
 
-        _retrieveAssetsAndCheckBalance(msg.sender, amount);
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         emit InitiatedDeposit(msg.sender, amount);
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
+        _checkPendingFee();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -77,6 +81,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _validateDeposit(msg.sender, depositPriceData);
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
+        _checkPendingFee();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -121,6 +126,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
+        _checkPendingFee();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -132,6 +138,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _validateWithdrawal(msg.sender, withdrawalPriceData);
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
+        _checkPendingFee();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -211,10 +218,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 msg.sender, long.timestamp, long.leverage, long.amount, adjustedPrice, tick_, tickVersion_, index_
             );
         }
-        _retrieveAssetsAndCheckBalance(msg.sender, amount);
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
+        _checkPendingFee();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -226,6 +234,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _validateOpenPosition(msg.sender, openPriceData);
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
+        _checkPendingFee();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -285,6 +294,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
+        _checkPendingFee();
     }
 
     /// @inheritdoc IUsdnProtocolActions
@@ -296,24 +306,59 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _validateClosePosition(msg.sender, closePriceData);
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
+        _checkPendingFee();
     }
 
     /// @inheritdoc IUsdnProtocolActions
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
-        returns (uint256 liquidated_)
+        returns (uint256 liquidatedPositions_)
     {
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
 
         _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
-        liquidated_ = _liquidatePositions(currentPrice.neutralPrice, iterations);
-
-        // TODO: add liquidator incentive if needed
+        uint16 liquidatedTicks;
+        int256 liquidatedCollateral;
+        (liquidatedPositions_, liquidatedTicks, liquidatedCollateral) =
+            _liquidatePositions(currentPrice.neutralPrice, iterations);
 
         _refundExcessEther();
+        _checkPendingFee();
+
+        if (liquidatedTicks > 0) {
+            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral);
+        }
+    }
+
+    /**
+     * @notice Send rewards to the liquidator.
+     * @dev Should still emit an event if liquidationRewards = 0 to better keep track of those anomalies as rewards for
+     * those will be managed off-chain.
+     * @param liquidatedTicks The number of ticks that were liquidated.
+     * @param liquidatedCollateral The amount of collateral lost due to the liquidations.
+     */
+    function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 liquidatedCollateral) internal {
+        // Get how much we should give to the liquidator as rewards
+        uint256 liquidationRewards =
+            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, liquidatedCollateral);
+
+        // Avoid underflows in situation of extreme bad debt
+        if (_balanceVault < liquidationRewards) {
+            liquidationRewards = _balanceVault;
+        }
+
+        // Update the vault's balance
+        unchecked {
+            _balanceVault -= liquidationRewards;
+        }
+
+        // Transfer rewards (wsteth) to the liquidator
+        _asset.safeTransfer(msg.sender, liquidationRewards);
+
+        emit LiquidatorRewarded(msg.sender, liquidationRewards);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
@@ -451,12 +496,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         uint256 assetToTransfer = FixedPointMathLib.fullMulDiv(withdrawal.amount, available, withdrawal.usdnTotalSupply);
 
-        _balanceVault -= assetToTransfer;
         // we have the USDN in the contract already
         _usdn.burn(withdrawal.amount);
 
         // send the asset to the user
-        _distributeAssetsAndCheckBalance(withdrawal.user, assetToTransfer);
+        if (assetToTransfer > 0) {
+            _balanceVault -= assetToTransfer;
+            _asset.safeTransfer(withdrawal.user, assetToTransfer);
+        }
 
         emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amount);
     }
@@ -587,7 +634,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // send the asset to the user
-        _distributeAssetsAndCheckBalance(long.user, assetToTransfer);
+        if (assetToTransfer > 0) {
+            _asset.safeTransfer(long.user, assetToTransfer);
+        }
 
         emit ValidatedClosePosition(
             long.user,
@@ -670,6 +719,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             if (!success) {
                 revert UsdnProtocolEtherRefundFailed();
             }
+        }
+    }
+
+    function _checkPendingFee() internal {
+        // if pending protocol fee is above threshold, send it to the fee collector
+        if (_pendingProtocolFee >= _feeThreshold) {
+            _asset.safeTransfer(_feeCollector, _pendingProtocolFee);
+            emit ProtocolFeeDistributed(_feeCollector, _pendingProtocolFee);
+            _pendingProtocolFee = 0;
         }
     }
 }

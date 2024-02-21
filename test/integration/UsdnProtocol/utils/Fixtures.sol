@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { DEPLOYER } from "test/utils/Constants.sol";
+import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
+import { ADMIN, DEPLOYER, CHAINLINK_ORACLE_GAS } from "test/utils/Constants.sol";
 import { WstethIntegrationFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
 
+import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -32,6 +35,7 @@ contract UsdnProtocolBaseIntegrationFixture is WstethIntegrationFixture, IUsdnPr
 
     Usdn public usdn;
     UsdnProtocol public protocol;
+    LiquidationRewardsManager public liquidationRewardsManager;
 
     function _setUp(SetUpParams memory testParams) public virtual {
         if (testParams.fork) {
@@ -45,17 +49,22 @@ contract UsdnProtocolBaseIntegrationFixture is WstethIntegrationFixture, IUsdnPr
         (bool success,) = address(WST_ETH).call{ value: 1000 ether }("");
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
-        protocol = new UsdnProtocol(usdn, WST_ETH, wstethMiddleware, 100); // tick spacing 100 = 1%
+        AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
+        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), WST_ETH, 2 days);
+        protocol = new UsdnProtocol(
+            usdn,
+            WST_ETH,
+            wstethMiddleware,
+            liquidationRewardsManager,
+            100, // tick spacing 100 = 1%
+            ADMIN
+        );
+
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         WST_ETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
-        protocol.initialize{
-            value: wstethMiddleware.validationCost(abi.encode(testParams.initialPrice), ProtocolAction.Initialize)
-        }(
-            testParams.initialDeposit,
-            testParams.initialLong,
-            testParams.initialPrice / 2,
-            abi.encode(testParams.initialPrice)
+        protocol.initialize{ value: wstethMiddleware.validationCost("", ProtocolAction.Initialize) }(
+            testParams.initialDeposit, testParams.initialLong, testParams.initialPrice / 2, ""
         );
         vm.stopPrank();
         params = testParams;

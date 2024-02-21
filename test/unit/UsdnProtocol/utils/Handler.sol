@@ -12,6 +12,7 @@ import {
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
@@ -23,9 +24,14 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 contract UsdnProtocolHandler is UsdnProtocol {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
-    constructor(IUsdn usdn, IERC20Metadata asset, IOracleMiddleware oracleMiddleware, int24 tickSpacing)
-        UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing)
-    { }
+    constructor(
+        IUsdn usdn,
+        IERC20Metadata asset,
+        IOracleMiddleware oracleMiddleware,
+        ILiquidationRewardsManager liquidationRewardsManager,
+        int24 tickSpacing,
+        address feeCollector
+    ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
     // tick version
     function tickVersion(int24 _tick) external view returns (uint256) {
@@ -174,14 +180,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory) {
         return _convertLongPendingAction(action);
-    }
-
-    function i_retrieveAssetsAndCheckBalance(address from, uint256 amount) external {
-        _retrieveAssetsAndCheckBalance(from, amount);
-    }
-
-    function i_distributeAssetsAndCheckBalance(address to, uint256 amount) external {
-        _distributeAssetsAndCheckBalance(to, amount);
     }
 
     function i_assetToTransfer(int24 tick, uint256 amount, uint128 leverage, uint256 liqMultiplier)

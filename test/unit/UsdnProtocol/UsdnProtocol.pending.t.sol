@@ -27,8 +27,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     function _getActionablePendingActionHelper(function (uint256) external returns (PendingAction memory) func)
         internal
     {
-        wstETH.mint(address(this), 100_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         // there should be no pending action at this stage
         PendingAction memory action = func(0);
         assertTrue(action.action == ProtocolAction.None, "pending action before initiate");

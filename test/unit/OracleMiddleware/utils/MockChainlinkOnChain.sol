@@ -6,12 +6,22 @@ pragma solidity 0.8.20;
  * @dev This contract is used to test the OracleMiddleware contract.
  */
 contract MockChainlinkOnChain {
+    struct LatestRoundData {
+        uint80 roundId;
+        int256 answer;
+        uint256 startedAt;
+        uint80 answeredInRound;
+    }
+
     bool private alwaysRevertOnCall;
 
     uint64 public lastPublishTime;
+    uint8 public decimals = 8;
+    LatestRoundData private _latestRoundData;
 
     constructor() {
         lastPublishTime = uint64(block.timestamp);
+        _latestRoundData = LatestRoundData(0, int256(2000 * (10 ** decimals)), 0, 0);
     }
 
     /**
@@ -42,13 +52,16 @@ contract MockChainlinkOnChain {
         view
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        return (0, alwaysRevertOnCall ? int256(-1) : int256(2000 * 1e8), 0, lastPublishTime, 0);
+        return (
+            _latestRoundData.roundId,
+            alwaysRevertOnCall ? int256(-1) : _latestRoundData.answer,
+            _latestRoundData.startedAt,
+            lastPublishTime,
+            _latestRoundData.answeredInRound
+        );
     }
 
-    /**
-     * @notice Get the decimals of the price asset.
-     */
-    function decimals() external pure returns (uint8) {
-        return 8;
+    function setLatestRoundData(uint80 roundId, int256 answer, uint256 startedAt, uint80 answeredInRound) external {
+        _latestRoundData = LatestRoundData(roundId, answer, startedAt, answeredInRound);
     }
 }

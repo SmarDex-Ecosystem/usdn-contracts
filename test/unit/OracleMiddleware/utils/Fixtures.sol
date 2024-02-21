@@ -9,9 +9,11 @@ import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
 import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
 
+import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IWstETH } from "src/interfaces/IWstETH.sol";
 
 /**
  * @title ActionsFixture
@@ -42,13 +44,16 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
     MockPyth internal mockPyth;
     MockChainlinkOnChain internal mockChainlinkOnChain;
     OracleMiddleware public oracleMiddleware;
+    uint256 internal chainlinkTimeElapsedLimit = 1 hours;
 
     function setUp() public virtual {
         vm.warp(1_704_063_600); // 01/01/2024 @ 12:00am (UTC+2)
 
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
-        oracleMiddleware = new OracleMiddleware(address(mockPyth), PYTH_WSTETH_USD, address(mockChainlinkOnChain));
+        oracleMiddleware = new OracleMiddleware(
+            address(mockPyth), PYTH_WSTETH_USD, address(mockChainlinkOnChain), chainlinkTimeElapsedLimit
+        );
     }
 
     function test_setUp() public {
@@ -79,6 +84,25 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
 }
 
 /**
+ * @title LiquidationRewardsManagerBaseFixture
+ * @dev Utils for testing the liquidation rewards manager
+ */
+contract LiquidationRewardsManagerBaseFixture is BaseFixture {
+    MockChainlinkOnChain internal mockChainlinkOnChain;
+    WstETH internal wsteth;
+    LiquidationRewardsManager internal liquidationRewardsManager;
+
+    function setUp() public virtual {
+        vm.warp(1_704_063_600); // 01/01/2024 @ 12:00am (UTC+2)
+
+        mockChainlinkOnChain = new MockChainlinkOnChain();
+        wsteth = new WstETH();
+        liquidationRewardsManager =
+            new LiquidationRewardsManager(address(mockChainlinkOnChain), IWstETH(address(wsteth)), 2 days);
+    }
+}
+
+/**
  * @title WstethBaseFixture
  * @dev Utils for testing the wsteth oracle
  */
@@ -94,7 +118,8 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
         wsteth = new WstETH();
-        wstethOracle = new WstEthOracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(wsteth));
+        wstethOracle =
+            new WstEthOracleMiddleware(address(mockPyth), 0, address(mockChainlinkOnChain), address(wsteth), 1 hours);
     }
 
     function test_setUp() public {

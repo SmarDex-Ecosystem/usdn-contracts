@@ -161,4 +161,42 @@ interface IUsdnProtocolEvents {
      * @param index The index of the position inside the tick array.
      */
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
+
+    /**
+     * @notice Emitted when a user (liquidator) successfully liquidated positions.
+     * @param liquidator The address that initiated the liquidation.
+     * @param rewards The amount of tokens the liquidator received in rewards.
+     */
+    event LiquidatorRewarded(address indexed liquidator, uint256 rewards);
+
+    /**
+     * @notice Emitted when the LiquidationRewardsManager contract is updated.
+     * @param newAddress The address of the new (current) contract.
+     */
+    event LiquidationRewardsManagerUpdated(address newAddress);
+
+    /**
+     * @notice Emitted when the pending protocol fee is distributed.
+     * @param feeCollector The collector address.
+     * @param amount The amount of fee transferred.
+     */
+    event ProtocolFeeDistributed(address feeCollector, uint256 amount);
+
+    /**
+     * @notice Emitted when the protocol fee is updated.
+     * @param feeBps The new fee in basis points.
+     */
+    event FeeBpsUpdated(uint256 feeBps);
+
+    /**
+     * @notice Emitted when the fee collector is updated.
+     * @param feeCollector The new fee collector address.
+     */
+    event FeeCollectorUpdated(address feeCollector);
+
+    /**
+     * @notice Emitted when the fee threshold is updated.
+     * @param feeThreshold The new fee threshold.
+     */
+    event FeeThresholdUpdated(uint256 feeThreshold);
 }

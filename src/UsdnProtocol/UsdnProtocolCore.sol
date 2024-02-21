@@ -62,7 +62,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
         int256 numerator = longExpo_ - vaultExpo_;
-        // optimization : if numerator is zero, then return the EMA
+        // optimization : if the numerator is zero, then return the EMA
         if (numerator == 0) {
             return (_EMA, longExpo_, vaultExpo_);
         }
@@ -306,27 +306,31 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
     }
 
-    /// @dev At the time of the last balances update (without taking funding into account)
+    /// @dev At the time of the last balance update (without taking funding into account)
     function _longTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
         expo_ = _totalExpo.toInt256().safeSub(_longAssetAvailable(currentPrice));
     }
 
-    /// @dev At the time of the last balances update (without taking funding into account)
+    /// @dev At the time of the last balance update (without taking funding into account)
     function _vaultTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
         expo_ = _vaultAssetAvailable(currentPrice);
     }
 
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) internal returns (bool priceUpdated_) {
+        // cache variable for optimization
+        uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
         // If the price is not fresh, do nothing
-        if (timestamp <= _lastUpdateTimestamp) {
+        if (timestamp <= lastUpdateTimestamp) {
             return false;
         }
 
-        _updateEMA(timestamp - _lastUpdateTimestamp);
+        _updateEMA(timestamp - lastUpdateTimestamp);
         (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
-        int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256());
-        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAsset);
+        (int256 fee, int256 fundAssetWithFee) = _calculateFee(fundAsset);
+        // we subtract the fee from the total balance
+        int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256()).safeSub(fee);
+        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
         if (newLongBalance < 0) {
             newLongBalance = 0;
         }
@@ -334,36 +338,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (newVaultBalance < 0) {
             newVaultBalance = 0;
         }
-        _balanceLong = uint256(newLongBalance);
-        _balanceVault = uint256(newVaultBalance);
+
+        (_balanceVault, _balanceLong) = (uint256(newVaultBalance), uint256(newLongBalance));
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fund;
         _liquidationMultiplier = _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
 
         priceUpdated_ = true;
-    }
-
-    function _retrieveAssetsAndCheckBalance(address from, uint256 amount) internal {
-        uint256 balanceBefore = _asset.balanceOf(address(this));
-        _asset.safeTransferFrom(from, address(this), amount);
-        uint256 expectedBalance = balanceBefore + amount;
-        if (_asset.balanceOf(address(this)) != expectedBalance) {
-            revert UsdnProtocolIncompleteTransfer(address(this), _asset.balanceOf(address(this)), expectedBalance);
-        }
-    }
-
-    function _distributeAssetsAndCheckBalance(address to, uint256 amount) internal {
-        // slither-disable-next-line incorrect-equality
-        if (amount == 0) {
-            return;
-        }
-        uint256 balanceBefore = _asset.balanceOf(to);
-        _asset.safeTransfer(to, amount);
-        uint256 expectedBalance = balanceBefore + amount;
-        if (_asset.balanceOf(to) != expectedBalance) {
-            revert UsdnProtocolIncompleteTransfer(to, _asset.balanceOf(to), expectedBalance);
-        }
     }
 
     /**
@@ -385,6 +367,25 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = _tickVersion[tick];
         hash_ = keccak256(abi.encodePacked(tick, version_));
+    }
+
+    /**
+     * @notice Calculate the protocol fee and apply it to the funding asset amount
+     * @param fundAsset The funding asset amount to be used for the fee calculation
+     * @return fee_ The absolute value of the calculated fee
+     * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
+     */
+    function _calculateFee(int256 fundAsset) internal returns (int256 fee_, int256 fundAssetWithFee_) {
+        fee_ = (fundAsset * _toInt256(_protocolFeeBps)) / int256(BPS_DIVISOR);
+        // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
+        fundAssetWithFee_ = fundAsset - fee_;
+
+        if (fee_ < 0) {
+            // we want to return the absolute value of the fee
+            fee_ = -fee_;
+        }
+
+        _pendingProtocolFee += uint256(fee_);
     }
 
     /* -------------------------- Pending actions queue ------------------------- */
