@@ -158,4 +158,24 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         (int256 fund_,,) = protocol.funding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
         assertEq(fund_, protocol.EMA(), "funding should be equal to EMA");
     }
+
+    /**
+     * TO DO : natspec
+     */
+    function test_funding_NegLong_ZeroVault() public {
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+        uint128 price = DEFAULT_PARAMS.initialPrice;
+        bytes memory priceData = abi.encode(price);
+
+        protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
+        protocol.validateOpenPosition(priceData, "");
+
+        skip(25);
+        protocol.liquidate(abi.encode(price / 100), 10);
+        int256 EMA = protocol.EMA();
+        uint256 fundingSF = protocol.fundingSF();
+        (int256 fund_,,) = protocol.funding(price / 100, uint128(block.timestamp));
+        emit log_named_int("fund_", fund_);
+        emit log_named_int("mul", -int256(fundingSF) + EMA);
+    }
 }
