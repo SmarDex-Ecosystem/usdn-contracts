@@ -262,6 +262,17 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         emit FeeThresholdUpdated(feeThreshold);
     }
 
+    /// @inheritdoc IUsdnProtocol
+    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external onlyOwner {
+        if (newLiquidationRewardsManager == address(0)) {
+            revert UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
+        }
+
+        _liquidationRewardsManager = ILiquidationRewardsManager(newLiquidationRewardsManager);
+
+        emit LiquidationRewardsManagerUpdated(newLiquidationRewardsManager);
+    }
+
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
         uint128 leverage = _getLeverage(price, liquidationPrice);
@@ -271,20 +282,5 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
         emit InitiatedOpenPosition(user, long.timestamp, long.leverage, long.amount, price, tick, tickVersion, index);
         emit ValidatedOpenPosition(user, long.leverage, price, tick, tickVersion, index);
-    }
-
-    /**
-     * @notice Replace the LiquidationRewardsManager contract with a new implementation.
-     * @dev Cannot be the 0 address.
-     * @param newLiquidationRewardsManager the address of the new contract.
-     */
-    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external onlyOwner {
-        if (newLiquidationRewardsManager == address(0)) {
-            revert UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
-        }
-
-        _liquidationRewardsManager = ILiquidationRewardsManager(newLiquidationRewardsManager);
-
-        emit LiquidationRewardsManagerUpdated(newLiquidationRewardsManager);
     }
 }

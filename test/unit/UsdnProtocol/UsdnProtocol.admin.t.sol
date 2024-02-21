@@ -61,6 +61,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(customError);
         protocol.setFeeThreshold(0);
+
+        vm.expectRevert(customError);
+        protocol.setLiquidationRewardsManager(address(this));
     }
 
     /**
@@ -474,5 +477,35 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setFeeThreshold(expectedNewValue);
         // check new value is equal than expected
         assertEq(protocol.getFeeThreshold(), expectedNewValue);
+    }
+
+    /**
+     * @custom:scenario Call "setLiquidationRewardsManager" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:then Revert because zero.
+     */
+    function test_setLiquidationRewardsManagerRevertZero() external AdminPrank {
+        // zero address disallowed
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolLiquidationRewardsManagerIsZeroAddress.selector);
+        // set liquidation reward manager
+        protocol.setLiquidationRewardsManager(address(0));
+    }
+
+    /**
+     * @custom:scenario Call "setLiquidationRewardsManager" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:then Value should be updated.
+     */
+    function test_setLiquidationRewardsManager() external AdminPrank {
+        // random address
+        address randAddress = address(this);
+        // cache previous address
+        address previousDefault = protocol.getLiquidationRewardsManager();
+        // assert previous liquidation reward manager different than randAddress
+        assertTrue(address(previousDefault) != randAddress);
+        // set liquidation reward manager
+        protocol.setLiquidationRewardsManager(randAddress);
+        // assert new liquidation reward manager equal randAddress
+        assertEq(protocol.getLiquidationRewardsManager(), randAddress);
     }
 }

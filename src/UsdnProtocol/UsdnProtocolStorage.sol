@@ -104,6 +104,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The fee collector's address
     address internal _feeCollector;
 
+    /// @notice The fee threshold above which fee will be sent
     uint256 internal _feeThreshold = 1 ether;
 
     /* -------------------------------------------------------------------------- */

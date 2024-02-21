@@ -76,4 +76,11 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @param feeThreshold The minimum amount of fees to be collected before they can be withdrawn
      */
     function setFeeThreshold(uint256 feeThreshold) external;
+
+    /**
+     * @notice Replace the LiquidationRewardsManager contract with a new implementation.
+     * @dev Cannot be the 0 address.
+     * @param newLiquidationRewardsManager the address of the new contract.
+     */
+    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external;
 }
