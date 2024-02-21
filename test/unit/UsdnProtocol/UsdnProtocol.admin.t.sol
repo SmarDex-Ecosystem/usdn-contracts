@@ -52,6 +52,15 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(customError);
         protocol.setFundingSF(0);
+
+        vm.expectRevert(customError);
+        protocol.setFeeBps(0);
+
+        vm.expectRevert(customError);
+        protocol.setFeeCollector(address(this));
+
+        vm.expectRevert(customError);
+        protocol.setFeeThreshold(0);
     }
 
     /**
@@ -385,5 +394,85 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setFundingSF(expectedNewValue);
         // check new value is equal than expected
         assertEq(protocol.getFundingSF(), expectedNewValue);
+    }
+
+    /**
+     * @custom:scenario Call "setFeeBps" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:then Revert because greater than max.
+     */
+    function test_feeBpsMax() external AdminPrank {
+        // above max value
+        uint16 aboveMax = uint16(protocol.BPS_DIVISOR()) + 1;
+        // feeBps greater than max (10000) disallowed
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps.selector);
+        // set feeBps
+        protocol.setFeeBps(aboveMax);
+    }
+
+    /**
+     * @custom:scenario Call "setFeeBps" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:then Value should be updated.
+     */
+    function test_feeBps() external AdminPrank {
+        // previous feeBps value
+        uint16 previousValue = uint16(protocol.getProtocolFeeBps());
+        // cache the new feeBps value to assign
+        uint16 expectedNewValue;
+        // check new value to assign is not equal than current
+        assertTrue(previousValue != expectedNewValue);
+        // assign new feeBps value
+        protocol.setFeeBps(expectedNewValue);
+        // check new value is equal than expected
+        assertEq(protocol.getProtocolFeeBps(), expectedNewValue);
+    }
+
+    /**
+     * @custom:scenario Call "setFeeCollector" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:then Revert because address zero.
+     */
+    function test_feeCollectorZero() external AdminPrank {
+        // feeCollector address zero disallowed
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidFeeCollector.selector);
+        // set feeBps
+        protocol.setFeeCollector(address(0));
+    }
+
+    /**
+     * @custom:scenario Call "setFeeCollector" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:then Value should be updated.
+     */
+    function test_feeCollector() external AdminPrank {
+        // previous feeCollector address
+        address previousValue = protocol.getFeeCollector();
+        // cache the new feeCollector address to assign
+        address expectedNewValue = address(this);
+        // check new address to assign is not equal than current
+        assertTrue(previousValue != expectedNewValue);
+        // assign new feeCollector address
+        protocol.setFeeCollector(expectedNewValue);
+        // check new address is equal than expected
+        assertEq(protocol.getFeeCollector(), expectedNewValue);
+    }
+
+    /**
+     * @custom:scenario Call "setFeeThreshold" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:then Value should be updated.
+     */
+    function test_feeThreshold() external AdminPrank {
+        // previous feeThreshold value
+        uint256 previousValue = protocol.getFeeThreshold();
+        // cache the new feeThreshold value to assign
+        uint256 expectedNewValue = type(uint256).max;
+        // check new value to assign is not equal than current
+        assertTrue(previousValue != expectedNewValue);
+        // assign new feeThreshold value
+        protocol.setFeeThreshold(expectedNewValue);
+        // check new value is equal than expected
+        assertEq(protocol.getFeeThreshold(), expectedNewValue);
     }
 }

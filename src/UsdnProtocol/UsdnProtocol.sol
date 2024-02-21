@@ -238,6 +238,30 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         emit FundingSFUpdated(_fundingSF);
     }
 
+    /// @inheritdoc IUsdnProtocol
+    function setFeeBps(uint16 protocolFeeBps) external onlyOwner {
+        if (protocolFeeBps > BPS_DIVISOR) {
+            revert UsdnProtocolInvalidProtocolFeeBps();
+        }
+        _protocolFeeBps = protocolFeeBps;
+        emit FeeBpsUpdated(protocolFeeBps);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setFeeCollector(address feeCollector) external onlyOwner {
+        if (feeCollector == address(0)) {
+            revert UsdnProtocolInvalidFeeCollector();
+        }
+        _feeCollector = feeCollector;
+        emit FeeCollectorUpdated(feeCollector);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setFeeThreshold(uint256 feeThreshold) external onlyOwner {
+        _feeThreshold = feeThreshold;
+        emit FeeThresholdUpdated(feeThreshold);
+    }
+
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
         uint128 leverage = _getLeverage(price, liquidationPrice);
@@ -262,29 +286,5 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _liquidationRewardsManager = ILiquidationRewardsManager(newLiquidationRewardsManager);
 
         emit LiquidationRewardsManagerUpdated(newLiquidationRewardsManager);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setFeeBps(uint16 protocolFeeBps) external onlyOwner {
-        if (protocolFeeBps > BPS_DIVISOR) {
-            revert UsdnProtocolInvalidProtocolFeeBps();
-        }
-        _protocolFeeBps = protocolFeeBps;
-        emit FeeBpsUpdated(protocolFeeBps);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setFeeCollector(address feeCollector) external onlyOwner {
-        if (feeCollector == address(0)) {
-            revert UsdnProtocolInvalidFeeCollector();
-        }
-        _feeCollector = feeCollector;
-        emit FeeCollectorUpdated(feeCollector);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setFeeThreshold(uint256 feeThreshold) external onlyOwner {
-        _feeThreshold = feeThreshold;
-        emit FeeThresholdUpdated(feeThreshold);
     }
 }
