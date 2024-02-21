@@ -5,7 +5,15 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import { BaseFixture } from "test/utils/Fixtures.sol";
-import { DEPLOYER, ADMIN, WSTETH, PYTH_STETH_USD, PYTH_ORACLE, CHAINLINK_ORACLE_STETH } from "test/utils/Constants.sol";
+import {
+    DEPLOYER,
+    ADMIN,
+    WSTETH,
+    PYTH_STETH_USD,
+    PYTH_ORACLE,
+    CHAINLINK_ORACLE_STETH,
+    CHAINLINK_ORACLE_GAS
+} from "test/utils/Constants.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
@@ -58,7 +66,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             IPyth pyth = IPyth(PYTH_ORACLE);
             AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
             oracleMiddleware =
-                new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH);
+                new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH, 1 hours);
         } else {
             wstETH = new WstETH();
             mockPyth = new MockPyth();
@@ -66,7 +74,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             mockChainlinkOnChain.setLastPublishTime(testParams.initialTimestamp - 10 minutes);
             mockChainlinkOnChain.setLastPrice(int256(uint256(testParams.initialPrice / 10 ** (18 - 8))));
             oracleMiddleware = new WstEthOracleMiddleware(
-                address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), address(wstETH)
+                address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
             );
         }
         vm.warp(testParams.initialTimestamp);
@@ -75,11 +83,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
         AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
-        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), WST_ETH, 2 days);
+        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
         protocol = new UsdnProtocolHandler(
             usdn,
-            WST_ETH,
-            wstethMiddleware,
+            wstETH,
+            oracleMiddleware,
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
             ADMIN

@@ -316,36 +316,46 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int24 tick = _maxInitializedTick;
 
         do {
-            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
-            if (index == LibBitmap.NOT_FOUND) {
-                // no populated ticks left
-                break;
-            }
+            {
+                uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+                if (index == LibBitmap.NOT_FOUND) {
+                    // no populated ticks left
+                    break;
+                }
 
-            tick = _bitmapIndexToTick(index);
-            if (tick < currentTick) {
-                break;
+                tick = _bitmapIndexToTick(index);
+                if (tick < currentTick) {
+                    break;
+                }
             }
 
             // we have found a non-empty tick that needs to be liquidated
-            (bytes32 tickHash,) = _tickHash(tick);
-            uint256 length = _positionsInTick[tickHash];
+            uint256 tickTotalExpo;
+            {
+                (bytes32 tickHash,) = _tickHash(tick);
+                tickTotalExpo = _totalExpoByTick[tickHash];
+                uint256 length = _positionsInTick[tickHash];
+                unchecked {
+                    _totalExpo -= tickTotalExpo;
 
-            uint256 tickTotalExpo = _totalExpoByTick[tickHash];
-            int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
-            remainingCollateral_ += tickValue;
-            unchecked {
-                _totalExpo -= tickTotalExpo;
+                    _totalLongPositions -= length;
+                    liquidatedPositions_ += length;
 
-                _totalLongPositions -= length;
-                liquidatedPositions_ += length;
-
-                ++_tickVersion[tick];
-                ++liquidatedTicks_;
+                    ++_tickVersion[tick];
+                    ++liquidatedTicks_;
+                }
             }
-            _tickBitmap.unset(_tickToBitmapIndex(tick));
 
-            emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue);
+            {
+                int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
+                remainingCollateral_ += tickValue;
+
+                _tickBitmap.unset(_tickToBitmapIndex(tick));
+
+                emit LiquidatedTick(
+                    tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue
+                );
+            }
         } while (liquidatedTicks_ < iteration);
 
         if (liquidatedPositions_ != 0) {

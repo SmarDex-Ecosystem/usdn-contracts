@@ -52,9 +52,9 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockPyth.updatePrice(3290e8);
         mockPyth.setLastPublishTime(1_708_090_186 + 24);
 
-        protocol.validateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.ValidateOpenPosition) }(
-            "beef", ""
-        );
+        protocol.validateOpenPosition{
+            value: oracleMiddleware.validationCost("beef", ProtocolAction.ValidateOpenPosition)
+        }("beef", "");
 
         vm.warp(1_708_090_342);
         mockChainlinkOnChain.setLastPublishTime(1_708_090_342 - 10 minutes);
@@ -68,9 +68,9 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockPyth.updatePrice(3281e8);
         mockPyth.setLastPublishTime(1_708_090_342 + 24);
 
-        protocol.validateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.ValidateOpenPosition) }(
-            "beef", ""
-        );
+        protocol.validateOpenPosition{
+            value: oracleMiddleware.validationCost("beef", ProtocolAction.ValidateOpenPosition)
+        }("beef", "");
 
         vm.stopPrank();
 

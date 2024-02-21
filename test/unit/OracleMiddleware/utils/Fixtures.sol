@@ -61,7 +61,7 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
         assertEq(address(oracleMiddleware.priceFeed()), address(mockChainlinkOnChain));
 
         assertEq(mockPyth.lastPublishTime(), block.timestamp);
-        assertEq(mockChainlinkOnChain.lastPublishTime(), block.timestamp);
+        assertEq(mockChainlinkOnChain.latestTimestamp(), block.timestamp);
 
         /* ----------------------------- Test pyth mock ----------------------------- */
         bytes[] memory updateData = new bytes[](1);
@@ -127,7 +127,7 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
         assertEq(address(wstethOracle.priceFeed()), address(mockChainlinkOnChain));
 
         assertEq(mockPyth.lastPublishTime(), block.timestamp);
-        assertEq(mockChainlinkOnChain.lastPublishTime(), block.timestamp);
+        assertEq(mockChainlinkOnChain.latestTimestamp(), block.timestamp);
 
         /* ----------------------------- Test pyth mock ----------------------------- */
         bytes[] memory updateData = new bytes[](1);
