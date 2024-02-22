@@ -30,6 +30,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The maximum number of liquidations per transaction
     function MAX_LIQUIDATION_ITERATION() external view returns (uint16);
 
+    /// @notice The denominator of expo imbalance limits
+    function EXPO_IMBALANCE_LIMIT_DENOMINATOR() external view returns (uint16);
+
     /**
      * @notice The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
