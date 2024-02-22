@@ -122,7 +122,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolZeroMiddlewareAddress();
         }
         _oracleMiddleware = newOracleMiddleware;
-        emit OracleMiddlewareUpdated(address(_oracleMiddleware));
+        emit OracleMiddlewareUpdated(address(newOracleMiddleware));
     }
 
     /// @inheritdoc IUsdnProtocol
