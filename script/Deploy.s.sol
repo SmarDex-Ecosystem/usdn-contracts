@@ -4,13 +4,12 @@ pragma solidity 0.8.20;
 import { Script } from "forge-std/Script.sol";
 
 import { WstETH } from "test/utils/WstEth.sol";
-import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
 
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 import { MockLiquidationRewardsManager } from "src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
@@ -28,7 +27,7 @@ contract Deploy is Script {
         if (wstETHAddress != address(0)) {
             wstETH = WstETH(wstETHAddress);
             if (vm.envOr("GET_WSTETH", false) && depositAmount > 0 && longAmount > 0) {
-                uint256 ethAmount = (depositAmount + longAmount + 1000) * wstETH.stEthPerToken() / 1 ether;
+                uint256 ethAmount = (depositAmount + longAmount + 10_000) * wstETH.stEthPerToken() / 1 ether;
                 (bool result,) = wstETHAddress.call{ value: ethAmount }(hex"");
                 require(result, "Failed to mint wstETH");
             }
@@ -41,7 +40,7 @@ contract Deploy is Script {
         // fetch middleware address environment variable
         address middlewareAddress = vm.envOr("MIDDLEWARE_ADDRESS", address(0));
         // cache environment type
-        bool isProdEnv = block.chainid != 31_337;
+        bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
         // cache middleware
         WstEthOracleMiddleware middleware;
 
@@ -121,8 +120,16 @@ contract Deploy is Script {
         wstETH.approve(address(protocol), depositAmount + longAmount);
         // Initialize if needed
         if (depositAmount > 0 && longAmount > 0) {
-            // Desired liquidation price at 1 USD
-            protocol.initialize(uint128(depositAmount), uint128(longAmount), 1 ether, "");
+            uint256 desiredLiqPrice;
+            if (isProdEnv) {
+                desiredLiqPrice = vm.envUint("INIT_LONG_LIQPRICE");
+            } else {
+                // for forks, we want a leverage of ~2x so we get the current
+                // price from the middleware and divide it by two
+                desiredLiqPrice =
+                    middleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.Initialize, "").price / 2;
+            }
+            protocol.initialize(uint128(depositAmount), uint128(longAmount), uint128(desiredLiqPrice), "");
         }
 
         vm.stopBroadcast();

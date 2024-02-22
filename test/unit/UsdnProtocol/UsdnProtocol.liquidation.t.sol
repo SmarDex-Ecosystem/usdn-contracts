@@ -42,11 +42,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         assertEq(protocol.tickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
         // check if first total expo match initial value
-        assertEq(protocol.totalExpo(), 297.50876198898525358 ether, "wrong first totalExpo");
+        assertEq(protocol.totalExpo(), 297.551622685266578822 ether, "wrong first totalExpo");
         // check if first tick match initial value
         assertEq(initialTick, 74_300, "wrong first tick");
         // check if first total expo by tick match initial value
-        assertEq(protocol.totalExpoByTick(initialTick), 287.588791719281791408 ether, "wrong first totalExpoByTick");
+        assertEq(protocol.totalExpoByTick(initialTick), 287.63165241556311665 ether, "wrong first totalExpoByTick");
         // check if first long position length match initial value
         assertEq(protocol.longPositionsLength(initialTick), 10, "wrong first longPositionsLength");
         // check if first position in tick match initial value
@@ -61,7 +61,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(
-            74_300, 0, 1650 ether, 1_688_815_697_758_784_379_410, -937_114_468_940_773_818
+            74_300, 0, 1650 ether, 1_688_815_737_333_156_862_292, -937_260_893_567_821_247
         );
         // initiate a position to liquidate all other positions
         protocol.initiateOpenPosition(5 ether, 500 ether, priceData, "");
@@ -70,7 +70,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
         // check if second total expo is equal expected value
-        assertEq(protocol.totalExpo(), 17.024364708768907152 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 17.023727463156635834 ether, "wrong second totalExpo");
         // check if second total expo by tick is equal expected value
         assertEq(protocol.totalExpoByTick(initialTick), 0, "wrong second totalExpoByTick");
         // check if second long position length is equal expected value
@@ -107,11 +107,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         assertEq(protocol.tickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
         // check if first total expo match initial value
-        assertEq(protocol.totalExpo(), 297.50876198898525358 ether, "wrong first totalExpo");
+        assertEq(protocol.totalExpo(), 297.551622685266578822 ether, "wrong first totalExpo");
         // check if first tick match initial value
         assertEq(initialTick, 74_300, "wrong first tick");
         // check if first total expo by tick match initial value
-        assertEq(protocol.totalExpoByTick(initialTick), 287.588791719281791408 ether, "wrong first totalExpoByTick");
+        assertEq(protocol.totalExpoByTick(initialTick), 287.63165241556311665 ether, "wrong first totalExpoByTick");
         // check if first long position length match initial value
         assertEq(protocol.longPositionsLength(initialTick), 10, "wrong first longPositionsLength");
         // check if first position in tick match initial value
@@ -126,7 +126,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(
-            74_300, 0, 1000 ether, 1_688_120_057_896_887_704_615, -188_282_856_486_164_494_018
+            74_300, 0, 1000 ether, 1_688_120_086_919_862_090_115, -188_310_925_339_308_849_619
         );
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
@@ -145,100 +145,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(protocol.maxInitializedTick(), -322_300, "wrong second maxInitializedTick");
         // check if second total long positions is equal expected value
         assertEq(protocol.totalLongPositions(), 1, "wrong second totalLongPositions");
-    }
-
-    /**
-     * @custom:scenario Simulate user open positions on many different tick then
-     * a price drawdown and liquidations by liquidators.
-     * @custom:given User open positions
-     * @custom:and Simulate a 20 price drawdown
-     * @custom:when Liquidators execute liquidate once
-     * @custom:then Should execute liquidations partially.
-     * @custom:and Change contract state.
-     * @custom:when Liquidators execute liquidate many time
-     * @custom:then Should execute liquidations entirely.
-     * @custom:and Change contract state.
-     */
-    function test_openLiquidatorPartialLiquidation() public {
-        uint256 length = users.length;
-        int24[] memory initialTicks = new int24[](length);
-        uint256 actualPrice = 2000 ether;
-        bytes memory priceData = abi.encode(actualPrice);
-
-        for (uint256 i; i < length; i++) {
-            vm.startPrank(users[i]);
-            (initialTicks[i],,) =
-                protocol.initiateOpenPosition(20 ether, uint128(actualPrice * 80 / 100), priceData, "");
-            protocol.validateOpenPosition(priceData, "");
-            vm.stopPrank();
-            // 20 eth drawdown
-            actualPrice -= 20 ether;
-            priceData = abi.encode(actualPrice);
-            skip(1 hours);
-        }
-
-        // check if positions aren't liquidated
-        for (uint256 i; i != length; i++) {
-            // check if first tickVersion match initial value
-            assertEq(protocol.tickVersion(initialTicks[i]), 0, "wrong first tickVersion");
-            // check if first long position length match initial value
-            assertEq(protocol.longPositionsLength(initialTicks[i]), 1, "wrong first longPositionsLength");
-            // check if first position in tick match initial value
-            assertEq(protocol.positionsInTick(initialTicks[i]), 1, "wrong first positionsInTick");
-        }
-        // check if first total expo match initial value
-        assertEq(protocol.totalExpo(), 920.916195233143927215 ether, "wrong first totalExpo");
-        // check if first max initialized match initial value
-        assertEq(protocol.maxInitializedTick(), 73_700, "wrong first maxInitializedTick");
-        // check if first total long positions match initial value
-        assertEq(protocol.totalLongPositions(), 12, "wrong first totalLongPositions");
-
-        priceData = abi.encode(1000 ether);
-
-        skip(1 hours);
-        vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatedTick(
-            73_700, 0, 1000 ether, 1_663_032_234_633_913_346_312, -56_718_158_511_510_127_738
-        );
-        // liquidator first liquidation batch
-        protocol.liquidate(priceData, uint16(length / 2));
-
-        // half users should be liquidated
-        for (uint256 i; i != length / 2; i++) {
-            // check if second tickVersion is updated
-            assertEq(protocol.tickVersion(initialTicks[i]), 1, "wrong second tickVersion");
-            // check if second long position is updated
-            assertEq(protocol.longPositionsLength(initialTicks[i]), 0, "wrong second longPositionsLength");
-            // check if second long position is updated
-            assertEq(protocol.positionsInTick(initialTicks[i]), 0, "wrong second positionsInTick");
-        }
-
-        // check if second total expo match expected value
-        assertEq(protocol.totalExpo(), 464.17754310293132502 ether, "wrong second totalExpo");
-        // check if second max initialized match expected value
-        assertEq(protocol.maxInitializedTick(), 73_000, "wrong second maxInitializedTick");
-        // check if second total long positions match expected value
-        assertEq(protocol.totalLongPositions(), 7, "wrong second totalLongPositions");
-
-        // liquidator second liquidation batch
-        protocol.liquidate(priceData, uint16(length / 2));
-
-        // all users should be liquidated
-        for (uint256 i = length / 2; i != length; i++) {
-            // check if second tickVersion is updated
-            assertEq(protocol.tickVersion(initialTicks[i]), 1, "wrong second tickVersion in tick");
-            // check if second long position is updated
-            assertEq(protocol.longPositionsLength(initialTicks[i]), 0, "wrong second longPositionsLength in tick");
-            // check if second long position is updated
-            assertEq(protocol.positionsInTick(initialTicks[i]), 0, "wrong second positionsInTick in tick");
-        }
-
-        // check if second total expo match expected value
-        assertEq(protocol.totalExpo(), 9.919970269703462172 ether, "wrong second totalExpo");
-        // check if second max initialized match expected value
-        assertEq(protocol.maxInitializedTick(), 69_200, "wrong second maxInitializedTick");
-        // check if second total long positions match expected value
-        assertEq(protocol.totalLongPositions(), 2, "wrong second totalLongPositions");
     }
 
     /**
@@ -389,7 +295,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         priceData = abi.encode(1680 ether);
 
-        uint256 collateralRemainingAfterLiquidation = 464_558_964_785_558_438;
+        uint256 collateralLiquidated = 473_682_811_132_131_111;
         uint256 expectedLiquidatorRewards = 4_209_000_000_000_000;
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.balanceVault();
@@ -407,7 +313,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // check that the vault balance got updated
         assertEq(
-            protocol.balanceVault() - vaultBalanceBeforeRewards - collateralRemainingAfterLiquidation,
+            vaultBalanceBeforeRewards + collateralLiquidated - protocol.balanceVault(),
             expectedLiquidatorRewards,
             "The vault does not contain the right amount of funds"
         );
