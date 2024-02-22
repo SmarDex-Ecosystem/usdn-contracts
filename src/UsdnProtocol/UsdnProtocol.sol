@@ -126,6 +126,17 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
+    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external onlyOwner {
+        if (newLiquidationRewardsManager == address(0)) {
+            revert UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
+        }
+
+        _liquidationRewardsManager = ILiquidationRewardsManager(newLiquidationRewardsManager);
+
+        emit LiquidationRewardsManagerUpdated(newLiquidationRewardsManager);
+    }
+
+    /// @inheritdoc IUsdnProtocol
     function setMinLeverage(uint256 newMinLeverage) external onlyOwner {
         // zero minLeverage
         if (newMinLeverage == 0) {
@@ -248,29 +259,18 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setFeeCollector(address feeCollector) external onlyOwner {
-        if (feeCollector == address(0)) {
-            revert UsdnProtocolInvalidFeeCollector();
-        }
-        _feeCollector = feeCollector;
-        emit FeeCollectorUpdated(feeCollector);
-    }
-
-    /// @inheritdoc IUsdnProtocol
     function setFeeThreshold(uint256 feeThreshold) external onlyOwner {
         _feeThreshold = feeThreshold;
         emit FeeThresholdUpdated(feeThreshold);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external onlyOwner {
-        if (newLiquidationRewardsManager == address(0)) {
-            revert UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
+    function setFeeCollector(address feeCollector) external onlyOwner {
+        if (feeCollector == address(0)) {
+            revert UsdnProtocolInvalidFeeCollector();
         }
-
-        _liquidationRewardsManager = ILiquidationRewardsManager(newLiquidationRewardsManager);
-
-        emit LiquidationRewardsManagerUpdated(newLiquidationRewardsManager);
+        _feeCollector = feeCollector;
+        emit FeeCollectorUpdated(feeCollector);
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {

@@ -125,7 +125,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * @dev This value represents 1 with 38 decimals to have the same precision when the multiplier
      * tends to 0 and high values (uint256.max have 78 digits).
      */
-    uint256 internal _liquidationMultiplier = 100_000_000_000_000_000_000_000_000_000_000_000_000;
+    uint256 internal _liquidationMultiplier = 1e38;
 
     /// @notice The pending protocol fee accumulator
     uint256 internal _pendingProtocolFee;
@@ -219,6 +219,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _feeCollector = feeCollector;
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                                 Immutables getters                              */
+    /* -------------------------------------------------------------------------- */
+
     /// @inheritdoc IUsdnProtocolStorage
     function getTickSpacing() external view returns (int24) {
         return _tickSpacing;
@@ -249,9 +253,18 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         return _usdnDecimals;
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                                 Parameters getters                                */
+    /* -------------------------------------------------------------------------- */
+
     /// @inheritdoc IUsdnProtocolStorage
     function getOracleMiddleware() external view returns (IOracleMiddleware) {
         return _oracleMiddleware;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager) {
+        return _liquidationRewardsManager;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -265,13 +278,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getLiquidationPenalty() external view returns (uint24) {
-        return _liquidationPenalty;
+    function getValidationDeadline() external view returns (uint256) {
+        return _validationDeadline;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getValidationDeadline() external view returns (uint256) {
-        return _validationDeadline;
+    function getLiquidationPenalty() external view returns (uint24) {
+        return _liquidationPenalty;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -295,6 +308,25 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
+    function getProtocolFeeBps() external view returns (uint16) {
+        return _protocolFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getFeeThreshold() external view returns (uint256) {
+        return _feeThreshold;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getFeeCollector() external view returns (address) {
+        return _feeCollector;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                    State getters                                 */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IUsdnProtocolStorage
     function getLastFunding() external view returns (int256) {
         return _lastFunding;
     }
@@ -312,6 +344,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getLiquidationMultiplier() external view returns (uint256) {
         return _liquidationMultiplier;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getPendingProtocolFee() external view returns (uint256) {
+        return _pendingProtocolFee;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -367,29 +404,5 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getTotalLongPositions() external view returns (uint256) {
         return _totalLongPositions;
-    }
-
-    function getLiquidationRewardsManager() external view returns (address) {
-        return address(_liquidationRewardsManager);
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getPendingProtocolFee() external view returns (uint256) {
-        return _pendingProtocolFee;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getFeeThreshold() external view returns (uint256) {
-        return _feeThreshold;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getFeeCollector() external view returns (address) {
-        return _feeCollector;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getProtocolFeeBps() external view returns (uint16) {
-        return _protocolFeeBps;
     }
 }

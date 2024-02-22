@@ -31,6 +31,13 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     /// @notice Set the new oracle middleware contract.
     function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external;
 
+    /**
+     * @notice Replace the LiquidationRewardsManager contract with a new implementation.
+     * @dev Cannot be the 0 address.
+     * @param newLiquidationRewardsManager the address of the new contract.
+     */
+    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external;
+
     /// @notice Set the new minimum leverage for a position.
     function setMinLeverage(uint256 newMinLeverage) external;
 
@@ -64,23 +71,16 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setFeeBps(uint16 feeBps) external;
 
     /**
-     * @notice Set the fee collector address.
-     * @param feeCollector The address of the fee collector.
-     * @dev The fee collector is the address that receives the fees charged by the protocol
-     * @dev The fee collector must be different from the zero address
-     */
-    function setFeeCollector(address feeCollector) external;
-
-    /**
      * @notice Set the minimum amount of fees to be collected before they can be withdrawn
      * @param feeThreshold The minimum amount of fees to be collected before they can be withdrawn
      */
     function setFeeThreshold(uint256 feeThreshold) external;
 
     /**
-     * @notice Replace the LiquidationRewardsManager contract with a new implementation.
-     * @dev Cannot be the 0 address.
-     * @param newLiquidationRewardsManager the address of the new contract.
+     * @notice Set the fee collector address.
+     * @param feeCollector The address of the fee collector.
+     * @dev The fee collector is the address that receives the fees charged by the protocol
+     * @dev The fee collector must be different from the zero address
      */
-    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external;
+    function setFeeCollector(address feeCollector) external;
 }

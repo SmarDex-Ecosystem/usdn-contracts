@@ -4,13 +4,13 @@ pragma solidity 0.8.20;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 
 import {
     UsdnProtocolBaseFixture,
     IUsdnProtocolErrors,
     IUsdnProtocolEvents
 } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { DEPLOYER } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature The admin functions of the protocol
@@ -541,7 +541,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // expected new value
         address expectedNewValue = address(this);
         // cache previous address
-        address previousDefault = protocol.getLiquidationRewardsManager();
+        ILiquidationRewardsManager previousDefault = protocol.getLiquidationRewardsManager();
         // assert previous liquidation reward manager different than expectedNewValue
         assertTrue(address(previousDefault) != expectedNewValue);
         // expected event
@@ -550,6 +550,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // set liquidation reward manager
         protocol.setLiquidationRewardsManager(expectedNewValue);
         // assert new liquidation reward manager equal expectedNewValue
-        assertEq(protocol.getLiquidationRewardsManager(), expectedNewValue);
+        assertEq(address(protocol.getLiquidationRewardsManager()), expectedNewValue);
     }
 }

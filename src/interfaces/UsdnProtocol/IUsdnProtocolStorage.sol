@@ -8,12 +8,17 @@ import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEv
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
+import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 /**
  * @title IUsdnProtocolStorage
  * @notice Interface for the storage layer of the USDN protocol.
  */
+
 interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
+    /* -------------------------------------------------------------------------- */
+    /*                                  Constants                                 */
+    /* -------------------------------------------------------------------------- */
+
     /// @notice The number of decimals for leverage values
     function LEVERAGE_DECIMALS() external view returns (uint8);
 
@@ -35,6 +40,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The maximum number of liquidations per transaction
     function MAX_LIQUIDATION_ITERATION() external view returns (uint16);
 
+    /* -------------------------------------------------------------------------- */
+    /*                                 Immutables getters                              */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * @notice The liquidation tick spacing for storing long positions.
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
@@ -45,11 +54,11 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The asset ERC20 contract (wstETH).
     function getAsset() external view returns (IERC20Metadata);
 
-    /// @notice The asset decimals.
-    function getAssetDecimals() external view returns (uint8);
-
     /// @notice The price feed decimals.
     function getPriceFeedDecimals() external view returns (uint8);
+
+    /// @notice The asset decimals.
+    function getAssetDecimals() external view returns (uint8);
 
     /// @notice The USDN ERC20 contract.
     function getUsdn() external view returns (IUsdn);
@@ -57,8 +66,15 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The decimals of the USDN token.
     function getUsdnDecimals() external view returns (uint8);
 
+    /* -------------------------------------------------------------------------- */
+    /*                                 Parameters getters                                */
+    /* -------------------------------------------------------------------------- */
+
     /// @notice The oracle middleware contract.
     function getOracleMiddleware() external view returns (IOracleMiddleware);
+
+    /// @notice The liquidation rewards manager contract
+    function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager);
 
     /// @notice The minimum leverage for a position
     function getMinLeverage() external view returns (uint256);
@@ -84,6 +100,19 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The scaling factor (SF) of the funding rate
     function getFundingSF() external view returns (uint256);
 
+    /// @notice The protocol fee in bps
+    function getProtocolFeeBps() external view returns (uint16);
+
+    /// @notice The fee threshold before fees are sent to the fee collector
+    function getFeeThreshold() external view returns (uint256);
+
+    /// @notice The address of the fee collector
+    function getFeeCollector() external view returns (address);
+
+    /* -------------------------------------------------------------------------- */
+    /*                                    State getters                                 */
+    /* -------------------------------------------------------------------------- */
+
     /// @notice The funding corresponding to the last update timestamp
     function getLastFunding() external view returns (int256);
 
@@ -95,6 +124,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The multiplier for liquidation price calculations
     function getLiquidationMultiplier() external view returns (uint256);
+
+    /// @notice The pending fees that are accumulated in the protocol
+    function getPendingProtocolFee() external view returns (uint256);
 
     /**
      * @notice The pending action by user (1 per user max).
@@ -146,19 +178,4 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice Cache of the total long positions count
     function getTotalLongPositions() external view returns (uint256);
-
-    /// @notice The liquidation rewards manager contract
-    function getLiquidationRewardsManager() external view returns (address);
-
-    /// @notice The pending fees that are accumulated in the protocol
-    function getPendingProtocolFee() external view returns (uint256);
-
-    /// @notice The fee threshold before fees are sent to the fee collector
-    function getFeeThreshold() external view returns (uint256);
-
-    /// @notice The address of the fee collector
-    function getFeeCollector() external view returns (address);
-
-    /// @notice The protocol fee in bps
-    function getProtocolFeeBps() external view returns (uint16);
 }
