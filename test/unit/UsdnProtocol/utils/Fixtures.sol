@@ -12,7 +12,7 @@ import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewar
 import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 
 /**
@@ -114,6 +114,84 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
         assertEq(protocol.feeCollector(), ADMIN, "fee collector");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
+    }
+
+    /**
+     * @notice Create user positions on the vault side (deposit and withdrawal)
+     * @dev The order in which the actions are performed are defined as followed:
+     * @dev InitiateDeposit -> ValidateDeposit -> InitiateWithdrawal
+     * @param user User that performs the actions
+     * @param untilAction Action after which the function returns
+     * @param positionSize Amount of wstEth to deposit
+     * @param price Current price
+     */
+    function setUpUserPositionInVault(address user, ProtocolAction untilAction, uint128 positionSize, uint256 price)
+        public
+    {
+        bytes memory priceData = abi.encode(price);
+
+        vm.prank(user);
+        protocol.initiateDeposit(positionSize, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateDeposit) return;
+
+        vm.prank(user);
+        protocol.validateDeposit(priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.ValidateDeposit) return;
+
+        vm.prank(user);
+        protocol.initiateWithdrawal(uint128(usdn.balanceOf(user)), priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateWithdrawal) return;
+
+        vm.prank(user);
+        protocol.validateWithdrawal(priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+    }
+
+    /**
+     * @notice Create user positions on the long side (open and close a position)
+     * @dev The order in which the actions are performed are defined as followed:
+     * @dev InitiateOpenPosition -> ValidateOpenPosition -> InitiateClosePosition
+     * @param user User that performs the actions
+     * @param untilAction Action after which the function returns
+     * @param positionSize Amount of wstEth to deposit
+     * @param desiredLiqPrice Price at which the position should be liquidated
+     * @param price Current price
+     * @return tick_ The tick at which the position was opened
+     * @return tickVersion_ The tick version of the price tick
+     * @return index_ The index of the new position inside the tick array
+     */
+    function setUpUserPositionInLong(
+        address user,
+        ProtocolAction untilAction,
+        uint96 positionSize,
+        uint128 desiredLiqPrice,
+        uint256 price
+    ) public returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+        bytes memory priceData = abi.encode(price);
+
+        vm.prank(user);
+        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(positionSize, desiredLiqPrice, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
+
+        vm.prank(user);
+        protocol.validateOpenPosition(priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
+
+        vm.prank(user);
+        protocol.initiateClosePosition(tick_, tickVersion_, index_, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
+
+        vm.prank(user);
+        protocol.validateClosePosition(priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+
+        return (tick_, tickVersion_, index_);
     }
 
     // create userCount funded addresses with ETH and underlying
