@@ -162,6 +162,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _lastFunding;
     }
 
+    function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) external returns (bool priceUpdated_) {
+        return _applyPnlAndFunding(currentPrice, timestamp);
+    }
+
     function getEMAPeriod() external view returns (uint256) {
         return _EMAPeriod;
     }
