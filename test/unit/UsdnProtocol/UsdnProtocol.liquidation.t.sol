@@ -281,7 +281,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @dev TODO Uncomment after totalExpo with new leverage fix
      * @custom:scenario User initiates a close position action after a price drawdown that
      * liquidates underwater long positions.
      * @custom:given User 1 opens a position
@@ -290,7 +289,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:when User 2 initiates a close position action
      * @custom:then It should liquidate User 1's position.
      */
-    /*function test_userLiquidatesOnInitiateClosePosition() public {
+    function test_userLiquidatesOnInitiateClosePosition() public {
         uint256 price = 2000 ether;
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
@@ -301,7 +300,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Initates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
         (int24 tickToClose, uint256 tickVersionToClose, uint256 indexToClose) =
-    setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, price);
+            setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, price);
 
         // TODO remove when the MockOracleMiddleware is fixed
         skip(31 minutes);
@@ -316,7 +315,42 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.initiateClosePosition(
             tickToClose, tickVersionToClose, indexToClose, abi.encode(effectivePriceForTick), ""
         );
-    }*/
+    }
+
+    /**
+     * @custom:scenario User close his position action after a price drawdown that
+     * liquidates underwater long positions.
+     * @custom:given User 1 opens a position
+     * @custom:and User 2 initiates and validates an open position
+     * @custom:and User 2 initiates a close position action
+     * @custom:and Price drops below User 1's liquidation price
+     * @custom:when User 2 initiates a close position action
+     * @custom:then It should liquidate User 1's position.
+     */
+    function test_userLiquidatesOnValidateClosePosition() public {
+        uint256 price = 2000 ether;
+        uint128 desiredLiqPrice = uint128(price) - 200 ether;
+
+        // Create a long position to liquidate
+        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) =
+            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+
+        // Initates and validates the position for the other user
+        desiredLiqPrice -= 200 ether;
+        setUpUserPositionInLong(address(this), ProtocolAction.InitiateClosePosition, 1 ether, desiredLiqPrice, price);
+
+        // TODO remove when the MockOracleMiddleware is fixed
+        skip(31 minutes);
+
+        // When funding is positive, calculations will increase the liquidation price so this is enough
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tickToLiquidate);
+
+        // Check that tick has been liquidated
+        vm.expectEmit(true, true, false, false);
+        emit IUsdnProtocolEvents.LiquidatedTick(tickToLiquidate, tickVersionToLiquidate, 0, 0, 0);
+
+        protocol.validateClosePosition(abi.encode(effectivePriceForTick), "");
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                                 TODO remove                                */
