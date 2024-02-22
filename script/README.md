@@ -4,6 +4,7 @@
 
 Environment variables can be used to control the script execution:
 
+- `FORK_CHAIN_ID`: the chain ID of the anvil fork. If deploying on mainnet (production), this variable can be omitted.
 - `DEPLOYER_ADDRESS`: required, the address that is used for simulating the transactions on the network fork (needs to have a sufficient balance).
 - `FEE_COLLECTOR` : required, the receiver of all protocol fees
 - `WSTETH_ADDRESS`: if provided, skips deployment of the mock wstETH token
@@ -28,6 +29,7 @@ at 1 USD so a leverage close to 1x):
 Will also link oracles to mainnet instances:
 
 ```
+export FORK_CHAIN_ID=31337
 export DEPLOYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 export FEE_COLLECTOR=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 export WSTETH_ADDRESS=0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0
@@ -62,11 +64,11 @@ The `anvil` fork should be launched with at least the following parameters:
 
 - `-a 100` to fund 100 addresses with 10'000 Ξ
 - `-f https://..` to fork mainnet at the latest height
-- `--chain-id 31337` to change from the default (1) forked chain ID
+- `--chain-id $FORK_CHAIN_ID` to change from the default (1) forked chain ID
 - `--code-size-limit 50000` to support larger contracts (50kB) since we are still in the process of optimizing code size
 
 ```
-anvil -a 100 -f [Mainnet RPC] --chain-id 31337 --code-size-limit 50000
+anvil -a 100 -f [Mainnet RPC] --chain-id $FORK_CHAIN_ID --code-size-limit 50000
 ```
 
 ## Logs analysis command
