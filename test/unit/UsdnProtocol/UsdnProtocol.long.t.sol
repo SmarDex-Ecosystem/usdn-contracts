@@ -247,7 +247,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check that the user can close his opened position
      * @custom:given An initialized and validated position
-     * @custom:when The user can initiate a close position action
+     * @custom:when The user call initiateClosePosition
      * @custom:then The close position action is initialized
      */
     function test_canInitializeClosePosition() external {
