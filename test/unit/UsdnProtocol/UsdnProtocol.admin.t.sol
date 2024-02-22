@@ -202,7 +202,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because lower than min disallowed.
      */
     function test_RevertWhen_setValidationDeadlineWithMin() external AdminPrank {
-        // validationDeadline lower than min (1 minute) disallowed
+        // validationDeadline lower than min disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolValidationDeadlineLowerThanMin.selector);
         // set validationDeadline
         protocol.setValidationDeadline(59);
@@ -214,7 +214,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setValidationDeadlineWithMax() external AdminPrank {
-        // validationDeadline greater than max ( 1 year ) disallowed
+        // validationDeadline greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolValidationDeadlineGreaterThanMax.selector);
         // set validationDeadline
         protocol.setValidationDeadline(365 days + 1);
@@ -247,7 +247,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setLiquidationPenaltyMax() external AdminPrank {
-        // liquidationPenalty greater than max (15 tick spacing) disallowed
+        // liquidationPenalty greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolLiquidationPenaltyGreaterThanMax.selector);
         // set liquidationPenalty
         protocol.setLiquidationPenalty(16);
@@ -280,7 +280,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setSafetyMarginBpsWithMax() external AdminPrank {
-        // safetyMargin greater than max (20%) disallowed
+        // safetyMargin greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolSafetyMarginBpsGreaterThanMax.selector);
         // set safetyMargin
         protocol.setSafetyMarginBps(2001);
@@ -314,7 +314,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setLiquidationIterationWithMax() external AdminPrank {
         uint16 aboveMax = protocol.MAX_LIQUIDATION_ITERATION() + 1;
-        // liquidationIteration greater than max (10) disallowed
+        // liquidationIteration greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolLiquidationIterationGreaterThanMax.selector);
         // set liquidationIteration
         protocol.setLiquidationIteration(aboveMax);
@@ -347,7 +347,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because zero.
      */
     function test_RevertWhen_setEMAPeriodWithZero() external AdminPrank {
-        // EMAPeriod 0 disallowed
+        // EMAPeriod zero disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolZeroEMAPeriod.selector);
         // set EMAPeriod
         protocol.setEMAPeriod(0);
@@ -359,7 +359,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setEMAPeriodWithMax() external AdminPrank {
-        // EMAPeriod greater than max (3 months) disallowed
+        // EMAPeriod greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEMAPeriodGreaterThanMax.selector);
         // set EMAPeriod
         protocol.setEMAPeriod(90 days + 1);
@@ -392,7 +392,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because zero.
      */
     function test_RevertWhen_setFundingSFWithZero() external AdminPrank {
-        // fundingSF 0 disallowed
+        // fundingSF zero disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolZeroFundingSF.selector);
         // set fundingSF
         protocol.setFundingSF(0);
@@ -404,7 +404,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because greater than max.
      */
     function test__RevertWhen_setFundingSFWithMax() external AdminPrank {
-        // fundingSF greater than max (1) disallowed
+        // fundingSF greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolFundingSFGreaterThanMax.selector);
         // set fundingSF
         protocol.setFundingSF(1000 + 1);
@@ -439,7 +439,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function test_RevertWhen_setFeeBpsWithMax() external AdminPrank {
         // above max value
         uint16 aboveMax = uint16(protocol.BPS_DIVISOR()) + 1;
-        // feeBps greater than max (10000) disallowed
+        // feeBps greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps.selector);
         // set feeBps
         protocol.setFeeBps(aboveMax);
