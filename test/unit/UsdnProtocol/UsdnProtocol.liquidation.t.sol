@@ -1,23 +1,326 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { DEPLOYER } from "test/utils/Constants.sol";
+import "forge-std/console.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
+import { USER_1, USER_2, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 
-/// @custom:feature The `_liquidatePositions` function of `UsdnProtocol`
+/// @custom:feature The `liquidate()` function of `UsdnProtocolActions`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
+
+        usdn.approve(address(protocol), type(uint256).max);
 
         chainlinkGasPriceFeed.setLatestRoundData(1, 30 gwei, block.timestamp, 1);
         vm.txGasPrice(30 gwei);
     }
+
+    /**
+     * TODO To move to fixtures setup?
+     * @notice Create user positions on the vault side (deposit and withdrawal)
+     * @dev The order in which the actions are performed are defined as followed:
+     * @dev InitiateDeposit -> ValidateDeposit -> InitiateWithdrawal
+     * @param user User that performs the actions
+     * @param untilAction Action after which the function returns
+     * @param positionSize Amount of wstEth to deposit
+     * @param price Current price
+     */
+    function setUpUserPositionInVault(address user, ProtocolAction untilAction, uint128 positionSize, uint256 price)
+        public
+    {
+        bytes memory priceData = abi.encode(price);
+
+        vm.prank(user);
+        protocol.initiateDeposit(positionSize, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateDeposit) return;
+
+        vm.prank(user);
+        protocol.validateDeposit(priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.ValidateDeposit) return;
+
+        vm.prank(user);
+        protocol.initiateWithdrawal(uint128(usdn.balanceOf(user)), priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateWithdrawal) return;
+    }
+
+    /**
+     * TODO To move to fixtures setup?
+     * @notice Create user positions on the long side (open and close a position)
+     * @dev The order in which the actions are performed are defined as followed:
+     * @dev InitiateOpenPosition -> ValidateOpenPosition -> InitiateClosePosition
+     * @param user User that performs the actions
+     * @param untilAction Action after which the function returns
+     * @param positionSize Amount of wstEth to deposit
+     * @param desiredLiqPrice Price at which the position should be liquidated
+     * @param price Current price
+     * @return tick_ The tick at which the position was opened
+     * @return tickVersion_ The tick version of the price tick
+     * @return index_ The index of the new position inside the tick array
+     */
+    function setUpUserPositionInLong(
+        address user,
+        ProtocolAction untilAction,
+        uint96 positionSize,
+        uint128 desiredLiqPrice,
+        uint256 price
+    ) public returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+        bytes memory priceData = abi.encode(price);
+
+        vm.prank(user);
+        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(positionSize, desiredLiqPrice, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
+
+        vm.prank(user);
+        protocol.validateOpenPosition(priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
+
+        vm.prank(user);
+        protocol.initiateClosePosition(tick_, tickVersion_, index_, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                        Liquidations on Vault actions                       */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario User initiates a deposit after a price drawdown that liquidates underwater long positions.
+     * @custom:given User 1 opens a position
+     * @custom:and Price drops below its liquidation price
+     * @custom:when User 2 initiates a deposit
+     * @custom:then It should liquidate User 1's position.
+     */
+    function test_userLiquidatesOnInitiateDeposit() public {
+        uint256 price = 2000 ether;
+        uint128 desiredLiqPrice = uint128(price) - 200 ether;
+
+        // Create a long position to liquidate
+        (int24 tick, uint256 tickVersion,) =
+            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+
+        // TODO remove when the MockOracleMiddleware is fixed
+        skip(31 minutes);
+
+        // When funding is positive, calculations will increase the liquidation price so this is enough
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+
+        // Check that tick has been liquidated
+        vm.expectEmit(true, true, false, false);
+        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+        protocol.initiateDeposit(1 ether, abi.encode(effectivePriceForTick), "");
+    }
+
+    /**
+     * @custom:scenario User validates a deposit after a price drawdown that liquidates underwater long positions.
+     * @custom:given User 1 opens a position
+     * @custom:and User 2 initiates a deposit
+     * @custom:and Price drops below User 1's liquidation price
+     * @custom:when User 2 validates its pending deposit
+     * @custom:then It should liquidate User 1's position.
+     */
+    function test_userLiquidatesOnValidateDeposit() public {
+        uint256 price = 2000 ether;
+        uint128 desiredLiqPrice = uint128(price) - 200 ether;
+
+        // Create a long position to liquidate
+        (int24 tick, uint256 tickVersion,) =
+            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+
+        // Initates the deposit for the other user
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, price);
+
+        // When funding is positive, calculations will increase the liquidation price so this is enough
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+
+        // Check that tick has been liquidated
+        vm.expectEmit(true, true, false, false);
+        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+
+        protocol.validateDeposit(abi.encode(effectivePriceForTick), "");
+    }
+
+    /**
+     * @custom:scenario User initiates a withdrawal after a price drawdown that liquidates underwater long positions.
+     * @custom:given User 1 opens a position
+     * @custom:and User 2 initiates and validates a deposit
+     * @custom:and Price drops below User 1's liquidation price
+     * @custom:when User 2 initiates a withdrawal
+     * @custom:then It should liquidate User 1's position.
+     */
+    function test_userLiquidatesOnInitiateWithdrawal() public {
+        uint256 price = 2000 ether;
+        uint128 desiredLiqPrice = uint128(price) - 200 ether;
+
+        // Create a long position to liquidate
+        (int24 tick, uint256 tickVersion,) =
+            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+
+        // Initate and validate the deposit for the other user
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, price);
+
+        // TODO remove when the MockOracleMiddleware is fixed
+        skip(31 minutes);
+
+        // When funding is positive, calculations will increase the liquidation price so this is enough
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+
+        // Check that tick has been liquidated
+        vm.expectEmit(true, true, false, false);
+        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+
+        protocol.initiateWithdrawal(uint128(usdn.balanceOf(address(this))), abi.encode(effectivePriceForTick), "");
+    }
+
+    /**
+     * @custom:scenario User validates a withdrawal after a price drawdown that liquidates underwater long positions.
+     * @custom:given User 1 opens a position
+     * @custom:and User 2 initiates and validates a deposit, then initiates a withdrawal
+     * @custom:and Price drops below its liquidation price
+     * @custom:when User 2 validates its pending withdrawal action
+     * @custom:then It should liquidate User 1's position.
+     */
+    function test_userLiquidatesOnValidateWithdrawal() public {
+        uint256 price = 2000 ether;
+        uint128 desiredLiqPrice = uint128(price) - 200 ether;
+
+        // Create a long position to liquidate
+        (int24 tick, uint256 tickVersion,) =
+            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+
+        // Initate and validate the deposit, then initiate the withdrawal for the other user
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 1 ether, price);
+
+        // When funding is positive, calculations will increase the liquidation price so this is enough
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+
+        // Check that tick has been liquidated
+        vm.expectEmit(true, true, false, false);
+        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+
+        protocol.validateWithdrawal(abi.encode(effectivePriceForTick), "");
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                        Liquidations on Long actions                        */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario User initiates an open position action after a price drawdown that
+     * liquidates underwater long positions.
+     * @custom:given User 1 opens a position
+     * @custom:and Price drops below its liquidation price
+     * @custom:when User 2 initiates an open position
+     * @custom:then It should liquidate User 1's position.
+     */
+    function test_userLiquidatesOnInitiateOpenPosition() public {
+        uint256 price = 2000 ether;
+        uint128 desiredLiqPrice = uint128(price) - 200 ether;
+
+        // Create a long position to liquidate
+        (int24 tick, uint256 tickVersion,) =
+            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+
+        // TODO remove when the MockOracleMiddleware is fixed
+        skip(31 minutes);
+
+        // When funding is positive, calculations will increase the liquidation price so this is enough
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+
+        // Check that tick has been liquidated
+        vm.expectEmit(true, true, false, false);
+        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+        protocol.initiateOpenPosition(1 ether, desiredLiqPrice - 200 ether, abi.encode(effectivePriceForTick), "");
+    }
+
+    /**
+     * @custom:scenario User validates an open position after a price drawdown that
+     * liquidates underwater long positions.
+     * @custom:given User 1 opens a position
+     * @custom:and User 2 initiates an open position
+     * @custom:and Price drops below User 1's liquidation price
+     * @custom:when User 2 validates its pending open position
+     * @custom:then It should liquidate User 1's position.
+     */
+    function test_userLiquidatesOnValidateOpenPosition() public {
+        uint256 price = 2000 ether;
+        uint128 desiredLiqPrice = uint128(price) - 200 ether;
+
+        // Create a long position to liquidate
+        (int24 tick, uint256 tickVersion,) =
+            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+
+        // Initates the position for the other user
+        price -= 200 ether;
+        desiredLiqPrice -= 200 ether;
+        setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, price);
+
+        // When funding is positive, calculations will increase the liquidation price so this is enough
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+
+        // Check that tick has been liquidated
+        vm.expectEmit(true, true, false, false);
+        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+        protocol.validateOpenPosition(abi.encode(effectivePriceForTick), "");
+    }
+
+    /**
+     * @dev TODO Uncomment after totalExpo with new leverage fix
+     * @custom:scenario User initiates a close position action after a price drawdown that
+     * liquidates underwater long positions.
+     * @custom:given User 1 opens a position
+     * @custom:and User 2 initiates and validates an open position
+     * @custom:and Price drops below User 1's liquidation price
+     * @custom:when User 2 initiates a close position action
+     * @custom:then It should liquidate User 1's position.
+     */
+    /*function test_userLiquidatesOnInitiateClosePosition() public {
+        uint256 price = 2000 ether;
+        uint128 desiredLiqPrice = uint128(price) - 200 ether;
+
+        // Create a long position to liquidate
+        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) =
+            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+
+        // Initates and validates the position for the other user
+        desiredLiqPrice -= 200 ether;
+        (int24 tickToClose, uint256 tickVersionToClose, uint256 indexToClose) =
+    setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, price);
+
+        // TODO remove when the MockOracleMiddleware is fixed
+        skip(31 minutes);
+
+        // When funding is positive, calculations will increase the liquidation price so this is enough
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tickToLiquidate);
+
+        // Check that tick has been liquidated
+        vm.expectEmit(true, true, false, false);
+        emit IUsdnProtocolEvents.LiquidatedTick(tickToLiquidate, tickVersionToLiquidate, 0, 0, 0);
+
+        protocol.initiateClosePosition(
+            tickToClose, tickVersionToClose, indexToClose, abi.encode(effectivePriceForTick), ""
+        );
+    }*/
+
+    /* -------------------------------------------------------------------------- */
+    /*                                 TODO remove                                */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @custom:scenario Simulate user open positions then
@@ -324,6 +627,14 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion));
         protocol.getLongPosition(tick, tickVersion, index);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             TODO end of Remove                             */
+    /* -------------------------------------------------------------------------- */
+
+    /* -------------------------------------------------------------------------- */
+    /*                  Test liquidations from liquidate() calls                  */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @custom:scenario A liquidator receives no rewards if liquidate() is called but no ticks can be liquidated
