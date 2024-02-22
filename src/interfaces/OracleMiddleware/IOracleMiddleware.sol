@@ -32,7 +32,7 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
      * @notice Returns the delay (in seconds) between the moment an action is initiated and the timestamp of the
      * price data used to validate that action.
      */
-    function validationDelay() external returns (uint256);
+    function validationDelay() external view returns (uint256);
 
     /// @notice Returns the amount of time we consider the data from Chainlink valid.
     function getChainlinkTimeElapsedLimit() external view returns (uint256);

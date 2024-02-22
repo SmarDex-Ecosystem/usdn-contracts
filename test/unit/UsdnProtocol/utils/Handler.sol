@@ -56,25 +56,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _positionsInTick[tHash];
     }
 
-    // max initialized tick
-    function maxInitializedTick() external view returns (int24) {
-        return _maxInitializedTick;
-    }
-
-    // total long position
-    function totalLongPositions() external view returns (uint256) {
-        return _totalLongPositions;
-    }
-
-    // fetch max liquidation execution
-    function maxLiquidationIteration() external pure returns (uint16) {
-        return MAX_LIQUIDATION_ITERATION;
-    }
-
-    function getUserPendingAction(address user) external returns (PendingAction memory action_) {
-        (action_,) = _getPendingAction(user, false); // do not clear
-    }
-
     function vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
     }

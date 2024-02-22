@@ -93,11 +93,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the new EMAPeriod is greater than max
     error UsdnProtocolEMAPeriodGreaterThanMax();
 
-    /// @dev Indicates that the new fundingSF is zero
-    error UsdnProtocolZeroFundingSF();
-
     /// @dev Indicates that the new fundingSF is greater than max
     error UsdnProtocolFundingSFGreaterThanMax();
+
     /// @dev Indicates that the provided address for the LiquidationRewardsManager contract is the 0 address
     error UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
 

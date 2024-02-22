@@ -175,6 +175,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         } while (i < maxIter);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
+    function getUserPendingAction(address user) external returns (PendingAction memory action_) {
+        (action_,) = _getPendingAction(user, false); // do not clear
+    }
+
     /* --------------------------  Internal functions --------------------------- */
 
     function _getLiquidationMultiplier(
@@ -374,7 +379,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = _tickVersion[tick];
-        hash_ = keccak256(abi.encodePacked(tick, version_));
+        hash_ = tickHash(tick, version_);
     }
 
     /**

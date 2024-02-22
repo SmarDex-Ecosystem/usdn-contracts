@@ -10,10 +10,12 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReentrancyGuard {
     using LibBitmap for LibBitmap.Bitmap;
+    using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
@@ -322,6 +324,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         return _feeCollector;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
+    function getMiddlewareValidationDelay() external view returns (uint256) {
+        return _oracleMiddleware.validationDelay();
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                                 */
     /* -------------------------------------------------------------------------- */
@@ -357,6 +364,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
+    function getPendingActionAt(uint256 index) external view returns (PendingAction memory) {
+        return _pendingActionsQueue.at(index);
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
     function getBalanceVault() external view returns (uint256) {
         return _balanceVault;
     }
@@ -382,18 +394,36 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getLongPositions(bytes32 tickHash, uint256 index) external view returns (Position memory) {
-        return _longPositions[tickHash][index];
+    function getTotalExpoByTick(int24 tick, uint256 version) external view returns (uint256) {
+        bytes32 cachedTickHash = tickHash(tick, version);
+        return _totalExpoByTick[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getTotalExpoByTick(bytes32 tickHash) external view returns (uint256) {
-        return _totalExpoByTick[tickHash];
+    function getPositionsInTick(int24 tick, uint256 version) external view returns (uint256) {
+        bytes32 cachedTickHash = tickHash(tick, version);
+        return _positionsInTick[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getPositionsInTick(bytes32 tickHash) external view returns (uint256) {
-        return _positionsInTick[tickHash];
+    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
+        uint256 version = _tickVersion[tick];
+        bytes32 cachedTickHash = tickHash(tick, version);
+        return _longPositions[cachedTickHash][index];
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getCurrentTotalExpoByTick(int24 tick) external view returns (uint256) {
+        uint256 version = _tickVersion[tick];
+        bytes32 cachedTickHash = tickHash(tick, version);
+        return _totalExpoByTick[cachedTickHash];
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getCurrentPositionsInTick(int24 tick) external view returns (uint256) {
+        uint256 version = _tickVersion[tick];
+        bytes32 cachedTickHash = tickHash(tick, version);
+        return _positionsInTick[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -404,5 +434,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getTotalLongPositions() external view returns (uint256) {
         return _totalLongPositions;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(tick, version));
     }
 }

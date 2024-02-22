@@ -90,12 +90,12 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:when The minimum leverage is 1
      * @custom:and The multiplier is 1x.
      */
-    function test_getMinLiquidationPrice_minLeverageEqOne() public AdminPrank {
+    function test_getMinLiquidationPrice_minLeverageEqOne() public adminPrank {
         /**
          * 5000 - 5000 / 1 = 0
          * => minLiquidationPrice = getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
          */
-        protocol.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS());
+        protocol.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS() + 1);
         assertEq(
             protocol.getMinLiquidationPrice(5000 ether),
             TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
@@ -107,7 +107,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:when The minimum leverage is 1.1
      * @custom:and The multiplier is 1x.
      */
-    function test_getMinLiquidationPrice_minLeverageEq1_1() public AdminPrank {
+    function test_getMinLiquidationPrice_minLeverageEq1_1() public adminPrank {
         /**
          * 5000 - 5000 / 1.1 = 454.545454545454545455
          * tick(454.545454545454545455) = 61_100 => + tickSpacing = 61_200

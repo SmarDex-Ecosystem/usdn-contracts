@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 
 /**
  * @title IUsdnProtocol
@@ -36,7 +37,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @dev Cannot be the 0 address.
      * @param newLiquidationRewardsManager the address of the new contract.
      */
-    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external;
+    function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external;
 
     /// @notice Set the new minimum leverage for a position.
     function setMinLeverage(uint256 newMinLeverage) external;

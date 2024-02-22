@@ -9,11 +9,12 @@ import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolEr
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @title IUsdnProtocolStorage
  * @notice Interface for the storage layer of the USDN protocol.
  */
-
 interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
@@ -109,6 +110,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The address of the fee collector
     function getFeeCollector() external view returns (address);
 
+    /// @notice The address of the fee collector
+    function getMiddlewareValidationDelay() external view returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                                 */
     /* -------------------------------------------------------------------------- */
@@ -136,6 +140,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      */
     function getPendingAction(address user) external view returns (uint256);
 
+    /// @notice The pending action at index
+    function getPendingActionAt(uint256 index) external view returns (PendingAction memory);
+
     /// @notice The balance of deposits (with asset decimals)
     function getBalanceVault() external view returns (uint256);
 
@@ -155,27 +162,44 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getTickVersion(int24 tick) external view returns (uint256);
 
     /**
-     * @notice The long position per versioned tick (liquidation price) by position index
-     * @param tickHash The tickHash of the tick.
-     * @param index The position index.
-     */
-    function getLongPositions(bytes32 tickHash, uint256 index) external view returns (Position memory);
-
-    /**
      * @notice Cache of the total exposure per versioned tick.
-     * @param tickHash The tickHash of the tick.
+     * @param tick The tick number.
+     * @param version The tick version.
      */
-    function getTotalExpoByTick(bytes32 tickHash) external view returns (uint256);
+    function getTotalExpoByTick(int24 tick, uint256 version) external view returns (uint256);
 
     /**
      * @notice Cache of the number of positions per tick.
-     * @param tickHash The tickHash of the tick.
+     * @param tick The tick number.
+     * @param version The tick version.
      */
-    function getPositionsInTick(bytes32 tickHash) external view returns (uint256);
+    function getPositionsInTick(int24 tick, uint256 version) external view returns (uint256);
+
+    /**
+     * @notice The long position per current tick (liquidation price) by position index
+     * @param tick The tick number.
+     * @param index The position index.
+     */
+    function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory);
+
+    /**
+     * @notice Cache of the total exposure per current tick.
+     * @param tick The tick number.
+     */
+    function getCurrentTotalExpoByTick(int24 tick) external view returns (uint256);
+
+    /**
+     * @notice Cache of the number of positions per current tick.
+     * @param tick The tick number.
+     */
+    function getCurrentPositionsInTick(int24 tick) external view returns (uint256);
 
     /// @notice Cached value of the maximum initialized tick
     function getMaxInitializedTick() external view returns (int24);
 
     /// @notice Cache of the total long positions count
     function getTotalLongPositions() external view returns (uint256);
+
+    /// @notice Get the tickHash from tick and tickVersion
+    function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
 }

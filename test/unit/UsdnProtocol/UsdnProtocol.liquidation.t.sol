@@ -263,7 +263,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         }
 
         // max liquidation iteration constant
-        uint16 maxLiquidationIteration = protocol.maxLiquidationIteration();
+        uint16 maxLiquidationIteration = protocol.MAX_LIQUIDATION_ITERATION();
         // check if first tick version match initial value
         assertEq(protocol.getTickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
 

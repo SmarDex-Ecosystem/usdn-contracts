@@ -126,20 +126,20 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external onlyOwner {
-        if (newLiquidationRewardsManager == address(0)) {
+    function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external onlyOwner {
+        if (address(newLiquidationRewardsManager) == address(0)) {
             revert UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
         }
 
-        _liquidationRewardsManager = ILiquidationRewardsManager(newLiquidationRewardsManager);
+        _liquidationRewardsManager = newLiquidationRewardsManager;
 
-        emit LiquidationRewardsManagerUpdated(newLiquidationRewardsManager);
+        emit LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
     }
 
     /// @inheritdoc IUsdnProtocol
     function setMinLeverage(uint256 newMinLeverage) external onlyOwner {
         // zero minLeverage
-        if (newMinLeverage == 0) {
+        if (newMinLeverage <= 10 ** LEVERAGE_DECIMALS) {
             revert UsdnProtocolZeroMinLeverage();
         }
 
@@ -175,8 +175,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolValidationDeadlineLowerThanMin();
         }
 
-        // validation deadline greater than max 1 year
-        if (newValidationDeadline > 365 days) {
+        // validation deadline greater than max 1 day
+        if (newValidationDeadline > 1 days) {
             revert UsdnProtocolValidationDeadlineGreaterThanMax();
         }
 
@@ -235,13 +235,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setFundingSF(uint256 newFundingSF) external onlyOwner {
-        // newFundingSF is zero
-        if (newFundingSF == 0) {
-            revert UsdnProtocolZeroFundingSF();
-        }
-
         // newFundingSF is greater than max 1
-        if (newFundingSF > 1000) {
+        if (newFundingSF > 10 ** FUNDING_SF_DECIMALS) {
             revert UsdnProtocolFundingSFGreaterThanMax();
         }
 

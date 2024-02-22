@@ -102,4 +102,10 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
      */
     function getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory action_);
+
+    /**
+     * @notice Retrieve a user pending action.
+     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     */
+    function getUserPendingAction(address user) external returns (PendingAction memory action_);
 }
