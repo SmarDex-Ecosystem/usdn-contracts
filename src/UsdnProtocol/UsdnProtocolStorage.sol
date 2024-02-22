@@ -293,4 +293,24 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     function protocolFeeBps() external view returns (uint16) {
         return _protocolFeeBps;
     }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getSoftLongExpoImbalanceLimit() external view returns (uint16) {
+        return _softLongExpoImbalanceLimit;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getHardLongExpoImbalanceLimit() external view returns (uint16) {
+        return _hardLongExpoImbalanceLimit;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getSoftVaultExpoImbalanceLimit() external view returns (uint16) {
+        return _softVaultExpoImbalanceLimit;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getHardVaultExpoImbalanceLimit() external view returns (uint16) {
+        return _hardVaultExpoImbalanceLimit;
+    }
 }

@@ -171,4 +171,36 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _feeThreshold = feeThreshold;
         emit FeeThresholdUpdated(feeThreshold);
     }
+
+    function setSoftLongExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
+        if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
+            revert UsdnProtocolInvalidSoftLongExpoImbalanceLimit();
+        }
+        // TODO add lower limit if needed
+        _softLongExpoImbalanceLimit = newLimit;
+    }
+
+    function setHardLongExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
+        if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
+            revert UsdnProtocolInvalidHardLongExpoImbalanceLimit();
+        }
+        // TODO add lower limit if needed
+        _hardLongExpoImbalanceLimit = newLimit;
+    }
+
+    function setSoftVaultExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
+        if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
+            revert UsdnProtocolInvalidSoftVaultExpoImbalanceLimit();
+        }
+        // TODO add lower limit if needed
+        _softVaultExpoImbalanceLimit = newLimit;
+    }
+
+    function setHardVaultExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
+        if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
+            revert UsdnProtocolInvalidHardVaultExpoImbalanceLimit();
+        }
+        // TODO add lower limit if needed
+        _hardVaultExpoImbalanceLimit = newLimit;
+    }
 }
