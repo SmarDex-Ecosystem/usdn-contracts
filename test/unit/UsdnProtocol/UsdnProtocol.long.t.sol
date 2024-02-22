@@ -193,7 +193,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint128 price = 2000 ether;
         uint128 desiredLiqPrice = 1700 ether;
 
-        uint256 inititialTotalExpo = protocol.totalExpo();
+        uint256 initialTotalExpo = protocol.totalExpo();
         uint256 totalExpoForTick = protocol.totalExpoByTick(protocol.getEffectiveTickForPrice(desiredLiqPrice));
 
         assertEq(totalExpoForTick, 0, "Total expo for future position's tick should be empty");
@@ -209,7 +209,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint256 expectedPositionTotalExpo =
             FixedPointMathLib.fullMulDiv(position.amount, position.leverage, 10 ** protocol.LEVERAGE_DECIMALS());
         assertEq(
-            inititialTotalExpo + expectedPositionTotalExpo,
+            initialTotalExpo + expectedPositionTotalExpo,
             protocol.totalExpo(),
             "Total expo should have increased by the position's total expo"
         );
@@ -235,7 +235,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             FixedPointMathLib.fullMulDiv(position.amount, position.leverage, 10 ** protocol.LEVERAGE_DECIMALS());
 
         assertEq(
-            inititialTotalExpo + expectedPositionTotalExpo,
+            initialTotalExpo + expectedPositionTotalExpo,
             protocol.totalExpo(),
             "Total expo should have increased by the position's new total expo"
         );
