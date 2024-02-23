@@ -65,7 +65,9 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         assertEq(logs.length, 1, "Only one log should have been emitted");
         assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
         assertLt(
-            protocol.maxInitializedTick(), desiredLiqTick, "The max Initialized tick should be the next lower tick"
+            protocol.maxInitializedTick(),
+            desiredLiqTick,
+            "The max Initialized tick should be lower than the last liquidated tick"
         );
     }
 

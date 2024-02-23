@@ -306,23 +306,25 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256 vaultBalanceBeforeRewards = protocol.balanceVault();
         uint256 longPositionsBeforeLiquidation = protocol.totalLongPositions();
 
-        protocol.liquidate(priceData, 1);
+        uint256 liquidatedPositions = protocol.liquidate(priceData, 1);
 
-        // check that the liquidator didn't receive any rewards
+        assertEq(liquidatedPositions, 0, "No position should have been liquidated");
+
+        // Check that the liquidator didn't receive any rewards
         assertEq(
             wstETHBalanceBeforeRewards,
             wstETH.balanceOf(address(this)),
             "The liquidator should not receive rewards if there were no liquidations"
         );
 
-        // check that the vault balance did not change
+        // Check that the vault balance did not change
         assertEq(
             vaultBalanceBeforeRewards,
             protocol.balanceVault(),
             "The vault balance should not change if there were no liquidations"
         );
 
-        // check if first total long positions match initial value
+        // Check if first total long positions match initial value
         assertEq(
             longPositionsBeforeLiquidation,
             protocol.totalLongPositions(),
@@ -364,7 +366,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.liquidate(abi.encode(price), 1);
+        uint256 liquidatedPositions = protocol.liquidate(abi.encode(price), 1);
+
+        // Check that the right number of positions have been liquidated
+        assertEq(liquidatedPositions, 1, "One position should have been liquidated");
 
         // Check that the liquidator received its rewards
         assertEq(
@@ -373,7 +378,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             "The liquidator did not receive the right amount of rewards"
         );
 
-        // check that the vault balance got updated
+        // Check that the vault balance got updated
         assertEq(
             vaultBalanceBeforeRewards + uint256(collateralLiquidated) - protocol.balanceVault(),
             expectedLiquidatorRewards,
