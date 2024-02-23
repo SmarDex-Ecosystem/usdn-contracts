@@ -386,6 +386,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tempLongBalance = 0;
         }
 
+        // For now, since we have calculations problems for the tick value vs the expected long balance, we also
+        // need to make sure that the vault balance is not negative
+        // TODO: fix calculations and remove this
+        if (tempVaultBalance < 0) {
+            tempLongBalance += tempVaultBalance;
+            tempVaultBalance = 0;
+        }
+
         newLongBalance_ = tempLongBalance.toUint256();
         newVaultBalance_ = tempVaultBalance.toUint256();
     }

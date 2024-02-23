@@ -90,6 +90,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         emit log_named_decimal_uint("long balance", protocol.balanceLong(), 18);
         emit log_named_decimal_uint("vault balance", protocol.balanceVault(), 18);
         emit log_named_decimal_uint("total expo", protocol.totalExpo(), 18);
+        // TODO: uncomment once calculations are fixed
         //assertGe(protocol.longTradingExpoWithFunding(3381 ether, uint128(block.timestamp)), 0, "long expo");
     }
 }
