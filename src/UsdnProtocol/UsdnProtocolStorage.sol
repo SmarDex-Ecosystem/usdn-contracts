@@ -37,9 +37,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint16 public constant MAX_LIQUIDATION_ITERATION = 10;
 
     /// @inheritdoc IUsdnProtocolStorage
-    uint16 public constant PROTOCOL_FEE_DENOMINATOR = 10_000;
-
-    /// @inheritdoc IUsdnProtocolStorage
     /// @dev The maximum protocol fee is 1%
     uint16 public constant MAX_POSITION_FEE = 100;
 
