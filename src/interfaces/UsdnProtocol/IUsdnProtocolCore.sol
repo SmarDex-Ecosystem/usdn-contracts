@@ -108,5 +108,5 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @param user The user address
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
      */
-    function getUserPendingAction(address user) external returns (PendingAction memory action_);
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_);
 }

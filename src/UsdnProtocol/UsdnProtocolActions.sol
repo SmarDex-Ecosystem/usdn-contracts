@@ -362,7 +362,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
-        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
+        PendingAction memory pending = _getPendingActionAndClear(user); // clear pending action
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateDeposit) {
@@ -444,7 +444,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
-        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
+        PendingAction memory pending = _getPendingActionAndClear(user); // clear pending action
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateWithdrawal) {
@@ -509,7 +509,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateOpenPosition(address user, bytes calldata priceData) internal {
-        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
+        PendingAction memory pending = _getPendingActionAndClear(user); // clear pending action
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateOpenPosition) {
@@ -591,7 +591,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateClosePosition(address user, bytes calldata priceData) internal {
-        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
+        PendingAction memory pending = _getPendingActionAndClear(user); // clear pending action
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateClosePosition) {
