@@ -214,7 +214,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
             revert UsdnProtocolInvalidAssetDecimals(_assetDecimals);
         }
         _oracleMiddleware = oracleMiddleware;
-        _priceFeedDecimals = oracleMiddleware.decimals();
+        _priceFeedDecimals = oracleMiddleware.getDecimals();
         _liquidationRewardsManager = liquidationRewardsManager;
         _tickSpacing = tickSpacing;
         _feeCollector = feeCollector;
@@ -325,7 +325,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @inheritdoc IUsdnProtocolStorage
     function getMiddlewareValidationDelay() external view returns (uint256) {
-        return _oracleMiddleware.validationDelay();
+        return _oracleMiddleware.getValidationDelay();
     }
 
     /* -------------------------------------------------------------------------- */

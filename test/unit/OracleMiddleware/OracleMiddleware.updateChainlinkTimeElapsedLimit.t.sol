@@ -36,7 +36,7 @@ contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddleware
 
         vm.expectEmit();
         emit IOracleMiddlewareEvents.TimeElapsedLimitUpdated(newValue);
-        oracleMiddleware.updateChainlinkTimeElapsedLimit(newValue);
+        oracleMiddleware.setChainlinkTimeElapsedLimit(newValue);
 
         assertEq(oracleMiddleware.getChainlinkTimeElapsedLimit(), newValue);
     }
@@ -51,6 +51,6 @@ contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddleware
 
         vm.prank(USER_1);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
-        oracleMiddleware.updateChainlinkTimeElapsedLimit(newValue);
+        oracleMiddleware.setChainlinkTimeElapsedLimit(newValue);
     }
 }

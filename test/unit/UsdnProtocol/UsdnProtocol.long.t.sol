@@ -218,7 +218,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         );
         assertEq(totalExpoForTick, expectedPositionTotalExpo, "Total expo on tick is not the expected value");
 
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         // Change the price
         price = 1999 ether;
@@ -260,10 +260,10 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) =
             protocol.initiateOpenPosition(1 ether, desiredLiqPrice, abi.encode(price), "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         // Validate the open position action
         protocol.validateOpenPosition(abi.encode(price), "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         vm.expectEmit();
         emit InitiatedClosePosition(address(this), tick, tickVersion, index);

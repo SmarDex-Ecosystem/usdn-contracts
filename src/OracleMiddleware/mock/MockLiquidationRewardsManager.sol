@@ -24,8 +24,8 @@ contract MockLiquidationRewardsManager is LiquidationRewardsManager {
      * @notice Return the gas price from chainlink or the mocked gas price if set.
      * @return price_ Price information from the chainlink oracle.
      */
-    function getChainlinkPrice() internal view override returns (ChainlinkPriceInfo memory price_) {
-        price_ = super.getChainlinkPrice();
+    function _getChainlinkPrice() internal view override returns (ChainlinkPriceInfo memory price_) {
+        price_ = super._getChainlinkPrice();
 
         if (_mockedGasPrice > 0) {
             price_.price = _mockedGasPrice;
@@ -38,7 +38,7 @@ contract MockLiquidationRewardsManager is LiquidationRewardsManager {
     }
 
     /// @notice Get the current mocked gas price.
-    function mockedGasPrice() external view returns (int256) {
+    function getMockedGasPrice() external view returns (int256) {
         return _mockedGasPrice;
     }
 }

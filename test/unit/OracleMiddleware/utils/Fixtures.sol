@@ -57,8 +57,8 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
     }
 
     function test_setUp() public {
-        assertEq(address(oracleMiddleware.pyth()), address(mockPyth));
-        assertEq(address(oracleMiddleware.priceFeed()), address(mockChainlinkOnChain));
+        assertEq(address(oracleMiddleware.getPyth()), address(mockPyth));
+        assertEq(address(oracleMiddleware.getPriceFeed()), address(mockChainlinkOnChain));
 
         assertEq(mockPyth.lastPublishTime(), block.timestamp);
         assertEq(mockChainlinkOnChain.lastPublishTime(), block.timestamp);
@@ -123,8 +123,8 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
     }
 
     function test_setUp() public {
-        assertEq(address(wstethOracle.pyth()), address(mockPyth));
-        assertEq(address(wstethOracle.priceFeed()), address(mockChainlinkOnChain));
+        assertEq(address(wstethOracle.getPyth()), address(mockPyth));
+        assertEq(address(wstethOracle.getPriceFeed()), address(mockChainlinkOnChain));
 
         assertEq(mockPyth.lastPublishTime(), block.timestamp);
         assertEq(mockChainlinkOnChain.lastPublishTime(), block.timestamp);

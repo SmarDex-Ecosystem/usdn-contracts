@@ -631,7 +631,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _balanceLong += long.closeTempTransfer - assetToTransfer;
         }
 
-        // get liquidation price (with liq penalty) to check if position was valid at `timestamp + validationDelay`
+        // get liquidation price (with liq penalty) to check if position was valid at `timestamp + getValidationDelay`
         uint128 liquidationPrice = _getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
         if (price.neutralPrice <= liquidationPrice) {
             // position should be liquidated, we don't pay out the profits but send any remaining collateral to the
@@ -715,11 +715,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         internal
         returns (PriceInfo memory price_)
     {
-        uint256 validationCost = _oracleMiddleware.validationCost(priceData, action);
-        if (address(this).balance < validationCost) {
+        uint256 getValidationCost = _oracleMiddleware.getValidationCost(priceData, action);
+        if (address(this).balance < getValidationCost) {
             revert UsdnProtocolInsufficientOracleFee();
         }
-        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(timestamp, action, priceData);
+        price_ = _oracleMiddleware.parseAndValidatePrice{ value: getValidationCost }(timestamp, action, priceData);
     }
 
     /// @notice Refund any excess ether to the user, making sure we don't lock ETH in the contract.

@@ -11,4 +11,10 @@ interface IOracleMiddlewareEvents {
      * @param newTimeElapsedLimit The new limit.
      */
     event TimeElapsedLimitUpdated(uint256 newTimeElapsedLimit);
+
+    /**
+     * @notice Emitted when validation delay is updated.
+     * @param newValidationDelay The new validation delay.
+     */
+    event ValidationDelayUpdated(uint256 newValidationDelay);
 }

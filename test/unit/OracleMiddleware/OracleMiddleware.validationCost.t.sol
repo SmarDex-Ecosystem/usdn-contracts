@@ -6,7 +6,7 @@ import { OracleMiddlewareBaseFixture } from "test/unit/OracleMiddleware/utils/Fi
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @custom:feature The `validationCost` function of `OracleMiddleware`
+ * @custom:feature The `getValidationCost` function of `OracleMiddleware`
  */
 contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     bytes[] public data;
@@ -17,13 +17,13 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `validationCost` function
+     * @custom:scenario Call `getValidationCost` function
      * @custom:when Protocol action is a value that is not supported
      * @custom:then The validation cost is the same as pythOracle
      */
     function test_RevertWhen_validationCostWithUnsupportedAction() public {
         (bool success, bytes memory _data) = address(oracleMiddleware).call(
-            abi.encodeWithSelector(oracleMiddleware.validationCost.selector, abi.encode("data"), 11)
+            abi.encodeWithSelector(oracleMiddleware.getValidationCost.selector, abi.encode("data"), 11)
         );
 
         assertEq(success, false, "Function should revert");
@@ -31,23 +31,23 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `validationCost` function
+     * @custom:scenario Call `getValidationCost` function
      * @custom:when Data is not empty
      * @custom:then The validation cost is the same as pythOracle
      */
     function test_parseAndValidatePriceWithData() public {
-        uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
+        uint256 fee = oracleMiddleware.getValidationCost(abi.encode("data"), ProtocolAction.None);
 
         assertEq(fee, mockPyth.getUpdateFee(data), "Wrong fee cost when data is not empty");
     }
 
     /**
-     * @custom:scenario Call `validationCost` function
+     * @custom:scenario Call `getValidationCost` function
      * @custom:when Data is empty
      * @custom:then The validation cost is the same as pythOracle
      */
     function test_parseAndValidatePriceWithoutData() public {
-        uint256 fee = oracleMiddleware.validationCost("", ProtocolAction.None);
+        uint256 fee = oracleMiddleware.getValidationCost("", ProtocolAction.None);
 
         assertEq(fee, 0, "Fee should be 0 when there's no data");
     }

@@ -5,6 +5,23 @@ import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 
 interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTypes {
+    /* -------------------------------------------------------------------------- */
+    /*                                  Constants                                 */
+    /* -------------------------------------------------------------------------- */
+
+    /// @notice Denominator for the reward multiplier, will give us a 0.01% basis point.
+    function REWARDS_MULTIPLIER_DENOMINATOR() external view returns (uint32);
+
+    /**
+     * @notice Fixed amount of gas a transaction consume.
+     * @dev Is a uint256 to avoid overflows during gas usage calculations.
+     */
+    function BASE_GAS_COST() external view returns (uint256);
+
+    /* -------------------------------------------------------------------------- */
+    /*                                  Getters Setters                           */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * @notice Returns the amount of wstETH that needs to be sent to the liquidator.
      * @param tickAmount The amount of tick to liquidate.

@@ -19,10 +19,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Denominator for the reward multiplier, will give us a 0.01% basis point.
+    /// @inheritdoc ILiquidationRewardsManager
     uint32 public constant REWARDS_MULTIPLIER_DENOMINATOR = 10_000;
-    /// @notice Fixed amount of gas a transaction consume.
-    /// @dev Is a uint256 to avoid overflows during gas usage calculations.
+
+    /// @inheritdoc ILiquidationRewardsManager
     uint256 public constant BASE_GAS_COST = 21_000;
 
     /* -------------------------------------------------------------------------- */
@@ -32,8 +32,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /// @notice Address of the wstETH contract.
     IWstETH private immutable _wstEth;
 
-    /// @notice Parameters for the rewards calculation
-    /// @dev Those values need to be updated if the gas cost changes.
+    /**
+     * @notice Parameters for the rewards calculation.
+     * @dev Those values need to be updated if the gas cost changes.
+     */
     RewardsParameters private _rewardsParameters;
 
     constructor(address chainlinkGasPriceFeed, IWstETH wstETH, uint256 chainlinkElapsedTimeLimit)
@@ -43,7 +45,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 32_043,
-            otherGasUsed: 43_563,
+            otherGasUsed: 43_553,
             gasPriceLimit: uint64(1000 gwei),
             multiplierBps: 20_000
         });
@@ -102,7 +104,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * @return gasPrice_ The gas price.
      */
     function _getGasPrice(RewardsParameters memory rewardsParameters) private view returns (uint256 gasPrice_) {
-        ChainlinkPriceInfo memory priceInfo = getChainlinkPrice();
+        ChainlinkPriceInfo memory priceInfo = _getChainlinkPrice();
 
         // If the gas price is invalid, return 0 and do not distribute rewards.
         if (priceInfo.price <= 0) {

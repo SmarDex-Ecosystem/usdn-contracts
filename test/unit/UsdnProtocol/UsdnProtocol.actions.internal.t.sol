@@ -88,7 +88,7 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
             ProtocolAction action = ProtocolAction(i);
             uint128 currentPrice = 2000 ether;
             bytes memory priceData = abi.encode(currentPrice);
-            uint256 fee = oracleMiddleware.validationCost(priceData, action);
+            uint256 fee = oracleMiddleware.getValidationCost(priceData, action);
             PriceInfo memory price = protocol.i_getOraclePrice{ value: fee }(action, uint40(block.timestamp), priceData);
             assertEq(price.price, currentPrice, string.concat("price for action", uint256(i).toString()));
 

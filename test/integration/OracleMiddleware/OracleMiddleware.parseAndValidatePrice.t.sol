@@ -29,7 +29,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
     /**
      * @custom:scenario Parse and validate price with mocked hermes API signature for pyth
      * @custom:given The price feed is wstETH/USD for pyth
-     * @custom:and The validationDelay is respected
+     * @custom:and The getValidationDelay is respected
      * @custom:when Protocol action is any targeted action
      * @custom:then The price signature is well decoded
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API
@@ -56,7 +56,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
             } else {
                 middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-                    uint128(pythTimestamp - oracleMiddleware.validationDelay()), action, data
+                    uint128(pythTimestamp - oracleMiddleware.getValidationDelay()), action, data
                 );
             }
 
@@ -65,7 +65,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // formatted middleware price
             uint256 middlewareFormattedPrice =
-                middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals();
+                middlewarePrice.price * 10 ** oracleMiddleware.getPythDecimals() / 10 ** oracleMiddleware.getDecimals();
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
@@ -122,7 +122,8 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
             // price check
             assertEq(
-                middlewarePrice.price * 10 ** oracleMiddleware.chainlinkDecimals() / 10 ** oracleMiddleware.decimals(),
+                middlewarePrice.price * 10 ** oracleMiddleware.getChainlinkDecimals()
+                    / 10 ** oracleMiddleware.getDecimals(),
                 chainlinkPrice,
                 priceError
             );
@@ -136,7 +137,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
     /**
      * @custom:scenario Parse and validate price with mocked hermes API signature for pyth
      * @custom:given The price feed is wstETH/USD for pyth
-     * @custom:and The validationDelay is respected
+     * @custom:and The getValidationDelay is respected
      * @custom:when Protocol action is any targeted action
      * @custom:then The price signature is well decoded
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API
@@ -163,7 +164,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
             } else {
                 middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-                    uint128(pythTimestamp - oracleMiddleware.validationDelay()), action, data
+                    uint128(pythTimestamp - oracleMiddleware.getValidationDelay()), action, data
                 );
             }
 
@@ -172,7 +173,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // formatted middleware price
             uint256 middlewareFormattedPrice =
-                middlewarePrice.price * 10 ** oracleMiddleware.pythDecimals() / 10 ** oracleMiddleware.decimals();
+                middlewarePrice.price * 10 ** oracleMiddleware.getPythDecimals() / 10 ** oracleMiddleware.getDecimals();
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
@@ -230,7 +231,8 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
             // price check
             assertEq(
-                middlewarePrice.price * 10 ** oracleMiddleware.chainlinkDecimals() / 10 ** oracleMiddleware.decimals(),
+                middlewarePrice.price * 10 ** oracleMiddleware.getChainlinkDecimals()
+                    / 10 ** oracleMiddleware.getDecimals(),
                 chainlinkPrice,
                 priceError
             );
