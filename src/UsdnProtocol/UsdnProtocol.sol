@@ -235,7 +235,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setFundingSF(uint256 newFundingSF) external onlyOwner {
-        // newFundingSF is greater than max 1
+        // newFundingSF is greater than max
         if (newFundingSF > 10 ** FUNDING_SF_DECIMALS) {
             revert UsdnProtocolFundingSFGreaterThanMax();
         }

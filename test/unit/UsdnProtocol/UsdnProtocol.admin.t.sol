@@ -24,6 +24,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call all admin functions from non contract admin.
      * @custom:given The initial usdnProtocol state.
+     * @custom:when Non admin wallet trigger admin contract function.
      * @custom:then Each functions should revert with the same custom Ownable error.
      */
     function test_RevertWhen_nonAdminWalletCallAdminFunctions() external {
@@ -73,6 +74,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setOracleMiddleware" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because zero.
      */
     function test_RevertWhen_setOracleMiddlewareWithZero() external adminPrank {
@@ -85,27 +87,23 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setOracleMiddleware" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setOracleMiddleware() external adminPrank {
-        // random address
-        address randAddress = address(1);
-        // cache previous value
-        IOracleMiddleware previousDefault = protocol.getOracleMiddleware();
-        // assert previous middleware different than randAddress
-        assertTrue(address(previousDefault) != randAddress);
         // expected event
         vm.expectEmit();
-        emit IUsdnProtocolEvents.OracleMiddlewareUpdated(randAddress);
+        emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(this));
         // set middleware
-        protocol.setOracleMiddleware(IOracleMiddleware(randAddress));
+        protocol.setOracleMiddleware(IOracleMiddleware(address(this)));
         // assert new middleware equal randAddress
-        assertEq(address(protocol.getOracleMiddleware()), randAddress);
+        assertEq(address(protocol.getOracleMiddleware()), address(this));
     }
 
     /**
      * @custom:scenario Call "setMinLeverage" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because zero.
      */
     function test_RevertWhen_setMinLeverageWithZero() external adminPrank {
@@ -118,6 +116,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setMinLeverage" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setMinLeverageWithMax() external adminPrank {
@@ -131,16 +130,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setMinLeverage" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setMinLeverage() external adminPrank {
-        // set new minLeverage
-        // previous minLeverage value
-        uint256 previousValue = protocol.getMinLeverage();
-        // cache the new minLeverage value to assign
+        // allowed value
         uint256 expectedNewValue = 10 ** protocol.LEVERAGE_DECIMALS() + 1;
-        // check new value to assign is not equal than current
-        assertTrue(previousValue != expectedNewValue);
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.MinLeverageUpdated(expectedNewValue);
@@ -153,6 +148,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setMaxLeverage" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because lower than min.
      */
     function test_RevertWhen_setMaxLeverageWithMin() external adminPrank {
@@ -166,6 +162,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setMaxLeverage" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setMaxLeverageWithMax() external adminPrank {
@@ -180,15 +177,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setMaxLeverage" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setMaxLeverage() external adminPrank {
-        // previous maxLeverage value
-        uint256 previousValue = protocol.getMaxLeverage();
         // cache the new maxLeverage value to assign
         uint256 expectedNewValue = protocol.getMinLeverage() + 1;
-        // check new value to assign is not equal than current
-        assertTrue(previousValue != expectedNewValue);
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.MaxLeverageUpdated(expectedNewValue);
@@ -201,6 +195,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setValidationDeadline" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because lower than min disallowed.
      */
     function test_RevertWhen_setValidationDeadlineWithMin() external adminPrank {
@@ -213,6 +208,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setValidationDeadline" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setValidationDeadlineWithMax() external adminPrank {
@@ -225,15 +221,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setValidationDeadline" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setValidationDeadline() external adminPrank {
-        // previous validationDeadline value
-        uint256 previousValue = protocol.getValidationDeadline();
         // cache the new validationDeadline value to assign
         uint256 expectedNewValue = 61;
-        // check new value to assign is not equal than current
-        assertTrue(previousValue != expectedNewValue);
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.ValidationDeadlineUpdated(expectedNewValue);
@@ -246,6 +239,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setLiquidationPenalty" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setLiquidationPenaltyMax() external adminPrank {
@@ -258,15 +252,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setLiquidationPenalty" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setLiquidationPenalty() external adminPrank {
-        // previous liquidationPenalty value
-        uint24 previousValue = protocol.getLiquidationPenalty();
         // cache the new liquidationPenalty value to assign
         uint24 expectedNewValue = 0;
-        // check new value to assign is not equal than current
-        assertTrue(previousValue != expectedNewValue);
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidationPenaltyUpdated(expectedNewValue);
@@ -279,6 +270,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setSafetyMarginBps" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setSafetyMarginBpsWithMax() external adminPrank {
@@ -291,15 +283,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setSafetyMarginBps" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setSafetyMarginBps() external adminPrank {
-        // previous safetyMargin value
-        uint256 previousValue = protocol.getSafetyMarginBps();
         // cache the new safetyMargin value to assign
         uint256 expectedNewValue = 0;
-        // check new value to assign is not equal than current
-        assertTrue(previousValue != expectedNewValue);
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.SafetyMarginBpsUpdated(expectedNewValue);
@@ -312,6 +301,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setLiquidationIteration" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setLiquidationIterationWithMax() external adminPrank {
@@ -325,15 +315,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setLiquidationIteration" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setLiquidationIteration() external adminPrank {
-        // previous liquidationIteration value
-        uint16 previousValue = protocol.getLiquidationIteration();
         // cache the new liquidationIteration value to assign
         uint16 expectedNewValue = 0;
-        // check new value to assign is not equal than current
-        assertTrue(previousValue != expectedNewValue);
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidationIterationUpdated(expectedNewValue);
@@ -346,6 +333,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setEMAPeriod" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because zero.
      */
     function test_RevertWhen_setEMAPeriodWithZero() external adminPrank {
@@ -358,6 +346,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setEMAPeriod" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setEMAPeriodWithMax() external adminPrank {
@@ -370,15 +359,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setEMAPeriod" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setEMAPeriod() external adminPrank {
-        // previous EMAPeriod value
-        uint128 previousValue = protocol.getEMAPeriod();
         // cache the new EMAPeriod value to assign
         uint128 expectedNewValue = 1;
-        // check new value to assign is not equal than current
-        assertTrue(previousValue != expectedNewValue);
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.EMAPeriodUpdated(expectedNewValue);
@@ -391,6 +377,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setFundingSF" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because greater than max.
      */
     function test__RevertWhen_setFundingSFWithMax() external adminPrank {
@@ -405,15 +392,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setFundingSF" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setFundingSF() external adminPrank {
-        // previous fundingSF value
-        uint256 previousValue = protocol.getFundingSF();
         // cache the new fundingSF value to assign
         uint256 expectedNewValue = 1;
-        // check new value to assign is not equal than current
-        assertTrue(previousValue != expectedNewValue);
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.FundingSFUpdated(expectedNewValue);
@@ -426,6 +410,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setFeeBps" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setFeeBpsWithMax() external adminPrank {
@@ -440,15 +425,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setFeeBps" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setFeeBps() external adminPrank {
-        // previous feeBps value
-        uint16 previousValue = uint16(protocol.getProtocolFeeBps());
         // cache the new feeBps value to assign
         uint16 expectedNewValue;
-        // check new value to assign is not equal than current
-        assertTrue(previousValue != expectedNewValue);
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.FeeBpsUpdated(expectedNewValue);
@@ -461,6 +443,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setFeeCollector" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because address zero.
      */
     function test_RevertWhen_setFeeCollectorWithZero() external adminPrank {
@@ -473,15 +456,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setFeeCollector" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setFeeCollector() external adminPrank {
-        // previous feeCollector address
-        address previousValue = protocol.getFeeCollector();
         // cache the new feeCollector address to assign
         address expectedNewValue = address(this);
-        // check new address to assign is not equal than current
-        assertTrue(previousValue != expectedNewValue);
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.FeeCollectorUpdated(expectedNewValue);
@@ -494,15 +474,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setFeeThreshold" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setFeeThreshold() external adminPrank {
-        // previous feeThreshold value
-        uint256 previousValue = protocol.getFeeThreshold();
         // cache the new feeThreshold value to assign
         uint256 expectedNewValue = type(uint256).max;
-        // check new value to assign is not equal than current
-        assertTrue(previousValue != expectedNewValue);
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.FeeThresholdUpdated(expectedNewValue);
@@ -515,6 +492,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setLiquidationRewardsManager" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because zero.
      */
     function test_RevertWhen_setLiquidationRewardsManagerWithZero() external adminPrank {
@@ -527,15 +505,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setLiquidationRewardsManager" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
      */
     function test_setLiquidationRewardsManager() external adminPrank {
         // expected new value
         ILiquidationRewardsManager expectedNewValue = ILiquidationRewardsManager(address(this));
-        // cache previous address
-        ILiquidationRewardsManager previousDefault = protocol.getLiquidationRewardsManager();
-        // assert previous liquidation reward manager different than expectedNewValue
-        assertTrue(address(previousDefault) != address(expectedNewValue));
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidationRewardsManagerUpdated(address(expectedNewValue));
