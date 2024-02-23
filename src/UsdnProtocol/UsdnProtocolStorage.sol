@@ -161,7 +161,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _totalExpo;
 
     /// @notice The liquidation tick version.
-    // slither-disable-next-line uninitialized-state
     mapping(int24 => uint256) internal _tickVersion;
 
     /// @notice The long positions per versioned tick (liquidation price)
@@ -222,7 +221,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                                 Immutables getters                              */
+    /*                                 Immutables getters                         */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -256,7 +255,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                                 Parameters getters                                */
+    /*                                 Parameters getters                         */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -330,7 +329,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                                    State getters                                 */
+    /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolStorage

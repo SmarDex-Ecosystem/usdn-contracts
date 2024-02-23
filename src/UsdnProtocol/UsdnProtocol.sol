@@ -119,7 +119,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external onlyOwner {
         // check address zero middleware
         if (address(newOracleMiddleware) == address(0)) {
-            revert UsdnProtocolZeroMiddlewareAddress();
+            revert UsdnProtocolInvalidMiddlewareAddress();
         }
         _oracleMiddleware = newOracleMiddleware;
         emit OracleMiddlewareUpdated(address(newOracleMiddleware));
@@ -128,7 +128,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     /// @inheritdoc IUsdnProtocol
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external onlyOwner {
         if (address(newLiquidationRewardsManager) == address(0)) {
-            revert UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
+            revert UsdnProtocolInvalidLiquidationRewardsManagerAddress();
         }
 
         _liquidationRewardsManager = newLiquidationRewardsManager;
@@ -140,12 +140,12 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setMinLeverage(uint256 newMinLeverage) external onlyOwner {
         // zero minLeverage
         if (newMinLeverage <= 10 ** LEVERAGE_DECIMALS) {
-            revert UsdnProtocolZeroMinLeverage();
+            revert UsdnProtocolInvalidMinLeverage();
         }
 
         // minLeverage greater or equal maxLeverage
         if (newMinLeverage >= _maxLeverage) {
-            revert UsdnProtocolMinLeverageGreaterThanMax();
+            revert UsdnProtocolInvalidMinLeverage();
         }
 
         _minLeverage = newMinLeverage;
@@ -156,12 +156,12 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
         // maxLeverage lower or equal minLeverage
         if (newMaxLeverage <= _minLeverage) {
-            revert UsdnProtocolMaxLeverageLowerThanMin();
+            revert UsdnProtocolInvalidMaxLeverage();
         }
 
         // maxLeverage greater than max 100
         if (newMaxLeverage > 100 * 10 ** LEVERAGE_DECIMALS) {
-            revert UsdnProtocolMaxLeverageGreaterThanMax();
+            revert UsdnProtocolInvalidMaxLeverage();
         }
 
         _maxLeverage = newMaxLeverage;
@@ -172,12 +172,12 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setValidationDeadline(uint256 newValidationDeadline) external onlyOwner {
         // validation deadline lower than min 1 minute
         if (newValidationDeadline < 60) {
-            revert UsdnProtocolValidationDeadlineLowerThanMin();
+            revert UsdnProtocolInvalidValidationDeadline();
         }
 
         // validation deadline greater than max 1 day
         if (newValidationDeadline > 1 days) {
-            revert UsdnProtocolValidationDeadlineGreaterThanMax();
+            revert UsdnProtocolInvalidValidationDeadline();
         }
 
         _validationDeadline = newValidationDeadline;
@@ -188,7 +188,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setLiquidationPenalty(uint24 newLiquidationPenalty) external onlyOwner {
         // liquidationPenalty greater than max 15
         if (newLiquidationPenalty > 15) {
-            revert UsdnProtocolLiquidationPenaltyGreaterThanMax();
+            revert UsdnProtocolInvalidLiquidationPenalty();
         }
 
         _liquidationPenalty = newLiquidationPenalty;
@@ -199,7 +199,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyOwner {
         // safetyMarginBps greater than max 2000: 20%
         if (newSafetyMarginBps > 2000) {
-            revert UsdnProtocolSafetyMarginBpsGreaterThanMax();
+            revert UsdnProtocolInvalidSafetyMarginBps();
         }
 
         _safetyMarginBps = newSafetyMarginBps;
@@ -210,7 +210,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setLiquidationIteration(uint16 newLiquidationIteration) external onlyOwner {
         // newLiquidationIteration greater than MAX_LIQUIDATION_ITERATION 10
         if (newLiquidationIteration > MAX_LIQUIDATION_ITERATION) {
-            revert UsdnProtocolLiquidationIterationGreaterThanMax();
+            revert UsdnProtocolInvalidLiquidationIteration();
         }
 
         _liquidationIteration = newLiquidationIteration;
@@ -221,12 +221,12 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setEMAPeriod(uint128 newEMAPeriod) external onlyOwner {
         // EMAPeriod is zero
         if (newEMAPeriod == 0) {
-            revert UsdnProtocolZeroEMAPeriod();
+            revert UsdnProtocolInvalidEMAPeriod();
         }
 
         // EMAPeriod is greater than max 3 months
         if (newEMAPeriod > 90 days) {
-            revert UsdnProtocolEMAPeriodGreaterThanMax();
+            revert UsdnProtocolInvalidEMAPeriod();
         }
 
         _EMAPeriod = newEMAPeriod;
@@ -237,7 +237,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setFundingSF(uint256 newFundingSF) external onlyOwner {
         // newFundingSF is greater than max
         if (newFundingSF > 10 ** FUNDING_SF_DECIMALS) {
-            revert UsdnProtocolFundingSFGreaterThanMax();
+            revert UsdnProtocolInvalidFundingSF();
         }
 
         _fundingSF = newFundingSF;

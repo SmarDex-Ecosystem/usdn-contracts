@@ -204,7 +204,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getTotalLongPositions() external view returns (uint256);
 
     /**
-     * @notice @notice Get the tickHash from tick and tickVersion
+     * @notice Get the tickHash from tick and tickVersion
      * @param tick The tick number.
      * @param version The tick version.
      */

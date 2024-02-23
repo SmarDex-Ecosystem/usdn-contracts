@@ -79,7 +79,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setOracleMiddlewareWithZero() external adminPrank {
         // zero address disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolZeroMiddlewareAddress.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareAddress.selector);
         // set middleware
         protocol.setOracleMiddleware(IOracleMiddleware(address(0)));
     }
@@ -108,7 +108,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setMinLeverageWithZero() external adminPrank {
         // minLeverage zero disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolZeroMinLeverage.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage.selector);
         // set minLeverage
         protocol.setMinLeverage(0);
     }
@@ -122,7 +122,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function test_RevertWhen_setMinLeverageWithMax() external adminPrank {
         uint256 maxLeverage = protocol.getMaxLeverage();
         // minLeverage higher than max disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolMinLeverageGreaterThanMax.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage.selector);
         // set minLeverage
         protocol.setMinLeverage(maxLeverage);
     }
@@ -154,7 +154,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function test_RevertWhen_setMaxLeverageWithMin() external adminPrank {
         uint256 minLeverage = protocol.getMinLeverage();
         // maxLeverage lower than min disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolMaxLeverageLowerThanMin.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage.selector);
         // set maxLeverage
         protocol.setMaxLeverage(minLeverage);
     }
@@ -169,7 +169,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // cache limit
         uint256 aboveLimit = 100 * 10 ** protocol.LEVERAGE_DECIMALS() + 1;
         // maxLeverage greater than max disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolMaxLeverageGreaterThanMax.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage.selector);
         // set maxLeverage
         protocol.setMaxLeverage(aboveLimit);
     }
@@ -200,7 +200,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setValidationDeadlineWithMin() external adminPrank {
         // validationDeadline lower than min disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolValidationDeadlineLowerThanMin.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline.selector);
         // set validationDeadline
         protocol.setValidationDeadline(59);
     }
@@ -213,7 +213,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setValidationDeadlineWithMax() external adminPrank {
         // validationDeadline greater than max disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolValidationDeadlineGreaterThanMax.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline.selector);
         // set validationDeadline
         protocol.setValidationDeadline(365 days + 1);
     }
@@ -244,7 +244,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setLiquidationPenaltyMax() external adminPrank {
         // liquidationPenalty greater than max disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolLiquidationPenaltyGreaterThanMax.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPenalty.selector);
         // set liquidationPenalty
         protocol.setLiquidationPenalty(16);
     }
@@ -275,7 +275,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setSafetyMarginBpsWithMax() external adminPrank {
         // safetyMargin greater than max disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolSafetyMarginBpsGreaterThanMax.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidSafetyMarginBps.selector);
         // set safetyMargin
         protocol.setSafetyMarginBps(2001);
     }
@@ -307,7 +307,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function test_RevertWhen_setLiquidationIterationWithMax() external adminPrank {
         uint16 aboveMax = protocol.MAX_LIQUIDATION_ITERATION() + 1;
         // liquidationIteration greater than max disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolLiquidationIterationGreaterThanMax.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationIteration.selector);
         // set liquidationIteration
         protocol.setLiquidationIteration(aboveMax);
     }
@@ -338,7 +338,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setEMAPeriodWithZero() external adminPrank {
         // EMAPeriod zero disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolZeroEMAPeriod.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidEMAPeriod.selector);
         // set EMAPeriod
         protocol.setEMAPeriod(0);
     }
@@ -351,7 +351,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setEMAPeriodWithMax() external adminPrank {
         // EMAPeriod greater than max disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolEMAPeriodGreaterThanMax.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidEMAPeriod.selector);
         // set EMAPeriod
         protocol.setEMAPeriod(90 days + 1);
     }
@@ -384,7 +384,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // cached limit
         uint256 aboveLimit = 10 ** protocol.FUNDING_SF_DECIMALS() + 1;
         // fundingSF greater than max disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolFundingSFGreaterThanMax.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidFundingSF.selector);
         // set fundingSF
         protocol.setFundingSF(aboveLimit);
     }
@@ -497,7 +497,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setLiquidationRewardsManagerWithZero() external adminPrank {
         // zero address disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolLiquidationRewardsManagerIsZeroAddress.selector);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationRewardsManagerAddress.selector);
         // set liquidation reward manager
         protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(0)));
     }

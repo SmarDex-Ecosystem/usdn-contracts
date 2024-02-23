@@ -57,49 +57,37 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided tick version is outdated (transactions have been liquidated)
     error UsdnProtocolOutdatedTick(uint256 currentVersion, uint256 providedVersion);
 
-    /// @dev Indicates that the new middleware address is address zero
-    error UsdnProtocolZeroMiddlewareAddress();
+    /// @dev Indicates that the new middleware address value is invalid.
+    error UsdnProtocolInvalidMiddlewareAddress();
 
-    /// @dev Indicates that the new minLeverage is zero
-    error UsdnProtocolZeroMinLeverage();
+    /// @dev Indicate that the new minLeverage value is invalid.
+    error UsdnProtocolInvalidMinLeverage();
 
-    /// @dev Indicates that the new minLeverage is greater than max
-    error UsdnProtocolMinLeverageGreaterThanMax();
+    /// @dev Indicates that the new maxLeverage value is invalid.
+    error UsdnProtocolInvalidMaxLeverage();
 
-    /// @dev Indicates that the new maxLeverage is lower than min
-    error UsdnProtocolMaxLeverageLowerThanMin();
+    /// @dev Indicates that the new validation deadline value is invalid.
+    error UsdnProtocolInvalidValidationDeadline();
 
-    /// @dev Indicates that the new maxLeverage is greater than max
-    error UsdnProtocolMaxLeverageGreaterThanMax();
+    /// @dev Indicates that the new liquidationPenalty value is invalid.
+    error UsdnProtocolInvalidLiquidationPenalty();
 
-    /// @dev Indicates that the new validation deadline is lower than min
-    error UsdnProtocolValidationDeadlineLowerThanMin();
+    /// @dev Indicates that the new safetyMargin value is invalid.
+    error UsdnProtocolInvalidSafetyMarginBps();
 
-    /// @dev Indicates that the new validation deadline is greater than max
-    error UsdnProtocolValidationDeadlineGreaterThanMax();
+    /// @dev Indicates that the new liquidationIteration value is invalid.
+    error UsdnProtocolInvalidLiquidationIteration();
 
-    /// @dev Indicates that the new liquidationPenalty is greater than max
-    error UsdnProtocolLiquidationPenaltyGreaterThanMax();
+    /// @dev Indicates that the new EMAPeriod value is invalid.
+    error UsdnProtocolInvalidEMAPeriod();
 
-    /// @dev Indicates that the new safetyMargin is greater than max
-    error UsdnProtocolSafetyMarginBpsGreaterThanMax();
+    /// @dev Indicates that the new fundingSF value is invalid.
+    error UsdnProtocolInvalidFundingSF();
 
-    /// @dev Indicates that the new liquidationIteration is greater than max
-    error UsdnProtocolLiquidationIterationGreaterThanMax();
+    /// @dev Indicates that the provided address for the LiquidationRewardsManager contract address is invalid.
+    error UsdnProtocolInvalidLiquidationRewardsManagerAddress();
 
-    /// @dev Indicates that the new EMAPeriod is zero
-    error UsdnProtocolZeroEMAPeriod();
-
-    /// @dev Indicates that the new EMAPeriod is greater than max
-    error UsdnProtocolEMAPeriodGreaterThanMax();
-
-    /// @dev Indicates that the new fundingSF is greater than max
-    error UsdnProtocolFundingSFGreaterThanMax();
-
-    /// @dev Indicates that the provided address for the LiquidationRewardsManager contract is the 0 address
-    error UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
-
-    /// @dev Indicates that the provided fee percentage is invalid (> 100%)
+    /// @dev Indicates that the provided fee percentage value is invalid.
     error UsdnProtocolInvalidProtocolFeeBps();
 
     /// @dev Indicates that the provided fee collector address is invalid
