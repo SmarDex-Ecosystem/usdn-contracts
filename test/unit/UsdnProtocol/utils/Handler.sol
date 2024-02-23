@@ -166,6 +166,13 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _applyPnlAndFunding(currentPrice, timestamp);
     }
 
+    function i_liquidatePositions(uint256 currentPrice, uint16 iteration)
+        external
+        returns (uint256 liquidatedPositions_, uint16 liquidatedTicks_, int256 remainingCollateral_)
+    {
+        return _liquidatePositions(currentPrice, iteration);
+    }
+
     function getEMAPeriod() external view returns (uint256) {
         return _EMAPeriod;
     }
