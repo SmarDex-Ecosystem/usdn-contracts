@@ -149,7 +149,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _minLeverage = newMinLeverage;
-        emit MinLeverageUpdated(_minLeverage);
+        emit MinLeverageUpdated(newMinLeverage);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -165,7 +165,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _maxLeverage = newMaxLeverage;
-        emit MaxLeverageUpdated(_maxLeverage);
+        emit MaxLeverageUpdated(newMaxLeverage);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -181,7 +181,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _validationDeadline = newValidationDeadline;
-        emit ValidationDeadlineUpdated(_validationDeadline);
+        emit ValidationDeadlineUpdated(newValidationDeadline);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -192,7 +192,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _liquidationPenalty = newLiquidationPenalty;
-        emit LiquidationPenaltyUpdated(_liquidationPenalty);
+        emit LiquidationPenaltyUpdated(newLiquidationPenalty);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -203,7 +203,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _safetyMarginBps = newSafetyMarginBps;
-        emit SafetyMarginBpsUpdated(_safetyMarginBps);
+        emit SafetyMarginBpsUpdated(newSafetyMarginBps);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -214,7 +214,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _liquidationIteration = newLiquidationIteration;
-        emit LiquidationIterationUpdated(_liquidationIteration);
+        emit LiquidationIterationUpdated(newLiquidationIteration);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -230,7 +230,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _EMAPeriod = newEMAPeriod;
-        emit EMAPeriodUpdated(_EMAPeriod);
+        emit EMAPeriodUpdated(newEMAPeriod);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -241,31 +241,31 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         _fundingSF = newFundingSF;
-        emit FundingSFUpdated(_fundingSF);
+        emit FundingSFUpdated(newFundingSF);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setFeeBps(uint16 protocolFeeBps) external onlyOwner {
-        if (protocolFeeBps > BPS_DIVISOR) {
+    function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyOwner {
+        if (newProtocolFeeBps > BPS_DIVISOR) {
             revert UsdnProtocolInvalidProtocolFeeBps();
         }
-        _protocolFeeBps = protocolFeeBps;
-        emit FeeBpsUpdated(protocolFeeBps);
+        _protocolFeeBps = newProtocolFeeBps;
+        emit FeeBpsUpdated(newProtocolFeeBps);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setFeeThreshold(uint256 feeThreshold) external onlyOwner {
-        _feeThreshold = feeThreshold;
-        emit FeeThresholdUpdated(feeThreshold);
+    function setFeeThreshold(uint256 newFeeThreshold) external onlyOwner {
+        _feeThreshold = newFeeThreshold;
+        emit FeeThresholdUpdated(newFeeThreshold);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setFeeCollector(address feeCollector) external onlyOwner {
-        if (feeCollector == address(0)) {
+    function setFeeCollector(address newFeeCollector) external onlyOwner {
+        if (newFeeCollector == address(0)) {
             revert UsdnProtocolInvalidFeeCollector();
         }
-        _feeCollector = feeCollector;
-        emit FeeCollectorUpdated(feeCollector);
+        _feeCollector = newFeeCollector;
+        emit FeeCollectorUpdated(newFeeCollector);
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {

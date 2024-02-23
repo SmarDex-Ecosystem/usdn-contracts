@@ -59,7 +59,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setFundingSF(0);
 
         vm.expectRevert(customError);
-        protocol.setFeeBps(0);
+        protocol.setProtocolFeeBps(0);
 
         vm.expectRevert(customError);
         protocol.setFeeCollector(address(this));
@@ -408,7 +408,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Call "setFeeBps" from admin.
+     * @custom:scenario Call "setProtocolFeeBps" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
      * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Revert because greater than max.
@@ -419,11 +419,11 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // feeBps greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps.selector);
         // set feeBps
-        protocol.setFeeBps(aboveMax);
+        protocol.setProtocolFeeBps(aboveMax);
     }
 
     /**
-     * @custom:scenario Call "setFeeBps" from admin.
+     * @custom:scenario Call "setProtocolFeeBps" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
      * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Value should be updated.
@@ -435,7 +435,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.FeeBpsUpdated(expectedNewValue);
         // assign new feeBps value
-        protocol.setFeeBps(expectedNewValue);
+        protocol.setProtocolFeeBps(expectedNewValue);
         // check new value is equal than expected
         assertEq(protocol.getProtocolFeeBps(), expectedNewValue);
     }

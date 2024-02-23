@@ -17,7 +17,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check that setFeeBps() reverts when the value is too big
+     * @custom:scenario Check that setProtocolFeeBps() reverts when the value is too big
      * @custom:given The fee value is > BPS_DIVISOR
      * @custom:then The protocol reverts with `UsdnProtocolInvalidProtocolFeeBps`
      */
@@ -25,12 +25,12 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
         vm.startPrank(ADMIN);
         vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
-        protocol.setFeeBps(bpsDivisor + 1);
+        protocol.setProtocolFeeBps(bpsDivisor + 1);
         vm.stopPrank();
     }
 
     /**
-     * @custom:scenario Check setFeeBps() function
+     * @custom:scenario Check setProtocolFeeBps() function
      * @custom:given The fee bps is 0
      * @custom:then The protocol emits `FeeBpsUpdated` event with 0
      * @custom:and Pending protocol fee is 0 after action
@@ -40,7 +40,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit FeeBpsUpdated(0);
-        protocol.setFeeBps(0);
+        protocol.setProtocolFeeBps(0);
 
         protocol.initiateDeposit(1000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
