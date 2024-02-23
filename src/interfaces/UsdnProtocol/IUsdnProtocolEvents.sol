@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity >=0.8.0;
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -48,34 +48,40 @@ interface IUsdnProtocolEvents {
      * position.
      * @param user The user address.
      * @param to The address that will be the owner of the position.
-     * @param position The position that was opened (pending validation).
+     * @param timestamp The timestamp of the action.
+     * @param leverage The initial leverage of the position (pending validation).
+     * @param amount The amount of asset that were deposited as collateral.
+     * @param startPrice The asset price at the moment of the position creation (pending validation).
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
      */
     event InitiatedOpenPosition(
-        address indexed user, address indexed to, Position position, int24 tick, uint256 tickVersion, uint256 index
+        address indexed user,
+        address indexed to,
+        uint40 timestamp,
+        uint128 leverage,
+        uint128 amount,
+        uint128 startPrice,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index
     );
 
     /**
      * @notice Emitted when a user validates the opening of a long position.
      * @param user The user address.
-     * @param position The position that was opened (final).
+     * @param newLeverage The initial leverage of the position (final).
+     * @param newStartPrice The asset price at the moment of the position creation (final).
      * @param tick The tick containing the position.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted too
      * @param tickVersion The tick version.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted too
      * @param index The index of the position inside the tick array.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted
-     * @param liquidationPrice The liquidation price of the position (final).
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted too
      */
     event ValidatedOpenPosition(
-        address indexed user,
-        Position position,
-        int24 tick,
-        uint256 tickVersion,
-        uint256 index,
-        uint128 liquidationPrice
+        address indexed user, uint128 newLeverage, uint128 newStartPrice, int24 tick, uint256 tickVersion, uint256 index
     );
 
     /**
@@ -124,9 +130,15 @@ interface IUsdnProtocolEvents {
      * @param oldTickVersion The liquidated tick version.
      * @param liquidationPrice The asset price at the moment of liquidation.
      * @param effectiveTickPrice The effective liquidated tick price.
+     * @param remainingCollateral The amount of asset that was left in the tick, which was transferred to the vault if
+     * positive, or was taken from the vault if negative.
      */
     event LiquidatedTick(
-        int24 indexed tick, uint256 indexed oldTickVersion, uint256 liquidationPrice, uint256 effectiveTickPrice
+        int24 indexed tick,
+        uint256 indexed oldTickVersion,
+        uint256 liquidationPrice,
+        uint256 effectiveTickPrice,
+        int256 remainingCollateral
     );
 
     /**
@@ -155,4 +167,42 @@ interface IUsdnProtocolEvents {
      * @param index The index of the position inside the tick array.
      */
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
+
+    /**
+     * @notice Emitted when a user (liquidator) successfully liquidated positions.
+     * @param liquidator The address that initiated the liquidation.
+     * @param rewards The amount of tokens the liquidator received in rewards.
+     */
+    event LiquidatorRewarded(address indexed liquidator, uint256 rewards);
+
+    /**
+     * @notice Emitted when the LiquidationRewardsManager contract is updated.
+     * @param newAddress The address of the new (current) contract.
+     */
+    event LiquidationRewardsManagerUpdated(address newAddress);
+
+    /**
+     * @notice Emitted when the pending protocol fee is distributed.
+     * @param feeCollector The collector address.
+     * @param amount The amount of fee transferred.
+     */
+    event ProtocolFeeDistributed(address feeCollector, uint256 amount);
+
+    /**
+     * @notice Emitted when the protocol fee is updated.
+     * @param feeBps The new fee in basis points.
+     */
+    event FeeBpsUpdated(uint256 feeBps);
+
+    /**
+     * @notice Emitted when the fee collector is updated.
+     * @param feeCollector The new fee collector address.
+     */
+    event FeeCollectorUpdated(address feeCollector);
+
+    /**
+     * @notice Emitted when the fee threshold is updated.
+     * @param feeThreshold The new fee threshold.
+     */
+    event FeeThresholdUpdated(uint256 feeThreshold);
 }

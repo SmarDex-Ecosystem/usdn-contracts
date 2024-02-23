@@ -1,14 +1,14 @@
 {
   "name": "@usdn/usdn-contracts",
-  "version": "0.5.0",
+  "version": "0.7.0",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:Blockchain-RA2-Tech/usdn-contracts.git",
   "author": "RA2 Tech",
   "license": "BUSL-1.1",
   "scripts": {
     "prepare": "husky install",
-    "snapshot": "FOUNDRY_PROFILE=ci forge clean && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --offline",
-    "snapshot:check": "FOUNDRY_PROFILE=ci forge build && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --check --offline",
+    "snapshot": "FOUNDRY_PROFILE=ci forge clean && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --offline",
+    "snapshot:check": "FOUNDRY_PROFILE=ci forge build && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --check --offline",
     "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",
     "cov": "forge coverage --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",
     "cov:html": "forge coverage --report lcov --no-match-test \"(FFI|Fork|Fuzz|invariant)\" && genhtml -o .coverage lcov.info && open .coverage/index.html",
@@ -23,16 +23,23 @@
     "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf lib && forge clean && npm i && forge install"
   },
   "main": "dist/index.js",
-  "files": ["dist", "broadcast", "docs"],
+  "files": [
+    "dist",
+    "broadcast",
+    "docs"
+  ],
   "devDependencies": {
     "@biomejs/biome": "^1.5.3",
     "@chainlink/contracts": "^0.8.0",
     "@openzeppelin/contracts": "^5.0.0",
     "@pythnetwork/pyth-sdk-solidity": "^2.3.0",
+    "@types/luxon": "^3.4.2",
     "abitype": "^1.0.0",
     "commander": "^11.1.0",
     "glob": "^10.3.10",
     "husky": "^8.0.3",
+    "luxon": "^3.4.4",
+    "picocolors": "^1.0.0",
     "solady": "^0.0.138",
     "solhint": "^4.1.1",
     "ts-node": "^10.9.2",

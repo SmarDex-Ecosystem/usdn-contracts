@@ -1,5 +1,51 @@
 # Changelog
 
+## [0.7.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.6.0...v0.7.0) (2024-02-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* **LiquidationRewards:** Implement the LiquidationRewardsManager contract and transfer liquidation rewards to the liquidator ([#91](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/91))
+* the constructor now takes feeCollector address
+
+### Features
+
+* add protocol fee ([#90](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/90)) ([088810c](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/088810ca650b38e01d7cf6f08ee032b369fe94e5))
+* **LiquidationRewards:** Implement the LiquidationRewardsManager contract and transfer liquidation rewards to the liquidator ([#91](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/91)) ([c860fa6](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/c860fa6799b848cf5aee78b9263ea2dddb2300e6))
+
+
+### Bug Fixes
+
+* Adjust the total expo when the leverage of the position change on validation ([#104](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/104)) ([908c8e1](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/908c8e1b5638bb9295af24b42daa0fc9c281c665))
+* **ema:** protection when secondElapsed &gt;= EMAPeriod ([#99](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/99)) ([c3bf2b3](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/c3bf2b326b1294f869ac0bae63f36899bc7b06e8))
+* **middleware:** validation logic for liquidation ([#95](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/95)) ([681ffb3](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/681ffb30677908df35f34429087246a3c43d9371))
+
+## [0.6.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.5.0...v0.6.0) (2024-02-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* transfer remaining collateral to vault upon liquidation ([#89](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/89))
+* **events:** `Position` has no `startPrice` anymore, `InitiatedOpenPosition` and `ValidatedOpenPosition` have different fields
+* **middleware:** some unused errors don't exist anymore
+
+### Features
+
+* transfer remaining collateral to vault upon liquidation ([#89](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/89)) ([92f43e7](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/92f43e79538872afed48f441a41b44d9472db302))
+* update position tick if leverage exceeds max leverage ([#76](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/76)) ([aad0e50](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/aad0e501d0787e7e1cc67d7f25828a34379f0617))
+
+
+### Bug Fixes
+
+* **liquidation:** use neutral price and liquidate whenever possible ([#94](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/94)) ([92f13b5](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/92f13b55eca6e351e928c046734d56fdb68b5621))
+* **middleware:** remove unused errors ([#83](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/83)) ([6a95a11](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/6a95a11ce822fddd4e2f5b804ef796d9986fa61f))
+* only pass required ether to middleware and refund excess ([#87](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/87)) ([7c777e4](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/7c777e4b8c62e7729ca6f1c1b788195bdc9c7d1a))
+
+
+### Code Refactoring
+
+* **events:** remove unused or unneeded fields from events and structs ([#88](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/88)) ([672e4f7](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/672e4f7c07bf9ec305d0c3c4e70cc631e367e73d))
+
 ## [0.5.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.4.0...v0.5.0) (2024-02-08)
 
 

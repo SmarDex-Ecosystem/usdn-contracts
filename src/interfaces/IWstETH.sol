@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity >=0.8.0;
 
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 
-interface IWstETH is IERC20Permit {
+interface IWstETH is IERC20Metadata, IERC20Permit {
     /**
      * @notice Exchanges stETH to wstETH
      * @param _stETHAmount amount of stETH to wrap in exchange for wstETH
@@ -19,7 +20,7 @@ interface IWstETH is IERC20Permit {
 
     /**
      * @notice Exchanges wstETH to stETH
-     * @param _wstETHAmount amount of wstETH to uwrap in exchange for stETH
+     * @param _wstETHAmount amount of wstETH to unwrap in exchange for stETH
      * @dev Requirements:
      *  - `_wstETHAmount` must be non-zero
      *  - msg.sender must have at least `_wstETHAmount` wstETH.

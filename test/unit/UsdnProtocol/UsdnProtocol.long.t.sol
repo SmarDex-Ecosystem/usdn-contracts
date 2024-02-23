@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
+import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -12,7 +15,6 @@ import { USER_1 } from "test/utils/Constants.sol";
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x.
  */
-
 contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     uint96 internal constant LONG_POSITION_AMOUNT = 5 ether;
     uint256 internal initialWstETHBalance;
@@ -21,8 +23,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mint(address(this), 100_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         initialUsdnBalance = usdn.balanceOf(address(this));
         initialWstETHBalance = wstETH.balanceOf(address(this));
         initialWstETHBalanceProtocol = wstETH.balanceOf(address(protocol));
@@ -122,7 +123,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_002_839_520_694, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_002_844_036_506, "wrong minimum liquidation price");
     }
 
     /**
@@ -144,7 +145,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_032_217_704_260, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_032_218_788_439, "wrong minimum liquidation price");
     }
 
     /**
@@ -206,5 +207,123 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         value = protocol.positionValue(2000 ether, 750 ether, 1 ether, uint128(4 * 10 ** protocol.LEVERAGE_DECIMALS()));
         assertEq(value, 2.5 ether, "current price 2000 leverage 4x");
+    }
+
+    /**
+     * @custom:scenario Check calculations of the `tickValue` function
+     * @custom:given A tick with total expo 10 wstETH and a liquidation price around $500
+     * @custom:when The current price is equal to the liquidation price without penalty
+     * @custom:or the current price is 2x the liquidation price without penalty
+     * @custom:or the current price is 0.5x the liquidation price without penalty
+     * @custom:or the current price is equal to the liquidation price with penalty
+     * @custom:then The tick value is 0 if the price is equal to the liquidation price without penalty
+     * @custom:or the tick value is 5 wstETH if the price is 2x the liquidation price without penalty
+     * @custom:or the tick value is -10 wstETH if the price is 0.5x the liquidation price without penalty
+     * @custom:or the tick value is 0.198003465594229687 wstETH if the price is equal to the liquidation price with
+     * penalty
+     */
+    function test_tickValue() public {
+        int24 tick = protocol.getEffectiveTickForPrice(500 ether);
+        uint128 liqPriceWithoutPenalty =
+            protocol.getEffectivePriceForTick(tick - int24(protocol.liquidationPenalty()) * protocol.tickSpacing());
+
+        int256 value = protocol.i_tickValue(liqPriceWithoutPenalty, tick, 10 ether);
+        assertEq(value, 0, "current price = liq price");
+
+        value = protocol.i_tickValue(liqPriceWithoutPenalty * 2, tick, 10 ether);
+        assertEq(value, 5 ether, "current price = 2x liq price");
+
+        value = protocol.i_tickValue(liqPriceWithoutPenalty / 2, tick, 10 ether);
+        assertEq(value, -10 ether, "current price = 0.5x liq price");
+
+        value = protocol.i_tickValue(protocol.getEffectivePriceForTick(tick), tick, 10 ether);
+        assertEq(value, 0.198003465594229687 ether, "current price = liq price with penalty");
+    }
+
+    /**
+     * @custom:scenario Check that the leverage and total expo of a position is re-calculated on validation
+     * @custom:given An initialized position
+     * @custom:when The position is validated
+     * @custom:and The price fluctuated a bit
+     * @custom:and Funding calculations were applied
+     * @custom:then The leverage of the position should be adjusted, changing the value of the total expo for the tick
+     * and the protocol
+     */
+    function test_validateAPositionAfterPriceChangedRecalculateLeverageAndTotalExpo() external {
+        uint128 price = 2000 ether;
+        uint128 desiredLiqPrice = 1700 ether;
+
+        uint256 initialTotalExpo = protocol.totalExpo();
+        uint256 totalExpoForTick = protocol.totalExpoByTick(protocol.getEffectiveTickForPrice(desiredLiqPrice));
+
+        assertEq(totalExpoForTick, 0, "Total expo for future position's tick should be empty");
+
+        // Initiate a long position
+        (int24 tick, uint256 tickVersion, uint256 index) =
+            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, abi.encode(price), "", address(this));
+
+        totalExpoForTick = protocol.totalExpoByTick(tick);
+        Position memory position = protocol.getLongPosition(tick, tickVersion, index);
+
+        // Calculate the total expo of the position after the initialization
+        uint256 expectedPositionTotalExpo =
+            FixedPointMathLib.fullMulDiv(position.amount, position.leverage, 10 ** protocol.LEVERAGE_DECIMALS());
+        assertEq(
+            initialTotalExpo + expectedPositionTotalExpo,
+            protocol.totalExpo(),
+            "Total expo should have increased by the position's total expo"
+        );
+        assertEq(totalExpoForTick, expectedPositionTotalExpo, "Total expo on tick is not the expected value");
+
+        skip(oracleMiddleware.validationDelay() + 1);
+
+        // Change the price
+        price = 1999 ether;
+        // Validate the position with the new price
+        protocol.validateOpenPosition(abi.encode(price), "");
+
+        uint256 previousLeverage = position.leverage;
+        // Get the updated position
+        position = protocol.getLongPosition(tick, tickVersion, index);
+        uint256 newLeverage = position.leverage;
+
+        // Sanity check
+        assertTrue(previousLeverage != newLeverage, "The leverage changing is necessary for this test to work");
+
+        // Calculate the total expo of the position after the validation
+        expectedPositionTotalExpo =
+            FixedPointMathLib.fullMulDiv(position.amount, position.leverage, 10 ** protocol.LEVERAGE_DECIMALS());
+
+        assertEq(
+            initialTotalExpo + expectedPositionTotalExpo,
+            protocol.totalExpo(),
+            "Total expo should have increased by the position's new total expo"
+        );
+
+        totalExpoForTick = protocol.totalExpoByTick(tick);
+        assertEq(totalExpoForTick, expectedPositionTotalExpo, "Total expo on tick is not the expected value");
+    }
+
+    /**
+     * @custom:scenario Check that the user can close his opened position
+     * @custom:given An initialized and validated position
+     * @custom:when The user call initiateClosePosition
+     * @custom:then The close position action is initialized
+     */
+    function test_canInitializeClosePosition() external {
+        uint128 price = 2000 ether;
+        uint128 desiredLiqPrice = 1700 ether;
+
+        // Initiate a long position
+        (int24 tick, uint256 tickVersion, uint256 index) =
+            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, abi.encode(price), "", address(this));
+        skip(oracleMiddleware.validationDelay() + 1);
+        // Validate the open position action
+        protocol.validateOpenPosition(abi.encode(price), "");
+        skip(oracleMiddleware.validationDelay() + 1);
+
+        vm.expectEmit();
+        emit InitiatedClosePosition(address(this), tick, tickVersion, index);
+        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(price), "");
     }
 }

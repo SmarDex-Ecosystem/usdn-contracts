@@ -18,8 +18,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mint(address(this), INITIAL_WSTETH_BALANCE);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
     }
 
     /**
@@ -100,8 +99,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with `UsdnProtocolZeroAmount`
      */
     function test_RevertWhen_zeroAmount() public {
+        bytes memory priceData = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateDeposit(0, abi.encode(uint128(2000 ether)), "", address(this));
+        protocol.initiateDeposit(0, priceData, "", address(this));
     }
 
     /**
@@ -143,6 +143,42 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      */
     function test_validateDepositAddressToDifferent() public {
         _checkValidateDepositWithPrice(2000 ether, 2000 ether, 2000 ether, USER_1);
+    }
+
+    /**
+     * @custom:scenario The user sends too much ether when initiating a deposit
+     * @custom:given The user deposits 1 wstETH
+     * @custom:when The user sends 0.5 ether as value in the `initiateDeposit` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_initiateDepositEtherRefund() public {
+        oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
+        uint256 balanceBefore = address(this).balance;
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
+        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, "", address(this));
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario The user sends too much ether when validating a deposit
+     * @custom:given The user initiated a deposit of 1 wstETH and validates it
+     * @custom:when The user sends 0.5 ether as value in the `validateDeposit` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_validateDepositEtherRefund() public {
+        oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
+        // initiate
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
+        protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, "", address(this));
+
+        skip(oracleMiddleware.validationDelay() + 1);
+        // validate
+        validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
+        uint256 balanceBefore = address(this).balance;
+        protocol.validateDeposit{ value: 0.5 ether }(currentPrice, "");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
     /**
@@ -191,4 +227,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         }
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply");
     }
+
+    // test refunds
+    receive() external payable { }
 }

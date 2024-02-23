@@ -34,22 +34,61 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * @dev required integration actions tests
  */
 contract ActionsIntegrationFixture is IOracleMiddlewareErrors {
-    // action types for integration tests
+    // all action types
     ProtocolAction[] public actions = [
         ProtocolAction.None,
+        ProtocolAction.Initialize,
         ProtocolAction.InitiateDeposit,
         ProtocolAction.ValidateDeposit,
-        ProtocolAction.ValidateOpenPosition
+        ProtocolAction.InitiateWithdrawal,
+        ProtocolAction.ValidateWithdrawal,
+        ProtocolAction.InitiateOpenPosition,
+        ProtocolAction.ValidateOpenPosition,
+        ProtocolAction.InitiateClosePosition,
+        ProtocolAction.ValidateClosePosition,
+        ProtocolAction.Liquidation
     ];
 }
 
+contract CommonBaseIntegrationFixture is BaseFixture {
+    AggregatorV3Interface internal chainlinkOnChain;
+
+    function _getHermesApiSignature(bytes32 feed, uint256 timestamp)
+        internal
+        returns (uint256, uint256, uint256, bytes memory)
+    {
+        string[] memory cmds = new string[](4);
+        cmds[0] = "./test_utils/target/release/test_utils";
+        cmds[1] = "pyth-price";
+        cmds[2] = vm.toString(feed);
+        cmds[3] = vm.toString(timestamp);
+        bytes memory result = vm.ffi(cmds);
+        return abi.decode(result, (uint256, uint256, uint256, bytes));
+    }
+
+    function getChainlinkPrice() internal view returns (uint256, uint256) {
+        (, int256 price,, uint256 timestamp,) = chainlinkOnChain.latestRoundData();
+        return (uint256(price), uint256(timestamp));
+    }
+
+    function getHermesApiSignature(bytes32 feed, uint256 timestamp)
+        internal
+        returns (uint256, uint256, uint256, bytes memory)
+    {
+        return _getHermesApiSignature(feed, timestamp);
+    }
+
+    // force ignore from coverage report
+    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
+    function test() public virtual override { }
+}
+
 /**
- * @title OracleMiddlewareBaseFixture
+ * @title OracleMiddlewareBaseIntegrationFixture
  * @dev Utils for testing the oracle middleware
  */
-contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationFixture {
+contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegrationFixture {
     IPyth internal pyth;
-    AggregatorV3Interface internal chainlinkOnChain;
     OracleMiddleware public oracleMiddleware;
 
     modifier reSetUp() {
@@ -60,47 +99,24 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsIntegrationFixture {
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
         chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE);
-        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_WSTETH_USD, address(chainlinkOnChain));
+        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_WSTETH_USD, address(chainlinkOnChain), 1 hours);
     }
 
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
         return (PYTH_DATA_PRICE, PYTH_DATA_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA);
     }
-
-    function getHermesApiSignature(bytes32 feed, uint256 timestamp)
-        internal
-        returns (uint256, uint256, uint256, bytes memory)
-    {
-        string[] memory cmds = new string[](4);
-        cmds[0] = "./test_utils/target/release/test_utils";
-        cmds[1] = "pyth-price";
-        cmds[2] = vm.toString(feed);
-        cmds[3] = vm.toString(timestamp);
-        bytes memory result = vm.ffi(cmds);
-        return abi.decode(result, (uint256, uint256, uint256, bytes));
-    }
-
-    function getChainlinkPrice() internal view returns (uint256, uint256) {
-        (, int256 price,, uint256 timestamp,) = chainlinkOnChain.latestRoundData();
-        return (uint256(price), uint256(timestamp));
-    }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public virtual override { }
 }
 
 /**
- * @title WstethFixture
+ * @title WstethIntegrationFixture
  * @dev Utils for testing the oracle middleware
  */
-contract WstethFixture is BaseFixture, ActionsIntegrationFixture {
+contract WstethIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegrationFixture {
     IPyth internal pyth;
-    AggregatorV3Interface internal chainlinkOnChain;
     WstEthOracleMiddleware public wstethMiddleware;
     IWstETH public constant WST_ETH = IWstETH(WSTETH);
 
-    modifier reSetUp() {
+    modifier reSetUp() virtual {
         setUp();
         _;
     }
@@ -108,36 +124,15 @@ contract WstethFixture is BaseFixture, ActionsIntegrationFixture {
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
         chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
-        wstethMiddleware = new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH);
+        wstethMiddleware =
+            new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH, 1 hours);
     }
 
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
         return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
     }
 
-    function getHermesApiSignature(bytes32 feed, uint256 timestamp)
-        internal
-        returns (uint256, uint256, uint256, bytes memory)
-    {
-        string[] memory cmds = new string[](4);
-        cmds[0] = "./test_utils/target/release/test_utils";
-        cmds[1] = "pyth-price";
-        cmds[2] = vm.toString(feed);
-        cmds[3] = vm.toString(timestamp);
-        bytes memory result = vm.ffi(cmds);
-        return abi.decode(result, (uint256, uint256, uint256, bytes));
-    }
-
-    function getChainlinkPrice() internal view returns (uint256, uint256) {
-        (, int256 price,, uint256 timestamp,) = chainlinkOnChain.latestRoundData();
-        return (uint256(price), uint256(timestamp));
-    }
-
     function stethToWsteth(uint256 amount) public view returns (uint256) {
         return amount * WST_ETH.stEthPerToken() / 1 ether;
     }
-
-    // force ignore from coverage report
-    // until https://github.com/foundry-rs/foundry/issues/2988 is fixed
-    function test() public virtual override { }
 }

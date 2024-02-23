@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity >=0.8.0;
 
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 
@@ -26,4 +26,26 @@ interface IUsdnProtocol is IUsdnProtocolActions {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) external payable;
+
+    /**
+     * @notice Set the fee basis points (0.01%).
+     * @param feeBps The fee bps to be charged.
+     * @dev Fees are charged when transfers occur between the vault and the long
+     * @dev example: 50 bps -> 0.5%
+     */
+    function setFeeBps(uint16 feeBps) external;
+
+    /**
+     * @notice Set the fee collector address.
+     * @param feeCollector The address of the fee collector.
+     * @dev The fee collector is the address that receives the fees charged by the protocol
+     * @dev The fee collector must be different from the zero address
+     */
+    function setFeeCollector(address feeCollector) external;
+
+    /**
+     * @notice Set the minimum amount of fees to be collected before they can be withdrawn
+     * @param feeThreshold The minimum amount of fees to be collected before they can be withdrawn
+     */
+    function setFeeThreshold(uint256 feeThreshold) external;
 }
