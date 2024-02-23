@@ -573,9 +573,19 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             emit LiquidationPriceUpdated(long.tick, long.tickVersion, long.index, tick, tickVersion, index);
             emit ValidatedOpenPosition(pos.user, pos.leverage, startPrice, tick, tickVersion, index);
         } else {
-            // simply update pos in storage
             Position storage pos = _longPositions[tickHash][long.index];
+
+            // Calculate the total expo with the old and new leverage
+            uint256 expoBefore = FixedPointMathLib.fullMulDiv(pos.amount, pos.leverage, 10 ** LEVERAGE_DECIMALS);
+            uint256 expoAfter = FixedPointMathLib.fullMulDiv(pos.amount, leverage, 10 ** LEVERAGE_DECIMALS);
+
+            // Update the leverage of the position
             pos.leverage = leverage;
+            // Update the total expo by adding the position's new expo and removing the old one.
+            // Do not use += or it will underflow
+            _totalExpo = _totalExpo + expoAfter - expoBefore;
+            _totalExpoByTick[tickHash] = _totalExpoByTick[tickHash] + expoAfter - expoBefore;
+
             emit ValidatedOpenPosition(long.user, leverage, startPrice, long.tick, long.tickVersion, long.index);
         }
     }

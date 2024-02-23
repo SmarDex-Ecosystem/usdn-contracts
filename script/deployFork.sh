@@ -8,6 +8,7 @@ RPC_URL=http://localhost:8545
 DEPLOYER_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
 # Setup deployment script environment variables
+# FORK_CHAIN_ID should be set before running the script. If not specified, 31337 is assumed.
 export ETHERSCAN_API_KEY=XXXXXXXXXXXXXXXXX # not needed but needs to exist
 export DEPLOYER_ADDRESS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 export FEE_COLLECTOR=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266

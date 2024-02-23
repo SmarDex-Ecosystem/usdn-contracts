@@ -42,11 +42,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         assertEq(protocol.getTickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
         // check if first total expo match initial value
-        assertEq(protocol.getTotalExpo(), 297.50876198898525358 ether, "wrong first totalExpo");
+        assertEq(protocol.getTotalExpo(), 297.551622685266578822 ether, "wrong first totalExpo");
         // check if first tick match initial value
         assertEq(initialTick, 74_300, "wrong first tick");
         // check if first total expo by tick match initial value
-        assertEq(protocol.totalExpoByTick(initialTick), 287.588791719281791408 ether, "wrong first totalExpoByTick");
+        assertEq(protocol.totalExpoByTick(initialTick), 287.63165241556311665 ether, "wrong first totalExpoByTick");
         // check if first long position length match initial value
         assertEq(protocol.longPositionsLength(initialTick), 10, "wrong first longPositionsLength");
         // check if first position in tick match initial value
@@ -61,7 +61,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(
-            74_300, 0, 1650 ether, 1_688_815_697_758_784_379_410, -937_114_468_940_773_818
+            74_300, 0, 1650 ether, 1_688_815_737_333_156_862_292, -937_260_893_567_821_247
         );
         // initiate a position to liquidate all other positions
         protocol.initiateOpenPosition(5 ether, 500 ether, priceData, "");
@@ -70,7 +70,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if second tick version is updated properly
         assertEq(protocol.getTickVersion(initialTick), 1, "wrong second tickVersion");
         // check if second total expo is equal expected value
-        assertEq(protocol.getTotalExpo(), 17.024364708768907152 ether, "wrong second totalExpo");
+        assertEq(protocol.getTotalExpo(), 17.023727463156635834 ether, "wrong second totalExpo");
         // check if second total expo by tick is equal expected value
         assertEq(protocol.totalExpoByTick(initialTick), 0, "wrong second totalExpoByTick");
         // check if second long position length is equal expected value
@@ -107,11 +107,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         assertEq(protocol.getTickVersion(initialTick), initialTickVersion, "wrong first tickVersion");
         // check if first total expo match initial value
-        assertEq(protocol.getTotalExpo(), 297.50876198898525358 ether, "wrong first totalExpo");
+        assertEq(protocol.getTotalExpo(), 297.551622685266578822 ether, "wrong first totalExpo");
         // check if first tick match initial value
         assertEq(initialTick, 74_300, "wrong first tick");
         // check if first total expo by tick match initial value
-        assertEq(protocol.totalExpoByTick(initialTick), 287.588791719281791408 ether, "wrong first totalExpoByTick");
+        assertEq(protocol.totalExpoByTick(initialTick), 287.63165241556311665 ether, "wrong first totalExpoByTick");
         // check if first long position length match initial value
         assertEq(protocol.longPositionsLength(initialTick), 10, "wrong first longPositionsLength");
         // check if first position in tick match initial value
@@ -126,7 +126,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(
-            74_300, 0, 1000 ether, 1_692_438_383_940_893_356_380, -189_500_168_562_066_025_611
+            74_300, 0, 1000 ether, 1_692_438_724_440_355_120_370, -189_528_506_653_469_194_628
         );
         // liquidator liquidation
         protocol.liquidate(priceData, 9);
@@ -187,7 +187,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             assertEq(protocol.positionsInTick(initialTicks[i]), 1, "wrong first positionsInTick");
         }
         // check if first total expo match initial value
-        assertEq(protocol.getTotalExpo(), 920.916195233143927215 ether, "wrong first totalExpo");
+        assertEq(protocol.getTotalExpo(), 928.416549454726026012 ether, "wrong first totalExpo");
         // check if first max initialized match initial value
         assertEq(protocol.getMaxInitializedTick(), 73_700, "wrong first maxInitializedTick");
         // check if first total long positions match initial value
@@ -198,7 +198,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         skip(1 hours);
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatedTick(
-            73_700, 0, 1000 ether, 1_670_658_741_688_949_105_099, -57_391_058_263_557_498_225
+            73_700, 0, 1000 ether, 1_670_734_667_099_243_261_617, -57_463_137_433_299_332_773
         );
         // liquidator first liquidation batch
         protocol.liquidate(priceData, uint16(length / 2));
@@ -214,7 +214,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         }
 
         // check if second total expo match expected value
-        assertEq(protocol.getTotalExpo(), 464.17754310293132502 ether, "wrong second totalExpo");
+        assertEq(protocol.getTotalExpo(), 468.218901565172002096 ether, "wrong second totalExpo");
         // check if second max initialized match expected value
         assertEq(protocol.getMaxInitializedTick(), 73_000, "wrong second maxInitializedTick");
         // check if second total long positions match expected value
@@ -389,7 +389,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         priceData = abi.encode(1680 ether);
 
-        uint256 collateralRemainingAfterLiquidation = 464_558_964_785_558_438;
+        uint256 collateralLiquidated = 473_682_811_132_131_111;
         uint256 expectedLiquidatorRewards = 4_209_000_000_000_000;
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
@@ -407,7 +407,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // check that the vault balance got updated
         assertEq(
-            protocol.getBalanceVault() - vaultBalanceBeforeRewards - collateralRemainingAfterLiquidation,
+            vaultBalanceBeforeRewards + collateralLiquidated - protocol.getBalanceVault(),
             expectedLiquidatorRewards,
             "The vault does not contain the right amount of funds"
         );
