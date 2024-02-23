@@ -29,7 +29,11 @@ interface IUsdnProtocol is IUsdnProtocolActions {
         bytes calldata currentPriceData
     ) external payable;
 
-    /// @notice Set the new oracle middleware contract.
+    /**
+     * @notice Set the new oracle middleware contract.
+     * @dev Cannot be the 0 address.
+     * @param newOracleMiddleware the address of the new contract.
+     */
     function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external;
 
     /**

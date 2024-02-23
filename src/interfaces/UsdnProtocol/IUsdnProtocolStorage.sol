@@ -140,7 +140,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      */
     function getPendingAction(address user) external view returns (uint256);
 
-    /// @notice The pending action at index
+    /**
+     * @notice The pending action at index
+     * @param index The pending action index.
+     */
     function getPendingActionAt(uint256 index) external view returns (PendingAction memory);
 
     /// @notice The balance of deposits (with asset decimals)
@@ -200,6 +203,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice Cache of the total long positions count
     function getTotalLongPositions() external view returns (uint256);
 
-    /// @notice Get the tickHash from tick and tickVersion
+    /**
+     * @notice @notice Get the tickHash from tick and tickVersion
+     * @param tick The tick number.
+     * @param version The tick version.
+     */
     function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
 }
