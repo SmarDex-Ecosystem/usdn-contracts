@@ -83,8 +83,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdnInitialTotalSupply = usdn.totalSupply();
         initialLongLeverage = firstPos.leverage;
         params = testParams;
-        // initialize x10 EOA addresses with 10K ETH and ~8.5K WSTETH
-        createAndFundUsers(10, 10_000 ether);
     }
 
     function test_setUp() public {
@@ -106,22 +104,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
         assertEq(protocol.feeCollector(), ADMIN, "fee collector");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
-    }
-
-    // create userCount funded addresses with ETH and underlying
-    function createAndFundUsers(uint256 userCount, uint256 initialBalance) public {
-        for (uint256 i; i < userCount; i++) {
-            address user = vm.addr(i + 1);
-            vm.deal(user, initialBalance * 2);
-            vm.startPrank(user);
-            (bool success,) = address(wstETH).call{ value: initialBalance }("");
-            require(success, "swap asset error");
-            wstETH.approve(address(protocol), type(uint256).max);
-            assertTrue(wstETH.balanceOf(user) != 0, "user with empty wallet");
-            vm.stopPrank();
-
-            users.push(user);
-        }
     }
 
     /**

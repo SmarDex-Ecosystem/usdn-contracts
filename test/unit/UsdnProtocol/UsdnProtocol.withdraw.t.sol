@@ -103,9 +103,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $3000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.425407343332072355
+     * @custom:then The user's wstETH balance increases by 0.42540734333207234
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425407343332072355
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.42540734333207234
      */
     function test_validateWithdrawPriceUp() public {
         skip(3600);
