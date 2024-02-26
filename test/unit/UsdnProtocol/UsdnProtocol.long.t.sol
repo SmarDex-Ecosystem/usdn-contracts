@@ -83,7 +83,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_033_643_136_913, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_046_330_378_738, "wrong minimum liquidation price");
     }
 
     /**

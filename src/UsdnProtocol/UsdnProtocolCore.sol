@@ -318,7 +318,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         (int256 fundAsset, int256 fund) = fundingAsset(timestamp);
 
         // Take protocol fee on the funding value
-        (int256 fee, int256 fundAssetWithFee) = _calculateFee(fundAsset);
+        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(fund, fundAsset);
         // we subtract the fee from the total balance
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256()).safeSub(fee);
         // Calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
@@ -328,8 +328,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // Update state variables
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
-        _lastFunding = fund;
-        _liquidationMultiplier = _getLiquidationMultiplier(fund, _liquidationMultiplier);
+        _lastFunding = fundWithFee;
+        _liquidationMultiplier = _getLiquidationMultiplier(fundWithFee, _liquidationMultiplier);
 
         priceUpdated_ = true;
     }
@@ -365,16 +365,27 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Calculate the protocol fee and apply it to the funding asset amount
+     * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to long side)
+     * @param fund The funding factor
      * @param fundAsset The funding asset amount to be used for the fee calculation
      * @return fee_ The absolute value of the calculated fee
+     * @return fundWithFee_ The updated funding factor after applying the fee
      * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
      */
-    function _calculateFee(int256 fundAsset) internal returns (int256 fee_, int256 fundAssetWithFee_) {
-        fee_ = (fundAsset * _toInt256(_protocolFeeBps)) / int256(BPS_DIVISOR);
+    function _calculateFee(int256 fund, int256 fundAsset)
+        internal
+        returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
+    {
+        int256 protocolFeeBps = _toInt256(_protocolFeeBps);
+        fundWithFee_ = fund;
+        fee_ = (fundAsset * protocolFeeBps) / int256(BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
         fundAssetWithFee_ = fundAsset - fee_;
 
         if (fee_ < 0) {
+            // when funding is negative, the part that is taken as fee does not contribute to the liquidation multiplier
+            // adjustment, and so we should deduce it from the funding factor.
+            fundWithFee_ -= fund * protocolFeeBps / int256(BPS_DIVISOR);
             // we want to return the absolute value of the fee
             fee_ = -fee_;
         }

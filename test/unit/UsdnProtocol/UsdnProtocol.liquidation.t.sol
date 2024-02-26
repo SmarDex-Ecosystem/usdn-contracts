@@ -70,7 +70,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // check if second tick version is updated properly
         assertEq(protocol.tickVersion(initialTick), 1, "wrong second tickVersion");
         // check if second total expo is equal expected value
-        assertEq(protocol.totalExpo(), 17.021688667020651456 ether, "wrong second totalExpo");
+        assertEq(protocol.totalExpo(), 17.021693501698224247 ether, "wrong second totalExpo");
         // check if second total expo by tick is equal expected value
         assertEq(protocol.totalExpoByTick(initialTick), 0, "wrong second totalExpoByTick");
         // check if second long position length is equal expected value
