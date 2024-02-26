@@ -108,7 +108,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario The user sends too much ether when initiating a deposit
      * @custom:given The user deposits 1 wstETH
      * @custom:when The user sends 0.5 ether as value in the `initiateDeposit` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - getValidationCost)
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
      */
     function test_initiateDepositEtherRefund() public {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
@@ -123,7 +123,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario The user sends too much ether when validating a deposit
      * @custom:given The user initiated a deposit of 1 wstETH and validates it
      * @custom:when The user sends 0.5 ether as value in the `validateDeposit` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - getValidationCost)
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
      */
     function test_validateDepositEtherRefund() public {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
@@ -157,8 +157,8 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation
-        uint256 getValidationDelay = oracleMiddleware.getValidationDelay();
-        skip(getValidationDelay + 1);
+        uint256 validationDelay = oracleMiddleware.getValidationDelay();
+        skip(validationDelay + 1);
 
         // set the effective price used for minting USDN
         currentPrice = abi.encode(assetPrice);

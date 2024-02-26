@@ -131,7 +131,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:scenario The user sends too much ether when initiating a withdrawal
      * @custom:given The user withdraws 1 wstETH
      * @custom:when The user sends 0.5 ether as value in the `initiateWithdrawal` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - getValidationCost)
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
      */
     function test_initiateWithdrawEtherRefund() public {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
@@ -146,7 +146,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:scenario The user sends too much ether when validating a withdrawal
      * @custom:given The user initiated a withdrawal of 1000 USDN and validates it
      * @custom:when The user sends 0.5 ether as value in the `validateWithdrawal` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - getValidationCost)
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
      */
     function test_validateWithdrawEtherRefund() public {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
@@ -180,8 +180,8 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             // decreases
 
         // wait the required delay between initiation and validation
-        uint256 getValidationDelay = oracleMiddleware.getValidationDelay();
-        skip(getValidationDelay + 1);
+        uint256 validationDelay = oracleMiddleware.getValidationDelay();
+        skip(validationDelay + 1);
 
         currentPrice = abi.encode(assetPrice);
 

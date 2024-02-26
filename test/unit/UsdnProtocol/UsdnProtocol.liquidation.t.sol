@@ -483,7 +483,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:scenario The user sends too much ether when liquidating positions
      * @custom:given The user performs a liquidation
      * @custom:when The user sends 0.5 ether as value in the `liquidate` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - getValidationCost)
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
      */
     function test_liquidateEtherRefund() public {
         uint256 initialTotalPos = protocol.getTotalLongPositions();
