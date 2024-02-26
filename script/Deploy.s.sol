@@ -40,7 +40,7 @@ contract Deploy is Script {
         // fetch middleware address environment variable
         address middlewareAddress = vm.envOr("MIDDLEWARE_ADDRESS", address(0));
         // cache environment type
-        bool isProdEnv = block.chainid != 31_337;
+        bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
         // cache middleware
         WstEthOracleMiddleware middleware;
 
