@@ -168,8 +168,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _getOraclePrice(ProtocolAction.InitiateOpenPosition, uint40(block.timestamp), currentPriceData);
 
             // Apply fees on price
-            adjustedPrice =
-                (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+            adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
             neutralPrice = currentPrice.neutralPrice.toUint128();
             bool priceUpdated = _applyPnlAndFunding(neutralPrice, currentPrice.timestamp.toUint128());
