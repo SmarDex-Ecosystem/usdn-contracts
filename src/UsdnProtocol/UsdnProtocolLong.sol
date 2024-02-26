@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { console } from "forge-std/console.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
@@ -294,7 +293,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         do {
             uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
             if (index == LibBitmap.NOT_FOUND) {
-                console.log("break");
                 // no populated ticks left
                 break;
             }
