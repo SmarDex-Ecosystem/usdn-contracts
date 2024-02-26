@@ -715,11 +715,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         internal
         returns (PriceInfo memory price_)
     {
-        uint256 getValidationCost = _oracleMiddleware.getValidationCost(priceData, action);
-        if (address(this).balance < getValidationCost) {
+        uint256 validationCost = _oracleMiddleware.getValidationCost(priceData, action);
+        if (address(this).balance < validationCost) {
             revert UsdnProtocolInsufficientOracleFee();
         }
-        price_ = _oracleMiddleware.parseAndValidatePrice{ value: getValidationCost }(timestamp, action, priceData);
+        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(timestamp, action, priceData);
     }
 
     /// @notice Refund any excess ether to the user, making sure we don't lock ETH in the contract.
