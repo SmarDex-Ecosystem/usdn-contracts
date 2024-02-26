@@ -17,4 +17,10 @@ interface IOracleMiddlewareEvents {
      * @param newValidationDelay The new validation delay.
      */
     event ValidationDelayUpdated(uint256 newValidationDelay);
+
+    /**
+     * @notice Emitted when recent price delay is updated.
+     * @param newDelay The new recent price delay.
+     */
+    event RecentPriceDelayUpdated(uint256 newDelay);
 }

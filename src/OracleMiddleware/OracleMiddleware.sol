@@ -139,6 +139,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             revert OracleMiddlewareInvalidRecentPriceDelay(newDelay);
         }
         _recentPriceDelay = newDelay;
+
+        emit RecentPriceDelayUpdated(newDelay);
     }
 
     /* -------------------------------------------------------------------------- */
