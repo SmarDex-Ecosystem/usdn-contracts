@@ -73,10 +73,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // if the product is negative, then vaultExpo_ or longExpo_ is negative
             // if it's zero, we check if one of the two is negative
             if (vaultExpo_ < 0) {
-                // if vaultExpo_ is negative, then we cap the inbalance index to 1
+                // if vaultExpo_ is negative, then we cap the imbalance index to 1
                 return (int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
             } else {
-                // if longExpo_ is negative, then we cap the inbalance index to -1
+                // if longExpo_ is negative, then we cap the imbalance index to -1
                 return (-int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
             }
         }
