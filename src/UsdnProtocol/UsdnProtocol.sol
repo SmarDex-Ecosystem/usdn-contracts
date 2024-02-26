@@ -207,7 +207,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setLiquidationIteration(uint16 newLiquidationIteration) external onlyOwner {
-        // newLiquidationIteration greater than MAX_LIQUIDATION_ITERATION 10
+        // newLiquidationIteration greater than MAX_LIQUIDATION_ITERATION
         if (newLiquidationIteration > MAX_LIQUIDATION_ITERATION) {
             revert UsdnProtocolInvalidLiquidationIteration();
         }

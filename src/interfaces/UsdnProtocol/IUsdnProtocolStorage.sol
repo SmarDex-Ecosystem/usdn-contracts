@@ -165,14 +165,14 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getTickVersion(int24 tick) external view returns (uint256);
 
     /**
-     * @notice Cache of the total exposure per versioned tick.
+     * @notice Total exposure per versioned tick.
      * @param tick The tick number.
      * @param version The tick version.
      */
     function getTotalExpoByTick(int24 tick, uint256 version) external view returns (uint256);
 
     /**
-     * @notice Cache of the number of positions per tick.
+     * @notice The number of positions per tick.
      * @param tick The tick number.
      * @param version The tick version.
      */
@@ -186,25 +186,25 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory);
 
     /**
-     * @notice Cache of the total exposure per current tick.
+     * @notice The total exposure per current tick.
      * @param tick The tick number.
      */
     function getCurrentTotalExpoByTick(int24 tick) external view returns (uint256);
 
     /**
-     * @notice Cache of the number of positions per current tick.
+     * @notice The number of positions per current tick.
      * @param tick The tick number.
      */
     function getCurrentPositionsInTick(int24 tick) external view returns (uint256);
 
-    /// @notice Cached value of the maximum initialized tick
+    /// @notice The maximum initialized tick
     function getMaxInitializedTick() external view returns (int24);
 
-    /// @notice Cache of the total long positions count
+    /// @notice Total long positions count
     function getTotalLongPositions() external view returns (uint256);
 
     /**
-     * @notice Get the tickHash from tick and tickVersion
+     * @notice The tickHash from tick and tickVersion
      * @param tick The tick number.
      * @param version The tick version.
      */

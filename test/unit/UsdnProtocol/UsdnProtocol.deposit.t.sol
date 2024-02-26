@@ -114,9 +114,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
         uint256 balanceBefore = address(this).balance;
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        uint256 getValidationCost = oracleMiddleware.getValidationCost(currentPrice, ProtocolAction.InitiateDeposit);
+        uint256 validationCost = oracleMiddleware.getValidationCost(currentPrice, ProtocolAction.InitiateDeposit);
         protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, "");
-        assertEq(address(this).balance, balanceBefore - getValidationCost, "user balance after refund");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
     /**
@@ -129,15 +129,15 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
         // initiate
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        uint256 getValidationCost = oracleMiddleware.getValidationCost(currentPrice, ProtocolAction.InitiateDeposit);
-        protocol.initiateDeposit{ value: getValidationCost }(1 ether, currentPrice, "");
+        uint256 validationCost = oracleMiddleware.getValidationCost(currentPrice, ProtocolAction.InitiateDeposit);
+        protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, "");
 
         skip(oracleMiddleware.getValidationDelay() + 1);
         // validate
-        getValidationCost = oracleMiddleware.getValidationCost(currentPrice, ProtocolAction.ValidateDeposit);
+        validationCost = oracleMiddleware.getValidationCost(currentPrice, ProtocolAction.ValidateDeposit);
         uint256 balanceBefore = address(this).balance;
         protocol.validateDeposit{ value: 0.5 ether }(currentPrice, "");
-        assertEq(address(this).balance, balanceBefore - getValidationCost, "user balance after refund");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
     /**

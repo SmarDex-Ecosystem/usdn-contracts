@@ -231,7 +231,7 @@ TestUsdnProtocolLiquidation:test_nothingHappensIfNoTicksCanBeLiquidated() (gas: 
 TestUsdnProtocolLiquidation:test_openLiquidatorLiquidation() (gas: 1863249)
 TestUsdnProtocolLiquidation:test_openLiquidatorLiquidationAboveMax() (gas: 1844381)
 TestUsdnProtocolLiquidation:test_openLiquidatorPartialLiquidation() (gas: 3081844)
-TestUsdnProtocolLiquidation:test_openUserLiquidation() (gas: 2047657)
+TestUsdnProtocolLiquidation:test_openUserLiquidation() (gas: 2048682)
 TestUsdnProtocolLiquidation:test_rewardsAreSentToLiquidatorAfterLiquidations() (gas: 468681)
 TestUsdnProtocolLiquidation:test_setUp() (gas: 14044574)
 TestUsdnProtocolLong:test() (gas: 208)

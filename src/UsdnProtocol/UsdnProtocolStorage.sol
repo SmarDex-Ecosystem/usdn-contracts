@@ -91,7 +91,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _safetyMarginBps = 200; // 2%
 
     /// @notice User current liquidation iteration in tick.
-    uint16 internal _liquidationIteration = 1;
+    uint16 internal _liquidationIteration = 3;
 
     // TODO: Add checks when creating the setter for this variable (!= 0)
     /// @notice The moving average period of the funding rate
