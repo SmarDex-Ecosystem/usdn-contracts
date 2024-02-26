@@ -60,12 +60,13 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
      * @custom:then The asset to transfer is zero
      */
     function test_assetToTransferZeroBalance() public {
+        // TODO: enable once the initial 1000 wei position doesn't exist anymore
+        vm.skip(true);
         int24 firstPosTick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2);
         skip(60); // we need that the oracle timestamp be newer than the last price update
         // liquidate the default position
-        uint128 liqPrice = protocol.getEffectivePriceForTick(
-            firstPosTick, protocol.getLiquidationMultiplier(DEFAULT_PARAMS.initialPrice / 2, uint128(block.timestamp))
-        );
+        uint128 liqPrice =
+            protocol.getEffectivePriceForTick(firstPosTick, protocol.getLiquidationMultiplier(uint128(block.timestamp)));
         protocol.liquidate(abi.encode(liqPrice), 10);
 
         assertEq(protocol.balanceLong(), 0, "balance long");

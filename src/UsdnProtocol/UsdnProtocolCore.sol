@@ -33,46 +33,45 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /* -------------------------- Public view functions ------------------------- */
 
     /// @inheritdoc IUsdnProtocolCore
-    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) public view returns (uint256) {
-        if (timestamp <= _lastUpdateTimestamp) {
+    function getLiquidationMultiplier(uint128 timestamp) public view returns (uint256) {
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+        } else if (timestamp == _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
 
-        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
-        return _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
+        (int256 fund,) = funding(timestamp);
+        return _getLiquidationMultiplier(fund, _liquidationMultiplier);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function funding(uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
-    {
-        vaultExpo_ = _vaultTradingExpo(currentPrice);
-        longExpo_ = _longTradingExpo(currentPrice);
+    function funding(uint128 timestamp) public view returns (int256 fund_, int256 oldLongExpo_) {
+        oldLongExpo_ = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
 
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
             // slither-disable-next-line incorrect-equality
         } else if (timestamp == _lastUpdateTimestamp) {
-            return (0, longExpo_, vaultExpo_);
+            return (0, oldLongExpo_);
         }
+
+        int256 oldVaultExpo = _balanceVault.toInt256();
 
         // fund = (+-) ((longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
-        int256 numerator = longExpo_ - vaultExpo_;
+        int256 numerator = oldLongExpo_ - oldVaultExpo;
         // optimization : if the numerator is zero, then return the EMA
         if (numerator == 0) {
-            return (_EMA, longExpo_, vaultExpo_);
+            return (_EMA, oldLongExpo_);
         }
         uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
         uint256 numerator_squared = uint256(numerator * numerator);
 
         uint256 denominator;
-        if (vaultExpo_ > longExpo_) {
+        if (oldVaultExpo > oldLongExpo_) {
             // we have to multiply by 1 day to get the correct units
-            denominator = uint256(vaultExpo_ * vaultExpo_) * 1 days;
+            denominator = uint256(oldVaultExpo * oldVaultExpo) * 1 days;
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
@@ -82,7 +81,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             ) + _EMA;
         } else {
             // we have to multiply by 1 day to get the correct units
-            denominator = uint256(longExpo_ * longExpo_) * 1 days;
+            denominator = uint256(oldLongExpo_ * oldLongExpo_) * 1 days;
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
@@ -94,13 +93,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function fundingAsset(uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 fundingAsset_, int256 longExpo_, int256 vaultExpo_, int256 fund_)
-    {
-        (fund_, longExpo_, vaultExpo_) = funding(currentPrice, timestamp);
-        fundingAsset_ = fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
+    function fundingAsset(uint128 timestamp) public view returns (int256 fundingAsset_, int256 fund_) {
+        int256 oldLongExpo;
+        (fund_, oldLongExpo) = funding(timestamp);
+        fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -109,7 +105,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         view
         returns (int256 available_)
     {
-        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        (int256 fundAsset,) = fundingAsset(timestamp);
         available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
     }
 
@@ -119,7 +115,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         view
         returns (int256 available_)
     {
-        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        (int256 fundAsset,) = fundingAsset(timestamp);
         available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
     }
 
@@ -177,36 +173,18 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /* --------------------------  Internal functions --------------------------- */
 
-    function _getLiquidationMultiplier(
-        int256 fund,
-        int256 oldLongExpo,
-        int256 oldVaultExpo,
-        uint256 liquidationMultiplier
-    ) internal pure returns (uint256 multiplier_) {
+    function _getLiquidationMultiplier(int256 fund, uint256 liquidationMultiplier)
+        internal
+        pure
+        returns (uint256 multiplier_)
+    {
         multiplier_ = liquidationMultiplier;
 
-        if (oldLongExpo >= oldVaultExpo) {
-            // newMultiplier = oldMultiplier * (1 + funding)
-            if (fund > 0) {
-                multiplier_ += FixedPointMathLib.fullMulDiv(multiplier_, uint256(fund), 10 ** FUNDING_RATE_DECIMALS);
-            } else {
-                multiplier_ -= FixedPointMathLib.fullMulDiv(multiplier_, uint256(-fund), 10 ** FUNDING_RATE_DECIMALS);
-            }
+        // newMultiplier = oldMultiplier * (1 + funding)
+        if (fund > 0) {
+            multiplier_ += FixedPointMathLib.fullMulDiv(multiplier_, uint256(fund), 10 ** FUNDING_RATE_DECIMALS);
         } else {
-            // newMultiplier = oldMultiplier * (1 + funding * (oldLongExpo / _balanceVault))
-            if (fund > 0) {
-                multiplier_ += FixedPointMathLib.fullMulDiv(
-                    multiplier_ * uint256(fund),
-                    uint256(oldLongExpo),
-                    uint256(oldVaultExpo) * 10 ** FUNDING_RATE_DECIMALS
-                );
-            } else {
-                multiplier_ -= FixedPointMathLib.fullMulDiv(
-                    multiplier_ * uint256(-fund),
-                    uint256(oldLongExpo),
-                    uint256(oldVaultExpo) * 10 ** FUNDING_RATE_DECIMALS
-                );
-            }
+            multiplier_ -= FixedPointMathLib.fullMulDiv(multiplier_, uint256(-fund), 10 ** FUNDING_RATE_DECIMALS);
         }
     }
 
@@ -337,7 +315,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         _updateEMA(timestamp - lastUpdateTimestamp);
 
         // Calculate the funding
-        (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
+        (int256 fundAsset, int256 fund) = fundingAsset(timestamp);
 
         // Take protocol fee on the funding value
         (int256 fee, int256 fundAssetWithFee) = _calculateFee(fundAsset);
@@ -351,7 +329,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fund;
-        _liquidationMultiplier = _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
+        _liquidationMultiplier = _getLiquidationMultiplier(fund, _liquidationMultiplier);
 
         priceUpdated_ = true;
     }

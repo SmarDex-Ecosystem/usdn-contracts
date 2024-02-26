@@ -61,7 +61,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         returns (uint256 value_)
     {
         Position memory pos = getLongPosition(tick, tickVersion, index);
-        uint256 liquidationMultiplier = getLiquidationMultiplier(price, timestamp);
+        uint256 liquidationMultiplier = getLiquidationMultiplier(timestamp);
         uint128 liqPrice =
             getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liquidationMultiplier);
         value_ = _positionValue(price, liqPrice, pos.amount, pos.leverage);
