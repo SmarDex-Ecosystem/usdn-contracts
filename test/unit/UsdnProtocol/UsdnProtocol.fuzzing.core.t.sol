@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { console2 } from "forge-std/Test.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -45,7 +46,17 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             uint256 longAmount = (random % 9 ether) + 1 ether;
             uint256 longLeverage = (random % 3) + 2;
             uint256 longLiqPrice = currentPrice / longLeverage;
-            vm.startPrank(users[i]);
+
+            // create a random user with ~8.5K wstETH
+            {
+                address user = vm.addr(i + 1);
+                vm.deal(user, 20_000 ether);
+                vm.startPrank(user);
+                (bool success,) = address(wstETH).call{ value: 10_000 ether }("");
+                require(success, "wstETH mint failed");
+                wstETH.approve(address(protocol), type(uint256).max);
+            }
+
             (int24 tick, uint256 tickVersion, uint256 index) =
                 protocol.initiateOpenPosition(uint96(longAmount), uint128(longLiqPrice), abi.encode(currentPrice), "");
             protocol.validateOpenPosition(abi.encode(currentPrice), "");
