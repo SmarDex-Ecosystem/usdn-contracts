@@ -12,6 +12,10 @@ import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracle
  * middleware allows the protocol to later upgrade to a new oracle logic without having modify the vault contract.
  */
 interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents {
+    /* -------------------------------------------------------------------------- */
+    /*                          Price retrieval features                          */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * @notice Parses and validates price data.
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
@@ -50,7 +54,7 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
      * @param action Type of action for which the price is requested.
      * @return The ETH cost of one price validation
      */
-    function getValidationCost(bytes calldata data, ProtocolAction action) external returns (uint256);
+    function getValidationCost(bytes calldata data, ProtocolAction action) external view returns (uint256);
 
     /* -------------------------------------------------------------------------- */
     /*                               Owner features                               */

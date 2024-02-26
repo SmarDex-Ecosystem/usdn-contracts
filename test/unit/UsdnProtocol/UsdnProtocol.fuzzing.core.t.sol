@@ -75,7 +75,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         }
         // calculate the value of the init position (we use the low-level pure function because there is no liquidation
         // penalty for those)
-        uint128 liqPrice = protocol.getEffectivePriceForTick(protocol.minTick());
+        uint128 liqPrice = protocol.getEffectivePriceForTick(protocol.getMinTick());
         longPosValue +=
             protocol.positionValue(finalPrice - 5 ether, liqPrice, protocol.FIRST_LONG_AMOUNT(), defaultPosLeverage);
         // calculate the value of the deployer's long position

@@ -34,7 +34,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
     // tick hash
-    function tickHash(int24 tick) external view returns (bytes32, uint256) {
+    function getTickHash(int24 tick) external view returns (bytes32, uint256) {
         return _tickHash(tick);
     }
 
@@ -81,7 +81,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         pure
         returns (uint256 value_)
     {
-        return _positionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
+        return _getPositionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
     }
 
     function removePendingAction(uint128 rawIndex, address user) external {
@@ -138,11 +138,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
         pure
         returns (uint256 value_)
     {
-        return _positionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
+        return _getPositionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
     }
 
     function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {
-        return _tickValue(currentPrice, tick, tickTotalExpo);
+        return _getTickValue(currentPrice, tick, tickTotalExpo);
     }
 
     function i_getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)

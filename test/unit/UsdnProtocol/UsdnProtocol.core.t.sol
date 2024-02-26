@@ -21,7 +21,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_funding() public {
         (int256 fund, int256 longExpo, int256 vaultExpo) =
-            protocol.funding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp));
+            protocol.getFunding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp));
         assertEq(fund, 0, "funding should be 0 if no time has passed");
         assertEq(longExpo, 4.919970269703462172 ether, "longExpo if no time has passed");
         assertEq(vaultExpo, 10 ether, "vaultExpo if no time has passed");
@@ -34,7 +34,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_funding_pastTimestamp() public {
         vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
-        protocol.funding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp) - 1);
+        protocol.getFunding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp) - 1);
     }
 
     /**
@@ -48,7 +48,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_longAssetAvailable() public {
         // calculate the value of the init position
-        uint128 initLiqPrice = protocol.getEffectivePriceForTick(protocol.minTick());
+        uint128 initLiqPrice = protocol.getEffectivePriceForTick(protocol.getMinTick());
         uint256 initPosValue = protocol.positionValue(
             DEFAULT_PARAMS.initialPrice, initLiqPrice, protocol.FIRST_LONG_AMOUNT(), defaultPosLeverage
         );
@@ -89,7 +89,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         protocol.liquidate(priceData, 10);
 
         // the pending action is stale
-        (, uint256 currentTickVersion) = protocol.tickHash(tick_);
+        (, uint256 currentTickVersion) = protocol.getTickHash(tick_);
         PendingAction memory action = protocol.getUserPendingAction(address(this));
         assertEq(action.var3, tickVersion_, "tick version");
         assertTrue(action.var3 != currentTickVersion, "current tick version");
@@ -195,7 +195,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             protocol.i_vaultTradingExpo(price),
             "long and vault expos should be equal"
         );
-        (int256 fund_,,) = protocol.funding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
+        (int256 fund_,,) = protocol.getFunding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
         assertEq(fund_, protocol.getEMA(), "funding should be equal to EMA");
     }
 

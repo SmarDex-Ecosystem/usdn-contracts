@@ -38,12 +38,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return _liquidationMultiplier;
         }
 
-        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
+        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = getFunding(currentPrice, timestamp);
         return _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function funding(uint128 currentPrice, uint128 timestamp)
+    function getFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
@@ -94,47 +94,51 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function fundingAsset(uint128 currentPrice, uint128 timestamp)
+    function getFundingAsset(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 fundingAsset_, int256 longExpo_, int256 vaultExpo_, int256 fund_)
     {
-        (fund_, longExpo_, vaultExpo_) = funding(currentPrice, timestamp);
+        (fund_, longExpo_, vaultExpo_) = getFunding(currentPrice, timestamp);
         fundingAsset_ = fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+    function getLongAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 available_)
     {
-        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        (int256 fundAsset,,,) = getFundingAsset(currentPrice, timestamp);
         available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+    function getVaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 available_)
     {
-        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        (int256 fundAsset,,,) = getFundingAsset(currentPrice, timestamp);
         available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
-        expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
+    function getLongTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
         external
         view
         returns (int256 expo_)
     {
-        expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
+        expo_ = _totalExpo.toInt256().safeSub(getLongAssetAvailableWithFunding(currentPrice, timestamp));
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function getVaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (int256 expo_)
+    {
+        expo_ = getVaultAssetAvailableWithFunding(currentPrice, timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -330,7 +334,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
 
         _updateEMA(timestamp - lastUpdateTimestamp);
-        (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
+        (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) =
+            getFundingAsset(currentPrice, timestamp);
 
         (int256 fee, int256 fundAssetWithFee) = _calculateFee(fundAsset);
         // we subtract the fee from the total balance
@@ -379,7 +384,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = _tickVersion[tick];
-        hash_ = tickHash(tick, version_);
+        hash_ = getTickHash(tick, version_);
     }
 
     /**

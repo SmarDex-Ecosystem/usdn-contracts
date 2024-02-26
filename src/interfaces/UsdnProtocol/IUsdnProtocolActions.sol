@@ -8,7 +8,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @notice The minimum total supply of USDN that we allow.
      * @dev Upon the first deposit, this amount is sent to the dead address and cannot be later recovered.
      */
-    function MIN_USDN_SUPPLY() external view returns (uint256);
+    function MIN_USDN_SUPPLY() external pure returns (uint256);
 
     /**
      * @notice Initiate a deposit of assets into the vault to mint USDN.

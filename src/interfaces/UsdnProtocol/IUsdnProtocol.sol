@@ -10,6 +10,11 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
  * @notice Interface for the USDN protocol.
  */
 interface IUsdnProtocol is IUsdnProtocolActions {
+    /// @dev The minimum amount of wstETH for the initialization deposit and long.
+    function MIN_INIT_DEPOSIT() external pure returns (uint256);
+    /// @dev The amount of collateral for the first "dead" long position.
+    function FIRST_LONG_AMOUNT() external pure returns (uint128);
+
     /**
      * @notice Initialize the protocol, making a first deposit and creating a first long position.
      * @dev This function can only be called once, and no other user action can be performed until it was called.
@@ -31,7 +36,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     ) external payable;
 
     /**
-     * @notice Set the new oracle middleware contract.
+     * @notice Replace the OracleMiddleware contract with a new implementation.
      * @dev Cannot be the 0 address.
      * @param newOracleMiddleware the address of the new contract.
      */
@@ -72,7 +77,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @notice Set the fee basis points.
      * @param newFeeBps The fee bps to be charged.
      * @dev Fees are charged when transfers occur between the vault and the long
-     * @dev example: 50 bps -> 0.5%
+     * example: 50 bps -> 0.5%
      */
     function setProtocolFeeBps(uint16 newFeeBps) external;
 
@@ -86,7 +91,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @notice Set the fee collector address.
      * @param newFeeCollector The address of the fee collector.
      * @dev The fee collector is the address that receives the fees charged by the protocol
-     * @dev The fee collector must be different from the zero address
+     * The fee collector must be different from the zero address
      */
     function setFeeCollector(address newFeeCollector) external;
 }

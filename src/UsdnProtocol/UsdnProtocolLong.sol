@@ -18,12 +18,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using SignedMath for int256;
 
     /// @inheritdoc IUsdnProtocolLong
-    function minTick() public view returns (int24 tick_) {
+    function getMinTick() public view returns (int24 tick_) {
         tick_ = TickMath.minUsableTick(_tickSpacing);
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function maxTick() public view returns (int24 tick_) {
+    function getMaxTick() public view returns (int24 tick_) {
         tick_ = TickMath.maxUsableTick(_tickSpacing);
     }
 
@@ -62,7 +62,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     {
         Position memory pos = getLongPosition(tick, tickVersion, index);
         uint128 liqPrice = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
-        value_ = _positionValue(currentPrice, liqPrice, pos.amount, pos.leverage);
+        value_ = _getPositionValue(currentPrice, liqPrice, pos.amount, pos.leverage);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -72,7 +72,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             FixedPointMathLib.fullMulDiv(price, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier);
 
         if (priceWithMultiplier < TickMath.MIN_PRICE) {
-            return minTick();
+            return getMinTick();
         }
 
         int24 tickSpacing = _tickSpacing;
@@ -84,7 +84,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(tickSpacing)))))
                 * tickSpacing;
             // avoid invalid ticks
-            int24 minUsableTick = minTick();
+            int24 minUsableTick = getMinTick();
             if (tick_ < minUsableTick) {
                 tick_ = minUsableTick;
             }
@@ -109,15 +109,15 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @notice Find the largest tick which contains at least one position
+     * @notice Get the largest tick which contains at least one position
      * @param searchStart The tick from which to start searching
      */
-    function _findMaxInitializedTick(int24 searchStart) internal view returns (int24 tick_) {
-        uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(searchStart));
+    function _getMaxInitializedTick(int24 searchStart) internal view returns (int24 tick_) {
+        uint256 index = _tickBitmap.findLastSet(_getTickToBitmapIndex(searchStart));
         if (index == LibBitmap.NOT_FOUND) {
-            tick_ = minTick();
+            tick_ = getMinTick();
         } else {
-            tick_ = _bitmapIndexToTick(index);
+            tick_ = _getBitmapIndexToTick(index);
         }
     }
 
@@ -137,11 +137,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param amount The amount of the position
      * @param initLeverage The initial leverage of the position
      */
-    function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint256 amount, uint128 initLeverage)
-        internal
-        pure
-        returns (uint256 value_)
-    {
+    function _getPositionValue(
+        uint128 currentPrice,
+        uint128 liqPriceWithoutPenalty,
+        uint256 amount,
+        uint128 initLeverage
+    ) internal pure returns (uint256 value_) {
         if (currentPrice < liqPriceWithoutPenalty) {
             return 0;
         }
@@ -160,7 +161,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param tick The tick number
      * @param tickTotalExpo The total expo of the positions in the tick
      */
-    function _tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo)
+    function _getTickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo)
         internal
         view
         returns (int256 value_)
@@ -189,12 +190,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         leverage_ = ((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
     }
 
-    function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
+    function _getMaxLiquidationPriceWithSafetyMargin(uint128 price)
+        internal
+        view
+        returns (uint128 maxLiquidationPrice_)
+    {
         maxLiquidationPrice_ = uint128(price * (BPS_DIVISOR - _safetyMarginBps) / BPS_DIVISOR);
     }
 
     function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {
-        uint128 maxLiquidationPrice = _maxLiquidationPriceWithSafetyMargin(currentPrice);
+        uint128 maxLiquidationPrice = _getMaxLiquidationPriceWithSafetyMargin(currentPrice);
         if (liquidationPrice >= maxLiquidationPrice) {
             revert UsdnProtocolLiquidationPriceSafetyMargin(liquidationPrice, maxLiquidationPrice);
         }
@@ -220,7 +225,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         index_ = tickArray.length;
         if (_positionsInTick[tickHash] == 1) {
             // first position in this tick, we need to reflect that it is populated
-            _tickBitmap.set(_tickToBitmapIndex(tick));
+            _tickBitmap.set(_getTickToBitmapIndex(tick));
         }
         if (tick > _maxInitializedTick) {
             // keep track of max initialized tick
@@ -250,7 +255,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         delete tickArray[index];
         if (_positionsInTick[tickHash] == 0) {
             // we removed the last position in the tick
-            _tickBitmap.unset(_tickToBitmapIndex(tick));
+            _tickBitmap.unset(_getTickToBitmapIndex(tick));
         }
     }
 
@@ -259,7 +264,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param tick The tick to convert, a multiple of `tickSpacing`
      * @return index_ The index into the Bitmap
      */
-    function _tickToBitmapIndex(int24 tick) internal view returns (uint256 index_) {
+    function _getTickToBitmapIndex(int24 tick) internal view returns (uint256 index_) {
         int24 compactTick = tick / _tickSpacing;
         // shift into positive and cast to uint256
         index_ = uint256(int256(compactTick) - int256(type(int24).min));
@@ -270,7 +275,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param index The index into the Bitmap
      * @return tick_ The tick corresponding to the index, a multiple of `tickSpacing`
      */
-    function _bitmapIndexToTick(uint256 index) internal view returns (int24 tick_) {
+    function _getBitmapIndexToTick(uint256 index) internal view returns (int24 tick_) {
         // cast to int256 and shift into negative
         int24 compactTick = (int256(index) + int256(type(int24).min)).toInt24();
         tick_ = compactTick * _tickSpacing;
@@ -291,13 +296,13 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int24 tick = _maxInitializedTick;
 
         do {
-            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+            uint256 index = _tickBitmap.findLastSet(_getTickToBitmapIndex(tick));
             if (index == LibBitmap.NOT_FOUND) {
                 // no populated ticks left
                 break;
             }
 
-            tick = _bitmapIndexToTick(index);
+            tick = _getBitmapIndexToTick(index);
             if (tick < currentTick) {
                 break;
             }
@@ -307,7 +312,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             uint256 length = _positionsInTick[tickHash];
 
             uint256 tickTotalExpo = _totalExpoByTick[tickHash];
-            int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
+            int256 tickValue = _getTickValue(currentPrice, tick, tickTotalExpo);
             remainingCollateral_ += tickValue;
             unchecked {
                 _totalExpo -= tickTotalExpo;
@@ -318,7 +323,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 ++_tickVersion[tick];
                 ++liquidatedTicks_;
             }
-            _tickBitmap.unset(_tickToBitmapIndex(tick));
+            _tickBitmap.unset(_getTickToBitmapIndex(tick));
 
             emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue);
         } while (liquidatedTicks_ < iteration);
@@ -326,10 +331,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         if (liquidatedPositions_ != 0) {
             if (tick < currentTick) {
                 // all ticks above the current tick were liquidated
-                _maxInitializedTick = _findMaxInitializedTick(currentTick);
+                _maxInitializedTick = _getMaxInitializedTick(currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                _maxInitializedTick = _findMaxInitializedTick(tick);
+                _maxInitializedTick = _getMaxInitializedTick(tick);
             }
         }
 

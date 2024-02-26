@@ -24,10 +24,9 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
-    /// @dev The minimum amount of wstETH for the initialization deposit and long.
+    /// @inheritdoc IUsdnProtocol
     uint256 public constant MIN_INIT_DEPOSIT = 1 ether;
-
-    /// @dev The amount of collateral for the first "dead" long position.
+    /// @inheritdoc IUsdnProtocol
     uint128 public constant FIRST_LONG_AMOUNT = 1000;
 
     /**
@@ -104,7 +103,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _asset.safeTransferFrom(msg.sender, address(this), longAmount);
 
         // Create long positions with min leverage
-        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), minTick());
+        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), getMinTick());
         _createInitialPosition(
             msg.sender,
             longAmount - FIRST_LONG_AMOUNT,
@@ -268,6 +267,14 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         emit FeeCollectorUpdated(newFeeCollector);
     }
 
+    /**
+     * @notice Create initial open positions.
+     * @param user The initial position user address.
+     * @param amount The initial position amount.
+     * @param price The initial position price.
+     * @param tick The initial position tick.
+     * @dev To be called in contract initialize.
+     */
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
         uint128 leverage = _getLeverage(price, liquidationPrice);

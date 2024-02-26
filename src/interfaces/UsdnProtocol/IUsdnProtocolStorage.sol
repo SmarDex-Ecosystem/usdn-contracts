@@ -21,25 +21,25 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
 
     /// @notice The number of decimals for leverage values
-    function LEVERAGE_DECIMALS() external view returns (uint8);
+    function LEVERAGE_DECIMALS() external pure returns (uint8);
 
     /// @notice The number of decimals for funding rate values
-    function FUNDING_RATE_DECIMALS() external view returns (uint8);
+    function FUNDING_RATE_DECIMALS() external pure returns (uint8);
 
     /// @notice The number of decimals for liquidation multiplier values
-    function LIQUIDATION_MULTIPLIER_DECIMALS() external view returns (uint8);
+    function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8);
 
     /// @notice The number of decimals for the scaling factor of the funding rate
-    function FUNDING_SF_DECIMALS() external view returns (uint8);
+    function FUNDING_SF_DECIMALS() external pure returns (uint8);
 
     /**
      * @notice Divisor for the bps values
      * @dev Example: 200 -> 2%
      */
-    function BPS_DIVISOR() external view returns (uint256);
+    function BPS_DIVISOR() external pure returns (uint256);
 
     /// @notice The maximum number of liquidations per transaction
-    function MAX_LIQUIDATION_ITERATION() external view returns (uint16);
+    function MAX_LIQUIDATION_ITERATION() external pure returns (uint16);
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                              */
@@ -114,7 +114,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getMiddlewareValidationDelay() external view returns (uint256);
 
     /* -------------------------------------------------------------------------- */
-    /*                                    State getters                                 */
+    /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
 
     /// @notice The funding corresponding to the last update timestamp
@@ -208,5 +208,5 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @param tick The tick number.
      * @param version The tick version.
      */
-    function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
+    function getTickHash(int24 tick, uint256 version) external pure returns (bytes32);
 }

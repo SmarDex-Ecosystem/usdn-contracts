@@ -124,10 +124,10 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function setChainlinkTimeElapsedLimit(uint256 timeElapsedLimit) external onlyOwner {
-        _timeElapsedLimit = timeElapsedLimit;
+    function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external onlyOwner {
+        _timeElapsedLimit = newTimeElapsedLimit;
 
-        emit TimeElapsedLimitUpdated(timeElapsedLimit);
+        emit TimeElapsedLimitUpdated(newTimeElapsedLimit);
     }
 
     /// @inheritdoc IOracleMiddleware

@@ -75,7 +75,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
-        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0, 0);
+        Position memory defaultPos = protocol.getLongPosition(protocol.getMinTick(), 0, 0);
         Position memory firstPos =
             protocol.getLongPosition(protocol.getEffectiveTickForPrice(testParams.initialPrice / 2), 0, 0);
         // separate the roles ADMIN and DEPLOYER
@@ -100,7 +100,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
-        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0, 0);
+        Position memory defaultPos = protocol.getLongPosition(protocol.getMinTick(), 0, 0);
         assertEq(defaultPos.leverage, 1_000_000_000_000_000_005_039, "default pos leverage");
         assertEq(defaultPos.timestamp, block.timestamp, "default pos timestamp");
         assertEq(defaultPos.user, protocol.DEAD_ADDRESS(), "default pos user");

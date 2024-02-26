@@ -679,7 +679,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // Calculate position value
-        int256 value = _positionValue(
+        int256 value = _getPositionValue(
             lastPrice,
             _getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
             posAmount,
