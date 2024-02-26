@@ -23,7 +23,7 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
 contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Ownable {
     uint256 internal _validationDelay = 24 seconds;
 
-    uint8 private constant DECIMALS = 18;
+    uint8 private constant MIDDLEWARE_DECIMALS = 18;
 
     /**
      * @param pythContract Address of the Pyth contract
@@ -102,7 +102,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /// @inheritdoc IOracleMiddleware
     function getDecimals() external pure returns (uint8) {
-        return DECIMALS;
+        return MIDDLEWARE_DECIMALS;
     }
 
     /// @inheritdoc IOracleMiddleware
@@ -165,7 +165,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
          * Add the validation delay to the action timestamp to get the timestamp of the price data used to
          * validate
          */
-        FormattedPythPrice memory pythPrice = _getFormattedPythPrice(data, actionTimestamp, DECIMALS);
+        FormattedPythPrice memory pythPrice = _getFormattedPythPrice(data, actionTimestamp, MIDDLEWARE_DECIMALS);
 
         if (conf == ConfidenceInterval.Down) {
             price_.price = uint256(pythPrice.price) - pythPrice.conf;
@@ -189,7 +189,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             return _getPythOrChainlinkDataStreamPrice(data, actionTimestamp, conf);
         }
 
-        ChainlinkPriceInfo memory chainlinkOnChainPrice = _getFormattedChainlinkPrice(DECIMALS);
+        ChainlinkPriceInfo memory chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS);
 
         // If the price equals PRICE_TOO_OLD then the tolerated time elapsed for price validity was exceeded, revert.
         if (chainlinkOnChainPrice.price == PRICE_TOO_OLD) {
