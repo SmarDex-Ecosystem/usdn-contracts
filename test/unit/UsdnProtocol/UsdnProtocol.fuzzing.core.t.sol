@@ -73,19 +73,11 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         for (uint256 i = 0; i < 10; i++) {
             longPosValue += protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice - 5 ether);
         }
-        // calculate the value of the init position (we use the low-level pure function because there is no liquidation
-        // penalty for those)
-        uint128 liqPrice = protocol.getEffectivePriceForTick(protocol.minTick());
-        longPosValue +=
-            protocol.positionValue(finalPrice - 5 ether, liqPrice, protocol.FIRST_LONG_AMOUNT(), defaultPosLeverage);
         // calculate the value of the deployer's long position
-        liqPrice = protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
-        longPosValue += protocol.positionValue(
-            finalPrice - 5 ether,
-            liqPrice,
-            DEFAULT_PARAMS.initialLong - protocol.FIRST_LONG_AMOUNT(),
-            initialLongLeverage
-        );
+        uint128 liqPrice =
+            protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
+        longPosValue +=
+            protocol.positionValue(finalPrice - 5 ether, liqPrice, DEFAULT_PARAMS.initialLong, initialLongLeverage);
 
         emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());
         emit log_named_decimal_uint("long balance", uint256(protocol.longAssetAvailable(finalPrice)), wstETH.decimals());

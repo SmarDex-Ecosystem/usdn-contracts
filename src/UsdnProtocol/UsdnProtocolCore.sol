@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/Test.sol";
-
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -71,8 +69,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return (_EMA, longExpo_, vaultExpo_);
         }
 
-        console2.log("vaultExpo_:", vaultExpo_);
-        console2.log("longExpo_:", longExpo_);
         if ((vaultExpo_ * longExpo_) <= 0 && (vaultExpo_ < 0 || longExpo_ < 0)) {
             // if the product is negative, then vaultExpo_ or longExpo_ is negative
             // if it's zero, we check if one of the two is negative

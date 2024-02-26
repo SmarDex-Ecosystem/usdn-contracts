@@ -23,7 +23,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         (int256 fund, int256 longExpo, int256 vaultExpo) =
             protocol.funding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp));
         assertEq(fund, 0, "funding should be 0 if no time has passed");
-        assertEq(longExpo, 4.919970269703462172 ether, "longExpo if no time has passed");
+        assertEq(longExpo, 4.919970269703463156 ether, "longExpo if no time has passed");
         assertEq(vaultExpo, 10 ether, "vaultExpo if no time has passed");
     }
 
@@ -38,37 +38,24 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The sum of all long position's value is equal to the long side available balance
+     * @custom:scenario The long position's value is equal to the long side available balance
      * @custom:given No time has elapsed since the initialization
      * @custom:and The price of the asset is equal to the initial price
-     * @custom:when The sum of all position values is calculated
-     * @custom:then The long side available balance is equal to the sum of all position values
+     * @custom:then The long side available balance is equal to the first position value
      * @dev Due to imprecision in the calculations, there are in practice a few wei of difference, but always in favor
      * of the protocol (see fuzzing tests)
      */
     function test_longAssetAvailable() public {
-        // calculate the value of the init position
-        uint128 initLiqPrice = protocol.getEffectivePriceForTick(protocol.minTick());
-        uint256 initPosValue = protocol.positionValue(
-            DEFAULT_PARAMS.initialPrice, initLiqPrice, protocol.FIRST_LONG_AMOUNT(), defaultPosLeverage
-        );
-
         // calculate the value of the deployer's long position
         uint128 longLiqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
         uint256 longPosValue = protocol.positionValue(
-            DEFAULT_PARAMS.initialPrice,
-            longLiqPrice,
-            DEFAULT_PARAMS.initialLong - protocol.FIRST_LONG_AMOUNT(),
-            initialLongLeverage
+            DEFAULT_PARAMS.initialPrice, longLiqPrice, DEFAULT_PARAMS.initialLong, initialLongLeverage
         );
-
-        // calculate the sum to know the theoretical long balance
-        uint256 sumOfPositions = longPosValue + initPosValue;
 
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.
-        assertGe(uint256(protocol.longAssetAvailable(DEFAULT_PARAMS.initialPrice)), sumOfPositions, "long balance");
+        assertGe(uint256(protocol.longAssetAvailable(DEFAULT_PARAMS.initialPrice)), longPosValue, "long balance");
     }
 
     /**
