@@ -48,6 +48,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             vm.startPrank(users[i]);
             (int24 tick, uint256 tickVersion, uint256 index) =
                 protocol.initiateOpenPosition(uint96(longAmount), uint128(longLiqPrice), abi.encode(currentPrice), "");
+            skip(oracleMiddleware.validationDelay() + 1);
             protocol.validateOpenPosition(abi.encode(currentPrice), "");
             pos[i] = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;
@@ -55,15 +56,18 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
             random = uint256(keccak256(abi.encode(random, i, 2)));
 
-            // create a random short position
-            uint256 shortAmount = (random % 9 ether) + 1 ether;
-            protocol.initiateDeposit(uint128(shortAmount), abi.encode(currentPrice), "");
+            // create a random deposit position
+            uint256 depositAmount = (random % 9 ether) + 1 ether;
+            protocol.initiateDeposit(uint128(depositAmount), abi.encode(currentPrice), "");
+            skip(oracleMiddleware.validationDelay() + 1);
             protocol.validateDeposit(abi.encode(currentPrice), "");
             vm.stopPrank();
 
             // increase the current price, each time by 100 dollars or less, the max price is 3000 dollars
             currentPrice += random % 100 ether;
         }
+
+        skip(1 hours);
 
         // Bound the final price between the highest position start price and 10000 dollars
         finalPrice = uint128(bound(uint256(finalPrice), currentPrice, 10_000 ether));
