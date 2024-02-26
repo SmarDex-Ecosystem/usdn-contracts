@@ -137,13 +137,15 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param index The index of the position inside the tick array
      * @param currentPriceData The current price data
      * @param previousActionPriceData The price data of an actionable pending action.
+     * @param to The address that will receive the assets
      */
     function initiateClosePosition(
         int24 tick,
         uint256 tickVersion,
         uint256 index,
         bytes calldata currentPriceData,
-        bytes calldata previousActionPriceData
+        bytes calldata previousActionPriceData,
+        address to
     ) external payable;
 
     /**

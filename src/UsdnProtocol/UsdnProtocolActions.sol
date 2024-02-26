@@ -258,13 +258,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 tickVersion,
         uint256 index,
         bytes calldata currentPriceData,
-        bytes calldata previousActionPriceData
+        bytes calldata previousActionPriceData,
+        address to
     ) external payable initializedAndNonReentrant {
         // check if the position belongs to the user
         // this reverts if the position was liquidated
         Position memory pos = getLongPosition(tick, tickVersion, index);
         if (pos.user != msg.sender) {
             revert UsdnProtocolUnauthorized();
+        }
+
+        if (to == address(0)) {
+            revert UsdnProtocolZeroAddressTo();
         }
 
         {
@@ -287,7 +292,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 action: ProtocolAction.ValidateClosePosition,
                 timestamp: uint40(block.timestamp),
                 user: msg.sender,
-                to: address(0),
+                to: to,
                 tick: tick,
                 closeAmount: pos.amount,
                 closeLeverage: pos.leverage,
@@ -306,7 +311,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _removePosition(tick, tickVersion, index);
 
-        emit InitiatedClosePosition(msg.sender, tick, tickVersion, index);
+        emit InitiatedClosePosition(msg.sender, to, tick, tickVersion, index);
 
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();

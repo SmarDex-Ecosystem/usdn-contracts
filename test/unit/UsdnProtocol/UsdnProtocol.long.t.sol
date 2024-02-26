@@ -323,7 +323,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         skip(oracleMiddleware.validationDelay() + 1);
 
         vm.expectEmit();
-        emit InitiatedClosePosition(address(this), tick, tickVersion, index);
-        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(price), "");
+        emit InitiatedClosePosition(address(this), address(this), tick, tickVersion, index);
+        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(price), "", address(this));
     }
 }
