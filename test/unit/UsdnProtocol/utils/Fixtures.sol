@@ -44,7 +44,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
-    uint128 public defaultPosLeverage;
     uint128 public initialLongLeverage;
     address[] public users;
 
@@ -75,19 +74,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
-        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0, 0);
-        Position memory firstPos =
-            protocol.getLongPosition(protocol.getEffectiveTickForPrice(testParams.initialPrice / 2), 0, 0);
+        Position memory firstPos = protocol.getLongPosition(
+            protocol.getEffectiveTickForPrice(testParams.initialPrice / 2)
+                + int24(protocol.liquidationPenalty()) * protocol.tickSpacing(),
+            0,
+            0
+        );
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();
-        defaultPosLeverage = defaultPos.leverage;
         initialLongLeverage = firstPos.leverage;
         params = testParams;
-        // initialize x10 EOA addresses with 10K ETH and ~8.5K WSTETH
-        createAndFundUsers(10, 10_000 ether);
     }
 
     function test_setUp() public {
@@ -100,17 +99,16 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
-        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0, 0);
-        assertEq(defaultPos.leverage, 1_000_000_000_000_000_005_039, "default pos leverage");
-        assertEq(defaultPos.timestamp, block.timestamp, "default pos timestamp");
-        assertEq(defaultPos.user, protocol.DEAD_ADDRESS(), "default pos user");
-        assertEq(defaultPos.amount, protocol.FIRST_LONG_AMOUNT(), "default pos amount");
-        Position memory firstPos =
-            protocol.getLongPosition(protocol.getEffectiveTickForPrice(params.initialPrice / 2), 0, 0);
+        Position memory firstPos = protocol.getLongPosition(
+            protocol.getEffectiveTickForPrice(params.initialPrice / 2)
+                + int24(protocol.liquidationPenalty()) * protocol.tickSpacing(),
+            0,
+            0
+        );
         assertEq(firstPos.leverage, 1_983_994_053_940_692_631_258, "first pos leverage");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
-        assertEq(firstPos.amount, params.initialLong - protocol.FIRST_LONG_AMOUNT(), "first pos amount");
+        assertEq(firstPos.amount, params.initialLong, "first pos amount");
         assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
         assertEq(protocol.feeCollector(), ADMIN, "fee collector");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
@@ -192,22 +190,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         skip(oracleMiddleware.validationDelay() + 1);
 
         return (tick_, tickVersion_, index_);
-    }
-
-    // create userCount funded addresses with ETH and underlying
-    function createAndFundUsers(uint256 userCount, uint256 initialBalance) public {
-        for (uint256 i; i < userCount; i++) {
-            address user = vm.addr(i + 1);
-            vm.deal(user, initialBalance * 2);
-            vm.startPrank(user);
-            (bool success,) = address(wstETH).call{ value: initialBalance }("");
-            require(success, "swap asset error");
-            wstETH.approve(address(protocol), type(uint256).max);
-            assertTrue(wstETH.balanceOf(user) != 0, "user with empty wallet");
-            vm.stopPrank();
-
-            users.push(user);
-        }
     }
 
     /**

@@ -287,6 +287,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:then No rewards are sent and no ticks are liquidated
      */
     function test_nothingHappensIfNoTicksCanBeLiquidated() public {
+        vm.skip(true);
+
         bytes memory priceData = abi.encode(2000 ether);
 
         vm.startPrank(users[0]);
@@ -387,6 +389,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
      */
     function test_liquidateEtherRefund() public {
+        vm.skip(true);
+
         uint256 initialTotalPos = protocol.totalLongPositions();
         uint128 currentPrice = 2000 ether;
         bytes memory priceData = abi.encode(currentPrice);

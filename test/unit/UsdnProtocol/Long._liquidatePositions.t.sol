@@ -3,7 +3,6 @@ pragma solidity 0.8.20;
 
 import { Vm } from "forge-std/Vm.sol";
 
-import { USER_1, USER_2, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -15,6 +14,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /**
@@ -48,7 +48,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Create a long position to liquidate
-        setUpUserPositionInLong(users[0], ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
+        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
 
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
 
@@ -93,7 +93,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick + 1);
 
             // Create a long position to liquidate
-            setUpUserPositionInLong(users[0], ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
+            setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
 
             // Save the tick for future checks
             ticksToLiquidate[i] = desiredLiqTick;
