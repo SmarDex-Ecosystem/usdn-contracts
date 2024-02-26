@@ -74,8 +74,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
-        Position memory firstPos =
-            protocol.getLongPosition(protocol.getEffectiveTickForPrice(testParams.initialPrice / 2), 0, 0);
+        Position memory firstPos = protocol.getLongPosition(
+            protocol.getEffectiveTickForPrice(testParams.initialPrice / 2)
+                + int24(protocol.liquidationPenalty()) * protocol.tickSpacing(),
+            0,
+            0
+        );
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
         vm.stopPrank();
@@ -95,8 +99,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
-        Position memory firstPos =
-            protocol.getLongPosition(protocol.getEffectiveTickForPrice(params.initialPrice / 2), 0, 0);
+        Position memory firstPos = protocol.getLongPosition(
+            protocol.getEffectiveTickForPrice(params.initialPrice / 2)
+                + int24(protocol.liquidationPenalty()) * protocol.tickSpacing(),
+            0,
+            0
+        );
         assertEq(firstPos.leverage, 1_983_994_053_940_692_631_258, "first pos leverage");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");

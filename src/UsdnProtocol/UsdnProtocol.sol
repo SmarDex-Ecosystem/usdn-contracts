@@ -111,15 +111,17 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             msg.sender,
             longAmount,
             currentPrice.price.toUint128(),
-            getEffectiveTickForPrice(desiredLiqPrice) // no liquidation penalty
+            getEffectiveTickForPrice(desiredLiqPrice) // without penalty
         );
 
         _refundExcessEther();
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
-        uint128 liquidationPrice = getEffectivePriceForTick(tick);
-        uint128 leverage = _getLeverage(price, liquidationPrice);
+        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
+        uint128 leverage = _getLeverage(price, liquidationPriceWithoutPenalty);
+        // apply liquidation penalty to the deployer's position
+        tick = tick + int24(_liquidationPenalty) * _tickSpacing;
         Position memory long =
             Position({ user: user, amount: amount, leverage: leverage, timestamp: uint40(block.timestamp) });
         // Save the position and update the state
