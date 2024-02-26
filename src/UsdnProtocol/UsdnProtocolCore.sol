@@ -334,10 +334,22 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
         // Take protocol fee on the funding value
         (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(fund, fundAsset);
+
         // we subtract the fee from the total balance
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256()).safeSub(fee);
         // Calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
-        tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
+
+        if (fund > 0) {
+            // In case of positive funding, the vault balance must be decremented by the totality of the funding amount.
+            // However, since we deducted the fee amount from the total balance, the vault balance will be incremented
+            // only by the funding amount minus the fee amount.
+            tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
+        } else {
+            // In case of negative funding, the vault balance must be decremented by the totality of the funding amount.
+            // However, since we deducted the fee amount from the total balance, the long balance will be incremented
+            // only by the funding amount minus the fee amount.
+            tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
+        }
         tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
 
         // Update state variables

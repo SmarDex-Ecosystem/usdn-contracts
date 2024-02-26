@@ -217,15 +217,20 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then fund should be equal to -fundingSF + EMA
      */
     function test_funding_NegLong_ZeroVault() public {
+        skip(1 hours);
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
         protocol.validateOpenPosition(priceData, "");
 
-        skip(35);
+        skip(1 hours);
         protocol.liquidate(abi.encode(price / 100), 10);
+        assertLt(int256(protocol.totalExpo()) - int256(protocol.balanceLong()), 0, "long expo should be negative");
+        assertEq(protocol.balanceVault(), 0, "vault expo should be zero");
+
         int256 EMA = protocol.getEMA();
         uint256 fundingSF = protocol.fundingSF();
         (int256 fund_,) = protocol.funding(uint128(block.timestamp));
