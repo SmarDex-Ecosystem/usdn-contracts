@@ -13,7 +13,7 @@ import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEv
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
-/// @custom:feature The `liquidate()` function of `UsdnProtocolActions`
+/// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -268,9 +268,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Initates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
         setUpUserPositionInLong(address(this), ProtocolAction.InitiateClosePosition, 1 ether, desiredLiqPrice, price);
-
-        // TODO remove when the MockOracleMiddleware is fixed
-        skip(31 minutes);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tickToLiquidate);

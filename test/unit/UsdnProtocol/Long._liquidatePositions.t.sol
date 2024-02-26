@@ -12,6 +12,7 @@ import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEv
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _liquidatePositions internal function of the long layer
+/// @custom:todo Add a test that liquidates the very last position of the protocol when it becomes possible
 contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -72,44 +73,6 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A position is underwater and can be liquidated
-     * @custom:given A position has its liquidation price above current price
-     * @custom:when User calls _liquidatePositions
-     * @custom:then It should liquidate the position.
-     */
-    function test_liquidateTheLastPosition() public {
-        int24 desiredLiqTick = 69_000;
-        uint128 price = protocol.getEffectivePriceForTick(desiredLiqTick);
-
-        // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.i_tickValue(price, desiredLiqTick, protocol.totalExpoByTick(desiredLiqTick));
-
-        vm.expectEmit();
-        emit LiquidatedTick(desiredLiqTick, 0, price, price, tickValue);
-
-        vm.recordLogs();
-        (uint256 liquidatedPositions,,) = protocol.i_liquidatePositions(uint256(price), 10);
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-
-        assertEq(logs.length, 1, "Only one log should have been emitted");
-        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertLt(
-            protocol.maxInitializedTick(),
-            desiredLiqTick,
-            "The max Initialized tick should be lower than the last liquidated tick"
-        );
-
-        // TODO Uncomment when I manage to liquidate the last position
-        //price = protocol.getEffectivePriceForTick(protocol.minTick());
-
-        //protocol.i_liquidatePositions(price, 1);
-
-        //assertEq(protocol.totalLongPositions(), 0, "There should be no positions left");
-    }
-
-    // TODO test when heavy bad debt
-
-    /**
      * @custom:scenario Even if the iteration parameter is above MAX_LIQUIDATION_ITERATION,
      * we will only iterate an amount of time equal to MAX_LIQUIDATION_ITERATION
      * @custom:given MAX_LIQUIDATION_ITERATION + 1 ticks can be liquidated
@@ -146,7 +109,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         // Set a price below all others
         liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick - 1);
 
-        // Make sure no more than MAX_LIQUIDATION_ITERATION have been emitted
+        // Make sure no more than MAX_LIQUIDATION_ITERATION events have been emitted
         vm.recordLogs();
         (uint256 liquidatedPositions,,) = protocol.i_liquidatePositions(uint256(liqPrice), maxIterations + 1);
         Vm.Log[] memory logs = vm.getRecordedLogs();
