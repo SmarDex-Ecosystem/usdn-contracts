@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 
 /**
  * @title Contract to apply and return a mocked wsteth price
@@ -21,7 +22,6 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
      * @dev This price will be used if greater than zero.
      */
     uint256 internal _wstethMockedPrice;
-    uint256 internal _validationCost;
     /**
      * @notice If we need to verify the provided signature data or not.
      * @dev If _wstethMockedPrice == 0, this setting is ignored
@@ -36,17 +36,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         uint256 chainlinkTimeElapsedLimit
     ) WstEthOracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, wsteth, chainlinkTimeElapsedLimit) { }
 
-    /**
-     * @notice Parses and validates price data by returning current wsteth mocked price.
-     * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
-     * @param targetTimestamp The target timestamp for validating the price data. For validation actions, this is the
-     * timestamp of the initiation.
-     * @param action Type of action for which the price is requested. The middleware may use this to alter the
-     * validation of the price or the returned price.
-     * @param data Price data, the format varies from middleware to middleware and can be different depending on the
-     * action.
-     * @return The price and timestamp as `PriceInfo`.
-     */
+    /// @inheritdoc OracleMiddleware
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         public
         payable
@@ -98,6 +88,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         _wstethMockedPrice = newWstethMockedPrice;
     }
 
+    /// @inheritdoc OracleMiddleware
     function validationCost(bytes calldata data, ProtocolAction action)
         public
         view
