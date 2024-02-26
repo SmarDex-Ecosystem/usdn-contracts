@@ -72,6 +72,38 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The last position in the protocol is underwater and can be liquidated
+     * @custom:given A position has its liquidation price above current price
+     * @custom:when User calls _liquidatePositions with 2 iterations
+     * @custom:then It should liquidate the position.
+     */
+    function test_canLiquidateTheLastPosition() public {
+        int24 desiredLiqTick = 69_200;
+        uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
+
+        uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
+
+        // Calculate the collateral this position gives on liquidation
+        int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.totalExpoByTick(desiredLiqTick));
+
+        vm.expectEmit();
+        emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
+
+        vm.recordLogs();
+        // 2 Iterations to make sure we break the loop when there are no ticks to be found
+        (uint256 liquidatedPositions,,) = protocol.i_liquidatePositions(uint256(liqPrice), 2);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        assertEq(logs.length, 1, "Only one log should have been emitted");
+        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(
+            protocol.maxInitializedTick(),
+            TickMath.minUsableTick(protocol.tickSpacing()),
+            "The max Initialized tick should be equal to the very last tick"
+        );
+    }
+
+    /**
      * @custom:scenario Even if the iteration parameter is above MAX_LIQUIDATION_ITERATION,
      * we will only iterate an amount of time equal to MAX_LIQUIDATION_ITERATION
      * @custom:given MAX_LIQUIDATION_ITERATION + 1 ticks can be liquidated
