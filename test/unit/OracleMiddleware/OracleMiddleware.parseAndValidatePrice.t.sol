@@ -46,7 +46,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
     /**
      * @custom:scenario Parse and validate price
      * @custom:given ETH price is 2000 USD in pyth and chainlink oracles
-     * @custom:and The getValidationDelay is respected
+     * @custom:and The validationDelay is respected
      * @custom:when Protocol action is a value that is not supported
      * @custom:then The call reverts
      */
@@ -71,7 +71,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
     /**
      * @custom:scenario Parse and validate price with Pyth when data is provided
      * @custom:given ETH price is 2000 USD in pyth and chainlink oracles
-     * @custom:and The getValidationDelay is respected
+     * @custom:and The validationDelay is respected
      * @custom:and Non-empty data was given
      * @custom:when Calling parseAndValidatePrice
      * @custom:then The price is exactly 2000 USD
@@ -234,7 +234,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
     /**
      * @custom:scenario Parse and validate price
      * @custom:given Pyth oracle reverts
-     * @custom:and The getValidationDelay is respected
+     * @custom:and The validationDelay is respected
      * @custom:then It reverts when validating price for all action using Pyth oracle
      */
     function test_RevertWhen_parseAndValidatePriceWhileOracleMiddlewarePythValidationFailed() public {
@@ -320,7 +320,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
     /**
      * @custom:scenario Parse and validate price
      * @custom:given Pyth oracle reverts
-     * @custom:and The getValidationDelay is respected
+     * @custom:and The validationDelay is respected
      * @custom:then It reverts when validating price and initiating positions for all actions using Pyth oracle
      */
     function test_RevertWhen_parseAndValidatePriceWhileAllValidationFailed() public {

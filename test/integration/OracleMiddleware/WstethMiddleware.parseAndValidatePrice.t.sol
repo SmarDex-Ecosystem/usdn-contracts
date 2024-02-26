@@ -29,7 +29,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
     /**
      * @custom:scenario Parse and validate price with mocked hermes API signature for pyth
      * @custom:given The price feed is stETH/USD for pyth and chainlink
-     * @custom:and The getValidationDelay is respected
+     * @custom:and The validationDelay is respected
      * @custom:when Protocol action is any targeted action
      * @custom:then The price signature is well decoded
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API by applying
@@ -144,7 +144,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
     /**
      * @custom:scenario Parse and validate price with real hermes API signature for pyth
      * @custom:given The price feed is stETH/USD for pyth
-     * @custom:and The getValidationDelay is respected
+     * @custom:and The validationDelay is respected
      * @custom:when Protocol action is any targeted action
      * @custom:then The price signature is well decoded
      * @custom:and The price retrieved by the oracle middleware is the same as the one from the hermes API by applying

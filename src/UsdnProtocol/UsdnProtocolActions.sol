@@ -362,7 +362,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
-        PendingAction memory pending = _getPendingActionAndClear(user); // clear pending action
+        (PendingAction memory pending,) = _getPendingAction(user);
+        _clearPendingAction(user); // clear pending action
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateDeposit) {
@@ -444,7 +445,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
-        PendingAction memory pending = _getPendingActionAndClear(user); // clear pending action
+        (PendingAction memory pending,) = _getPendingAction(user);
+        _clearPendingAction(user); // clear pending action
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateWithdrawal) {
@@ -509,7 +511,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateOpenPosition(address user, bytes calldata priceData) internal {
-        PendingAction memory pending = _getPendingActionAndClear(user); // clear pending action
+        (PendingAction memory pending,) = _getPendingAction(user);
+        _clearPendingAction(user); // clear pending action
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateOpenPosition) {
@@ -591,7 +594,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateClosePosition(address user, bytes calldata priceData) internal {
-        PendingAction memory pending = _getPendingActionAndClear(user); // clear pending action
+        (PendingAction memory pending,) = _getPendingAction(user);
+        _clearPendingAction(user); // clear pending action
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateClosePosition) {
@@ -631,7 +635,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _balanceLong += long.closeTempTransfer - assetToTransfer;
         }
 
-        // get liquidation price (with liq penalty) to check if position was valid at `timestamp + getValidationDelay`
+        // get liquidation price (with liq penalty) to check if position was valid at `timestamp + validationDelay`
         uint128 liquidationPrice = _getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
         if (price.neutralPrice <= liquidationPrice) {
             // position should be liquidated, we don't pay out the profits but send any remaining collateral to the

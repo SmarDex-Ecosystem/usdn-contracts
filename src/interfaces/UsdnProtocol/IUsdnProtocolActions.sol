@@ -28,9 +28,9 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @notice Validate a pending deposit action.
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.ValidateDeposit` action.
-     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * The price validation might require payment according to the return value of the `validationCost` function
      * of the middleware.
-     * The timestamp corresponding to the price data is calculated by adding the mandatory `getValidationDelay`
+     * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * @param depositPriceData The price data corresponding to the sender's pending deposit action.
      * @param previousActionPriceData The price data of an actionable pending action.
@@ -61,7 +61,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * the `ProtocolAction.ValidateWithdrawal` action.
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
-     * The timestamp corresponding to the price data is calculated by adding the mandatory `getValidationDelay`
+     * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action.
      * @param previousActionPriceData The price data of an actionable pending action.
@@ -100,7 +100,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * the `ProtocolAction.ValidateOpenPosition` action.
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
-     * The timestamp corresponding to the price data is calculated by adding the mandatory `getValidationDelay`
+     * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * This operation adjusts the entry price and initial leverage of the position.
      * It is also possible for this operation to change the tick, tickVersion and index of the position, in which case
@@ -144,7 +144,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * the `ProtocolAction.ValidateClosePosition` action.
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
-     * The timestamp corresponding to the price data is calculated by adding the mandatory `getValidationDelay`
+     * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * This operation calculates the final exit price and profit of the long position and performs the payout.
      * @param closePriceData The price data corresponding to the sender's pending close position action.

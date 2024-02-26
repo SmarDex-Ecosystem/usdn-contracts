@@ -45,7 +45,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
     /**
      * @custom:scenario Parse and validate price
      * @custom:given WSTETH price is ~1739 USD in pyth and chainlink oracles
-     * @custom:and The getValidationDelay is respected
+     * @custom:and The validationDelay is respected
      * @custom:when Protocol action is any action
      * @custom:then The price is exactly ~1739 USD
      */
