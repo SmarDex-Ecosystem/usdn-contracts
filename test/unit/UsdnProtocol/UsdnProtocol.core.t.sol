@@ -217,9 +217,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then fund should be equal to -fundingSF + EMA
      */
     function test_funding_NegLong_ZeroVault() public {
-        // TODO : fix the test when #101 merged
-        vm.skip(true);
-
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
@@ -227,12 +224,12 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
         protocol.validateOpenPosition(priceData, "");
 
-        skip(25);
+        skip(35);
         protocol.liquidate(abi.encode(price / 100), 10);
         int256 EMA = protocol.getEMA();
         uint256 fundingSF = protocol.fundingSF();
         (int256 fund_,) = protocol.funding(uint128(block.timestamp));
-        emit log_named_int("fund_", fund_);
-        emit log_named_int("mul", -int256(fundingSF) + EMA);
+
+        assertEq(fund_, -int256(fundingSF) + EMA, "funding should be equal to -fundingSF + EMA");
     }
 }
