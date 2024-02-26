@@ -386,9 +386,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tempLongBalance = 0;
         }
 
-        // For now, since we have calculations problems for the tick value vs the expected long balance, we also
-        // need to make sure that the vault balance is not negative
-        // TODO: fix calculations and remove this
+        // This can happen if there is not enough balance in the vault to pay the bad debt of the long side, for
+        // example if the protocol fees reduce the vault balance.
+        // Test case: test_funding_NegLong_ZeroVault()
         if (tempVaultBalance < 0) {
             tempLongBalance += tempVaultBalance;
             tempVaultBalance = 0;
