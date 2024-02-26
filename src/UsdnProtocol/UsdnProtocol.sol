@@ -51,6 +51,11 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         UsdnProtocolStorage(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
     { }
 
+    // TODO needs #93
+    function setOracleMiddleware(IOracleMiddleware newValue) external {
+        _oracleMiddleware = newValue;
+    }
+
     /**
      * @notice Initialize the protocol.
      * @dev This function can only be called once. Other external functions can only be called after the initialization.

@@ -178,7 +178,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
      * @dev We don't use the protocol action parameter for now
      * @param data The data used to get the price
      */
-    function validationCost(bytes calldata data, ProtocolAction) external view returns (uint256 result_) {
+    function validationCost(bytes calldata data, ProtocolAction) public view virtual returns (uint256 result_) {
         if (data.length > 0) {
             result_ = getPythUpdateFee(data);
         }

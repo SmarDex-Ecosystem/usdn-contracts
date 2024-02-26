@@ -21,6 +21,12 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
      * @dev This price will be used if greater than zero.
      */
     uint256 internal _wstethMockedPrice;
+    uint256 internal _validationCost;
+    /**
+     * @notice If we need to verify the provided signature data or not.
+     * @dev If _wstethMockedPrice == 0, this setting is ignored
+     */
+    bool internal _verifySignature = true;
 
     constructor(
         address pythContract,
@@ -50,13 +56,17 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     {
         // Parse and validate from parent wsteth middleware.
         // This aim to verify pyth price hermes signature in any case.
-        PriceInfo memory price = super.parseAndValidatePrice(targetTimestamp, action, data);
+        PriceInfo memory price;
 
         // If mocked price is not set.
         if (_wstethMockedPrice == 0) {
-            return price;
+            return super.parseAndValidatePrice(targetTimestamp, action, data);
             // If mocked price is set.
         } else {
+            if (_verifySignature) {
+                price = super.parseAndValidatePrice(targetTimestamp, action, data);
+            }
+
             // neutralPrice.
             price.neutralPrice = _wstethMockedPrice;
             // price initialized with neutralPrice.
@@ -88,6 +98,18 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         _wstethMockedPrice = newWstethMockedPrice;
     }
 
+    function validationCost(bytes calldata data, ProtocolAction action)
+        public
+        view
+        override
+        returns (uint256 result_)
+    {
+        // No signature verification -> no oracle fee
+        if (!_verifySignature) return 0;
+
+        return super.validationCost(data, action);
+    }
+
     /**
      * @notice Set Wsteth mocked confidence interval percentage.
      * @dev To calculate a percentage of neutral price up or down in some protocol actions.
@@ -111,5 +133,10 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     /// @notice Get constant wsteth mocked confidence interval denominator.
     function wstethMockedConfDenom() external pure returns (uint64) {
         return CONF_DENOM;
+    }
+
+    /// @notice Toggle the signature verification.
+    function toggleVerifySignature() external {
+        _verifySignature = !_verifySignature;
     }
 }
