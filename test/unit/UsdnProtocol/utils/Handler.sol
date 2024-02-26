@@ -71,6 +71,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _EMA;
     }
 
+    function fundingSF() external view returns (uint256) {
+        return _fundingSF;
+    }
+
     // total long position
     function totalLongPositions() external view returns (uint256) {
         return _totalLongPositions;

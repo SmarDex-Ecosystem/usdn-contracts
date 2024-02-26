@@ -60,7 +60,7 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
      * @custom:then The asset to transfer is zero
      */
     function test_assetToTransferZeroBalance() public {
-        // TODO: enable once the initial 1000 wei position doesn't exist anymore
+        // TODO : fix this test with #102
         vm.skip(true);
         int24 firstPosTick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2);
         skip(60); // we need that the oracle timestamp be newer than the last price update
@@ -69,6 +69,8 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
             protocol.getEffectivePriceForTick(firstPosTick, protocol.getLiquidationMultiplier(uint128(block.timestamp)));
         protocol.liquidate(abi.encode(liqPrice), 10);
 
+        assertEq(protocol.totalLongPositions(), 0, "total long positions");
+        assertEq(protocol.i_longTradingExpo(liqPrice), 0, "long trading expo with funding");
         assertEq(protocol.balanceLong(), 0, "balance long");
         assertEq(protocol.longAssetAvailable(liqPrice), 0, "long asset available");
 

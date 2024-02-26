@@ -27,9 +27,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     /// @dev The minimum amount of wstETH for the initialization deposit and long.
     uint256 public constant MIN_INIT_DEPOSIT = 1 ether;
 
-    /// @dev The amount of collateral for the first "dead" long position.
-    uint128 public constant FIRST_LONG_AMOUNT = 1000;
-
     /**
      * @notice Constructor.
      * @param usdn The USDN ERC20 contract.
@@ -110,11 +107,9 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Transfer the wstETH for the long
         _asset.safeTransferFrom(msg.sender, address(this), longAmount);
 
-        // Create long positions with min leverage
-        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), minTick());
         _createInitialPosition(
             msg.sender,
-            longAmount - FIRST_LONG_AMOUNT,
+            longAmount,
             currentPrice.price.toUint128(),
             getEffectiveTickForPrice(desiredLiqPrice) // without penalty
         );
@@ -125,10 +120,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
         uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
         uint128 leverage = _getLeverage(price, liquidationPriceWithoutPenalty);
-        if (user != DEAD_ADDRESS) {
-            // apply liquidation penalty to the deployer's position
-            tick = tick + int24(_liquidationPenalty) * _tickSpacing;
-        }
+        // apply liquidation penalty to the deployer's position
+        tick = tick + int24(_liquidationPenalty) * _tickSpacing;
         Position memory long =
             Position({ user: user, amount: amount, leverage: leverage, timestamp: uint40(block.timestamp) });
         // Save the position and update the state

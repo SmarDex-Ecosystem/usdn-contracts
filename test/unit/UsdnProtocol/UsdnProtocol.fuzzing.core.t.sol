@@ -45,7 +45,17 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             uint256 longAmount = (random % 9 ether) + 1 ether;
             uint256 longLeverage = (random % 3) + 2;
             uint256 longLiqPrice = currentPrice / longLeverage;
-            vm.startPrank(users[i]);
+
+            // create a random user with ~8.5K wstETH
+            {
+                address user = vm.addr(i + 1);
+                vm.deal(user, 20_000 ether);
+                vm.startPrank(user);
+                (bool success,) = address(wstETH).call{ value: 10_000 ether }("");
+                require(success, "wstETH mint failed");
+                wstETH.approve(address(protocol), type(uint256).max);
+            }
+
             (int24 tick, uint256 tickVersion, uint256 index) =
                 protocol.initiateOpenPosition(uint96(longAmount), uint128(longLiqPrice), abi.encode(currentPrice), "");
             skip(oracleMiddleware.validationDelay() + 1);
@@ -78,19 +88,11 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             longPosValue +=
                 protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice - 5 ether, uint128(block.timestamp));
         }
-        // calculate the value of the init position (we use the low-level pure function because there is no liquidation
-        // penalty for those)
-        uint128 liqPrice = protocol.getEffectivePriceForTick(protocol.minTick());
-        longPosValue +=
-            protocol.positionValue(finalPrice - 5 ether, liqPrice, protocol.FIRST_LONG_AMOUNT(), defaultPosLeverage);
         // calculate the value of the deployer's long position
-        liqPrice = protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
-        longPosValue += protocol.positionValue(
-            finalPrice - 5 ether,
-            liqPrice,
-            DEFAULT_PARAMS.initialLong - protocol.FIRST_LONG_AMOUNT(),
-            initialLongLeverage
-        );
+        uint128 liqPrice =
+            protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
+        longPosValue +=
+            protocol.positionValue(finalPrice - 5 ether, liqPrice, DEFAULT_PARAMS.initialLong, initialLongLeverage);
 
         emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());
         emit log_named_decimal_uint("long balance", uint256(protocol.longAssetAvailable(finalPrice)), wstETH.decimals());

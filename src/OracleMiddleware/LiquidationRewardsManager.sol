@@ -42,9 +42,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 31_973,
-            otherGasUsed: 43_882,
-            gasPriceLimit: 1000 gwei,
+            gasUsedPerTick: 32_043,
+            otherGasUsed: 43_570,
+            gasPriceLimit: uint64(1000 gwei),
             multiplierBps: 20_000
         });
     }

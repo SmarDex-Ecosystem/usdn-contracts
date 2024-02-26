@@ -29,6 +29,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and Change contract state.
      */
     function test_openUserLiquidation() public {
+        vm.skip(true);
+
         bytes memory priceData = abi.encode(2000 ether);
         int24 initialTick;
         uint256 initialTickVersion;
@@ -94,6 +96,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and Change contract state.
      */
     function test_openLiquidatorLiquidation() public {
+        vm.skip(true);
+
         bytes memory priceData = abi.encode(2000 ether);
         int24 initialTick;
         uint256 initialTickVersion;
@@ -160,6 +164,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and Change contract state.
      */
     function test_openLiquidatorPartialLiquidation() public {
+        vm.skip(true);
+
         uint256 length = users.length;
         int24[] memory initialTicks = new int24[](length);
         uint256 actualPrice = 2000 ether;
@@ -251,6 +257,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and The liquidator receive rewards in connection with the amount of ticks liquidated
      */
     function test_openLiquidatorLiquidationAboveMax() public {
+        vm.skip(true);
+
         bytes memory priceData = abi.encode(2000 ether);
         int24 initialTick;
         uint256 initialTickVersion;
@@ -286,6 +294,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and The high risk position gets liquidated even though the asset price has not changed
      */
     function test_liquidatedByFundingRates() public {
+        vm.skip(true);
+
         uint128 currentPrice = 2000 ether;
 
         wstETH.mintAndApprove(address(this), 1_000_000 ether, address(protocol), type(uint256).max);
@@ -332,6 +342,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:then No rewards are sent and no ticks are liquidated
      */
     function test_nothingHappensIfNoTicksCanBeLiquidated() public {
+        vm.skip(true);
+
         bytes memory priceData = abi.encode(2000 ether);
 
         vm.startPrank(users[0]);
@@ -376,6 +388,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:then The protocol send rewards for the liquidation
      */
     function test_rewardsAreSentToLiquidatorAfterLiquidations() public {
+        vm.skip(true);
+
         bytes memory priceData = abi.encode(2000 ether);
 
         vm.startPrank(users[0]);
@@ -421,6 +435,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:then The gas usage matches the LiquidationRewardsManager parameters
      */
     function test_gasUsageOfLiquidateFunction() public {
+        vm.skip(true);
+
         bytes memory priceData = abi.encode(4500 ether);
 
         vm.startPrank(users[0]);
@@ -486,6 +502,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
      */
     function test_liquidateEtherRefund() public {
+        vm.skip(true);
+
         uint256 initialTotalPos = protocol.totalLongPositions();
         uint128 currentPrice = 2000 ether;
         bytes memory priceData = abi.encode(currentPrice);

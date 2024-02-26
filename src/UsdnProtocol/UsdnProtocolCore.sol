@@ -57,7 +57,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
         int256 oldVaultExpo = _balanceVault.toInt256();
 
-        // fund = (+-) ((longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
+        // ImbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
+        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) + _EMA
+        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
         int256 numerator = oldLongExpo_ - oldVaultExpo;
@@ -65,6 +67,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (numerator == 0) {
             return (_EMA, oldLongExpo_);
         }
+
+        if ((oldVaultExpo * oldLongExpo_) <= 0 && (oldVaultExpo < 0 || oldLongExpo_ < 0)) {
+            // if the product is negative, then oldVaultExpo or oldLongExpo is negative
+            // if it's zero, we check if one of the two is negative
+            if (oldVaultExpo < 0) {
+                // if oldVaultExpo is negative, then we cap the imbalance index to 1
+                return (int256(_fundingSF) + _EMA, oldLongExpo_);
+            } else {
+                // if oldLongExpo is negative, then we cap the imbalance index to -1
+                return (-int256(_fundingSF) + _EMA, oldLongExpo_);
+            }
+        }
+
         uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
         uint256 numerator_squared = uint256(numerator * numerator);
 
