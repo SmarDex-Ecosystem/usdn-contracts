@@ -666,11 +666,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // send the asset to the user
         if (assetToTransfer > 0) {
-            _asset.safeTransfer(long.user, assetToTransfer);
+            _asset.safeTransfer(long.to, assetToTransfer);
         }
 
         emit ValidatedClosePosition(
             long.user,
+            long.to,
             long.tick,
             long.tickVersion,
             long.index,
