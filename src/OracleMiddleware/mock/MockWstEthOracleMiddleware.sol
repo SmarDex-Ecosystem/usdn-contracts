@@ -121,8 +121,8 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         return CONF_DENOM;
     }
 
-    /// @notice Toggle the signature verification.
-    function toggleVerifySignature() external {
-        _verifySignature = !_verifySignature;
+    /// @notice Set the signature verification flag.
+    function setVerifySignature(bool verify) external {
+        _verifySignature = verify;
     }
 }

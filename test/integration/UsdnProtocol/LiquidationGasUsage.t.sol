@@ -43,7 +43,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         mockOracle.setWstethMockedPrice((pythPrice + 1000e8) * 10 ** 10);
         // Turn off pyth signature verification to avoid updating the price feed
         // This allows us to be in the worst case scenario gas wise later
-        mockOracle.toggleVerifySignature();
+        mockOracle.setVerifySignature(false);
 
         uint256 oracleFee = 1;
         uint128 futurePythPrice = uint128(pythPrice + 500e8) * 10 ** 10;
@@ -67,7 +67,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         // Do not use the mocked price anymore for accurate gas usage
         mockOracle.setWstethMockedPrice(0);
         // Enable the signature verification again
-        mockOracle.toggleVerifySignature();
+        mockOracle.setVerifySignature(true);
         ILiquidationRewardsManagerErrorsEventsTypes.RewardsParameters memory rewardsParameters =
             liquidationRewardsManager.getRewardsParameters();
         vm.warp(pythTimestamp);
