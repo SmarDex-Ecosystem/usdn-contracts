@@ -538,7 +538,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             }
         }
 
-        (bytes32 tickHash, uint256 version) = _getTickHash(long.tick);
+        (bytes32 tickHash, uint256 version) = _tickHash(long.tick);
         if (version != long.tickVersion) {
             // The current tick version doesn't match the version from the pending action.
             // This means the position has been liquidated in the mean time

@@ -392,7 +392,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         return int256(uint256(x));
     }
 
-    function _getTickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = _tickVersion[tick];
         hash_ = tickHash(tick, version_);
     }
@@ -536,7 +536,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // slither-disable-next-line incorrect-equality
         if (action.action == ProtocolAction.ValidateOpenPosition) {
             LongPendingAction memory openAction = _toLongPendingAction(action);
-            (, uint256 version) = _getTickHash(openAction.tick);
+            (, uint256 version) = _tickHash(openAction.tick);
             if (version != openAction.tickVersion) {
                 // the position was liquidated while pending
                 // remove the stale pending action

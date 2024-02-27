@@ -103,7 +103,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     function i_tickHash(int24 tick) external view returns (bytes32, uint256) {
-        return _getTickHash(tick);
+        return _tickHash(tick);
     }
 
     function i_longAssetAvailable(uint128 currentPrice) external view returns (int256) {
