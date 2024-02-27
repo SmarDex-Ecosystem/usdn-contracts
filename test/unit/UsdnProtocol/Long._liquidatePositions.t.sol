@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { Vm } from "forge-std/Vm.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -26,12 +24,12 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         vm.recordLogs();
         (uint256 liquidatedPositions, uint16 liquidatedTicks, int256 remainingCollateral) =
             protocol.i_liquidatePositions(2000 ether, 1);
-        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 logsAmount = vm.getRecordedLogs().length;
 
-        assertEq(logs.length, 0, "No event should have been emitted");
-        assertEq(liquidatedPositions, 0, "The are no positions to liquidate at this price");
-        assertEq(liquidatedTicks, 0, "The are no ticks to liquidate at this price");
-        assertEq(remainingCollateral, 0, "The no collateral available to liquidate at this price");
+        assertEq(logsAmount, 0, "No event should have been emitted");
+        assertEq(liquidatedPositions, 0, "No position should have been liquidated at the given price");
+        assertEq(liquidatedTicks, 0, "No tick should have been liquidated at this price");
+        assertEq(remainingCollateral, 0, "There should have been no changes to the collateral");
     }
 
     /**
@@ -58,9 +56,9 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         vm.recordLogs();
         (uint256 liquidatedPositions,,) = protocol.i_liquidatePositions(uint256(liqPrice), 1);
-        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 logsAmount = vm.getRecordedLogs().length;
 
-        assertEq(logs.length, 1, "Only one log should have been emitted");
+        assertEq(logsAmount, 1, "Only one log should have been emitted");
         assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
         assertLt(
             protocol.maxInitializedTick(),
@@ -90,9 +88,9 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         vm.recordLogs();
         // 2 Iterations to make sure we break the loop when there are no ticks to be found
         (uint256 liquidatedPositions,,) = protocol.i_liquidatePositions(uint256(liqPrice), 2);
-        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 logsAmount = vm.getRecordedLogs().length;
 
-        assertEq(logs.length, 1, "Only one log should have been emitted");
+        assertEq(logsAmount, 1, "Only one log should have been emitted");
         assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
         assertEq(
             protocol.maxInitializedTick(),
@@ -142,12 +140,10 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         // Make sure no more than MAX_LIQUIDATION_ITERATION events have been emitted
         vm.recordLogs();
         (, uint256 liquidatedTicks,) = protocol.i_liquidatePositions(uint256(liqPrice), maxIterations + 1);
-        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(
-            logs.length,
-            maxIterations,
-            "An amount of events equal to MAX_LIQUIDATION_ITERATION should have been emitted"
+            logsAmount, maxIterations, "An amount of events equal to MAX_LIQUIDATION_ITERATION should have been emitted"
         );
 
         assertEq(
