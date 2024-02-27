@@ -45,7 +45,7 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
     function getMinLiquidationPrice(uint128 price) external view returns (uint128);
 
     /**
-     * @notice Get the value of a long position when the asset price is equal to the given price
+     * @notice Get the value of a long position when the asset price is equal to the given price, at the given timestamp
      * @param tick The tick containing the long position
      * @param tickVersion The tick version
      * @param index The index of the long position inside the tick array
