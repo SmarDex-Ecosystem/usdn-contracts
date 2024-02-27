@@ -26,8 +26,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     uint256 public constant MIN_INIT_DEPOSIT = 1 ether;
-    /// @inheritdoc IUsdnProtocol
-    uint128 public constant FIRST_LONG_AMOUNT = 1000;
 
     /**
      * @notice Constructor.
@@ -102,13 +100,11 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Transfer the wstETH for the long
         _asset.safeTransferFrom(msg.sender, address(this), longAmount);
 
-        // Create long positions with min leverage
-        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), getMinTick());
         _createInitialPosition(
             msg.sender,
-            longAmount - FIRST_LONG_AMOUNT,
+            longAmount,
             currentPrice.price.toUint128(),
-            getEffectiveTickForPrice(desiredLiqPrice) // no liquidation penalty
+            getEffectiveTickForPrice(desiredLiqPrice) // without penalty
         );
 
         _refundExcessEther();
@@ -218,11 +214,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setEMAPeriod(uint128 newEMAPeriod) external onlyOwner {
-        // EMAPeriod is zero
-        if (newEMAPeriod == 0) {
-            revert UsdnProtocolInvalidEMAPeriod();
-        }
-
         // EMAPeriod is greater than max 3 months
         if (newEMAPeriod > 90 days) {
             revert UsdnProtocolInvalidEMAPeriod();
@@ -276,8 +267,10 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @dev To be called in contract initialize.
      */
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
-        uint128 liquidationPrice = getEffectivePriceForTick(tick);
-        uint128 leverage = _getLeverage(price, liquidationPrice);
+        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
+        uint128 leverage = _getLeverage(price, liquidationPriceWithoutPenalty);
+        // apply liquidation penalty to the deployer's position
+        tick = tick + int24(_liquidationPenalty) * _tickSpacing;
         Position memory long =
             Position({ user: user, amount: amount, leverage: leverage, timestamp: uint40(block.timestamp) });
         // Save the position and update the state

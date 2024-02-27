@@ -94,10 +94,10 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         vm.stopPrank();
 
         // Simulate the second item in the queue being empty (sets it to zero values)
-        protocol.removePendingAction(1, USER_2);
+        protocol.i_removePendingAction(1, USER_2);
         // Simulate the first item in the queue being empty
         // This will pop the first item, but leave the second empty
-        protocol.removePendingAction(0, USER_1);
+        protocol.i_removePendingAction(0, USER_1);
 
         // Wait
         skip(protocol.getValidationDeadline() + 1);

@@ -10,7 +10,6 @@ import {
     ProtocolAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -33,58 +32,16 @@ contract UsdnProtocolHandler is UsdnProtocol {
         address feeCollector
     ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
-    // tick hash
-    function getTickHash(int24 tick) external view returns (bytes32, uint256) {
-        return _tickHash(tick);
-    }
-
-    // total expo by tick
-    function totalExpoByTick(int24 tick) external view returns (uint256) {
-        (bytes32 tHash,) = _tickHash(tick);
-        return _totalExpoByTick[tHash];
-    }
-
-    // long positions length
-    function longPositionsLength(int24 tick) external view returns (uint256) {
-        (bytes32 tHash,) = _tickHash(tick);
-        return _longPositions[tHash].length;
-    }
-
-    // positions in tick
-    function positionsInTick(int24 tick) external view returns (uint256) {
-        (bytes32 tHash,) = _tickHash(tick);
-        return _positionsInTick[tHash];
-    }
-
-    function vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
-        return _vaultAssetAvailable(currentPrice);
-    }
-
-    function minimumPrice() external pure returns (uint256) {
-        return TickMath.MIN_PRICE;
-    }
-
-    function longAssetAvailable(uint128 currentPrice) external view returns (int256) {
-        return _longAssetAvailable(currentPrice);
-    }
-
-    function getLeverage(uint128 startPrice, uint128 liquidationPrice) external pure returns (uint128) {
-        return _getLeverage(startPrice, liquidationPrice);
-    }
-
-    function getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
-        return _getLiquidationPrice(startPrice, leverage);
-    }
-
-    function positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint256 amount, uint128 initLeverage)
-        external
-        pure
-        returns (uint256 value_)
-    {
+    function i_getPositionValue(
+        uint128 currentPrice,
+        uint128 liqPriceWithoutPenalty,
+        uint256 amount,
+        uint128 initLeverage
+    ) external pure returns (uint256 value_) {
         return _getPositionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
     }
 
-    function removePendingAction(uint128 rawIndex, address user) external {
+    function i_removePendingAction(uint128 rawIndex, address user) external {
         _pendingActionsQueue.clearAt(rawIndex);
         delete _pendingActions[user];
     }
@@ -94,15 +51,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
-        return _vaultTradingExpo(currentPrice);
+        return _getVaultTradingExpo(currentPrice);
     }
 
     function i_longTradingExpo(uint128 currentPrice) external view returns (int256) {
-        return _longTradingExpo(currentPrice);
-    }
-
-    function i_lastFunding() external view returns (int256) {
-        return _lastFunding;
+        return _getLongTradingExpo(currentPrice);
     }
 
     function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {
@@ -133,14 +86,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _assetToTransfer(tick, amount, leverage, liqMultiplier);
     }
 
-    function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint256 amount, uint128 initLeverage)
-        external
-        pure
-        returns (uint256 value_)
-    {
-        return _getPositionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
-    }
-
     function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {
         return _getTickValue(currentPrice, tick, tickTotalExpo);
     }
@@ -151,5 +96,21 @@ contract UsdnProtocolHandler is UsdnProtocol {
         returns (PriceInfo memory)
     {
         return _getOraclePrice(action, timestamp, priceData);
+    }
+
+    function i_vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
+        return _getVaultAssetAvailable(currentPrice);
+    }
+
+    function i_tickHash(int24 tick) external view returns (bytes32, uint256) {
+        return _getTickHash(tick);
+    }
+
+    function i_longAssetAvailable(uint128 currentPrice) external view returns (int256) {
+        return _getLongAssetAvailable(currentPrice);
+    }
+
+    function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
+        return _getLiquidationPrice(startPrice, leverage);
     }
 }

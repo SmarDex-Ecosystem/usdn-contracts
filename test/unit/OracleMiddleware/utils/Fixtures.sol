@@ -14,12 +14,14 @@ import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
+import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 /**
  * @title ActionsFixture
  * @dev all protocol actions
  */
-contract ActionsFixture {
+contract ActionsFixture is IOracleMiddlewareErrors, IOracleMiddlewareEvents {
     // all action types
     ProtocolAction[] public actions = [
         ProtocolAction.None,

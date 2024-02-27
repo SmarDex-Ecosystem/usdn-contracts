@@ -12,7 +12,7 @@ import { USER_1 } from "test/utils/Constants.sol";
  * @custom:feature The `getChainlinkTimeElapsedLimit` and `updateChainlinkTimeElapsedLimit` functions of
  * `OracleMiddleware`.
  */
-contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddlewareBaseFixture, IOracleMiddlewareEvents {
+contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddlewareBaseFixture {
     function setUp() public override {
         super.setUp();
     }

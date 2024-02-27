@@ -9,18 +9,13 @@ import { IMockPythError } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `OracleMiddleware`
  * @custom:background Given the price of ETH is 2000 USD
  * @custom:and The confidence interval is 20 USD
  */
-contract TestOracleMiddlewareParseAndValidatePrice is
-    OracleMiddlewareBaseFixture,
-    IOracleMiddlewareErrors,
-    IMockPythError
-{
+contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixture, IMockPythError {
     using Strings for uint256;
 
     uint256 internal immutable FORMATTED_ETH_PRICE;

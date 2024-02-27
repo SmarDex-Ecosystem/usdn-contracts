@@ -12,8 +12,6 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 interface IUsdnProtocol is IUsdnProtocolActions {
     /// @dev The minimum amount of wstETH for the initialization deposit and long.
     function MIN_INIT_DEPOSIT() external pure returns (uint256);
-    /// @dev The amount of collateral for the first "dead" long position.
-    function FIRST_LONG_AMOUNT() external pure returns (uint128);
 
     /**
      * @notice Initialize the protocol, making a first deposit and creating a first long position.

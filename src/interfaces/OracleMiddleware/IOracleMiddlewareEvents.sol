@@ -22,5 +22,5 @@ interface IOracleMiddlewareEvents {
      * @notice Emitted when recent price delay is updated.
      * @param newDelay The new recent price delay.
      */
-    event RecentPriceDelayUpdated(uint256 newDelay);
+    event RecentPriceDelayUpdated(uint64 newDelay);
 }

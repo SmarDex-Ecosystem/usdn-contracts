@@ -5,12 +5,9 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-
-import {
-    UsdnProtocolBaseFixture,
-    IUsdnProtocolErrors,
-    IUsdnProtocolEvents
-} from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 /**
  * @custom:feature The admin functions of the protocol
@@ -328,19 +325,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setLiquidationIteration(expectedNewValue);
         // check new value is equal than expected
         assertEq(protocol.getLiquidationIteration(), expectedNewValue);
-    }
-
-    /**
-     * @custom:scenario Call "setEMAPeriod" from admin.
-     * @custom:given The initial usdnProtocol state from admin wallet.
-     * @custom:when Admin wallet trigger admin contract function.
-     * @custom:then Revert because zero.
-     */
-    function test_RevertWhen_setEMAPeriodWithZero() external adminPrank {
-        // EMAPeriod zero disallowed
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidEMAPeriod.selector);
-        // set EMAPeriod
-        protocol.setEMAPeriod(0);
     }
 
     /**

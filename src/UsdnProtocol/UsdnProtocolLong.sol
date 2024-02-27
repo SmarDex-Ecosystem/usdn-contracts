@@ -33,7 +33,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         view
         returns (Position memory pos_)
     {
-        (bytes32 tickHash, uint256 version) = _tickHash(tick);
+        (bytes32 tickHash, uint256 version) = _getTickHash(tick);
         if (tickVersion != version) {
             revert UsdnProtocolOutdatedTick(version, tickVersion);
         }
@@ -42,7 +42,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /// @inheritdoc IUsdnProtocolLong
     function getLongPositionsLength(int24 tick) external view returns (uint256 len_) {
-        (bytes32 tickHash,) = _tickHash(tick);
+        (bytes32 tickHash,) = _getTickHash(tick);
         len_ = _positionsInTick[tickHash];
     }
 
@@ -210,7 +210,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         returns (uint256 tickVersion_, uint256 index_)
     {
         bytes32 tickHash;
-        (tickHash, tickVersion_) = _tickHash(tick);
+        (tickHash, tickVersion_) = _getTickHash(tick);
 
         // Adjust state
         _balanceLong += long.amount;
@@ -235,7 +235,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     function _removePosition(int24 tick, uint256 tickVersion, uint256 index) internal returns (Position memory pos_) {
-        (bytes32 tickHash, uint256 version) = _tickHash(tick);
+        (bytes32 tickHash, uint256 version) = _getTickHash(tick);
 
         if (version != tickVersion) {
             revert UsdnProtocolOutdatedTick(version, tickVersion);
@@ -308,7 +308,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             }
 
             // we have found a non-empty tick that needs to be liquidated
-            (bytes32 tickHash,) = _tickHash(tick);
+            (bytes32 tickHash,) = _getTickHash(tick);
             uint256 length = _positionsInTick[tickHash];
 
             uint256 tickTotalExpo = _totalExpoByTick[tickHash];

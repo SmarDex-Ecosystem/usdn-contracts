@@ -50,7 +50,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_getMinLiquidationPrice_multiplierGtOne() public {
         bytes memory priceData = abi.encode(4000 ether);
         uint128 desiredLiqPrice =
-            protocol.getLiquidationPrice(4000 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+            protocol.i_getLiquidationPrice(4000 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
 
         protocol.initiateOpenPosition(500 ether, desiredLiqPrice, priceData, "");
         protocol.validateOpenPosition(priceData, "");
@@ -117,11 +117,10 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
          */
         protocol.setMinLeverage(11 * 10 ** (protocol.LEVERAGE_DECIMALS() - 1)); // = x1.1
         assertEq(protocol.getMinLiquidationPrice(5000 ether), TickMath.getPriceAtTick(61_200));
-        vm.stopPrank();
     }
 
     /**
-     * @custom:scenario Check calculations of `positionValue`
+     * @custom:scenario Check calculations of `i_getPositionValue`
      * @custom:given A position for 1 wstETH with a starting price of $1000
      * @custom:and a leverage of 2x (liquidation price $500)
      * @custom:or a leverage of 4x (liquidation price $750)
@@ -137,16 +136,19 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_positionValue() public {
         // starting price is 1000 ether (liq at 500 with a leverage of 2x)
         uint256 value =
-            protocol.positionValue(2000 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+            protocol.i_getPositionValue(2000 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
         assertEq(value, 1.5 ether, "current price 2000");
 
-        value = protocol.positionValue(1000 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+        value =
+            protocol.i_getPositionValue(1000 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
         assertEq(value, 1 ether, "current price 1000");
 
-        value = protocol.positionValue(500 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+        value =
+            protocol.i_getPositionValue(500 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
         assertEq(value, 0 ether, "current price 500");
 
-        value = protocol.positionValue(2000 ether, 750 ether, 1 ether, uint128(4 * 10 ** protocol.LEVERAGE_DECIMALS()));
+        value =
+            protocol.i_getPositionValue(2000 ether, 750 ether, 1 ether, uint128(4 * 10 ** protocol.LEVERAGE_DECIMALS()));
         assertEq(value, 2.5 ether, "current price 2000 leverage 4x");
     }
 
@@ -205,7 +207,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion, uint256 index) =
             protocol.initiateOpenPosition(1 ether, desiredLiqPrice, abi.encode(price), "");
 
-        totalExpoForTick = protocol.totalExpoByTick(tick);
+        totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
         Position memory position = protocol.getLongPosition(tick, tickVersion, index);
 
         // Calculate the total expo of the position after the initialization
@@ -243,7 +245,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             "Total expo should have increased by the position's new total expo"
         );
 
-        totalExpoForTick = protocol.totalExpoByTick(tick);
+        totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
         assertEq(totalExpoForTick, expectedPositionTotalExpo, "Total expo on tick is not the expected value");
     }
 

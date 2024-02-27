@@ -411,7 +411,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 usdnToMint2 = _calcMintUsdn(
             deposit.amount,
             uint256(
-                _vaultAssetAvailable(
+                _getVaultAssetAvailable(
                     deposit.totalExpo,
                     deposit.balanceVault,
                     deposit.balanceLong,
@@ -480,7 +480,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 available1 = withdrawal.balanceVault;
         uint256 available2 = uint256(
-            _vaultAssetAvailable(
+            _getVaultAssetAvailable(
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
@@ -541,7 +541,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             }
         }
 
-        (bytes32 tickHash, uint256 version) = _tickHash(long.tick);
+        (bytes32 tickHash, uint256 version) = _getTickHash(long.tick);
         if (version != long.tickVersion) {
             // The current tick version doesn't match the version from the pending action.
             // This means the position has been liquidated in the mean time
@@ -677,7 +677,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         uint128 lastPrice = _lastPrice;
         // calculate amount to transfer
-        int256 available = _longAssetAvailable(lastPrice);
+        int256 available = _getLongAssetAvailable(lastPrice);
         if (available <= 0) {
             return 0;
         }
