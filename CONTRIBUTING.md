@@ -71,7 +71,7 @@ setup function.
 
 ### Test files
 
-Inside the contract sub-folder, test files should be named `ContractName.function.t.sol` where `function` is the name
+Inside the contract sub-folder, test files should be named `function.t.sol` where `function` is the name
 of the function being tested. For very small functions, they can be grouped in a single file/contract named accordingly.
 
 The contract name inside that file should be `TestContractNameMethod`.
