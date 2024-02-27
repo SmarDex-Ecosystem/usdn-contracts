@@ -104,9 +104,10 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Even if the iteration parameter is above MAX_LIQUIDATION_ITERATION,
      * we will only iterate an amount of time equal to MAX_LIQUIDATION_ITERATION
-     * @custom:given MAX_LIQUIDATION_ITERATION + 1 ticks can be liquidated
-     * @custom:when User calls _liquidatePositions with a iteration parameter set at MAX_LIQUIDATION_ITERATION + 1
-     * @custom:then It should liquidate MAX_LIQUIDATION_ITERATION positions.
+     * @custom:given MAX_LIQUIDATION_ITERATION + 1 tick can be liquidated
+     * @custom:when User calls _liquidatePositions with an iteration parameter set at MAX_LIQUIDATION_ITERATION + 1
+     * @custom:then It should liquidate MAX_LIQUIDATION_ITERATION ticks.
+     * @custom:and There should be 1 tick left to liquidate.
      */
     function test_liquidationIterationsAreCapped() public {
         uint128 price = 2000 ether;
@@ -140,7 +141,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         // Make sure no more than MAX_LIQUIDATION_ITERATION events have been emitted
         vm.recordLogs();
-        (uint256 liquidatedPositions,,) = protocol.i_liquidatePositions(uint256(liqPrice), maxIterations + 1);
+        (, uint256 liquidatedTicks,) = protocol.i_liquidatePositions(uint256(liqPrice), maxIterations + 1);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(
@@ -150,9 +151,9 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
 
         assertEq(
-            liquidatedPositions,
+            liquidatedTicks,
             maxIterations,
-            "The amount of positions liquidated should be equal to MAX_LIQUIDATION_ITERATION"
+            "The amount of ticks liquidated should be equal to MAX_LIQUIDATION_ITERATION"
         );
 
         assertEq(

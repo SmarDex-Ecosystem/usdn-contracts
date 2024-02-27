@@ -221,7 +221,7 @@ TestUsdnProtocolLong:test_validateAPositionAfterPriceChangedRecalculateLeverageA
 TestUsdnProtocolLongLiquidatePositions:test() (gas: 208)
 TestUsdnProtocolLongLiquidatePositions:test_canLiquidateAPosition() (gas: 429515)
 TestUsdnProtocolLongLiquidatePositions:test_canLiquidateTheLastPosition() (gas: 78544966)
-TestUsdnProtocolLongLiquidatePositions:test_liquidationIterationsAreCapped() (gas: 2921377)
+TestUsdnProtocolLongLiquidatePositions:test_liquidationIterationsAreCapped() (gas: 2921383)
 TestUsdnProtocolLongLiquidatePositions:test_nothingHappensWhenThereIsNothingToLiquidate() (gas: 28715)
 TestUsdnProtocolLongLiquidatePositions:test_setUp() (gas: 12345235)
 TestUsdnProtocolMultiplier:test() (gas: 208)
