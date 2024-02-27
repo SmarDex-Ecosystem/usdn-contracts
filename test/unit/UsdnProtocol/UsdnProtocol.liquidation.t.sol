@@ -67,7 +67,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion,) =
             setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
 
-        // Initates the deposit for the other user
+        // Initiates the deposit for the other user
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, price);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
@@ -190,7 +190,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion,) =
             setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
 
-        // Initates the position for the other user
+        // Initiates the position for the other user
         price -= 200 ether;
         desiredLiqPrice -= 200 ether;
         setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, price);
@@ -221,7 +221,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) =
             setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
 
-        // Initates and validates the position for the other user
+        // Initiates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
         (int24 tickToClose, uint256 tickVersionToClose, uint256 indexToClose) =
             setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, price);
@@ -259,7 +259,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) =
             setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
 
-        // Initates and validates the position for the other user
+        // Initiates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
         setUpUserPositionInLong(address(this), ProtocolAction.InitiateClosePosition, 1 ether, desiredLiqPrice, price);
 

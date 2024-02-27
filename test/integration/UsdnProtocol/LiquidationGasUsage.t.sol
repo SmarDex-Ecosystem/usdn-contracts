@@ -6,6 +6,7 @@ import { PYTH_STETH_USD } from "test/utils/Constants.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 
 /**
@@ -71,14 +72,15 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
             liquidationRewardsManager.getRewardsParameters();
         vm.warp(pythTimestamp);
 
+        uint256 oracleFee = mockOracle.validationCost(data, ProtocolAction.Liquidation);
+        uint256[] memory gasUsedArray = new uint256[](3);
+
         // Take a snapshot to re-do liquidations with different iterations
         uint256 snapshotId = vm.snapshot();
-
-        uint256[] memory gasUsedArray = new uint256[](3);
         for (uint16 ticksToLiquidate = 1; ticksToLiquidate <= 3; ++ticksToLiquidate) {
             // Get a price that liquidates `ticksToLiquidate` ticks
             uint256 startGas = gasleft();
-            uint256 positionsLiquidated = protocol.liquidate{ value: 1 }(data, ticksToLiquidate);
+            uint256 positionsLiquidated = protocol.liquidate{ value: oracleFee }(data, ticksToLiquidate);
             uint256 gasUsed = startGas - gasleft();
             gasUsedArray[ticksToLiquidate - 1] = gasUsed;
 
