@@ -5,9 +5,6 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-
 /**
  * @custom:feature Test the _assetToTransfer internal function of the actions layer
  */

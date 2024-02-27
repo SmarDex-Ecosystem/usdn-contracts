@@ -2,24 +2,18 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
-import { PYTH_STETH_USD, WSTETH } from "test/utils/Constants.sol";
-import {
-    PYTH_DATA,
-    PYTH_DATA_STETH_PRICE,
-    PYTH_DATA_TIMESTAMP
-} from "test/integration/OracleMiddleware/utils/Constants.sol";
+import { PYTH_STETH_USD } from "test/utils/Constants.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Checking the gas usage of a liquidation.
  * @custom:background Given a forked ethereum mainnet chain
  */
 contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationFixture {
-    MockWstEthOracleMiddleware mockOracle;
+    MockWstEthOracleMiddleware public mockOracle;
 
     function setUp() public override {
         params = DEFAULT_PARAMS;

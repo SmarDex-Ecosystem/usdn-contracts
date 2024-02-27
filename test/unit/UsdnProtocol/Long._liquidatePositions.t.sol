@@ -6,7 +6,6 @@ import { Vm } from "forge-std/Vm.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _liquidatePositions internal function of the long layer

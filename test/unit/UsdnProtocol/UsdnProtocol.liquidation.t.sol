@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-
-import { USER_1, USER_2, DEPLOYER } from "test/utils/Constants.sol";
+import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
