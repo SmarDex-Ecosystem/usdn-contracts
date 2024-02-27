@@ -20,9 +20,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The funding should be 0
      */
     function test_funding() public {
+        int256 longExpo = int256(protocol.totalExpo()) - int256(protocol.balanceLong());
         (int256 fund, int256 oldLongExpo) = protocol.funding(uint128(DEFAULT_PARAMS.initialTimestamp));
         assertEq(fund, 0, "funding should be 0 if no time has passed");
-        assertEq(oldLongExpo, 4.919970269703463156 ether, "longExpo if no time has passed");
+        assertEq(oldLongExpo, longExpo, "longExpo if no time has passed");
     }
 
     /**
