@@ -30,9 +30,9 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         (bool success,) = address(WST_ETH).call{ value: 10 ether }("");
         require(success, "USER_1 wstETH mint failed");
         WST_ETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{
-            value: wstethMiddleware.getValidationCost("", ProtocolAction.InitiateOpenPosition)
-        }(1 ether, 1000 ether, "", "");
+        protocol.initiateOpenPosition{ value: wstethMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
+            1 ether, 1000 ether, "", ""
+        );
         uint256 ts1 = block.timestamp;
         vm.stopPrank();
         skip(30);
@@ -40,9 +40,9 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         (success,) = address(WST_ETH).call{ value: 10 ether }("");
         require(success, "USER_2 wstETH mint failed");
         WST_ETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{
-            value: wstethMiddleware.getValidationCost("", ProtocolAction.InitiateOpenPosition)
-        }(1 ether, 1000 ether, "", "");
+        protocol.initiateOpenPosition{ value: wstethMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
+            1 ether, 1000 ether, "", ""
+        );
         uint256 ts2 = block.timestamp;
         vm.stopPrank();
 
@@ -51,9 +51,9 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
 
         // Second user tries to validate their action
         (,,, bytes memory data1) = getHermesApiSignature(PYTH_STETH_USD, ts1 + wstethMiddleware.getValidationDelay());
-        uint256 data1Fee = wstethMiddleware.getValidationCost(data1, ProtocolAction.ValidateOpenPosition);
+        uint256 data1Fee = wstethMiddleware.validationCost(data1, ProtocolAction.ValidateOpenPosition);
         (,,, bytes memory data2) = getHermesApiSignature(PYTH_STETH_USD, ts2 + wstethMiddleware.getValidationDelay());
-        uint256 data2Fee = wstethMiddleware.getValidationCost(data2, ProtocolAction.ValidateOpenPosition);
+        uint256 data2Fee = wstethMiddleware.validationCost(data2, ProtocolAction.ValidateOpenPosition);
         vm.prank(USER_2);
         protocol.validateOpenPosition{ value: data1Fee + data2Fee }(data2, data1);
         // No more pending action

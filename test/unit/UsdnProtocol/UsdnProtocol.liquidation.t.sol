@@ -517,11 +517,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // create high risk position
         protocol.initiateOpenPosition{
-            value: oracleMiddleware.getValidationCost(priceData, ProtocolAction.InitiateOpenPosition)
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
         }(5 ether, 9 * currentPrice / 10, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition{
-            value: oracleMiddleware.getValidationCost(priceData, ProtocolAction.ValidateOpenPosition)
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
         }(priceData, "");
         assertEq(protocol.getTotalLongPositions(), initialTotalPos + 1, "total positions after create");
 
@@ -530,7 +530,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         priceData = abi.encode(currentPrice);
 
         uint256 balanceBefore = address(this).balance;
-        uint256 validationCost = oracleMiddleware.getValidationCost(priceData, ProtocolAction.Liquidation);
+        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation);
         protocol.liquidate{ value: 0.5 ether }(priceData, 1);
         assertEq(protocol.getTotalLongPositions(), initialTotalPos, "total positions after liquidate");
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");

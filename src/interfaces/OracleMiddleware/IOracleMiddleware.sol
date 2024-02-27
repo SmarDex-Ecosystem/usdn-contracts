@@ -54,7 +54,7 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
      * @param action Type of action for which the price is requested.
      * @return The ETH cost of one price validation
      */
-    function getValidationCost(bytes calldata data, ProtocolAction action) external view returns (uint256);
+    function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256);
 
     /* -------------------------------------------------------------------------- */
     /*                               Owner features                               */

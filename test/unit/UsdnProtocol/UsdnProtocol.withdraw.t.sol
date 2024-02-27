@@ -137,7 +137,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
         uint256 balanceBefore = address(this).balance;
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        uint256 validationCost = oracleMiddleware.getValidationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(USDN_AMOUNT, currentPrice, "");
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
@@ -152,12 +152,12 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
         // initiate
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        uint256 validationCost = oracleMiddleware.getValidationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
+        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(USDN_AMOUNT, currentPrice, "");
 
         skip(oracleMiddleware.getValidationDelay() + 1);
         // validate
-        validationCost = oracleMiddleware.getValidationCost(currentPrice, ProtocolAction.ValidateWithdrawal);
+        validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateWithdrawal);
         uint256 balanceBefore = address(this).balance;
         protocol.validateWithdrawal{ value: 0.5 ether }(currentPrice, "");
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");

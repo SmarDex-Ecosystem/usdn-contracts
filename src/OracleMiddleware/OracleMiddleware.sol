@@ -106,7 +106,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getValidationCost(bytes calldata data, ProtocolAction) external view returns (uint256 result_) {
+    function validationCost(bytes calldata data, ProtocolAction) external view returns (uint256 result_) {
         if (data.length > 0) {
             result_ = _getPythUpdateFee(data);
         }

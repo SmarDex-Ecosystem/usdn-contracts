@@ -715,7 +715,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         internal
         returns (PriceInfo memory price_)
     {
-        uint256 validationCost = _oracleMiddleware.getValidationCost(priceData, action);
+        uint256 validationCost = _oracleMiddleware.validationCost(priceData, action);
         if (address(this).balance < validationCost) {
             revert UsdnProtocolInsufficientOracleFee();
         }

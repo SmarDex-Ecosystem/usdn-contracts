@@ -58,7 +58,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getValidationCost(bytes calldata, ProtocolAction) external view returns (uint256) {
+    function validationCost(bytes calldata, ProtocolAction) external view returns (uint256) {
         return _requireValidationCost ? 1 : 0;
     }
 

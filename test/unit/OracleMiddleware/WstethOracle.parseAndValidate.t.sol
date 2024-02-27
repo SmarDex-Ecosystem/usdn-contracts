@@ -61,7 +61,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
             }
 
             PriceInfo memory price = wstethOracle.parseAndValidatePrice{
-                value: wstethOracle.getValidationCost(abi.encode("data"), action)
+                value: wstethOracle.validationCost(abi.encode("data"), action)
             }(timestamp, action, abi.encode("data"));
 
             // Price + conf

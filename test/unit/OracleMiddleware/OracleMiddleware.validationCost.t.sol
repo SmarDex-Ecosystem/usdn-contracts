@@ -23,7 +23,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
      */
     function test_RevertWhen_validationCostWithUnsupportedAction() public {
         (bool success, bytes memory _data) = address(oracleMiddleware).call(
-            abi.encodeWithSelector(oracleMiddleware.getValidationCost.selector, abi.encode("data"), 11)
+            abi.encodeWithSelector(oracleMiddleware.validationCost.selector, abi.encode("data"), 11)
         );
 
         assertEq(success, false, "Function should revert");
@@ -36,7 +36,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
      * @custom:then The validation cost is the same as pythOracle
      */
     function test_parseAndValidatePriceWithData() public {
-        uint256 fee = oracleMiddleware.getValidationCost(abi.encode("data"), ProtocolAction.None);
+        uint256 fee = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
 
         assertEq(fee, mockPyth.getUpdateFee(data), "Wrong fee cost when data is not empty");
     }
@@ -47,7 +47,7 @@ contract TestOracleMiddlewareValidationCost is OracleMiddlewareBaseFixture {
      * @custom:then The validation cost is the same as pythOracle
      */
     function test_parseAndValidatePriceWithoutData() public {
-        uint256 fee = oracleMiddleware.getValidationCost("", ProtocolAction.None);
+        uint256 fee = oracleMiddleware.validationCost("", ProtocolAction.None);
 
         assertEq(fee, 0, "Fee should be 0 when there's no data");
     }
