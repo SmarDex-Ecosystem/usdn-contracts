@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import { ADMIN, DEPLOYER, CHAINLINK_ORACLE_GAS } from "test/utils/Constants.sol";
-import { WstethIntegrationFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
+import { WstethIntegrationFixture } from "test/integration/Middlewares/utils/Fixtures.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
