@@ -170,6 +170,36 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(uint96(LONG_AMOUNT), CURRENT_PRICE, abi.encode(CURRENT_PRICE), "");
     }
 
+    function test_validateOpenPosition() public {
+        uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
+        (int24 tick, uint256 tickVersion, uint256 index) =
+            protocol.initiateOpenPosition(uint96(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), "");
+
+        skip(oracleMiddleware.validationDelay() + 1);
+
+        uint128 newPrice = CURRENT_PRICE + 10 ether;
+
+        vm.expectEmit(true, true, true, false);
+        emit ValidatedOpenPosition(address(this), 0, newPrice, tick, tickVersion, index); // expected
+            // event
+        protocol.validateOpenPosition(abi.encode(newPrice), "");
+    }
+
+    /**
+     * @custom:scenario The user sends too much ether when initiating a position opening
+     * @custom:given The user opens a position
+     * @custom:when The user sends 0.5 ether as value in the `initiateOpenPosition` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_initiateOpenPositionEtherRefund() public {
+        oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
+        uint256 balanceBefore = address(this).balance;
+        bytes memory priceData = abi.encode(uint128(2000 ether));
+        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition);
+        protocol.initiateOpenPosition{ value: 0.5 ether }(uint96(LONG_AMOUNT), 1000 ether, priceData, "");
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
     // test refunds
     receive() external payable { }
 }
