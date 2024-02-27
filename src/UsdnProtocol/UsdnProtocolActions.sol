@@ -22,6 +22,7 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
+    using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
     using LibBitmap for LibBitmap.Bitmap;
 
@@ -324,19 +325,52 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
-        returns (uint256 liquidated_)
+        returns (uint256 liquidatedPositions_)
     {
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
 
         _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
-        liquidated_ = _liquidatePositions(currentPrice.neutralPrice, iterations);
-
-        // TODO: add liquidator incentive if needed
+        uint16 liquidatedTicks;
+        int256 liquidatedCollateral;
+        (liquidatedPositions_, liquidatedTicks, liquidatedCollateral) =
+            _liquidatePositions(currentPrice.neutralPrice, iterations);
 
         _refundExcessEther();
         _checkPendingFee();
+
+        if (liquidatedTicks > 0) {
+            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral);
+        }
+    }
+
+    /**
+     * @notice Send rewards to the liquidator.
+     * @dev Should still emit an event if liquidationRewards = 0 to better keep track of those anomalies as rewards for
+     * those will be managed off-chain.
+     * @param liquidatedTicks The number of ticks that were liquidated.
+     * @param liquidatedCollateral The amount of collateral lost due to the liquidations.
+     */
+    function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 liquidatedCollateral) internal {
+        // Get how much we should give to the liquidator as rewards
+        uint256 liquidationRewards =
+            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, liquidatedCollateral);
+
+        // Avoid underflows in situation of extreme bad debt
+        if (_balanceVault < liquidationRewards) {
+            liquidationRewards = _balanceVault;
+        }
+
+        // Update the vault's balance
+        unchecked {
+            _balanceVault -= liquidationRewards;
+        }
+
+        // Transfer rewards (wsteth) to the liquidator
+        _asset.safeTransfer(msg.sender, liquidationRewards);
+
+        emit LiquidatorRewarded(msg.sender, liquidationRewards);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
@@ -570,9 +604,19 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             emit LiquidationPriceChanged(long.tick, long.tickVersion, long.index, tick, tickVersion, index);
             emit ValidatedOpenPosition(pos.user, pos.leverage, startPrice, tick, tickVersion, index);
         } else {
-            // simply update pos in storage
             Position storage pos = _longPositions[tickHash][long.index];
+
+            // Calculate the total expo with the old and new leverage
+            uint256 expoBefore = FixedPointMathLib.fullMulDiv(pos.amount, pos.leverage, 10 ** LEVERAGE_DECIMALS);
+            uint256 expoAfter = FixedPointMathLib.fullMulDiv(pos.amount, leverage, 10 ** LEVERAGE_DECIMALS);
+
+            // Update the leverage of the position
             pos.leverage = leverage;
+            // Update the total expo by adding the position's new expo and removing the old one.
+            // Do not use += or it will underflow
+            _totalExpo = _totalExpo + expoAfter - expoBefore;
+            _totalExpoByTick[tickHash] = _totalExpoByTick[tickHash] + expoAfter - expoBefore;
+
             emit ValidatedOpenPosition(long.user, leverage, startPrice, long.tick, long.tickVersion, long.index);
         }
     }

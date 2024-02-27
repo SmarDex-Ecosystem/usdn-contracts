@@ -12,6 +12,7 @@ import {
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
@@ -27,9 +28,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
         IUsdn usdn,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
+        ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
-    ) UsdnProtocol(usdn, asset, oracleMiddleware, tickSpacing, feeCollector) { }
+    ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
     // tick version
     function tickVersion(int24 _tick) external view returns (uint256) {
@@ -65,8 +67,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     // Exponential Moving Average
-    function EMA() external view returns (int256) {
+    function getEMA() external view returns (int256) {
         return _EMA;
+    }
+
+    function fundingSF() external view returns (uint256) {
+        return _fundingSF;
     }
 
     // total long position
@@ -97,6 +103,16 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
+    }
+
+    function vaultAssetAvailable(
+        uint256 expo,
+        uint256 valutBalance,
+        uint256 longBalance,
+        uint128 newPrice,
+        uint128 oldPrice
+    ) external pure returns (int256) {
+        return _vaultAssetAvailable(expo, valutBalance, longBalance, newPrice, oldPrice);
     }
 
     function setMinLeverage(uint256 minLeverage) external {
@@ -166,6 +182,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_lastFunding() external view returns (int256) {
         return _lastFunding;
+    }
+
+    function getEMAPeriod() external view returns (uint256) {
+        return _EMAPeriod;
     }
 
     function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {

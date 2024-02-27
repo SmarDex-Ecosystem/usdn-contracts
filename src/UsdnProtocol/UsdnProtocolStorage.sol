@@ -7,6 +7,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { IUsdnProtocolStorage } from "src/interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
@@ -72,6 +73,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The oracle middleware contract.
     IOracleMiddleware internal _oracleMiddleware;
+
+    /// @notice The liquidation rewards manager contract.
+    ILiquidationRewardsManager internal _liquidationRewardsManager;
 
     /// @notice The minimum leverage for a position (1.000000001)
     uint256 internal _minLeverage = 10 ** LEVERAGE_DECIMALS + 10 ** 12;
@@ -189,6 +193,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * @param usdn The USDN ERC20 contract.
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
+     * @param liquidationRewardsManager_ The liquidation rewards manager contract.
      * @param tickSpacing_ The positions tick spacing.
      * @param feeCollector_ The address of the fee collector.
      */
@@ -196,6 +201,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         IUsdn usdn,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
+        ILiquidationRewardsManager liquidationRewardsManager_,
         int24 tickSpacing_,
         address feeCollector_
     ) {
@@ -216,6 +222,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         }
         _oracleMiddleware = oracleMiddleware;
         _priceFeedDecimals = oracleMiddleware.decimals();
+        _liquidationRewardsManager = liquidationRewardsManager_;
         _tickSpacing = tickSpacing_;
         _feeCollector = feeCollector_;
     }
@@ -238,6 +245,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function liquidationMultiplier() external view returns (uint256) {
         return _liquidationMultiplier;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function liquidationRewardsManager() external view returns (address) {
+        return address(_liquidationRewardsManager);
     }
 
     /// @inheritdoc IUsdnProtocolStorage

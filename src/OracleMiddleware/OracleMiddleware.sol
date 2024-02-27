@@ -8,6 +8,7 @@ import { PythOracle } from "src/OracleMiddleware/oracles/PythOracle.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import {
     PriceInfo,
+    ChainlinkPriceInfo,
     ConfidenceInterval,
     FormattedPythPrice
 } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -36,10 +37,16 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
      * @param pythContract Address of the Pyth contract
      * @param pythPriceID The price ID of the asset in Pyth
      * @param chainlinkPriceFeed Address of the Chainlink price feed
+     * @param chainlinkTimeElapsedLimit Elapsed time tolerated for chainlink's data validity
      */
-    constructor(address pythContract, bytes32 pythPriceID, address chainlinkPriceFeed)
+    constructor(
+        address pythContract,
+        bytes32 pythPriceID,
+        address chainlinkPriceFeed,
+        uint256 chainlinkTimeElapsedLimit
+    )
         PythOracle(pythContract, pythPriceID)
-        ChainlinkOracle(chainlinkPriceFeed)
+        ChainlinkOracle(chainlinkPriceFeed, chainlinkTimeElapsedLimit)
         Ownable(msg.sender)
     { }
 
@@ -57,8 +64,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         if (action == ProtocolAction.None) {
             return getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.Initialize) {
-            // Use chainlink data to make deployment easier
-            return getChainlinkOnChainPrice();
+            return getOnChainPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.ValidateDeposit) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
             // of price inaccuracies
@@ -78,13 +84,13 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             // Special case, if we pass a timestamp of zero, then we accept all prices newer than `_recentPriceDelay`
             return getPythOrChainlinkDataStreamPrice(data, 0, ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateDeposit) {
-            return getChainlinkOnChainPrice();
+            return getOnChainPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateWithdrawal) {
-            return getChainlinkOnChainPrice();
+            return getOnChainPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateOpenPosition) {
-            return getChainlinkOnChainPrice();
+            return getOnChainPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateClosePosition) {
-            return getChainlinkOnChainPrice();
+            return getOnChainPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
         }
     }
 
@@ -103,13 +109,16 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         private
         returns (PriceInfo memory price_)
     {
+        // If actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
+        if (actionTimestamp > 0) {
+            actionTimestamp += uint64(_validationDelay);
+        }
         /**
          * @dev Fetch the price from Pyth, return a price at -1 if it fails
          * Add the validation delay to the action timestamp to get the timestamp of the price data used to
          * validate
          */
-        FormattedPythPrice memory pythPrice =
-            getFormattedPythPrice(data, actionTimestamp + uint64(_validationDelay), DECIMALS);
+        FormattedPythPrice memory pythPrice = getFormattedPythPrice(data, actionTimestamp, DECIMALS);
 
         if (conf == ConfidenceInterval.Down) {
             price_.price = uint256(pythPrice.price) - ((pythPrice.conf * _confRatio) / CONF_RATIO_DENOM);
@@ -123,9 +132,33 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         price_.neutralPrice = uint256(pythPrice.price);
     }
 
-    /// @dev Get the price from Chainlink onChain.
-    function getChainlinkOnChainPrice() private view returns (PriceInfo memory) {
-        return getFormattedChainlinkPrice(DECIMALS);
+    /// @dev If the data parameter is not empty, get the price from pyth, else, get it from chainlink.
+    function getOnChainPrice(bytes calldata data, uint64 actionTimestamp, ConfidenceInterval conf)
+        private
+        returns (PriceInfo memory)
+    {
+        // If data is not empty, use pyth
+        if (data.length > 0) {
+            return getPythOrChainlinkDataStreamPrice(data, actionTimestamp, conf);
+        }
+
+        ChainlinkPriceInfo memory chainlinkOnChainPrice = getFormattedChainlinkPrice(DECIMALS);
+
+        // If the price equals PRICE_TOO_OLD then the tolerated time elapsed for price validity was exceeded, revert.
+        if (chainlinkOnChainPrice.price == PRICE_TOO_OLD) {
+            revert OracleMiddlewarePriceTooOld(chainlinkOnChainPrice.timestamp);
+        }
+
+        // If the price is less than 0, revert.
+        if (chainlinkOnChainPrice.price < 0) {
+            revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
+        }
+
+        return PriceInfo({
+            price: uint256(chainlinkOnChainPrice.price),
+            neutralPrice: uint256(chainlinkOnChainPrice.price),
+            timestamp: chainlinkOnChainPrice.timestamp
+        });
     }
 
     /* -------------------------------------------------------------------------- */
@@ -137,6 +170,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         return _validationDelay;
     }
 
+    /// @inheritdoc IOracleMiddleware
+    function getChainlinkTimeElapsedLimit() external view returns (uint256) {
+        return _timeElapsedLimit;
+    }
+
     /// @notice Returns the number of decimals for the price (constant)
     function decimals() external pure returns (uint8) {
         return DECIMALS;
@@ -144,33 +182,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /**
      * @notice Returns the ETH cost of one price validation for the given action
+     * @dev We don't use the protocol action parameter for now
      * @param data The data used to get the price
-     * @param action The action to validate
      */
-    function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256 _result) {
-        // TODO: Validate each ConfidenceInterval
-        if (action == ProtocolAction.None) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.Initialize) {
-            return 0;
-        } else if (action == ProtocolAction.ValidateDeposit) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.ValidateWithdrawal) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.ValidateOpenPosition) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.ValidateClosePosition) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.Liquidation) {
-            return getPythUpdateFee(data);
-        } else if (action == ProtocolAction.InitiateDeposit) {
-            return 0;
-        } else if (action == ProtocolAction.InitiateWithdrawal) {
-            return 0;
-        } else if (action == ProtocolAction.InitiateOpenPosition) {
-            return 0;
-        } else if (action == ProtocolAction.InitiateClosePosition) {
-            return 0;
+    function validationCost(bytes calldata data, ProtocolAction) external view returns (uint256 result_) {
+        if (data.length > 0) {
+            result_ = getPythUpdateFee(data);
         }
     }
 
@@ -212,6 +229,13 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @inheritdoc IOracleMiddleware
     function updateValidationDelay(uint256 _newValidationDelay) external onlyOwner {
         _validationDelay = _newValidationDelay;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function updateChainlinkTimeElapsedLimit(uint256 timeElapsedLimit) external onlyOwner {
+        _timeElapsedLimit = timeElapsedLimit;
+
+        emit TimeElapsedLimitUpdated(timeElapsedLimit);
     }
 
     /**

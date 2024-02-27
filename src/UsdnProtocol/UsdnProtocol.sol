@@ -16,6 +16,7 @@ import {
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
@@ -26,14 +27,12 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     /// @dev The minimum amount of wstETH for the initialization deposit and long.
     uint256 public constant MIN_INIT_DEPOSIT = 1 ether;
 
-    /// @dev The amount of collateral for the first "dead" long position.
-    uint128 public constant FIRST_LONG_AMOUNT = 1000;
-
     /**
      * @notice Constructor.
      * @param usdn The USDN ERC20 contract.
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
+     * @param liquidationRewardsManager The liquidation rewards manager contract.
      * @param tickSpacing The positions tick spacing.
      * @param feeCollector The address of the fee collector.
      */
@@ -41,9 +40,13 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         IUsdn usdn,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
+        ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
-    ) Ownable(msg.sender) UsdnProtocolStorage(usdn, asset, oracleMiddleware, tickSpacing, feeCollector) { }
+    )
+        Ownable(msg.sender)
+        UsdnProtocolStorage(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
+    { }
 
     /**
      * @notice Initialize the protocol.
@@ -104,27 +107,42 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Transfer the wstETH for the long
         _asset.safeTransferFrom(msg.sender, address(this), longAmount);
 
-        // Create long positions with min leverage
-        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), minTick());
         _createInitialPosition(
             msg.sender,
-            longAmount - FIRST_LONG_AMOUNT,
+            longAmount,
             currentPrice.price.toUint128(),
-            getEffectiveTickForPrice(desiredLiqPrice) // no liquidation penalty
+            getEffectiveTickForPrice(desiredLiqPrice) // without penalty
         );
 
         _refundExcessEther();
     }
 
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
-        uint128 liquidationPrice = getEffectivePriceForTick(tick);
-        uint128 leverage = _getLeverage(price, liquidationPrice);
+        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
+        uint128 leverage = _getLeverage(price, liquidationPriceWithoutPenalty);
+        // apply liquidation penalty to the deployer's position
+        tick = tick + int24(_liquidationPenalty) * _tickSpacing;
         Position memory long =
             Position({ user: user, amount: amount, leverage: leverage, timestamp: uint40(block.timestamp) });
         // Save the position and update the state
         (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
         emit InitiatedOpenPosition(user, long.timestamp, long.leverage, long.amount, price, tick, tickVersion, index);
         emit ValidatedOpenPosition(user, long.leverage, price, tick, tickVersion, index);
+    }
+
+    /**
+     * @notice Replace the LiquidationRewardsManager contract with a new implementation.
+     * @dev Cannot be the 0 address.
+     * @param newLiquidationRewardsManager the address of the new contract.
+     */
+    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external onlyOwner {
+        if (newLiquidationRewardsManager == address(0)) {
+            revert UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
+        }
+
+        _liquidationRewardsManager = ILiquidationRewardsManager(newLiquidationRewardsManager);
+
+        emit LiquidationRewardsManagerUpdated(newLiquidationRewardsManager);
     }
 
     /// @inheritdoc IUsdnProtocol

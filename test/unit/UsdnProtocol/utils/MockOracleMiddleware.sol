@@ -16,6 +16,8 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     uint16 private constant CONF_RATIO_DENOM = 10_000;
     uint16 private constant MAX_CONF_RATIO = CONF_RATIO_DENOM * 2;
     uint16 private _confRatio = 4000; // to divide by CONF_RATIO_DENOM
+    uint256 internal _validationDelay = 24 seconds;
+    uint256 internal _timeElapsedLimit = 1 hours;
     // if true, then the middleware requires a payment of 1 wei for any action
     bool internal _requireValidationCost = false;
 
@@ -62,7 +64,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function validationDelay() external view returns (uint256) {
+    function validationDelay() external pure returns (uint256) {
         return VALIDATION_DELAY;
     }
 
@@ -87,7 +89,9 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function updateValidationDelay(uint256 newDelay) external onlyOwner { }
+    function updateValidationDelay(uint256 newDelay) external onlyOwner {
+        _validationDelay = newDelay;
+    }
 
     /// @inheritdoc IOracleMiddleware
     function setConfRatio(uint16 newConfRatio) external onlyOwner {
@@ -96,6 +100,15 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
             revert IOracleMiddlewareErrors.OracleMiddlewareConfRatioTooHigh();
         }
         _confRatio = newConfRatio;
+    }
+
+    function getChainlinkTimeElapsedLimit() external view returns (uint256) {
+        return _timeElapsedLimit;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function updateChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external {
+        _timeElapsedLimit = newTimeElapsedLimit;
     }
 
     function requireValidationCost() external view returns (bool) {

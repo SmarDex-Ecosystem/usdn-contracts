@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity >=0.8.0;
 
 /**
  * @title IOracleMiddlewareErrors
@@ -10,7 +10,7 @@ interface IOracleMiddlewareErrors {
     error OracleMiddlewareWrongPrice(int256 price);
 
     /// @notice The oracle price is invalid (too old)
-    error OracleMiddlewarePriceTooOld(int256 price, uint256 timestamp);
+    error OracleMiddlewarePriceTooOld(uint256 timestamp);
 
     /// @notice the confidence ratio is too high
     error OracleMiddlewareConfRatioTooHigh();

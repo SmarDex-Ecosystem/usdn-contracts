@@ -5,8 +5,11 @@ import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
+import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
+import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -37,9 +40,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     Usdn public usdn;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
+    MockChainlinkOnChain public chainlinkGasPriceFeed;
+    LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
-    uint128 public defaultPosLeverage;
     uint128 public initialLongLeverage;
     address[] public users;
 
@@ -49,8 +53,18 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdn = new Usdn(address(0), address(0));
         wstETH = new WstETH();
         oracleMiddleware = new MockOracleMiddleware();
-        // tick spacing 100 = 1%, feeCollector = ADMIN
-        protocol = new UsdnProtocolHandler(usdn, wstETH, oracleMiddleware, 100, ADMIN);
+        chainlinkGasPriceFeed = new MockChainlinkOnChain();
+        liquidationRewardsManager =
+            new LiquidationRewardsManager(address(chainlinkGasPriceFeed), IWstETH(address(wstETH)), 2 days);
+
+        protocol = new UsdnProtocolHandler(
+            usdn,
+            wstETH,
+            oracleMiddleware,
+            liquidationRewardsManager,
+            100, // tick spacing 100 = 1%
+            ADMIN // Fee collector
+        );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
@@ -60,19 +74,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
-        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0, 0);
-        Position memory firstPos =
-            protocol.getLongPosition(protocol.getEffectiveTickForPrice(testParams.initialPrice / 2), 0, 0);
+        Position memory firstPos = protocol.getLongPosition(
+            protocol.getEffectiveTickForPrice(testParams.initialPrice / 2)
+                + int24(protocol.liquidationPenalty()) * protocol.tickSpacing(),
+            0,
+            0
+        );
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();
-        defaultPosLeverage = defaultPos.leverage;
         initialLongLeverage = firstPos.leverage;
         params = testParams;
-        // initialize x10 EOA addresses with 10K ETH and ~8.5K WSTETH
-        createAndFundUsers(10, 10_000 ether);
     }
 
     function test_setUp() public {
@@ -86,36 +100,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdnTotalSupply -= usdnTotalSupply * protocol.positionFee() / protocol.BPS_DIVISOR();
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
-        Position memory defaultPos = protocol.getLongPosition(protocol.minTick(), 0, 0);
-        assertEq(defaultPos.leverage, 1_000_000_000_000_000_005_039, "default pos leverage");
-        assertEq(defaultPos.timestamp, block.timestamp, "default pos timestamp");
-        assertEq(defaultPos.user, protocol.DEAD_ADDRESS(), "default pos user");
-        assertEq(defaultPos.amount, protocol.FIRST_LONG_AMOUNT(), "default pos amount");
-        Position memory firstPos =
-            protocol.getLongPosition(protocol.getEffectiveTickForPrice(params.initialPrice / 2), 0, 0);
+        Position memory firstPos = protocol.getLongPosition(
+            protocol.getEffectiveTickForPrice(params.initialPrice / 2)
+                + int24(protocol.liquidationPenalty()) * protocol.tickSpacing(),
+            0,
+            0
+        );
         assertEq(firstPos.leverage, 1_983_994_053_940_692_631_258, "first pos leverage");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
-        assertEq(firstPos.amount, params.initialLong - protocol.FIRST_LONG_AMOUNT(), "first pos amount");
+        assertEq(firstPos.amount, params.initialLong, "first pos amount");
         assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
         assertEq(protocol.feeCollector(), ADMIN, "fee collector");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
-    }
-
-    // create userCount funded addresses with ETH and underlying
-    function createAndFundUsers(uint256 userCount, uint256 initialBalance) public {
-        for (uint256 i; i < userCount; i++) {
-            address user = vm.addr(i + 1);
-            vm.deal(user, initialBalance * 2);
-            vm.startPrank(user);
-            (bool success,) = address(wstETH).call{ value: initialBalance }("");
-            require(success, "swap asset error");
-            wstETH.approve(address(protocol), type(uint256).max);
-            assertTrue(wstETH.balanceOf(user) != 0, "user with empty wallet");
-            vm.stopPrank();
-
-            users.push(user);
-        }
     }
 
     /**

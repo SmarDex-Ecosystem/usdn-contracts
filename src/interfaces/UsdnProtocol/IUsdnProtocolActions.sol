@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity >=0.8.0;
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 
@@ -164,10 +164,10 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * At least one tick will be liquidated, even if the `iterations` parameter is zero.
      * @param currentPriceData The most recent price data
      * @param iterations The maximum number of ticks to liquidate
-     * @return liquidated_ The number of ticks that were liquidated
+     * @return liquidatedPositions_ The number of positions that were liquidated
      */
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
-        returns (uint256 liquidated_);
+        returns (uint256 liquidatedPositions_);
 }

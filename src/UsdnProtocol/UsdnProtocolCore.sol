@@ -58,7 +58,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return (0, longExpo_, vaultExpo_);
         }
 
-        // fund = (+-) ((longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
+        // ImbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
+        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) + _EMA
+        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
         int256 numerator = longExpo_ - vaultExpo_;
@@ -66,6 +68,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (numerator == 0) {
             return (_EMA, longExpo_, vaultExpo_);
         }
+
+        if ((vaultExpo_ * longExpo_) <= 0 && (vaultExpo_ < 0 || longExpo_ < 0)) {
+            // if the product is negative, then vaultExpo_ or longExpo_ is negative
+            // if it's zero, we check if one of the two is negative
+            if (vaultExpo_ < 0) {
+                // if vaultExpo_ is negative, then we cap the imbalance index to 1
+                return (int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
+            } else {
+                // if longExpo_ is negative, then we cap the imbalance index to -1
+                return (-int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
+            }
+        }
+
         uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
         uint256 numerator_squared = uint256(numerator * numerator);
 
@@ -353,11 +368,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
      * @dev This function is called every time the protocol state is updated
      * @dev All required checks are done in the caller function (_applyPnlAndFunding)
+     * @dev If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
+     * funding value
      */
     function _updateEMA(uint128 secondsElapsed) internal {
         // cache variable for optimization
-        int256 intEMAPeriod = _toInt256(_EMAPeriod);
-        _EMA = (_lastFunding + _EMA * (intEMAPeriod - _toInt256(secondsElapsed))) / intEMAPeriod;
+        uint128 emaPeriod = _EMAPeriod;
+
+        if (secondsElapsed >= emaPeriod) {
+            _EMA = _lastFunding;
+            return;
+        }
+
+        _EMA = (_lastFunding + _EMA * (_toInt256(emaPeriod) - _toInt256(secondsElapsed))) / _toInt256(emaPeriod);
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {

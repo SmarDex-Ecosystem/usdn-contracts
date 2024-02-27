@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity >=0.8.0;
 
 /**
  * @title IUsdnProtocolErrors
@@ -59,6 +59,9 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided protocol fee exceeds the maximum allowed
     error UsdnProtocolMaxProtocolFeeExceeded();
+
+    /// @dev Indicates that the provided address for the LiquidationRewardsManager contract is the 0 address
+    error UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
 
     /// @dev Indicates that the provided fee percentage is invalid (> 100%)
     error UsdnProtocolInvalidProtocolFeeBps();
