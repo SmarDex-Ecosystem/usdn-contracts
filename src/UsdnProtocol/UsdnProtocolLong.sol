@@ -109,7 +109,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @notice Get the largest tick which contains at least one position
+     * @notice Find the largest tick which contains at least one position
      * @param searchStart The tick from which to start searching
      */
     function _findMaxInitializedTick(int24 searchStart) internal view returns (int24 tick_) {
