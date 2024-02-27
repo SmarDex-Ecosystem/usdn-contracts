@@ -587,6 +587,18 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
+     * @notice Clear the user pending action and return it
+     * @param user The user address
+     * @return action_ The cleared pending action struct
+     */
+    function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
+        uint128 rawIndex;
+        (action_, rawIndex) = _getPendingAction(user);
+        _pendingActionsQueue.clearAt(rawIndex);
+        delete _pendingActions[user];
+    }
+
+    /**
      * @notice Clear the pending action for a user
      * @param user The user address
      */
