@@ -378,7 +378,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         tempVaultBalance += remainingCollateral_;
         tempLongBalance -= remainingCollateral_;
 
-        // TODO: check if this is an acceptable solution
         // This can happen if the funding is larger than the remaining balance in the long side after applying PnL.
         // Test case: test_assetToTransferZeroBalance()
         if (tempLongBalance < 0) {
