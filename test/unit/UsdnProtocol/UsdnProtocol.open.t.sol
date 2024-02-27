@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction, LongPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, LongPendingAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The open position function of the USDN Protocol
@@ -170,19 +170,41 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(uint96(LONG_AMOUNT), CURRENT_PRICE, abi.encode(CURRENT_PRICE), "");
     }
 
+    /**
+     * @custom:scenario The user validates an open position action
+     * @custom:given The user has initiated an open position with 1 wstETH and a desired liquidation price of ~1333$
+     * @custom:and the price was 2000$ at the moment of initiation
+     * @custom:and the price has increased to 2100$
+     * @custom:when The user validates the open position with the new price
+     * @custom:then The protocol validates the position and emits the ValidatedOpenPosition event
+     * @custom:and the position's leverage decreases
+     * @custom:and the rest of the state changes as expected
+     */
     function test_validateOpenPosition() public {
+        uint256 initialTotalExpo = protocol.totalExpo();
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         (int24 tick, uint256 tickVersion, uint256 index) =
             protocol.initiateOpenPosition(uint96(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), "");
+        Position memory tempPos = protocol.getLongPosition(tick, tickVersion, index);
 
         skip(oracleMiddleware.validationDelay() + 1);
 
-        uint128 newPrice = CURRENT_PRICE + 10 ether;
+        uint128 newPrice = CURRENT_PRICE + 100 ether;
 
-        vm.expectEmit(true, true, true, false);
-        emit ValidatedOpenPosition(address(this), 0, newPrice, tick, tickVersion, index); // expected
-            // event
+        vm.expectEmit(true, false, false, false);
+        emit ValidatedOpenPosition(address(this), 0, newPrice, tick, tickVersion, index);
         protocol.validateOpenPosition(abi.encode(newPrice), "");
+
+        Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
+        assertEq(pos.user, tempPos.user, "user");
+        assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
+        assertEq(pos.amount, tempPos.amount, "amount");
+        // price increased -> leverage decreased
+        assertLt(pos.leverage, tempPos.leverage, "leverage");
+
+        uint256 posTotalExpo = LONG_AMOUNT * pos.leverage / uint256(10) ** protocol.LEVERAGE_DECIMALS();
+        assertEq(protocol.totalExpoByTick(tick), posTotalExpo, "total expo in tick");
+        assertEq(protocol.totalExpo(), initialTotalExpo + posTotalExpo, "total expo");
     }
 
     /**

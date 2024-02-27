@@ -225,7 +225,7 @@ TestUsdnProtocolOpenPosition:test_RevertWhen_initiateOpenPositionZeroAmount() (g
 TestUsdnProtocolOpenPosition:test_initiateOpenPosition() (gas: 375228)
 TestUsdnProtocolOpenPosition:test_initiateOpenPositionEtherRefund() (gas: 343474)
 TestUsdnProtocolOpenPosition:test_setUp() (gas: 12336569)
-TestUsdnProtocolOpenPosition:test_validateOpenPosition() (gas: 381906)
+TestUsdnProtocolOpenPosition:test_validateOpenPosition() (gas: 392768)
 TestUsdnProtocolPending:test() (gas: 208)
 TestUsdnProtocolPending:test_getActionablePendingAction() (gas: 371560)
 TestUsdnProtocolPending:test_getActionablePendingActionEmpty() (gas: 12729)
