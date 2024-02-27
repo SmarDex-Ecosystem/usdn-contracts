@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Based on the OpenZeppelin implementation
 
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 /**
  * @title InitializableReentrancyGuard
