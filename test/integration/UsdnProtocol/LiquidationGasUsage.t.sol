@@ -32,7 +32,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
      * @custom:when A liquidator calls the function liquidate
      * @custom:then The gas usage matches the LiquidationRewardsManager parameters
      */
-    function test_gasUsageOfLiquidateFunction() public {
+    function test_forkGasUsageOfLiquidateFunction() public {
         (uint256 pythPrice,, uint256 pythTimestamp, bytes memory data) = getMockedPythSignature();
 
         // Use the mock oracle to open positions to avoid hermes calls
@@ -113,7 +113,4 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
             "The result should match the otherGasUsed parameter set in LiquidationRewardsManager's constructor"
         );
     }
-
-    // handle oracle fee refunds
-    receive() external payable { }
 }

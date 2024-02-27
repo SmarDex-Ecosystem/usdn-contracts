@@ -9,7 +9,6 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _liquidatePositions internal function of the long layer
-/// @custom:todo Add a test that liquidates the very last position of the protocol when it becomes possible
 contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -23,7 +22,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      * @custom:then Nothing should happen
      * @custom:and 0s should be returned
      */
-    function test_nothinHappensWhenThereIsNothingToLiquidate() external {
+    function test_nothingHappensWhenThereIsNothingToLiquidate() external {
         vm.recordLogs();
         (uint256 liquidatedPositions, uint16 liquidatedTicks, int256 remainingCollateral) =
             protocol.i_liquidatePositions(2000 ether, 1);
