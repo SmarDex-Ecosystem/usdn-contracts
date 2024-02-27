@@ -103,7 +103,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * @dev This function cannot return a value higher than the _gasPriceLimit storage variable.
      * @return gasPrice_ The gas price.
      */
-    function _getGasPrice(RewardsParameters memory rewardsParameters) private view returns (uint256 gasPrice_) {
+    function _getGasPrice(RewardsParameters memory rewardsParameters) internal view returns (uint256 gasPrice_) {
         ChainlinkPriceInfo memory priceInfo = _getChainlinkPrice();
 
         // If the gas price is invalid, return 0 and do not distribute rewards.

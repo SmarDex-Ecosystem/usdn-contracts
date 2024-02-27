@@ -155,7 +155,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
      * @param conf The confidence interval to use.
      */
     function _getPythOrChainlinkDataStreamPrice(bytes calldata data, uint64 actionTimestamp, ConfidenceInterval conf)
-        private
+        internal
         returns (PriceInfo memory price_)
     {
         // If actionTimestamp is 0 we're performing a liquidation and we don't add the validation delay
@@ -183,7 +183,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /// @dev If the data parameter is not empty, get the price from pyth, else, get it from chainlink.
     function _getOnChainPrice(bytes calldata data, uint64 actionTimestamp, ConfidenceInterval conf)
-        private
+        internal
         returns (PriceInfo memory)
     {
         // If data is not empty, use pyth
