@@ -42,39 +42,34 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         payable
         virtual
         override
-        returns (PriceInfo memory)
+        returns (PriceInfo memory price_)
     {
         // Parse and validate from parent wsteth middleware.
         // This aim to verify pyth price hermes signature in any case.
-        PriceInfo memory price;
+        if (_verifySignature || _wstethMockedPrice == 0) {
+            price_ = super.parseAndValidatePrice(targetTimestamp, action, data);
+        }
 
-        // If mocked price is not set.
+        // If mocked price is not set, return.
         if (_wstethMockedPrice == 0) {
-            return super.parseAndValidatePrice(targetTimestamp, action, data);
-            // If mocked price is set.
-        } else {
-            if (_verifySignature) {
-                price = super.parseAndValidatePrice(targetTimestamp, action, data);
-            }
+            return price_;
+        }
 
-            // neutralPrice.
-            price.neutralPrice = _wstethMockedPrice;
-            // price initialized with neutralPrice.
-            price.price = price.neutralPrice;
+        // neutralPrice.
+        price_.neutralPrice = _wstethMockedPrice;
+        // price initialized with neutralPrice.
+        price_.price = price_.neutralPrice;
 
-            // ConfidenceInterval Down cases
-            if (
-                action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition
-                    || action == ProtocolAction.Liquidation
-            ) {
-                price.price -= price.price * _wstethMockedConfPct / CONF_DENOM;
+        // ConfidenceInterval Down cases
+        if (
+            action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition
+                || action == ProtocolAction.Liquidation
+        ) {
+            price_.price -= price_.price * _wstethMockedConfPct / CONF_DENOM;
 
-                // ConfidenceInterval Up case
-            } else if (action == ProtocolAction.ValidateOpenPosition) {
-                price.price += price.price * _wstethMockedConfPct / CONF_DENOM;
-            }
-
-            return price;
+            // ConfidenceInterval Up case
+        } else if (action == ProtocolAction.ValidateOpenPosition) {
+            price_.price += price_.price * _wstethMockedConfPct / CONF_DENOM;
         }
     }
 
