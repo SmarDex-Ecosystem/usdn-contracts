@@ -37,7 +37,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @return longExpo_ The long trading exposure (with asset decimals)
      * @return vaultExpo_ The vault trading exposure (with asset decimals)
      */
-    function getFunding(uint128 currentPrice, uint128 timestamp)
+    function funding(uint128 currentPrice, uint128 timestamp)
         external
         view
         returns (int256 fund_, int256 longExpo_, int256 vaultExpo_);
@@ -53,7 +53,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @return vaultExpo_ The vault trading exposure (with asset decimals)
      * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
      */
-    function getFundingAsset(uint128 currentPrice, uint128 timestamp)
+    function fundingAsset(uint128 currentPrice, uint128 timestamp)
         external
         view
         returns (int256 fundingAsset_, int256 longExpo_, int256 vaultExpo_, int256 fund_);
@@ -65,7 +65,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
-    function getLongAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
 
     /**
      * @notice Get the predicted value of the vault balance for the given asset price and timestamp
@@ -74,10 +74,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
-    function getVaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (int256);
+    function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
 
     /**
      * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp
@@ -86,7 +83,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
-    function getLongTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
 
     /**
      * @notice Get the predicted value of the vault trading exposure for the given asset price and timestamp
@@ -95,7 +92,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
-    function getVaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
+    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
 
     /**
      * @notice Retrieve a pending action that must be validated by the next user action in the protocol.

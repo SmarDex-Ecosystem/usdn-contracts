@@ -13,7 +13,7 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
  * price of the USDN underlying asset.
  */
 abstract contract PythOracle is IOracleMiddlewareErrors {
-    uint256 private constant DECIMALS = 8;
+    uint256 internal constant DECIMALS = 8;
 
     bytes32 internal immutable _priceID;
     IPyth internal immutable _pyth;
@@ -46,7 +46,7 @@ abstract contract PythOracle is IOracleMiddlewareErrors {
      * @notice Get the Pyth price ID
      * @return priceID_ The Pyth price ID
      */
-    function getPriceID() public view returns (bytes32) {
+    function getPriceID() external view returns (bytes32) {
         return _priceID;
     }
 

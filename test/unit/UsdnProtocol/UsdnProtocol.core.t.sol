@@ -21,7 +21,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_funding() public {
         (int256 fund, int256 longExpo, int256 vaultExpo) =
-            protocol.getFunding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp));
+            protocol.funding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp));
         assertEq(fund, 0, "funding should be 0 if no time has passed");
         assertEq(longExpo, 4.919970269703463156 ether, "longExpo if no time has passed");
         assertEq(vaultExpo, 10 ether, "vaultExpo if no time has passed");
@@ -34,7 +34,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_funding_pastTimestamp() public {
         vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
-        protocol.getFunding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp) - 1);
+        protocol.funding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp) - 1);
     }
 
     /**
@@ -182,7 +182,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             protocol.i_vaultTradingExpo(price),
             "long and vault expos should be equal"
         );
-        (int256 fund_,,) = protocol.getFunding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
+        (int256 fund_,,) = protocol.funding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
         assertEq(fund_, protocol.getEMA(), "funding should be equal to EMA");
     }
 
@@ -228,7 +228,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         protocol.liquidate(abi.encode(price / 100), 10);
         int256 EMA = protocol.getEMA();
         uint256 fundingSF = protocol.getFundingSF();
-        (int256 fund_,,) = protocol.getFunding(price / 100, uint128(block.timestamp));
+        (int256 fund_,,) = protocol.funding(price / 100, uint128(block.timestamp));
         emit log_named_int("fund_", fund_);
         emit log_named_int("mul", -int256(fundingSF) + EMA);
     }

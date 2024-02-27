@@ -38,7 +38,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint256 amount,
         uint128 initLeverage
     ) external pure returns (uint256 value_) {
-        return _getPositionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
+        return _positionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
     }
 
     function i_removePendingAction(uint128 rawIndex, address user) external {
@@ -51,11 +51,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
-        return _getVaultTradingExpo(currentPrice);
+        return _vaultTradingExpo(currentPrice);
     }
 
     function i_longTradingExpo(uint128 currentPrice) external view returns (int256) {
-        return _getLongTradingExpo(currentPrice);
+        return _longTradingExpo(currentPrice);
     }
 
     function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {
@@ -87,7 +87,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {
-        return _getTickValue(currentPrice, tick, tickTotalExpo);
+        return _tickValue(currentPrice, tick, tickTotalExpo);
     }
 
     function i_getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
@@ -99,7 +99,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     function i_vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
-        return _getVaultAssetAvailable(currentPrice);
+        return _vaultAssetAvailable(currentPrice);
     }
 
     function i_tickHash(int24 tick) external view returns (bytes32, uint256) {
@@ -107,7 +107,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     function i_longAssetAvailable(uint128 currentPrice) external view returns (int256) {
-        return _getLongAssetAvailable(currentPrice);
+        return _longAssetAvailable(currentPrice);
     }
 
     function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {

@@ -23,7 +23,7 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
 contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Ownable {
     uint256 internal _validationDelay = 24 seconds;
 
-    uint8 private constant MIDDLEWARE_DECIMALS = 18;
+    uint8 internal constant MIDDLEWARE_DECIMALS = 18;
 
     /**
      * @param pythContract Address of the Pyth contract

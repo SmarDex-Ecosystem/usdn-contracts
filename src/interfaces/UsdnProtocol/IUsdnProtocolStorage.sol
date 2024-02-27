@@ -208,5 +208,5 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @param tick The tick number.
      * @param version The tick version.
      */
-    function getTickHash(int24 tick, uint256 version) external pure returns (bytes32);
+    function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
 }

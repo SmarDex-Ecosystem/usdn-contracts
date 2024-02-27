@@ -11,17 +11,17 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     using SafeCast for int256;
 
     /// @inheritdoc IUsdnProtocolVault
-    function getUsdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
+    function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
         price_ = FixedPointMathLib.fullMulDiv(
-            getVaultAssetAvailableWithFunding(currentPrice, timestamp).toUint256(),
+            vaultAssetAvailableWithFunding(currentPrice, timestamp).toUint256(),
             uint256(currentPrice) * 10 ** _usdnDecimals,
             _usdn.totalSupply() * 10 ** _assetDecimals
         );
     }
 
     /// @inheritdoc IUsdnProtocolVault
-    function getUsdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
-        price_ = getUsdnPrice(currentPrice, uint128(block.timestamp));
+    function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
+        price_ = usdnPrice(currentPrice, uint128(block.timestamp));
     }
 
     /**

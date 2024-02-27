@@ -38,18 +38,18 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return _liquidationMultiplier;
         }
 
-        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = getFunding(currentPrice, timestamp);
+        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
         return _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getFunding(uint128 currentPrice, uint128 timestamp)
+    function funding(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
     {
-        vaultExpo_ = _getVaultTradingExpo(currentPrice);
-        longExpo_ = _getLongTradingExpo(currentPrice);
+        vaultExpo_ = _vaultTradingExpo(currentPrice);
+        longExpo_ = _longTradingExpo(currentPrice);
 
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
@@ -109,51 +109,47 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getFundingAsset(uint128 currentPrice, uint128 timestamp)
+    function fundingAsset(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 fundingAsset_, int256 longExpo_, int256 vaultExpo_, int256 fund_)
     {
-        (fund_, longExpo_, vaultExpo_) = getFunding(currentPrice, timestamp);
+        (fund_, longExpo_, vaultExpo_) = funding(currentPrice, timestamp);
         fundingAsset_ = fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getLongAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 available_)
     {
-        (int256 fundAsset,,,) = getFundingAsset(currentPrice, timestamp);
-        available_ = _getLongAssetAvailable(currentPrice).safeSub(fundAsset);
+        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getVaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+    function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 available_)
     {
-        (int256 fundAsset,,,) = getFundingAsset(currentPrice, timestamp);
-        available_ = _getVaultAssetAvailable(currentPrice).safeAdd(fundAsset);
+        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getLongTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
+        expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
         external
         view
         returns (int256 expo_)
     {
-        expo_ = _totalExpo.toInt256().safeSub(getLongAssetAvailableWithFunding(currentPrice, timestamp));
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function getVaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (int256 expo_)
-    {
-        expo_ = getVaultAssetAvailableWithFunding(currentPrice, timestamp);
+        expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -241,7 +237,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param newPrice The new price
      * @param oldPrice The old price
      */
-    function _getPnlLong(uint256 totalExpo, uint128 newPrice, uint128 oldPrice) internal view returns (int256 pnl_) {
+    function _pnlLong(uint256 totalExpo, uint128 newPrice, uint128 oldPrice) internal view returns (int256 pnl_) {
         int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
         pnl_ = totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
     }
@@ -254,7 +250,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param newPrice The new price
      * @param oldPrice The old price when the old balance was updated
      */
-    function _getPnlAsset(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
+    function _pnlAsset(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
         internal
         pure
         returns (int256 pnl_)
@@ -269,8 +265,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
      * due to the price change to `currentPrice`.
      */
-    function _getLongAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        available_ = _getLongAssetAvailable(_totalExpo, _balanceLong, currentPrice, _lastPrice);
+    function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
+        available_ = _longAssetAvailable(_totalExpo, _balanceLong, currentPrice, _lastPrice);
     }
 
     /**
@@ -280,7 +276,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param newPrice The new price
      * @param oldPrice The old price when the old balance was updated
      */
-    function _getLongAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
+    function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
         internal
         pure
         returns (int256 available_)
@@ -291,7 +287,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return 0;
         }
 
-        available_ = balanceLong.toInt256().safeAdd(_getPnlAsset(totalExpo, balanceLong, newPrice, oldPrice));
+        available_ = balanceLong.toInt256().safeAdd(_pnlAsset(totalExpo, balanceLong, newPrice, oldPrice));
     }
 
     /**
@@ -299,8 +295,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * account).
      * @param currentPrice Current price
      */
-    function _getVaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        available_ = _getVaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, currentPrice, _lastPrice);
+    function _vaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
+        available_ = _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, currentPrice, _lastPrice);
     }
 
     /**
@@ -312,7 +308,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param newPrice the new price
      * @param oldPrice the old price when the old balances were updated
      */
-    function _getVaultAssetAvailable(
+    function _vaultAssetAvailable(
         uint256 totalExpo,
         uint256 balanceVault,
         uint256 balanceLong,
@@ -320,7 +316,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         uint128 oldPrice
     ) internal pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
-        int256 newLongBalance = _getLongAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
+        int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
         if (newLongBalance < 0) {
             newLongBalance = 0;
         }
@@ -331,13 +327,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @dev At the time of the last balance update (without taking funding into account)
-    function _getLongTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
-        expo_ = _totalExpo.toInt256().safeSub(_getLongAssetAvailable(currentPrice));
+    function _longTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
+        expo_ = _totalExpo.toInt256().safeSub(_longAssetAvailable(currentPrice));
     }
 
     /// @dev At the time of the last balance update (without taking funding into account)
-    function _getVaultTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
-        expo_ = _getVaultAssetAvailable(currentPrice);
+    function _vaultTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
+        expo_ = _vaultAssetAvailable(currentPrice);
     }
 
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) internal returns (bool priceUpdated_) {
@@ -349,13 +345,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
 
         _updateEMA(timestamp - lastUpdateTimestamp);
-        (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) =
-            getFundingAsset(currentPrice, timestamp);
+        (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
         (int256 fee, int256 fundAssetWithFee) = _calculateFee(fundAsset);
         // we subtract the fee from the total balance
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256()).safeSub(fee);
-        int256 newLongBalance = _getLongAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
+        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
         if (newLongBalance < 0) {
             newLongBalance = 0;
         }
@@ -399,7 +394,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     function _getTickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = _tickVersion[tick];
-        hash_ = getTickHash(tick, version_);
+        hash_ = tickHash(tick, version_);
     }
 
     /**

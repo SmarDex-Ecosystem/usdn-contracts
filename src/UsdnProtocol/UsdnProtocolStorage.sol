@@ -394,34 +394,34 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @inheritdoc IUsdnProtocolStorage
     function getTotalExpoByTick(int24 tick, uint256 version) external view returns (uint256) {
-        bytes32 cachedTickHash = getTickHash(tick, version);
+        bytes32 cachedTickHash = tickHash(tick, version);
         return _totalExpoByTick[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function getPositionsInTick(int24 tick, uint256 version) external view returns (uint256) {
-        bytes32 cachedTickHash = getTickHash(tick, version);
+        bytes32 cachedTickHash = tickHash(tick, version);
         return _positionsInTick[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
         uint256 version = _tickVersion[tick];
-        bytes32 cachedTickHash = getTickHash(tick, version);
+        bytes32 cachedTickHash = tickHash(tick, version);
         return _longPositions[cachedTickHash][index];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function getCurrentTotalExpoByTick(int24 tick) external view returns (uint256) {
         uint256 version = _tickVersion[tick];
-        bytes32 cachedTickHash = getTickHash(tick, version);
+        bytes32 cachedTickHash = tickHash(tick, version);
         return _totalExpoByTick[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function getCurrentPositionsInTick(int24 tick) external view returns (uint256) {
         uint256 version = _tickVersion[tick];
-        bytes32 cachedTickHash = getTickHash(tick, version);
+        bytes32 cachedTickHash = tickHash(tick, version);
         return _positionsInTick[cachedTickHash];
     }
 
@@ -436,7 +436,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getTickHash(int24 tick, uint256 version) public pure returns (bytes32) {
+    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(tick, version));
     }
 }

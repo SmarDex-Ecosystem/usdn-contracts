@@ -15,7 +15,7 @@ interface IUsdnProtocolVault is IUsdnProtocolCore {
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
-    function getUsdnPrice(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
+    function usdnPrice(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
 
     /**
      * @notice Get the value of the USDN token price for the given asset price and current timestamp
@@ -23,5 +23,5 @@ interface IUsdnProtocolVault is IUsdnProtocolCore {
      * update are taken into account.
      * @param currentPrice The most recent/current asset price
      */
-    function getUsdnPrice(uint128 currentPrice) external view returns (uint256);
+    function usdnPrice(uint128 currentPrice) external view returns (uint256);
 }
