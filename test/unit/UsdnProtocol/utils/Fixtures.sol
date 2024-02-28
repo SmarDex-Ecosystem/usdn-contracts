@@ -47,6 +47,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     uint128 public initialLongLeverage;
     address[] public users;
 
+    modifier prankUser(address user) {
+        vm.startPrank(user);
+        _;
+        vm.stopPrank();
+    }
+
     function _setUp(SetUpParams memory testParams) public virtual {
         vm.warp(testParams.initialTimestamp);
         vm.startPrank(DEPLOYER);
@@ -125,25 +131,22 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
      */
     function setUpUserPositionInVault(address user, ProtocolAction untilAction, uint128 positionSize, uint256 price)
         public
+        prankUser(user)
     {
         bytes memory priceData = abi.encode(price);
 
-        vm.prank(user);
         protocol.initiateDeposit(positionSize, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
-        vm.prank(user);
         protocol.validateDeposit(priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
-        vm.prank(user);
         protocol.initiateWithdrawal(uint128(usdn.balanceOf(user)), priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
 
-        vm.prank(user);
         protocol.validateWithdrawal(priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
     }
@@ -167,25 +170,21 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         uint96 positionSize,
         uint128 desiredLiqPrice,
         uint256 price
-    ) public returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+    ) public prankUser(user) returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         bytes memory priceData = abi.encode(price);
 
-        vm.prank(user);
         (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(positionSize, desiredLiqPrice, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
 
-        vm.prank(user);
         protocol.validateOpenPosition(priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
 
-        vm.prank(user);
         protocol.initiateClosePosition(tick_, tickVersion_, index_, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
 
-        vm.prank(user);
         protocol.validateClosePosition(priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
 

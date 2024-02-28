@@ -16,6 +16,7 @@ contract TestUsdnProtocolActionsGetOraclePrice is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+        oracleMiddleware.setRequireValidationCost(true);
     }
 
     /**
@@ -25,17 +26,16 @@ contract TestUsdnProtocolActionsGetOraclePrice is UsdnProtocolBaseFixture {
      * @custom:then The price is returned and the validation cost is equal to 1 wei
      */
     function test_getOraclePrice() public {
-        oracleMiddleware.setRequireValidationCost(true);
         for (uint8 i = 0; i <= uint8(type(ProtocolAction).max); i++) {
             ProtocolAction action = ProtocolAction(i);
             uint128 currentPrice = 2000 ether;
             bytes memory priceData = abi.encode(currentPrice);
             uint256 fee = oracleMiddleware.validationCost(priceData, action);
             PriceInfo memory price = protocol.i_getOraclePrice{ value: fee }(action, uint40(block.timestamp), priceData);
-            assertEq(price.price, currentPrice, string.concat("price for action", uint256(i).toString()));
+            assertEq(price.price, currentPrice, string.concat("wrong price for action", uint256(i).toString()));
 
-            // sending more should not revert either (refund is handled outside of this function and is tested
-            // separately)
+            // sending more should not revert either
+            // (refund is handled outside of this function and is tested separately)
             protocol.i_getOraclePrice{ value: fee * 2 }(action, uint40(block.timestamp), priceData);
         }
     }
@@ -47,7 +47,6 @@ contract TestUsdnProtocolActionsGetOraclePrice is UsdnProtocolBaseFixture {
      * @custom:then The function reverts with the `OracleMiddlewareInsufficientFee` error
      */
     function test_RevertWhen_getOraclePriceInsufficientFee() public {
-        oracleMiddleware.setRequireValidationCost(true);
         for (uint8 i = 0; i <= uint8(type(ProtocolAction).max); i++) {
             ProtocolAction action = ProtocolAction(i);
             uint128 currentPrice = 2000 ether;
