@@ -4,9 +4,7 @@ pragma solidity 0.8.20;
 import { OracleMiddlewareBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
 import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
 
-/**
- * @custom:feature The `priceID` function of `OracleMiddleware`
- */
+/// @custom:feature The `priceID` function of `OracleMiddleware`
 contract TestOracleMiddlewarePriceID is OracleMiddlewareBaseFixture {
     function setUp() public override {
         super.setUp();
@@ -18,6 +16,6 @@ contract TestOracleMiddlewarePriceID is OracleMiddlewareBaseFixture {
      * @custom:then It should succeed
      */
     function test_priceID() public {
-        assertEq(oracleMiddleware.priceID(), PYTH_WSTETH_USD);
+        assertEq(oracleMiddleware.getPriceID(), PYTH_WSTETH_USD);
     }
 }
