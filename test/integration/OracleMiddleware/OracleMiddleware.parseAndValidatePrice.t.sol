@@ -9,8 +9,6 @@ import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-import { console2 } from "./../../../lib/forge-std/src/console2.sol";
-
 /**
  * @custom:feature The `parseAndValidatePrice` function of `OracleMiddleware`
  * @custom:background Given the price of ETH is 2000 USD
