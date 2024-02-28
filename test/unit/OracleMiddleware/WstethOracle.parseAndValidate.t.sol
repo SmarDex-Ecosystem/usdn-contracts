@@ -24,10 +24,12 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
     constructor() {
         super.setUp();
 
-        FORMATTED_STETH_PRICE =
-            uint256(uint256(uint64(STETH_PRICE)) * 10 ** wstethOracle.decimals() / 10 ** wstethOracle.pythDecimals());
-        FORMATTED_STETH_CONF =
-            uint256(uint256(uint64(STETH_CONF)) * 10 ** wstethOracle.decimals() / 10 ** wstethOracle.pythDecimals());
+        FORMATTED_STETH_PRICE = uint256(
+            uint256(uint64(STETH_PRICE)) * 10 ** wstethOracle.getDecimals() / 10 ** wstethOracle.getPythDecimals()
+        );
+        FORMATTED_STETH_CONF = uint256(
+            uint256(uint64(STETH_CONF)) * 10 ** wstethOracle.getDecimals() / 10 ** wstethOracle.getPythDecimals()
+        );
 
         STETH_PER_TOKEN = wsteth.stEthPerToken();
     }
@@ -55,7 +57,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
 
             uint128 timestamp = uint128(block.timestamp);
             if (action != ProtocolAction.Liquidation) {
-                timestamp -= uint128(wstethOracle.validationDelay());
+                timestamp -= uint128(wstethOracle.getValidationDelay());
             }
 
             PriceInfo memory price = wstethOracle.parseAndValidatePrice{

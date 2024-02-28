@@ -14,12 +14,14 @@ import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
+import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
+import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
 /**
  * @title ActionsFixture
  * @dev all protocol actions
  */
-contract ActionsFixture {
+contract ActionsFixture is IOracleMiddlewareErrors, IOracleMiddlewareEvents {
     // all action types
     ProtocolAction[] public actions = [
         ProtocolAction.None,
@@ -57,8 +59,8 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
     }
 
     function test_setUp() public {
-        assertEq(address(oracleMiddleware.pyth()), address(mockPyth));
-        assertEq(address(oracleMiddleware.priceFeed()), address(mockChainlinkOnChain));
+        assertEq(address(oracleMiddleware.getPyth()), address(mockPyth));
+        assertEq(address(oracleMiddleware.getPriceFeed()), address(mockChainlinkOnChain));
 
         assertEq(mockPyth.lastPublishTime(), block.timestamp);
         assertEq(mockChainlinkOnChain.lastPublishTime(), block.timestamp);
@@ -123,8 +125,8 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
     }
 
     function test_setUp() public {
-        assertEq(address(wstethOracle.pyth()), address(mockPyth));
-        assertEq(address(wstethOracle.priceFeed()), address(mockChainlinkOnChain));
+        assertEq(address(wstethOracle.getPyth()), address(mockPyth));
+        assertEq(address(wstethOracle.getPriceFeed()), address(mockChainlinkOnChain));
 
         assertEq(mockPyth.lastPublishTime(), block.timestamp);
         assertEq(mockChainlinkOnChain.lastPublishTime(), block.timestamp);

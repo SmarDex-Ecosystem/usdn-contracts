@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { LiquidationRewardsManagerBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 
 /**
  * @custom:feature The `getLiquidationRewards` function of `LiquidationRewardsManager`

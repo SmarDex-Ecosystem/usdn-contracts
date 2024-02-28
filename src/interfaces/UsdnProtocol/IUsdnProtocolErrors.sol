@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
+pragma solidity >=0.8.0;
 
 /**
  * @title IUsdnProtocolErrors
@@ -57,10 +57,37 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided tick version is outdated (transactions have been liquidated)
     error UsdnProtocolOutdatedTick(uint256 currentVersion, uint256 providedVersion);
 
-    /// @dev Indicates that the provided address for the LiquidationRewardsManager contract is the 0 address
-    error UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
+    /// @dev Indicates that the new middleware address value is invalid.
+    error UsdnProtocolInvalidMiddlewareAddress();
 
-    /// @dev Indicates that the provided fee percentage is invalid (> 100%)
+    /// @dev Indicate that the new minLeverage value is invalid.
+    error UsdnProtocolInvalidMinLeverage();
+
+    /// @dev Indicates that the new maxLeverage value is invalid.
+    error UsdnProtocolInvalidMaxLeverage();
+
+    /// @dev Indicates that the new validation deadline value is invalid.
+    error UsdnProtocolInvalidValidationDeadline();
+
+    /// @dev Indicates that the new liquidationPenalty value is invalid.
+    error UsdnProtocolInvalidLiquidationPenalty();
+
+    /// @dev Indicates that the new safetyMargin value is invalid.
+    error UsdnProtocolInvalidSafetyMarginBps();
+
+    /// @dev Indicates that the new liquidationIteration value is invalid.
+    error UsdnProtocolInvalidLiquidationIteration();
+
+    /// @dev Indicates that the new EMAPeriod value is invalid.
+    error UsdnProtocolInvalidEMAPeriod();
+
+    /// @dev Indicates that the new fundingSF value is invalid.
+    error UsdnProtocolInvalidFundingSF();
+
+    /// @dev Indicates that the provided address for the LiquidationRewardsManager contract address is invalid.
+    error UsdnProtocolInvalidLiquidationRewardsManagerAddress();
+
+    /// @dev Indicates that the provided fee percentage value is invalid.
     error UsdnProtocolInvalidProtocolFeeBps();
 
     /// @dev Indicates that the provided fee collector address is invalid

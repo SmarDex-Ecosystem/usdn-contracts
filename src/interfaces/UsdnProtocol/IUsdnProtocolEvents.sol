@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.20;
-
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+pragma solidity >=0.8.0;
 
 /**
  * @title IUsdnProtocolEvents
@@ -68,11 +66,11 @@ interface IUsdnProtocolEvents {
      * @param newLeverage The initial leverage of the position (final).
      * @param newStartPrice The asset price at the moment of the position creation (final).
      * @param tick The tick containing the position.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted too
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      * @param tickVersion The tick version.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted too
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      * @param index The index of the position inside the tick array.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted too
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      */
     event ValidatedOpenPosition(
         address indexed user, uint128 newLeverage, uint128 newStartPrice, int24 tick, uint256 tickVersion, uint256 index
@@ -87,7 +85,7 @@ interface IUsdnProtocolEvents {
      * @param newTickVersion The new tick version.
      * @param newIndex The new index of the position inside the `newTick` array.
      */
-    event LiquidationPriceChanged(
+    event LiquidationPriceUpdated(
         int24 indexed oldTick,
         uint256 indexed oldTickVersion,
         uint256 indexed oldIndex,
@@ -161,6 +159,60 @@ interface IUsdnProtocolEvents {
      * @param index The index of the position inside the tick array.
      */
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
+
+    /**
+     * @notice Emitted when the oracle middleware is updated.
+     * @param newMiddleware The new oracle middleware address.
+     */
+    event OracleMiddlewareUpdated(address newMiddleware);
+
+    /**
+     * @notice Emitted when the minLeverage is updated.
+     * @param newMinLeverage The new minLeverage.
+     */
+    event MinLeverageUpdated(uint256 newMinLeverage);
+
+    /**
+     * @notice Emitted when the maxLeverage is updated.
+     * @param newMaxLeverage The new maxLeverage.
+     */
+    event MaxLeverageUpdated(uint256 newMaxLeverage);
+
+    /**
+     * @notice Emitted when the validationDeadline is updated.
+     * @param newValidationDeadline The new validationDeadline.
+     */
+    event ValidationDeadlineUpdated(uint256 newValidationDeadline);
+
+    /**
+     * @notice Emitted when the liquidationPenalty is updated.
+     * @param newLiquidationPenalty The new liquidationPenalty.
+     */
+    event LiquidationPenaltyUpdated(uint24 newLiquidationPenalty);
+
+    /**
+     * @notice Emitted when the safetyMargin is updated.
+     * @param newSafetyMargin The new safetyMargin.
+     */
+    event SafetyMarginBpsUpdated(uint256 newSafetyMargin);
+
+    /**
+     * @notice Emitted when the liquidationIteration is updated.
+     * @param newLiquidationIteration The new liquidationIteration.
+     */
+    event LiquidationIterationUpdated(uint16 newLiquidationIteration);
+
+    /**
+     * @notice Emitted when the EMAPeriod is updated.
+     * @param newEMAPeriod The new EMAPeriod.
+     */
+    event EMAPeriodUpdated(uint128 newEMAPeriod);
+
+    /**
+     * @notice Emitted when the fundingSF is updated.
+     * @param newFundingSF The new fundingSF.
+     */
+    event FundingSFUpdated(uint256 newFundingSF);
 
     /**
      * @notice Emitted when a user (liquidator) successfully liquidated positions.
