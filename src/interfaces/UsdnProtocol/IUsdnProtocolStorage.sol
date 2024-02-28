@@ -42,7 +42,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function MAX_LIQUIDATION_ITERATION() external pure returns (uint16);
 
     /* -------------------------------------------------------------------------- */
-    /*                                 Immutables getters                              */
+    /*                                 Immutables getters                         */
     /* -------------------------------------------------------------------------- */
 
     /**
@@ -68,7 +68,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getUsdnDecimals() external view returns (uint8);
 
     /* -------------------------------------------------------------------------- */
-    /*                                 Parameters getters                                */
+    /*                                 Parameters getters                         */
     /* -------------------------------------------------------------------------- */
 
     /// @notice The oracle middleware contract.
