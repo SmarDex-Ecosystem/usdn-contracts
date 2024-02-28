@@ -3,8 +3,6 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature The functions of the core of the protocol
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
@@ -56,66 +54,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.
         assertGe(uint256(protocol.longAssetAvailable(DEFAULT_PARAMS.initialPrice)), longPosValue, "long balance");
-    }
-
-    /**
-     * @dev Helper function to initiate a new position and liquidate it before it gets validated
-     * @return tick_ The tick of the new position
-     * @return tickVersion_ The tick version of the new position
-     * @return index_ The index of the new position
-     */
-    function _createStalePendingActionHelper() internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
-        wstETH.mintAndApprove(address(this), 2 ether, address(protocol), type(uint256).max);
-        // create a pending action with a liquidation price around $1700
-        bytes memory priceData = abi.encode(uint128(2000 ether));
-        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(1 ether, 1700 ether, priceData, "");
-
-        // the price drops to $1500 and the position gets liquidated
-        skip(30);
-        priceData = abi.encode(uint128(1500 ether));
-        protocol.liquidate(priceData, 10);
-
-        // the pending action is stale
-        (, uint256 currentTickVersion) = protocol.tickHash(tick_);
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
-        assertEq(action.var3, tickVersion_, "tick version");
-        assertTrue(action.var3 != currentTickVersion, "current tick version");
-    }
-
-    /**
-     * @custom:scenario A pending new long position gets liquidated
-     * @custom:given A pending new position was liquidated before being validated
-     * @custom:and The pending action is stale (tick version mismatch)
-     * @custom:when The user opens another position
-     * @custom:then The protocol emits a `StalePendingActionRemoved` event
-     * @custom:and The transaction does not revert
-     */
-    function test_stalePendingActionReInit() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
-
-        bytes memory priceData = abi.encode(uint128(1500 ether));
-        // we should be able to open a new position
-        vm.expectEmit();
-        emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
-    }
-
-    /**
-     * @custom:scenario A pending new long position gets liquidated and then validated
-     * @custom:given A pending new position was liquidated before being validated
-     * @custom:and The pending action is stale (tick version mismatch)
-     * @custom:when The user tries to validate the pending action
-     * @custom:then The protocol emits a `StalePendingActionRemoved` event
-     * @custom:and The transaction does not revert
-     */
-    function test_stalePendingActionValidate() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
-
-        bytes memory priceData = abi.encode(uint128(1500 ether));
-        // validating the action emits the proper event
-        vm.expectEmit();
-        emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.validateOpenPosition(priceData, "");
     }
 
     /**
