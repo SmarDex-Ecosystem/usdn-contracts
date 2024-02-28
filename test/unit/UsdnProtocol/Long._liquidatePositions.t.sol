@@ -22,8 +22,8 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      */
     function test_nothingHappensWhenThereIsNothingToLiquidate() external {
         vm.recordLogs();
-        (uint256 liquidatedPositions, uint16 liquidatedTicks, int256 remainingCollateral) =
-            protocol.i_liquidatePositions(2000 ether, 1);
+        (uint256 liquidatedPositions, uint16 liquidatedTicks, int256 remainingCollateral,,) =
+            protocol.i_liquidatePositions(2000 ether, 1, 100 ether, 100 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 0, "No event should have been emitted");
@@ -56,7 +56,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
 
         vm.recordLogs();
-        (uint256 liquidatedPositions,,) = protocol.i_liquidatePositions(uint256(liqPrice), 1);
+        (uint256 liquidatedPositions,,,,) = protocol.i_liquidatePositions(uint256(liqPrice), 1, 100 ether, 100 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 1, "Only one log should have been emitted");
@@ -89,7 +89,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         vm.recordLogs();
         // 2 Iterations to make sure we break the loop when there are no ticks to be found
-        (uint256 liquidatedPositions,,) = protocol.i_liquidatePositions(uint256(liqPrice), 2);
+        (uint256 liquidatedPositions,,,,) = protocol.i_liquidatePositions(uint256(liqPrice), 2, 100 ether, 100 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 1, "Only one log should have been emitted");
@@ -141,7 +141,8 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         // Make sure no more than MAX_LIQUIDATION_ITERATION events have been emitted
         vm.recordLogs();
-        (, uint256 liquidatedTicks,) = protocol.i_liquidatePositions(uint256(liqPrice), maxIterations + 1);
+        (, uint256 liquidatedTicks,,,) =
+            protocol.i_liquidatePositions(uint256(liqPrice), maxIterations + 1, 100 ether, 100 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(

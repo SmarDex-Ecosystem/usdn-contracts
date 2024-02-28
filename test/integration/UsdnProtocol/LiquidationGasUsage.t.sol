@@ -16,14 +16,14 @@ import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEth
 contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationFixture {
     MockWstEthOracleMiddleware public mockOracle;
 
-    function setUp() public override {
+    function setUp() public {
         params = DEFAULT_PARAMS;
         params.fork = true; // all tests in this contract must be labelled `Fork`
         _setUp(params);
 
-        (bool success,) = address(WST_ETH).call{ value: 1000 ether }("");
+        (bool success,) = address(wstETH).call{ value: 1000 ether }("");
         require(success, "Could not mint wstETH to test contract");
-        WST_ETH.approve(address(protocol), type(uint256).max);
+        wstETH.approve(address(protocol), type(uint256).max);
     }
 
     /**
@@ -38,7 +38,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
 
         // Use the mock oracle to open positions to avoid hermes calls
         mockOracle = new MockWstEthOracleMiddleware(
-            address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), address(WST_ETH), 1 hours
+            address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
         );
         vm.warp(pythTimestamp);
         protocol.setOracleMiddleware(mockOracle);
@@ -50,17 +50,17 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
 
         /* ---------------------------- Set up position 1 --------------------------- */
         protocol.initiateOpenPosition(1 ether, futurePythPrice + 150e18, data, "");
-        skip(wstethMiddleware.getValidationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(data, "");
 
         /* ---------------------------- Set up position 2 --------------------------- */
         protocol.initiateOpenPosition(1 ether, futurePythPrice + 100e18, data, "");
-        skip(wstethMiddleware.getValidationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(data, "");
 
         /* ---------------------------- Set up position 3 --------------------------- */
         protocol.initiateOpenPosition(1 ether, futurePythPrice + 50e18, data, "");
-        skip(wstethMiddleware.getValidationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(data, "");
 
         /* ---------------------------- Start the checks ---------------------------- */

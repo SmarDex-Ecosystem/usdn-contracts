@@ -385,8 +385,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 currentPrice = 2000 ether;
         bytes memory priceData = abi.encode(currentPrice);
 
-        wstETH.mint(address(this), 1_000_000 ether);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), 1_000_000 ether, address(protocol), type(uint256).max);
 
         // create high risk position
         protocol.initiateOpenPosition{
@@ -398,10 +397,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         }(priceData, "");
         assertEq(protocol.getTotalLongPositions(), initialTotalPos + 1, "total positions after create");
 
-        // liquidate
-        currentPrice = 1750 ether;
+        // price drops
+        skip(1 hours);
+        currentPrice = 1000 ether;
         priceData = abi.encode(currentPrice);
 
+        // liquidate
         uint256 balanceBefore = address(this).balance;
         uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation);
         protocol.liquidate{ value: 0.5 ether }(priceData, 1);

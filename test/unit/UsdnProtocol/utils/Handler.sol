@@ -62,15 +62,29 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _lastFunding;
     }
 
-    function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) external returns (bool priceUpdated_) {
+    function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+    {
         return _applyPnlAndFunding(currentPrice, timestamp);
     }
 
-    function i_liquidatePositions(uint256 currentPrice, uint16 iteration)
+    function i_liquidatePositions(
+        uint256 currentPrice,
+        uint16 iteration,
+        int256 tempLongBalance,
+        int256 tempVaultBalance
+    )
         external
-        returns (uint256 liquidatedPositions_, uint16 liquidatedTicks_, int256 remainingCollateral_)
+        returns (
+            uint256 liquidatedPositions_,
+            uint16 liquidatedTicks_,
+            int256 remainingCollateral_,
+            uint256 newLongBalance_,
+            uint256 newVaultBalance_
+        )
     {
-        return _liquidatePositions(currentPrice, iteration);
+        return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
     function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {

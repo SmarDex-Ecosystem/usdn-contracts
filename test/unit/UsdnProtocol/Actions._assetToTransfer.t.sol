@@ -12,7 +12,9 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
     using Strings for uint256;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.initialLong = 10 ether;
+        super._setUp(params);
     }
 
     /**
@@ -57,20 +59,17 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
      * @custom:then The asset to transfer is zero
      */
     function test_assetToTransferZeroBalance() public {
-        // TODO : fix this test with #102
-        vm.skip(true);
-        int24 firstPosTick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2);
-        skip(60); // we need that the oracle timestamp be newer than the last price update
+        uint128 price = 1000 ether;
+        skip(1 weeks);
         // liquidate the default position
-        uint128 liqPrice = protocol.getEffectivePriceForTick(firstPosTick);
-        protocol.liquidate(abi.encode(liqPrice), 10);
+        protocol.liquidate(abi.encode(price), 10);
 
         assertEq(protocol.getTotalLongPositions(), 0, "total long positions");
-        assertEq(protocol.i_longTradingExpo(liqPrice), 0, "long trading expo with funding");
+        assertEq(protocol.i_longTradingExpo(price), 0, "long trading expo with funding");
         assertEq(protocol.getBalanceLong(), 0, "balance long");
-        assertEq(protocol.i_longAssetAvailable(liqPrice), 0, "long asset available");
+        assertEq(protocol.i_longAssetAvailable(price), 0, "long asset available");
 
-        int24 tick = protocol.getEffectiveTickForPrice(liqPrice);
+        int24 tick = protocol.getEffectiveTickForPrice(price);
         uint256 res = protocol.i_assetToTransfer(
             tick, 100 ether, uint128(10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
         );

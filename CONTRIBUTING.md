@@ -137,7 +137,7 @@ contract TestMyTokenTransfer is MyTokenFixture {
 }
 ```
 
-### Expect statements
+### Assert statements
 
 When using `assert*` statements in the tests, foundry allows to pass a third parameter with a string of characters.
 
