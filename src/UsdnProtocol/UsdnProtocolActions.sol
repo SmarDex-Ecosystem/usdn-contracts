@@ -49,18 +49,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration);
         }
 
-        // Apply fees on price
-        // we use `_lastPrice` because it might be more recent than `currentPrice.price`
-        uint256 pendingActionPrice = _lastPrice;
-        pendingActionPrice -= (pendingActionPrice * _positionFeeBps) / BPS_DIVISOR;
-
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
             user: msg.sender,
             _unused: 0,
             amount: amount,
-            assetPrice: pendingActionPrice.toUint128(),
+            assetPrice: _lastPrice,
             totalExpo: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,
@@ -109,18 +104,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration);
         }
 
-        // Apply fees on price
-        // we use `_lastPrice` because it might be more recent than `currentPrice.price`
-        uint256 pendingActionPrice = _lastPrice;
-        pendingActionPrice += (pendingActionPrice * _positionFeeBps) / BPS_DIVISOR;
-
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateWithdrawal,
             timestamp: uint40(block.timestamp),
             user: msg.sender,
             _unused: 0,
             amount: usdnAmount,
-            assetPrice: pendingActionPrice.toUint128(),
+            assetPrice: _lastPrice,
             totalExpo: _totalExpo,
             balanceVault: _balanceVault,
             balanceLong: _balanceLong,

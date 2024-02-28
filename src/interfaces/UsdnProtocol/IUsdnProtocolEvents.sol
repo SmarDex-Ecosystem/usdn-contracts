@@ -163,10 +163,10 @@ interface IUsdnProtocolEvents {
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
 
     /**
-     * @notice Emitted when the protocol fees are updated.
-     * @param protocolFee The new protocol fee (in percentage).
+     * @notice Emitted when the position fees are updated.
+     * @param positionFee The new position fee (in percentage).
      */
-    event UpdatedProtocolFees(uint256 protocolFee);
+    event UpdatedPositionFees(uint256 positionFee);
 
     /**
      * @notice Emitted when the protocol fee decimals are updated.

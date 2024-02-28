@@ -170,14 +170,14 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /**
-     * @notice Update the protocol fees.
-     * @param protocolFee The new protocol fee (in percentage).
+     * @notice Update the position fees.
+     * @param positionFee The new position fee (in percentage).
      */
-    function updateProtocolFees(uint16 protocolFee) external onlyOwner {
-        if (protocolFee > MAX_POSITION_FEE) {
-            revert UsdnProtocolMaxProtocolFeeExceeded();
+    function updatePositionFees(uint16 positionFee) external onlyOwner {
+        if (positionFee > MAX_POSITION_FEE) {
+            revert UsdnProtocolMaxPositionFeeExceeded();
         }
-        _positionFeeBps = protocolFee;
-        emit UpdatedProtocolFees(protocolFee);
+        _positionFeeBps = positionFee;
+        emit UpdatedPositionFees(positionFee);
     }
 }

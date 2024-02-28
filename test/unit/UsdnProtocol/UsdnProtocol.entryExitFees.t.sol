@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN } from "test/utils/Constants.sol";
 
 import {
     Position,
@@ -170,7 +171,8 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
      * @custom:scenario The user initiates a deposit of 1 wstETH
      * @custom:given The price of the asset is $2000
      * @custom:when The user initiates a deposit of 1 wstETH
-     * @custom:then The user's position should have a start price according to the fees
+     * @custom:then The user's position should have a start price set to the ETH price because the minted amount will be
+     *              be calculated using the price movement between price without fees and price with fees
      */
     function test_initiateDepositPositionFees() public {
         uint128 depositAmount = 1 ether;
@@ -183,7 +185,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.None, "no pending action");
 
         action = protocol.getUserPendingAction(address(this));
-        uint256 expectedPrice = 2000 ether - 2000 ether * protocol.positionFee() / protocol.BPS_DIVISOR();
+        uint256 expectedPrice = 2000 ether;
         // Check stored position asset price
         assertEq(action.var2, expectedPrice, "assetPrice");
     }
@@ -206,7 +208,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.None, "no pending action");
 
         action = protocol.getUserPendingAction(address(this));
-        uint256 expectedPrice = 2000 ether - 2000 ether * protocol.positionFee() / protocol.BPS_DIVISOR();
+        uint256 expectedPrice = 2000 ether;
         // Check stored position asset price
         assertEq(action.var2, expectedPrice, "assetPrice");
 
@@ -214,7 +216,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         protocol.validateDeposit(currentPrice, "");
         uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
 
-        assertEq(usdnBalanceAfter - usdnBalanceBefore, expectedPrice, "usdn balance");
+        assertEq(usdnBalanceAfter - usdnBalanceBefore, 1_998_806_479_853_710_648_779, "usdn balance");
     }
 
     /**
@@ -236,7 +238,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.None, "no pending action");
 
         action = protocol.getUserPendingAction(address(this));
-        uint256 expectedPrice = 2000 ether - 2000 ether * protocol.positionFee() / protocol.BPS_DIVISOR();
+        uint256 expectedPrice = 2000 ether;
         // Check stored position asset price
         assertEq(action.var2, expectedPrice, "assetPrice");
 
@@ -244,7 +246,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         protocol.validateDeposit(currentPrice, "");
         uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
 
-        assertEq(usdnBalanceAfter - usdnBalanceBefore, expectedPrice, "usdn balance");
+        assertEq(usdnBalanceAfter - usdnBalanceBefore, 1_998_806_479_853_710_648_779, "usdn balance");
 
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(depositAmount, currentPrice, "");
@@ -254,7 +256,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.None, "no pending action");
 
         action = protocol.getUserPendingAction(address(this));
-        expectedPrice = 2000 ether + 2000 ether * protocol.positionFee() / protocol.BPS_DIVISOR();
+        expectedPrice = 2000 ether;
         // Check stored position asset price
         assertEq(action.var2, expectedPrice, "assetPrice");
     }
@@ -271,6 +273,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
     function test_validateWithdrawalPositionFees() public {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
+        uint256 initialAssetBalance = wstETH.balanceOf(address(this));
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");
 
@@ -279,32 +282,211 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.None, "no pending action");
 
         action = protocol.getUserPendingAction(address(this));
-        uint256 expectedPrice = 2000 ether - 2000 ether * protocol.positionFee() / protocol.BPS_DIVISOR();
+        uint256 expectedPrice = 2000 ether;
         // Check stored position asset price
         assertEq(action.var2, expectedPrice, "assetPrice");
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
         protocol.validateDeposit(currentPrice, "");
         uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
+        uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
 
-        assertEq(usdnBalanceAfter - usdnBalanceBefore, expectedPrice, "usdn balance");
+        assertEq(mintedUsdn, 1_998_806_479_853_710_648_779, "usdn balance");
 
         usdn.approve(address(protocol), type(uint256).max);
-        protocol.initiateWithdrawal(depositAmount, currentPrice, "");
+        protocol.initiateWithdrawal(uint128(mintedUsdn), currentPrice, "");
 
         vm.prank(address(0)); // simulate front-end call by someone else
         action = protocol.getActionablePendingAction(0);
         assertTrue(action.action == ProtocolAction.None, "no pending action");
 
         action = protocol.getUserPendingAction(address(this));
-        expectedPrice = 2000 ether + 2000 ether * protocol.positionFee() / protocol.BPS_DIVISOR();
+        expectedPrice = 2000 ether;
         // Check stored position asset price
         assertEq(action.var2, expectedPrice, "assetPrice");
 
         usdnBalanceBefore = usdn.balanceOf(address(this));
         protocol.validateWithdrawal(currentPrice, "");
         usdnBalanceAfter = usdn.balanceOf(address(this));
+        uint256 finalAssetBalance = wstETH.balanceOf(address(this));
 
         assertEq(usdnBalanceAfter - usdnBalanceBefore, 0, "usdn balance");
+        assertLt(finalAssetBalance, initialAssetBalance, "wstETH balance before and after");
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                        Compare with and without fees                       */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario The user validate a deposit of 1 wstETH
+     * @custom:given The price of the asset is $2000
+     * @custom:when The user validate a position without position fees
+     * @custom:then The user's should receive the expected amount of USDN without fees
+     * @custom:when The user validate a position with 1% position fees
+     * @custom:then The user's should receive the expected amount of USDN with 1% fees apply
+     * @custom:and The amount of usdn minted with fees should be less than the amount minted without fees
+     */
+
+    function test_validateDepositPositionFeesCompareWithAndWithoutFees() public {
+        /* --------------------- Validate without position fees --------------------- */
+        vm.prank(ADMIN);
+        protocol.updatePositionFees(100); // 1% fees
+
+        assertEq(protocol.positionFee(), 100, "positionFee");
+
+        uint128 depositAmount = 1 ether;
+        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
+
+        protocol.initiateDeposit(depositAmount, currentPrice, "");
+
+        vm.prank(address(0)); // simulate front-end call by someone else
+        PendingAction memory action = protocol.getActionablePendingAction(0);
+        assertTrue(action.action == ProtocolAction.None, "no pending action");
+
+        action = protocol.getUserPendingAction(address(this));
+        assertEq(action.var2, 2000 ether, "assetPrice");
+
+        uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
+        protocol.validateDeposit(currentPrice, "");
+        uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
+
+        uint256 mintedUsdnWithFees = usdnBalanceAfter - usdnBalanceBefore;
+
+        assertEq(mintedUsdnWithFees, 1_989_313_773_110_288_645_773, "usdn balance");
+
+        /* ----------------------- Validate with position fees ---------------------- */
+        vm.prank(ADMIN);
+        protocol.updatePositionFees(0); // 0% fees
+
+        assertEq(protocol.positionFee(), 0, "positionFee");
+
+        protocol.initiateDeposit(depositAmount, currentPrice, "");
+
+        vm.prank(address(0)); // simulate front-end call by someone else
+        action = protocol.getActionablePendingAction(0);
+        assertTrue(action.action == ProtocolAction.None, "no pending action");
+
+        action = protocol.getUserPendingAction(address(this));
+        assertEq(action.var2, 2000 ether, "assetPrice");
+
+        usdnBalanceBefore = usdn.balanceOf(address(this));
+        protocol.validateDeposit(currentPrice, "");
+        usdnBalanceAfter = usdn.balanceOf(address(this));
+
+        uint256 mintedUsdnWithoutFees = usdnBalanceAfter - usdnBalanceBefore;
+
+        assertGt(mintedUsdnWithoutFees, mintedUsdnWithFees, "usdn balance");
+    }
+
+    /**
+     * @custom:scenario The user initiates a withdraw of 1 wstETH
+     * @custom:given The price of the asset is $2000
+     * @custom:when The user initiates a deposit of 1 wstETH
+     * @custom:then The user's position should have a start price according to the fees
+     * @custom:and The user's USDN balance should be updated accordingly
+     * @custom:and The user's withdrawal pending position should have a start price according to the fees
+     * @custom:and The user's withdrawal pending USDN balance should be updated accordingly
+     */
+    function test_validateWithdrawalPositionFeesCompareWithAndWithoutFees() public {
+        /* --------------------- Validate without position fees --------------------- */
+        vm.prank(ADMIN);
+        protocol.updatePositionFees(100); // 1% fees
+
+        assertEq(protocol.positionFee(), 100, "positionFee");
+
+        uint128 depositAmount = 1 ether;
+        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
+        uint256 initialAssetBalance = wstETH.balanceOf(address(this));
+
+        protocol.initiateDeposit(depositAmount, currentPrice, "");
+
+        vm.prank(address(0)); // simulate front-end call by someone else
+        PendingAction memory action = protocol.getActionablePendingAction(0);
+        assertTrue(action.action == ProtocolAction.None, "no pending action");
+
+        action = protocol.getUserPendingAction(address(this));
+        uint256 expectedPrice = 2000 ether;
+        // Check stored position asset price
+        assertEq(action.var2, expectedPrice, "assetPrice");
+
+        uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
+        protocol.validateDeposit(currentPrice, "");
+        uint256 usdnBalanceAfter = usdn.balanceOf(address(this));
+        uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
+
+        assertEq(mintedUsdn, 1_989_313_773_110_288_645_773, "usdn balance");
+
+        usdn.approve(address(protocol), type(uint256).max);
+        protocol.initiateWithdrawal(uint128(mintedUsdn), currentPrice, "");
+
+        vm.prank(address(0)); // simulate front-end call by someone else
+        action = protocol.getActionablePendingAction(0);
+        assertTrue(action.action == ProtocolAction.None, "no pending action");
+
+        action = protocol.getUserPendingAction(address(this));
+        expectedPrice = 2000 ether;
+        // Check stored position asset price
+        assertEq(action.var2, expectedPrice, "assetPrice");
+
+        usdnBalanceBefore = usdn.balanceOf(address(this));
+        protocol.validateWithdrawal(currentPrice, "");
+        usdnBalanceAfter = usdn.balanceOf(address(this));
+        uint256 finalAssetBalance = wstETH.balanceOf(address(this));
+        uint256 balanceDiffWithFees = initialAssetBalance - finalAssetBalance;
+
+        assertEq(usdnBalanceAfter - usdnBalanceBefore, 0, "usdn balance");
+        assertLt(finalAssetBalance, initialAssetBalance, "wstETH balance before and after");
+
+        /* ----------------------- Validate with position fees ---------------------- */
+        vm.prank(ADMIN);
+        protocol.updatePositionFees(0); // 0% fees
+
+        assertEq(protocol.positionFee(), 0, "positionFee");
+
+        initialAssetBalance = wstETH.balanceOf(address(this));
+
+        protocol.initiateDeposit(depositAmount, currentPrice, "");
+
+        vm.prank(address(0)); // simulate front-end call by someone else
+        action = protocol.getActionablePendingAction(0);
+        assertTrue(action.action == ProtocolAction.None, "no pending action");
+
+        action = protocol.getUserPendingAction(address(this));
+        expectedPrice = 2000 ether;
+        // Check stored position asset price
+        assertEq(action.var2, expectedPrice, "assetPrice");
+
+        usdnBalanceBefore = usdn.balanceOf(address(this));
+        protocol.validateDeposit(currentPrice, "");
+        usdnBalanceAfter = usdn.balanceOf(address(this));
+        mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
+
+        assertEq(mintedUsdn, 1_998_041_376_091_354_795_930, "usdn balance");
+
+        usdn.approve(address(protocol), type(uint256).max);
+        protocol.initiateWithdrawal(uint128(mintedUsdn), currentPrice, "");
+
+        vm.prank(address(0)); // simulate front-end call by someone else
+        action = protocol.getActionablePendingAction(0);
+        assertTrue(action.action == ProtocolAction.None, "no pending action");
+
+        action = protocol.getUserPendingAction(address(this));
+        expectedPrice = 2000 ether;
+        // Check stored position asset price
+        assertEq(action.var2, expectedPrice, "assetPrice");
+
+        usdnBalanceBefore = usdn.balanceOf(address(this));
+        protocol.validateWithdrawal(currentPrice, "");
+        usdnBalanceAfter = usdn.balanceOf(address(this));
+        finalAssetBalance = wstETH.balanceOf(address(this));
+        uint256 balanceDiffWithoutFees = initialAssetBalance - finalAssetBalance;
+
+        assertEq(usdnBalanceAfter - usdnBalanceBefore, 0, "usdn balance");
+        assertApproxEqAbs(finalAssetBalance, initialAssetBalance, 10, "wstETH balance before and after");
+
+        // The balance difference before and after withdraw with fees should be less than the balance difference without
+        // fees
+        assertGt(balanceDiffWithFees, balanceDiffWithoutFees, "wstETH balance diff with and without fees");
     }
 }

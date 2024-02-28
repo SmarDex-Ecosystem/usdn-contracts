@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN } from "test/utils/Constants.sol";
 
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -96,9 +97,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2000 at the moment of initiation
      * @custom:and The price of the asset is $1900 at the moment of validation
      * @custom:when The user validates the deposit
-     * @custom:then The user's USDN balance increases by 1949.518048223628553344 USDN
-     * @custom:and The USDN total supply increases by 1949.518048223628553344 USDN
-     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1949.518048223628553344 USDN
+     * @custom:then The user's USDN balance increases by 1948.738241004339101922 USDN
+     * @custom:and The USDN total supply increases by 1948.738241004339101922 USDN
+     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1948.738241004339101922 USDN
      */
     function test_validateDepositPriceDecrease() public {
         _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1948.738241004339101922 ether);
@@ -152,6 +153,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function _checkValidateDepositWithPrice(uint128 initialPrice, uint128 assetPrice, uint256 expectedUsdnAmount)
         internal
     {
+        vm.prank(ADMIN);
+        protocol.updatePositionFees(0); // 0% fees
+
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 

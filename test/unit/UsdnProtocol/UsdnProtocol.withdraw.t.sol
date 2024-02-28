@@ -5,6 +5,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN } from "test/utils/Constants.sol";
 
 import { PendingAction, ProtocolAction, VaultPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -43,7 +44,8 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The user's wstETH balance is 9 wstETH
      */
     function test_withdrawSetUp() public {
-        assertEq(initialUsdnBalance, 19_992 * DEPOSIT_AMOUNT / 10, "initial usdn balance");
+        // Using the price computed with the default position fees
+        assertEq(initialUsdnBalance, 1_998_806_479_853_710_648_779 * (DEPOSIT_AMOUNT / 1e18), "initial usdn balance");
         assertEq(initialWstETHBalance, INITIAL_WSTETH_BALANCE - DEPOSIT_AMOUNT, "initial wstETH balance");
     }
 
@@ -109,13 +111,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $3000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.425696903830231634
+     * @custom:then The user's wstETH balance increases by 0.425585189969251644
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425696903830231634
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425585189969251644
      */
     function test_validateWithdrawPriceUp() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.425696903830231634 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.425585189969251644 ether);
     }
 
     /**
@@ -124,13 +126,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $2000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.455398008518617480
+     * @custom:then The user's wstETH balance increases by 0.455406157755485910
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.455398008518617480
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.455406157755485910
      */
     function test_validateWithdrawPriceDown() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.45539800851861748 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.45540615775548591 ether);
     }
 
     /**
@@ -179,6 +181,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     function _checkValidateWithdrawWithPrice(uint128 initialPrice, uint128 assetPrice, uint256 expectedAssetAmount)
         public
     {
+        vm.prank(ADMIN);
+        protocol.updatePositionFees(0); // 0% fees
+
         bytes memory currentPrice = abi.encode(initialPrice);
         protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "");
 
