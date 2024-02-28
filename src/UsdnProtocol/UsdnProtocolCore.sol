@@ -34,6 +34,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolCore
     function getLiquidationMultiplier(uint128 timestamp) public view returns (uint256) {
+        // slither-disable-next-line incorrect-equality
         if (timestamp == _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
@@ -63,6 +64,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
         int256 numerator = oldLongExpo_ - oldVaultExpo;
         // optimization : if the numerator is zero, then return the EMA
+        // slither-disable-next-line incorrect-equality
         if (numerator == 0) {
             return (_EMA, oldLongExpo_);
         }
