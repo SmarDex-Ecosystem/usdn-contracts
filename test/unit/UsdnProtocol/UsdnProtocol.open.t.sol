@@ -304,6 +304,29 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user sends too much ether when validate a position opening
+     * @custom:given The user has initiated an open position
+     * @custom:when The user sends 0.5 ether as value in the `validateOpenPosition` call
+     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     */
+    function test_validateOpenPositionEtherRefund() public {
+        oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
+
+        bytes memory priceData = abi.encode(CURRENT_PRICE);
+        uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+        }(uint96(LONG_AMOUNT), desiredLiqPrice, priceData, "");
+        skip(oracleMiddleware.validationDelay() + 1);
+
+        uint256 balanceBefore = address(this).balance;
+        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition);
+        protocol.validateOpenPosition{ value: 0.5 ether }(priceData, "");
+
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
      * @dev Helper function to initiate a new position and liquidate it before it gets validated
      * @return tick_ The tick of the new position
      * @return tickVersion_ The tick version of the new position
