@@ -7,51 +7,61 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 /**
  * @custom:feature The `multiplier` variable of the USDN Protocol
- * @custom:background Given a protocol initialized with 100 wstETH in the vault and 5 wstETH in a long position with a
- * leverage of ~2x.
+ * @custom:background Given a protocol with ~10 ether of trading expo on either side (approx. equilibrium)
  */
 contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
 
     function setUp() public {
-        super._setUp(
-            SetUpParams({
-                initialDeposit: 100 ether,
-                initialLong: 5 ether,
-                initialPrice: DEFAULT_PARAMS.initialPrice,
-                initialTimestamp: DEFAULT_PARAMS.initialTimestamp,
-                initialBlock: DEFAULT_PARAMS.initialBlock
-            })
-        );
+        params = DEFAULT_PARAMS;
+        params.initialLong = 10 ether;
+        super._setUp(params);
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /**
-     * @custom:scenario A user initiates and validates multiple deposit/position while the price of the asset don't
-     * @custom:and change to check the multiplier
-     * @custom:when The user opens a long position of 500 wsteth with a leverage of ~2x
-     * @custom:then The multiplier should be 1e38 (1st deposit)
-     * @custom:when The user deposits 500 wsteth
-     * @custom:then The multiplier should be > 1e38
-     * @custom:when The user opens a long position of 1 wei to refresh the multiplier
-     * @custom:then The multiplier should be < 1e38
+     * @custom:scenario Check that the multiplier increases with positive funding (more long trading expo than vault)
+     * @custom:given Twice the long trading expo compared to the vault trading expo
+     * @custom:when The funding is positive during 10 days
+     * @custom:then The liquidation multiplier increases
      */
-    function test_liquidationMultiplier() public {
-        bytes memory priceData = abi.encode(4000 ether);
-        uint128 desiredLiqPrice = 2000 ether;
-
-        protocol.initiateOpenPosition(5 ether, desiredLiqPrice, priceData, "");
-        assertEq(protocol.getLiquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
+    function test_liquidationMultiplierIncrease() public {
+        skip(1 hours);
+        bytes memory priceData = abi.encode(params.initialPrice);
+        // create a long position to have positive funding
+        protocol.initiateOpenPosition(10 ether, params.initialPrice / 2, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(priceData, "");
+        assertGt(protocol.i_longTradingExpo(params.initialPrice), protocol.i_vaultTradingExpo(params.initialPrice));
 
-        // Here, we have vaultExpo > longExpo and fund > 0, so we should have multiplier > 1
-        assertGt(protocol.getLiquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
-
+        // positive funding applies
         skip(10 days);
 
         // We need to call liquidate to trigger the refresh of the multiplier
         protocol.liquidate(priceData, 0);
-        // Here, we have vaultExpo > longExpo and fund < 0, so we should have multiplier < 1
+        assertGt(protocol.getLiquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
+    }
+
+    /**
+     * @custom:scenario Check that the multiplier decreases with negative funding (more vault trading expo than long)
+     * @custom:given Twice the vault trading expo compared to the long trading expo
+     * @custom:when The funding is negative during 10 days
+     * @custom:then The liquidation multiplier decreases
+     */
+    function test_liquidationMultiplierDecrease() public {
+        skip(1 hours);
+        bytes memory priceData = abi.encode(params.initialPrice);
+        // create a deposit to have negative funding
+        protocol.initiateDeposit(10 ether, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+        protocol.validateDeposit(priceData, "");
+        assertGt(protocol.i_vaultTradingExpo(params.initialPrice), protocol.i_longTradingExpo(params.initialPrice));
+
+        // positive funding applies
+        skip(10 days);
+
+        // We need to call liquidate to trigger the refresh of the multiplier
+        protocol.liquidate(priceData, 0);
         assertLt(protocol.getLiquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
     }
 }
