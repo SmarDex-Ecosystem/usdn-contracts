@@ -48,12 +48,12 @@ contract MockOracleMiddleware is IOracleMiddleware {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function decimals() external pure returns (uint8) {
+    function getDecimals() external pure returns (uint8) {
         return DECIMALS;
     }
 
     /// @inheritdoc IOracleMiddleware
-    function validationDelay() external view returns (uint256) {
+    function getValidationDelay() external view returns (uint256) {
         return _validationDelay;
     }
 
@@ -68,13 +68,17 @@ contract MockOracleMiddleware is IOracleMiddleware {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function updateValidationDelay(uint256 newDelay) external {
+    function setValidationDelay(uint256 newDelay) external {
         _validationDelay = newDelay;
     }
 
     /// @inheritdoc IOracleMiddleware
-    function updateChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external {
+    function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external {
         _timeElapsedLimit = newTimeElapsedLimit;
+    }
+
+    function setRecentPriceDelay(uint64) external {
+        // Do something if needed
     }
 
     function requireValidationCost() external view returns (bool) {

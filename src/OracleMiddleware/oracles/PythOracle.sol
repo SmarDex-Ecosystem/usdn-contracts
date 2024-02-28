@@ -13,7 +13,7 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
  * price of the USDN underlying asset.
  */
 abstract contract PythOracle is IOracleMiddlewareErrors {
-    uint256 private constant DECIMALS = 8;
+    uint256 internal constant DECIMALS = 8;
 
     bytes32 internal immutable _priceID;
     IPyth internal immutable _pyth;
@@ -27,12 +27,44 @@ abstract contract PythOracle is IOracleMiddlewareErrors {
     }
 
     /**
+     * @notice Get the number of decimals of the asset from Pyth network
+     * @return decimals_ The number of decimals of the asset
+     */
+    function getPythDecimals() public pure returns (uint256) {
+        return DECIMALS;
+    }
+
+    /**
+     * @notice Get the Pyth contract address
+     * @return pyth_ The Pyth contract address
+     */
+    function getPyth() public view returns (IPyth) {
+        return _pyth;
+    }
+
+    /**
+     * @notice Get the Pyth price ID
+     * @return priceID_ The Pyth price ID
+     */
+    function getPriceID() external view returns (bytes32) {
+        return _priceID;
+    }
+
+    /**
+     * @notice Get the recent price delay
+     * @return recentPriceDelay_ The maximum age of a recent price to be considered valid
+     */
+    function getRecentPriceDelay() external view returns (uint64) {
+        return _recentPriceDelay;
+    }
+
+    /**
      * @notice Get the price of the asset from pyth
      * @param priceUpdateData The data required to update the price feed
      * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices.
      * @return price_ The price of the asset
      */
-    function getPythPrice(bytes calldata priceUpdateData, uint64 targetTimestamp)
+    function _getPythPrice(bytes calldata priceUpdateData, uint64 targetTimestamp)
         internal
         returns (PythStructs.Price memory)
     {
@@ -85,11 +117,11 @@ abstract contract PythOracle is IOracleMiddlewareErrors {
      * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices.
      * @param _decimals The number of decimals to format the price to
      */
-    function getFormattedPythPrice(bytes calldata priceUpdateData, uint64 targetTimestamp, uint256 _decimals)
+    function _getFormattedPythPrice(bytes calldata priceUpdateData, uint64 targetTimestamp, uint256 _decimals)
         internal
         returns (FormattedPythPrice memory pythPrice_)
     {
-        PythStructs.Price memory pythPrice = getPythPrice(priceUpdateData, targetTimestamp);
+        PythStructs.Price memory pythPrice = _getPythPrice(priceUpdateData, targetTimestamp);
 
         pythPrice_ = FormattedPythPrice({
             price: int256(uint256(uint64(pythPrice.price)) * 10 ** _decimals / 10 ** DECIMALS),
@@ -104,42 +136,10 @@ abstract contract PythOracle is IOracleMiddlewareErrors {
      * @param priceUpdateData The data required to update the price feed
      * @return updateFee_ The price of the fee to update the price feed
      */
-    function getPythUpdateFee(bytes calldata priceUpdateData) internal view returns (uint256) {
+    function _getPythUpdateFee(bytes calldata priceUpdateData) internal view returns (uint256) {
         bytes[] memory pricesUpdateData = new bytes[](1);
         pricesUpdateData[0] = priceUpdateData;
 
         return _pyth.getUpdateFee(pricesUpdateData);
-    }
-
-    /**
-     * @notice Get the number of decimals of the asset from Pyth network
-     * @return decimals_ The number of decimals of the asset
-     */
-    function pythDecimals() public pure returns (uint256) {
-        return DECIMALS;
-    }
-
-    /**
-     * @notice Get the Pyth contract address
-     * @return pyth_ The Pyth contract address
-     */
-    function pyth() public view returns (IPyth) {
-        return _pyth;
-    }
-
-    /**
-     * @notice Get the Pyth price ID
-     * @return priceID_ The Pyth price ID
-     */
-    function priceID() public view returns (bytes32) {
-        return _priceID;
-    }
-
-    /**
-     * @notice Get the recent price delay
-     * @return recentPriceDelay_ The maximum age of a recent price to be considered valid
-     */
-    function getRecentPriceDelay() external view returns (uint64) {
-        return _recentPriceDelay;
     }
 }

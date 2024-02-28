@@ -76,7 +76,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         );
         Position memory firstPos = protocol.getLongPosition(
             protocol.getEffectiveTickForPrice(testParams.initialPrice / 2)
-                + int24(protocol.liquidationPenalty()) * protocol.tickSpacing(),
+                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
             0,
             0
         );
@@ -91,7 +91,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
     function test_setUp() public {
         _setUp(DEFAULT_PARAMS);
-        assertGt(protocol.tickSpacing(), 1, "tickSpacing"); // we want to test all functions for a tickSpacing > 1
+        assertGt(protocol.getTickSpacing(), 1, "tickSpacing"); // we want to test all functions for a tickSpacing > 1
         assertEq(
             wstETH.balanceOf(address(protocol)), params.initialDeposit + params.initialLong, "wstETH protocol balance"
         );
@@ -101,7 +101,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         Position memory firstPos = protocol.getLongPosition(
             protocol.getEffectiveTickForPrice(params.initialPrice / 2)
-                + int24(protocol.liquidationPenalty()) * protocol.tickSpacing(),
+                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
             0,
             0
         );
@@ -109,8 +109,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
-        assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
-        assertEq(protocol.feeCollector(), ADMIN, "fee collector");
+        assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
+        assertEq(protocol.getFeeCollector(), ADMIN, "fee collector");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
     }
 

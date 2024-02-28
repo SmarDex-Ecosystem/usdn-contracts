@@ -30,11 +30,24 @@ abstract contract ChainlinkOracle is IOracleMiddlewareErrors {
     }
 
     /**
+     * @notice Get the number of decimals of the asset from Chainlink
+     * @return decimals_ The number of decimals of the asset
+     */
+    function getChainlinkDecimals() public view returns (uint256) {
+        return _priceFeed.decimals();
+    }
+
+    /// @notice Returns the Chainlink price feed aggregator contract
+    function getPriceFeed() public view returns (AggregatorV3Interface) {
+        return _priceFeed;
+    }
+
+    /**
      * @notice Get the price of the asset from Chainlink
      * @dev If the price returned equals PRICE_TOO_OLD, it means the price is too old
      * @return price_ The price of the asset
      */
-    function getChainlinkPrice() internal view virtual returns (ChainlinkPriceInfo memory price_) {
+    function _getChainlinkPrice() internal view virtual returns (ChainlinkPriceInfo memory price_) {
         // slither-disable-next-line unused-return
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
@@ -50,30 +63,17 @@ abstract contract ChainlinkOracle is IOracleMiddlewareErrors {
      * @param decimals The number of decimals to format the price to
      * @return formattedPrice_ The formatted price of the asset
      */
-    function getFormattedChainlinkPrice(uint256 decimals)
+    function _getFormattedChainlinkPrice(uint256 decimals)
         internal
         view
         returns (ChainlinkPriceInfo memory formattedPrice_)
     {
         uint256 oracleDecimal = _priceFeed.decimals();
-        formattedPrice_ = getChainlinkPrice();
+        formattedPrice_ = _getChainlinkPrice();
         if (formattedPrice_.price == PRICE_TOO_OLD) {
             return formattedPrice_;
         }
 
         formattedPrice_.price = formattedPrice_.price * int256(10 ** decimals) / int256(10 ** oracleDecimal);
-    }
-
-    /**
-     * @notice Get the number of decimals of the asset from Chainlink
-     * @return decimals_ The number of decimals of the asset
-     */
-    function chainlinkDecimals() public view returns (uint256) {
-        return _priceFeed.decimals();
-    }
-
-    /// @notice Returns the Chainlink price feed aggregator contract
-    function priceFeed() public view returns (AggregatorV3Interface) {
-        return _priceFeed;
     }
 }

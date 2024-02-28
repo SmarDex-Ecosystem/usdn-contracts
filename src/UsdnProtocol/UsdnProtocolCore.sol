@@ -190,6 +190,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         } while (i < maxIter);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
+        (action_,) = _getPendingAction(user);
+    }
+
     /* --------------------------  Internal functions --------------------------- */
 
     function _getLiquidationMultiplier(
@@ -389,7 +394,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = _tickVersion[tick];
-        hash_ = keccak256(abi.encodePacked(tick, version_));
+        hash_ = tickHash(tick, version_);
     }
 
     /**
@@ -526,7 +531,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (_pendingActions[user] == 0) {
             return;
         }
-        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user, false); // do not clear
+        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user);
         // the position is only at risk of being liquidated while pending if it is an open position action
         // slither-disable-next-line incorrect-equality
         if (action.action == ProtocolAction.ValidateOpenPosition) {
@@ -560,16 +565,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Get the pending action for a user and optionally pop it from the queue
+     * @notice Get the pending action for a user
      * @param user The user address
-     * @param clear Whether to pop the pending action from the queue or leave it there
      * @return action_ The pending action struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
-    function _getPendingAction(address user, bool clear)
-        internal
-        returns (PendingAction memory action_, uint128 rawIndex_)
-    {
+    function _getPendingAction(address user) internal view returns (PendingAction memory action_, uint128 rawIndex_) {
         uint256 pendingActionIndex = _pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
@@ -578,12 +579,18 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
         rawIndex_ = uint128(pendingActionIndex - 1);
         action_ = _pendingActionsQueue.atRaw(rawIndex_);
+    }
 
-        if (clear) {
-            // remove the pending action
-            _pendingActionsQueue.clearAt(rawIndex_);
-            delete _pendingActions[user];
-        }
+    /**
+     * @notice Clear the user pending action and return it
+     * @param user The user address
+     * @return action_ The cleared pending action struct
+     */
+    function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
+        uint128 rawIndex;
+        (action_, rawIndex) = _getPendingAction(user);
+        _pendingActionsQueue.clearAt(rawIndex);
+        delete _pendingActions[user];
     }
 
     /**

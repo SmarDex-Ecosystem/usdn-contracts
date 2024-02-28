@@ -80,7 +80,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertEq(action.amount, USDN_AMOUNT, "action amount");
 
         // the pending action should be actionable after the validation deadline
-        skip(protocol.validationDeadline() + 1);
+        skip(protocol.getValidationDeadline() + 1);
         vm.prank(address(0)); // simulate front-end call by someone else
         action = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(this), "pending action user");
@@ -155,7 +155,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(USDN_AMOUNT, currentPrice, "");
 
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateWithdrawal);
         uint256 balanceBefore = address(this).balance;
@@ -176,17 +176,18 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(initialPrice);
         protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "");
 
-        uint256 vaultBalance = protocol.balanceVault(); // save for withdrawn amount calculation in case price decreases
+        uint256 vaultBalance = protocol.getBalanceVault(); // save for withdrawn amount calculation in case price
+            // decreases
 
         // wait the required delay between initiation and validation
-        uint256 validationDelay = oracleMiddleware.validationDelay();
+        uint256 validationDelay = oracleMiddleware.getValidationDelay();
         skip(validationDelay + 1);
 
         currentPrice = abi.encode(assetPrice);
 
         // if price increases, we need to use the new balance to calculate the withdrawn amount
         if (assetPrice > initialPrice) {
-            vaultBalance = uint256(protocol.vaultAssetAvailable(assetPrice));
+            vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
         }
 
         // theoretical withdrawn amount
