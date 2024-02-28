@@ -68,17 +68,16 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return (_EMA, oldLongExpo_);
         }
 
-        if ((oldVaultExpo * oldLongExpo_) <= 0 && (oldVaultExpo < 0 || oldLongExpo_ < 0)) {
-            // if the product is negative, then oldVaultExpo or oldLongExpo is negative
-            // if it's zero, we check if one of the two is negative
-            if (oldVaultExpo < 0) {
-                // if oldVaultExpo is negative, then we cap the imbalance index to 1
-                return (int256(_fundingSF) + _EMA, oldLongExpo_);
-            } else {
-                // if oldLongExpo is negative, then we cap the imbalance index to -1
-                return (-int256(_fundingSF) + _EMA, oldLongExpo_);
-            }
+        if (oldLongExpo_ <= 0) {
+            // if oldLongExpo is negative, then we cap the imbalance index to -1
+            // oldVaultExpo is always positive
+            return (-int256(_fundingSF) + _EMA, oldLongExpo_);
+        } else if (oldVaultExpo == 0) {
+            // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
+            // oldLongExpo must be positive in this case
+            return (int256(_fundingSF) + _EMA, oldLongExpo_);
         }
+        // starting here, oldLongExpo and oldVaultExpo are always strictly positive
 
         uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
         uint256 numerator_squared = uint256(numerator * numerator);
