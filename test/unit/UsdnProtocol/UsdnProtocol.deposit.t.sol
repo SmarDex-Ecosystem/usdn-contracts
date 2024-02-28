@@ -59,7 +59,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(action.amount, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
-        skip(protocol.validationDeadline() + 1);
+        skip(protocol.getValidationDeadline() + 1);
         vm.prank(address(0)); // simulate front-end call by someone else
         action = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(this), "pending action user");
@@ -132,7 +132,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, "");
 
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
         uint256 balanceBefore = address(this).balance;
@@ -154,10 +154,10 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");
-        uint256 vaultBalance = protocol.balanceVault(); // save for mint amount calculation in case price increases
+        uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation
-        uint256 validationDelay = oracleMiddleware.validationDelay();
+        uint256 validationDelay = oracleMiddleware.getValidationDelay();
         skip(validationDelay + 1);
 
         // set the effective price used for minting USDN
@@ -165,7 +165,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
         // if price decreases, we need to use the new balance to calculate the minted amount
         if (assetPrice < initialPrice) {
-            vaultBalance = uint256(protocol.vaultAssetAvailable(assetPrice));
+            vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
         }
 
         // theoretical minted amount

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -17,6 +17,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     uint16 internal constant CONF_DENOM = 10_000;
     /// @notice Confidence interval percentage numerator
     uint16 internal _wstethMockedConfPct = 20; // default 0.2% conf
+
     /**
      * @notice Wsteth mocked price
      * @dev This price will be used if greater than zero.
@@ -83,19 +84,6 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         _wstethMockedPrice = newWstethMockedPrice;
     }
 
-    /// @inheritdoc OracleMiddleware
-    function validationCost(bytes calldata data, ProtocolAction action)
-        public
-        view
-        override
-        returns (uint256 result_)
-    {
-        // No signature verification -> no oracle fee
-        if (!_verifySignature) return 0;
-
-        return super.validationCost(data, action);
-    }
-
     /**
      * @notice Set Wsteth mocked confidence interval percentage.
      * @dev To calculate a percentage of neutral price up or down in some protocol actions.
@@ -107,22 +95,35 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     }
 
     /// @notice Get current wsteth mocked price.
-    function wstethMockedPrice() external view returns (uint256) {
+    function getWstethMockedPrice() external view returns (uint256) {
         return _wstethMockedPrice;
     }
 
     /// @notice Get current wsteth mocked confidence interval.
-    function wstethMockedConfPct() external view returns (uint64) {
+    function getWstethMockedConfPct() external view returns (uint64) {
         return _wstethMockedConfPct;
     }
 
     /// @notice Get constant wsteth mocked confidence interval denominator.
-    function wstethMockedConfDenom() external pure returns (uint64) {
+    function getWstethMockedConfDenom() external pure returns (uint64) {
         return CONF_DENOM;
     }
 
     /// @notice Set the signature verification flag.
     function setVerifySignature(bool verify) external {
         _verifySignature = verify;
+    }
+
+    /// @inheritdoc OracleMiddleware
+    function validationCost(bytes calldata data, ProtocolAction action)
+        public
+        view
+        override
+        returns (uint256 result_)
+    {
+        // No signature verification -> no oracle fee
+        if (!_verifySignature) return 0;
+
+        return super.validationCost(data, action);
     }
 }

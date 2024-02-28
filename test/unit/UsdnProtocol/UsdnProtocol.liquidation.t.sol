@@ -291,8 +291,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         priceData = abi.encode(1950 ether);
 
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
-        uint256 vaultBalanceBeforeRewards = protocol.balanceVault();
-        uint256 longPositionsBeforeLiquidation = protocol.totalLongPositions();
+        uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
+        uint256 longPositionsBeforeLiquidation = protocol.getTotalLongPositions();
 
         uint256 liquidatedPositions = protocol.liquidate(priceData, 1);
 
@@ -308,14 +308,14 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Check that the vault balance did not change
         assertEq(
             vaultBalanceBeforeRewards,
-            protocol.balanceVault(),
+            protocol.getBalanceVault(),
             "The vault balance should not change if there were no liquidations"
         );
 
         // Check if first total long positions match initial value
         assertEq(
             longPositionsBeforeLiquidation,
-            protocol.totalLongPositions(),
+            protocol.getTotalLongPositions(),
             "The number of long positions should not have changed"
         );
     }
@@ -346,11 +346,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
 
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
-        uint256 vaultBalanceBeforeRewards = protocol.balanceVault();
+        uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
 
         // Get the proper liquidation price for the tick
         price = protocol.getEffectivePriceForTick(tick);
-        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.totalExpoByTick(tick));
+        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTotalExpoByTick(tick, 0));
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
@@ -368,7 +368,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Check that the vault balance got updated
         assertEq(
-            vaultBalanceBeforeRewards + uint256(collateralLiquidated) - protocol.balanceVault(),
+            vaultBalanceBeforeRewards + uint256(collateralLiquidated) - protocol.getBalanceVault(),
             expectedLiquidatorRewards,
             "The vault does not contain the right amount of funds"
         );
@@ -381,7 +381,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
      */
     function test_liquidateEtherRefund() public {
-        uint256 initialTotalPos = protocol.totalLongPositions();
+        uint256 initialTotalPos = protocol.getTotalLongPositions();
         uint128 currentPrice = 2000 ether;
         bytes memory priceData = abi.encode(currentPrice);
 
@@ -392,11 +392,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
         }(5 ether, 9 * currentPrice / 10, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
         }(priceData, "");
-        assertEq(protocol.totalLongPositions(), initialTotalPos + 1, "total positions after create");
+        assertEq(protocol.getTotalLongPositions(), initialTotalPos + 1, "total positions after create");
 
         // liquidate
         currentPrice = 1750 ether;
@@ -405,7 +405,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation);
         protocol.liquidate{ value: 0.5 ether }(priceData, 1);
-        assertEq(protocol.totalLongPositions(), initialTotalPos, "total positions after liquidate");
+        assertEq(protocol.getTotalLongPositions(), initialTotalPos, "total positions after liquidate");
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 

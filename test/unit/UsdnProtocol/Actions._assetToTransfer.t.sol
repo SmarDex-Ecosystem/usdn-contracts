@@ -27,7 +27,7 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
     function test_assetToTransfer() public {
         int24 tick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 4);
         uint256 res = protocol.i_assetToTransfer(
-            tick, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.liquidationMultiplier()
+            tick, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
         );
         assertEq(res, 1.512304848730381401 ether);
     }
@@ -43,9 +43,9 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
      */
     function test_assetToTransferNotEnoughBalance() public {
         int24 tick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 4);
-        uint256 longAvailable = uint256(protocol.longAssetAvailable(DEFAULT_PARAMS.initialPrice)); // 5 ether
+        uint256 longAvailable = uint256(protocol.i_longAssetAvailable(DEFAULT_PARAMS.initialPrice)); // 5 ether
         uint256 res = protocol.i_assetToTransfer(
-            tick, 100 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.liquidationMultiplier()
+            tick, 100 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
         );
         assertEq(res, longAvailable);
     }
@@ -65,14 +65,14 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
         uint128 liqPrice = protocol.getEffectivePriceForTick(firstPosTick);
         protocol.liquidate(abi.encode(liqPrice), 10);
 
-        assertEq(protocol.totalLongPositions(), 0, "total long positions");
+        assertEq(protocol.getTotalLongPositions(), 0, "total long positions");
         assertEq(protocol.i_longTradingExpo(liqPrice), 0, "long trading expo with funding");
-        assertEq(protocol.balanceLong(), 0, "balance long");
-        assertEq(protocol.longAssetAvailable(liqPrice), 0, "long asset available");
+        assertEq(protocol.getBalanceLong(), 0, "balance long");
+        assertEq(protocol.i_longAssetAvailable(liqPrice), 0, "long asset available");
 
         int24 tick = protocol.getEffectiveTickForPrice(liqPrice);
         uint256 res = protocol.i_assetToTransfer(
-            tick, 100 ether, uint128(10 ** protocol.LEVERAGE_DECIMALS()), protocol.liquidationMultiplier()
+            tick, 100 ether, uint128(10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
         );
         assertEq(res, 0, "asset to transfer");
     }

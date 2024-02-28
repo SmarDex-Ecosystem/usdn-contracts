@@ -76,7 +76,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         );
         Position memory firstPos = protocol.getLongPosition(
             protocol.getEffectiveTickForPrice(testParams.initialPrice / 2)
-                + int24(protocol.liquidationPenalty()) * protocol.tickSpacing(),
+                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
             0,
             0
         );
@@ -91,7 +91,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
     function test_setUp() public {
         _setUp(DEFAULT_PARAMS);
-        assertGt(protocol.tickSpacing(), 1, "tickSpacing"); // we want to test all functions for a tickSpacing > 1
+        assertGt(protocol.getTickSpacing(), 1, "tickSpacing"); // we want to test all functions for a tickSpacing > 1
         assertEq(
             wstETH.balanceOf(address(protocol)), params.initialDeposit + params.initialLong, "wstETH protocol balance"
         );
@@ -101,7 +101,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         Position memory firstPos = protocol.getLongPosition(
             protocol.getEffectiveTickForPrice(params.initialPrice / 2)
-                + int24(protocol.liquidationPenalty()) * protocol.tickSpacing(),
+                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
             0,
             0
         );
@@ -109,8 +109,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
-        assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
-        assertEq(protocol.feeCollector(), ADMIN, "fee collector");
+        assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
+        assertEq(protocol.getFeeCollector(), ADMIN, "fee collector");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
     }
 
@@ -130,22 +130,22 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
         vm.prank(user);
         protocol.initiateDeposit(positionSize, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
         vm.prank(user);
         protocol.validateDeposit(priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
         vm.prank(user);
         protocol.initiateWithdrawal(uint128(usdn.balanceOf(user)), priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
 
         vm.prank(user);
         protocol.validateWithdrawal(priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
     }
 
     /**
@@ -172,22 +172,22 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
         vm.prank(user);
         (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(positionSize, desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
 
         vm.prank(user);
         protocol.validateOpenPosition(priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
 
         vm.prank(user);
         protocol.initiateClosePosition(tick_, tickVersion_, index_, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
 
         vm.prank(user);
         protocol.validateClosePosition(priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         return (tick_, tickVersion_, index_);
     }

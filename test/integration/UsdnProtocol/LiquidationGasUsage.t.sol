@@ -50,17 +50,17 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
 
         /* ---------------------------- Set up position 1 --------------------------- */
         protocol.initiateOpenPosition(1 ether, futurePythPrice + 150e18, data, "");
-        skip(wstethMiddleware.validationDelay() + 1);
+        skip(wstethMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(data, "");
 
         /* ---------------------------- Set up position 2 --------------------------- */
         protocol.initiateOpenPosition(1 ether, futurePythPrice + 100e18, data, "");
-        skip(wstethMiddleware.validationDelay() + 1);
+        skip(wstethMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(data, "");
 
         /* ---------------------------- Set up position 3 --------------------------- */
         protocol.initiateOpenPosition(1 ether, futurePythPrice + 50e18, data, "");
-        skip(wstethMiddleware.validationDelay() + 1);
+        skip(wstethMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(data, "");
 
         /* ---------------------------- Start the checks ---------------------------- */

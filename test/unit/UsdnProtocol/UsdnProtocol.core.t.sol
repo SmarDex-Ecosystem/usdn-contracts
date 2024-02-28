@@ -49,13 +49,13 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // calculate the value of the deployer's long position
         uint128 longLiqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
-        uint256 longPosValue = protocol.positionValue(
+        uint256 longPosValue = protocol.i_getPositionValue(
             DEFAULT_PARAMS.initialPrice, longLiqPrice, DEFAULT_PARAMS.initialLong, initialLongLeverage
         );
 
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.
-        assertGe(uint256(protocol.longAssetAvailable(DEFAULT_PARAMS.initialPrice)), longPosValue, "long balance");
+        assertGe(uint256(protocol.i_longAssetAvailable(DEFAULT_PARAMS.initialPrice)), longPosValue, "long balance");
     }
 
     /**
@@ -76,7 +76,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         protocol.liquidate(priceData, 10);
 
         // the pending action is stale
-        (, uint256 currentTickVersion) = protocol.tickHash(tick_);
+        (, uint256 currentTickVersion) = protocol.i_tickHash(tick_);
         PendingAction memory action = protocol.getUserPendingAction(address(this));
         assertEq(action.var3, tickVersion_, "tick version");
         assertTrue(action.var3 != currentTickVersion, "current tick version");
@@ -130,7 +130,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         skip(1 days);
         protocol.liquidate(priceData, 1);
 
-        int256 lastFunding = protocol.i_lastFunding();
+        int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
         protocol.liquidate(priceData, 1);
@@ -150,7 +150,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(200 ether, DEFAULT_PARAMS.initialPrice / 2, priceData, "");
         protocol.validateOpenPosition(priceData, "");
 
-        int256 lastFunding = protocol.i_lastFunding();
+        int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
         protocol.liquidate(priceData, 1);
@@ -199,7 +199,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         skip(1 days);
         protocol.liquidate(priceData, 1);
 
-        int256 lastFunding = protocol.i_lastFunding();
+        int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() + 1);
         // we call liquidate() to update the EMA
         protocol.liquidate(priceData, 1);
@@ -227,7 +227,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         skip(25);
         protocol.liquidate(abi.encode(price / 100), 10);
         int256 EMA = protocol.getEMA();
-        uint256 fundingSF = protocol.fundingSF();
+        uint256 fundingSF = protocol.getFundingSF();
         (int256 fund_,,) = protocol.funding(price / 100, uint128(block.timestamp));
         emit log_named_int("fund_", fund_);
         emit log_named_int("mul", -int256(fundingSF) + EMA);

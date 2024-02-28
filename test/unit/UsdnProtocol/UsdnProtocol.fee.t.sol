@@ -17,7 +17,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check that setFeeBps() reverts when the value is too big
+     * @custom:scenario Check that setProtocolFeeBps() reverts when the value is too big
      * @custom:given The fee value is > BPS_DIVISOR
      * @custom:then The protocol reverts with `UsdnProtocolInvalidProtocolFeeBps`
      */
@@ -25,12 +25,12 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
         vm.startPrank(ADMIN);
         vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
-        protocol.setFeeBps(bpsDivisor + 1);
+        protocol.setProtocolFeeBps(bpsDivisor + 1);
         vm.stopPrank();
     }
 
     /**
-     * @custom:scenario Check setFeeBps() function
+     * @custom:scenario Check setProtocolFeeBps() function
      * @custom:given The fee bps is 0
      * @custom:then The protocol emits `FeeBpsUpdated` event with 0
      * @custom:and Pending protocol fee is 0 after action
@@ -40,11 +40,11 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit FeeBpsUpdated(0);
-        protocol.setFeeBps(0);
+        protocol.setProtocolFeeBps(0);
 
         protocol.initiateDeposit(1000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
+        assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
     }
 
     /**
@@ -67,7 +67,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit FeeCollectorUpdated(address(this));
         protocol.setFeeCollector(address(this));
-        assertEq(protocol.feeCollector(), address(this));
+        assertEq(protocol.getFeeCollector(), address(this));
     }
 
     /**
@@ -80,7 +80,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit FeeThresholdUpdated(5 ether);
         protocol.setFeeThreshold(5 ether);
-        assertEq(protocol.feeThreshold(), 5 ether);
+        assertEq(protocol.getFeeThreshold(), 5 ether);
     }
 
     /**
@@ -93,10 +93,10 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     function test_pendingProtocolFee() public {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
 
-        assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
+        assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
         protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        assertGt(protocol.pendingProtocolFee(), 0, "pending protocol fee after deposit");
+        assertGt(protocol.getPendingProtocolFee(), 0, "pending protocol fee after deposit");
     }
 
     /**
@@ -119,6 +119,6 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         skip(8 days);
         assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");
         protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        assertGe(wstETH.balanceOf(ADMIN), protocol.feeThreshold(), "fee collector balance after collect");
+        assertGe(wstETH.balanceOf(ADMIN), protocol.getFeeThreshold(), "fee collector balance after collect");
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { console, Test } from "forge-std/Test.sol";
+import { console2, Test } from "forge-std/Test.sol";
 
 import { Usdn } from "src/Usdn.sol";
 
@@ -41,7 +41,7 @@ contract UsdnHandler is Usdn, Test {
     /* ------------------ Functions used for invariant testing ------------------ */
 
     modifier useActor(uint256 actorIndexSeed) {
-        console.log("bound actor ID");
+        console2.log("bound actor ID");
         _currentActor = actors[bound(actorIndexSeed, 0, actors.length - 1)];
         vm.startPrank(_currentActor);
         _;
@@ -52,18 +52,18 @@ contract UsdnHandler is Usdn, Test {
         if (_divisor == MIN_DIVISOR) {
             return;
         }
-        console.log("bound divisor");
+        console2.log("bound divisor");
         newDivisor = bound(newDivisor, MIN_DIVISOR, _divisor - 1);
         emit DivisorAdjusted(_divisor, newDivisor);
         _divisor = newDivisor;
     }
 
     function mintTest(uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
-        if (totalSupply() == maxTokens()) {
+        if (totalSupply() >= maxTokens() - 1) {
             return;
         }
-        console.log("bound mint value");
-        value = bound(value, 1, maxTokens() - totalSupply());
+        console2.log("bound mint value");
+        value = bound(value, 1, maxTokens() - totalSupply() - 1);
         uint256 valueShares = value * _divisor;
         totalSharesSum += valueShares;
         shares[_currentActor] += valueShares;
@@ -74,21 +74,24 @@ contract UsdnHandler is Usdn, Test {
         if (balanceOf(_currentActor) == 0) {
             return;
         }
-        console.log("bound burn value");
+        console2.log("bound burn value");
         value = bound(value, 1, balanceOf(_currentActor));
         uint256 valueShares = value * _divisor;
+        if (valueShares > shares[_currentActor]) {
+            valueShares = shares[_currentActor];
+        }
         totalSharesSum -= valueShares;
         shares[_currentActor] -= valueShares;
         _burn(_currentActor, value);
     }
 
     function transferTest(uint256 actorTo, uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
-        console.log("bound 'to' actor ID");
+        console2.log("bound 'to' actor ID");
         address to = actors[bound(actorTo, 0, actors.length - 1)];
         if (balanceOf(_currentActor) == 0) {
             return;
         }
-        console.log("bound transfer value");
+        console2.log("bound transfer value");
         value = bound(value, 1, balanceOf(_currentActor));
         uint256 valueShares = value * _divisor;
         if (valueShares > shares[_currentActor]) {

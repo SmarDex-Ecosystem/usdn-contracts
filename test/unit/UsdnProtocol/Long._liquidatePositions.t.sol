@@ -49,7 +49,8 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.totalExpoByTick(desiredLiqTick));
+        int256 tickValue =
+            protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTotalExpoByTick(desiredLiqTick, 0));
 
         vm.expectEmit();
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
@@ -61,7 +62,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         assertEq(logsAmount, 1, "Only one log should have been emitted");
         assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
         assertLt(
-            protocol.maxInitializedTick(),
+            protocol.getMaxInitializedTick(),
             desiredLiqTick,
             "The max Initialized tick should be lower than the last liquidated tick"
         );
@@ -80,7 +81,8 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.totalExpoByTick(desiredLiqTick));
+        int256 tickValue =
+            protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTotalExpoByTick(desiredLiqTick, 0));
 
         vm.expectEmit();
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
@@ -93,8 +95,8 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         assertEq(logsAmount, 1, "Only one log should have been emitted");
         assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
         assertEq(
-            protocol.maxInitializedTick(),
-            TickMath.minUsableTick(protocol.tickSpacing()),
+            protocol.getMaxInitializedTick(),
+            TickMath.minUsableTick(protocol.getTickSpacing()),
             "The max Initialized tick should be equal to the very last tick"
         );
     }
@@ -110,7 +112,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     function test_liquidationIterationsAreCapped() public {
         uint128 price = 2000 ether;
         uint16 maxIterations = protocol.MAX_LIQUIDATION_ITERATION();
-        int24 tickSpacing = protocol.tickSpacing();
+        int24 tickSpacing = protocol.getTickSpacing();
         int24 desiredLiqTick = protocol.getEffectiveTickForPrice(price - 200 ether);
         uint128 liqPrice;
 
@@ -153,7 +155,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
 
         assertEq(
-            protocol.maxInitializedTick(),
+            protocol.getMaxInitializedTick(),
             ticksToLiquidate[ticksToLiquidate.length - 1],
             "Max initialized tick should be the last tick left to liquidate"
         );
