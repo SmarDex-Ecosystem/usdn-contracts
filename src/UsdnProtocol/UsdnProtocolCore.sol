@@ -34,13 +34,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolCore
     function getLiquidationMultiplier(uint128 timestamp) public view returns (uint256) {
-        if (timestamp < _lastUpdateTimestamp) {
-            revert UsdnProtocolTimestampTooOld();
-        } else if (timestamp == _lastUpdateTimestamp) {
+        if (timestamp == _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
-
+        // timestamp < _lastUpdateTimestamp is checked in funding below and would revert
         (int256 fund,) = funding(timestamp);
+        // starting here, timestamp is strictly greater than _lastUpdateTimestamp
         return _getLiquidationMultiplier(fund, _liquidationMultiplier);
     }
 
