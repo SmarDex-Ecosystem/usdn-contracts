@@ -172,6 +172,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         emit FeeThresholdUpdated(feeThreshold);
     }
 
+    /// @inheritdoc IUsdnProtocol
     function setSoftLongExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
         if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
             revert UsdnProtocolInvalidSoftLongExpoImbalanceLimit();
@@ -180,6 +181,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _softLongExpoImbalanceLimit = newLimit;
     }
 
+    /// @inheritdoc IUsdnProtocol
     function setHardLongExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
         if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
             revert UsdnProtocolInvalidHardLongExpoImbalanceLimit();
@@ -188,6 +190,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _hardLongExpoImbalanceLimit = newLimit;
     }
 
+    /// @inheritdoc IUsdnProtocol
     function setSoftVaultExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
         if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
             revert UsdnProtocolInvalidSoftVaultExpoImbalanceLimit();
@@ -196,6 +199,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _softVaultExpoImbalanceLimit = newLimit;
     }
 
+    /// @inheritdoc IUsdnProtocol
     function setHardVaultExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
         if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
             revert UsdnProtocolInvalidHardVaultExpoImbalanceLimit();

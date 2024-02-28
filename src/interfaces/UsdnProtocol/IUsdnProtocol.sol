@@ -48,4 +48,28 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @param feeThreshold The minimum amount of fees to be collected before they can be withdrawn
      */
     function setFeeThreshold(uint256 feeThreshold) external;
+
+    /**
+     * @notice Set the soft long expo imbalance limit percentage
+     * @param newLimit The new percentage limit (based on EXPO_IMBALANCE_LIMIT_DENOMINATOR)
+     */
+    function setSoftLongExpoImbalanceLimit(uint16 newLimit) external;
+
+    /**
+     * @notice Set the hard long expo imbalance limit percentage
+     * @param newLimit The new percentage limit (based on EXPO_IMBALANCE_LIMIT_DENOMINATOR)
+     */
+    function setHardLongExpoImbalanceLimit(uint16 newLimit) external;
+
+    /**
+     * @notice Set the soft vault expo imbalance limit percentage
+     * @param newLimit The new percentage limit (based on EXPO_IMBALANCE_LIMIT_DENOMINATOR)
+     */
+    function setSoftVaultExpoImbalanceLimit(uint16 newLimit) external;
+
+    /**
+     * @notice Set the hard vault expo imbalance limit percentage
+     * @param newLimit The new percentage limit (based on EXPO_IMBALANCE_LIMIT_DENOMINATOR)
+     */
+    function setHardVaultExpoImbalanceLimit(uint16 newLimit) external;
 }
