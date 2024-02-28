@@ -9,18 +9,13 @@ import { IMockPythError } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
 
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
 /**
  * @custom:feature The `parseAndValidatePrice` function of `OracleMiddleware`
  * @custom:background Given the price of ETH is 2000 USD
  * @custom:and The confidence interval is 20 USD
  */
-contract TestOracleMiddlewareParseAndValidatePrice is
-    OracleMiddlewareBaseFixture,
-    IOracleMiddlewareErrors,
-    IMockPythError
-{
+contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixture, IMockPythError {
     using Strings for uint256;
 
     uint256 internal immutable FORMATTED_ETH_PRICE;
@@ -30,8 +25,9 @@ contract TestOracleMiddlewareParseAndValidatePrice is
         super.setUp();
 
         FORMATTED_ETH_PRICE =
-            (ETH_PRICE * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals());
-        FORMATTED_ETH_CONF = (ETH_CONF * (10 ** oracleMiddleware.decimals())) / (10 ** oracleMiddleware.pythDecimals());
+            (ETH_PRICE * (10 ** oracleMiddleware.getDecimals())) / (10 ** oracleMiddleware.getPythDecimals());
+        FORMATTED_ETH_CONF =
+            (ETH_CONF * (10 ** oracleMiddleware.getDecimals())) / (10 ** oracleMiddleware.getPythDecimals());
     }
 
     function setUp() public override {
@@ -53,7 +49,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
         (bool success, bytes memory data) = address(oracleMiddleware).call(
             abi.encodeWithSelector(
                 oracleMiddleware.parseAndValidatePrice.selector,
-                uint128(block.timestamp - oracleMiddleware.validationDelay()),
+                uint128(block.timestamp - oracleMiddleware.getValidationDelay()),
                 11,
                 abi.encode("data")
             )
@@ -88,7 +84,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
 
             PriceInfo memory price = oracleMiddleware.parseAndValidatePrice{
                 value: oracleMiddleware.validationCost(abi.encode("data"), action)
-            }(uint128(block.timestamp - oracleMiddleware.validationDelay()), action, abi.encode("data"));
+            }(uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, abi.encode("data"));
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
@@ -149,7 +145,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
     function test_RevertWhen_parseAndValidatePriceWithNegativeEthPrice() public {
         // Update price to -1 USD in pyth oracle
         mockPyth.updatePrice(-1);
-        uint256 timestamp = block.timestamp - oracleMiddleware.validationDelay();
+        uint256 timestamp = block.timestamp - oracleMiddleware.getValidationDelay();
 
         // Expect revert when validating price for None action
         uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
@@ -239,7 +235,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
     function test_RevertWhen_parseAndValidatePriceWhileOracleMiddlewarePythValidationFailed() public {
         // Update price to -1 USD in pyth oracle
         mockPyth.toggleRevert();
-        uint256 timestamp = block.timestamp - oracleMiddleware.validationDelay();
+        uint256 timestamp = block.timestamp - oracleMiddleware.getValidationDelay();
 
         // Expect revert when validating price for None action
         uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
@@ -326,7 +322,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
         // Update price to -1 USD in oracles
         mockPyth.toggleRevert();
 
-        uint256 timestamp = block.timestamp - oracleMiddleware.validationDelay();
+        uint256 timestamp = block.timestamp - oracleMiddleware.getValidationDelay();
 
         // Expect revert when validating price for None action
         uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.None);
@@ -489,7 +485,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is
      * @custom:scenario The user sends too much ether when validating a price
      * @custom:given The user validates a price that requires 1 wei of ether
      * @custom:when The user sends 0.5 ether as value in the `parseAndValidatePrice` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     * @custom:then The user gets refunded the excess ether (0.5 ether - getValidationCost)
      */
     function test_parseAndValidatePriceRefundEther() public {
         uint256 balanceBefore = address(this).balance;

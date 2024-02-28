@@ -345,7 +345,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
-        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
+        PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateDeposit) {
@@ -423,7 +423,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
-        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
+        PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateWithdrawal) {
@@ -482,7 +482,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateOpenPosition(address user, bytes calldata priceData) internal {
-        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
+        PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateOpenPosition) {
@@ -539,8 +539,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             int24 tick = tickWithoutPenalty + int24(_liquidationPenalty) * _tickSpacing;
             // insert position into new tick, update tickVersion and index
             (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos);
-            // emit LiquidationPriceChanged
-            emit LiquidationPriceChanged(long.tick, long.tickVersion, long.index, tick, tickVersion, index);
+            // emit LiquidationPriceUpdated
+            emit LiquidationPriceUpdated(long.tick, long.tickVersion, long.index, tick, tickVersion, index);
             emit ValidatedOpenPosition(pos.user, pos.leverage, startPrice, tick, tickVersion, index);
         } else {
             Position storage pos = _longPositions[tickHash][long.index];
@@ -561,7 +561,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateClosePosition(address user, bytes calldata priceData) internal {
-        (PendingAction memory pending,) = _getPendingAction(user, true); // clear pending action
+        PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateClosePosition) {

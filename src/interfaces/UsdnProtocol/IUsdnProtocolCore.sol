@@ -10,10 +10,12 @@ import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.so
  */
 interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /// @notice The address that holds the minimum supply of USDN and first minimum long position.
-    function DEAD_ADDRESS() external view returns (address);
+    function DEAD_ADDRESS() external pure returns (address);
 
     /// @notice The default max number of iterations for the checking the pending actions queue
-    function DEFAULT_QUEUE_MAX_ITER() external view returns (uint256);
+    function DEFAULT_QUEUE_MAX_ITER() external pure returns (uint256);
+
+    /* -------------------------- Public view functions ------------------------- */
 
     /**
      * @notice Get the predicted value of the liquidation price multiplier for the given timestamp
@@ -89,5 +91,12 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @param maxIter The maximum number of iterations to find the first initialized item
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
      */
-    function getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory action_);
+    function getActionablePendingAction(uint256 maxIter) external view returns (PendingAction memory action_);
+
+    /**
+     * @notice Retrieve a user pending action.
+     * @param user The user address
+     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     */
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_);
 }

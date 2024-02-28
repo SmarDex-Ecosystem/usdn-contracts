@@ -20,7 +20,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The funding should be 0
      */
     function test_funding() public {
-        int256 longExpo = int256(protocol.totalExpo()) - int256(protocol.balanceLong());
+        int256 longExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
         (int256 fund, int256 oldLongExpo) = protocol.funding(uint128(DEFAULT_PARAMS.initialTimestamp));
         assertEq(fund, 0, "funding should be 0 if no time has passed");
         assertEq(oldLongExpo, longExpo, "longExpo if no time has passed");
@@ -48,13 +48,13 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // calculate the value of the deployer's long position
         uint128 longLiqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
-        uint256 longPosValue = protocol.positionValue(
+        uint256 longPosValue = protocol.i_getPositionValue(
             DEFAULT_PARAMS.initialPrice, longLiqPrice, DEFAULT_PARAMS.initialLong, initialLongLeverage
         );
 
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.
-        assertGe(uint256(protocol.longAssetAvailable(DEFAULT_PARAMS.initialPrice)), longPosValue, "long balance");
+        assertGe(uint256(protocol.i_longAssetAvailable(DEFAULT_PARAMS.initialPrice)), longPosValue, "long balance");
     }
 
     /**
@@ -75,7 +75,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         protocol.liquidate(priceData, 10);
 
         // the pending action is stale
-        (, uint256 currentTickVersion) = protocol.tickHash(tick_);
+        (, uint256 currentTickVersion) = protocol.i_tickHash(tick_);
         PendingAction memory action = protocol.getUserPendingAction(address(this));
         assertEq(action.var3, tickVersion_, "tick version");
         assertTrue(action.var3 != currentTickVersion, "current tick version");
@@ -129,7 +129,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         skip(1 days);
         protocol.liquidate(priceData, 1);
 
-        int256 lastFunding = protocol.i_lastFunding();
+        int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
         protocol.liquidate(priceData, 1);
@@ -149,7 +149,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(200 ether, DEFAULT_PARAMS.initialPrice / 2, priceData, "");
         protocol.validateOpenPosition(priceData, "");
 
-        int256 lastFunding = protocol.i_lastFunding();
+        int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
         protocol.liquidate(priceData, 1);
@@ -185,7 +185,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertEq(fund_, protocol.getEMA(), "funding should be equal to EMA");
         assertEq(
             oldLongExpo,
-            int256(protocol.totalExpo() - protocol.balanceLong()),
+            int256(protocol.getTotalExpo() - protocol.getBalanceLong()),
             "old long expo should be the same as last update"
         );
     }
@@ -203,7 +203,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         skip(1 days);
         protocol.liquidate(priceData, 1);
 
-        int256 lastFunding = protocol.i_lastFunding();
+        int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() + 1);
         // we call liquidate() to update the EMA
         protocol.liquidate(priceData, 1);
@@ -224,16 +224,16 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(priceData, "");
 
         skip(1 hours);
         protocol.liquidate(abi.encode(price / 100), 10);
-        assertLt(int256(protocol.totalExpo()) - int256(protocol.balanceLong()), 0, "long expo should be negative");
-        assertEq(protocol.balanceVault(), 0, "vault expo should be zero");
+        assertLt(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo should be negative");
+        assertEq(protocol.getBalanceVault(), 0, "vault expo should be zero");
 
         int256 EMA = protocol.getEMA();
-        uint256 fundingSF = protocol.fundingSF();
+        uint256 fundingSF = protocol.getFundingSF();
         (int256 fund_,) = protocol.funding(uint128(block.timestamp));
 
         assertEq(fund_, -int256(fundingSF) + EMA, "funding should be equal to -fundingSF + EMA");
@@ -252,16 +252,16 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(priceData, "");
 
         skip(1 hours);
         protocol.liquidate(abi.encode(price * 100), 10);
-        assertGt(int256(protocol.totalExpo()) - int256(protocol.balanceLong()), 0, "long expo should be positive");
-        assertEq(protocol.balanceVault(), 0, "vault expo should be zero");
+        assertGt(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo should be positive");
+        assertEq(protocol.getBalanceVault(), 0, "vault expo should be zero");
 
         int256 EMA = protocol.getEMA();
-        uint256 fundingSF = protocol.fundingSF();
+        uint256 fundingSF = protocol.getFundingSF();
         (int256 fund_,) = protocol.funding(uint128(block.timestamp));
 
         assertEq(fund_, int256(fundingSF) + EMA, "funding should be equal to fundingSF + EMA");

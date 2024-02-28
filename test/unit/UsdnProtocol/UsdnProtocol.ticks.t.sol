@@ -39,7 +39,7 @@ contract TestUsdnProtocolTicks is UsdnProtocolBaseFixture {
         // the price due to rounding errors. But for all other prices, we can be sure that the next valid tick towards
         // positive infinity would lead to a price that is too high.
         if (price > 5_000_000) {
-            int24 nextTick = tick + protocol.tickSpacing(); // the next valid tick towards positive infinity
+            int24 nextTick = tick + protocol.getTickSpacing(); // the next valid tick towards positive infinity
             uint256 nextPrice = TickMath.getPriceAtTick(nextTick);
             // this next tick would lead to a price that is higher than the initial price
             assertLt(price, nextPrice, "price < nextPrice");

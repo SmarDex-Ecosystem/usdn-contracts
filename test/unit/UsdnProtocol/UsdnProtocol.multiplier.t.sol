@@ -30,7 +30,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a long position to have positive funding
         protocol.initiateOpenPosition(10 ether, params.initialPrice / 2, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(priceData, "");
         assertGt(protocol.i_longTradingExpo(params.initialPrice), protocol.i_vaultTradingExpo(params.initialPrice));
 
@@ -39,7 +39,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
 
         // We need to call liquidate to trigger the refresh of the multiplier
         protocol.liquidate(priceData, 0);
-        assertGt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
+        assertGt(protocol.getLiquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
     }
 
     /**
@@ -53,7 +53,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a deposit to have negative funding
         protocol.initiateDeposit(10 ether, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateDeposit(priceData, "");
         assertGt(protocol.i_vaultTradingExpo(params.initialPrice), protocol.i_longTradingExpo(params.initialPrice));
 
@@ -62,6 +62,6 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
 
         // We need to call liquidate to trigger the refresh of the multiplier
         protocol.liquidate(priceData, 0);
-        assertLt(protocol.liquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
+        assertLt(protocol.getLiquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
     }
 }

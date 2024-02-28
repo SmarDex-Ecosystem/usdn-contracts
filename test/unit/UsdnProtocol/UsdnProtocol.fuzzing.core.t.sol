@@ -58,7 +58,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
             (int24 tick, uint256 tickVersion, uint256 index) =
                 protocol.initiateOpenPosition(uint96(longAmount), uint128(longLiqPrice), abi.encode(currentPrice), "");
-            skip(oracleMiddleware.validationDelay() + 1);
+            skip(oracleMiddleware.getValidationDelay() + 1);
             protocol.validateOpenPosition(abi.encode(currentPrice), "");
             pos[i] = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;
@@ -69,7 +69,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             // create a random deposit position
             uint256 depositAmount = (random % 9 ether) + 1 ether;
             protocol.initiateDeposit(uint128(depositAmount), abi.encode(currentPrice), "");
-            skip(oracleMiddleware.validationDelay() + 1);
+            skip(oracleMiddleware.getValidationDelay() + 1);
             protocol.validateDeposit(abi.encode(currentPrice), "");
             vm.stopPrank();
 
@@ -92,12 +92,14 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         uint128 liqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
         longPosValue +=
-            protocol.positionValue(finalPrice - 5 ether, liqPrice, DEFAULT_PARAMS.initialLong, initialLongLeverage);
+            protocol.i_getPositionValue(finalPrice - 5 ether, liqPrice, DEFAULT_PARAMS.initialLong, initialLongLeverage);
 
         emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());
-        emit log_named_decimal_uint("long balance", uint256(protocol.longAssetAvailable(finalPrice)), wstETH.decimals());
+        emit log_named_decimal_uint(
+            "long balance", uint256(protocol.i_longAssetAvailable(finalPrice)), wstETH.decimals()
+        );
 
         // The available balance should always be able to cover the value of all long positions
-        assertGe(uint256(protocol.longAssetAvailable(finalPrice)), longPosValue, "long balance");
+        assertGe(uint256(protocol.i_longAssetAvailable(finalPrice)), longPosValue, "long balance");
     }
 }
