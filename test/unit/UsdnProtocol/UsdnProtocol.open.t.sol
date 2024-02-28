@@ -208,6 +208,46 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user validates an open position action with a price that would increase the leverage above
+     * the maximum allowed leverage
+     * @custom:given The user has initiated an open position with 1 wstETH and a desired liquidation price of ~1800$
+     * @custom:and the price was 2000$ at the moment of initiation
+     * @custom:and the price has decreased to 1900$
+     * @custom:when The user validates the open position with the new price
+     * @custom:then The protocol validates the position and emits the ValidatedOpenPosition event
+     * @custom:and the position is moved to another lower tick (to avoid exceeding the max leverage)
+     * @custom:and the position's leverage stays below the max leverage
+     */
+    function test_validateOpenPositionAboveMaxLeverage() public {
+        uint128 desiredLiqPrice = CURRENT_PRICE * 9 / 10; // leverage approx 10x
+        (int24 tick, uint256 tickVersion, uint256 index) =
+            protocol.initiateOpenPosition(uint96(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), "");
+        Position memory tempPos = protocol.getLongPosition(tick, tickVersion, index);
+
+        skip(oracleMiddleware.validationDelay() + 1);
+
+        uint128 newPrice = CURRENT_PRICE - 100 ether;
+        uint128 newLiqPrice = protocol.getLiquidationPrice(newPrice, uint128(protocol.maxLeverage()));
+        int24 newTick = protocol.getEffectiveTickForPrice(newLiqPrice)
+            + int24(protocol.liquidationPenalty()) * protocol.tickSpacing();
+        uint256 newTickVersion = protocol.tickVersion(newTick);
+        uint256 newIndex = protocol.positionsInTick(newTick);
+
+        vm.expectEmit();
+        emit LiquidationPriceChanged(tick, tickVersion, index, newTick, newTickVersion, newIndex);
+        vm.expectEmit(true, false, false, false);
+        emit ValidatedOpenPosition(address(this), 0, newPrice, newTick, newTickVersion, newIndex);
+        protocol.validateOpenPosition(abi.encode(newPrice), "");
+
+        Position memory pos = protocol.getLongPosition(newTick, newTickVersion, newIndex);
+        assertEq(pos.user, tempPos.user, "user");
+        assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
+        assertEq(pos.amount, tempPos.amount, "amount");
+        assertLt(newTick, tick, "tick");
+        assertLe(pos.leverage, protocol.maxLeverage(), "leverage");
+    }
+
+    /**
      * @custom:scenario The user sends too much ether when initiating a position opening
      * @custom:given The user opens a position
      * @custom:when The user sends 0.5 ether as value in the `initiateOpenPosition` call
