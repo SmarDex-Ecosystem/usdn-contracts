@@ -157,6 +157,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         assertEq(value, 2.5 ether, "Position with 4x leverage should have a 2.5 ether value");
     }
 
+    // TODO move in another file
     function testFuzz_getPositionValue(uint256 amount, uint256 currentPrice, uint256 leverage) public {
         uint256 priceAtOpening = 1000 ether;
         uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
