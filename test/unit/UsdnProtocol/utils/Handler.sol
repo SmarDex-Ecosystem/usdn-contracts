@@ -32,7 +32,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         address feeCollector
     ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
-    function i_getPositionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionExpo)
+    function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionExpo)
         external
         pure
         returns (uint256 value_)

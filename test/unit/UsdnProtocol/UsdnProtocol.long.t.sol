@@ -120,7 +120,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check calculations of `i_getPositionValue`
+     * @custom:scenario Check calculations of `_positionValue`
      * @custom:given A position for 1 wstETH with a starting price of $1000
      * @custom:and a leverage of 2x (liquidation price $500)
      * @custom:or a leverage of 4x (liquidation price $750)
@@ -133,19 +133,19 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:or the position value is 0 wstETH ($500 at 2x)
      * @custom:or the position value is 2.5 wstETH ($2000 at 4x)
      */
-    function test_getPositionValue() public {
+    function test_positionValue() public {
         uint128 positionExpo = uint128(
             FixedPointMathLib.fullMulDiv(
                 1 ether, 2 * 10 ** protocol.LEVERAGE_DECIMALS(), 10 ** protocol.LEVERAGE_DECIMALS()
             )
         );
-        uint256 value = protocol.i_getPositionValue(2000 ether, 500 ether, positionExpo);
+        uint256 value = protocol.i_positionValue(2000 ether, 500 ether, positionExpo);
         assertEq(value, 1.5 ether, "Position value should be 1.5 ether");
 
-        value = protocol.i_getPositionValue(1000 ether, 500 ether, positionExpo);
+        value = protocol.i_positionValue(1000 ether, 500 ether, positionExpo);
         assertEq(value, 1 ether, "Position value should be 1 ether");
 
-        value = protocol.i_getPositionValue(500 ether, 500 ether, positionExpo);
+        value = protocol.i_positionValue(500 ether, 500 ether, positionExpo);
         assertEq(value, 0 ether, "Position value should be 0");
 
         positionExpo = uint128(
@@ -153,26 +153,8 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
                 1 ether, 4 * 10 ** protocol.LEVERAGE_DECIMALS(), 10 ** protocol.LEVERAGE_DECIMALS()
             )
         );
-        value = protocol.i_getPositionValue(2000 ether, 750 ether, positionExpo);
+        value = protocol.i_positionValue(2000 ether, 750 ether, positionExpo);
         assertEq(value, 2.5 ether, "Position with 4x leverage should have a 2.5 ether value");
-    }
-
-    // TODO move in another file
-    function testFuzz_getPositionValue(uint256 amount, uint256 currentPrice, uint256 leverage) public {
-        uint256 priceAtOpening = 1000 ether;
-        uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
-
-        // Set some boundaries for the fuzzed inputs
-        amount = bound(amount, 0.1 ether, 100_000 ether);
-        currentPrice = bound(currentPrice, priceAtOpening, priceAtOpening * 100);
-        leverage = bound(leverage, protocol.getMinLeverage(), protocol.getMaxLeverage());
-
-        // Start checks
-        uint128 liqPrice = uint128(FixedPointMathLib.fullMulDiv(priceAtOpening, levDecimals, leverage));
-        uint256 positionExpo = FixedPointMathLib.fullMulDiv(amount, leverage, levDecimals);
-        uint256 expectedValue = FixedPointMathLib.fullMulDiv(positionExpo, (currentPrice - liqPrice), currentPrice);
-        uint256 value = protocol.i_getPositionValue(uint128(currentPrice), liqPrice, uint128(positionExpo));
-        assertEq(expectedValue, value, "Returned value is incorrect");
     }
 
     /**
