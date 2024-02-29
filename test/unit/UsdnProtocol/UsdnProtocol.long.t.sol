@@ -158,6 +158,38 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario Check calculations of `_calculatePositionExpo`
+     */
+    function test_calculatePositionExpo() public {
+        // amount / leverage = position expo
+        uint256 expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 1500 ether);
+        assertEq(expo, 4 ether, "Position expo should be 4 ether");
+
+        expo = protocol.i_calculatePositionExpo(2 ether, 4000 ether, 1350 ether);
+        assertEq(expo, 3_018_867_924_528_301_886, "Position expo should be 3.018... ether");
+
+        expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 1000 ether);
+        assertEq(expo, 2 ether, "Position expo should be 2 ether");
+    }
+
+    /**
+     * @custom:scenario Call `_calculatePositionExpo` when the liquidation price is greater than
+     * or equal to the start price
+     * @custom:given An amount of 1 ether
+     * @custom:and a price of $2000
+     * @custom:and a liquidation price of $2000
+     * @custom:or a liquidation price of $3000
+     * @custom:when The current price is equal to the liquidation price without penalty
+     */
+    function test_calculatePositionExpoReturns0WhenPriceLesserThanLiqPrice() public {
+        uint256 expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 2000 ether);
+        assertEq(expo, 0, "Position expo should be 0");
+
+        expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 3000 ether);
+        assertEq(expo, 0, "Position expo should be 0");
+    }
+
+    /**
      * @custom:scenario Check calculations of the `tickValue` function
      * @custom:given A tick with total expo 10 wstETH and a liquidation price around $500
      * @custom:when The current price is equal to the liquidation price without penalty

@@ -198,6 +198,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         pure
         returns (uint128)
     {
+        // Protects against division by 0
+        if (liquidationPrice >= startPrice) {
+            return 0;
+        }
+
         return FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
     }
 

@@ -40,6 +40,14 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _positionValue(currentPrice, liqPriceWithoutPenalty, positionExpo);
     }
 
+    function i_calculatePositionExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+        external
+        pure
+        returns (uint256 expo_)
+    {
+        return _calculatePositionExpo(amount, startPrice, liquidationPrice);
+    }
+
     function i_removePendingAction(uint128 rawIndex, address user) external {
         _pendingActionsQueue.clearAt(rawIndex);
         delete _pendingActions[user];
