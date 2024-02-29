@@ -15,10 +15,10 @@ import {
     CHAINLINK_ORACLE_GAS
 } from "test/utils/Constants.sol";
 import {
-    PYTH_DATA_PRICE,
-    PYTH_DATA_CONF,
+    PYTH_DATA_STETH_PRICE,
+    PYTH_DATA_STETH_CONF,
     PYTH_DATA_TIMESTAMP,
-    PYTH_DATA
+    PYTH_DATA_STETH
 } from "test/integration/OracleMiddleware/utils/Constants.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
@@ -70,8 +70,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             wstETH = WstETH(payable(WSTETH));
             IPyth pyth = IPyth(PYTH_ORACLE);
             AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
-            oracleMiddleware =
-                new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH, 1 hours);
+            oracleMiddleware = new WstEthOracleMiddleware(
+                address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
+            );
         } else {
             wstETH = new WstETH();
             mockPyth = new MockPyth();
@@ -108,7 +109,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         params = testParams;
     }
 
-    // temporary: will be moved to a base fixture thanks to #91
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
         returns (uint256, uint256, uint256, bytes memory)
@@ -123,6 +123,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     }
 
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
-        return (PYTH_DATA_PRICE, PYTH_DATA_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA);
+        return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
     }
 }

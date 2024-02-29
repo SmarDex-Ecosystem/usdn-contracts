@@ -22,14 +22,21 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      */
     function test_nothingHappensWhenThereIsNothingToLiquidate() external {
         vm.recordLogs();
-        (uint256 liquidatedPositions, uint16 liquidatedTicks, int256 remainingCollateral,,) =
-            protocol.i_liquidatePositions(2000 ether, 1, 100 ether, 100 ether);
+        (
+            uint256 liquidatedPositions,
+            uint16 liquidatedTicks,
+            int256 remainingCollateral,
+            uint256 newLongBalance,
+            uint256 newVaultBalance
+        ) = protocol.i_liquidatePositions(2000 ether, 1, 100 ether, 100 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 0, "No event should have been emitted");
         assertEq(liquidatedPositions, 0, "No position should have been liquidated at the given price");
         assertEq(liquidatedTicks, 0, "No tick should have been liquidated at this price");
         assertEq(remainingCollateral, 0, "There should have been no changes to the collateral");
+        assertEq(newLongBalance, 100 ether, "There should have been no changes to the long balance");
+        assertEq(newVaultBalance, 100 ether, "There should have been no changes to the vault balance");
     }
 
     /**
@@ -56,11 +63,26 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
 
         vm.recordLogs();
-        (uint256 liquidatedPositions,,,,) = protocol.i_liquidatePositions(uint256(liqPrice), 1, 100 ether, 100 ether);
+        (
+            uint256 liquidatedPositions,
+            uint16 liquidatedTicks,
+            int256 collateralLiquidated,
+            uint256 newLongBalance,
+            uint256 newVaultBalance
+        ) = protocol.i_liquidatePositions(uint256(liqPrice), 1, 100 ether, 100 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 1, "Only one log should have been emitted");
         assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(collateralLiquidated, tickValue, "Collateral liquidated should be equal to tickValue");
+        assertEq(
+            int256(newLongBalance), 100 ether - tickValue, "The long side should have paid tickValue to the vault side"
+        );
+        assertEq(
+            int256(newVaultBalance), 100 ether + tickValue, "The long side should have paid tickValue to the vault side"
+        );
+
         assertLt(
             protocol.getMaxInitializedTick(),
             desiredLiqTick,
@@ -160,5 +182,99 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             ticksToLiquidate[ticksToLiquidate.length - 1],
             "Max initialized tick should be the last tick left to liquidate"
         );
+    }
+
+    /**
+     * @custom:scenario A position can be liquidated but there is not enough balance in the longs to cover
+     * the debt to the vault
+     * @custom:given A position with a value of X that can be liquidated
+     * @custom:and A long balance at X - 1
+     * @custom:when User calls _liquidatePositions
+     * @custom:then It should liquidate the position
+     * @custom:and The long balance should be at 0
+     * @custom:and The vault should have absorbed the long side's debt
+     */
+    function test_canLiquidateEvenWithBadDebtInLongs() external {
+        uint128 price = 2000 ether;
+        int24 desiredLiqTick = protocol.getEffectiveTickForPrice(price - 200 ether);
+        uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
+
+        // Create a long position to liquidate
+        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
+
+        uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
+
+        // Calculate the collateral this position gives on liquidation
+        int256 tickValue =
+            protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTotalExpoByTick(desiredLiqTick, 0));
+
+        vm.expectEmit();
+        emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
+
+        // Set the tempVaultBalance parameter to less than tickValue to make sure it sends what it can
+        (
+            uint256 liquidatedPositions,
+            uint16 liquidatedTicks,
+            int256 collateralLiquidated,
+            uint256 newLongBalance,
+            uint256 newVaultBalance
+        ) = protocol.i_liquidatePositions(uint256(liqPrice), 1, tickValue - 1, 100 ether);
+
+        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(collateralLiquidated, tickValue, "The value of the tick should be the collateral liquidated");
+        assertEq(newLongBalance, 0, "New long balance should be 0");
+        assertEq(
+            newVaultBalance,
+            100 ether + uint256(tickValue - 1),
+            "New vault balance should be what was left in the longs"
+        );
+    }
+
+    /**
+     * @custom:scenario A position can be liquidated but there is not enough balance in the vault to cover
+     * the debt to the longs
+     * @custom:given A position with a value of X that can be liquidated
+     * @custom:and A vault balance at X - 1
+     * @custom:when User calls _liquidatePositions
+     * @custom:then It should liquidate the position
+     * @custom:and The vault balance should be at 0
+     * @custom:and The long side should have absorbed the vault's debt
+     */
+    function test_canLiquidateEvenWithBadDebtInVault() external {
+        uint128 price = 3000 ether;
+        int24 desiredLiqTick = protocol.getEffectiveTickForPrice(price - 200 ether);
+        uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
+
+        // Create a long position to liquidate
+        (int24 positionTick,,) =
+            setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
+
+        uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(positionTick);
+
+        // Get a liquidation price that would cause a bad debt
+        int24 liqTick = protocol.getEffectiveTickForPrice(liqPrice - 600 ether);
+        price = protocol.getEffectivePriceForTick(liqTick);
+
+        // Calculate the collateral this position gives on liquidation
+        int256 tickValue = protocol.i_tickValue(price, positionTick, protocol.getTotalExpoByTick(positionTick, 0));
+
+        vm.expectEmit();
+        emit LiquidatedTick(positionTick, 0, price, liqPriceAfterFundings, tickValue);
+
+        // Set the tempVaultBalance parameter to less than tickValue to make sure it sends what it can
+        (
+            uint256 liquidatedPositions,
+            uint16 liquidatedTicks,
+            int256 collateralLiquidated,
+            uint256 newLongBalance,
+            uint256 newVaultBalance
+        ) = protocol.i_liquidatePositions(uint256(price), 1, 100 ether, tickValue);
+
+        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(collateralLiquidated, tickValue, "The value of the tick should be the collateral liquidated");
+        assertEq(int256(newLongBalance), 100 ether + tickValue, "New long balance should be what was left in the vault");
+        assertEq(newVaultBalance, 0, "New vault balance should be 0");
     }
 }

@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
-import { PYTH_STETH_USD } from "test/utils/Constants.sol";
+import { DEPLOYER, PYTH_STETH_USD } from "test/utils/Constants.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
@@ -14,8 +14,6 @@ import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEth
  * @custom:background Given a forked ethereum mainnet chain
  */
 contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationFixture {
-    MockWstEthOracleMiddleware public mockOracle;
-
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.fork = true; // all tests in this contract must be labelled `Fork`
@@ -37,10 +35,11 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         (uint256 pythPrice,, uint256 pythTimestamp, bytes memory data) = getMockedPythSignature();
 
         // Use the mock oracle to open positions to avoid hermes calls
-        mockOracle = new MockWstEthOracleMiddleware(
+        MockWstEthOracleMiddleware mockOracle = new MockWstEthOracleMiddleware(
             address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
         );
         vm.warp(pythTimestamp);
+        vm.prank(DEPLOYER);
         protocol.setOracleMiddleware(mockOracle);
         mockOracle.setWstethMockedPrice((pythPrice + 1000e8) * 10 ** 10);
         // Turn off pyth signature verification to avoid updating the price feed
@@ -64,16 +63,16 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         protocol.validateOpenPosition(data, "");
 
         /* ---------------------------- Start the checks ---------------------------- */
-        // Do not use the mocked price anymore for accurate gas usage
-        mockOracle.setWstethMockedPrice(0);
-        // Enable the signature verification again
-        mockOracle.setVerifySignature(true);
+        // Put the original oracle back
+        vm.prank(DEPLOYER);
+        protocol.setOracleMiddleware(oracleMiddleware);
+
+        uint256 oracleFee = oracleMiddleware.validationCost(data, ProtocolAction.Liquidation);
+        uint256[] memory gasUsedArray = new uint256[](3);
         ILiquidationRewardsManagerErrorsEventsTypes.RewardsParameters memory rewardsParameters =
             liquidationRewardsManager.getRewardsParameters();
-        vm.warp(pythTimestamp);
 
-        uint256 oracleFee = mockOracle.validationCost(data, ProtocolAction.Liquidation);
-        uint256[] memory gasUsedArray = new uint256[](3);
+        vm.warp(pythTimestamp);
 
         // Take a snapshot to re-do liquidations with different iterations
         uint256 snapshotId = vm.snapshot();
