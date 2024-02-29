@@ -415,7 +415,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         uint256 tooOldTimestamp = timestamp - 1;
 
         // Set chainlink's data's last timestamp to something too old
-        mockChainlinkOnChain.updateLastPublishTime(tooOldTimestamp);
+        mockChainlinkOnChain.setLastPublishTime(tooOldTimestamp);
         mockChainlinkOnChain.setLatestRoundData(1, oracleMiddleware.PRICE_TOO_OLD(), tooOldTimestamp, 1);
 
         uint256 validationCost = oracleMiddleware.validationCost("", ProtocolAction.Initialize);
@@ -458,7 +458,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      */
     function test_RevertWhen_ChainlinkPriceIsWrong() public {
         // Set chainlink's data's last timestamp to something too old
-        mockChainlinkOnChain.updateLastPublishTime(block.timestamp);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
         mockChainlinkOnChain.setLatestRoundData(1, -1, block.timestamp, 1);
 
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareWrongPrice.selector, -1 * 1e10));

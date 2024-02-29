@@ -48,11 +48,9 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:and The multiplier is > 1.
      */
     function test_getMinLiquidationPrice_multiplierGtOne() public {
-        bytes memory priceData = abi.encode(4000 ether);
-        uint128 desiredLiqPrice =
-            protocol.i_getLiquidationPrice(4000 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+        bytes memory priceData = abi.encode(params.initialPrice);
 
-        protocol.initiateOpenPosition(500 ether, desiredLiqPrice, priceData, "");
+        protocol.initiateOpenPosition(500 ether, params.initialPrice / 2, priceData, "");
         protocol.validateOpenPosition(priceData, "");
         skip(1 days);
         protocol.initiateDeposit(1, priceData, "");
@@ -63,7 +61,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_002_844_036_506, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_030_457_696_851, "wrong minimum liquidation price");
     }
 
     /**
@@ -72,7 +70,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:and The multiplier is < 1.
      */
     function test_getMinLiquidationPrice_multiplierLtOne() public {
-        bytes memory priceData = abi.encode(4000 ether);
+        bytes memory priceData = abi.encode(params.initialPrice);
 
         protocol.initiateDeposit(5000 ether, priceData, "");
         protocol.validateDeposit(priceData, "");
@@ -85,7 +83,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_032_218_788_439, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_046_330_385_990, "wrong minimum liquidation price");
     }
 
     /**

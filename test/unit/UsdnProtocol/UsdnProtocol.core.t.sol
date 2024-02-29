@@ -20,11 +20,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The funding should be 0
      */
     function test_funding() public {
-        (int256 fund, int256 longExpo, int256 vaultExpo) =
-            protocol.funding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp));
+        int256 longExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
+        (int256 fund, int256 oldLongExpo) = protocol.funding(uint128(DEFAULT_PARAMS.initialTimestamp));
         assertEq(fund, 0, "funding should be 0 if no time has passed");
-        assertEq(longExpo, 4.919970269703463156 ether, "longExpo if no time has passed");
-        assertEq(vaultExpo, 10 ether, "vaultExpo if no time has passed");
+        assertEq(oldLongExpo, longExpo, "longExpo if no time has passed");
     }
 
     /**
@@ -34,7 +33,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_funding_pastTimestamp() public {
         vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
-        protocol.funding(DEFAULT_PARAMS.initialPrice, uint128(DEFAULT_PARAMS.initialTimestamp) - 1);
+        protocol.funding(uint128(DEFAULT_PARAMS.initialTimestamp) - 1);
     }
 
     /**
@@ -182,8 +181,13 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             protocol.i_vaultTradingExpo(price),
             "long and vault expos should be equal"
         );
-        (int256 fund_,,) = protocol.funding(price, uint128(DEFAULT_PARAMS.initialTimestamp + 60));
+        (int256 fund_, int256 oldLongExpo) = protocol.funding(uint128(DEFAULT_PARAMS.initialTimestamp + 60));
         assertEq(fund_, protocol.getEMA(), "funding should be equal to EMA");
+        assertEq(
+            oldLongExpo,
+            int256(protocol.getTotalExpo() - protocol.getBalanceLong()),
+            "old long expo should be the same as last update"
+        );
     }
 
     /**
@@ -214,22 +218,52 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then fund should be equal to -fundingSF + EMA
      */
     function test_funding_NegLong_ZeroVault() public {
-        // TODO : fix the test when #101 merged
-        vm.skip(true);
-
+        skip(1 hours);
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(priceData, "");
 
-        skip(25);
+        skip(1 hours);
         protocol.liquidate(abi.encode(price / 100), 10);
+        assertLt(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo should be negative");
+        assertEq(protocol.getBalanceVault(), 0, "vault expo should be zero");
+
         int256 EMA = protocol.getEMA();
         uint256 fundingSF = protocol.getFundingSF();
-        (int256 fund_,,) = protocol.funding(price / 100, uint128(block.timestamp));
-        emit log_named_int("fund_", fund_);
-        emit log_named_int("mul", -int256(fundingSF) + EMA);
+        (int256 fund_,) = protocol.funding(uint128(block.timestamp));
+
+        assertEq(fund_, -int256(fundingSF) + EMA, "funding should be equal to -fundingSF + EMA");
+    }
+
+    /**
+     * @custom:scenario Funding calculation
+     * @custom:when the long expo is positive
+     * @custom:and the vault expo is zero
+     * @custom:then fund should be equal to fundingSF + EMA
+     */
+    function test_funding_PosLong_ZeroVault() public {
+        skip(1 hours);
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+        uint128 price = DEFAULT_PARAMS.initialPrice;
+        bytes memory priceData = abi.encode(price);
+
+        protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+        protocol.validateOpenPosition(priceData, "");
+
+        skip(1 hours);
+        protocol.liquidate(abi.encode(price * 100), 10);
+        assertGt(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo should be positive");
+        assertEq(protocol.getBalanceVault(), 0, "vault expo should be zero");
+
+        int256 EMA = protocol.getEMA();
+        uint256 fundingSF = protocol.getFundingSF();
+        (int256 fund_,) = protocol.funding(uint128(block.timestamp));
+
+        assertEq(fund_, int256(fundingSF) + EMA, "funding should be equal to fundingSF + EMA");
     }
 }
