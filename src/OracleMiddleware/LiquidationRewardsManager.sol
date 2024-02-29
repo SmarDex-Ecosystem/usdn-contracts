@@ -57,23 +57,26 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * @dev In the current implementation, the `int256 amountLiquidated` parameter is not used
      */
     function getLiquidationRewards(uint16 tickAmount, int256) external view returns (uint256 wstETHRewards_) {
+        console2.log("start of getLiquidationRewards");
+        console2.log("getLiquidationRewards gasprice 1", tx.gasprice);
         // Do not give rewards if no ticks were liquidated.
         if (tickAmount == 0) {
             return 0;
         }
 
+        console2.log("getLiquidationRewards gasprice 2", tx.gasprice);
         RewardsParameters memory rewardsParameters = _rewardsParameters;
         // Calculate the amount of gas spent during the liquidation.
         uint256 gasUsed =
             rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
 
-        console2.log(gasUsed);
-        console2.log(_getGasPrice(rewardsParameters));
-        console2.log(rewardsParameters.multiplierBps);
+        console2.log("getLiquidationRewards gasprice 3", tx.gasprice);
         // Multiply by the gas price and the rewards multiplier.
         wstETHRewards_ = _wstEth.getWstETHByStETH(
             gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplierBps / REWARDS_MULTIPLIER_DENOMINATOR
         );
+        console2.log("getLiquidationRewards gasprice 4", tx.gasprice);
+        console2.log("end of getLiquidationRewards");
     }
 
     /// @inheritdoc ILiquidationRewardsManager
@@ -109,11 +112,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * @return gasPrice_ The gas price.
      */
     function _getGasPrice(RewardsParameters memory rewardsParameters) internal view returns (uint256 gasPrice_) {
-        console2.log("1");
+        console2.log("start of _getGasPrice");
         ChainlinkPriceInfo memory priceInfo = _getChainlinkPrice();
-        console2.log(block.timestamp);
-        console2.log(priceInfo.timestamp);
-        console2.log(priceInfo.price);
+        console2.log("_getGasPrice oraclePrice 1", priceInfo.price);
+        console2.log("_getGasPrice tx.gasprice 1", tx.gasprice);
 
         // If the gas price is invalid, return 0 and do not distribute rewards.
         if (priceInfo.price <= 0) {
@@ -122,20 +124,21 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
         // We can safely cast as rawGasPrice cannot be below 0
         gasPrice_ = uint256(priceInfo.price);
+        console2.log("_getGasPrice result      1", gasPrice_);
         if (tx.gasprice < gasPrice_) {
             gasPrice_ = tx.gasprice;
+            console2.log("_getGasPrice tx.gasprice lower than oraclePrice, so result: ", gasPrice_);
         }
-
-        console2.log("2");
-        console2.log(gasPrice_);
-        console2.log(tx.gasprice);
+        console2.log("_getGasPrice oraclePrice 2", priceInfo.price);
+        console2.log("_getGasPrice tx.gasprice 2", tx.gasprice);
+        console2.log("_getGasPrice result      2", gasPrice_);
 
         // Avoid paying an insane amount if network is abnormally congested
         if (gasPrice_ > rewardsParameters.gasPriceLimit) {
             gasPrice_ = rewardsParameters.gasPriceLimit;
         }
+        console2.log("_getGasPrice result", gasPrice_);
 
-        console2.log("3");
-        console2.log(rewardsParameters.gasPriceLimit);
+        console2.log("end of _getGasPrice");
     }
 }
