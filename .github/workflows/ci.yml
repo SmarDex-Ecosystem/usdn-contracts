@@ -33,7 +33,7 @@ jobs:
         run: npm run snapshot:check
 
       - name: Run tests
-        run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork --gas-report
+        run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork
   run-slither:
     runs-on: ubuntu-latest
     steps:

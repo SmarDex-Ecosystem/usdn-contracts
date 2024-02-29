@@ -11,7 +11,7 @@ import { ILiquidationRewardsManagerErrorsEventsTypes } from
 /**
  * @custom:feature The `setRewardsParameters` function of `LiquidationRewardsManager`
  */
-contract LiquidationRewardsManagerSetRewardsParameters is
+contract TestLiquidationRewardsManagerSetRewardsParameters is
     LiquidationRewardsManagerBaseFixture,
     ILiquidationRewardsManagerErrorsEventsTypes
 {

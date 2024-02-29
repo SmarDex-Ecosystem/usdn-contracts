@@ -6,7 +6,7 @@ import { LiquidationRewardsManagerBaseFixture } from "test/unit/OracleMiddleware
 /**
  * @custom:feature The `getLiquidationRewards` function of `LiquidationRewardsManager`
  */
-contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsManagerBaseFixture {
+contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsManagerBaseFixture {
     function setUp() public override {
         super.setUp();
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
