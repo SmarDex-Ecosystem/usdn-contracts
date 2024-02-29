@@ -345,25 +345,16 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Sanity check
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
 
-        emit log_named_address("address liquidation rewards", address(liquidationRewardsManager));
-        emit log_named_address(
-            "address liquidation rewards from protocol", address(protocol.getLiquidationRewardsManager())
-        );
-
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
 
-        emit log_named_uint("test gasprice 1", tx.gasprice);
         // Get the proper liquidation price for the tick
         price = protocol.getEffectivePriceForTick(tick);
-        emit log_named_uint("test gasprice 2", tx.gasprice);
         int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTotalExpoByTick(tick, 0));
 
-        emit log_named_uint("test gasprice 3", tx.gasprice);
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         uint256 liquidatedPositions = protocol.liquidate(abi.encode(price), 1);
-        emit log_named_uint("test gasprice 4", tx.gasprice);
 
         // Check that the right number of positions have been liquidated
         assertEq(liquidatedPositions, 1, "One position should have been liquidated");

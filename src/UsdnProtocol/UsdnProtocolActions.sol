@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/console2.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -298,32 +297,23 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         returns (uint256 liquidatedPositions_)
     {
-        console2.log("start of liquidate");
-        console2.log("gasprice 1", tx.gasprice);
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
 
-        console2.log("gasprice 2", tx.gasprice);
         (, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
-        console2.log("gasprice 3", tx.gasprice);
         uint16 liquidatedTicks;
         int256 liquidatedCollateral;
         (liquidatedPositions_, liquidatedTicks, liquidatedCollateral, _balanceLong, _balanceVault) =
             _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
 
-        console2.log("gasprice 4", tx.gasprice);
         _refundExcessEther();
-        console2.log("gasprice 5", tx.gasprice);
         _checkPendingFee();
-        console2.log("gasprice 6", tx.gasprice);
 
         if (liquidatedTicks > 0) {
             _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral);
         }
-        console2.log("gasprice end", tx.gasprice);
-        console2.log("end of liquidate");
     }
 
     /**
@@ -334,13 +324,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param liquidatedCollateral The amount of collateral lost due to the liquidations.
      */
     function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 liquidatedCollateral) internal {
-        console2.log("start of _sendRewardsToLiquidator");
-        console2.log("_sendRewardsToLiquidator gasprice 1", tx.gasprice);
         // Get how much we should give to the liquidator as rewards
         uint256 liquidationRewards =
             _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, liquidatedCollateral);
 
-        console2.log("_sendRewardsToLiquidator gasprice 2", tx.gasprice);
         // Avoid underflows in situation of extreme bad debt
         if (_balanceVault < liquidationRewards) {
             liquidationRewards = _balanceVault;
@@ -355,7 +342,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _asset.safeTransfer(msg.sender, liquidationRewards);
 
         emit LiquidatorRewarded(msg.sender, liquidationRewards);
-        console2.log("end of _sendRewardsToLiquidator");
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
