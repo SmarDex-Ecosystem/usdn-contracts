@@ -357,6 +357,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         price = protocol.getEffectivePriceForTick(tick);
         int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTotalExpoByTick(tick, 0));
 
+        vm.txGasPrice(30 gwei);
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         uint256 liquidatedPositions = protocol.liquidate(abi.encode(price), 1);
