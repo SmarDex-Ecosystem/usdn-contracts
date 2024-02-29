@@ -48,9 +48,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // calculate the value of the deployer's long position
         uint128 longLiqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
-        uint256 longPosValue = protocol.i_getPositionValue(
-            DEFAULT_PARAMS.initialPrice, longLiqPrice, DEFAULT_PARAMS.initialLong, initialLongLeverage
-        );
+        uint256 longPosValue = protocol.i_getPositionValue(DEFAULT_PARAMS.initialPrice, longLiqPrice, initialLongExpo);
 
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.

@@ -32,13 +32,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
         address feeCollector
     ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
-    function i_getPositionValue(
-        uint128 currentPrice,
-        uint128 liqPriceWithoutPenalty,
-        uint256 amount,
-        uint128 initLeverage
-    ) external pure returns (uint256 value_) {
-        return _positionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
+    function i_getPositionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionExpo)
+        external
+        pure
+        returns (uint256 value_)
+    {
+        return _positionValue(currentPrice, liqPriceWithoutPenalty, positionExpo);
     }
 
     function i_removePendingAction(uint128 rawIndex, address user) external {
@@ -78,12 +77,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _convertLongPendingAction(action);
     }
 
-    function i_assetToTransfer(int24 tick, uint256 amount, uint128 leverage, uint256 liqMultiplier)
-        external
-        view
-        returns (uint256)
-    {
-        return _assetToTransfer(tick, amount, leverage, liqMultiplier);
+    function i_assetToTransfer(int24 tick, uint128 expo, uint256 liqMultiplier) external view returns (uint256) {
+        return _assetToTransfer(tick, expo, liqMultiplier);
     }
 
     function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {

@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Test } from "forge-std/Test.sol";
+
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-
 import { TickMath } from "src/libraries/TickMath.sol";
+
+import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 /**
  * @custom:feature The getter functions of the USDN Protocol
@@ -61,7 +63,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_030_457_696_851, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_030_444_330_272, "wrong minimum liquidation price");
     }
 
     /**
@@ -131,23 +133,45 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:or the position value is 0 wstETH ($500 at 2x)
      * @custom:or the position value is 2.5 wstETH ($2000 at 4x)
      */
-    function test_positionValue() public {
-        // starting price is 1000 ether (liq at 500 with a leverage of 2x)
-        uint256 value =
-            protocol.i_getPositionValue(2000 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
-        assertEq(value, 1.5 ether, "current price 2000");
+    function test_getPositionValue() public {
+        uint128 positionExpo = uint128(
+            FixedPointMathLib.fullMulDiv(
+                1 ether, 2 * 10 ** protocol.LEVERAGE_DECIMALS(), 10 ** protocol.LEVERAGE_DECIMALS()
+            )
+        );
+        uint256 value = protocol.i_getPositionValue(2000 ether, 500 ether, positionExpo);
+        assertEq(value, 1.5 ether, "Position value should be 1.5 ether");
 
-        value =
-            protocol.i_getPositionValue(1000 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
-        assertEq(value, 1 ether, "current price 1000");
+        value = protocol.i_getPositionValue(1000 ether, 500 ether, positionExpo);
+        assertEq(value, 1 ether, "Position value should be 1 ether");
 
-        value =
-            protocol.i_getPositionValue(500 ether, 500 ether, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
-        assertEq(value, 0 ether, "current price 500");
+        value = protocol.i_getPositionValue(500 ether, 500 ether, positionExpo);
+        assertEq(value, 0 ether, "Position value should be 0");
 
-        value =
-            protocol.i_getPositionValue(2000 ether, 750 ether, 1 ether, uint128(4 * 10 ** protocol.LEVERAGE_DECIMALS()));
-        assertEq(value, 2.5 ether, "current price 2000 leverage 4x");
+        positionExpo = uint128(
+            FixedPointMathLib.fullMulDiv(
+                1 ether, 4 * 10 ** protocol.LEVERAGE_DECIMALS(), 10 ** protocol.LEVERAGE_DECIMALS()
+            )
+        );
+        value = protocol.i_getPositionValue(2000 ether, 750 ether, positionExpo);
+        assertEq(value, 2.5 ether, "Position with 4x leverage should have a 2.5 ether value");
+    }
+
+    function testFuzz_getPositionValue(uint256 amount, uint256 currentPrice, uint256 leverage) public {
+        uint256 priceAtOpening = 1000 ether;
+        uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
+
+        // Set some boundaries for the fuzzed inputs
+        amount = bound(amount, 0.1 ether, 100_000 ether);
+        currentPrice = bound(currentPrice, priceAtOpening, priceAtOpening * 100);
+        leverage = bound(leverage, protocol.getMinLeverage(), protocol.getMaxLeverage());
+
+        // Start checks
+        uint128 liqPrice = uint128(FixedPointMathLib.fullMulDiv(priceAtOpening, levDecimals, leverage));
+        uint256 positionExpo = FixedPointMathLib.fullMulDiv(amount, leverage, levDecimals);
+        uint256 expectedValue = FixedPointMathLib.fullMulDiv(positionExpo, (currentPrice - liqPrice), currentPrice);
+        uint256 value = protocol.i_getPositionValue(uint128(currentPrice), liqPrice, uint128(positionExpo));
+        assertEq(expectedValue, value, "Returned value is incorrect");
     }
 
     /**
@@ -209,14 +233,12 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         Position memory position = protocol.getLongPosition(tick, tickVersion, index);
 
         // Calculate the total expo of the position after the initialization
-        uint256 expectedPositionTotalExpo =
-            FixedPointMathLib.fullMulDiv(position.amount, position.leverage, 10 ** protocol.LEVERAGE_DECIMALS());
         assertEq(
-            initialTotalExpo + expectedPositionTotalExpo,
+            initialTotalExpo + position.expo,
             protocol.getTotalExpo(),
             "Total expo should have increased by the position's total expo"
         );
-        assertEq(totalExpoForTick, expectedPositionTotalExpo, "Total expo on tick is not the expected value");
+        assertEq(totalExpoForTick, position.expo, "Total expo on tick is not the expected value");
 
         skip(oracleMiddleware.getValidationDelay() + 1);
 
@@ -225,26 +247,23 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         // Validate the position with the new price
         protocol.validateOpenPosition(abi.encode(price), "");
 
-        uint256 previousLeverage = position.leverage;
+        uint256 previousExpo = position.expo;
         // Get the updated position
         position = protocol.getLongPosition(tick, tickVersion, index);
-        uint256 newLeverage = position.leverage;
+        uint256 newExpo = position.expo;
 
         // Sanity check
-        assertTrue(previousLeverage != newLeverage, "The leverage changing is necessary for this test to work");
+        assertTrue(previousExpo != newExpo, "The expo changing is necessary for this test to work");
 
         // Calculate the total expo of the position after the validation
-        expectedPositionTotalExpo =
-            FixedPointMathLib.fullMulDiv(position.amount, position.leverage, 10 ** protocol.LEVERAGE_DECIMALS());
-
         assertEq(
-            initialTotalExpo + expectedPositionTotalExpo,
+            initialTotalExpo + position.expo,
             protocol.getTotalExpo(),
             "Total expo should have increased by the position's new total expo"
         );
 
         totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
-        assertEq(totalExpoForTick, expectedPositionTotalExpo, "Total expo on tick is not the expected value");
+        assertEq(totalExpoForTick, position.expo, "Total expo on tick is not the expected value");
     }
 
     /**

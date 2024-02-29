@@ -91,8 +91,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         // calculate the value of the deployer's long position
         uint128 liqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
-        longPosValue +=
-            protocol.i_getPositionValue(finalPrice - 5 ether, liqPrice, DEFAULT_PARAMS.initialLong, initialLongLeverage);
+        longPosValue += protocol.i_getPositionValue(finalPrice - 5 ether, liqPrice, initialLongExpo);
 
         emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());
         emit log_named_decimal_uint(
