@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { console2 } from "forge-std/console2.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IWstETH } from "src/interfaces/IWstETH.sol";
@@ -65,6 +66,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         // Calculate the amount of gas spent during the liquidation.
         uint256 gasUsed =
             rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
+
+        console2.log(gasUsed);
+        console2.log(_getGasPrice(rewardsParameters));
+        console2.log(rewardsParameters.multiplierBps);
         // Multiply by the gas price and the rewards multiplier.
         wstETHRewards_ = _wstEth.getWstETHByStETH(
             gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplierBps / REWARDS_MULTIPLIER_DENOMINATOR
