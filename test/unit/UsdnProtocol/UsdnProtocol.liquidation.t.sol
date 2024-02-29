@@ -345,6 +345,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Sanity check
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
 
+        emit log_named_address("address liquidation rewards", address(liquidationRewardsManager));
+        emit log_named_address(
+            "address liquidation rewards from protocol", address(protocol.getLiquidationRewardsManager())
+        );
+
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
 

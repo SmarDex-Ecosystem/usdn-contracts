@@ -109,7 +109,11 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * @return gasPrice_ The gas price.
      */
     function _getGasPrice(RewardsParameters memory rewardsParameters) internal view returns (uint256 gasPrice_) {
+        console2.log("1");
         ChainlinkPriceInfo memory priceInfo = _getChainlinkPrice();
+        console2.log(block.timestamp);
+        console2.log(priceInfo.timestamp);
+        console2.log(priceInfo.price);
 
         // If the gas price is invalid, return 0 and do not distribute rewards.
         if (priceInfo.price <= 0) {
@@ -122,9 +126,16 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             gasPrice_ = tx.gasprice;
         }
 
+        console2.log("2");
+        console2.log(gasPrice_);
+        console2.log(tx.gasprice);
+
         // Avoid paying an insane amount if network is abnormally congested
         if (gasPrice_ > rewardsParameters.gasPriceLimit) {
             gasPrice_ = rewardsParameters.gasPriceLimit;
         }
+
+        console2.log("3");
+        console2.log(rewardsParameters.gasPriceLimit);
     }
 }
