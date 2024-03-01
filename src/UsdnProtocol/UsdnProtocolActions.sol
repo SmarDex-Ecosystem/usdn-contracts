@@ -241,16 +241,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolUnauthorized();
         }
 
-        {
-            PriceInfo memory currentPrice =
-                _getOraclePrice(ProtocolAction.InitiateClosePosition, uint40(block.timestamp), currentPriceData);
+        PriceInfo memory currentPrice =
+            _getOraclePrice(ProtocolAction.InitiateClosePosition, uint40(block.timestamp), currentPriceData);
 
-            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
-        }
+        _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
         {
             uint256 liqMultiplier = _liquidationMultiplier;
-            uint256 tempTransfer = _assetToTransfer(tick, pos.expo, liqMultiplier);
+            uint256 tempTransfer = _assetToTransfer(currentPrice.price.toUint128(), tick, pos.expo, liqMultiplier);
 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
@@ -583,7 +581,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _applyPnlAndFundingAndLiquidate(price.neutralPrice, price.timestamp);
 
-        uint256 assetToTransfer = _assetToTransfer(long.tick, long.expo, long.closeLiqMultiplier);
+        uint256 assetToTransfer =
+            _assetToTransfer(price.price.toUint128(), long.tick, long.expo, long.closeLiqMultiplier);
 
         // adjust long balance that was previously optimistically decreased
         if (assetToTransfer > long.closeTempTransfer) {
@@ -626,26 +625,26 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     /**
      * @notice Calculate how much wstETH must be transferred to a user to close a position.
      * @dev The amount is bound by the amount of wstETH available in the long side.
-     * @param tick The tick of the position
+     * @param currentPrice The current price
+     * @param posTick The tick of the position
      * @param posExpo The expo of the position
      * @param liqMultiplier The liquidation multiplier at the moment of closing the position
      */
-    function _assetToTransfer(int24 tick, uint128 posExpo, uint256 liqMultiplier)
+    function _assetToTransfer(uint128 currentPrice, int24 posTick, uint128 posExpo, uint256 liqMultiplier)
         internal
         view
         returns (uint256 assetToTransfer_)
     {
-        uint128 lastPrice = _lastPrice;
         // calculate amount to transfer
-        int256 available = _longAssetAvailable(lastPrice);
+        int256 available = _longAssetAvailable(currentPrice);
         if (available <= 0) {
             return 0;
         }
 
         // Calculate position value
         int256 value = _positionValue(
-            lastPrice,
-            getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
+            currentPrice,
+            getEffectivePriceForTick(posTick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
             posExpo
         ).toInt256();
 
