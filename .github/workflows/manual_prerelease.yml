@@ -6,7 +6,8 @@ name: Manual Pre-release
 
 permissions:
   id-token: write # Required for requesting AWS JWT
-
+  content: read
+  
 jobs:
   manual-prerelease:
     runs-on: ubuntu-latest
