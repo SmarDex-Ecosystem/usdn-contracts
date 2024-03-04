@@ -539,6 +539,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             int24 tickWithoutPenalty = getEffectiveTickForPrice(liqPriceWithoutPenalty);
             // retrieve exact liquidation price without penalty
             liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
+            // recalculate the leverage with the new liquidation price
+            leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
             // update position total expo
             pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
             // apply liquidation penalty
