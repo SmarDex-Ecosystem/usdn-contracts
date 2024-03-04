@@ -154,7 +154,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             return 0;
         }
 
-        value_ = FixedPointMathLib.fullMulDiv(positionTotalExpo, (currentPrice - liqPriceWithoutPenalty), currentPrice);
+        value_ = FixedPointMathLib.fullMulDiv(positionTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice);
     }
 
     /**
@@ -192,9 +192,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         leverage_ = ((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
     }
 
-    /// @notice Calculate the total exposure of a position
-    /// @dev Reverts when startPrice <= liquidationPrice
-    /// @return totalExpo_ The total exposure of a position
+    /**
+     * @notice Calculate the total exposure of a position
+     * @dev Reverts when startPrice <= liquidationPrice
+     * @param amount The amount of ether used as collateral
+     * @param startPrice The price of the asset when the position was created
+     * @param liquidationPrice The liquidation price of the position
+     * @return totalExpo_ The total exposure of a position
+     */
     function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
         internal
         pure

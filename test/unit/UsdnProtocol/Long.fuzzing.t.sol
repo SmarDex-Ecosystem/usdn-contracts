@@ -27,6 +27,10 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
      * @custom:and a leverage between the protocol's min and max values
      * @custom:when _positionValue is called
      * @custom:then The returned value is equal to the expected value.
+     * @param amount The amount used as collateral
+     * @param priceAtOpening The price of the asset when the position was opened
+     * @param currentPrice The price of the asset now
+     * @param leverage The leverage of the position
      */
     function testFuzz_positionValue(uint96 amount, uint128 priceAtOpening, uint128 currentPrice, uint256 leverage)
         public
@@ -58,6 +62,10 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
      * @custom:when _positionValue is called
      * @custom:and the result is compared to the calculation with the leverage
      * @custom:then The difference is within the tolerated values.
+     * @param amount The amount used as collateral
+     * @param priceAtOpening The price of the asset when the position was opened
+     * @param currentPrice The price of the asset now
+     * @param leverage The leverage of the position
      */
     function testFuzz_comparePositionValueCalculationWithExpoVSWithLeverage(
         uint96 amount,
