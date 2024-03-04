@@ -193,15 +193,15 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @notice Calculate the total exposure of a position
+    /// @dev Reverts when startPrice <= liquidationPrice
     /// @return totalExpo_ The total exposure of a position
     function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
         internal
         pure
         returns (uint128 totalExpo_)
     {
-        // Protects against division by 0
-        if (liquidationPrice >= startPrice) {
-            return 0;
+        if (startPrice <= liquidationPrice) {
+            revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
         }
 
         totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();

@@ -173,20 +173,24 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `_calculatePositionExpo` when the liquidation price is greater than
-     * or equal to the start price
-     * @custom:given An amount of 1 ether
-     * @custom:and a price of $2000
-     * @custom:and a liquidation price of $2000
-     * @custom:or a liquidation price of $3000
-     * @custom:when The current price is equal to the liquidation price without penalty
+     * @custom:scenario Call `_calculatePositionExpo` reverts when the liquidation price is greater than
+     * the start price.
+     * @custom:given A liquidation price greater than or equal to the start price
+     * @custom:when _calculatePositionTotalExpo is called
+     * @custom:then The transaction reverts with a UsdnProtocolInvalidLiquidationPrice error
      */
-    function test_calculatePositionExpoReturns0WhenPriceLesserThanLiqPrice() public {
-        uint256 expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 2000 ether);
-        assertEq(expo, 0, "Position total expo should be 0");
+    function test_RevertWhen_calculatePositionExpoWithLiqPriceGreaterThanStartPrice() public {
+        uint128 startPrice = 2000 ether;
+        uint128 liqPrice = 2000 ether;
 
-        expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 3000 ether);
-        assertEq(expo, 0, "Position total expo should be 0");
+        /* ------------------------- startPrice == liqPrice ------------------------- */
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
+        protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
+
+        /* -------------------------- liqPrice > startprice ------------------------- */
+        liqPrice = 2000 ether + 1;
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
+        protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
     }
 
     /**
