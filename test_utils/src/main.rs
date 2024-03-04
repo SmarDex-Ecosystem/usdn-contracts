@@ -106,7 +106,7 @@ fn main() -> Result<()> {
         }
         Commands::PythPrice { feed, publish_time } => {
             let request_url = format!(
-                "https://hermes.pyth.network/api/get_price_feed?id={feed}&publish_time={publish_time}&binary=true"
+                "https://hermes-mainnet.rpc.extrnode.com/b1fe0833-6e8e-46da-8edc-6aa4c2e7e033/api/get_price_feed?id={feed}&publish_time={publish_time}&binary=true"
             );
             let response = reqwest::blocking::get(request_url)?;
             let price: HermesResponse = response.json()?;
