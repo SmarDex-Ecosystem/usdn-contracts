@@ -11,5 +11,5 @@ interface IUsdnEvents {
      * @param oldDivisor divisor before adjustment
      * @param newDivisor divisor after adjustment
      */
-    event DivisorAdjusted(uint256 oldDivisor, uint256 newDivisor);
+    event Rebase(uint256 oldDivisor, uint256 newDivisor);
 }

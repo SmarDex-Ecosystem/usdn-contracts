@@ -48,13 +48,13 @@ contract UsdnHandler is Usdn, Test {
         vm.stopPrank();
     }
 
-    function adjustDivisorTest(uint256 newDivisor) external {
+    function rebaseTest(uint256 newDivisor) external {
         if (_divisor == MIN_DIVISOR) {
             return;
         }
         console2.log("bound divisor");
         newDivisor = bound(newDivisor, MIN_DIVISOR, _divisor - 1);
-        emit DivisorAdjusted(_divisor, newDivisor);
+        emit Rebase(_divisor, newDivisor);
         _divisor = newDivisor;
     }
 

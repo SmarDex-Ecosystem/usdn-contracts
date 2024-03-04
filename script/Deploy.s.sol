@@ -100,7 +100,7 @@ contract Deploy is Script {
             liquidationRewardsManagerAddress = address(liquidationRewardsManager);
         }
 
-        // Deploy USDN token, without a specific minter or adjuster for now
+        // Deploy USDN token, without a specific minter or rebaser for now
         address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
         Usdn usdn;
         if (usdnAddress != address(0)) {
@@ -114,9 +114,10 @@ contract Deploy is Script {
         UsdnProtocol protocol =
             new UsdnProtocol(usdn, wstETH, middleware, liquidationRewardsManager, 100, vm.envAddress("FEE_COLLECTOR"));
 
-        // Grant USDN minter role to protocol and approve wstETH spending
+        // Grant USDN minter & rebaser roles to protocol and approve wstETH spending
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), depositAmount + longAmount);
         // Initialize if needed
         if (depositAmount > 0 && longAmount > 0) {
