@@ -5,11 +5,14 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 /**
  * @custom:feature The functions of the core of the protocol
- * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
+ * @custom:background Given a protocol instance that was initialized at equilibrium (4.92 ether of trading expo on
+ * either side)
  */
 contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.initialDeposit = 4.919970269703463156 ether;
+        super._setUp(params);
     }
 
     /**
@@ -62,8 +65,12 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then EMA should be greater than the last funding
      */
     function test_updateEma_negFunding() public {
+        // we create a deposit and skip 1 day and call liquidate() to have a negative funding
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
-        // we skip 1 day and call liquidate() to have a negative funding
+        wstETH.mintAndApprove(address(this), 10 ether, address(protocol), type(uint256).max);
+        protocol.initiateDeposit(10 ether, priceData, "");
+        _waitDelay();
+        protocol.validateDeposit(priceData, "");
         skip(1 days);
         protocol.liquidate(priceData, 1);
 
@@ -85,6 +92,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
         protocol.initiateOpenPosition(200 ether, DEFAULT_PARAMS.initialPrice / 2, priceData, "");
+        _waitDelay();
         protocol.validateOpenPosition(priceData, "");
 
         int256 lastFunding = protocol.getLastFunding();
@@ -101,22 +109,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then fund should be equal to EMA
      */
     function test_fundingWhenEqualExpo() public {
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
-        uint128 price = DEFAULT_PARAMS.initialPrice;
-        bytes memory priceData = abi.encode(price);
-
-        protocol.initiateOpenPosition(20 ether, price / 2, priceData, "");
-        protocol.validateOpenPosition(priceData, "");
-
-        // we create a deposit to make the long and vault expos equal
-        protocol.initiateDeposit(
-            uint128(uint256(protocol.i_longTradingExpo(price) - protocol.i_vaultTradingExpo(price))), priceData, ""
-        );
-        protocol.validateDeposit(priceData, "");
-
         assertEq(
-            protocol.i_longTradingExpo(price),
-            protocol.i_vaultTradingExpo(price),
+            protocol.i_longTradingExpo(DEFAULT_PARAMS.initialPrice),
+            protocol.i_vaultTradingExpo(DEFAULT_PARAMS.initialPrice),
             "long and vault expos should be equal"
         );
         (int256 fund_, int256 oldLongExpo) = protocol.funding(uint128(DEFAULT_PARAMS.initialTimestamp + 60));
@@ -162,7 +157,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         protocol.validateOpenPosition(priceData, "");
 
         skip(1 hours);
@@ -190,7 +185,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         protocol.validateOpenPosition(priceData, "");
 
         skip(1 hours);

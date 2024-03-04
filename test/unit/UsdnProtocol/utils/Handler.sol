@@ -113,4 +113,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
         return _getLiquidationPrice(startPrice, leverage);
     }
+
+    function i_getLeverage(uint128 startPrice, uint128 liquidationPrice) external pure returns (uint128 leverage_) {
+        return _getLeverage(startPrice, liquidationPrice);
+    }
 }

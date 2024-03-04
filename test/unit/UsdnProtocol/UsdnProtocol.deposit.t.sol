@@ -132,7 +132,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, "");
 
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
         uint256 balanceBefore = address(this).balance;

@@ -192,7 +192,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             protocol.initiateOpenPosition(uint96(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), "");
         Position memory tempPos = protocol.getLongPosition(tick, tickVersion, index);
 
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
 
         uint128 newPrice = CURRENT_PRICE + 100 ether;
 
@@ -229,7 +229,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             protocol.initiateOpenPosition(uint96(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), "");
         Position memory tempPos = protocol.getLongPosition(tick, tickVersion, index);
 
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
 
         uint128 newPrice = CURRENT_PRICE - 100 ether;
         uint128 newLiqPrice = protocol.i_getLiquidationPrice(newPrice, uint128(protocol.getMaxLeverage()));
@@ -317,7 +317,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
         }(uint96(LONG_AMOUNT), desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
 
         uint256 balanceBefore = address(this).balance;
         uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition);

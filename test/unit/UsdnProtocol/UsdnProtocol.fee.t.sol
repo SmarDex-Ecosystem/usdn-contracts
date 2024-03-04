@@ -42,8 +42,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         emit FeeBpsUpdated(0);
         protocol.setProtocolFeeBps(0);
 
-        protocol.initiateDeposit(1000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        protocol.liquidate(abi.encode(DEFAULT_PARAMS.initialPrice), 0);
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
     }
 
@@ -95,6 +94,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
 
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
         protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        _waitDelay();
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
         assertGt(protocol.getPendingProtocolFee(), 0, "pending protocol fee after deposit");
     }
@@ -110,11 +110,13 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
 
         protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        _waitDelay();
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
         skip(4 days);
         protocol.initiateOpenPosition(
             5000 ether, DEFAULT_PARAMS.initialPrice / 2, abi.encode(DEFAULT_PARAMS.initialPrice), ""
         );
+        _waitDelay();
         protocol.validateOpenPosition(abi.encode(DEFAULT_PARAMS.initialPrice), "");
         skip(8 days);
         assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");

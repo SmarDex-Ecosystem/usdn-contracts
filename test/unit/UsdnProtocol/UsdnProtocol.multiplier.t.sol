@@ -30,7 +30,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a long position to have positive funding
         protocol.initiateOpenPosition(10 ether, params.initialPrice / 2, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         protocol.validateOpenPosition(priceData, "");
         assertGt(protocol.i_longTradingExpo(params.initialPrice), protocol.i_vaultTradingExpo(params.initialPrice));
 
@@ -53,7 +53,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a deposit to have negative funding
         protocol.initiateDeposit(10 ether, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         protocol.validateDeposit(priceData, "");
         assertGt(protocol.i_vaultTradingExpo(params.initialPrice), protocol.i_longTradingExpo(params.initialPrice));
 

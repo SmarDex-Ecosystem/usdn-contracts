@@ -18,32 +18,27 @@ contract MockOracleMiddleware is IOracleMiddleware {
         payable
         returns (PriceInfo memory)
     {
-        uint128 priceValue = abi.decode(data, (uint128));
-        uint128 ts = targetTimestamp;
+        require(block.timestamp >= 30 minutes, "MockOracleMiddleware: set block timestamp before calling");
+        uint256 priceValue = abi.decode(data, (uint128));
+        uint256 ts;
         if (
             action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
                 || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
                 || action == ProtocolAction.Initialize
         ) {
-            if (ts < 30 minutes) {
-                // avoid underflow
-                ts = 0;
-            } else {
-                ts -= 30 minutes; // simulate that we got the price 30 minutes ago
-            }
+            // simulate that we got the price 30 minutes ago
+            ts = block.timestamp - 30 minutes;
         } else if (action == ProtocolAction.Liquidation) {
-            if (ts < 30 seconds) {
-                // avoid underflow
-                ts = 0;
-            } else {
-                ts -= 30 seconds; // for liquidation, simulate we got a recent timestamp
-            }
+            // for liquidation, simulate we got a recent timestamp
+            ts = block.timestamp - 30 seconds;
         } else {
             // for other actions, simulate we got the price from 24s after the initiate action
-            ts += uint128(_validationDelay);
+            ts = targetTimestamp + _validationDelay;
         }
+        // the timestamp cannot be in the future (the caller must `skip` before calling this function)
+        require(ts < block.timestamp, "MockOracleMiddleware: timestamp is in the future");
 
-        PriceInfo memory price = PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: uint48(ts) });
+        PriceInfo memory price = PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: ts });
         return price;
     }
 

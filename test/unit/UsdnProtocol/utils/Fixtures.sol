@@ -99,13 +99,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
+        int24 firstPosTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
         Position memory firstPos = protocol.getLongPosition(
-            protocol.getEffectiveTickForPrice(params.initialPrice / 2)
-                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
-            0,
-            0
+            firstPosTick + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(), 0, 0
         );
-        assertEq(firstPos.leverage, 1_983_994_053_940_692_631_258, "first pos leverage");
+        uint256 firstPosLeverage =
+            protocol.i_getLeverage(params.initialPrice, protocol.getEffectivePriceForTick(firstPosTick));
+        assertEq(firstPos.leverage, firstPosLeverage, "first pos leverage");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
@@ -131,5 +131,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(a.var4, b.var4, string.concat(err, " - action var4"));
         assertEq(a.var5, b.var5, string.concat(err, " - action var5"));
         assertEq(a.var6, b.var6, string.concat(err, " - action var6"));
+    }
+
+    function _waitDelay() internal {
+        skip(oracleMiddleware.getValidationDelay() + 1);
     }
 }
