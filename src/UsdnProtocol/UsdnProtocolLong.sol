@@ -142,9 +142,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
      * @param currentPrice The current price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
-     * @param positionExpo The expo of the position
+     * @param positionTotalExpo The total expo of the position
      */
-    function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionExpo)
+    function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         internal
         pure
         returns (uint256 value_)
@@ -154,7 +154,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             return 0;
         }
 
-        value_ = FixedPointMathLib.fullMulDiv(positionExpo, (currentPrice - liqPriceWithoutPenalty), currentPrice);
+        value_ = FixedPointMathLib.fullMulDiv(positionTotalExpo, (currentPrice - liqPriceWithoutPenalty), currentPrice);
     }
 
     /**
