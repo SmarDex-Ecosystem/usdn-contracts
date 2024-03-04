@@ -12,16 +12,38 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
 
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
-        price_ = FixedPointMathLib.fullMulDiv(
+        price_ = _calcUsdnPrice(
             vaultAssetAvailableWithFunding(currentPrice, timestamp).toUint256(),
-            uint256(currentPrice) * 10 ** _usdnDecimals,
-            _usdn.totalSupply() * 10 ** _assetDecimals
+            currentPrice,
+            _usdn.totalSupply(),
+            _usdnDecimals,
+            _assetDecimals
         );
     }
 
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
         price_ = usdnPrice(currentPrice, uint128(block.timestamp));
+    }
+
+    function _calcUsdnPrice(
+        uint256 vaultBalance,
+        uint128 currentPrice,
+        uint256 usdnTotalSupply,
+        uint8 usdnDecimals,
+        uint8 assetDecimals
+    ) internal pure returns (uint256 price_) {
+        price_ = FixedPointMathLib.fullMulDiv(
+            vaultBalance, uint256(currentPrice) * 10 ** usdnDecimals, usdnTotalSupply * 10 ** assetDecimals
+        );
+    }
+
+    function _usdnRebase(uint128 currentPrice) internal {
+        uint256 usdnPrice =
+            _calcUsdnPrice(_balanceVault, currentPrice, _usdn.totalSupply(), _usdnDecimals, _assetDecimals);
+        if (usdnPrice <= _usdnRebaseThreshold) {
+            return;
+        }
     }
 
     /**
