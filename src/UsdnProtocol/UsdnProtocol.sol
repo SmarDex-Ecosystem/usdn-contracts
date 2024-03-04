@@ -67,41 +67,17 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
 
+        PriceInfo memory currentPrice =
+            _getOraclePrice(ProtocolAction.Initialize, uint40(block.timestamp), currentPriceData);
+
         // Create vault deposit
-        PriceInfo memory currentPrice;
-        {
-            PendingAction memory pendingAction = _convertVaultPendingAction(
-                VaultPendingAction({
-                    action: ProtocolAction.ValidateDeposit,
-                    timestamp: 0, // not needed since we have a special ProtocolAction for init
-                    user: msg.sender,
-                    _unused: 0, // unused
-                    amount: depositAmount,
-                    assetPrice: 0, // special case for init
-                    totalExpo: 0,
-                    balanceVault: 0,
-                    balanceLong: 0,
-                    usdnTotalSupply: 0
-                })
-            );
-
-            // Transfer the wstETH for the deposit
-            _asset.safeTransferFrom(msg.sender, address(this), depositAmount);
-
-            emit InitiatedDeposit(msg.sender, depositAmount);
-            // Mint USDN (a small amount is minted to the dead address)
-            // last parameter = initializing
-            currentPrice = _validateDepositWithAction(pendingAction, currentPriceData, true);
-        }
+        _createInitialDeposit(depositAmount, currentPrice.price.toUint128());
 
         _lastUpdateTimestamp = uint40(block.timestamp);
         _lastPrice = currentPrice.price.toUint128();
 
-        // Transfer the wstETH for the long
-        _asset.safeTransferFrom(msg.sender, address(this), longAmount);
-
+        // Create long position
         _createInitialPosition(
-            msg.sender,
             longAmount,
             currentPrice.price.toUint128(),
             getEffectiveTickForPrice(desiredLiqPrice) // without penalty
@@ -259,24 +235,60 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /**
-     * @notice Create initial open positions.
-     * @param user The initial position user address.
-     * @param amount The initial position amount.
-     * @param price The initial position price.
-     * @param tick The initial position tick.
-     * @dev To be called in contract initialize.
+     * @notice Create initial deposit
+     * @dev To be called from `initialize`
+     * @param amount The initial deposit amount
+     * @param price The current asset price
      */
-    function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
-        uint128 liquidationPrice = getEffectivePriceForTick(tick);
-        uint128 leverage = _getLeverage(price, liquidationPrice);
-        uint128 positionTotalExpo = _calculatePositionTotalExpo(amount, price, liquidationPrice);
-        // apply liquidation penalty to the deployer's position
+    function _createInitialDeposit(uint128 amount, uint128 price) internal {
+        _checkUninitialized(); // prevent using this function after initialization
+
+        // Transfer the wstETH for the deposit
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
+        _balanceVault += amount;
+        emit InitiatedDeposit(msg.sender, amount);
+
+        // Calculate the total minted amount of USDN (vault balance and total supply are zero for now, we assume the
+        // USDN price to be $1)
+        uint256 usdnToMint = _calcMintUsdn(amount, 0, 0, price);
+        // Mint the min amount and send to dead address so it can never be removed from the total supply
+        _usdn.mint(DEAD_ADDRESS, MIN_USDN_SUPPLY);
+        // Mint the user's share
+        uint256 mintToUser = usdnToMint - MIN_USDN_SUPPLY;
+        _usdn.mint(msg.sender, mintToUser);
+
+        // Emit events
+        emit ValidatedDeposit(DEAD_ADDRESS, 0, MIN_USDN_SUPPLY);
+        emit ValidatedDeposit(msg.sender, amount, mintToUser);
+    }
+
+    /**
+     * @notice Create initial long position
+     * @dev To be called from `initialize`
+     * @param amount The initial position amount
+     * @param price The current asset price
+     * @param tick The tick corresponding to the liquidation price (without penalty)
+     */
+    function _createInitialPosition(uint128 amount, uint128 price, int24 tick) internal {
+        _checkUninitialized(); // prevent using this function after initialization
+
+        // Transfer the wstETH for the long
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
+
+        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
+        uint128 leverage = _getLeverage(price, liquidationPriceWithoutPenalty);
+        uint128 positionTotalExpo = _calculatePositionTotalExpo(amount, price, liquidationPriceWithoutPenalty);
+        // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
         tick = tick + int24(_liquidationPenalty) * _tickSpacing;
-        Position memory long =
-            Position({ user: user, amount: amount, totalExpo: positionTotalExpo, timestamp: uint40(block.timestamp) });
+        Position memory long = Position({
+            user: msg.sender,
+            amount: amount,
+            totalExpo: positionTotalExpo,
+            timestamp: uint40(block.timestamp)
+        });
         // Save the position and update the state
         (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
-        emit InitiatedOpenPosition(user, long.timestamp, leverage, long.amount, price, tick, tickVersion, index);
-        emit ValidatedOpenPosition(user, leverage, price, tick, tickVersion, index);
+        emit InitiatedOpenPosition(msg.sender, long.timestamp, leverage, long.amount, price, tick, tickVersion, index);
+        emit ValidatedOpenPosition(msg.sender, leverage, price, tick, tickVersion, index);
     }
 }

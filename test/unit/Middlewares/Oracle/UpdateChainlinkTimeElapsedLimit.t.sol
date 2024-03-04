@@ -5,7 +5,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracleMiddlewareEvents.sol";
 
-import { OracleMiddlewareBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
+import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 
 /**
