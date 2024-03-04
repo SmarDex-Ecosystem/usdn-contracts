@@ -12,7 +12,7 @@ import { USER_1 } from "test/utils/Constants.sol";
  * @custom:feature The `getChainlinkTimeElapsedLimit` and `updateChainlinkTimeElapsedLimit` functions of
  * `OracleMiddleware`.
  */
-contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddlewareBaseFixture, IOracleMiddlewareEvents {
+contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddlewareBaseFixture {
     function setUp() public override {
         super.setUp();
     }
@@ -36,7 +36,7 @@ contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddleware
 
         vm.expectEmit();
         emit IOracleMiddlewareEvents.TimeElapsedLimitUpdated(newValue);
-        oracleMiddleware.updateChainlinkTimeElapsedLimit(newValue);
+        oracleMiddleware.setChainlinkTimeElapsedLimit(newValue);
 
         assertEq(oracleMiddleware.getChainlinkTimeElapsedLimit(), newValue);
     }
@@ -51,6 +51,6 @@ contract TestOracleMiddlewareUpdateChainlinkTimeElapsedLimit is OracleMiddleware
 
         vm.prank(USER_1);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
-        oracleMiddleware.updateChainlinkTimeElapsedLimit(newValue);
+        oracleMiddleware.setChainlinkTimeElapsedLimit(newValue);
     }
 }

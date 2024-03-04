@@ -9,6 +9,7 @@ solc_version = "0.8.20"
 optimizer = true
 optimizer_runs = 20_000
 libs = ["node_modules", "lib"]
+invariant = { fail_on_revert = true }
 
 # -------------------------------- Remappings -------------------------------- #
 

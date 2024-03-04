@@ -17,7 +17,7 @@ contract TestOracleMiddlewareDecimals is OracleMiddlewareBaseFixture {
      * @custom:then It should succeed
      */
     function test_decimals() public {
-        assertEq(oracleMiddleware.decimals(), 18);
+        assertEq(oracleMiddleware.getDecimals(), 18);
     }
 
     /**
@@ -26,7 +26,7 @@ contract TestOracleMiddlewareDecimals is OracleMiddlewareBaseFixture {
      * @custom:then It should succeed
      */
     function test_pythDecimals() public {
-        assertEq(oracleMiddleware.pythDecimals(), 8);
+        assertEq(oracleMiddleware.getPythDecimals(), 8);
     }
 
     /**
@@ -35,6 +35,6 @@ contract TestOracleMiddlewareDecimals is OracleMiddlewareBaseFixture {
      * @custom:then It should succeed
      */
     function test_chainlinkDecimals() public {
-        assertEq(oracleMiddleware.chainlinkDecimals(), 8);
+        assertEq(oracleMiddleware.getChainlinkDecimals(), 8);
     }
 }

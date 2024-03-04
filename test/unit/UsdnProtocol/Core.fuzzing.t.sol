@@ -58,6 +58,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
             (int24 tick, uint256 tickVersion, uint256 index) =
                 protocol.initiateOpenPosition(uint96(longAmount), uint128(longLiqPrice), abi.encode(currentPrice), "");
+            skip(oracleMiddleware.getValidationDelay() + 1);
             protocol.validateOpenPosition(abi.encode(currentPrice), "");
             pos[i] = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;
@@ -65,9 +66,10 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
             random = uint256(keccak256(abi.encode(random, i, 2)));
 
-            // create a random short position
-            uint256 shortAmount = (random % 9 ether) + 1 ether;
-            protocol.initiateDeposit(uint128(shortAmount), abi.encode(currentPrice), "");
+            // create a random deposit position
+            uint256 depositAmount = (random % 9 ether) + 1 ether;
+            protocol.initiateDeposit(uint128(depositAmount), abi.encode(currentPrice), "");
+            skip(oracleMiddleware.getValidationDelay() + 1);
             protocol.validateDeposit(abi.encode(currentPrice), "");
             vm.stopPrank();
 
@@ -75,24 +77,29 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             currentPrice += random % 100 ether;
         }
 
+        skip(1 hours);
+
         // Bound the final price between the highest position start price and 10000 dollars
         finalPrice = uint128(bound(uint256(finalPrice), currentPrice, 10_000 ether));
 
         // calculate the value of all new long positions (simulating taking the low bound of the confidence interval)
         uint256 longPosValue;
         for (uint256 i = 0; i < 10; i++) {
-            longPosValue += protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice - 5 ether);
+            longPosValue +=
+                protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice - 5 ether, uint128(block.timestamp));
         }
         // calculate the value of the deployer's long position
         uint128 liqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
         longPosValue +=
-            protocol.positionValue(finalPrice - 5 ether, liqPrice, DEFAULT_PARAMS.initialLong, initialLongLeverage);
+            protocol.i_getPositionValue(finalPrice - 5 ether, liqPrice, DEFAULT_PARAMS.initialLong, initialLongLeverage);
 
         emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());
-        emit log_named_decimal_uint("long balance", uint256(protocol.longAssetAvailable(finalPrice)), wstETH.decimals());
+        emit log_named_decimal_uint(
+            "long balance", uint256(protocol.i_longAssetAvailable(finalPrice)), wstETH.decimals()
+        );
 
         // The available balance should always be able to cover the value of all long positions
-        assertGe(uint256(protocol.longAssetAvailable(finalPrice)), longPosValue, "long balance");
+        assertGe(uint256(protocol.i_longAssetAvailable(finalPrice)), longPosValue, "long balance");
     }
 }

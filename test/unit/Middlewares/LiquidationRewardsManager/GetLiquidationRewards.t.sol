@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { LiquidationRewardsManagerBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 
 /**
  * @custom:feature The `getLiquidationRewards` function of `LiquidationRewardsManager`
@@ -10,7 +9,7 @@ import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewar
 contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsManagerBaseFixture {
     function setUp() public override {
         super.setUp();
-        mockChainlinkOnChain.updateLastPublishTime(block.timestamp);
+        mockChainlinkOnChain.setLastPublishTime(block.timestamp);
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 1000 gwei, 20_000);
@@ -153,7 +152,7 @@ contract LiquidationRewardsManagerGetLiquidationRewards is LiquidationRewardsMan
      * @custom:then It should return 0 to avoid relying solely on tx.gasprice or old data
      */
     function test_getLiquidationRewardsWithOracleGasPriceTooOld() public {
-        mockChainlinkOnChain.updateLastPublishTime(0);
+        mockChainlinkOnChain.setLastPublishTime(0);
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
 
         assertEq(rewards, 0, "The function should return 0");

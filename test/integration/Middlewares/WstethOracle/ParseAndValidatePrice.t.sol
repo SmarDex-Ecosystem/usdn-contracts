@@ -56,7 +56,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
             } else {
                 middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(
-                    uint128(pythTimestamp - wstethMiddleware.validationDelay()), action, data
+                    uint128(pythTimestamp - wstethMiddleware.getValidationDelay()), action, data
                 );
             }
 
@@ -65,11 +65,11 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
             // formatted pyth price
             uint256 formattedPythPrice =
-                pythPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
+                pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
 
             // formatted pyth conf
             uint256 formattedPythConf =
-                pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
+                pythConf * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
@@ -129,7 +129,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             assertEq(
                 middlewarePrice.price,
                 stethToWsteth(
-                    chainlinkPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.chainlinkDecimals()
+                    chainlinkPrice * 10 ** wstethMiddleware.getDecimals()
+                        / 10 ** wstethMiddleware.getChainlinkDecimals()
                 ),
                 priceError
             );
@@ -171,7 +172,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
             } else {
                 middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(
-                    uint128(pythTimestamp - wstethMiddleware.validationDelay()), action, data
+                    uint128(pythTimestamp - wstethMiddleware.getValidationDelay()), action, data
                 );
             }
 
@@ -180,11 +181,11 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
             // formatted pyth price
             uint256 formattedPythPrice =
-                pythPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
+                pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
 
             // formatted pyth conf
             uint256 formattedPythConf =
-                pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
+                pythConf * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
@@ -215,8 +216,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 // We are ok with a delta below pyth wsteth confidence.
                 assertApproxEqAbs(
                     middlewarePrice.price,
-                    pythWstethPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals(),
-                    pythWstethConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals(),
+                    pythWstethPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals(),
+                    pythWstethConf * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals(),
                     priceError
                 );
             }
@@ -263,7 +264,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             assertEq(
                 middlewarePrice.price,
                 stethToWsteth(
-                    chainlinkPrice * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.chainlinkDecimals()
+                    chainlinkPrice * 10 ** wstethMiddleware.getDecimals()
+                        / 10 ** wstethMiddleware.getChainlinkDecimals()
                 ),
                 priceError
             );

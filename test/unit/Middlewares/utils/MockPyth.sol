@@ -35,7 +35,7 @@ contract MockPyth is IMockPythError {
      * @notice Update manually the last publish time.
      * @param _lastPublishTime New last publish time.
      */
-    function updateLastPublishTime(uint256 _lastPublishTime) external {
+    function setLastPublishTime(uint256 _lastPublishTime) external {
         lastPublishTime = uint64(_lastPublishTime);
     }
 

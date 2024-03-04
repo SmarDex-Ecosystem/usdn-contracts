@@ -39,7 +39,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         action = func(0);
         assertTrue(action.action == ProtocolAction.None, "pending action after initiate");
         // the pending action is actionable after the validation deadline
-        skip(protocol.validationDeadline() + 1);
+        skip(protocol.getValidationDeadline() + 1);
         vm.prank(address(0)); // simulate front-end call by someone else
         action = func(0);
         assertEq(action.user, address(this), "action user");
@@ -94,13 +94,13 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         vm.stopPrank();
 
         // Simulate the second item in the queue being empty (sets it to zero values)
-        protocol.removePendingAction(1, USER_2);
+        protocol.i_removePendingAction(1, USER_2);
         // Simulate the first item in the queue being empty
         // This will pop the first item, but leave the second empty
-        protocol.removePendingAction(0, USER_1);
+        protocol.i_removePendingAction(0, USER_1);
 
         // Wait
-        skip(protocol.validationDeadline() + 1);
+        skip(protocol.getValidationDeadline() + 1);
 
         // With 1 max iter, we should not get any pending action (since the first item in the queue is zeroed)
         PendingAction memory action = func(1);
@@ -186,7 +186,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(2000 ether);
         protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
         // the pending action is actionable after the validation deadline
-        skip(protocol.validationDeadline() + 1);
+        skip(protocol.getValidationDeadline() + 1);
         vm.prank(address(0)); // simulate front-end call by someone else
         PendingAction memory action = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(this), "action user");
@@ -287,7 +287,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         vm.stopPrank();
 
         // Wait
-        skip(protocol.validationDeadline() + 1);
+        skip(protocol.getValidationDeadline() + 1);
 
         // Second user tries to validate their action
         vm.prank(USER_2);
