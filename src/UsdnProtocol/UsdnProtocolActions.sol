@@ -200,7 +200,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 user: msg.sender,
                 tick: tick_,
                 closeAmount: 0,
-                totalExpo: long.totalExpo,
+                closeTotalExpo: 0,
                 tickVersion: tickVersion_,
                 index: index_,
                 closeLiqMultiplier: 0,
@@ -262,7 +262,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 user: msg.sender,
                 tick: tick,
                 closeAmount: pos.amount,
-                totalExpo: pos.totalExpo,
+                closeTotalExpo: pos.totalExpo,
                 tickVersion: tickVersion,
                 index: index,
                 closeLiqMultiplier: liqMultiplier,
@@ -589,7 +589,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _applyPnlAndFundingAndLiquidate(price.neutralPrice, price.timestamp);
 
-        uint256 assetToTransfer = _assetToTransfer(long.tick, long.totalExpo, long.closeLiqMultiplier);
+        uint256 assetToTransfer = _assetToTransfer(long.tick, long.closeTotalExpo, long.closeLiqMultiplier);
 
         // adjust long balance that was previously optimistically decreased
         if (assetToTransfer > long.closeTempTransfer) {

@@ -102,7 +102,7 @@ struct VaultPendingAction {
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
  * @param tick The tick of the position.
- * @param totalExpo The total expo of the position.
+ * @param closeTotalExpo The total expo of the position (only used when closing a position).
  * @param closeAmount The amount of the pending action (only used when closing a position).
  * @param tickVersion The version of the tick.
  * @param index The index of the position in the tick list.
@@ -117,7 +117,7 @@ struct LongPendingAction {
     address user; // 20 bytes
     int24 tick; // 3 bytes
     uint128 closeAmount; // 16 bytes
-    uint128 totalExpo; // 16 bytes
+    uint128 closeTotalExpo; // 16 bytes
     uint256 tickVersion; // 32 bytes
     uint256 index; // 32 bytes
     uint256 closeLiqMultiplier; // 32 bytes
