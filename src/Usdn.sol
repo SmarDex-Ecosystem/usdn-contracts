@@ -58,6 +58,11 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @dev Divisor used to convert between shares and tokens.
     uint256 internal _divisor = MAX_DIVISOR;
 
+    /**
+     * @notice Create an instance of the USDN token
+     * @param minter Address which should have the minter role by default (zero address to skip)
+     * @param rebaser Address which should have the rebaser role by default (zero address to skip)
+     */
     constructor(address minter, address rebaser) ERC20(NAME, SYMBOL) ERC20Permit(NAME) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         if (minter != address(0)) {
