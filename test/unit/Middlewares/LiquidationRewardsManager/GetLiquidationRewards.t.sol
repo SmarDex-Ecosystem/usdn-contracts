@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { LiquidationRewardsManagerBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
+import { LiquidationRewardsManagerBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
 
 /**
  * @custom:feature The `getLiquidationRewards` function of `LiquidationRewardsManager`

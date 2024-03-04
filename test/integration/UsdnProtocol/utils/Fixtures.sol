@@ -19,10 +19,10 @@ import {
     PYTH_DATA_STETH_CONF,
     PYTH_DATA_TIMESTAMP,
     PYTH_DATA_STETH
-} from "test/integration/OracleMiddleware/utils/Constants.sol";
+} from "test/integration/Middlewares/utils/Constants.sol";
 import { WstETH } from "test/utils/WstEth.sol";
-import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
-import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
+import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
+import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";

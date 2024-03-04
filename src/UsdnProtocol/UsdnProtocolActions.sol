@@ -356,36 +356,24 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        _validateDepositWithAction(pending, priceData, false);
+        _validateDepositWithAction(pending, priceData);
     }
 
-    function _validateDepositWithAction(PendingAction memory pending, bytes calldata priceData, bool initializing)
+    function _validateDepositWithAction(PendingAction memory pending, bytes calldata priceData)
         internal
         returns (PriceInfo memory depositPrice_)
     {
         VaultPendingAction memory deposit = _toVaultPendingAction(pending);
 
-        // During initialization, we might want to use a different oracle, so we have a special action
-        ProtocolAction action = initializing ? ProtocolAction.Initialize : ProtocolAction.ValidateDeposit;
-
-        depositPrice_ = _getOraclePrice(action, deposit.timestamp, priceData);
+        depositPrice_ = _getOraclePrice(ProtocolAction.ValidateDeposit, deposit.timestamp, priceData);
 
         // adjust balances
-        if (!initializing) {
-            // There is no need to adjust balances during initialization.
-            // Also, during initialization, `_lastUpdateTimestamp` and `_lastPrice` are not updated yet.
-
-            _applyPnlAndFundingAndLiquidate(depositPrice_.neutralPrice, depositPrice_.timestamp);
-        }
+        _applyPnlAndFundingAndLiquidate(depositPrice_.neutralPrice, depositPrice_.timestamp);
 
         // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
         // action, or the current price provided for validation. We will use the lower of the two amounts to mint.
-
-        // During initialization, the deposit.assetPrice is zero, so we use the price provided for validation.
-        uint256 oldPrice = initializing ? depositPrice_.price : deposit.assetPrice;
-
-        // The last parameter (price) is only used during initialization
-        uint256 usdnToMint1 = _calcMintUsdn(deposit.amount, deposit.balanceVault, deposit.usdnTotalSupply, oldPrice);
+        uint256 usdnToMint1 =
+            _calcMintUsdn(deposit.amount, deposit.balanceVault, deposit.usdnTotalSupply, deposit.assetPrice);
         uint256 usdnToMint2 = _calcMintUsdn(
             deposit.amount,
             uint256(
@@ -409,17 +397,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _balanceVault += deposit.amount;
 
-        if (initializing) {
-            // we mint the minimum amount of USDN to the dead address, so that the total supply never falls to zero
-            _usdn.mint(DEAD_ADDRESS, MIN_USDN_SUPPLY);
-            uint256 mintToUser = usdnToMint - MIN_USDN_SUPPLY;
-            _usdn.mint(deposit.user, mintToUser);
-            emit ValidatedDeposit(DEAD_ADDRESS, 0, MIN_USDN_SUPPLY);
-            emit ValidatedDeposit(deposit.user, deposit.amount, mintToUser);
-        } else {
-            _usdn.mint(deposit.user, usdnToMint);
-            emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint);
-        }
+        _usdn.mint(deposit.user, usdnToMint);
+        emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint);
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
@@ -666,7 +645,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
         _clearPendingAction(pending.user);
         if (pending.action == ProtocolAction.ValidateDeposit) {
-            _validateDepositWithAction(pending, priceData, false);
+            _validateDepositWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
             _validateWithdrawalWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
