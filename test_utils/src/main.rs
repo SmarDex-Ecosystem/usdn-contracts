@@ -105,7 +105,7 @@ fn main() -> Result<()> {
             print_u256_hex(res)?;
         }
         Commands::PythPrice { feed, publish_time } => {
-            let hermes_key = std::env::var("HERMES_RA2_NODDE_KEY")?;
+            let hermes_key = std::env::var("HERMES_RA2_NODE_KEY")?;
             let request_url = format!(
                 "https://hermes-mainnet.rpc.extrnode.com/{hermes_key}/api/get_price_feed?id={feed}&publish_time={publish_time}&binary=true"
             );
