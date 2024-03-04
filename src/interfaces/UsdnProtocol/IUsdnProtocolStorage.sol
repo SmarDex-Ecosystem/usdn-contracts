@@ -113,6 +113,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The address of the fee collector
     function getMiddlewareValidationDelay() external view returns (uint256);
 
+    /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
+    function getTargetUsdnPrice() external view returns (uint128);
+
+    /// @notice The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
+    function getUsdnRebaseThreshold() external view returns (uint128);
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */

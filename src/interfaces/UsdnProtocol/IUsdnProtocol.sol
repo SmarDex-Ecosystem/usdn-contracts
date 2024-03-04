@@ -91,4 +91,20 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * The fee collector must be different from the zero address
      */
     function setFeeCollector(address newFeeCollector) external;
+
+    /**
+     * @notice Set the target USDN price
+     * @param newPrice The new target price (with _priceFeedDecimals)
+     * @dev When a rebase of USDN occurs, it will bring the price back down to this value.
+     * This value cannot be greater than `_usdnRebaseThreshold`.
+     */
+    function setTargetUsdnPrice(uint128 newPrice) external;
+
+    /**
+     * @notice Set the USDN rebase threshold
+     * @param newThreshold The new threshold value (with _priceFeedDecimals)
+     * @dev When the price of USDN exceeds this value, a rebase will be triggered.
+     * This value cannot be smaller than `_targetUsdnPrice`.
+     */
+    function setUsdnRebaseThreshold(uint128 newThreshold) external;
 }

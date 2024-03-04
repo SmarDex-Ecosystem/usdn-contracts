@@ -92,4 +92,10 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided fee collector address is invalid
     error UsdnProtocolInvalidFeeCollector();
+
+    /// @dev Indicates that the provided target USDN price is invalid
+    error UsdnProtocolInvalidTargetUsdnPrice();
+
+    /// @dev Indicates that the provided USDN rebase threshold is invalid
+    error UsdnProtocolInvalidUsdnRebaseThreshold();
 }

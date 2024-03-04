@@ -109,6 +109,12 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The fee threshold above which fee will be sent
     uint256 internal _feeThreshold = 1 ether;
 
+    /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
+    uint128 internal _targetUsdnPrice;
+
+    /// @notice The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
+    uint128 internal _usdnRebaseThreshold;
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
@@ -218,6 +224,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _liquidationRewardsManager = liquidationRewardsManager;
         _tickSpacing = tickSpacing;
         _feeCollector = feeCollector;
+
+        _targetUsdnPrice = uint128(102 * 10 ** (_priceFeedDecimals - 2)); // $1.02
+        _usdnRebaseThreshold = uint128(1021 * 10 ** (_priceFeedDecimals - 3)); // $1.021
     }
 
     /* -------------------------------------------------------------------------- */
@@ -326,6 +335,16 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getMiddlewareValidationDelay() external view returns (uint256) {
         return _oracleMiddleware.getValidationDelay();
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getTargetUsdnPrice() external view returns (uint128) {
+        return _targetUsdnPrice;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getUsdnRebaseThreshold() external view returns (uint128) {
+        return _usdnRebaseThreshold;
     }
 
     /* -------------------------------------------------------------------------- */
