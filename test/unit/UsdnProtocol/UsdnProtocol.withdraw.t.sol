@@ -181,8 +181,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             // decreases
 
         // wait the required delay between initiation and validation
-        uint256 validationDelay = oracleMiddleware.getValidationDelay();
-        skip(validationDelay + 1);
+        _waitDelay();
 
         currentPrice = abi.encode(assetPrice);
 

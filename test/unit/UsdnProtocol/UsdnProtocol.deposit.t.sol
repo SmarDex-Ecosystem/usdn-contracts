@@ -157,8 +157,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation
-        uint256 validationDelay = oracleMiddleware.getValidationDelay();
-        skip(validationDelay + 1);
+        _waitDelay();
 
         // set the effective price used for minting USDN
         currentPrice = abi.encode(assetPrice);
