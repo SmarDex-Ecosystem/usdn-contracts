@@ -3,9 +3,9 @@ pragma solidity 0.8.20;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { OracleMiddlewareBaseFixture } from "test/unit/OracleMiddleware/utils/Fixtures.sol";
-import { ETH_PRICE, ETH_CONF } from "test/unit/OracleMiddleware/utils/Constants.sol";
-import { IMockPythError } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
+import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
+import { ETH_PRICE, ETH_CONF } from "test/unit/Middlewares/utils/Constants.sol";
+import { IMockPythError } from "test/unit/Middlewares/utils/MockPyth.sol";
 
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
