@@ -57,7 +57,7 @@ abstract contract InitializableReentrancyGuard {
         }
     }
 
-    function _checkUninitialized() private view {
+    function _checkUninitialized() internal view {
         if (_status != UNINITIALIZED) {
             revert InitializableReentrancyGuardInvalidInitialization();
         }

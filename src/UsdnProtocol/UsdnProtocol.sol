@@ -241,6 +241,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param price The current asset price
      */
     function _createInitialDeposit(uint128 amount, uint128 price) internal {
+        _checkUninitialized(); // prevent using this function after initialization
+
         // Transfer the wstETH for the deposit
         _asset.safeTransferFrom(msg.sender, address(this), amount);
         _balanceVault += amount;
@@ -268,6 +270,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param tick The tick corresponding to the liquidation price (without penalty)
      */
     function _createInitialPosition(uint128 amount, uint128 price, int24 tick) internal {
+        _checkUninitialized(); // prevent using this function after initialization
+
         // Transfer the wstETH for the long
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
