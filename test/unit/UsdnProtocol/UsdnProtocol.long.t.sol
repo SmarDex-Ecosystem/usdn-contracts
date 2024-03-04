@@ -162,14 +162,14 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      */
     function test_calculatePositionExpo() public {
         // amount / leverage = position expo
-        uint256 expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 1500 ether);
-        assertEq(expo, 4 ether, "Position expo should be 4 ether");
+        uint256 expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1500 ether);
+        assertEq(expo, 4 ether, "Position total expo should be 4 ether");
 
-        expo = protocol.i_calculatePositionExpo(2 ether, 4000 ether, 1350 ether);
-        assertEq(expo, 3_018_867_924_528_301_886, "Position expo should be 3.018... ether");
+        expo = protocol.i_calculatePositionTotalExpo(2 ether, 4000 ether, 1350 ether);
+        assertEq(expo, 3_018_867_924_528_301_886, "Position total expo should be 3.018... ether");
 
-        expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 1000 ether);
-        assertEq(expo, 2 ether, "Position expo should be 2 ether");
+        expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1000 ether);
+        assertEq(expo, 2 ether, "Position total expo should be 2 ether");
     }
 
     /**
@@ -182,11 +182,11 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:when The current price is equal to the liquidation price without penalty
      */
     function test_calculatePositionExpoReturns0WhenPriceLesserThanLiqPrice() public {
-        uint256 expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 2000 ether);
-        assertEq(expo, 0, "Position expo should be 0");
+        uint256 expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 2000 ether);
+        assertEq(expo, 0, "Position total expo should be 0");
 
-        expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 3000 ether);
-        assertEq(expo, 0, "Position expo should be 0");
+        expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 3000 ether);
+        assertEq(expo, 0, "Position total expo should be 0");
     }
 
     /**
@@ -249,11 +249,11 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         // Calculate the total expo of the position after the initialization
         assertEq(
-            initialTotalExpo + position.expo,
+            initialTotalExpo + position.totalExpo,
             protocol.getTotalExpo(),
             "Total expo should have increased by the position's total expo"
         );
-        assertEq(totalExpoForTick, position.expo, "Total expo on tick is not the expected value");
+        assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
 
         skip(oracleMiddleware.getValidationDelay() + 1);
 
@@ -262,23 +262,23 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         // Validate the position with the new price
         protocol.validateOpenPosition(abi.encode(price), "");
 
-        uint256 previousExpo = position.expo;
+        uint256 previousExpo = position.totalExpo;
         // Get the updated position
         position = protocol.getLongPosition(tick, tickVersion, index);
-        uint256 newExpo = position.expo;
+        uint256 newExpo = position.totalExpo;
 
         // Sanity check
         assertTrue(previousExpo != newExpo, "The expo changing is necessary for this test to work");
 
         // Calculate the total expo of the position after the validation
         assertEq(
-            initialTotalExpo + position.expo,
+            initialTotalExpo + position.totalExpo,
             protocol.getTotalExpo(),
             "Total expo should have increased by the position's new total expo"
         );
 
         totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
-        assertEq(totalExpoForTick, position.expo, "Total expo on tick is not the expected value");
+        assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
     }
 
     /**

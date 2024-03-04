@@ -269,11 +269,11 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
         uint128 liquidationPrice = getEffectivePriceForTick(tick);
         uint128 leverage = _getLeverage(price, liquidationPrice);
-        uint128 positionExpo = _calculatePositionExpo(amount, price, liquidationPrice);
+        uint128 positionTotalExpo = _calculatePositionTotalExpo(amount, price, liquidationPrice);
         // apply liquidation penalty to the deployer's position
         tick = tick + int24(_liquidationPenalty) * _tickSpacing;
         Position memory long =
-            Position({ user: user, amount: amount, expo: positionExpo, timestamp: uint40(block.timestamp) });
+            Position({ user: user, amount: amount, totalExpo: positionTotalExpo, timestamp: uint40(block.timestamp) });
         // Save the position and update the state
         (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
         emit InitiatedOpenPosition(user, long.timestamp, leverage, long.amount, price, tick, tickVersion, index);

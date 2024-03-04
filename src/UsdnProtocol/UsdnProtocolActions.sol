@@ -173,20 +173,24 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             }
         }
 
-        uint128 positionExpo;
+        uint128 positionTotalExpo;
         {
             // Calculate effective liquidation price
             uint128 liquidationPrice = getEffectivePriceForTick(tick_);
 
             // Liquidation price must be at least x% below current price
             _checkSafetyMargin(neutralPrice, liquidationPrice);
-            positionExpo = _calculatePositionExpo(amount, adjustedPrice, liquidationPrice);
+            positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liquidationPrice);
         }
 
         // Register position and adjust contract state
         {
-            Position memory long =
-                Position({ user: msg.sender, amount: amount, expo: positionExpo, timestamp: uint40(block.timestamp) });
+            Position memory long = Position({
+                user: msg.sender,
+                amount: amount,
+                totalExpo: positionTotalExpo,
+                timestamp: uint40(block.timestamp)
+            });
             (tickVersion_, index_) = _saveNewPosition(tick_, long);
 
             // Register pending action
@@ -196,7 +200,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 user: msg.sender,
                 tick: tick_,
                 closeAmount: 0,
-                expo: long.expo,
+                totalExpo: long.totalExpo,
                 tickVersion: tickVersion_,
                 index: index_,
                 closeLiqMultiplier: 0,
@@ -250,14 +254,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         {
             uint256 liqMultiplier = _liquidationMultiplier;
-            uint256 tempTransfer = _assetToTransfer(tick, pos.expo, liqMultiplier);
+            uint256 tempTransfer = _assetToTransfer(tick, pos.totalExpo, liqMultiplier);
 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
                 timestamp: uint40(block.timestamp),
                 user: msg.sender,
                 tick: tick,
-                expo: pos.expo,
+                totalExpo: pos.totalExpo,
                 closeAmount: pos.amount,
                 tickVersion: tickVersion,
                 index: index,
@@ -535,8 +539,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             int24 tickWithoutPenalty = getEffectiveTickForPrice(liqPriceWithoutPenalty);
             // retrieve exact liquidation price without penalty
             liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
-            // update position expo
-            pos.expo = _calculatePositionExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
+            // update position total expo
+            pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
             // apply liquidation penalty
             int24 tick = tickWithoutPenalty + int24(_liquidationPenalty) * _tickSpacing;
             // insert position into new tick, update tickVersion and index
@@ -547,11 +551,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         } else {
             Position storage pos = _longPositions[tickHash][long.index];
             // Calculate the new total expo
-            uint128 expoBefore = pos.expo;
-            uint128 expoAfter = _calculatePositionExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
+            uint128 expoBefore = pos.totalExpo;
+            uint128 expoAfter = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
 
-            // Update the expo of the position
-            pos.expo = expoAfter;
+            // Update the total expo of the position
+            pos.totalExpo = expoAfter;
             // Update the total expo by adding the position's new expo and removing the old one.
             // Do not use += or it will underflow
             _totalExpo = _totalExpo + expoAfter - expoBefore;
@@ -583,7 +587,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _applyPnlAndFundingAndLiquidate(price.neutralPrice, price.timestamp);
 
-        uint256 assetToTransfer = _assetToTransfer(long.tick, long.expo, long.closeLiqMultiplier);
+        uint256 assetToTransfer = _assetToTransfer(long.tick, long.totalExpo, long.closeLiqMultiplier);
 
         // adjust long balance that was previously optimistically decreased
         if (assetToTransfer > long.closeTempTransfer) {

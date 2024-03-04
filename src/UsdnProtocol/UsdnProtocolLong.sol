@@ -64,7 +64,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 liquidationMultiplier = getLiquidationMultiplier(timestamp);
         uint128 liqPrice =
             getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liquidationMultiplier);
-        value_ = _positionValue(price, liqPrice, pos.expo);
+        value_ = _positionValue(price, liqPrice, pos.totalExpo);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -192,18 +192,19 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         leverage_ = ((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
     }
 
-    /// @notice Calculate the exposure of a position
-    function _calculatePositionExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+    /// @notice Calculate the total exposure of a position
+    /// @return totalExpo_ The total exposure of a position
+    function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
         internal
         pure
-        returns (uint128)
+        returns (uint128 totalExpo_)
     {
         // Protects against division by 0
         if (liquidationPrice >= startPrice) {
             return 0;
         }
 
-        return FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
+        totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
     }
 
     function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
@@ -226,8 +227,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // Adjust state
         _balanceLong += long.amount;
-        _totalExpo += long.expo;
-        _totalExpoByTick[tickHash] += long.expo;
+        _totalExpo += long.totalExpo;
+        _totalExpoByTick[tickHash] += long.totalExpo;
         ++_positionsInTick[tickHash];
         ++_totalLongPositions;
 
@@ -256,8 +257,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         pos_ = tickArray[index];
 
         // Adjust state
-        _totalExpo -= pos_.expo;
-        _totalExpoByTick[tickHash] -= pos_.expo;
+        _totalExpo -= pos_.totalExpo;
+        _totalExpoByTick[tickHash] -= pos_.totalExpo;
         --_positionsInTick[tickHash];
         --_totalLongPositions;
 
