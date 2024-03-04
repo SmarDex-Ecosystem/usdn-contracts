@@ -156,7 +156,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 // formatted pyth conf
                 uint256 formattedPythConf =
                     pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
-                formattedPythConf = formattedPythConf * wstethMiddleware.confRatio() / wstethMiddleware.confRatioDenom();
+                formattedPythConf =
+                    formattedPythConf * wstethMiddleware.getConfRatio() / wstethMiddleware.getConfRatioDenom();
 
                 // Price + conf
                 if (action == ProtocolAction.ValidateOpenPosition) {
@@ -204,7 +205,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
                 getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
             // Apply conf ratio to pyth confidence
-            pythConf = (pythConf * wstethMiddleware.confRatio()) / wstethMiddleware.confRatioDenom();
+            pythConf = (pythConf * wstethMiddleware.getConfRatio()) / wstethMiddleware.getConfRatioDenom();
 
             // middleware data
             PriceInfo memory middlewarePrice;
@@ -339,7 +340,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 // formatted pyth conf
                 uint256 formattedPythConf =
                     pythConf * 10 ** wstethMiddleware.decimals() / 10 ** wstethMiddleware.pythDecimals();
-                formattedPythConf = formattedPythConf * wstethMiddleware.confRatio() / wstethMiddleware.confRatioDenom();
+                formattedPythConf =
+                    formattedPythConf * wstethMiddleware.getConfRatio() / wstethMiddleware.getConfRatioDenom();
 
                 // Price + conf
                 if (action == ProtocolAction.ValidateOpenPosition) {

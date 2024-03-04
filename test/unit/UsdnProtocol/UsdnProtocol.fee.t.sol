@@ -44,7 +44,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
 
         protocol.initiateDeposit(1000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
+        assertEq(protocol.pendinggetProtocolFee(), 0, "initial pending protocol fee");
     }
 
     /**
@@ -90,13 +90,13 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:and A validation of the deposit
      * @custom:then The pending protocol fee is > 0
      */
-    function test_pendingProtocolFee() public {
+    function test_pendinggetProtocolFee() public {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
 
-        assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
+        assertEq(protocol.pendinggetProtocolFee(), 0, "initial pending protocol fee");
         protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        assertGt(protocol.pendingProtocolFee(), 0, "pending protocol fee after deposit");
+        assertGt(protocol.pendinggetProtocolFee(), 0, "pending protocol fee after deposit");
     }
 
     /**

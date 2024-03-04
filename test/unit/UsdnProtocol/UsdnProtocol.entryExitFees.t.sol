@@ -41,7 +41,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice =
             protocol.getLiquidationPrice(2500 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
 
-        uint256 expectedPrice = 2000 ether + 2000 ether * protocol.positionFee() / protocol.BPS_DIVISOR();
+        uint256 expectedPrice = 2000 ether + 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR();
         vm.expectEmit(true, false, false, true);
         emit InitiatedOpenPosition(
             address(this),
@@ -333,7 +333,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.updatePositionFees(100); // 1% fees
 
-        assertEq(protocol.positionFee(), 100, "positionFee");
+        assertEq(protocol.getPositionFee(), 100, "positionFee");
 
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
@@ -359,7 +359,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.updatePositionFees(0); // 0% fees
 
-        assertEq(protocol.positionFee(), 0, "positionFee");
+        assertEq(protocol.getPositionFee(), 0, "positionFee");
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");
 
@@ -393,7 +393,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.updatePositionFees(100); // 1% fees
 
-        assertEq(protocol.positionFee(), 100, "positionFee");
+        assertEq(protocol.getPositionFee(), 100, "positionFee");
 
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
@@ -442,7 +442,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.updatePositionFees(0); // 0% fees
 
-        assertEq(protocol.positionFee(), 0, "positionFee");
+        assertEq(protocol.getPositionFee(), 0, "positionFee");
 
         initialAssetBalance = wstETH.balanceOf(address(this));
 

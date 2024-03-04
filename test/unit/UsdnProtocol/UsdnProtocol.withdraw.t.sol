@@ -208,7 +208,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
         // Apply fees on price
         uint256 withdrawalPriceWithFees =
-            withdrawalPrice.price - (withdrawalPrice.price * protocol.positionFee()) / protocol.BPS_DIVISOR();
+            withdrawalPrice.price - (withdrawalPrice.price * protocol.getPositionFee()) / protocol.BPS_DIVISOR();
 
         // We calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to

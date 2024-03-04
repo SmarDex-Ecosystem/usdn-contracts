@@ -253,7 +253,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function pendingProtocolFee() external view returns (uint256) {
+    function pendinggetProtocolFee() external view returns (uint256) {
         return _pendingProtocolFee;
     }
 

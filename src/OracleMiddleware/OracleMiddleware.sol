@@ -196,17 +196,17 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOracleMiddleware
-    function maxConfRatio() external pure returns (uint16) {
+    function getMaxConfRatio() external pure returns (uint16) {
         return MAX_CONF_RATIO;
     }
 
     /// @inheritdoc IOracleMiddleware
-    function confRatioDenom() external pure returns (uint16) {
+    function getConfRatioDenom() external pure returns (uint16) {
         return CONF_RATIO_DENOM;
     }
 
     /// @inheritdoc IOracleMiddleware
-    function confRatio() external view returns (uint16) {
+    function getConfRatio() external view returns (uint16) {
         return _confRatio;
     }
 

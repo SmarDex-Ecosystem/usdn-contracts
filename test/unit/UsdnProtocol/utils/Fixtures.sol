@@ -97,7 +97,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         );
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "usdn dead address balance");
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
-        usdnTotalSupply -= usdnTotalSupply * protocol.positionFee() / protocol.BPS_DIVISOR();
+        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFee() / protocol.BPS_DIVISOR();
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         Position memory firstPos = protocol.getLongPosition(
@@ -110,7 +110,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
-        assertEq(protocol.pendingProtocolFee(), 0, "initial pending protocol fee");
+        assertEq(protocol.pendinggetProtocolFee(), 0, "initial pending protocol fee");
         assertEq(protocol.feeCollector(), ADMIN, "fee collector");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
     }

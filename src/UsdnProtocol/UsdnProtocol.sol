@@ -171,7 +171,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /**
      * @notice Update the position fees.
-     * @param positionFee The new position fee (in percentage).
+     * @param positionFee The new position fee (in basis points).
      */
     function updatePositionFees(uint16 positionFee) external onlyOwner {
         if (positionFee > MAX_POSITION_FEE) {

@@ -29,7 +29,7 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
             uint256(uint256(uint64(STETH_PRICE)) * 10 ** wstethOracle.decimals() / 10 ** wstethOracle.pythDecimals());
         FORMATTED_STETH_CONF =
             uint256(uint256(uint64(STETH_CONF)) * 10 ** wstethOracle.decimals() / 10 ** wstethOracle.pythDecimals());
-        STETH_CONF_RATIO = FORMATTED_STETH_CONF * wstethOracle.confRatio() / wstethOracle.confRatioDenom();
+        STETH_CONF_RATIO = FORMATTED_STETH_CONF * wstethOracle.getConfRatio() / wstethOracle.getConfRatioDenom();
         STETH_PER_TOKEN = wsteth.stEthPerToken();
     }
 

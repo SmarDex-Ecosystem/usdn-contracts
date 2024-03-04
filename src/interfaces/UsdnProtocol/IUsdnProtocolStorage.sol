@@ -53,7 +53,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function liquidationRewardsManager() external view returns (address);
 
     /// @notice The pending fees that are accumulated in the protocol
-    function pendingProtocolFee() external view returns (uint256);
+    function pendinggetProtocolFee() external view returns (uint256);
 
     /// @notice The fee threshold before fees are sent to the fee collector
     function feeThreshold() external view returns (uint256);

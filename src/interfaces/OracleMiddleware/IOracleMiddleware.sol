@@ -56,16 +56,16 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
     function updateValidationDelay(uint256 newDelay) external;
 
     /// @notice get max confidence ratio
-    function maxConfRatio() external pure returns (uint16);
+    function getMaxConfRatio() external pure returns (uint16);
 
     /// @notice get confidence ratio denominator
-    function confRatioDenom() external pure returns (uint16);
+    function getConfRatioDenom() external pure returns (uint16);
 
     /**
      * @notice Return the confidence ratio. This ratio is used to apply a specific portion of the confidence interval
      * provided by an oracle, which is used to adjust the precision of predictions or estimations.
      */
-    function confRatio() external view returns (uint16);
+    function getConfRatio() external view returns (uint16);
 
     /**
      * @notice Set confidence ratio (admin).
