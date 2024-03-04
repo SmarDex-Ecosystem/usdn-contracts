@@ -13,8 +13,7 @@ import {
 
 /**
  * @custom:feature The open position function of the USDN Protocol
- * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
- * leverage of ~2x.
+ * @custom:background Given a protocol initialized at equilibrium
  * @custom:and A user with 10 wstETH in their wallet
  */
 contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {

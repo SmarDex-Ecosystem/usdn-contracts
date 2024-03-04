@@ -7,7 +7,7 @@ import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Fuzzing tests for the core of the protocol
- * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
+ * @custom:background Given a protocol instance that was initialized at equilibrium
  */
 contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
     function setUp() public {

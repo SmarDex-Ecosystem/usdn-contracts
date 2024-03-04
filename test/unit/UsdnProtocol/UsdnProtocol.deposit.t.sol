@@ -7,8 +7,7 @@ import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdn
 
 /**
  * @custom:feature The deposit function of the USDN Protocol
- * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
- * leverage of ~2x.
+ * @custom:background Given a protocol initialized at equilibrium with a long position leverage of ~2x.
  * @custom:and A user with 10 wstETH in their wallet
  */
 contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
@@ -96,12 +95,12 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2000 at the moment of initiation
      * @custom:and The price of the asset is $1900 at the moment of validation
      * @custom:when The user validates the deposit
-     * @custom:then The user's USDN balance increases by 1949.518048223628553344 USDN
-     * @custom:and The USDN total supply increases by 1949.518048223628553344 USDN
-     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1949.518048223628553344 USDN
+     * @custom:then The user's USDN balance increases by 1900 USDN
+     * @custom:and The USDN total supply increases by 1900 USDN
+     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1900 USDN
      */
     function test_validateDepositPriceDecrease() public {
-        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048223628553344 ether);
+        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1900 ether);
     }
 
     /**

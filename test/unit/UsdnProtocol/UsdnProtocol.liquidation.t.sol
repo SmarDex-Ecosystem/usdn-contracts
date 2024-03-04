@@ -9,7 +9,10 @@ import { ILiquidationRewardsManagerErrorsEventsTypes } from
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-/// @custom:feature The `_liquidatePositions` function of `UsdnProtocol`
+/**
+ * @custom:feature The `_liquidatePositions` function of `UsdnProtocol`
+ * @custom:background Given a protocol initialized at equilibrium
+ */
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);

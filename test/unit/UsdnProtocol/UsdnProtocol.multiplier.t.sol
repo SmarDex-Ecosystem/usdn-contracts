@@ -7,15 +7,13 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 /**
  * @custom:feature The `multiplier` variable of the USDN Protocol
- * @custom:background Given a protocol with ~10 ether of trading expo on either side (approx. equilibrium)
+ * @custom:background Given a protocol initialized at equilibrium
  */
 contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.initialLong = 10 ether;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 

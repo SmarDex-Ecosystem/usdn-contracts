@@ -5,14 +5,11 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 /**
  * @custom:feature The functions of the core of the protocol
- * @custom:background Given a protocol instance that was initialized at equilibrium (4.92 ether of trading expo on
- * either side)
+ * @custom:background Given a protocol instance that was initialized at equilibrium
  */
 contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.initialDeposit = 4.919970269703463156 ether;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**

@@ -10,8 +10,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
  * @custom:feature The getter functions of the USDN Protocol
- * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
- * leverage of ~2x.
+ * @custom:background Given a protocol initialized at equilibrium
  */
 contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function setUp() public {
@@ -63,7 +62,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_030_607_316_713, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_041_881_827_697, "wrong minimum liquidation price");
     }
 
     /**
@@ -87,7 +86,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_045_717_290_288, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_045_981_660_235, "wrong minimum liquidation price");
     }
 
     /**
