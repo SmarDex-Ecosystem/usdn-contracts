@@ -15,8 +15,8 @@ import {
     CHAINLINK_ORACLE_GAS
 } from "test/utils/Constants.sol";
 import { WstETH } from "test/utils/WstEth.sol";
-import { MockPyth } from "test/unit/OracleMiddleware/utils/MockPyth.sol";
-import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
+import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
+import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";

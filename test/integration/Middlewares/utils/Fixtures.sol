@@ -21,7 +21,7 @@ import {
     PYTH_DATA_STETH_PRICE,
     PYTH_DATA_STETH_CONF,
     PYTH_DATA_STETH
-} from "test/integration/OracleMiddleware/utils/Constants.sol";
+} from "test/integration/Middlewares/utils/Constants.sol";
 
 import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
