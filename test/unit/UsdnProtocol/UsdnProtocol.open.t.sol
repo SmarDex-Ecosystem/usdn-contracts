@@ -163,12 +163,9 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         // calculate expected error values
         uint128 expectedMaxLiqPrice =
             uint128(CURRENT_PRICE * (protocol.BPS_DIVISOR() - protocol.getSafetyMarginBps()) / protocol.BPS_DIVISOR());
-        // the oracle gives a timestamp 30 minutes in the past, we need the liq multiplier at that time to calculate
-        // the tick price
-        uint256 liqMultiplierAtPriceTimestamp =
-            protocol.getLiquidationMultiplier(CURRENT_PRICE, uint128(block.timestamp - 30 minutes));
-        int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE, liqMultiplierAtPriceTimestamp);
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick, liqMultiplierAtPriceTimestamp);
+
+        int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE, protocol.getLiquidationMultiplier());
+        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick, protocol.getLiquidationMultiplier());
 
         vm.expectRevert(
             abi.encodeWithSelector(

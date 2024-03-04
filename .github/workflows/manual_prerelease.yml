@@ -6,6 +6,7 @@ name: Manual Pre-release
 
 permissions:
   id-token: write # Required for requesting AWS JWT
+  contents: read # Required for accessing the repo
 
 jobs:
   manual-prerelease:
