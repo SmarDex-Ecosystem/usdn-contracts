@@ -5,8 +5,6 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature Fuzzing tests for the long part of the protocol
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
@@ -22,7 +20,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
      * @custom:and an amount between 0.1 and 100 000 ether
      * @custom:and a leverage between the protocol's min and max values
      * @custom:when _positionValue is called
-     * @custom:then The returned value is the protduct of positionExpo and
+     * @custom:then The returned value is equal to the expected value.
      */
     function testFuzz_positionValue(uint256 amount, uint256 currentPrice, uint256 leverage) public {
         uint256 priceAtOpening = 1000 ether;
