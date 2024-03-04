@@ -329,7 +329,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
      */
 
     function test_validateDepositPositionFeesCompareWithAndWithoutFees() public {
-        /* --------------------- Validate without position fees --------------------- */
+        /* ----------------------- Validate with position fees ---------------------- */
         vm.prank(ADMIN);
         protocol.updatePositionFees(100); // 1% fees
 
@@ -355,7 +355,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         assertEq(mintedUsdnWithFees, 1_989_313_773_110_288_645_773, "usdn balance");
 
-        /* ----------------------- Validate with position fees ---------------------- */
+        /* --------------------- Validate without position fees --------------------- */
         vm.prank(ADMIN);
         protocol.updatePositionFees(0); // 0% fees
 
@@ -389,7 +389,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
      * @custom:and The user's withdrawal pending USDN balance should be updated accordingly
      */
     function test_validateWithdrawalPositionFeesCompareWithAndWithoutFees() public {
-        /* --------------------- Validate without position fees --------------------- */
+        /* ----------------------- Validate with position fees ---------------------- */
         vm.prank(ADMIN);
         protocol.updatePositionFees(100); // 1% fees
 
@@ -438,7 +438,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         assertEq(usdnBalanceAfter - usdnBalanceBefore, 0, "usdn balance");
         assertLt(finalAssetBalance, initialAssetBalance, "wstETH balance before and after");
 
-        /* ----------------------- Validate with position fees ---------------------- */
+        /* --------------------- Validate without position fees --------------------- */
         vm.prank(ADMIN);
         protocol.updatePositionFees(0); // 0% fees
 
@@ -488,5 +488,143 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         // The balance difference before and after withdraw with fees should be less than the balance difference without
         // fees
         assertGt(balanceDiffWithFees, balanceDiffWithoutFees, "wstETH balance diff with and without fees");
+    }
+
+    /**
+     * @custom:scenario The user initiates and validate a position opening
+     * @custom:given The price of the asset is $2000
+     * @custom:and The liquidation price is $2500
+     * @custom:when The user initiates a position opening with 500 wstETH as collateral
+     * @custom:when The user validate his position opening with
+     * @custom:then The user leverage should be computed using the price with fees (with Pyth oracle
+     *              price)
+     * @dev The price with fees is used only for data in the event emitted at this point so we just
+     *      need to check the event data at this point
+     */
+    function test_openPositionFeesCompareWithAndWithoutFees() public {
+        /* --------------------- Validate without position fees --------------------- */
+        vm.prank(ADMIN);
+        protocol.updatePositionFees(100); // 1% fees
+
+        assertEq(protocol.getPositionFee(), 100, "positionFee");
+
+        uint128 desiredLiqPrice =
+            protocol.getLiquidationPrice(2500 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+
+        bytes memory priceData = abi.encode(2000 ether);
+        (int24 tickWithFees, uint256 tickVersionWithFees, uint256 indexWithFees) =
+            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+
+        skip(50);
+
+        protocol.validateOpenPosition(priceData, "");
+
+        Position memory longWithFees = protocol.getLongPosition(tickWithFees, tickVersionWithFees, indexWithFees);
+
+        assertEq(longWithFees.leverage, 2_537_516_886_096_686_056_692, "leverage");
+
+        /* --------------------- Validate without position fees --------------------- */
+        vm.prank(ADMIN);
+        protocol.updatePositionFees(0); // 0% fees
+
+        assertEq(protocol.getPositionFee(), 0, "positionFee");
+
+        (int24 tickWithoutFees, uint256 tickVersionWithoutFees, uint256 indexWithoutFees) =
+            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+
+        skip(50);
+
+        protocol.validateOpenPosition(priceData, "");
+
+        Position memory longWithoutFees =
+            protocol.getLongPosition(tickWithoutFees, tickVersionWithoutFees, indexWithoutFees);
+
+        assertEq(longWithoutFees.leverage, 2_578_112_056_982_690_886_328, "leverage");
+
+        /* -------------------- Check positon leverage difference ------------------- */
+        assertGt(longWithoutFees.leverage, longWithFees.leverage, "leverage");
+    }
+
+    /**
+     * @custom:scenario The user initiates and validate a position opening
+     * @custom:given The price of the asset is $2000
+     * @custom:and The liquidation price is $2500
+     * @custom:when The user initiates a position opening with 500 wstETH as collateral
+     * @custom:when The user validate his position opening with
+     * @custom:then The user leverage should be computed using the price with fees (with Pyth oracle
+     *              price)
+     * @dev The price with fees is used only for data in the event emitted at this point so we just
+     *      need to check the event data at this point
+     */
+    function test_closePositionFeesCompareWithAndWithoutFees() public {
+        /* --------------------- Validate without position fees --------------------- */
+        vm.prank(ADMIN);
+        protocol.updatePositionFees(100); // 1% fees
+
+        assertEq(protocol.getPositionFee(), 100, "positionFee");
+
+        uint256 balanceBeforeOpenPosition = wstETH.balanceOf(address(protocol));
+
+        uint128 desiredLiqPrice =
+            protocol.getLiquidationPrice(2500 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()));
+
+        bytes memory priceData = abi.encode(2000 ether);
+        (int24 tickWithFees, uint256 tickVersionWithFees, uint256 indexWithFees) =
+            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+
+        skip(50);
+        protocol.validateOpenPosition(priceData, "");
+        skip(3600);
+
+        protocol.initiateClosePosition(tickWithFees, tickVersionWithFees, indexWithFees, priceData, "");
+
+        vm.prank(address(0)); // simulate front-end call by someone else
+        PendingAction memory actionWithFees = protocol.getUserPendingAction(address(this));
+
+        assertEq(actionWithFees.var6, 968_958_734_630_449_883, "Computed asset to transfer");
+
+        protocol.validateClosePosition(priceData, "");
+
+        uint256 balanceAfterClosePosition = wstETH.balanceOf(address(protocol));
+
+        // Check if protocol received some fees
+        assertGt(balanceAfterClosePosition, balanceBeforeOpenPosition, "wstETH balance");
+
+        // Store the difference between the balance before and after the close position
+        uint256 balanceDeltaWithFees = balanceAfterClosePosition - balanceBeforeOpenPosition;
+
+        /* --------------------- Validate without position fees --------------------- */
+        vm.prank(ADMIN);
+        protocol.updatePositionFees(0); // 0% fees
+
+        assertEq(protocol.getPositionFee(), 0, "positionFee");
+
+        balanceBeforeOpenPosition = wstETH.balanceOf(address(protocol));
+
+        (int24 tickWithoutFees, uint256 tickVersionWithoutFees, uint256 indexWithoutFees) =
+            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+
+        skip(50);
+        protocol.validateOpenPosition(priceData, "");
+        skip(3600);
+
+        protocol.initiateClosePosition(tickWithoutFees, tickVersionWithoutFees, indexWithoutFees, priceData, "");
+
+        vm.prank(address(0)); // simulate front-end call by someone else
+        PendingAction memory actionWithoutFees = protocol.getUserPendingAction(address(this));
+
+        assertEq(actionWithoutFees.var6, 1_000_021_064_056_210_678, "Computed asset to transfer");
+
+        priceData = abi.encode(1999 ether);
+        protocol.validateClosePosition(priceData, "");
+
+        balanceAfterClosePosition = wstETH.balanceOf(address(protocol));
+
+        // Store the difference between the balance before and after the close position
+        uint256 balanceDeltaWithoutFees = balanceAfterClosePosition - balanceBeforeOpenPosition;
+
+        // Check that the difference between the balance before and after the open/close position
+        // with fees is greater than the difference without fees
+        assertGt(balanceDeltaWithFees, balanceDeltaWithoutFees, "wstETH fees diff between with and without fees");
     }
 }
