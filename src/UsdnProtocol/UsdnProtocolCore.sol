@@ -33,61 +33,60 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /* -------------------------- Public view functions ------------------------- */
 
     /// @inheritdoc IUsdnProtocolCore
-    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) external view returns (uint256) {
-        if (timestamp <= _lastUpdateTimestamp) {
+    function getLiquidationMultiplier(uint128 timestamp) public view returns (uint256) {
+        // slither-disable-next-line incorrect-equality
+        if (timestamp == _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
-
-        (int256 fund, int256 oldLongExpo, int256 oldVaultExpo) = funding(currentPrice, timestamp);
-        return _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
+        // timestamp < _lastUpdateTimestamp is checked in funding below and would revert
+        (int256 fund,) = funding(timestamp);
+        // starting here, timestamp is strictly greater than _lastUpdateTimestamp
+        return _getLiquidationMultiplier(fund, _liquidationMultiplier);
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function funding(uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 fund_, int256 longExpo_, int256 vaultExpo_)
-    {
-        vaultExpo_ = _vaultTradingExpo(currentPrice);
-        longExpo_ = _longTradingExpo(currentPrice);
+    function funding(uint128 timestamp) public view returns (int256 fund_, int256 oldLongExpo_) {
+        oldLongExpo_ = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
 
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
             // slither-disable-next-line incorrect-equality
         } else if (timestamp == _lastUpdateTimestamp) {
-            return (0, longExpo_, vaultExpo_);
+            return (0, oldLongExpo_);
         }
+
+        int256 oldVaultExpo = _balanceVault.toInt256();
 
         // ImbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
         // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) + _EMA
         // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
-        int256 numerator = longExpo_ - vaultExpo_;
+        int256 numerator = oldLongExpo_ - oldVaultExpo;
         // optimization : if the numerator is zero, then return the EMA
+        // slither-disable-next-line incorrect-equality
         if (numerator == 0) {
-            return (_EMA, longExpo_, vaultExpo_);
+            return (_EMA, oldLongExpo_);
         }
 
-        if ((vaultExpo_ * longExpo_) <= 0 && (vaultExpo_ < 0 || longExpo_ < 0)) {
-            // if the product is negative, then vaultExpo_ or longExpo_ is negative
-            // if it's zero, we check if one of the two is negative
-            if (vaultExpo_ < 0) {
-                // if vaultExpo_ is negative, then we cap the imbalance index to 1
-                return (int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
-            } else {
-                // if longExpo_ is negative, then we cap the imbalance index to -1
-                return (-int256(_fundingSF) + _EMA, longExpo_, vaultExpo_);
-            }
+        if (oldLongExpo_ <= 0) {
+            // if oldLongExpo is negative, then we cap the imbalance index to -1
+            // oldVaultExpo is always positive
+            return (-int256(_fundingSF) + _EMA, oldLongExpo_);
+        } else if (oldVaultExpo == 0) {
+            // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
+            // oldLongExpo must be positive in this case
+            return (int256(_fundingSF) + _EMA, oldLongExpo_);
         }
+        // starting here, oldLongExpo and oldVaultExpo are always strictly positive
 
         uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
         uint256 numerator_squared = uint256(numerator * numerator);
 
         uint256 denominator;
-        if (vaultExpo_ > longExpo_) {
+        if (oldVaultExpo > oldLongExpo_) {
             // we have to multiply by 1 day to get the correct units
-            denominator = uint256(vaultExpo_ * vaultExpo_) * 1 days;
+            denominator = uint256(oldVaultExpo * oldVaultExpo) * 1 days;
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
@@ -97,7 +96,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             ) + _EMA;
         } else {
             // we have to multiply by 1 day to get the correct units
-            denominator = uint256(longExpo_ * longExpo_) * 1 days;
+            denominator = uint256(oldLongExpo_ * oldLongExpo_) * 1 days;
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
@@ -109,13 +108,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function fundingAsset(uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 fundingAsset_, int256 longExpo_, int256 vaultExpo_, int256 fund_)
-    {
-        (fund_, longExpo_, vaultExpo_) = funding(currentPrice, timestamp);
-        fundingAsset_ = fund_.safeMul(longExpo_) / int256(10) ** FUNDING_RATE_DECIMALS;
+    function fundingAsset(uint128 timestamp) public view returns (int256 fundingAsset_, int256 fund_) {
+        int256 oldLongExpo;
+        (fund_, oldLongExpo) = funding(timestamp);
+        fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -124,7 +120,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         view
         returns (int256 available_)
     {
-        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        (int256 fundAsset,) = fundingAsset(timestamp);
         available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
     }
 
@@ -134,7 +130,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         view
         returns (int256 available_)
     {
-        (int256 fundAsset,,,) = fundingAsset(currentPrice, timestamp);
+        (int256 fundAsset,) = fundingAsset(timestamp);
         available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
     }
 
@@ -190,38 +186,25 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         } while (i < maxIter);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
+        (action_,) = _getPendingAction(user);
+    }
+
     /* --------------------------  Internal functions --------------------------- */
 
-    function _getLiquidationMultiplier(
-        int256 fund,
-        int256 oldLongExpo,
-        int256 oldVaultExpo,
-        uint256 liquidationMultiplier
-    ) internal pure returns (uint256 multiplier_) {
+    function _getLiquidationMultiplier(int256 fund, uint256 liquidationMultiplier)
+        internal
+        pure
+        returns (uint256 multiplier_)
+    {
         multiplier_ = liquidationMultiplier;
 
-        if (oldLongExpo >= oldVaultExpo) {
-            // newMultiplier = oldMultiplier * (1 + funding)
-            if (fund > 0) {
-                multiplier_ += FixedPointMathLib.fullMulDiv(multiplier_, uint256(fund), 10 ** FUNDING_RATE_DECIMALS);
-            } else {
-                multiplier_ -= FixedPointMathLib.fullMulDiv(multiplier_, uint256(-fund), 10 ** FUNDING_RATE_DECIMALS);
-            }
+        // newMultiplier = oldMultiplier * (1 + funding)
+        if (fund > 0) {
+            multiplier_ += FixedPointMathLib.fullMulDiv(multiplier_, uint256(fund), 10 ** FUNDING_RATE_DECIMALS);
         } else {
-            // newMultiplier = oldMultiplier * (1 + funding * (oldLongExpo / _balanceVault))
-            if (fund > 0) {
-                multiplier_ += FixedPointMathLib.fullMulDiv(
-                    multiplier_ * uint256(fund),
-                    uint256(oldLongExpo),
-                    uint256(oldVaultExpo) * 10 ** FUNDING_RATE_DECIMALS
-                );
-            } else {
-                multiplier_ -= FixedPointMathLib.fullMulDiv(
-                    multiplier_ * uint256(-fund),
-                    uint256(oldLongExpo),
-                    uint256(oldVaultExpo) * 10 ** FUNDING_RATE_DECIMALS
-                );
-            }
+            multiplier_ -= FixedPointMathLib.fullMulDiv(multiplier_, uint256(-fund), 10 ** FUNDING_RATE_DECIMALS);
         }
     }
 
@@ -312,13 +295,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     ) internal pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
         int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
-        if (newLongBalance < 0) {
-            newLongBalance = 0;
-        }
+
         available_ = totalBalance.safeSub(newLongBalance);
-        if (available_ < 0) {
-            available_ = 0;
-        }
     }
 
     /// @dev At the time of the last balance update (without taking funding into account)
@@ -331,34 +309,59 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         expo_ = _vaultAssetAvailable(currentPrice);
     }
 
-    function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp) internal returns (bool priceUpdated_) {
+    /**
+     * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
+     * calculate the new liquidation multiplier and the temporary new balances for each side.
+     * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding` and
+     * `_liquidationMultiplier`, but does not update the balances. This is left to the caller.
+     * @param currentPrice The current price
+     * @param timestamp The timestamp of the current price
+     * @return priceUpdated_ Whether the price was updated
+     * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
+     * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
+     */
+    function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
+        internal
+        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+    {
         // cache variable for optimization
         uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
         // If the price is not fresh, do nothing
         if (timestamp <= lastUpdateTimestamp) {
-            return false;
+            return (false, _balanceLong.toInt256(), _balanceVault.toInt256());
         }
 
+        // Update the funding EMA
         _updateEMA(timestamp - lastUpdateTimestamp);
-        (int256 fundAsset, int256 oldLongExpo, int256 oldVaultExpo, int256 fund) = fundingAsset(currentPrice, timestamp);
 
-        (int256 fee, int256 fundAssetWithFee) = _calculateFee(fundAsset);
+        // Calculate the funding
+        (int256 fundAsset, int256 fund) = fundingAsset(timestamp);
+
+        // Take protocol fee on the funding value
+        (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(fund, fundAsset);
+
         // we subtract the fee from the total balance
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256()).safeSub(fee);
-        int256 newLongBalance = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
-        if (newLongBalance < 0) {
-            newLongBalance = 0;
-        }
-        int256 newVaultBalance = totalBalance.safeSub(newLongBalance);
-        if (newVaultBalance < 0) {
-            newVaultBalance = 0;
-        }
+        // Calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
 
-        (_balanceVault, _balanceLong) = (uint256(newVaultBalance), uint256(newLongBalance));
+        if (fund > 0) {
+            // In case of positive funding, the vault balance must be decremented by the totality of the funding amount.
+            // However, since we deducted the fee amount from the total balance, the vault balance will be incremented
+            // only by the funding amount minus the fee amount.
+            tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
+        } else {
+            // In case of negative funding, the vault balance must be decremented by the totality of the funding amount.
+            // However, since we deducted the fee amount from the total balance, the long balance will be incremented
+            // only by the funding amount minus the fee amount.
+            tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
+        }
+        tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
+
+        // Update state variables
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
-        _lastFunding = fund;
-        _liquidationMultiplier = _getLiquidationMultiplier(fund, oldLongExpo, oldVaultExpo, _liquidationMultiplier);
+        _lastFunding = fundWithFee;
+        _liquidationMultiplier = _getLiquidationMultiplier(fundWithFee, _liquidationMultiplier);
 
         priceUpdated_ = true;
     }
@@ -389,21 +392,32 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = _tickVersion[tick];
-        hash_ = keccak256(abi.encodePacked(tick, version_));
+        hash_ = tickHash(tick, version_);
     }
 
     /**
      * @notice Calculate the protocol fee and apply it to the funding asset amount
+     * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to long side)
+     * @param fund The funding factor
      * @param fundAsset The funding asset amount to be used for the fee calculation
      * @return fee_ The absolute value of the calculated fee
+     * @return fundWithFee_ The updated funding factor after applying the fee
      * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
      */
-    function _calculateFee(int256 fundAsset) internal returns (int256 fee_, int256 fundAssetWithFee_) {
-        fee_ = (fundAsset * _toInt256(_protocolFeeBps)) / int256(BPS_DIVISOR);
+    function _calculateFee(int256 fund, int256 fundAsset)
+        internal
+        returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
+    {
+        int256 protocolFeeBps = _toInt256(_protocolFeeBps);
+        fundWithFee_ = fund;
+        fee_ = (fundAsset * protocolFeeBps) / int256(BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
         fundAssetWithFee_ = fundAsset - fee_;
 
         if (fee_ < 0) {
+            // when funding is negative, the part that is taken as fee does not contribute to the liquidation multiplier
+            // adjustment, and so we should deduce it from the funding factor.
+            fundWithFee_ -= fund * protocolFeeBps / int256(BPS_DIVISOR);
             // we want to return the absolute value of the fee
             fee_ = -fee_;
         }
@@ -526,7 +540,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (_pendingActions[user] == 0) {
             return;
         }
-        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user, false); // do not clear
+        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user);
         // the position is only at risk of being liquidated while pending if it is an open position action
         // slither-disable-next-line incorrect-equality
         if (action.action == ProtocolAction.ValidateOpenPosition) {
@@ -560,16 +574,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Get the pending action for a user and optionally pop it from the queue
+     * @notice Get the pending action for a user
      * @param user The user address
-     * @param clear Whether to pop the pending action from the queue or leave it there
      * @return action_ The pending action struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
-    function _getPendingAction(address user, bool clear)
-        internal
-        returns (PendingAction memory action_, uint128 rawIndex_)
-    {
+    function _getPendingAction(address user) internal view returns (PendingAction memory action_, uint128 rawIndex_) {
         uint256 pendingActionIndex = _pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
@@ -578,12 +588,18 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
         rawIndex_ = uint128(pendingActionIndex - 1);
         action_ = _pendingActionsQueue.atRaw(rawIndex_);
+    }
 
-        if (clear) {
-            // remove the pending action
-            _pendingActionsQueue.clearAt(rawIndex_);
-            delete _pendingActions[user];
-        }
+    /**
+     * @notice Clear the user pending action and return it
+     * @param user The user address
+     * @return action_ The cleared pending action struct
+     */
+    function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
+        uint128 rawIndex;
+        (action_, rawIndex) = _getPendingAction(user);
+        _pendingActionsQueue.clearAt(rawIndex);
+        delete _pendingActions[user];
     }
 
     /**

@@ -15,7 +15,9 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
     using Strings for uint256;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.initialLong = 10 ether;
+        super._setUp(params);
     }
 
     /**
@@ -27,13 +29,13 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
      * @custom:when the asset to transfer is calculated
      * @custom:then The asset to transfer is slightly above 1.5 wstETH
      */
-    // function test_assetToTransfer() public {
-    //     int24 tick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 4);
-    //     uint256 res = protocol.i_assetToTransfer(
-    //         tick, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.liquidationMultiplier()
-    //     );
-    //     assertEq(res, 1.512109692607424371 ether);
-    // }
+    function test_assetToTransfer() public {
+        int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
+        uint256 res = protocol.i_assetToTransfer(
+            params.initialPrice, tick, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
+        );
+        assertEq(res, 1.512304848730381401 ether);
+    }
 
     /**
      * @custom:scenario Check value of the `assetToTransfer` function when the long balance is too small
@@ -44,14 +46,14 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
      * @custom:when the asset to transfer is calculated
      * @custom:then The asset to transfer is equal to the long available balance (because we don't have 150 wstETH)
      */
-    // function test_assetToTransferNotEnoughBalance() public {
-    //     int24 tick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 4);
-    //     uint256 longAvailable = uint256(protocol.longAssetAvailable(DEFAULT_PARAMS.initialPrice)); // 5 ether
-    //     uint256 res = protocol.i_assetToTransfer(
-    //         tick, 100 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.liquidationMultiplier()
-    //     );
-    //     assertEq(res, longAvailable);
-    // }
+    function test_assetToTransferNotEnoughBalance() public {
+        int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
+        uint256 longAvailable = uint256(protocol.i_longAssetAvailable(params.initialPrice)); // 5 ether
+        uint256 res = protocol.i_assetToTransfer(
+            params.initialPrice, tick, 100 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
+        );
+        assertEq(res, longAvailable);
+    }
 
     /**
      * @custom:scenario Check value of the `assetToTransfer` function when the long balance is zero
@@ -59,26 +61,23 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
      * @custom:when the asset to transfer is calculated
      * @custom:then The asset to transfer is zero
      */
-    // function test_assetToTransferZeroBalance() public {
-    //     // TODO : fix this test with #102
-    //     vm.skip(true);
-    //     int24 firstPosTick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2);
-    //     skip(60); // we need that the oracle timestamp be newer than the last price update
-    //     // liquidate the default position
-    //     uint128 liqPrice = protocol.getEffectivePriceForTick(firstPosTick);
-    //     protocol.liquidate(abi.encode(liqPrice), 10);
+    function test_assetToTransferZeroBalance() public {
+        uint128 price = 1000 ether;
+        skip(1 weeks);
+        // liquidate the default position
+        protocol.liquidate(abi.encode(price), 10);
 
-    //     assertEq(protocol.totalLongPositions(), 0, "total long positions");
-    //     assertEq(protocol.i_longTradingExpo(liqPrice), 0, "long trading expo with funding");
-    //     assertEq(protocol.balanceLong(), 0, "balance long");
-    //     assertEq(protocol.longAssetAvailable(liqPrice), 0, "long asset available");
+        assertEq(protocol.getTotalLongPositions(), 0, "total long positions");
+        assertEq(protocol.i_longTradingExpo(price), 0, "long trading expo with funding");
+        assertEq(protocol.getBalanceLong(), 0, "balance long");
+        assertEq(protocol.i_longAssetAvailable(price), 0, "long asset available");
 
-    //     int24 tick = protocol.getEffectiveTickForPrice(liqPrice);
-    //     uint256 res = protocol.i_assetToTransfer(
-    //         tick, 100 ether, uint128(10 ** protocol.LEVERAGE_DECIMALS()), protocol.liquidationMultiplier()
-    //     );
-    //     assertEq(res, 0, "asset to transfer");
-    // }
+        int24 tick = protocol.getEffectiveTickForPrice(price);
+        uint256 res = protocol.i_assetToTransfer(
+            params.initialPrice, tick, 100 ether, uint128(10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
+        );
+        assertEq(res, 0, "asset to transfer");
+    }
 
     /**
      * @custom:scenario Validate price data with oracle middleware

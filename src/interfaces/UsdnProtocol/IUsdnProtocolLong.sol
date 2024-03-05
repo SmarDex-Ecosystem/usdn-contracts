@@ -45,13 +45,14 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
     function getMinLiquidationPrice(uint128 price) external view returns (uint128);
 
     /**
-     * @notice Get the value of a long position when the asset price is equal to the given price
+     * @notice Get the value of a long position when the asset price is equal to the given price, at the given timestamp
      * @param tick The tick containing the long position
      * @param tickVersion The tick version
      * @param index The index of the long position inside the tick array
-     * @param currentPrice The current asset price
+     * @param price The asset price
+     * @param timestamp The timestamp of the price
      */
-    function getPositionValue(int24 tick, uint256 tickVersion, uint256 index, uint128 currentPrice)
+    function getPositionValue(int24 tick, uint256 tickVersion, uint256 index, uint128 price, uint128 timestamp)
         external
         view
         returns (uint256);
@@ -64,10 +65,27 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
     function getEffectiveTickForPrice(uint128 price) external view returns (int24);
 
     /**
+     * @notice Get the tick number corresponding to a given price
+     * @dev This takes into account the liquidation price multiplier and the tick spacing
+     * @param price The price
+     * @param liqMultiplier The liquidation price multiplier
+     */
+    function getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier) external view returns (int24);
+
+    /**
      * @notice Get the liquidation price corresponding to a given tick number
      * @dev This takes into account the liquidation price multiplier.
      * Note that ticks that are not a multiple of the tick spacing cannot contain a long position.
      * @param tick The tick number
      */
     function getEffectivePriceForTick(int24 tick) external view returns (uint128);
+
+    /**
+     * @notice Get the liquidation price corresponding to a given tick number
+     * @dev This takes into account the liquidation price multiplier.
+     * Note that ticks that are not a multiple of the tick spacing cannot contain a long position.
+     * @param tick The tick number
+     * @param liqMultiplier The liquidation price multiplier
+     */
+    function getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external view returns (uint128);
 }

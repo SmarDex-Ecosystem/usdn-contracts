@@ -41,11 +41,11 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether / 2;
 
         uint256 expectedPrice = 2000 ether + 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR();
-        uint256 expectedLeverage = protocol.getLeverage(
+        uint256 expectedLeverage = protocol.i_getLeverage(
             uint128(expectedPrice),
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(desiredLiqPrice)
-                    - int24(protocol.liquidationPenalty()) * protocol.tickSpacing()
+                    - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
             )
         );
 
@@ -78,16 +78,16 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         bytes memory priceData = abi.encode(2000 ether);
         protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         uint256 expectedPrice = 2000 ether + 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR();
         /// @dev TODO: Fix by using liquidation multiplier
-        // uint256 expectedLeverage = protocol.getLeverage(
+        // uint256 expectedLeverage = protocol.i_getLeverage(
         //     uint128(expectedPrice),
         //     protocol.getEffectivePriceForTick(
         //         protocol.getEffectiveTickForPrice(
         //             desiredLiqPrice
-        //         ) - int24(protocol.liquidationPenalty()) * protocol.tickSpacing()
+        //         ) - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
         //     )
         // );
 
@@ -115,7 +115,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
      */
     function test_initiateClosePosition() public {
         vm.prank(ADMIN);
-        protocol.setFeeBps(0); // 0% protocol fees
+        protocol.setProtocolFeeBps(0); // 0% protocol fees
 
         skip(1 hours);
 
@@ -124,7 +124,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(2000 ether);
         (int24 tick, uint256 tickVersion, uint256 index) =
             protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         protocol.validateOpenPosition(priceData, "");
 
@@ -142,10 +142,10 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
             tick,
             1 ether,
             action.closeLeverage,
-            protocol.liquidationMultiplier()
+            protocol.getLiquidationMultiplier()
         );
 
-        uint256 storageBalanceAfter = protocol.balanceLong();
+        uint256 storageBalanceAfter = protocol.getBalanceLong();
 
         assertEq(action.closeTempTransfer, expectedTempTransfer, "Computed asset to transfer");
         /// @dev TODO: update when main is merged
@@ -169,7 +169,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(2000 ether);
         (int24 tick, uint256 tickVersion, uint256 index) =
             protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         protocol.validateOpenPosition(priceData, "");
 
@@ -189,7 +189,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
             action.closeLiqMultiplier
         );
 
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
         vm.recordLogs();
         protocol.validateClosePosition(priceData, "");
 
@@ -239,12 +239,12 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         uint256 expectedBalanceA = protocol.i_calcMintUsdn(
             depositAmount,
-            protocol.balanceVault(),
+            protocol.getBalanceVault(),
             usdn.totalSupply(),
             2000 ether - 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR()
         );
 
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         PendingAction memory action = protocol.getUserPendingAction(address(this));
         VaultPendingAction memory deposit = protocol.i_toVaultPendingAction(action);
@@ -253,7 +253,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         uint256 expectedBalanceB = protocol.i_calcMintUsdn(
             depositAmount,
             uint256(
-                protocol.vaultAssetAvailable(
+                protocol.i_vaultAssetAvailable(
                     deposit.totalExpo,
                     deposit.balanceVault,
                     deposit.balanceLong,
@@ -291,7 +291,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");
 
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
         protocol.validateDeposit(currentPrice, "");
@@ -300,7 +300,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(uint128(mintedUsdn), currentPrice, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         PendingAction memory action = protocol.getUserPendingAction(address(this));
         VaultPendingAction memory withdraw = protocol.i_toVaultPendingAction(action);
@@ -325,7 +325,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");
 
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
         protocol.validateDeposit(currentPrice, "");
@@ -334,7 +334,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         usdn.approve(address(protocol), type(uint256).max);
         protocol.initiateWithdrawal(uint128(mintedUsdn), currentPrice, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         usdnBalanceBefore = usdn.balanceOf(address(this));
         protocol.validateWithdrawal(currentPrice, "");
@@ -372,7 +372,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");
 
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         protocol.validateDeposit(currentPrice, "");
         uint256 usdnBalanceAfterWithoutFees = usdn.balanceOf(address(this));
@@ -387,7 +387,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");
 
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         protocol.validateDeposit(currentPrice, "");
         uint256 usdnBalanceAfterWithFees = usdn.balanceOf(address(this));
@@ -417,7 +417,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         protocol.validateDeposit(currentPrice, "");
 
@@ -430,7 +430,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         protocol.updatePositionFees(100); // 1% fees
 
         protocol.initiateWithdrawal(uint128(usdn.balanceOf(address(this))), currentPrice, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         protocol.validateWithdrawal(currentPrice, "");
 
@@ -441,7 +441,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         vm.revertTo(snapshotId);
 
         protocol.initiateWithdrawal(uint128(usdn.balanceOf(address(this))), currentPrice, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         protocol.validateWithdrawal(currentPrice, "");
 
@@ -474,7 +474,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         skip(1 hours);
 
         protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         vm.recordLogs();
 
@@ -493,7 +493,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         skip(1 hours);
 
         protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         vm.recordLogs();
 
@@ -529,7 +529,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         (int24 tick, uint256 tickVersion, uint256 index) =
             protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         protocol.validateOpenPosition(priceData, "");
 
@@ -539,7 +539,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         uint256 balanceBeforeValidateWithoutFees = wstETH.balanceOf(address(this));
 
@@ -557,7 +557,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         protocol.updatePositionFees(100); // 1% fees
 
         (tick, tickVersion, index) = protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         protocol.validateOpenPosition(priceData, "");
 
@@ -567,7 +567,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
-        skip(oracleMiddleware.validationDelay() + 1);
+        skip(oracleMiddleware.getValidationDelay() + 1);
 
         uint256 balanceBeforeValidateWithFees = wstETH.balanceOf(address(this));
 

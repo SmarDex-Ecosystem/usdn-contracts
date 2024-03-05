@@ -59,13 +59,13 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function decimals() external pure returns (uint8) {
+    function getDecimals() external pure returns (uint8) {
         return DECIMALS;
     }
 
     /// @inheritdoc IOracleMiddleware
-    function validationDelay() external pure returns (uint256) {
-        return VALIDATION_DELAY;
+    function getValidationDelay() external view returns (uint256) {
+        return _validationDelay;
     }
 
     /// @inheritdoc IOracleMiddleware
@@ -89,7 +89,12 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function updateValidationDelay(uint256 newDelay) external onlyOwner {
+    function getChainlinkTimeElapsedLimit() external view returns (uint256) {
+        return _timeElapsedLimit;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function setValidationDelay(uint256 newDelay) external {
         _validationDelay = newDelay;
     }
 
@@ -102,13 +107,13 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         _confRatio = newConfRatio;
     }
 
-    function getChainlinkTimeElapsedLimit() external view returns (uint256) {
-        return _timeElapsedLimit;
+    /// @inheritdoc IOracleMiddleware
+    function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external {
+        _timeElapsedLimit = newTimeElapsedLimit;
     }
 
-    /// @inheritdoc IOracleMiddleware
-    function updateChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external {
-        _timeElapsedLimit = newTimeElapsedLimit;
+    function setRecentPriceDelay(uint64) external {
+        // Do something if needed
     }
 
     function requireValidationCost() external view returns (bool) {
