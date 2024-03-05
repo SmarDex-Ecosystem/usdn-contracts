@@ -220,6 +220,15 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
+    function setPositionFeeBps(uint16 newPositionFee) external onlyOwner {
+        if (newPositionFee > MAX_POSITION_FEE) {
+            revert UsdnProtocolMaxPositionFeeExceeded();
+        }
+        _positionFeeBps = newPositionFee;
+        emit UpdatedPositionFees(newPositionFee);
+    }
+
+    /// @inheritdoc IUsdnProtocol
     function setFeeThreshold(uint256 newFeeThreshold) external onlyOwner {
         _feeThreshold = newFeeThreshold;
         emit FeeThresholdUpdated(newFeeThreshold);
@@ -287,17 +296,5 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             msg.sender, long.timestamp, long.leverage, long.amount, price, tick, tickVersion, index
         );
         emit ValidatedOpenPosition(msg.sender, long.leverage, price, tick, tickVersion, index);
-    }
-
-    /**
-     * @notice Update the position fees.
-     * @param positionFee The new position fee (in basis points).
-     */
-    function updatePositionFees(uint16 positionFee) external onlyOwner {
-        if (positionFee > MAX_POSITION_FEE) {
-            revert UsdnProtocolMaxPositionFeeExceeded();
-        }
-        _positionFeeBps = positionFee;
-        emit UpdatedPositionFees(positionFee);
     }
 }

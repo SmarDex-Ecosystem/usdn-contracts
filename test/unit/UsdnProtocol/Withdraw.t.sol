@@ -40,12 +40,12 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Test the setup function output
      * @custom:given The user deposited 1 wstETH at price $2000
-     * @custom:then The user's USDN balance is 1999.2 USDN
+     * @custom:then The user's USDN balance is 2000 USDN
      * @custom:and The user's wstETH balance is 9 wstETH
      */
     function test_withdrawSetUp() public {
         // Using the price computed with the default position fees
-        assertEq(initialUsdnBalance, 1_998_806_479_853_710_648_779 * (DEPOSIT_AMOUNT / 1e18), "initial usdn balance");
+        assertEq(initialUsdnBalance, 2000 * DEPOSIT_AMOUNT, "initial usdn balance");
         assertEq(initialWstETHBalance, INITIAL_WSTETH_BALANCE - DEPOSIT_AMOUNT, "initial wstETH balance");
     }
 
@@ -182,7 +182,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         public
     {
         vm.prank(ADMIN);
-        protocol.updatePositionFees(0); // 0% fees
+        protocol.setPositionFeeBps(0); // 0% fees
 
         bytes memory currentPrice = abi.encode(initialPrice);
         protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "");

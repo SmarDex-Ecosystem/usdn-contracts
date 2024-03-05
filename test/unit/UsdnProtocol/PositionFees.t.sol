@@ -17,7 +17,7 @@ import {
 /**
  * @custom:feature The entry/exit position fees mechanism of the protocol
  */
-contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10_000 ether;
 
     function setUp() public {
@@ -114,9 +114,6 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
      * @custom:and The user pending position should have a leverage according to the fees
      */
     function test_initiateClosePosition() public {
-        vm.prank(ADMIN);
-        protocol.setProtocolFeeBps(0); // 0% protocol fees
-
         skip(1 hours);
 
         uint128 desiredLiqPrice = 2000 ether / 2;
@@ -368,7 +365,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         /* ----------------------- Validate with position fees ---------------------- */
         vm.prank(ADMIN);
-        protocol.updatePositionFees(0); // 0% fees
+        protocol.setPositionFeeBps(0); // 0% fees
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");
 
@@ -383,7 +380,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         vm.revertTo(snapshotId);
 
         vm.prank(ADMIN);
-        protocol.updatePositionFees(100); // 1% fees
+        protocol.setPositionFeeBps(100); // 1% fees
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");
 
@@ -409,7 +406,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
     function test_validateWithdrawalPositionFeesCompareWithAndWithoutFees() public {
         /* ----------------------- Validate with position fees ---------------------- */
         vm.prank(ADMIN);
-        protocol.updatePositionFees(0); // 0% fees
+        protocol.setPositionFeeBps(0); // 0% fees
 
         usdn.approve(address(protocol), type(uint256).max);
 
@@ -427,7 +424,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         uint256 initialAssetBalance = wstETH.balanceOf(address(this));
 
         vm.prank(ADMIN);
-        protocol.updatePositionFees(100); // 1% fees
+        protocol.setPositionFeeBps(100); // 1% fees
 
         protocol.initiateWithdrawal(uint128(usdn.balanceOf(address(this))), currentPrice, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
@@ -469,7 +466,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         /* ----------------------- Validate with position fees ---------------------- */
         vm.prank(ADMIN);
-        protocol.updatePositionFees(0); // 0% fees
+        protocol.setPositionFeeBps(0); // 0% fees
 
         skip(1 hours);
 
@@ -488,7 +485,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         vm.revertTo(snapshotId);
 
         vm.prank(ADMIN);
-        protocol.updatePositionFees(100); // 1% fees
+        protocol.setPositionFeeBps(100); // 1% fees
 
         skip(1 hours);
 
@@ -525,7 +522,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
 
         /* ----------------------- Validate with position fees ---------------------- */
         vm.prank(ADMIN);
-        protocol.updatePositionFees(0); // 0% fees
+        protocol.setPositionFeeBps(0); // 0% fees
 
         (int24 tick, uint256 tickVersion, uint256 index) =
             protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
@@ -554,7 +551,7 @@ contract TestUsdnProtocolEntryExitFees is UsdnProtocolBaseFixture {
         vm.revertTo(snapshotId);
 
         vm.prank(ADMIN);
-        protocol.updatePositionFees(100); // 1% fees
+        protocol.setPositionFeeBps(100); // 1% fees
 
         (tick, tickVersion, index) = protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);

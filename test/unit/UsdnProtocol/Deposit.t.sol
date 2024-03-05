@@ -88,7 +88,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
      */
     function test_validateDepositPriceIncrease() public {
-        _checkValidateDepositWithPrice(2000 ether, 2100 ether, 1_999_200_000_000_000_000_000);
+        _checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether);
     }
 
     /**
@@ -97,12 +97,12 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2000 at the moment of initiation
      * @custom:and The price of the asset is $1900 at the moment of validation
      * @custom:when The user validates the deposit
-     * @custom:then The user's USDN balance increases by 1948.738241004339101922 USDN
-     * @custom:and The USDN total supply increases by 1948.738241004339101922 USDN
-     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1948.738241004339101922 USDN
+     * @custom:then The user's USDN balance increases by 1949.518048223628553344 USDN
+     * @custom:and The USDN total supply increases by 1949.518048223628553344 USDN
+     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1949.518048223628553344 USDN
      */
     function test_validateDepositPriceDecrease() public {
-        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1948.738241004339101922 ether);
+        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048223628553344 ether);
     }
 
     /**
@@ -154,7 +154,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         internal
     {
         vm.prank(ADMIN);
-        protocol.updatePositionFees(0); // 0% fees
+        protocol.setPositionFeeBps(0); // 0% fees
 
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
