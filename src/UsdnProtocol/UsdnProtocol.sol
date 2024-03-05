@@ -221,7 +221,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setPositionFeeBps(uint16 newPositionFee) external onlyOwner {
-        if (newPositionFee > MAX_POSITION_FEE) {
+        // newPositionFee greater than max 2000: 20%
+        if (newPositionFee > 2000) {
             revert UsdnProtocolMaxPositionFeeExceeded();
         }
         _positionFeeBps = newPositionFee;

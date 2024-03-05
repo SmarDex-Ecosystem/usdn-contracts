@@ -48,25 +48,6 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
     /// @notice Returns the number of decimals for the price (constant)
     function getDecimals() external view returns (uint8);
 
-    /**
-     * @notice Returns the ETH cost of one price validation for the given action
-     * @param data Pyth price data to be validated for which to get fee prices
-     * @param action Type of action for which the price is requested.
-     * @return The ETH cost of one price validation
-     */
-    function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256);
-
-    /* -------------------------------------------------------------------------- */
-    /*                               Owner features                               */
-    /* -------------------------------------------------------------------------- */
-
-    /**
-     * @notice Set the "validation delay" (in seconds) between an action timestamp and the price
-     * data timestamp used to validate that action.
-     * @param newValidationDelay The new validation delay
-     */
-    function setValidationDelay(uint256 newValidationDelay) external;
-
     /// @notice get max confidence ratio
     function getMaxConfRatio() external pure returns (uint16);
 
@@ -80,17 +61,23 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
     function getConfRatio() external view returns (uint16);
 
     /**
+     * @notice Returns the ETH cost of one price validation for the given action
+     * @param data Pyth price data to be validated for which to get fee prices
+     * @param action Type of action for which the price is requested.
+     * @return The ETH cost of one price validation
+     */
+    function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256);
+
+    /* -------------------------------------------------------------------------- */
+    /*                               Owner features                               */
+    /* -------------------------------------------------------------------------- */
+
+    /**
      * @notice Set confidence ratio (admin).
      * @param newConfRatio the new confidence ratio.
      * @dev New value should be lower than max confidence ratio.
      */
     function setConfRatio(uint16 newConfRatio) external;
-
-    /**
-     * @notice Emitted when the confidence ratio is updated.
-     * @param newConfRatio new confidence ratio.
-     */
-    event ConfRatioUpdated(uint256 newConfRatio);
 
     /**
      * @notice Set the elapsed time tolerated before we consider the price invalid for the chainlink oracle.
@@ -103,4 +90,11 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
      * @param newDelay The maximum age of a recent price to be considered valid
      */
     function setRecentPriceDelay(uint64 newDelay) external;
+
+    /**
+     * @notice Set the "validation delay" (in seconds) between an action timestamp and the price
+     * data timestamp used to validate that action.
+     * @param newValidationDelay The new validation delay
+     */
+    function setValidationDelay(uint256 newValidationDelay) external;
 }

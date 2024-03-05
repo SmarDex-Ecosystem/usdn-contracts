@@ -45,9 +45,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /*                                 Immutables getters                         */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice The maximum position fee
-    function MAX_POSITION_FEE() external view returns (uint16);
-
     /**
      * @notice The liquidation tick spacing for storing long positions.
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
