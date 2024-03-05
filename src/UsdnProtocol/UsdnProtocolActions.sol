@@ -24,6 +24,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     using SafeERC20 for IUsdn;
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
+    using SafeCast for int256;
     using LibBitmap for LibBitmap.Bitmap;
 
     /// @inheritdoc IUsdnProtocolActions
@@ -49,15 +50,21 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration);
         }
 
+        // Apply fees on price
+        uint256 pendingActionPrice = currentPrice.price;
+        pendingActionPrice -= (pendingActionPrice * _positionFeeBps) / BPS_DIVISOR;
+
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
             user: msg.sender,
             _unused: 0,
             amount: amount,
-            assetPrice: _lastPrice,
+            assetPrice: pendingActionPrice.toUint128(),
             totalExpo: _totalExpo,
-            balanceVault: _balanceVault,
+            balanceVault: _vaultAssetAvailable(
+                _totalExpo, _balanceVault, _balanceLong, pendingActionPrice.toUint128(), _lastPrice
+                ).toUint256(),
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
         });
@@ -104,15 +111,25 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration);
         }
 
+        // Apply fees on price
+        uint256 pendingActionPrice = currentPrice.price;
+        pendingActionPrice += (pendingActionPrice * _positionFeeBps) / BPS_DIVISOR;
+
+        uint256 totalExpo = _totalExpo;
+
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateWithdrawal,
             timestamp: uint40(block.timestamp),
             user: msg.sender,
             _unused: 0,
             amount: usdnAmount,
-            assetPrice: _lastPrice,
-            totalExpo: _totalExpo,
-            balanceVault: _balanceVault,
+            assetPrice: pendingActionPrice.toUint128(),
+            totalExpo: totalExpo,
+            balanceVault: _vaultAssetAvailable(
+                totalExpo, _balanceVault, _balanceLong, pendingActionPrice.toUint128(), _lastPrice
+                ) // new price
+                        // old price
+                    .toUint256(),
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
         });
@@ -254,6 +271,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolUnauthorized();
         }
 
+        uint128 priceWithFees;
         {
             PriceInfo memory currentPrice =
                 _getOraclePrice(ProtocolAction.InitiateClosePosition, uint40(block.timestamp), currentPriceData);
@@ -264,11 +282,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             if (priceUpdated) {
                 _liquidatePositions(currentPrice.neutralPrice, _liquidationIteration);
             }
+
+            priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
         }
 
         {
             uint256 liqMultiplier = _liquidationMultiplier;
-            uint256 tempTransfer = _assetToTransfer(tick, pos.amount, pos.leverage, liqMultiplier);
+            uint256 tempTransfer = _assetToTransfer(priceWithFees, tick, pos.amount, pos.leverage, liqMultiplier);
 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
@@ -490,7 +510,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Apply fees on price
         uint256 withdrawalPriceWithFees =
-            withdrawalPrice.price - (withdrawalPrice.price * _positionFeeBps) / BPS_DIVISOR;
+            withdrawalPrice.price + (withdrawalPrice.price * _positionFeeBps) / BPS_DIVISOR;
 
         // We calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
@@ -638,8 +658,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _liquidatePositions(price.neutralPrice, _liquidationIteration);
         }
 
+        // Apply fees on price
+        uint128 priceWithFees = (price.price - (price.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+
         uint256 assetToTransfer =
-            _assetToTransfer(long.tick, long.closeAmount, long.closeLeverage, long.closeLiqMultiplier);
+            _assetToTransfer(priceWithFees, long.tick, long.closeAmount, long.closeLeverage, long.closeLiqMultiplier);
 
         // adjust long balance that was previously optimistically decreased
         if (assetToTransfer > long.closeTempTransfer) {
@@ -687,30 +710,25 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param posLeverage The initial leverage of the position
      * @param liqMultiplier The liquidation multiplier at the moment of closing the position
      */
-    function _assetToTransfer(int24 tick, uint256 posAmount, uint128 posLeverage, uint256 liqMultiplier)
-        internal
-        view
-        returns (uint256 assetToTransfer_)
-    {
-        uint128 lastPrice = _lastPrice;
+    function _assetToTransfer(
+        uint128 currentPrice,
+        int24 tick,
+        uint256 posAmount,
+        uint128 posLeverage,
+        uint256 liqMultiplier
+    ) internal view returns (uint256 assetToTransfer_) {
         // calculate amount to transfer
-        int256 available = _longAssetAvailable(lastPrice);
-        if (available <= 0) {
-            return 0;
-        }
-
-        // Apply fees on lastPrice
-        uint256 positionPriceWithFees = lastPrice - (lastPrice * _positionFeeBps) / BPS_DIVISOR;
+        uint256 available = _balanceLong;
 
         // Calculate position value
         int256 value = _positionValue(
-            positionPriceWithFees.toUint128(),
+            currentPrice,
             _getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
             posAmount,
             posLeverage
         ).toInt256();
 
-        if (value > available) {
+        if (value > int256(available)) {
             assetToTransfer_ = uint256(available);
         } else {
             assetToTransfer_ = uint256(value);

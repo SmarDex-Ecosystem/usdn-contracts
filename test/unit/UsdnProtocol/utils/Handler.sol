@@ -208,12 +208,14 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _convertLongPendingAction(action);
     }
 
-    function i_assetToTransfer(int24 tick, uint256 amount, uint128 leverage, uint256 liqMultiplier)
-        external
-        view
-        returns (uint256)
-    {
-        return _assetToTransfer(tick, amount, leverage, liqMultiplier);
+    function i_assetToTransfer(
+        uint128 currentPrice,
+        int24 tick,
+        uint256 amount,
+        uint128 leverage,
+        uint256 liqMultiplier
+    ) external view returns (uint256) {
+        return _assetToTransfer(currentPrice, tick, amount, leverage, liqMultiplier);
     }
 
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint256 amount, uint128 initLeverage)
@@ -234,5 +236,13 @@ contract UsdnProtocolHandler is UsdnProtocol {
         returns (PriceInfo memory)
     {
         return _getOraclePrice(action, timestamp, priceData);
+    }
+
+    function i_calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
+        external
+        view
+        returns (uint256 toMint_)
+    {
+        return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
     }
 }
