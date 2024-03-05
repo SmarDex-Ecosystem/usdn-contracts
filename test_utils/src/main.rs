@@ -105,8 +105,14 @@ fn main() -> Result<()> {
             print_u256_hex(res)?;
         }
         Commands::PythPrice { feed, publish_time } => {
+            let mut hermes_api_url = std::env::var("HERMES_RA2_NODE_URL")?;
+            // add / to the end of the url if it's not there
+            if !hermes_api_url.ends_with('/') {
+                hermes_api_url.push('/');
+            }
+
             let request_url = format!(
-                "https://hermes.pyth.network/api/get_price_feed?id={feed}&publish_time={publish_time}&binary=true"
+                "{hermes_api_url}get_price_feed?id={feed}&publish_time={publish_time}&binary=true"
             );
             let response = reqwest::blocking::get(request_url)?;
             let price: HermesResponse = response.json()?;
