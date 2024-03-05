@@ -90,7 +90,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:and A validation of the deposit
      * @custom:then The pending protocol fee is > 0
      */
-    function test_pendinggetProtocolFee() public {
+    function test_pendingProtocolFee() public {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
 
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");

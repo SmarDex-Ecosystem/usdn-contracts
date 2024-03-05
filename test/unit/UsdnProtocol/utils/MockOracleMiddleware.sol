@@ -12,7 +12,6 @@ import {
 
 contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     uint8 internal constant DECIMALS = 18;
-    uint256 internal constant VALIDATION_DELAY = 24 seconds;
     uint16 private constant CONF_RATIO_DENOM = 10_000;
     uint16 private constant MAX_CONF_RATIO = CONF_RATIO_DENOM * 2;
     uint16 private _confRatio = 4000; // to divide by CONF_RATIO_DENOM
@@ -51,7 +50,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
             }
         } else {
             // for other actions, simulate we got the price from 24s after the initiate action
-            ts += uint128(VALIDATION_DELAY);
+            ts += uint128(_validationDelay);
         }
 
         PriceInfo memory price = PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: uint48(ts) });

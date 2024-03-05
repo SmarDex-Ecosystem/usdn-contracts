@@ -50,14 +50,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getActionablePendingAction(maxIter);
     }
 
-    function getPositionFee() public view returns (uint256) {
-        return _positionFeeBps;
-    }
-
-    function getProtocolFee() public view returns (uint256) {
-        return _protocolFeeBps;
-    }
-
     function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
         return _vaultTradingExpo(currentPrice);
     }

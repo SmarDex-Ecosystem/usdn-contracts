@@ -43,7 +43,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
     function test_initiateOpenPosition() public {
         uint128 desiredLiqPrice = 2000 ether / 2;
 
-        uint256 expectedPrice = 2000 ether + 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR();
+        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
         uint256 expectedLeverage = protocol.i_getLeverage(
             uint128(expectedPrice),
             protocol.getEffectivePriceForTick(
@@ -88,7 +88,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         // Call liquidate to trigger liquidation multiplier update
         protocol.liquidate(priceData, 0);
 
-        uint256 expectedPrice = 2000 ether + 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR();
+        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
         uint256 expectedLeverage = protocol.i_getLeverage(
             uint128(expectedPrice),
             protocol.getEffectivePriceForTick(
@@ -142,7 +142,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
         uint256 expectedTempTransfer = protocol.i_assetToTransfer(
-            uint128(2000 ether - 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR()),
+            uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
             tick,
             1 ether,
             action.closeLeverage,
@@ -185,7 +185,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
         uint256 expectedTransfer = protocol.i_assetToTransfer(
-            uint128(2000 ether - 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR()),
+            uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
             tick,
             1 ether,
             action.closeLeverage,
@@ -222,7 +222,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         VaultPendingAction memory action = protocol.i_toVaultPendingAction(protocol.getUserPendingAction(address(this)));
 
-        uint256 priceWithoutFees = 2000 ether - 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR();
+        uint256 priceWithoutFees =
+            2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
         assertEq(action.assetPrice, priceWithoutFees, "assetPrice");
     }
 
@@ -244,7 +245,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             depositAmount,
             protocol.getBalanceVault(),
             usdn.totalSupply(),
-            2000 ether - 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR()
+            2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()
         );
 
         skip(oracleMiddleware.getValidationDelay() + 1);
@@ -260,12 +261,12 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
                     deposit.totalExpo,
                     deposit.balanceVault,
                     deposit.balanceLong,
-                    uint128(2000 ether - 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR()),
+                    uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
                     deposit.assetPrice
                 )
             ),
             deposit.usdnTotalSupply,
-            2000 ether - 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR()
+            2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()
         );
 
         uint256 expectedBalance = expectedBalanceA < expectedBalanceB ? expectedBalanceA : expectedBalanceB;
@@ -309,7 +310,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         VaultPendingAction memory withdraw = protocol.i_toVaultPendingAction(action);
 
         // Check stored position asset price
-        uint256 expectedPrice = 2000 ether + 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR();
+        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
         assertEq(withdraw.assetPrice, expectedPrice, "assetPrice validate");
     }
 
@@ -357,7 +358,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
      * @custom:given The price of the asset is $2000
      * @custom:when The user validate a deposit of 1 wstETH with fees
      * @custom:and The user validate a deposit of 1 wstETH without fees
-     * @custom:then The USDN mintedwithout fees should be greater than the USDN minted with fees
+     * @custom:then The USDN minted without fees should be greater than the USDN minted with fees
      */
     function test_validateDepositPositionFeesCompareWithAndWithoutFees() public {
         skip(1 hours);
@@ -459,7 +460,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
      * @custom:given The price of the asset is $2000
      * @custom:when The user open a position with 1 wstETH as collateral, with fees
      * @custom:and The user open a position with 1 wstETH as collateral, without fees
-     * @custom:then The prending position price with fees should be greater than the prending position price without
+     * @custom:then The pending position price with fees should be greater than the pending position price without
      * fees
      */
     function test_openPositionFeesCompareWithAndWithoutFees() public {
@@ -551,7 +552,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         (,,, uint256 assetToTransferWithoutFees,) = abi.decode(logs[1].data, (int24, uint256, uint256, uint256, int256));
-        uint256 assetTransferedWithoutFees = wstETH.balanceOf(address(this)) - balanceBeforeValidateWithoutFees;
+        uint256 assetTransferredWithoutFees = wstETH.balanceOf(address(this)) - balanceBeforeValidateWithoutFees;
 
         /* ----------------------- Validate with position fees ---------------------- */
         vm.revertTo(snapshotId);
@@ -579,14 +580,14 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         logs = vm.getRecordedLogs();
 
         (,,, uint256 assetToTransferWithFees,) = abi.decode(logs[1].data, (int24, uint256, uint256, uint256, int256));
-        uint256 assetTransferedWithFees = wstETH.balanceOf(address(this)) - balanceBeforeValidateWithFees;
+        uint256 assetTransferredWithFees = wstETH.balanceOf(address(this)) - balanceBeforeValidateWithFees;
 
         /* --------------------------------- Checks --------------------------------- */
 
-        // Check if the transfereed asset with fees is less than the transferred asset without fees
+        // Check if the transferred asset with fees is less than the transferred asset without fees
         assertLt(assetToTransferWithFees, assetToTransferWithoutFees, "Transferred asset");
 
         // Same check for the emitted event
-        assertLt(assetTransferedWithFees, assetTransferedWithoutFees, "Transferred asset");
+        assertLt(assetTransferredWithFees, assetTransferredWithoutFees, "Transferred asset");
     }
 }
