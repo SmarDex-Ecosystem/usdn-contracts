@@ -94,6 +94,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
         protocol.initialize{ value: oracleMiddleware.validationCost("", ProtocolAction.Initialize) }(

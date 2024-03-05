@@ -308,6 +308,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (liquidatedPositions_, liquidatedTicks, liquidatedCollateral, _balanceLong, _balanceVault) =
             _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
 
+        _usdnRebase(uint128(currentPrice.neutralPrice)); // safecast not needed since done earlier
         _refundExcessEther();
         _checkPendingFee();
 
@@ -674,6 +675,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (priceUpdated) {
             (,,, _balanceLong, _balanceVault) =
                 _liquidatePositions(neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
+            _usdnRebase(uint128(neutralPrice)); // safecast not needed since already done earlier
         }
     }
 
