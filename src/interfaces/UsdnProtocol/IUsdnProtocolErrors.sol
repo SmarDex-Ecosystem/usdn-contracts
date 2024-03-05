@@ -60,9 +60,6 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided position fee exceeds the maximum allowed
     error UsdnProtocolInvalidPositionFee();
 
-    /// @dev Indicates that the provided address for the LiquidationRewardsManager contract is the 0 address
-    error UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
-
     /// @dev Indicates that the new middleware address value is invalid.
     error UsdnProtocolInvalidMiddlewareAddress();
 
