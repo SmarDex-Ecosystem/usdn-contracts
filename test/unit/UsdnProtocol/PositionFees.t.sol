@@ -21,7 +21,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10_000 ether;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.enablePositionFees = true;
+
+        super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
     }
 
