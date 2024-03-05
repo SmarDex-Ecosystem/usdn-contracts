@@ -5,6 +5,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import {
@@ -94,18 +95,27 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             currentPrice = _validateDepositWithAction(pendingAction, currentPriceData, true);
         }
 
-        _lastUpdateTimestamp = uint40(block.timestamp);
-        _lastPrice = currentPrice.price.toUint128();
+        // effective liquidation tick without penalty
+        int24 tickWithoutPenalty = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
+        // casted current price
+        uint128 price = currentPrice.price.toUint128();
+        // open position leverage
+        uint128 leverage = _getLeverage(price, getEffectivePriceForTick(tickWithoutPenalty));
+        // open position expo value
+        uint256 addExpo = FixedPointMathLib.fullMulDiv(longAmount, leverage, 10 ** LEVERAGE_DECIMALS);
 
-        // Transfer the wstETH for the long
-        _asset.safeTransferFrom(msg.sender, address(this), longAmount);
+        {
+            // verify expo is not imbalanced
+            _imbalanceLimitOpen(addExpo, longAmount);
 
-        _createInitialPosition(
-            msg.sender,
-            longAmount,
-            currentPrice.price.toUint128(),
-            getEffectiveTickForPrice(desiredLiqPrice) // without penalty
-        );
+            _lastUpdateTimestamp = uint40(block.timestamp);
+            _lastPrice = price;
+
+            // Transfer the wstETH for the long
+            _asset.safeTransferFrom(msg.sender, address(this), longAmount);
+
+            _createInitialPosition(msg.sender, longAmount, price, tickWithoutPenalty, leverage, addExpo);
+        }
 
         _refundExcessEther();
     }
@@ -259,38 +269,46 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setSoftLongExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
-        if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
-            revert UsdnProtocolInvalidSoftLongExpoImbalanceLimit();
+    function setSoftLongExpoImbalanceLimit(int256 newLimit) external onlyOwner {
+        if (newLimit < 0) {
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
+        } else if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
-        // TODO add lower limit if needed
+        // TODO different lower limit
         _softLongExpoImbalanceLimit = newLimit;
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setHardLongExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
-        if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
-            revert UsdnProtocolInvalidHardLongExpoImbalanceLimit();
+    function setHardLongExpoImbalanceLimit(int256 newLimit) external onlyOwner {
+        if (newLimit < _softLongExpoImbalanceLimit) {
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
+        } else if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
-        // TODO add lower limit if needed
+        // TODO different lower limit
         _hardLongExpoImbalanceLimit = newLimit;
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setSoftVaultExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
-        if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
-            revert UsdnProtocolInvalidSoftVaultExpoImbalanceLimit();
+    function setSoftVaultExpoImbalanceLimit(int256 newLimit) external onlyOwner {
+        if (newLimit < 0) {
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
+        } else if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
-        // TODO add lower limit if needed
+        // TODO different lower limit
         _softVaultExpoImbalanceLimit = newLimit;
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setHardVaultExpoImbalanceLimit(uint16 newLimit) external onlyOwner {
-        if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
-            revert UsdnProtocolInvalidHardVaultExpoImbalanceLimit();
+    function setHardVaultExpoImbalanceLimit(int256 newLimit) external onlyOwner {
+        if (newLimit < _softVaultExpoImbalanceLimit) {
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
+        } else if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
-        // TODO add lower limit if needed
+        // TODO different lower limit
         _hardVaultExpoImbalanceLimit = newLimit;
     }
 
@@ -302,15 +320,21 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param tick The initial position tick.
      * @dev To be called in contract initialize.
      */
-    function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
-        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
-        uint128 leverage = _getLeverage(price, liquidationPriceWithoutPenalty);
+    function _createInitialPosition(
+        address user,
+        uint128 amount,
+        uint128 price,
+        int24 tick,
+        uint128 leverage,
+        uint256 addExpo
+    ) internal {
         // apply liquidation penalty to the deployer's position
         tick = tick + int24(_liquidationPenalty) * _tickSpacing;
         Position memory long =
             Position({ user: user, amount: amount, leverage: leverage, timestamp: uint40(block.timestamp) });
+
         // Save the position and update the state
-        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
+        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long, addExpo);
         emit InitiatedOpenPosition(user, long.timestamp, long.leverage, long.amount, price, tick, tickVersion, index);
         emit ValidatedOpenPosition(user, long.leverage, price, tick, tickVersion, index);
     }

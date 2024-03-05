@@ -44,6 +44,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
         }
 
         PriceInfo memory price = PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: uint48(ts) });
+
         return price;
     }
 

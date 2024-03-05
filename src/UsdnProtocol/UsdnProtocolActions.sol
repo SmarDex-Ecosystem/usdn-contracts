@@ -18,6 +18,7 @@ import {
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { SignedMath } from "src/libraries/SignedMath.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -25,6 +26,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
     using LibBitmap for LibBitmap.Bitmap;
+    using SignedMath for int256;
 
     /// @inheritdoc IUsdnProtocolActions
     uint256 public constant MIN_USDN_SUPPLY = 1000;
@@ -43,6 +45,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _getOraclePrice(ProtocolAction.InitiateDeposit, uint40(block.timestamp), currentPriceData);
 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
+
+        // revert if percentage expo limit with the deposit value is reached
+        _imbalanceLimitDeposit(int128(amount));
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateDeposit,
@@ -94,6 +99,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
+        // early revert if percentage expo limit without the withdrawal value is reached
+        _imbalanceLimitWithdrawal(currentPrice.neutralPrice.toUint128());
+
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateWithdrawal,
             timestamp: uint40(block.timestamp),
@@ -108,6 +116,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         });
 
         _addPendingAction(msg.sender, _convertVaultPendingAction(pendingAction));
+
+        // verify again if percentage expo imbalance limit with the withdrawal value is reached
+        _imbalanceLimitWithdrawal(currentPrice.neutralPrice.toUint128());
 
         // retrieve the USDN tokens, checks that balance is sufficient
         _usdn.safeTransferFrom(msg.sender, address(this), usdnAmount);
@@ -173,7 +184,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             }
         }
 
+        uint256 openExpoValue = FixedPointMathLib.fullMulDiv(amount, leverage, 10 ** LEVERAGE_DECIMALS);
+
         {
+            // revert if percentage expo limit with the open position value is reached
+            _imbalanceLimitOpen(openExpoValue, amount);
+
             // Calculate effective liquidation price
             uint128 liquidationPrice = getEffectivePriceForTick(tick_);
 
@@ -185,7 +201,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         {
             Position memory long =
                 Position({ user: msg.sender, amount: amount, leverage: leverage, timestamp: uint40(block.timestamp) });
-            (tickVersion_, index_) = _saveNewPosition(tick_, long);
+            (tickVersion_, index_) = _saveNewPosition(tick_, long, openExpoValue);
 
             // Register pending action
             LongPendingAction memory pendingAction = LongPendingAction({
@@ -201,6 +217,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 closeTempTransfer: 0
             });
             _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
+
             emit InitiatedOpenPosition(
                 msg.sender, long.timestamp, long.leverage, long.amount, adjustedPrice, tick_, tickVersion_, index_
             );
@@ -239,11 +256,21 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolUnauthorized();
         }
 
+        uint128 neutralPrice;
+
         {
             PriceInfo memory currentPrice =
                 _getOraclePrice(ProtocolAction.InitiateClosePosition, uint40(block.timestamp), currentPriceData);
 
             _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
+
+            uint256 closeExpoValue = FixedPointMathLib.fullMulDiv(pos.amount, pos.leverage, 10 ** LEVERAGE_DECIMALS);
+
+            // revert if percentage expo limit with the close position value is reached
+            _imbalanceLimitClose(closeExpoValue, pos.amount);
+
+            // cache price to use in all check
+            neutralPrice = currentPrice.neutralPrice.toUint128();
         }
 
         {
@@ -313,6 +340,72 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         if (liquidatedTicks > 0) {
             _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral);
+        }
+    }
+
+    /**
+     * @notice The deposit imbalance limit state verification
+     * @dev This is to ensure that the protocol does not unbalance more than the soft limit on vault side
+     * @param depositValue the deposit value
+     */
+    function _imbalanceLimitDeposit(int128 depositValue) internal view {
+        int256 longExpo = int256(_totalExpo - _balanceLong);
+
+        int256 imbalancePercentage = (int256(_balanceVault).safeAdd(depositValue)).safeSub(longExpo).safeMul(
+            EXPO_IMBALANCE_LIMIT_DENOMINATOR
+        ).safeDiv(longExpo);
+
+        if (imbalancePercentage > _softVaultExpoImbalanceLimit) {
+            revert UsdnProtocolSoftImbalanceLimitReached(imbalancePercentage);
+        }
+    }
+
+    /**
+     * @notice The withdrawal imbalance limit state verification
+     * @dev This is to ensure that the protocol does not unbalance more than the hard limit on long side
+     * @param withdrawalValue The withdrawal value
+     */
+    function _imbalanceLimitWithdrawal(uint256 withdrawalValue) internal view {
+        int256 vaultExpo = int256(_balanceVault) - int256(withdrawalValue);
+
+        int256 imbalancePercentage = (int256(_totalExpo - _balanceLong).safeSub(vaultExpo)).safeMul(
+            EXPO_IMBALANCE_LIMIT_DENOMINATOR
+        ).safeDiv(vaultExpo);
+
+        if (imbalancePercentage > _hardLongExpoImbalanceLimit) {
+            revert UsdnProtocolHardImbalanceLimitReached(imbalancePercentage);
+        }
+    }
+
+    /**
+     * @notice The open imbalance limit state verification
+     * @dev This is to ensure that the protocol does not unbalance more than the soft limit on long side
+     * @param openExpoValue The open position expo value
+     * @param openCollatValue The open position expo value
+     */
+    function _imbalanceLimitOpen(uint256 openExpoValue, uint256 openCollatValue) internal view {
+        int256 vaultExpo = int256(_balanceVault);
+        int256 imbalancePercentage = (
+            int256(_totalExpo + openExpoValue - (_balanceLong + openCollatValue)).safeSub(vaultExpo)
+        ).safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(vaultExpo);
+
+        if (imbalancePercentage > _softLongExpoImbalanceLimit) {
+            revert UsdnProtocolSoftImbalanceLimitReached(imbalancePercentage);
+        }
+    }
+
+    /**
+     * @notice The close imbalance limit state verification
+     * @dev This is to ensure that the protocol does not unbalance more than the hard limit on vault side
+     * @param closeExpoValue The close expo value
+     */
+    function _imbalanceLimitClose(uint256 closeExpoValue, uint256 closeCollatValue) internal view {
+        int256 longExpo = int256(_totalExpo - closeExpoValue - (_balanceLong + closeCollatValue));
+        int256 imbalancePercentage =
+            (int256(_balanceVault).safeSub(longExpo)).safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(longExpo);
+
+        if (imbalancePercentage > _hardVaultExpoImbalanceLimit) {
+            revert UsdnProtocolHardImbalanceLimitReached(imbalancePercentage);
         }
     }
 
@@ -535,10 +628,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
             // update position leverage
             pos.leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
+            // Calculate the position expo with the new leverage
+            uint256 addExpo = FixedPointMathLib.fullMulDiv(pos.amount, pos.leverage, 10 ** LEVERAGE_DECIMALS);
             // apply liquidation penalty
             int24 tick = tickWithoutPenalty + int24(_liquidationPenalty) * _tickSpacing;
             // insert position into new tick, update tickVersion and index
-            (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos);
+            (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos, addExpo);
             // emit LiquidationPriceUpdated
             emit LiquidationPriceUpdated(long.tick, long.tickVersion, long.index, tick, tickVersion, index);
             emit ValidatedOpenPosition(pos.user, pos.leverage, startPrice, tick, tickVersion, index);

@@ -13,8 +13,8 @@ import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdn
  */
 contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
-    uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
-    uint128 internal constant USDN_AMOUNT = 1000 ether;
+    uint128 internal constant DEPOSIT_AMOUNT = 0.1 ether;
+    uint128 internal constant USDN_AMOUNT = 0.1 ether;
     uint256 internal initialWstETHBalance;
     uint256 internal initialUsdnBalance;
 
@@ -109,7 +109,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      */
     function test_validateWithdrawPriceUp() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.425413602320877178 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 33_389_515_448_581);
     }
 
     /**
@@ -124,7 +124,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      */
     function test_validateWithdrawPriceDown() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.455223358610342895 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 40_047_140_416_305);
     }
 
     /**

@@ -208,7 +208,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
     }
 
-    function _saveNewPosition(int24 tick, Position memory long)
+    function _saveNewPosition(int24 tick, Position memory long, uint256 addExpo)
         internal
         returns (uint256 tickVersion_, uint256 index_)
     {
@@ -217,7 +217,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // Adjust state
         _balanceLong += long.amount;
-        uint256 addExpo = FixedPointMathLib.fullMulDiv(long.amount, long.leverage, 10 ** LEVERAGE_DECIMALS);
         _totalExpo += addExpo;
         _totalExpoByTick[tickHash] += addExpo;
         ++_positionsInTick[tickHash];

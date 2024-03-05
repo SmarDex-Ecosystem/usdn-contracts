@@ -82,15 +82,15 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // Setup 3 pending actions
         vm.startPrank(USER_1);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(0.01 ether, 1000 ether, priceData, "");
         vm.stopPrank();
         vm.startPrank(USER_2);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(0.01 ether, 1000 ether, priceData, "");
         vm.stopPrank();
         vm.startPrank(USER_3);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(0.01 ether, 1000 ether, priceData, "");
         vm.stopPrank();
 
         // Simulate the second item in the queue being empty (sets it to zero values)
@@ -278,12 +278,12 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // Setup 2 pending actions
         vm.startPrank(USER_1);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, data1, "");
+        protocol.initiateOpenPosition(0.01 ether, 1000 ether, data1, "");
         vm.stopPrank();
         skip(30);
         vm.startPrank(USER_2);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, data2, "");
+        protocol.initiateOpenPosition(0.01 ether, 1000 ether, data2, "");
         vm.stopPrank();
 
         // Wait

@@ -16,7 +16,7 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialLong = 10 ether;
+        // params.initialLong = 10 ether;
         super._setUp(params);
     }
 
@@ -69,7 +69,7 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
 
         assertEq(protocol.getTotalLongPositions(), 0, "total long positions");
         assertEq(protocol.i_longTradingExpo(price), 0, "long trading expo with funding");
-        assertEq(protocol.getBalanceLong(), 0, "balance long");
+        assertEq(protocol.getBalanceLong(), 1, "balance long"); // 1 remaining wei
         assertEq(protocol.i_longAssetAvailable(price), 0, "long asset available");
 
         int24 tick = protocol.getEffectiveTickForPrice(price);

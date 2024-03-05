@@ -46,7 +46,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
 
     /// @notice The denominator of expo imbalance limits
-    function EXPO_IMBALANCE_LIMIT_DENOMINATOR() external view returns (uint16);
+    function EXPO_IMBALANCE_LIMIT_DENOMINATOR() external view returns (int256);
 
     /**
      * @notice The liquidation tick spacing for storing long positions.
@@ -121,28 +121,28 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of long
      * the soft long rebalancing mechanism is triggered, preventing the opening of a new long position.
      */
-    function getSoftLongExpoImbalanceLimit() external view returns (uint16);
+    function getSoftLongExpoImbalanceLimit() external view returns (int256);
 
     /**
      * @notice Get the hard longExpo imbalance limit.
      * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of long,
      * the hard long rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
      */
-    function getHardLongExpoImbalanceLimit() external view returns (uint16);
+    function getHardLongExpoImbalanceLimit() external view returns (int256);
 
     /**
      * @notice Get the soft vaultExpo imbalance limit.
      * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of vault,
      * the soft vault rebalancing mechanism is triggered, preventing the opening of new vault position.
      */
-    function getSoftVaultExpoImbalanceLimit() external view returns (uint16);
+    function getSoftVaultExpoImbalanceLimit() external view returns (int256);
 
     /**
      * @notice Get the hard vaultExpo imbalance limit.
      * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of vault,
      * the hard vault rebalancing mechanism is triggered, preventing the close of existing long position.
      */
-    function getHardVaultExpoImbalanceLimit() external view returns (uint16);
+    function getHardVaultExpoImbalanceLimit() external view returns (int256);
 
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */

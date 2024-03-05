@@ -40,7 +40,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint16 public constant MAX_LIQUIDATION_ITERATION = 10;
 
     /// @inheritdoc IUsdnProtocolStorage
-    uint16 public constant EXPO_IMBALANCE_LIMIT_DENOMINATOR = 10_000;
+    int256 public constant EXPO_IMBALANCE_LIMIT_DENOMINATOR = 10_000;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
@@ -117,28 +117,28 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of long
      * the soft long rebalancing mechanism is triggered, preventing the opening of a new long position.
      */
-    uint16 internal _softLongExpoImbalanceLimit = 200;
+    int256 internal _softLongExpoImbalanceLimit = 200;
 
     /**
      * @notice The hard longExpo imbalance limit.
      * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of long,
      * the hard long rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
      */
-    uint16 internal _hardLongExpoImbalanceLimit = 600;
+    int256 internal _hardLongExpoImbalanceLimit = 600;
 
     /**
      * @notice The soft vaultExpo imbalance limit.
      * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of vault,
      * the soft vault rebalancing mechanism is triggered, preventing the opening of new vault position.
      */
-    uint16 internal _softVaultExpoImbalanceLimit = 200;
+    int256 internal _softVaultExpoImbalanceLimit = 200;
 
     /**
      * @notice The hard vaultExpo imbalance limit.
      * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of vault,
      * the hard vault rebalancing mechanism is triggered, preventing the close of existing long position.
      */
-    uint16 internal _hardVaultExpoImbalanceLimit = 600;
+    int256 internal _hardVaultExpoImbalanceLimit = 600;
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
@@ -472,22 +472,22 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getSoftLongExpoImbalanceLimit() external view returns (uint16) {
+    function getSoftLongExpoImbalanceLimit() external view returns (int256) {
         return _softLongExpoImbalanceLimit;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getHardLongExpoImbalanceLimit() external view returns (uint16) {
+    function getHardLongExpoImbalanceLimit() external view returns (int256) {
         return _hardLongExpoImbalanceLimit;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getSoftVaultExpoImbalanceLimit() external view returns (uint16) {
+    function getSoftVaultExpoImbalanceLimit() external view returns (int256) {
         return _softVaultExpoImbalanceLimit;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getHardVaultExpoImbalanceLimit() external view returns (uint16) {
+    function getHardVaultExpoImbalanceLimit() external view returns (int256) {
         return _hardVaultExpoImbalanceLimit;
     }
 }

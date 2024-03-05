@@ -32,7 +32,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The pending action is actionable after the validation deadline has elapsed
      */
     function test_initiateDeposit() public {
-        uint128 depositAmount = 1 ether;
+        uint128 depositAmount = 0.01 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
         vm.expectEmit();
@@ -87,7 +87,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
      */
     function test_validateDepositPriceIncrease() public {
-        _checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether);
+        _checkValidateDepositWithPrice(2000 ether, 2100 ether, 20 ether);
     }
 
     /**
@@ -101,7 +101,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1949.518048223628553344 USDN
      */
     function test_validateDepositPriceDecrease() public {
-        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048223628553344 ether);
+        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 19 ether);
     }
 
     /**
@@ -115,7 +115,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
-        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, "");
+        protocol.initiateDeposit{ value: 0.5 ether }(0.01 ether, currentPrice, "");
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -130,7 +130,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         // initiate
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
-        protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, "");
+        protocol.initiateDeposit{ value: validationCost }(0.01 ether, currentPrice, "");
 
         skip(oracleMiddleware.getValidationDelay() + 1);
         // validate
@@ -150,7 +150,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function _checkValidateDepositWithPrice(uint128 initialPrice, uint128 assetPrice, uint256 expectedUsdnAmount)
         internal
     {
-        uint128 depositAmount = 1 ether;
+        uint128 depositAmount = 0.01 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 
         protocol.initiateDeposit(depositAmount, currentPrice, "");

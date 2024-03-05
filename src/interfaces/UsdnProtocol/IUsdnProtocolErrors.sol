@@ -94,14 +94,11 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolInvalidFeeCollector();
 
     /// @dev Indicates that the soft longExpo imbalance limit provided is invalid
-    error UsdnProtocolInvalidSoftLongExpoImbalanceLimit();
+    error UsdnProtocolInvalidExpoImbalanceLimit();
 
-    /// @dev Indicates that the hard longExpo imbalance limit provided is invalid
-    error UsdnProtocolInvalidHardLongExpoImbalanceLimit();
+    /// @dev Indicates that the protocol imbalance soft limit is reached
+    error UsdnProtocolSoftImbalanceLimitReached(int256 imbalancePct);
 
-    /// @dev Indicates that the soft vaultExpo imbalance limit provided is invalid
-    error UsdnProtocolInvalidSoftVaultExpoImbalanceLimit();
-
-    /// @dev Indicates that the hard vaultExpo imbalance limit provided is invalid
-    error UsdnProtocolInvalidHardVaultExpoImbalanceLimit();
+    /// @dev Indicates that the protocol imbalance hard limit is reached
+    error UsdnProtocolHardImbalanceLimitReached(int256 imbalancePct);
 }
