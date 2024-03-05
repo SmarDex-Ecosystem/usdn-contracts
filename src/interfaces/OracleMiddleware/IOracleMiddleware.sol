@@ -90,7 +90,7 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
      * @notice Emitted when the confidence ratio is updated.
      * @param newConfRatio new confidence ratio.
      */
-    event ConfRatioSet(uint256 newConfRatio);
+    event ConfRatioUpdated(uint256 newConfRatio);
 
     /**
      * @notice Set the elapsed time tolerated before we consider the price invalid for the chainlink oracle.

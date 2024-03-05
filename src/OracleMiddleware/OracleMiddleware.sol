@@ -247,6 +247,6 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
         _confRatio = newConfRatio;
 
-        emit ConfRatioSet(newConfRatio);
+        emit ConfRatioUpdated(newConfRatio);
     }
 }
