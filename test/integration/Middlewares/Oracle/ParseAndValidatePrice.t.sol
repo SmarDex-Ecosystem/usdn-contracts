@@ -46,7 +46,10 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = getMockedPythSignature();
             // Apply conf ratio to pyth confidence
-            pythConf = (pythConf * oracleMiddleware.getConfRatio()) / oracleMiddleware.getConfRatioDenom();
+            pythConf = (
+                pythConf * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals())
+                    * oracleMiddleware.getConfRatio()
+            ) / oracleMiddleware.getConfRatioDenom();
 
             // middleware data
             PriceInfo memory middlewarePrice;
@@ -64,24 +67,21 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
 
-            // formatted middleware price
-            uint256 middlewareFormattedPrice =
-                middlewarePrice.price * 10 ** oracleMiddleware.getPythDecimals() / 10 ** oracleMiddleware.getDecimals();
+            uint256 formattedPythPrice =
+                pythPrice * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals());
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
-                // check price with approximation of 1 to prevent rounding errors
-                assertApproxEqAbs(middlewareFormattedPrice, pythPrice + pythConf, 1, priceError);
+                assertEq(middlewarePrice.price, formattedPythPrice + pythConf, priceError);
             }
             // Price - conf
             else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
-                // check price with approximation of 1 to prevent rounding errors
-                assertApproxEqAbs(middlewareFormattedPrice, pythPrice - pythConf, 1, priceError);
+                assertEq(middlewarePrice.price, formattedPythPrice - pythConf, priceError);
             }
             // Price only
             else {
                 // check price
-                assertEq(middlewareFormattedPrice, pythPrice, priceError);
+                assertEq(middlewarePrice.price, formattedPythPrice, priceError);
             }
         }
     }
@@ -155,7 +155,10 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
                 getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
             // Apply conf ratio to pyth confidence
-            pythConf = (pythConf * oracleMiddleware.getConfRatio()) / oracleMiddleware.getConfRatioDenom();
+            pythConf = (
+                pythConf * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals())
+                    * oracleMiddleware.getConfRatio()
+            ) / oracleMiddleware.getConfRatioDenom();
 
             // middleware data
             PriceInfo memory middlewarePrice;
@@ -169,27 +172,23 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 );
             }
 
+            uint256 formattedPythPrice =
+                pythPrice * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals());
+
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
-
-            // formatted middleware price
-            uint256 middlewareFormattedPrice =
-                middlewarePrice.price * 10 ** oracleMiddleware.getPythDecimals() / 10 ** oracleMiddleware.getDecimals();
-
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
-                // check price with approximation of 1 to prevent rounding errors
-                assertApproxEqAbs(middlewareFormattedPrice, pythPrice + pythConf, 1, priceError);
+                assertEq(middlewarePrice.price, formattedPythPrice + pythConf, priceError);
             }
             // Price - conf
             else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
-                // check price with approximation of 1 to prevent rounding errors
-                assertApproxEqAbs(middlewareFormattedPrice, pythPrice - pythConf, 1, priceError);
+                assertEq(middlewarePrice.price, formattedPythPrice - pythConf, priceError);
             }
             // Price only
             else {
                 // check price
-                assertEq(middlewareFormattedPrice, pythPrice, priceError);
+                assertEq(middlewarePrice.price, formattedPythPrice, priceError);
             }
         }
     }

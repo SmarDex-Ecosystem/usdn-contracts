@@ -164,7 +164,10 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
                 getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
             // Apply conf ratio to pyth confidence
-            pythConf = (pythConf * wstethMiddleware.getConfRatio()) / wstethMiddleware.getConfRatioDenom();
+            pythConf = (
+                pythConf * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals()
+                    * wstethMiddleware.getConfRatio()
+            ) / wstethMiddleware.getConfRatioDenom();
 
             // middleware data
             PriceInfo memory middlewarePrice;
@@ -185,41 +188,18 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             uint256 formattedPythPrice =
                 pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
 
-            // formatted pyth conf
-            uint256 formattedPythConf =
-                pythConf * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
-
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
-                // check price with approximation of 1 to prevent rounding errors
-                assertApproxEqAbs(
-                    middlewarePrice.price * 10 ** wstethMiddleware.getPythDecimals()
-                        / 10 ** wstethMiddleware.getDecimals(),
-                    stethToWsteth(pythPrice + pythConf),
-                    1,
-                    priceError
-                );
+                assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + pythConf), priceError);
             }
             // Price - conf
             else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
-                // check price with approximation of 1 to prevent rounding errors
-                assertApproxEqAbs(
-                    middlewarePrice.price * 10 ** wstethMiddleware.getPythDecimals()
-                        / 10 ** wstethMiddleware.getDecimals(),
-                    stethToWsteth(pythPrice - pythConf),
-                    1,
-                    priceError
-                );
+                assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - pythConf), priceError);
             }
             // Price only
             else {
                 // check price
-                assertEq(
-                    middlewarePrice.price * 10 ** wstethMiddleware.getPythDecimals()
-                        / 10 ** wstethMiddleware.getDecimals(),
-                    stethToWsteth(pythPrice),
-                    priceError
-                );
+                assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice), priceError);
 
                 // pyth wsteth price comparison
                 (
