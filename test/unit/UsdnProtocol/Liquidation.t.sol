@@ -403,7 +403,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 1000 gwei, 20_000);
+        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 1000 gwei, 20_000);
 
         priceData = abi.encode(1680 ether);
 

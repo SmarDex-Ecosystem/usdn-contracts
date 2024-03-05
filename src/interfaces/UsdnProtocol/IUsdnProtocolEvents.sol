@@ -263,4 +263,10 @@ interface IUsdnProtocolEvents {
      * @param threshold The new target USDN price.
      */
     event UsdnRebaseThresholdUpdated(uint128 threshold);
+
+    /**
+     * @notice Emitted when the USDN rebase interval is updated.
+     * @param interval The new interval.
+     */
+    event UsdnRebaseIntervalUpdated(uint256 interval);
 }

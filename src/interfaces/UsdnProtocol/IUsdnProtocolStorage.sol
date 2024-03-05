@@ -119,6 +119,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
     function getUsdnRebaseThreshold() external view returns (uint128);
 
+    /// @notice The interval between two automatic rebase checks
+    function getUsdnRebaseInterval() external view returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */

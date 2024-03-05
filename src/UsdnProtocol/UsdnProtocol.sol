@@ -256,6 +256,12 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         emit UsdnRebaseThresholdUpdated(newThreshold);
     }
 
+    /// @inheritdoc IUsdnProtocol
+    function setUsdnRebaseInterval(uint256 newInterval) external onlyOwner {
+        _usdnRebaseInterval = newInterval;
+        emit UsdnRebaseIntervalUpdated(newInterval);
+    }
+
     /**
      * @notice Create initial deposit
      * @dev To be called from `initialize`

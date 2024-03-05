@@ -115,6 +115,12 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
     uint128 internal _usdnRebaseThreshold;
 
+    /**
+     * @notice The interval between two automatic rebase checks
+     * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
+     */
+    uint256 internal _usdnRebaseInterval = 12 hours;
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
@@ -154,6 +160,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The balance of deposits (with asset decimals)
     uint256 internal _balanceVault;
+
+    /// @notice The timestamp when the last USDN rebase check was performed
+    uint256 internal _lastRebaseCheck;
 
     /* ----------------------------- Long positions ----------------------------- */
 
@@ -347,6 +356,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         return _usdnRebaseThreshold;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
+    function getUsdnRebaseInterval() external view returns (uint256) {
+        return _usdnRebaseInterval;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
@@ -389,6 +403,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getBalanceVault() external view returns (uint256) {
         return _balanceVault;
+    }
+
+    function getLastRebaseCheck() external view returns (uint256) {
+        return _lastRebaseCheck;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
