@@ -81,18 +81,21 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         bytes memory priceData = abi.encode(2000 ether);
         protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+
+        // Wait at least 30 seconds to make sure liquidate updates the state
+        skip(oracleMiddleware.getValidationDelay() + 30);
+
+        // Call liquidate to trigger liquidation multiplier update
+        protocol.liquidate(priceData, 0);
 
         uint256 expectedPrice = 2000 ether + 2000 ether * protocol.getPositionFee() / protocol.BPS_DIVISOR();
-        /// @dev TODO: Fix by using liquidation multiplier
-        // uint256 expectedLeverage = protocol.i_getLeverage(
-        //     uint128(expectedPrice),
-        //     protocol.getEffectivePriceForTick(
-        //         protocol.getEffectiveTickForPrice(
-        //             desiredLiqPrice
-        //         ) - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
-        //     )
-        // );
+        uint256 expectedLeverage = protocol.i_getLeverage(
+            uint128(expectedPrice),
+            protocol.getEffectivePriceForTick(
+                protocol.getEffectiveTickForPrice(desiredLiqPrice)
+                    - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
+            )
+        );
 
         vm.recordLogs();
 
@@ -102,8 +105,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         (uint128 leverage, uint256 price,,,) = abi.decode(logs[0].data, (uint128, uint128, int24, uint256, uint256));
 
         assertEq(price, expectedPrice, "assetPrice");
-        /// @dev TODO: Fix by using liquidation multiplier (don't forget to uncomment this)
-        // assertEq(leverage, expectedLeverage, "leverage");
+        assertEq(leverage, expectedLeverage, "leverage");
     }
 
     /**
@@ -130,8 +132,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         skip(1 hours);
 
-        int256 storageBalanceBefore =
-            protocol.longAssetAvailableWithFunding(2000 ether, uint128(block.timestamp - 30 minutes));
+        // Call liquidate to trigger balance update
+        protocol.liquidate(priceData, 0);
+
+        uint256 storageBalanceBefore = protocol.getBalanceLong();
 
         protocol.initiateClosePosition(tick, tickVersion, index, priceData, "");
 
@@ -148,8 +152,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 storageBalanceAfter = protocol.getBalanceLong();
 
         assertEq(action.closeTempTransfer, expectedTempTransfer, "Computed asset to transfer");
-        /// @dev TODO: update when main is merged
-        // assertEq(uint256(storageBalanceBefore) - storageBalanceAfter, expectedTempTransfer, "Protocol balance");
+        assertEq(storageBalanceBefore - storageBalanceAfter, expectedTempTransfer, "Protocol balance");
     }
 
     /**
