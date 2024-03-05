@@ -58,7 +58,7 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolOutdatedTick(uint256 currentVersion, uint256 providedVersion);
 
     /// @dev Indicates that the provided position fee exceeds the maximum allowed
-    error UsdnProtocolMaxPositionFeeExceeded();
+    error UsdnProtocolInvalidPositionFee();
 
     /// @dev Indicates that the provided address for the LiquidationRewardsManager contract is the 0 address
     error UsdnProtocolLiquidationRewardsManagerIsZeroAddress();

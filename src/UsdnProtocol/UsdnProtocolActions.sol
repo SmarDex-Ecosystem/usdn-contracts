@@ -46,8 +46,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
         // Apply fees on price
-        uint256 pendingActionPrice = currentPrice.price;
-        pendingActionPrice -= (pendingActionPrice * _positionFeeBps) / BPS_DIVISOR;
+        uint128 pendingActionPrice =
+            (currentPrice.price - currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateDeposit,
@@ -55,11 +55,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             user: msg.sender,
             _unused: 0,
             amount: amount,
-            assetPrice: pendingActionPrice.toUint128(),
+            assetPrice: pendingActionPrice,
             totalExpo: _totalExpo,
-            balanceVault: _vaultAssetAvailable(
-                _totalExpo, _balanceVault, _balanceLong, pendingActionPrice.toUint128(), _lastPrice
-                ).toUint256(),
+            balanceVault: _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
+                .toUint256(),
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
         });
@@ -102,8 +101,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
         // Apply fees on price
-        uint256 pendingActionPrice = currentPrice.price;
-        pendingActionPrice += (pendingActionPrice * _positionFeeBps) / BPS_DIVISOR;
+        uint128 pendingActionPrice =
+            (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         uint256 totalExpo = _totalExpo;
 
@@ -113,11 +112,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             user: msg.sender,
             _unused: 0,
             amount: usdnAmount,
-            assetPrice: pendingActionPrice.toUint128(),
+            assetPrice: pendingActionPrice,
             totalExpo: totalExpo,
-            balanceVault: _vaultAssetAvailable(
-                totalExpo, _balanceVault, _balanceLong, pendingActionPrice.toUint128(), _lastPrice
-                ).toUint256(),
+            balanceVault: _vaultAssetAvailable(totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
+                .toUint256(),
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
         });
@@ -448,8 +446,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _applyPnlAndFundingAndLiquidate(withdrawalPrice.neutralPrice, withdrawalPrice.timestamp);
 
         // Apply fees on price
-        uint256 withdrawalPriceWithFees =
-            withdrawalPrice.price + (withdrawalPrice.price * _positionFeeBps) / BPS_DIVISOR;
+        uint128 withdrawalPriceWithFees =
+            (withdrawalPrice.price + (withdrawalPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
         // We calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
@@ -460,7 +458,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,
-                withdrawalPriceWithFees.toUint128(), // new price
+                withdrawalPriceWithFees, // new price
                 withdrawal.assetPrice // old price
             )
         );
@@ -635,6 +633,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     /**
      * @notice Calculate how much wstETH must be transferred to a user to close a position.
      * @dev The amount is bound by the amount of wstETH available in the long side.
+     * @param currentPrice The current price of the asset
      * @param tick The tick of the position
      * @param posAmount The amount of the position
      * @param posLeverage The initial leverage of the position

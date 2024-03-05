@@ -164,13 +164,7 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when the position fees are updated.
      * @param positionFee The new position fee (in percentage).
      */
-    event UpdatedPositionFees(uint256 positionFee);
-
-    /**
-     * @notice Emitted when the protocol fee decimals are updated.
-     * @param protocolFeeDecimals The new protocol fee decimals.
-     */
-    event UpdatedProtocolFeeDecimals(uint256 protocolFeeDecimals);
+    event PositionFeeUpdated(uint256 positionFee);
 
     /**
      * @notice Emitted when the oracle middleware is updated.

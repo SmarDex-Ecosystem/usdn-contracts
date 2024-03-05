@@ -223,10 +223,10 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setPositionFeeBps(uint16 newPositionFee) external onlyOwner {
         // newPositionFee greater than max 2000: 20%
         if (newPositionFee > 2000) {
-            revert UsdnProtocolMaxPositionFeeExceeded();
+            revert UsdnProtocolInvalidPositionFee();
         }
         _positionFeeBps = newPositionFee;
-        emit UpdatedPositionFees(newPositionFee);
+        emit PositionFeeUpdated(newPositionFee);
     }
 
     /// @inheritdoc IUsdnProtocol

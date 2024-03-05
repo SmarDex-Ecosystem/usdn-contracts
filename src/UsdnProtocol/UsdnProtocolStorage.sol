@@ -109,6 +109,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The fee threshold above which fee will be sent
     uint256 internal _feeThreshold = 1 ether;
 
+    /// @notice The protocol fee (in percentage)
+    uint16 internal _positionFeeBps = 4; // 0.04%
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
@@ -143,11 +146,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The pending actions queue.
     DoubleEndedQueue.Deque internal _pendingActionsQueue;
-
-    /* ---------------------------------- Fees ---------------------------------- */
-
-    /// @notice The protocol fee (in percentage)
-    uint16 internal _positionFeeBps = 4; // 0.04%
 
     /* ---------------------------------- Vault --------------------------------- */
 
