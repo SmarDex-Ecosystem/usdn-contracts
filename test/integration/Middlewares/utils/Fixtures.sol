@@ -48,6 +48,21 @@ contract ActionsIntegrationFixture is IOracleMiddlewareErrors {
         ProtocolAction.ValidateClosePosition,
         ProtocolAction.Liquidation
     ];
+
+    // all action names
+    string[] public actionNames = [
+        "None",
+        "Initialize",
+        "InitiateDeposit",
+        "ValidateDeposit",
+        "InitiateWithdrawal",
+        "ValidateWithdrawal",
+        "InitiateOpenPosition",
+        "ValidateOpenPosition",
+        "InitiateClosePosition",
+        "ValidateClosePosition",
+        "Liquidation"
+    ];
 }
 
 contract CommonBaseIntegrationFixture is BaseFixture {

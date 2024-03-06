@@ -27,6 +27,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         uint256 initialTimestamp;
         uint256 initialBlock;
         bool enableUsdnRebase;
+        bool enablePositionFees;
     }
 
     SetUpParams public params;
@@ -36,7 +37,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
         initialBlock: block.number,
-        enableUsdnRebase: false
+        enableUsdnRebase: false,
+        enablePositionFees: false
     });
 
     Usdn public usdn;
@@ -69,11 +71,16 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
+
         if (!params.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
             protocol.setUsdnRebaseThreshold(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
             protocol.setTargetUsdnPrice(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
         }
+        if (!testParams.enablePositionFees) {
+            protocol.setPositionFeeBps(0); // 0%
+        }
+
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
         protocol.initialize(
@@ -105,6 +112,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         );
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "usdn dead address balance");
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
+        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         Position memory firstPos = protocol.getLongPosition(
