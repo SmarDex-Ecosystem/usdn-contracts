@@ -109,6 +109,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The fee threshold above which fee will be sent
     uint256 internal _feeThreshold = 1 ether;
 
+    /// @notice The position fee in basis point
+    uint16 internal _positionFeeBps = 4; // 0.04%
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
@@ -311,6 +314,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getProtocolFeeBps() external view returns (uint16) {
         return _protocolFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getPositionFeeBps() external view returns (uint16) {
+        return _positionFeeBps;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
