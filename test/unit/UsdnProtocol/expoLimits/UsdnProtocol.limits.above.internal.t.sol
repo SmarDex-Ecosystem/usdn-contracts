@@ -20,7 +20,8 @@ contract TestUsdnProtocolExpoAboveLimits is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitDeposit` should revert when contract is balanced and position value unbalance
+     * @custom:scenario The `imbalanceLimitDeposit` should revert when contract is balanced
+     * and position value unbalance
      * @custom:given The expo balanced protocol state
      * @custom:when The `imbalanceLimitDeposit` is called with a value above the soft vault limit
      * @custom:then The transaction should revert
@@ -41,8 +42,8 @@ contract TestUsdnProtocolExpoAboveLimits is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitWithdrawal` should revert when contract is balanced and position value
-     * unbalance
+     * @custom:scenario The `imbalanceLimitWithdrawal` should revert when contract is balanced
+     * and position value unbalance
      * @custom:given The expo balanced protocol state
      * @custom:when The `imbalanceLimitWithdrawal` is called with a value above the hard long limit
      * @custom:then The transaction should revert
@@ -63,7 +64,8 @@ contract TestUsdnProtocolExpoAboveLimits is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitOpen` should revert when contract is balanced and position value unbalance
+     * @custom:scenario The `imbalanceLimitOpen` should revert when contract is balanced
+     * and position value unbalance
      * @custom:given The expo balanced protocol state
      * @custom:when The `imbalanceLimitOpen` is called with values above the soft long limit
      * @custom:then The transaction should revert
@@ -90,7 +92,8 @@ contract TestUsdnProtocolExpoAboveLimits is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitClose` should revert when contract is balanced and position value unbalance
+     * @custom:scenario The `imbalanceLimitClose` should revert when contract is balanced
+     * and position value unbalance
      * @custom:given The expo balanced protocol state
      * @custom:when The `imbalanceLimitClose` is called with values above the vault hard limit
      * @custom:then The transaction should revert

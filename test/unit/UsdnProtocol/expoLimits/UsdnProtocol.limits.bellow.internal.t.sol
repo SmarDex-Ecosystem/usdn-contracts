@@ -16,7 +16,8 @@ contract TestUsdnProtocolExpoBellowLimits is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitDeposit` should not revert when contract is balanced
+     * @custom:scenario The `imbalanceLimitDeposit` should not revert when contract is balanced and value bellow the
+     * limit
      * @custom:given The expo balanced protocol state
      * @custom:when The function is called with a value below the limit
      * @custom:then The transaction should not revert
@@ -26,7 +27,8 @@ contract TestUsdnProtocolExpoBellowLimits is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitWithdrawal` should not revert when contract is balanced
+     * @custom:scenario The `imbalanceLimitWithdrawal` should not revert when contract is balanced and value bellow the
+     * limit
      * @custom:given The expo balanced protocol state
      * @custom:when The function is called with a value below the limit
      * @custom:then The transaction should not revert
@@ -36,7 +38,7 @@ contract TestUsdnProtocolExpoBellowLimits is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitOpen` should not revert when contract is balanced
+     * @custom:scenario The `imbalanceLimitOpen` should not revert when contract is balanced and value bellow the limit
      * @custom:given The expo balanced protocol state
      * @custom:when The function is called with values below the limit
      * @custom:then The transaction should not revert
@@ -46,7 +48,7 @@ contract TestUsdnProtocolExpoBellowLimits is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitClose` should not revert when contract is balanced
+     * @custom:scenario The `imbalanceLimitClose` should not revert when contract is balanced and value bellow the limit
      * @custom:given The expo balanced protocol state
      * @custom:when The function is called with values below the limit
      * @custom:then The transaction should not revert
