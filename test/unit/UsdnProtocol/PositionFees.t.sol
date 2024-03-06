@@ -61,6 +61,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         (, uint128 leverage,, uint256 price,,,) =
             abi.decode(logs[0].data, (uint40, uint128, uint128, uint128, int24, uint256, uint256));
 
+        assertEq(logs[0].topics[0], InitiatedOpenPosition.selector);
         assertEq(price, expectedPrice, "assetPrice");
         assertEq(leverage, expectedLeverage, "leverage");
     }
@@ -104,6 +105,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         Vm.Log[] memory logs = vm.getRecordedLogs();
         (uint128 leverage, uint256 price,,,) = abi.decode(logs[0].data, (uint128, uint128, int24, uint256, uint256));
 
+        assertEq(logs[0].topics[0], ValidatedOpenPosition.selector);
         assertEq(price, expectedPrice, "assetPrice");
         assertEq(leverage, expectedLeverage, "leverage");
     }
@@ -199,6 +201,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         Vm.Log[] memory logs = vm.getRecordedLogs();
         (,,, uint256 assetToTransfer,) = abi.decode(logs[1].data, (int24, uint256, uint256, uint256, int256));
 
+        assertEq(logs[1].topics[0], ValidatedClosePosition.selector);
         assertEq(wstETH.balanceOf(address(this)) - balanceBefore, expectedTransfer, "wstETH balance");
         assertEq(assetToTransfer, expectedTransfer, "Computed asset to transfer");
     }
@@ -487,6 +490,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         Vm.Log[] memory logsWithoutFees = vm.getRecordedLogs();
         (, uint256 priceWithoutFees,,,) =
             abi.decode(logsWithoutFees[0].data, (uint128, uint128, int24, uint256, uint256));
+        assertEq(logsWithoutFees[0].topics[0], ValidatedOpenPosition.selector);
 
         /* ----------------------- Validate with position fees ---------------------- */
         vm.revertTo(snapshotId);
@@ -505,9 +509,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         Vm.Log[] memory logsWithFees = vm.getRecordedLogs();
         (, uint256 priceWithFees,,,) = abi.decode(logsWithFees[0].data, (uint128, uint128, int24, uint256, uint256));
+        assertEq(logsWithFees[0].topics[0], ValidatedOpenPosition.selector);
 
         // Check if the price with fees is greater than the price without fees
-
         assertGt(priceWithFees, priceWithoutFees, "Price with fees");
     }
 
@@ -553,6 +557,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         (,,, uint256 assetToTransferWithoutFees,) = abi.decode(logs[1].data, (int24, uint256, uint256, uint256, int256));
         uint256 assetTransferredWithoutFees = wstETH.balanceOf(address(this)) - balanceBeforeValidateWithoutFees;
+        assertEq(logs[1].topics[0], ValidatedClosePosition.selector);
 
         /* ----------------------- Validate with position fees ---------------------- */
         vm.revertTo(snapshotId);
@@ -581,6 +586,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         (,,, uint256 assetToTransferWithFees,) = abi.decode(logs[1].data, (int24, uint256, uint256, uint256, int256));
         uint256 assetTransferredWithFees = wstETH.balanceOf(address(this)) - balanceBeforeValidateWithFees;
+        assertEq(logs[1].topics[0], ValidatedClosePosition.selector);
 
         /* --------------------------------- Checks --------------------------------- */
 

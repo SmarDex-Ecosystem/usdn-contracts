@@ -650,17 +650,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 available = _balanceLong;
 
         // Calculate position value
-        int256 value = _positionValue(
+        uint256 value = _positionValue(
             currentPrice,
             getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
             posAmount,
             posLeverage
-        ).toInt256();
+        );
 
-        if (value > int256(available)) {
-            assetToTransfer_ = uint256(available);
+        if (value > available) {
+            assetToTransfer_ = available;
         } else {
-            assetToTransfer_ = uint256(value);
+            assetToTransfer_ = value;
         }
     }
 
