@@ -26,6 +26,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         uint128 initialPrice;
         uint256 initialTimestamp;
         uint256 initialBlock;
+        bool enablePositionFees;
     }
 
     SetUpParams public params;
@@ -34,7 +35,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         initialLong: 5 ether,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
-        initialBlock: block.number
+        initialBlock: block.number,
+        enablePositionFees: false
     });
 
     Usdn public usdn;
@@ -72,6 +74,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             ADMIN // Fee collector
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
+
+        if (!testParams.enablePositionFees) {
+            protocol.setPositionFeeBps(0); // 0%
+        }
+
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
         protocol.initialize(
@@ -103,6 +110,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         );
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "usdn dead address balance");
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
+        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         Position memory firstPos = protocol.getLongPosition(

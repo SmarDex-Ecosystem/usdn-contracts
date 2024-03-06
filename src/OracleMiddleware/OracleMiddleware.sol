@@ -23,6 +23,15 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
 contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Ownable {
     uint256 internal _validationDelay = 24 seconds;
 
+    /// @notice confidence ratio denominator
+    uint16 private constant CONF_RATIO_DENOM = 10_000;
+    /// @notice confidence ratio: up to 200%
+    uint16 private constant MAX_CONF_RATIO = CONF_RATIO_DENOM * 2;
+
+    /// @notice confidence ratio: default 40%
+    uint16 private _confRatio = 4000; // to divide by CONF_RATIO_DENOM
+
+    /// @notice The number of decimals for the returned price
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
 
     /**
@@ -51,7 +60,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         public
         payable
         virtual
-        returns (PriceInfo memory _result)
+        returns (PriceInfo memory price_)
     {
         if (action == ProtocolAction.None) {
             return _getPythOrChainlinkDataStreamPrice(data, uint64(targetTimestamp), ConfidenceInterval.None);
@@ -170,9 +179,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         FormattedPythPrice memory pythPrice = _getFormattedPythPrice(data, actionTimestamp, MIDDLEWARE_DECIMALS);
 
         if (conf == ConfidenceInterval.Down) {
-            price_.price = uint256(pythPrice.price) - pythPrice.conf;
+            price_.price = uint256(pythPrice.price) - ((pythPrice.conf * _confRatio) / CONF_RATIO_DENOM);
         } else if (conf == ConfidenceInterval.Up) {
-            price_.price = uint256(pythPrice.price) + pythPrice.conf;
+            price_.price = uint256(pythPrice.price) + ((pythPrice.conf * _confRatio) / CONF_RATIO_DENOM);
         } else {
             price_.price = uint256(pythPrice.price);
         }
@@ -208,5 +217,36 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             neutralPrice: uint256(chainlinkOnChainPrice.price),
             timestamp: chainlinkOnChainPrice.timestamp
         });
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                           Price confidence ratio                           */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IOracleMiddleware
+    function getMaxConfRatio() external pure returns (uint16) {
+        return MAX_CONF_RATIO;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function getConfRatioDenom() external pure returns (uint16) {
+        return CONF_RATIO_DENOM;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function getConfRatio() external view returns (uint16) {
+        return _confRatio;
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function setConfRatio(uint16 newConfRatio) external onlyOwner {
+        // confidence ratio limit check
+        if (newConfRatio > MAX_CONF_RATIO) {
+            revert OracleMiddlewareConfRatioTooHigh();
+        }
+
+        _confRatio = newConfRatio;
+
+        emit ConfRatioUpdated(newConfRatio);
     }
 }

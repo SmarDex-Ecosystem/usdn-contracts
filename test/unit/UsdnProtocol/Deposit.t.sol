@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN } from "test/utils/Constants.sol";
 
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -130,11 +131,13 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         // initiate
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
+        assertEq(validationCost, 1);
         protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, "");
 
         skip(oracleMiddleware.getValidationDelay() + 1);
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
+        assertEq(validationCost, 1);
         uint256 balanceBefore = address(this).balance;
         protocol.validateDeposit{ value: 0.5 ether }(currentPrice, "");
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
@@ -150,6 +153,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function _checkValidateDepositWithPrice(uint128 initialPrice, uint128 assetPrice, uint256 expectedUsdnAmount)
         internal
     {
+        vm.prank(ADMIN);
+        protocol.setPositionFeeBps(0); // 0% fees
+
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 
