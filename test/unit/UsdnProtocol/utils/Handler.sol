@@ -78,12 +78,14 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _convertLongPendingAction(action);
     }
 
-    function i_assetToTransfer(int24 tick, uint256 amount, uint128 leverage, uint256 liqMultiplier)
-        external
-        view
-        returns (uint256)
-    {
-        return _assetToTransfer(tick, amount, leverage, liqMultiplier);
+    function i_assetToTransfer(
+        uint128 currentPrice,
+        int24 tick,
+        uint256 amount,
+        uint128 leverage,
+        uint256 liqMultiplier
+    ) external view returns (uint256) {
+        return _assetToTransfer(currentPrice, tick, amount, leverage, liqMultiplier);
     }
 
     function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {
@@ -96,6 +98,24 @@ contract UsdnProtocolHandler is UsdnProtocol {
         returns (PriceInfo memory)
     {
         return _getOraclePrice(action, timestamp, priceData);
+    }
+
+    function i_calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
+        external
+        view
+        returns (uint256 toMint_)
+    {
+        return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
+    }
+
+    function i_vaultAssetAvailable(
+        uint256 totalExpo,
+        uint256 balanceVault,
+        uint256 balanceLong,
+        uint128 newPrice,
+        uint128 oldPrice
+    ) external pure returns (int256 available_) {
+        return _vaultAssetAvailable(totalExpo, balanceVault, balanceLong, newPrice, oldPrice);
     }
 
     function i_vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
@@ -114,7 +134,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getLiquidationPrice(startPrice, leverage);
     }
 
-    function i_getLeverage(uint128 startPrice, uint128 liquidationPrice) external pure returns (uint128 leverage_) {
-        return _getLeverage(startPrice, liquidationPrice);
+    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
+        return _getLeverage(price, liqPrice);
     }
 }
