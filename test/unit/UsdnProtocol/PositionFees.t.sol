@@ -163,7 +163,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
      * @custom:and The leverage is x2
      * @custom:when The user initiates a position opening with 1 wstETH as collateral
      * @custom:and The user validate his position opening with the same price
-     * @custom:and The user should be able to initiate a position closing
+     * @custom:and The user initiates a position closing
      * @custom:and The user should be able to validate his position closing
      * @custom:then The user should receive the expected amount of wstETH according to the fees
      * @custom:and The emitted event should have the correct amount of wstETH to transfer according to the fees
@@ -348,7 +348,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         usdnBalanceAfter = usdn.balanceOf(address(this));
         uint256 finalAssetBalance = wstETH.balanceOf(address(this));
 
-        assertEq(usdnBalanceAfter - usdnBalanceBefore, 0, "usdn balance withdraw");
+        assertEq(usdnBalanceAfter, usdnBalanceBefore, "usdn balance withdraw");
         assertLt(finalAssetBalance, initialAssetBalance, "wstETH balance before and after");
     }
 
