@@ -113,4 +113,24 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
         return _getLiquidationPrice(startPrice, leverage);
     }
+
+    function i_imbalanceLimitDeposit(uint256 depositValue) external view {
+        _imbalanceLimitDeposit(depositValue);
+    }
+
+    function i_imbalanceLimitWithdrawal(uint256 withdrawalValue) external view {
+        _imbalanceLimitWithdrawal(withdrawalValue);
+    }
+
+    function i_imbalanceLimitOpen(uint256 openExpoValue, uint256 openCollatValue) external view {
+        _imbalanceLimitOpen(openExpoValue, openCollatValue);
+    }
+
+    function i_imbalanceLimitClose(uint256 closeExpoValue, uint256 closeCollatValue) external view {
+        _imbalanceLimitClose(closeExpoValue, closeCollatValue);
+    }
+
+    function i_getLeverage(uint128 startPrice, uint128 liquidationPrice) external pure returns (uint128 leverage_) {
+        return _getLeverage(startPrice, liquidationPrice);
+    }
 }

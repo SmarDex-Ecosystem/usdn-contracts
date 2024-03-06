@@ -5,6 +5,8 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
+import { console2 } from "forge-std/Test.sol";
+
 /**
  * @custom:feature The functions of the core of the protocol
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
@@ -128,8 +130,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         vm.skip(true);
 
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        // protocol.initiateDeposit(
+
+        // );
         // we skip 1 day and call liquidate() to have a negative funding
-        skip(1 days);
+        skip(5 days);
         protocol.liquidate(priceData, 1);
 
         int256 lastFunding = protocol.getLastFunding();
@@ -222,22 +227,24 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_funding_NegLong_ZeroVault() public {
         // cannot work now
         // TODO to remove
-        vm.skip(true);
+        // vm.skip(true);
 
         skip(1 hours);
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
-        bytes memory priceData = abi.encode(price);
+        // bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
+        // protocol.initiateOpenPosition(2 ether, price * 90 / 100, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
-        protocol.validateOpenPosition(priceData, "");
+        // protocol.validateOpenPosition(priceData, "");
 
         skip(1 hours);
-        protocol.liquidate(abi.encode(price / 100), 10);
+        protocol.liquidate(abi.encode(price / 10_000), 10);
         assertLt(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo should be negative");
         assertEq(protocol.getBalanceVault(), 0, "vault expo should be zero");
-
+        // TODO check error
+        console2.log(protocol.getBalanceVault());
+        console2.log(protocol.getTotalExpo());
         int256 EMA = protocol.getEMA();
         uint256 fundingSF = protocol.getFundingSF();
         (int256 fund_,) = protocol.funding(uint128(block.timestamp));
