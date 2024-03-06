@@ -102,8 +102,8 @@ struct VaultPendingAction {
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
  * @param tick The tick of the position.
- * @param closeTotalExpo The total expo of the position (only used when closing a position).
  * @param closeAmount The amount of the pending action (only used when closing a position).
+ * @param closeTotalExpo The total expo of the position (only used when closing a position).
  * @param tickVersion The version of the tick.
  * @param index The index of the position in the tick list.
  * @param closeLiqMultiplier The liquidation multiplier at the time of the last update (only used when closing a
