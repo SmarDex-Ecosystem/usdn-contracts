@@ -474,7 +474,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 snapshotId = vm.snapshot();
 
-        /* ----------------------- Validate with position fees ---------------------- */
+        /* --------------------- Validate without position fees --------------------- */
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(0); // 0% fees
 
