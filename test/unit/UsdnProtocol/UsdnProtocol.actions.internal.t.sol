@@ -30,9 +30,13 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
      * @custom:then The asset to transfer is slightly above 1.5 wstETH
      */
     function test_assetToTransfer() public {
-        int24 tick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 4);
+        int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
         uint256 res = protocol.i_assetToTransfer(
-            tick, 1 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
+            params.initialPrice,
+            tick,
+            1 ether,
+            uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()),
+            protocol.getLiquidationMultiplier()
         );
         assertEq(res, 1.512304848730381401 ether);
     }
@@ -47,10 +51,14 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
      * @custom:then The asset to transfer is equal to the long available balance (because we don't have 150 wstETH)
      */
     function test_assetToTransferNotEnoughBalance() public {
-        int24 tick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 4);
-        uint256 longAvailable = uint256(protocol.i_longAssetAvailable(DEFAULT_PARAMS.initialPrice)); // 5 ether
+        int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
+        uint256 longAvailable = uint256(protocol.i_longAssetAvailable(params.initialPrice)); // 5 ether
         uint256 res = protocol.i_assetToTransfer(
-            tick, 100 ether, uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
+            params.initialPrice,
+            tick,
+            100 ether,
+            uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS()),
+            protocol.getLiquidationMultiplier()
         );
         assertEq(res, longAvailable);
     }
@@ -74,7 +82,11 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
 
         int24 tick = protocol.getEffectiveTickForPrice(price);
         uint256 res = protocol.i_assetToTransfer(
-            tick, 100 ether, uint128(10 ** protocol.LEVERAGE_DECIMALS()), protocol.getLiquidationMultiplier()
+            params.initialPrice,
+            tick,
+            100 ether,
+            uint128(10 ** protocol.LEVERAGE_DECIMALS()),
+            protocol.getLiquidationMultiplier()
         );
         assertEq(res, 0, "asset to transfer");
     }

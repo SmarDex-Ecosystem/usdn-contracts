@@ -163,6 +163,11 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
                 getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
+            // Apply conf ratio to pyth confidence
+            pythConf = (
+                pythConf * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals()
+                    * wstethMiddleware.getConfRatio()
+            ) / wstethMiddleware.getConfRatioDenom();
 
             // middleware data
             PriceInfo memory middlewarePrice;
@@ -183,22 +188,16 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             uint256 formattedPythPrice =
                 pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
 
-            // formatted pyth conf
-            uint256 formattedPythConf =
-                pythConf * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
-
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
-                // check price
-                assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
-
-                // Price - conf
-            } else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
-                // check price
-                assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
-
-                // Price only
-            } else {
+                assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + pythConf), priceError);
+            }
+            // Price - conf
+            else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
+                assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - pythConf), priceError);
+            }
+            // Price only
+            else {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice), priceError);
 

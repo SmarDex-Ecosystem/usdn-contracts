@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN } from "test/utils/Constants.sol";
+
+import { PendingAction, ProtocolAction, VaultPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /**
  * @custom:feature The withdraw function of the USDN Protocol
@@ -12,6 +17,8 @@ import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdn
  * @custom:and A user who deposited 1 wstETH at price $2000 to get 2000 USDN
  */
 contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
+    using SafeCast for uint256;
+
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
     uint128 internal constant USDN_AMOUNT = 1000 ether;
@@ -37,6 +44,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The user's wstETH balance is 9 wstETH
      */
     function test_withdrawSetUp() public {
+        // Using the price computed with the default position fees
         assertEq(initialUsdnBalance, 2000 * DEPOSIT_AMOUNT, "initial usdn balance");
         assertEq(initialWstETHBalance, INITIAL_WSTETH_BALANCE - DEPOSIT_AMOUNT, "initial wstETH balance");
     }
@@ -173,8 +181,14 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     function _checkValidateWithdrawWithPrice(uint128 initialPrice, uint128 assetPrice, uint256 expectedAssetAmount)
         public
     {
+        vm.prank(ADMIN);
+        protocol.setPositionFeeBps(0); // 0% fees
+
         bytes memory currentPrice = abi.encode(initialPrice);
         protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "");
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        VaultPendingAction memory withdrawal = protocol.i_toVaultPendingAction(pending);
 
         uint256 vaultBalance = protocol.getBalanceVault(); // save for withdrawn amount calculation in case price
             // decreases
@@ -190,8 +204,35 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
         }
 
-        // theoretical withdrawn amount
-        uint256 withdrawnAmount = uint256(USDN_AMOUNT) * vaultBalance / usdn.totalSupply();
+        PriceInfo memory withdrawalPrice =
+            protocol.i_getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, abi.encode(assetPrice));
+
+        // Apply fees on price
+        uint256 withdrawalPriceWithFees =
+            withdrawalPrice.price - (withdrawalPrice.price * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
+
+        // We calculate the available balance of the vault side, either considering the asset price at the time of the
+        // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
+        // redeem the underlying asset share.
+        uint256 available1 = withdrawal.balanceVault;
+        uint256 available2 = uint256(
+            protocol.i_vaultAssetAvailable(
+                withdrawal.totalExpo,
+                withdrawal.balanceVault,
+                withdrawal.balanceLong,
+                withdrawalPriceWithFees.toUint128(), // new price
+                withdrawal.assetPrice // old price
+            )
+        );
+        uint256 available;
+        if (available1 <= available2) {
+            available = available1;
+        } else {
+            available = available2;
+        }
+
+        // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
+        uint256 withdrawnAmount = FixedPointMathLib.fullMulDiv(withdrawal.amount, available, withdrawal.usdnTotalSupply);
         assertEq(withdrawnAmount, expectedAssetAmount, "asset amount");
 
         vm.expectEmit();

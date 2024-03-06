@@ -79,6 +79,12 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setProtocolFeeBps(uint16 newFeeBps) external;
 
     /**
+     * @notice Update the position fees.
+     * @param newPositionFee The new position fee (in basis points).
+     */
+    function setPositionFeeBps(uint16 newPositionFee) external;
+
+    /**
      * @notice Set the minimum amount of fees to be collected before they can be withdrawn
      * @param newFeeThreshold The minimum amount of fees to be collected before they can be withdrawn
      */
