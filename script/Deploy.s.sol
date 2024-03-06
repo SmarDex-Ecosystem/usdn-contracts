@@ -15,7 +15,16 @@ import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEth
 import { MockLiquidationRewardsManager } from "src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
 
 contract Deploy is Script {
-    function run() external {
+    function run()
+        external
+        returns (
+            WstETH wstETH,
+            WstEthOracleMiddleware middleware,
+            LiquidationRewardsManager liquidationRewardsManager,
+            Usdn usdn,
+            UsdnProtocol protocol
+        )
+    {
         vm.startBroadcast(vm.envAddress("DEPLOYER_ADDRESS"));
 
         uint256 depositAmount = vm.envOr("INIT_DEPOSIT_AMOUNT", uint256(0));
@@ -23,7 +32,6 @@ contract Deploy is Script {
 
         // Deploy wstETH if needed
         address payable wstETHAddress = payable(vm.envOr("WSTETH_ADDRESS", address(0)));
-        WstETH wstETH;
         if (wstETHAddress != address(0)) {
             wstETH = WstETH(wstETHAddress);
             if (vm.envOr("GET_WSTETH", false) && depositAmount > 0 && longAmount > 0) {
@@ -41,8 +49,6 @@ contract Deploy is Script {
         address middlewareAddress = vm.envOr("MIDDLEWARE_ADDRESS", address(0));
         // cache environment type
         bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
-        // cache middleware
-        WstEthOracleMiddleware middleware;
 
         // attach
         if (middlewareAddress != address(0)) {
@@ -78,7 +84,7 @@ contract Deploy is Script {
 
         // Deploy the LiquidationRewardsManager if necessary
         address liquidationRewardsManagerAddress = vm.envOr("LIQUIDATION_REWARDS_MANAGER_ADDRESS", address(0));
-        LiquidationRewardsManager liquidationRewardsManager;
+
         if (liquidationRewardsManagerAddress != address(0)) {
             if (isProdEnv) {
                 liquidationRewardsManager = LiquidationRewardsManager(liquidationRewardsManagerAddress);
@@ -102,7 +108,6 @@ contract Deploy is Script {
 
         // Deploy USDN token, without a specific minter or adjuster for now
         address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
-        Usdn usdn;
         if (usdnAddress != address(0)) {
             usdn = Usdn(usdnAddress);
         } else {
@@ -111,7 +116,7 @@ contract Deploy is Script {
         }
 
         // Deploy the protocol with tick spacing 100 = 1%
-        UsdnProtocol protocol =
+        protocol =
             new UsdnProtocol(usdn, wstETH, middleware, liquidationRewardsManager, 100, vm.envAddress("FEE_COLLECTOR"));
 
         // Grant USDN minter role to protocol and approve wstETH spending
