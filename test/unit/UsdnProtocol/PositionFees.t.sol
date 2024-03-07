@@ -146,8 +146,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 expectedTempTransfer = protocol.i_assetToTransfer(
             uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
             tick,
-            1 ether,
-            action.closeLeverage,
+            action.closeTotalExpo,
             protocol.getLiquidationMultiplier()
         );
 
@@ -189,8 +188,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 expectedTransfer = protocol.i_assetToTransfer(
             uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
             tick,
-            1 ether,
-            action.closeLeverage,
+            action.closeTotalExpo,
             action.closeLiqMultiplier
         );
 
