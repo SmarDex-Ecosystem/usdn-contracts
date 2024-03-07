@@ -27,6 +27,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         uint256 initialTimestamp;
         uint256 initialBlock;
         bool enablePositionFees;
+        bool enableProtocolFees;
+        bool enableFunding;
     }
 
     SetUpParams public params;
@@ -36,7 +38,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
         initialBlock: block.number,
-        enablePositionFees: false
+        enablePositionFees: false,
+        enableProtocolFees: true,
+        enableFunding: true
     });
 
     Usdn public usdn;
@@ -76,7 +80,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
 
         if (!testParams.enablePositionFees) {
-            protocol.setPositionFeeBps(0); // 0%
+            protocol.setPositionFeeBps(0);
+        }
+        if (!testParams.enableProtocolFees) {
+            protocol.setProtocolFeeBps(0);
+        }
+        if (!testParams.enableFunding) {
+            protocol.setFundingSF(0);
+            protocol.resetEMA();
         }
 
         wstETH.approve(address(protocol), type(uint256).max);

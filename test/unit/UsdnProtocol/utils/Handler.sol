@@ -32,6 +32,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
         address feeCollector
     ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
+    /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
+    function resetEMA() external {
+        _EMA = 0;
+    }
+
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         external
         pure
