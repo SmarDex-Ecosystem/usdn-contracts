@@ -34,7 +34,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint128 initialLiqPrice;
         uint128 initialPrice;
         uint256 initialTimestamp;
-        uint256 initialBlock;
         bool fork;
     }
 
@@ -45,7 +44,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialLiqPrice: 1000 ether, // leverage approx 2x
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
-        initialBlock: block.number,
         fork: false
     });
 
@@ -61,6 +59,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         if (testParams.fork) {
             string memory url = vm.rpcUrl("mainnet");
             vm.createSelectFork(url);
+            uint256 initBlock = block.number - 1000;
+            vm.rollFork(initBlock);
             dealAccounts(); // provide test accounts with ETH again
             wstETH = WstETH(payable(WSTETH));
             IPyth pyth = IPyth(PYTH_ORACLE);
@@ -76,8 +76,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             oracleMiddleware = new WstEthOracleMiddleware(
                 address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
             );
+            vm.warp(testParams.initialTimestamp);
         }
-        vm.warp(testParams.initialTimestamp);
         vm.startPrank(DEPLOYER);
         (bool success,) = address(wstETH).call{ value: 1000 ether }("");
         require(success, "DEPLOYER wstETH mint failed");
