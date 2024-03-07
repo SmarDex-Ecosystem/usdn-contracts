@@ -131,7 +131,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     /**
      * @notice Create user positions on the vault side (deposit and withdrawal)
      * @dev The order in which the actions are performed are defined as followed:
-     * @dev InitiateDeposit -> ValidateDeposit -> InitiateWithdrawal
+     * @dev InitiateDeposit -> ValidateDeposit -> InitiateWithdrawal -> ValidateWithdrawal
      * @param user User that performs the actions
      * @param untilAction Action after which the function returns
      * @param positionSize Amount of wstEth to deposit
@@ -162,7 +162,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     /**
      * @notice Create user positions on the long side (open and close a position)
      * @dev The order in which the actions are performed are defined as followed:
-     * @dev InitiateOpenPosition -> ValidateOpenPosition -> InitiateClosePosition
+     * @dev InitiateOpenPosition -> ValidateOpenPosition -> InitiateClosePosition -> ValidateWithdrawal
      * @param user User that performs the actions
      * @param untilAction Action after which the function returns
      * @param positionSize Amount of wstEth to deposit

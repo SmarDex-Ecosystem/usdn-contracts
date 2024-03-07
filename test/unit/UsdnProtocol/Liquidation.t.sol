@@ -96,7 +96,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion,) =
             setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
 
-        // Initate and validate the deposit for the other user
+        // Initiate and validate the deposit for the other user
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, price);
 
         // TODO remove when the MockOracleMiddleware is fixed
@@ -128,7 +128,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion,) =
             setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
 
-        // Initate and validate the deposit, then initiate the withdrawal for the other user
+        // Initiate and validate the deposit, then initiate the withdrawal for the other user
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 1 ether, price);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
