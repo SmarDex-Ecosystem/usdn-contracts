@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.9.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.8.0...v0.9.0) (2024-03-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **positions:** Position and PendingAction structs do not return the leverage anymore, they have the position expo instead
+
+### Features
+
+* **priceProcessing:** entry/exit fees and oracle price confidence ratio ([#82](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/82)) ([48d897b](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/48d897b010b33866fdac85ce667d5b03e9c65741))
+* update Hermes api endpoint to Ra2 Pyth node ([#125](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/125)) ([0c3dd15](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/0c3dd15884cb91814d411b7aa947c437f6da3aef))
+
+
+### Code Refactoring
+
+* **positions:** replace the leverage by the position expo in position and action structs ([#113](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/113)) ([7317c4d](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/7317c4da0669405cdd286a033017157429963630))
+
 ## [0.8.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.7.0...v0.8.0) (2024-02-29)
 
 
