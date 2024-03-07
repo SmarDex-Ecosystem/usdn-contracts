@@ -276,6 +276,42 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
+     * @notice Remove the provided total expo from the protocol and the tick's total expo.
+     * @param tick The tick to remove from
+     * @param tickVersion The tick version to make sure the tick is still valid
+     * @param index Index of the position in the tick array
+     * @param amountToRemove The amount to remove from the position
+     */
+    function _removeAmountFromPosition(int24 tick, uint256 tickVersion, uint256 index, uint128 amountToRemove)
+        internal
+    {
+        (bytes32 tickHash, uint256 version) = _tickHash(tick);
+
+        if (version != tickVersion) {
+            revert UsdnProtocolOutdatedTick(version, tickVersion);
+        }
+
+        Position[] storage tickArray = _longPositions[tickHash];
+        Position memory pos = tickArray[index];
+        if (pos.amount == amountToRemove) {
+            // A lot of duplicated calls if we do it like this
+            _removePosition(tick, tickVersion, index);
+            return;
+        }
+
+        // TODO use getPositionTotalExpo() when #113 is merged
+        uint128 totalExpoToRemove = FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToRemove, pos.amount).toUint128();
+        tickArray[index] = Position({
+            timestamp: pos.timestamp,
+            user: pos.user,
+            totalExpo: pos.totalExpo - totalExpoToRemove,
+            amount: pos.amount - amountToRemove
+        });
+        _totalExpo -= totalExpoToRemove;
+        _totalExpoByTick[tickHash] -= totalExpoToRemove;
+    }
+
+    /**
      * @dev Convert a signed tick to an unsigned index into the Bitmap
      * @param tick The tick to convert, a multiple of `tickSpacing`
      * @return index_ The index into the Bitmap

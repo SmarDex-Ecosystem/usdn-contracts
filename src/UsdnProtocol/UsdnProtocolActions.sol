@@ -22,7 +22,6 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
-    using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
     using SafeCast for int256;
     using LibBitmap for LibBitmap.Bitmap;
@@ -250,6 +249,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         int24 tick,
         uint256 tickVersion,
         uint256 index,
+        uint128 amountToClose,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
     ) external payable initializedAndNonReentrant {
@@ -258,6 +258,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         Position memory pos = getLongPosition(tick, tickVersion, index);
         if (pos.user != msg.sender) {
             revert UsdnProtocolUnauthorized();
+        }
+
+        if (amountToClose > pos.amount) {
+            revert UsdnProtocolAmountToCloseHigherThanPositionAmount(pos.amount, amountToClose);
         }
 
         uint128 priceWithFees;
@@ -269,17 +273,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
         }
 
+        uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToClose, pos.amount).toUint128();
         {
             uint256 liqMultiplier = _liquidationMultiplier;
-            uint256 tempTransfer = _assetToTransfer(priceWithFees, tick, pos.totalExpo, liqMultiplier);
+            uint256 tempTransfer = _assetToTransfer(priceWithFees, tick, totalExpoToClose, liqMultiplier);
 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
                 timestamp: uint40(block.timestamp),
                 user: msg.sender,
                 tick: tick,
-                closeAmount: pos.amount,
-                closeTotalExpo: pos.totalExpo,
+                closeAmount: amountToClose,
+                closeTotalExpo: totalExpoToClose,
                 tickVersion: tickVersion,
                 index: index,
                 closeLiqMultiplier: liqMultiplier,
@@ -293,9 +298,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
         }
 
-        _removePosition(tick, tickVersion, index);
+        // Remove the position if it's fully closed
+        if (amountToClose == pos.amount) {
+            _removePosition(tick, tickVersion, index);
+        } else {
+            _removeAmountFromPosition(tick, tickVersion, index, amountToClose);
+        }
 
-        emit InitiatedClosePosition(msg.sender, tick, tickVersion, index);
+        emit InitiatedClosePosition(msg.sender, tick, tickVersion, index, amountToClose, totalExpoToClose);
 
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();

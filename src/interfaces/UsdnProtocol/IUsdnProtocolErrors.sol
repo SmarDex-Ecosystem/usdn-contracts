@@ -95,4 +95,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided fee collector address is invalid
     error UsdnProtocolInvalidFeeCollector();
+
+    /// @dev Indicates that the amount to close in a position is higher than the amount in the position itself.
+    error UsdnProtocolAmountToCloseHigherThanPositionAmount(uint128 positionAmount, uint128 amountToClose);
 }
