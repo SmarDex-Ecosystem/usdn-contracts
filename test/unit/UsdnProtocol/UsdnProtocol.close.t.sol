@@ -46,6 +46,10 @@ contract TestUsdnProtocolClose is UsdnProtocolBaseFixture {
         Position memory userPosition = protocol.getLongPosition(tick, tickVersion, index);
         uint256 liquidationMultiplier = protocol.getLiquidationMultiplier();
         uint256 balanceLongBefore = protocol.getBalanceLong();
+        uint256 totalExpoBefore = protocol.getTotalExpo();
+        uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(tick, tickVersion);
+        uint256 longPositionLengthBefore = protocol.getLongPositionsLength(tick);
+        uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
         uint256 assetToTransfer =
             protocol.i_assetToTransfer(tick, amountPosition, userPosition.leverage, liquidationMultiplier);
 
@@ -78,6 +82,15 @@ contract TestUsdnProtocolClose is UsdnProtocolBaseFixture {
         action = protocol.i_toLongPendingAction(protocol.getActionablePendingAction(0));
         assertEq(action.user, address(this), "pending action user");
         vm.stopPrank();
+
+        uint256 totalExpoAfter = protocol.getTotalExpo();
+        uint256 totalExpoByTickAfter = protocol.getTotalExpoByTick(tick, tickVersion);
+        uint256 longPositionLengthAfter = protocol.getLongPositionsLength(tick);
+        uint256 totalLongPositionAfter = protocol.getTotalLongPositions();
+        assertLt(totalExpoAfter, totalExpoBefore, "wrong total exposure after");
+        assertLt(totalExpoByTickAfter, totalExpoByTickBefore, "wrong total exposure by tick after");
+        assertEq(longPositionLengthBefore - 1, longPositionLengthAfter, "wrong long position length after");
+        assertEq(totalLongPositionBefore - 1, totalLongPositionAfter, "wrong total long position after");
     }
 
     /**
