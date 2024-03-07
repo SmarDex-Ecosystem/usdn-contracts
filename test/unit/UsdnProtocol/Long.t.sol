@@ -159,7 +159,6 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:scenario Check calculations of `_calculatePositionTotalExpo`
      */
     function test_calculatePositionTotalExpo() public {
-        // amount / leverage = position expo
         uint256 expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1500 ether);
         assertEq(expo, 4 ether, "Position total expo should be 4 ether");
 
@@ -185,7 +184,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
         protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
 
-        /* -------------------------- liqPrice > startprice ------------------------- */
+        /* -------------------------- liqPrice > startPrice ------------------------- */
         liqPrice = 2000 ether + 1;
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
         protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
