@@ -195,7 +195,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     /**
      * @notice Calculate the total exposure of a position
      * @dev Reverts when startPrice <= liquidationPrice
-     * @param amount The amount of ether used as collateral
+     * @param amount The amount of asset used as collateral
      * @param startPrice The price of the asset when the position was created
      * @param liquidationPrice The liquidation price of the position
      * @return totalExpo_ The total exposure of a position
