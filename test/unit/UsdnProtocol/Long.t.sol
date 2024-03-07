@@ -13,7 +13,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x.
  */
-contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolActionsLong is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
@@ -301,8 +301,10 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         protocol.validateOpenPosition(abi.encode(price), "");
         skip(oracleMiddleware.getValidationDelay() + 1);
 
+        Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
+
         vm.expectEmit();
-        emit InitiatedClosePosition(address(this), tick, tickVersion, index);
-        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(price), "");
+        emit InitiatedClosePosition(address(this), tick, tickVersion, index, pos.amount, pos.totalExpo);
+        protocol.initiateClosePosition(tick, tickVersion, index, pos.amount, abi.encode(price), "");
     }
 }
