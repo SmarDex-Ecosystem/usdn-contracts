@@ -155,19 +155,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit(positionSize, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
         protocol.validateDeposit(priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
         protocol.initiateWithdrawal(uint128(usdn.balanceOf(user)), priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
 
         protocol.validateWithdrawal(priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
     }
 
     /**
@@ -193,19 +193,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         bytes memory priceData = abi.encode(price);
 
         (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(positionSize, desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
 
         protocol.validateOpenPosition(priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
 
         protocol.initiateClosePosition(tick_, tickVersion_, index_, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
 
         protocol.validateClosePosition(priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
 
         return (tick_, tickVersion_, index_);
     }

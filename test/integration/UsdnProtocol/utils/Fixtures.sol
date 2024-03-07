@@ -125,4 +125,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
         return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
     }
+
+    function _waitDelay() internal {
+        skip(oracleMiddleware.getValidationDelay() + 1);
+    }
 }
