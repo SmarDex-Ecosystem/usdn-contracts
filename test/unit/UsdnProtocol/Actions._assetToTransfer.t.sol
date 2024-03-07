@@ -5,13 +5,10 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-
 /**
- * @custom:feature Test internal functions of the actions layer
+ * @custom:feature Test the _assetToTransfer internal function of the actions layer
  */
-contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
     using Strings for uint256;
 
     function setUp() public {
@@ -89,44 +86,5 @@ contract TestUsdnProtocolActionsInternal is UsdnProtocolBaseFixture {
             protocol.getLiquidationMultiplier()
         );
         assertEq(res, 0, "asset to transfer");
-    }
-
-    /**
-     * @custom:scenario Validate price data with oracle middleware
-     * @custom:given The oracle middleware requires 1 wei for validation
-     * @custom:when The price is requested for each action (with the exact right amount or more)
-     * @custom:then The price is returned and the validation cost is equal to 1 wei
-     */
-    function test_getOraclePrice() public {
-        oracleMiddleware.setRequireValidationCost(true);
-        for (uint8 i = 0; i <= uint8(type(ProtocolAction).max); i++) {
-            ProtocolAction action = ProtocolAction(i);
-            uint128 currentPrice = 2000 ether;
-            bytes memory priceData = abi.encode(currentPrice);
-            uint256 fee = oracleMiddleware.validationCost(priceData, action);
-            PriceInfo memory price = protocol.i_getOraclePrice{ value: fee }(action, uint40(block.timestamp), priceData);
-            assertEq(price.price, currentPrice, string.concat("price for action", uint256(i).toString()));
-
-            // sending more should not revert either (refund is handled outside of this function and is tested
-            // separately)
-            protocol.i_getOraclePrice{ value: fee * 2 }(action, uint40(block.timestamp), priceData);
-        }
-    }
-
-    /**
-     * @custom:scenario Validate price data but insufficient fee provided
-     * @custom:given The oracle middleware requires 1 wei for validation
-     * @custom:when The price is requested for each action (without providing ether)
-     * @custom:then The function reverts with the `OracleMiddlewareInsufficientFee` error
-     */
-    function test_RevertWhen_getOraclePriceInsufficientFee() public {
-        oracleMiddleware.setRequireValidationCost(true);
-        for (uint8 i = 0; i <= uint8(type(ProtocolAction).max); i++) {
-            ProtocolAction action = ProtocolAction(i);
-            uint128 currentPrice = 2000 ether;
-            bytes memory priceData = abi.encode(currentPrice);
-            vm.expectRevert(UsdnProtocolInsufficientOracleFee.selector);
-            protocol.i_getOraclePrice(action, uint40(block.timestamp), priceData);
-        }
     }
 }
