@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { ADMIN } from "test/utils/Constants.sol";
+import { Vm } from "forge-std/Vm.sol";
+
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { DEPLOYER } from "test/utils/Constants.sol";
 
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
+import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the rebasing of the USDN token depending on its price
@@ -21,11 +24,18 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         params.enableFunding = false;
         params.enableUsdnRebase = true;
         super._setUp(params);
-        vm.prank(ADMIN);
-        protocol.setProtocolFeeBps(0);
+
+        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
-    function test_usdnRebase() public {
+    /**
+     * @custom:scenario Rebasing of the USDN token depending on the asset price
+     * @custom:given An initial USDN price of $1
+     * @custom:when The price of the asset is reduced by $100 and we call `liquidate`
+     * @custom:then The USDN token is rebased
+     * @custom:and The USDN divisor and total supply are adjusted as expected
+     */
+    function test_usdnRebaseWhenLiquidate() public {
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
 
@@ -49,6 +59,8 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         );
         uint256 expectedDivisor = usdn.totalSupply() * usdn.divisor() / expectedTotalSupply;
 
+        // we do not need to wait for the rebase interval to pass because `liquidate` overrides the check
+
         // rebase (no liquidation happens)
         vm.expectEmit();
         emit Rebase(usdn.MAX_DIVISOR(), expectedDivisor);
@@ -62,5 +74,272 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         );
         assertApproxEqRel(usdn.totalSupply(), expectedTotalSupply, 1, "total supply");
         assertEq(protocol.getBalanceVault(), expectedVaultBalance, "vault balance");
+    }
+
+    /**
+     * @custom:scenario USDN rebase before the interval has passed
+     * @custom:given An initial USDN price of $1 and a recent rebase check
+     * @custom:when The price of the asset is reduced by $100 but we wait less than the rebase interval
+     * @custom:then The USDN token is not rebased
+     */
+    function test_rebaseCheckInterval() public {
+        // initial price is $1
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+
+        skip(1 hours);
+
+        // initialize _lastRebaseCheck
+        protocol.i_usdnRebase(params.initialPrice, true);
+        assertGt(protocol.getLastRebaseCheck(), 0, "last rebase check");
+        uint256 usdnPrice = protocol.usdnPrice(params.initialPrice);
+        assertEq(usdnPrice, 1 ether, "initial price");
+
+        // this new price would normally trigger a rebase
+        uint128 newPrice = params.initialPrice - 100 ether;
+
+        skip(protocol.getUsdnRebaseInterval() - 1);
+
+        // but since we checked more recently than `_usdnRebaseInterval` we do not rebase
+        vm.recordLogs();
+        protocol.initiateDeposit(1 ether, abi.encode(newPrice), "");
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        for (uint256 i; i < logs.length; i++) {
+            // no log is a rebase log
+            assertTrue(logs[i].topics[0] != Rebase.selector, "log topic");
+        }
+    }
+
+    /**
+     * @custom:scenario USDN rebase when the price is lower than the threshold
+     * @custom:given An initial USDN price of $1
+     * @custom:when The price of the asset is reduced by $10
+     * @custom:and The price of USDN increases but is still lower than the rebase threshold
+     * @custom:then The USDN token is not rebased
+     */
+    function test_rebasePriceLowerThanThreshold() public {
+        // initial price is $1
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+
+        // initialize _lastRebaseCheck
+        protocol.i_usdnRebase(params.initialPrice, true);
+        assertGt(protocol.getLastRebaseCheck(), 0, "last rebase check");
+        uint256 usdnPrice = protocol.usdnPrice(params.initialPrice);
+        assertEq(usdnPrice, 1 ether, "initial price");
+
+        // we wait long enough to check for a rebase again
+        skip(protocol.getUsdnRebaseInterval() + 1);
+
+        assertGt(block.timestamp, protocol.getLastRebaseCheck() + protocol.getUsdnRebaseInterval(), "time elapsed");
+
+        uint128 newPrice = params.initialPrice - 10 ether;
+        usdnPrice = protocol.usdnPrice(newPrice);
+        assertGt(usdnPrice, 1 ether, "new USDN price compared to initial price");
+        assertLt(usdnPrice, protocol.getUsdnRebaseThreshold(), "new USDN price compared to threshold");
+
+        // but since the price of USDN didn't reach the threshold, we do not rebase
+        vm.recordLogs();
+        protocol.initiateDeposit(1 ether, abi.encode(newPrice), "");
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        for (uint256 i; i < logs.length; i++) {
+            // no log is a rebase log
+            assertTrue(logs[i].topics[0] != Rebase.selector, "log topic");
+        }
+    }
+
+    /**
+     * @custom:scenario Rebasing of the USDN token when initiating a deposit
+     * @custom:given An initial USDN price of $1
+     * @custom:when The price of the asset is reduced by $100 and we call `initiateDeposit`
+     * @custom:then The USDN token is rebased
+     */
+    function test_usdnRebaseWhenInitiateDeposit() public {
+        // initial price is $1
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+
+        skip(1 hours);
+
+        uint128 newPrice = params.initialPrice - 100 ether;
+        assertEq(protocol.getLastRebaseCheck(), 0, "rebase never checked");
+
+        // rebase
+        vm.expectEmit(false, false, false, false);
+        emit Rebase(0, 0);
+        protocol.initiateDeposit(1 ether, abi.encode(newPrice), "");
+    }
+
+    /**
+     * @custom:scenario Rebasing of the USDN token when validating a deposit
+     * @custom:given An initial USDN price of $1 and a deposit which was initiated
+     * @custom:when The price of the asset is reduced by $100 and we call `validateDeposit`
+     * @custom:then The USDN token is rebased
+     */
+    function test_usdnRebaseWhenValidateDeposit() public {
+        skip(1 hours);
+        protocol.initiateDeposit(1 ether, abi.encode(params.initialPrice), "");
+
+        // initial price is $1
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+
+        // we wait long enough to check for a rebase again
+        skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
+
+        uint128 newPrice = params.initialPrice - 100 ether;
+
+        // rebase
+        vm.expectEmit(false, false, false, false);
+        emit Rebase(0, 0);
+        protocol.validateDeposit(abi.encode(newPrice), "");
+    }
+
+    /**
+     * @custom:scenario Rebasing of the USDN token when initiating a withdrawal
+     * @custom:given An initial USDN price of $1
+     * @custom:when The price of the asset is reduced by $100 and we call `initiateWithdrawal`
+     * @custom:then The USDN token is rebased
+     */
+    function test_usdnRebaseWhenInitiateWithdrawal() public {
+        // initial price is $1
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+
+        skip(1 hours);
+
+        uint128 newPrice = params.initialPrice - 100 ether;
+        assertEq(protocol.getLastRebaseCheck(), 0, "rebase never checked");
+
+        vm.prank(DEPLOYER);
+        usdn.approve(address(protocol), 100 ether);
+
+        // rebase
+        vm.expectEmit(false, false, false, false);
+        emit Rebase(0, 0);
+        vm.prank(DEPLOYER);
+        protocol.initiateWithdrawal(100 ether, abi.encode(newPrice), "");
+    }
+
+    /**
+     * @custom:scenario Rebasing of the USDN token when validating a withdrawal
+     * @custom:given An initial USDN price of $1 and a withdrawal which was initiated
+     * @custom:when The price of the asset is reduced by $100 and we call `validateWithdrawal`
+     * @custom:then The USDN token is rebased
+     */
+    function test_usdnRebaseWhenValidateWithdrawal() public {
+        skip(1 hours);
+        vm.startPrank(DEPLOYER);
+        usdn.approve(address(protocol), 100 ether);
+        protocol.initiateWithdrawal(100 ether, abi.encode(params.initialPrice), "");
+        vm.stopPrank();
+
+        // initial price is $1
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+
+        // we wait long enough to check for a rebase again
+        skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
+
+        uint128 newPrice = params.initialPrice - 100 ether;
+
+        // rebase
+        vm.expectEmit(false, false, false, false);
+        emit Rebase(0, 0);
+        vm.prank(DEPLOYER);
+        protocol.validateWithdrawal(abi.encode(newPrice), "");
+    }
+
+    /**
+     * @custom:scenario Rebasing of the USDN token when initiating a long
+     * @custom:given An initial USDN price of $1
+     * @custom:when The price of the asset is reduced by $100 and we call `initiateOpenPosition`
+     * @custom:then The USDN token is rebased
+     */
+    function test_usdnRebaseWhenInitiateOpenPosition() public {
+        // initial price is $1
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+
+        skip(1 hours);
+
+        uint128 newPrice = params.initialPrice - 100 ether;
+        assertEq(protocol.getLastRebaseCheck(), 0, "rebase never checked");
+
+        // rebase
+        vm.expectEmit(false, false, false, false);
+        emit Rebase(0, 0);
+        protocol.initiateOpenPosition(1 ether, params.initialPrice / 2, abi.encode(newPrice), "");
+    }
+
+    /**
+     * @custom:scenario Rebasing of the USDN token when validating a new long
+     * @custom:given An initial USDN price of $1 and a long which was initiated
+     * @custom:when The price of the asset is reduced by $100 and we call `validateOpenPosition`
+     * @custom:then The USDN token is rebased
+     */
+    function test_usdnRebaseWhenValidateOpenPosition() public {
+        skip(1 hours);
+        protocol.initiateOpenPosition(1 ether, params.initialPrice / 2, abi.encode(params.initialPrice), "");
+
+        // initial price is $1
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+
+        // we wait long enough to check for a rebase again
+        skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
+
+        uint128 newPrice = params.initialPrice - 100 ether;
+
+        // rebase
+        vm.expectEmit(false, false, false, false);
+        emit Rebase(0, 0);
+        protocol.validateOpenPosition(abi.encode(newPrice), "");
+    }
+
+    /**
+     * @custom:scenario Rebasing of the USDN token when initiating a long closing
+     * @custom:given An initial USDN price of $1
+     * @custom:when The price of the asset is reduced by $100 and we call `initiateClosePosition`
+     * @custom:then The USDN token is rebased
+     */
+    function test_usdnRebaseWhenInitiateClosePosition() public {
+        int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 2)
+            + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing();
+        // initial price is $1
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+
+        skip(1 hours);
+
+        uint128 newPrice = params.initialPrice - 100 ether;
+        assertEq(protocol.getLastRebaseCheck(), 0, "rebase never checked");
+
+        // rebase
+        vm.expectEmit(false, false, false, false);
+        emit Rebase(0, 0);
+        vm.prank(DEPLOYER);
+        protocol.initiateClosePosition(tick, 0, 0, abi.encode(newPrice), "");
+    }
+
+    /**
+     * @custom:scenario Rebasing of the USDN token when validating a position closing
+     * @custom:given An initial USDN price of $1 and a close position which was initiated
+     * @custom:when The price of the asset is reduced by $100 and we call `validateClosePosition`
+     * @custom:then The USDN token is rebased
+     */
+    function test_usdnRebaseWhenValidateClosePosition() public {
+        (int24 tick, uint256 tickVersion, uint256 index) =
+            protocol.initiateOpenPosition(1 ether, params.initialPrice / 2, abi.encode(params.initialPrice), "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+        protocol.validateOpenPosition(abi.encode(params.initialPrice), "");
+
+        skip(1 hours);
+
+        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(params.initialPrice), "");
+
+        // initial price is $1
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+
+        // we wait long enough to check for a rebase again
+        skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
+
+        uint128 newPrice = params.initialPrice - 100 ether;
+
+        // rebase
+        vm.expectEmit(false, false, false, false);
+        emit Rebase(0, 0);
+        protocol.validateClosePosition(abi.encode(newPrice), "");
     }
 }
