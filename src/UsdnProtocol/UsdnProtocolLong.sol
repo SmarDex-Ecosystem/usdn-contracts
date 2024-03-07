@@ -64,7 +64,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 liquidationMultiplier = getLiquidationMultiplier(timestamp);
         uint128 liqPrice =
             getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liquidationMultiplier);
-        value_ = _positionValue(price, liqPrice, pos.amount, pos.leverage);
+        value_ = _positionValue(price, liqPrice, pos.totalExpo);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -142,24 +142,19 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
      * @param currentPrice The current price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
-     * @param amount The amount of the position
-     * @param initLeverage The initial leverage of the position
+     * @param positionTotalExpo The total expo of the position
      */
-    function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint256 amount, uint128 initLeverage)
+    function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         internal
         pure
         returns (uint256 value_)
     {
+        // Avoid an underflow
         if (currentPrice < liqPriceWithoutPenalty) {
             return 0;
         }
-        // totalExpo = amount * initLeverage
-        // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
-        value_ = FixedPointMathLib.fullMulDiv(
-            amount,
-            uint256(initLeverage) * (currentPrice - liqPriceWithoutPenalty),
-            currentPrice * uint256(10) ** LEVERAGE_DECIMALS
-        );
+
+        value_ = FixedPointMathLib.fullMulDiv(positionTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice);
     }
 
     /**
@@ -197,6 +192,26 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         leverage_ = ((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
     }
 
+    /**
+     * @notice Calculate the total exposure of a position
+     * @dev Reverts when startPrice <= liquidationPrice
+     * @param amount The amount of asset used as collateral
+     * @param startPrice The price of the asset when the position was created
+     * @param liquidationPrice The liquidation price of the position
+     * @return totalExpo_ The total exposure of a position
+     */
+    function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+        internal
+        pure
+        returns (uint128 totalExpo_)
+    {
+        if (startPrice <= liquidationPrice) {
+            revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
+        }
+
+        totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
+    }
+
     function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
         maxLiquidationPrice_ = uint128(price * (BPS_DIVISOR - _safetyMarginBps) / BPS_DIVISOR);
     }
@@ -217,9 +232,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // Adjust state
         _balanceLong += long.amount;
-        uint256 addExpo = FixedPointMathLib.fullMulDiv(long.amount, long.leverage, 10 ** LEVERAGE_DECIMALS);
-        _totalExpo += addExpo;
-        _totalExpoByTick[tickHash] += addExpo;
+        _totalExpo += long.totalExpo;
+        _totalExpoByTick[tickHash] += long.totalExpo;
         ++_positionsInTick[tickHash];
         ++_totalLongPositions;
 
@@ -248,9 +262,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         pos_ = tickArray[index];
 
         // Adjust state
-        uint256 removeExpo = FixedPointMathLib.fullMulDiv(pos_.amount, pos_.leverage, 10 ** LEVERAGE_DECIMALS);
-        _totalExpo -= removeExpo;
-        _totalExpoByTick[tickHash] -= removeExpo;
+        _totalExpo -= pos_.totalExpo;
+        _totalExpoByTick[tickHash] -= pos_.totalExpo;
         --_positionsInTick[tickHash];
         --_totalLongPositions;
 
