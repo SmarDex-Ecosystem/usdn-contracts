@@ -14,13 +14,18 @@ import {
     CHAINLINK_ORACLE_STETH,
     CHAINLINK_ORACLE_GAS
 } from "test/utils/Constants.sol";
+import {
+    PYTH_DATA_STETH_PRICE,
+    PYTH_DATA_STETH_CONF,
+    PYTH_DATA_TIMESTAMP,
+    PYTH_DATA_STETH
+} from "test/integration/Middlewares/utils/Constants.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -33,9 +38,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint128 initialLong;
         uint128 initialLiqPrice;
         uint128 initialPrice;
-        uint256 initialTimestamp;
-        uint256 initialBlock;
+        uint256 initialTimestamp; // ignored if fork is true
         bool fork;
+        uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
     }
 
     SetUpParams public params;
@@ -45,8 +50,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialLiqPrice: 1000 ether, // leverage approx 2x
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
-        initialBlock: block.number,
-        fork: false
+        fork: false,
+        forkWarp: 0
     });
 
     Usdn public usdn;
@@ -61,12 +66,18 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         if (testParams.fork) {
             string memory url = vm.rpcUrl("mainnet");
             vm.createSelectFork(url);
+            uint256 initBlock = block.number - 1000;
+            vm.rollFork(initBlock);
+            if (testParams.forkWarp > 0) {
+                vm.warp(testParams.forkWarp);
+            }
             dealAccounts(); // provide test accounts with ETH again
             wstETH = WstETH(payable(WSTETH));
             IPyth pyth = IPyth(PYTH_ORACLE);
             AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
-            oracleMiddleware =
-                new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH, 1 hours);
+            oracleMiddleware = new WstEthOracleMiddleware(
+                address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
+            );
         } else {
             wstETH = new WstETH();
             mockPyth = new MockPyth();
@@ -76,8 +87,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             oracleMiddleware = new WstEthOracleMiddleware(
                 address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
             );
+            vm.warp(testParams.initialTimestamp);
         }
-        vm.warp(testParams.initialTimestamp);
         vm.startPrank(DEPLOYER);
         (bool success,) = address(wstETH).call{ value: 1000 ether }("");
         require(success, "DEPLOYER wstETH mint failed");
@@ -104,10 +115,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         params = testParams;
     }
 
-    // temporary: will be moved to a base fixture thanks to #91
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
-        returns (uint256, uint256, uint256, bytes memory)
+        returns (uint256 price_, uint256 conf_, uint256 timestamp_, bytes memory data_)
     {
         string[] memory cmds = new string[](4);
         cmds[0] = "./test_utils/target/release/test_utils";
@@ -116,5 +126,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         cmds[3] = vm.toString(timestamp);
         bytes memory result = vm.ffi(cmds);
         return abi.decode(result, (uint256, uint256, uint256, bytes));
+    }
+
+    function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
+        return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
     }
 }

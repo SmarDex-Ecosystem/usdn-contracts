@@ -249,8 +249,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         if (newPrice > _usdnRebaseThreshold) {
             revert UsdnProtocolInvalidTargetUsdnPrice();
         }
-        if (newPrice < uint128(9 * 10 ** (_priceFeedDecimals - 1))) {
-            // values smaller than $0.9 are not allowed
+        if (newPrice < uint128(10 ** _priceFeedDecimals)) {
+            // values smaller than $1 are not allowed
             revert UsdnProtocolInvalidTargetUsdnPrice();
         }
         _targetUsdnPrice = newPrice;
