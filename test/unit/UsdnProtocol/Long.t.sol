@@ -132,33 +132,33 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:or the position value is 2.5 wstETH ($2000 at 4x)
      */
     function test_positionValue() public {
-        uint128 positionExpo = uint128(
+        uint128 positionTotalExpo = uint128(
             FixedPointMathLib.fullMulDiv(
                 1 ether, 2 * 10 ** protocol.LEVERAGE_DECIMALS(), 10 ** protocol.LEVERAGE_DECIMALS()
             )
         );
-        uint256 value = protocol.i_positionValue(2000 ether, 500 ether, positionExpo);
+        uint256 value = protocol.i_positionValue(2000 ether, 500 ether, positionTotalExpo);
         assertEq(value, 1.5 ether, "Position value should be 1.5 ether");
 
-        value = protocol.i_positionValue(1000 ether, 500 ether, positionExpo);
+        value = protocol.i_positionValue(1000 ether, 500 ether, positionTotalExpo);
         assertEq(value, 1 ether, "Position value should be 1 ether");
 
-        value = protocol.i_positionValue(500 ether, 500 ether, positionExpo);
+        value = protocol.i_positionValue(500 ether, 500 ether, positionTotalExpo);
         assertEq(value, 0 ether, "Position value should be 0");
 
-        positionExpo = uint128(
+        positionTotalExpo = uint128(
             FixedPointMathLib.fullMulDiv(
                 1 ether, 4 * 10 ** protocol.LEVERAGE_DECIMALS(), 10 ** protocol.LEVERAGE_DECIMALS()
             )
         );
-        value = protocol.i_positionValue(2000 ether, 750 ether, positionExpo);
+        value = protocol.i_positionValue(2000 ether, 750 ether, positionTotalExpo);
         assertEq(value, 2.5 ether, "Position with 4x leverage should have a 2.5 ether value");
     }
 
     /**
-     * @custom:scenario Check calculations of `_calculatePositionExpo`
+     * @custom:scenario Check calculations of `_calculatePositionTotalExpo`
      */
-    function test_calculatePositionExpo() public {
+    function test_calculatePositionTotalExpo() public {
         // amount / leverage = position expo
         uint256 expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1500 ether);
         assertEq(expo, 4 ether, "Position total expo should be 4 ether");
@@ -171,13 +171,13 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `_calculatePositionExpo` reverts when the liquidation price is greater than
+     * @custom:scenario Call `_calculatePositionTotalExpo` reverts when the liquidation price is greater than
      * the start price.
      * @custom:given A liquidation price greater than or equal to the start price
      * @custom:when _calculatePositionTotalExpo is called
      * @custom:then The transaction reverts with a UsdnProtocolInvalidLiquidationPrice error
      */
-    function test_RevertWhen_calculatePositionExpoWithLiqPriceGreaterThanStartPrice() public {
+    function test_RevertWhen_calculatePositionTotalExpoWithLiqPriceGreaterThanStartPrice() public {
         uint128 startPrice = 2000 ether;
         uint128 liqPrice = 2000 ether;
 
