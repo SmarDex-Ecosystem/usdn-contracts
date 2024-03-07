@@ -5,6 +5,7 @@ on:
 env:
   FOUNDRY_PROFILE: heavy_ci
   URL_ETH_MAINNET: ${{ secrets.URL_ETH_MAINNET }}
+  HERMES_RA2_NODE_URL: ${{ secrets.HERMES_RA2_NODE_URL }}
 
 jobs:
   heavy-ci:
