@@ -32,12 +32,17 @@ contract UsdnProtocolHandler is UsdnProtocol {
         address feeCollector
     ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
-    function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionExpo)
+    /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
+    function resetEMA() external {
+        _EMA = 0;
+    }
+
+    function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         external
         pure
         returns (uint256 value_)
     {
-        return _positionValue(currentPrice, liqPriceWithoutPenalty, positionExpo);
+        return _positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
     }
 
     function i_calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
@@ -63,6 +68,35 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_longTradingExpo(uint128 currentPrice) external view returns (int256) {
         return _longTradingExpo(currentPrice);
+    }
+
+    function i_lastFunding() external view returns (int256) {
+        return _lastFunding;
+    }
+
+    function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+    {
+        return _applyPnlAndFunding(currentPrice, timestamp);
+    }
+
+    function i_liquidatePositions(
+        uint256 currentPrice,
+        uint16 iteration,
+        int256 tempLongBalance,
+        int256 tempVaultBalance
+    )
+        external
+        returns (
+            uint256 liquidatedPositions_,
+            uint16 liquidatedTicks_,
+            int256 remainingCollateral_,
+            uint256 newLongBalance_,
+            uint256 newVaultBalance_
+        )
+    {
+        return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
     function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {
