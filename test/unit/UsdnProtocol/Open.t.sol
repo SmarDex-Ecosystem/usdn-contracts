@@ -68,6 +68,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         ); // expected event
         (int24 tick, uint256 tickVersion, uint256 index) =
             protocol.initiateOpenPosition(uint96(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), "");
+        uint256 tickLiqPrice = protocol.getEffectivePriceForTick(tick);
 
         // check state after opening the position
         assertEq(tick, expectedTick, "tick number");
@@ -77,16 +78,10 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(this)), balanceBefore - LONG_AMOUNT, "user wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + LONG_AMOUNT, "protocol wstETH balance");
         assertEq(protocol.getTotalLongPositions(), totalPositionsBefore + 1, "total long positions");
-        assertEq(
-            protocol.getTotalExpo(),
-            totalExpoBefore + LONG_AMOUNT * expectedLeverage / uint256(10) ** protocol.LEVERAGE_DECIMALS(),
-            "protocol total expo"
-        );
-        assertEq(
-            protocol.getTotalExpoByTick(expectedTick, tickVersion),
-            LONG_AMOUNT * expectedLeverage / uint256(10) ** protocol.LEVERAGE_DECIMALS(),
-            "total expo in tick"
-        );
+        uint256 positionExpo =
+            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, uint128(tickLiqPrice));
+        assertEq(protocol.getTotalExpo(), totalExpoBefore + positionExpo, "protocol total expo");
+        assertEq(protocol.getTotalExpoByTick(expectedTick, tickVersion), positionExpo, "total expo in tick");
         assertEq(protocol.getPositionsInTick(expectedTick, tickVersion), 1, "positions in tick");
         assertEq(protocol.getBalanceLong(), balanceLongBefore + LONG_AMOUNT, "balance of long side");
 
@@ -202,13 +197,11 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
         assertEq(pos.user, tempPos.user, "user");
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
-        assertEq(pos.amount, tempPos.amount, "amount");
-        // price increased -> leverage decreased
-        assertLt(pos.leverage, tempPos.leverage, "leverage");
+        // price increased -> total expo decreased
+        assertLt(pos.totalExpo, tempPos.totalExpo, "totalExpo");
 
-        uint256 posTotalExpo = LONG_AMOUNT * pos.leverage / uint256(10) ** protocol.LEVERAGE_DECIMALS();
-        assertEq(protocol.getTotalExpoByTick(tick, tickVersion), posTotalExpo, "total expo in tick");
-        assertEq(protocol.getTotalExpo(), initialTotalExpo + posTotalExpo, "total expo");
+        assertEq(protocol.getTotalExpoByTick(tick, tickVersion), pos.totalExpo, "total expo in tick");
+        assertEq(protocol.getTotalExpo(), initialTotalExpo + pos.totalExpo, "total expo");
     }
 
     /**
@@ -248,7 +241,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
         assertEq(pos.amount, tempPos.amount, "amount");
         assertLt(newTick, tick, "tick");
-        assertLe(pos.leverage, protocol.getMaxLeverage(), "leverage");
+        assertGt(pos.totalExpo, tempPos.totalExpo, "totalExpo");
     }
 
     /**

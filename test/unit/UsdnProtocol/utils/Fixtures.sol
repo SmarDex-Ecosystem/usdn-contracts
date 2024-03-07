@@ -50,7 +50,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
-    uint128 public initialLongLeverage;
+    uint128 public initialLongExpo;
     address[] public users;
 
     modifier prankUser(address user) {
@@ -109,7 +109,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();
-        initialLongLeverage = firstPos.leverage;
+        initialLongExpo = firstPos.totalExpo;
         params = testParams;
     }
 
@@ -128,9 +128,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         Position memory firstPos = protocol.getLongPosition(
             firstPosTick + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(), 0, 0
         );
-        uint256 firstPosLeverage =
-            protocol.i_getLeverage(params.initialPrice, protocol.getEffectivePriceForTick(firstPosTick));
-        assertEq(firstPos.leverage, firstPosLeverage, "first pos leverage");
+
+        assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");

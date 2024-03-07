@@ -3,15 +3,15 @@ pragma solidity >=0.8.0;
 
 /**
  * @notice Information about a long user position.
- * @param leverage The leverage of the position (0 for vault deposits).
  * @param timestamp The timestamp of the position start.
  * @param user The user address.
+ * @param totalExpo The total expo of the position (0 for vault deposits).
  * @param amount The amount of the position.
  */
 struct Position {
     uint40 timestamp; // 5 bytes. Max 1_099_511_627_775 (36812-02-20 01:36:15)
     address user; // 20 bytes
-    uint128 leverage; // 16 bytes. Max 340_282_366_920_938_463.463_374_607_431_768_211_455 x
+    uint128 totalExpo; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 ether
     uint128 amount; // 16 bytes.
 }
 
@@ -103,7 +103,7 @@ struct VaultPendingAction {
  * @param user The user address.
  * @param tick The tick of the position.
  * @param closeAmount The amount of the pending action (only used when closing a position).
- * @param closeLeverage The initial leverage of the position (only used when closing a position).
+ * @param closeTotalExpo The total expo of the position (only used when closing a position).
  * @param tickVersion The version of the tick.
  * @param index The index of the position in the tick list.
  * @param closeLiqMultiplier The liquidation multiplier at the time of the last update (only used when closing a
@@ -117,7 +117,7 @@ struct LongPendingAction {
     address user; // 20 bytes
     int24 tick; // 3 bytes
     uint128 closeAmount; // 16 bytes
-    uint128 closeLeverage; // 16 bytes
+    uint128 closeTotalExpo; // 16 bytes
     uint256 tickVersion; // 32 bytes
     uint256 index; // 32 bytes
     uint256 closeLiqMultiplier; // 32 bytes
