@@ -41,7 +41,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         skip(oracleMiddleware.getValidationDelay() + 1);
 
         // Add more to balance long because of a bug in _positionValue calculation
-        protocol.initiateOpenPosition(10 ether, params.initialPrice - 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(100 ether, params.initialPrice - 1000 ether, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
@@ -246,7 +246,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:and a LiquidatedPosition event is emitted
      * @custom:and the user doesn't receive his funds back
      */
-    function test_validatePartialClosePositionUnderwater() external {
+    function test_validatePartialCloseUnderwaterPosition() external {
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
@@ -294,6 +294,58 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             longBalanceBefore - remainingPosTickValue + action.closeTempTransfer - assetToTransfer,
             protocol.getBalanceLong(),
             "Collateral of the position should have been removed from the long side"
+        );
+    }
+
+    /**
+     * @custom:scenario Validate a partial close of a position that just went in profit
+     * @custom:given A validated open position
+     * @custom:and The initiate position is already done for half of the position
+     * @custom:and The price increased above by 200$ before the validation
+     * @custom:when The owner of the position validates the position closing
+     * @custom:then The state of the protocol is updated
+     * @custom:and the user receives his funds back + some profits
+     */
+    function test_validatePartialClosePositionInProfit() external {
+        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+
+        /* ------------------------- Initiate Close Position ------------------------ */
+        Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
+        uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
+
+        uint128 amountToClose = pos.amount / 2;
+        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+
+        /* ------------------------- Validate Close Position ------------------------ */
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        uint128 price = DEFAULT_PARAMS.initialPrice + 200 ether;
+        uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
+        uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
+        uint256 assetToTransfer =
+            protocol.i_assetToTransfer(price, action.tick, action.closeTotalExpo, action.closeLiqMultiplier);
+        priceData = abi.encode(price);
+        int256 profits = int256(assetToTransfer - action.closeAmount);
+
+        assertGt(profits, 0, "User should be in profits");
+
+        vm.expectEmit();
+        emit ValidatedClosePosition(address(this), tick, tickVersion, index, assetToTransfer, profits);
+        protocol.i_validateClosePosition(address(this), priceData);
+
+        assertEq(
+            protocol.getAsset().balanceOf(address(this)),
+            assetBalanceBefore + assetToTransfer,
+            "Test contract address should not have received any asset"
+        );
+
+        /* -------------------------- Balance Vault & Long -------------------------- */
+        assertEq(vaultBalanceBefore, protocol.getBalanceVault(), "Balance of the vault should not have changed");
+        assertApproxEqAbs(
+            longBalanceBefore - uint256(profits),
+            protocol.getBalanceLong(),
+            1,
+            "Porfits should have been subtractedfrom the long's balance"
         );
     }
 }
