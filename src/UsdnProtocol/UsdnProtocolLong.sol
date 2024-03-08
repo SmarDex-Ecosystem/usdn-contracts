@@ -252,8 +252,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @notice Remove the provided total amount from the protocol and the tick's total expo.
-     * @dev If the amount to remove is greater or equal than the position's, the position is deleted.
+     * @notice Remove the provided total amount from its position and update the position, tick and protocol's balances.
+     * If the amount to remove is greater or equal than the position's, the position is deleted instead.
      * @param tick The tick to remove from
      * @param index Index of the position in the tick array
      * @param pos The position to remove the amount from
