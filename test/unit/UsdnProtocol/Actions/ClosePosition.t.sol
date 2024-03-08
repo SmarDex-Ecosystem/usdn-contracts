@@ -117,6 +117,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
         uint256 totalExpoBefore = protocol.getTotalExpo();
         uint256 balanceLongBefore = protocol.getBalanceLong();
+        uint256 longPositionsAmountBefore = protocol.getTotalLongPositions();
 
         /* ------------------------ Initiate the close action ----------------------- */
         vm.expectEmit();
@@ -163,6 +164,11 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             balanceLongBefore - assetToTransfer,
             protocol.getBalanceLong(),
             "assetToTransfer should have been subtracted from the long balance of the protocol"
+        );
+        assertEq(
+            longPositionsAmountBefore,
+            protocol.getTotalLongPositions(),
+            "The amount of long positions should not have changed"
         );
     }
 
@@ -269,6 +275,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         uint256 remainingPosTickValue = uint256(protocol.i_tickValue(liquidationPrice, tick, remainingPos.totalExpo));
         uint256 assetToTransfer =
             protocol.i_assetToTransfer(liquidationPrice, action.tick, action.closeTotalExpo, action.closeLiqMultiplier);
+        uint256 longPositionsAmountBefore = protocol.getTotalLongPositions();
         priceData = abi.encode(liquidationPrice);
 
         // Make sure we liquidate the tick and the position at once
@@ -279,9 +286,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         protocol.i_validateClosePosition(address(this), priceData);
 
         assertEq(
-            protocol.getAsset().balanceOf(address(this)),
-            assetBalanceBefore,
-            "Test contract address should not have received any asset"
+            protocol.getAsset().balanceOf(address(this)), assetBalanceBefore, "User should not have received any asset"
         );
 
         /* -------------------------- Balance Vault & Long -------------------------- */
@@ -294,6 +299,9 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             longBalanceBefore - remainingPosTickValue + action.closeTempTransfer - assetToTransfer,
             protocol.getBalanceLong(),
             "Collateral of the position should have been removed from the long side"
+        );
+        assertEq(
+            protocol.getTotalLongPositions(), longPositionsAmountBefore - 1, "The position should have been removed"
         );
     }
 
