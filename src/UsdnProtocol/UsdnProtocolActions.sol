@@ -305,7 +305,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _removeAmountFromPosition(tick, index, pos, amountToClose);
         }
 
-        emit InitiatedClosePosition(msg.sender, tick, tickVersion, index, amountToClose, totalExpoToClose);
+        emit InitiatedClosePosition(
+            msg.sender, tick, tickVersion, index, pos.amount - amountToClose, pos.totalExpo - totalExpoToClose
+        );
 
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
@@ -547,7 +549,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // However, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
         // of _maxLeverage
         if (leverage > _maxLeverage) {
-            // retrieve and remove position
+            // remove the position
             _removeAmountFromPosition(long.tick, long.index, pos, pos.amount);
             // theoretical liquidation price for _maxLeverage
             liqPriceWithoutPenalty = _getLiquidationPrice(startPrice, _maxLeverage.toUint128());

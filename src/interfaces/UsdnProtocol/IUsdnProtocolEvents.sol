@@ -100,16 +100,16 @@ interface IUsdnProtocolEvents {
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
-     * @param amountClosed The amount of collateral subtracted from the position.
-     * @param totalExpoClosed The total expo subtracted from the position.
+     * @param amountRemaining The amount of collateral reminaing on the position.
+     * @param totalExpoRemaining The total expo remaining on the position.
      */
     event InitiatedClosePosition(
         address indexed user,
         int24 tick,
         uint256 tickVersion,
         uint256 index,
-        uint128 amountClosed,
-        uint128 totalExpoClosed
+        uint128 amountRemaining,
+        uint128 totalExpoRemaining
     );
 
     /**

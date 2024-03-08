@@ -124,7 +124,14 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
 
         /* ------------------------ Initiate the close action ----------------------- */
         vm.expectEmit();
-        emit InitiatedClosePosition(address(this), tick, tickVersion, index, amountToClose, totalExpoToClose);
+        emit InitiatedClosePosition(
+            address(this),
+            tick,
+            tickVersion,
+            index,
+            posBefore.amount - amountToClose,
+            posBefore.totalExpo - totalExpoToClose
+        );
         protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
 
         Position memory posAfter = protocol.getLongPosition(tick, tickVersion, index);

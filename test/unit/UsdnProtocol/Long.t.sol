@@ -303,7 +303,7 @@ contract TestUsdnProtocolActionsLong is UsdnProtocolBaseFixture {
         Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
 
         vm.expectEmit();
-        emit InitiatedClosePosition(address(this), tick, tickVersion, index, pos.amount, pos.totalExpo);
+        emit InitiatedClosePosition(address(this), tick, tickVersion, index, 0, 0);
         protocol.initiateClosePosition(tick, tickVersion, index, pos.amount, abi.encode(price), "");
     }
 }
