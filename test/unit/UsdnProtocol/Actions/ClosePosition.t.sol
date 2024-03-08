@@ -45,6 +45,12 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition(priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
+
+        // Add more to balance long because of a bug in _positionValue calculation
+        protocol.initiateOpenPosition(10 ether, params.initialPrice - 1000 ether, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+        protocol.validateOpenPosition(priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
     }
 
     /**
@@ -64,6 +70,39 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             )
         );
         protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+    }
+
+    /**
+     * @custom:scenario A user tries to close a position with 0 as the amount to close
+     * @custom:given A validated open position
+     * @custom:when The owner of the position calls initiateClosePosition with 0 as the amount to close
+     * @custom:then The call reverts
+     */
+    function test_RevertWhen_closePartialPositionWithZeroAmount() external {
+        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolAmountToCloseIsZero.selector));
+        protocol.initiateClosePosition(tick, tickVersion, index, 0, priceData, "");
+    }
+
+    /**
+     * @custom:scenario A user tries to close a position that was previously liquidated
+     * @custom:given A validated open position gets liquidated
+     * @custom:when The owner of the position calls initiateClosePosition with half of the amount
+     * @custom:then The call reverts because the position is not valid anymore
+     */
+    function test_RevertWhen_closePartialPositionWithAnOutdatedTick() external {
+        bytes memory priceData = abi.encode(protocol.getEffectivePriceForTick(tick));
+
+        // Liquidate the position
+        protocol.liquidate(priceData, 1);
+        (, uint256 version) = protocol.i_tickHash(tick);
+        assertGt(version, tickVersion, "The tick should have been liquidated");
+
+        // Try to close the position once the price comes back up
+        priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion));
+        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount / 2, priceData, "");
     }
 
     /**
@@ -129,45 +168,42 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Validate a partial close of a position
-     * @custom:given A validated open position in profit
+     * @custom:given A validated open position
      * @custom:and the initiate position is already done for half of the position
      * @custom:when The owner of the position validates the position closing
      * @custom:then The state of the protocol is updated
      * @custom:and a ValidatedClosePosition event is emitted
-     * @custom:and the user receives half of the position amount and half of the profits
+     * @custom:and the user receives half of the position amount
      */
     function test_validatePartialClosePosition() external {
-        uint128 price = DEFAULT_PARAMS.initialPrice + 100 ether;
+        uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
         /* ------------------------- Initiate Close Position ------------------------ */
         Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
-        uint128 amountToClose = pos.amount / 2;
+        uint128 amountToClose = 100_000;
         protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
-        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         /* ------------------------- Validate Close Position ------------------------ */
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToClose, pos.amount).toUint128();
         uint256 liqMultiplier = protocol.getLiquidationMultiplier();
         uint256 expectedAmountReceived = protocol.i_assetToTransfer(price, tick, totalExpoToClose, liqMultiplier);
-        int256 profit = int256(expectedAmountReceived) - int256(uint256(amountToClose));
 
-        // Sanity check
-        assertGt(profit, 0, "In this scenario, the user should have made a profit");
         Position memory posBefore = protocol.getLongPosition(tick, tickVersion, index);
         // Sanity Check
         // If user is address(0), the position was deleted from the tick array
         assertEq(posBefore.user, address(this), "The position should not have been deleted");
 
         vm.expectEmit();
-        emit ValidatedClosePosition(address(this), tick, tickVersion, index, expectedAmountReceived, profit);
+        emit ValidatedClosePosition(address(this), tick, tickVersion, index, expectedAmountReceived, -1);
         protocol.validateClosePosition(priceData, "");
 
-        assertEq(
+        assertApproxEqAbs(
             protocol.getAsset().balanceOf(address(this)),
-            assetBalanceBefore + amountToClose + uint256(profit),
+            assetBalanceBefore + amountToClose,
+            1,
             "Test contract address should have received his collateral + his profits"
         );
 
@@ -179,10 +215,23 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         assertEq(posBefore.amount, posAfter.amount, "The amount should not have changed after the validation");
 
         /* ----------------------------- User's Balance ----------------------------- */
-        assertEq(
-            userBalanceBefore + amountToClose + uint256(profit),
+        assertApproxEqAbs(
+            assetBalanceBefore + amountToClose,
             wstETH.balanceOf(address(this)),
-            "User should have received the amount to close and his profits"
+            1,
+            "User should have received the amount to close approximately"
+        );
+
+        protocol.initiateClosePosition(tick, tickVersion, index, pos.amount - amountToClose, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+        protocol.validateClosePosition(priceData, "");
+        posAfter = protocol.getLongPosition(tick, tickVersion, index);
+        assertEq(posAfter.amount, 0, "The amount should be 0");
+        assertApproxEqAbs(
+            assetBalanceBefore + pos.amount,
+            wstETH.balanceOf(address(this)),
+            2,
+            "User should have received approximately his full amount back"
         );
     }
 

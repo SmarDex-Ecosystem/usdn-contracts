@@ -145,7 +145,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /// @inheritdoc IUsdnProtocolActions
     function initiateOpenPosition(
-        uint96 amount,
+        uint128 amount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
@@ -264,6 +264,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolAmountToCloseHigherThanPositionAmount(pos.amount, amountToClose);
         }
 
+        if (amountToClose == 0) {
+            revert UsdnProtocolAmountToCloseIsZero();
+        }
+
         uint128 priceWithFees;
         {
             PriceInfo memory currentPrice =
@@ -296,13 +300,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _balanceLong -= tempTransfer;
 
             _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
-        }
 
-        // Remove the position if it's fully closed
-        if (amountToClose == pos.amount) {
-            _removePosition(tick, tickVersion, index);
-        } else {
-            _removeAmountFromPosition(tick, tickVersion, index, amountToClose);
+            // Remove the position if it's fully closed
+            _removeAmountFromPosition(tick, index, pos, amountToClose);
         }
 
         emit InitiatedClosePosition(msg.sender, tick, tickVersion, index, amountToClose, totalExpoToClose);
@@ -536,6 +536,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
+        // Get the position
+        Position memory pos = _longPositions[tickHash][long.index];
         // Re-calculate leverage
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(long.tick - int24(_liquidationPenalty) * _tickSpacing);
         // reverts if liquidationPrice >= entryPrice
@@ -545,8 +547,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // However, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
         // of _maxLeverage
         if (leverage > _maxLeverage) {
-            // remove and retrieve position
-            Position memory pos = _removePosition(long.tick, long.tickVersion, long.index);
+            // retrieve and remove position
+            _removeAmountFromPosition(long.tick, long.index, pos, pos.amount);
             // theoretical liquidation price for _maxLeverage
             liqPriceWithoutPenalty = _getLiquidationPrice(startPrice, _maxLeverage.toUint128());
             // adjust to closest valid tick down
@@ -565,13 +567,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             emit LiquidationPriceUpdated(long.tick, long.tickVersion, long.index, tick, tickVersion, index);
             emit ValidatedOpenPosition(pos.user, leverage, startPrice, tick, tickVersion, index);
         } else {
-            Position storage pos = _longPositions[tickHash][long.index];
             // Calculate the new total expo
             uint128 expoBefore = pos.totalExpo;
             uint128 expoAfter = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
 
             // Update the total expo of the position
-            pos.totalExpo = expoAfter;
+            _longPositions[tickHash][long.index].totalExpo = expoAfter;
             // Update the total expo by adding the position's new expo and removing the old one.
             // Do not use += or it will underflow
             _totalExpo = _totalExpo + expoAfter - expoBefore;

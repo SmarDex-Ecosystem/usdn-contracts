@@ -251,64 +251,42 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         tickArray.push(long);
     }
 
-    function _removePosition(int24 tick, uint256 tickVersion, uint256 index) internal returns (Position memory pos_) {
-        (bytes32 tickHash, uint256 version) = _tickHash(tick);
-
-        if (version != tickVersion) {
-            revert UsdnProtocolOutdatedTick(version, tickVersion);
-        }
-
-        Position[] storage tickArray = _longPositions[tickHash];
-        pos_ = tickArray[index];
-
-        // Adjust state
-        _totalExpo -= pos_.totalExpo;
-        _totalExpoByTick[tickHash] -= pos_.totalExpo;
-        --_positionsInTick[tickHash];
-        --_totalLongPositions;
-
-        // Remove from tick array (set to zero to avoid shifting indices)
-        delete tickArray[index];
-        if (_positionsInTick[tickHash] == 0) {
-            // we removed the last position in the tick
-            _tickBitmap.unset(_tickToBitmapIndex(tick));
-        }
-    }
-
     /**
-     * @notice Remove the provided total expo from the protocol and the tick's total expo.
+     * @notice Remove the provided total amount from the protocol and the tick's total expo.
+     * @dev If the amount to remove is greater or equal than the position's, the position is deleted.
      * @param tick The tick to remove from
-     * @param tickVersion The tick version to make sure the tick is still valid
      * @param index Index of the position in the tick array
+     * @param pos The position to remove the amount from
      * @param amountToRemove The amount to remove from the position
      */
-    function _removeAmountFromPosition(int24 tick, uint256 tickVersion, uint256 index, uint128 amountToRemove)
+    function _removeAmountFromPosition(int24 tick, uint256 index, Position memory pos, uint128 amountToRemove)
         internal
     {
-        (bytes32 tickHash, uint256 version) = _tickHash(tick);
+        (bytes32 tickHash,) = _tickHash(tick);
+        uint128 totalExpoToClose;
+        if (amountToRemove < pos.amount) {
+            totalExpoToClose = uint128(FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToRemove, pos.amount));
+            _longPositions[tickHash][index] = Position({
+                timestamp: pos.timestamp,
+                user: pos.user,
+                totalExpo: pos.totalExpo - totalExpoToClose,
+                amount: pos.amount - amountToRemove
+            });
+        } else {
+            totalExpoToClose = pos.totalExpo;
+            --_positionsInTick[tickHash];
+            --_totalLongPositions;
 
-        if (version != tickVersion) {
-            revert UsdnProtocolOutdatedTick(version, tickVersion);
+            // Remove from tick array (set to zero to avoid shifting indices)
+            delete _longPositions[tickHash][index];
+            if (_positionsInTick[tickHash] == 0) {
+                // we removed the last position in the tick
+                _tickBitmap.unset(_tickToBitmapIndex(tick));
+            }
         }
 
-        Position[] storage tickArray = _longPositions[tickHash];
-        Position memory pos = tickArray[index];
-        if (pos.amount == amountToRemove) {
-            // A lot of duplicated calls if we do it like this
-            _removePosition(tick, tickVersion, index);
-            return;
-        }
-
-        // TODO use getPositionTotalExpo() when #113 is merged
-        uint128 totalExpoToRemove = FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToRemove, pos.amount).toUint128();
-        tickArray[index] = Position({
-            timestamp: pos.timestamp,
-            user: pos.user,
-            totalExpo: pos.totalExpo - totalExpoToRemove,
-            amount: pos.amount - amountToRemove
-        });
-        _totalExpo -= totalExpoToRemove;
-        _totalExpoByTick[tickHash] -= totalExpoToRemove;
+        _totalExpo -= totalExpoToClose;
+        _totalExpoByTick[tickHash] -= totalExpoToClose;
     }
 
     /**

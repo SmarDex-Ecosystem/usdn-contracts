@@ -88,7 +88,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @return index_ The index of the new position inside the tick array
      */
     function initiateOpenPosition(
-        uint96 amount,
+        uint128 amount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData

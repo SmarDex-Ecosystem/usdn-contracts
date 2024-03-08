@@ -98,4 +98,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the amount to close in a position is higher than the amount in the position itself.
     error UsdnProtocolAmountToCloseHigherThanPositionAmount(uint128 positionAmount, uint128 amountToClose);
+
+    /// @dev Indicates that the amount to close in a position is 0.
+    error UsdnProtocolAmountToCloseIsZero();
 }
