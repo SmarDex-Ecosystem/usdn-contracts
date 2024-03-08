@@ -11,8 +11,7 @@ import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the rebasing of the USDN token depending on its price
- * @custom:background Given a protocol instance that was initialized with more expo in the long side and rebase+funding
- * enabled
+ * @custom:background Given a protocol instance that was initialized with more expo in the long side and rebase enabled
  */
 contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
     function setUp() public {
