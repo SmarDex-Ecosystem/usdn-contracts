@@ -12,7 +12,6 @@ import {
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature The close position functions of the USDN Protocol
@@ -29,13 +28,14 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
     uint256 private index;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        SetUpParams memory params = DEFAULT_PARAMS;
+        params.enableFunding = false;
+        params.enablePositionFees = false;
+        params.enableProtocolFees = false;
+
+        super._setUp(params);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
-
-        vm.prank(ADMIN);
-        protocol.setFundingSF(0);
-        protocol.setEMA(0);
 
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
 

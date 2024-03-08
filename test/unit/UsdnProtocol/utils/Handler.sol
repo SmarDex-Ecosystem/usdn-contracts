@@ -176,8 +176,4 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
         return _getLeverage(price, liqPrice);
     }
-
-    function setEMA(int256 newEMA) external {
-        _EMA = newEMA;
-    }
 }
