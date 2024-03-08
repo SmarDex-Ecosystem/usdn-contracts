@@ -263,17 +263,17 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         internal
     {
         (bytes32 tickHash,) = _tickHash(tick);
-        uint128 totalExpoToClose;
+        uint128 totalExpoToRemove;
         if (amountToRemove < pos.amount) {
-            totalExpoToClose = uint128(FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToRemove, pos.amount));
+            totalExpoToRemove = uint128(FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToRemove, pos.amount));
             _longPositions[tickHash][index] = Position({
                 timestamp: pos.timestamp,
                 user: pos.user,
-                totalExpo: pos.totalExpo - totalExpoToClose,
+                totalExpo: pos.totalExpo - totalExpoToRemove,
                 amount: pos.amount - amountToRemove
             });
         } else {
-            totalExpoToClose = pos.totalExpo;
+            totalExpoToRemove = pos.totalExpo;
             --_positionsInTick[tickHash];
             --_totalLongPositions;
 
@@ -285,8 +285,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             }
         }
 
-        _totalExpo -= totalExpoToClose;
-        _totalExpoByTick[tickHash] -= totalExpoToClose;
+        _totalExpo -= totalExpoToRemove;
+        _totalExpoByTick[tickHash] -= totalExpoToRemove;
     }
 
     /**
