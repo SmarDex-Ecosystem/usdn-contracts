@@ -353,7 +353,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             longBalanceBefore - uint256(profits),
             protocol.getBalanceLong(),
             1,
-            "Porfits should have been subtractedfrom the long's balance"
+            "Profits should have been subtracted from the long's balance"
         );
     }
 }
