@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { WstethIntegrationFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
+import { WstethIntegrationFixture } from "test/integration/Middlewares/utils/Fixtures.sol";
 import { PYTH_WSTETH_USD, PYTH_STETH_USD } from "test/utils/Constants.sol";
 
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -67,9 +67,11 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             uint256 formattedPythPrice =
                 pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
 
-            // formatted pyth conf
-            uint256 formattedPythConf =
-                pythConf * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
+            // Apply conf ratio to pyth confidence
+            uint256 formattedPythConf = (
+                pythConf * 10 ** (wstethMiddleware.getDecimals() - wstethMiddleware.getPythDecimals())
+                    * wstethMiddleware.getConfRatio()
+            ) / wstethMiddleware.getConfRatioDenom();
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
@@ -183,22 +185,22 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             uint256 formattedPythPrice =
                 pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
 
-            // formatted pyth conf
-            uint256 formattedPythConf =
-                pythConf * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
+            // Apply conf ratio to pyth confidence
+            uint256 formattedPythConf = (
+                pythConf * 10 ** (wstethMiddleware.getDecimals() - wstethMiddleware.getPythDecimals())
+                    * wstethMiddleware.getConfRatio()
+            ) / wstethMiddleware.getConfRatioDenom();
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
-                // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
-
-                // Price - conf
-            } else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
-                // check price
+            }
+            // Price - conf
+            else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
-
-                // Price only
-            } else {
+            }
+            // Price only
+            else {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice), priceError);
 

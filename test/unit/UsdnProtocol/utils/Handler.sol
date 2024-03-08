@@ -32,20 +32,25 @@ contract UsdnProtocolHandler is UsdnProtocol {
         address feeCollector
     ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
-    function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionExpo)
+    /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
+    function resetEMA() external {
+        _EMA = 0;
+    }
+
+    function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         external
         pure
         returns (uint256 value_)
     {
-        return _positionValue(currentPrice, liqPriceWithoutPenalty, positionExpo);
+        return _positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
     }
 
-    function i_calculatePositionExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+    function i_calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
         external
         pure
-        returns (uint256 expo_)
+        returns (uint256 totalExpo_)
     {
-        return _calculatePositionExpo(amount, startPrice, liquidationPrice);
+        return _calculatePositionTotalExpo(amount, startPrice, liquidationPrice);
     }
 
     function i_removePendingAction(uint128 rawIndex, address user) external {
@@ -63,6 +68,35 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_longTradingExpo(uint128 currentPrice) external view returns (int256) {
         return _longTradingExpo(currentPrice);
+    }
+
+    function i_lastFunding() external view returns (int256) {
+        return _lastFunding;
+    }
+
+    function i_applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+    {
+        return _applyPnlAndFunding(currentPrice, timestamp);
+    }
+
+    function i_liquidatePositions(
+        uint256 currentPrice,
+        uint16 iteration,
+        int256 tempLongBalance,
+        int256 tempVaultBalance
+    )
+        external
+        returns (
+            uint256 liquidatedPositions_,
+            uint16 liquidatedTicks_,
+            int256 remainingCollateral_,
+            uint256 newLongBalance_,
+            uint256 newVaultBalance_
+        )
+    {
+        return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
     function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {
@@ -105,6 +139,24 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getOraclePrice(action, timestamp, priceData);
     }
 
+    function i_calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
+        external
+        view
+        returns (uint256 toMint_)
+    {
+        return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
+    }
+
+    function i_vaultAssetAvailable(
+        uint256 totalExpo,
+        uint256 balanceVault,
+        uint256 balanceLong,
+        uint128 newPrice,
+        uint128 oldPrice
+    ) external pure returns (int256 available_) {
+        return _vaultAssetAvailable(totalExpo, balanceVault, balanceLong, newPrice, oldPrice);
+    }
+
     function i_vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
     }
@@ -119,5 +171,9 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
         return _getLiquidationPrice(startPrice, leverage);
+    }
+
+    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
+        return _getLeverage(price, liqPrice);
     }
 }

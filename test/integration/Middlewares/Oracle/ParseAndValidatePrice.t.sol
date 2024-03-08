@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { OracleMiddlewareBaseIntegrationFixture } from "test/integration/OracleMiddleware/utils/Fixtures.sol";
+import { OracleMiddlewareBaseIntegrationFixture } from "test/integration/Middlewares/utils/Fixtures.sol";
 import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -41,11 +41,15 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             ProtocolAction action = actions[i];
 
             // price error message
-            string memory priceError =
-                string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
+            string memory priceError = string.concat("Wrong oracle middleware price for ", actionNames[i]);
 
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = getMockedPythSignature();
+            // Apply conf ratio to pyth confidence
+            pythConf = (
+                pythConf * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals())
+                    * oracleMiddleware.getConfRatio()
+            ) / oracleMiddleware.getConfRatioDenom();
 
             // middleware data
             PriceInfo memory middlewarePrice;
@@ -63,24 +67,21 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
 
-            // formatted middleware price
-            uint256 middlewareFormattedPrice =
-                middlewarePrice.price * 10 ** oracleMiddleware.getPythDecimals() / 10 ** oracleMiddleware.getDecimals();
+            uint256 formattedPythPrice =
+                pythPrice * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals());
 
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
+                assertEq(middlewarePrice.price, formattedPythPrice + pythConf, priceError);
+            }
+            // Price - conf
+            else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
+                assertEq(middlewarePrice.price, formattedPythPrice - pythConf, priceError);
+            }
+            // Price only
+            else {
                 // check price
-                assertEq(middlewareFormattedPrice, pythPrice + pythConf, priceError);
-
-                // Price - conf
-            } else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
-                // check price
-                assertEq(middlewareFormattedPrice, pythPrice - pythConf, priceError);
-
-                // Price only
-            } else {
-                // check price
-                assertEq(middlewareFormattedPrice, pythPrice, priceError);
+                assertEq(middlewarePrice.price, formattedPythPrice, priceError);
             }
         }
     }
@@ -107,17 +108,16 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             }
 
             // timestamp error message
-            string memory timestampError =
-                string.concat("Wrong oracle middleware timestamp for action: ", uint256(action).toString());
+            string memory timestampError = string.concat("Wrong oracle middleware timestamp for ", actionNames[i]);
             // price error message
-            string memory priceError =
-                string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
+            string memory priceError = string.concat("Wrong oracle middleware price for ", actionNames[i]);
 
             // chainlink data
             (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
-            PriceInfo memory middlewarePrice =
-                oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(uint128(block.timestamp), action, "");
+            PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, ""
+            );
             // timestamp check
             assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
             // price check
@@ -149,12 +149,16 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             ProtocolAction action = actions[i];
 
             // price error message
-            string memory priceError =
-                string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
+            string memory priceError = string.concat("Wrong oracle middleware price for ", actionNames[i]);
 
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
                 getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
+            // Apply conf ratio to pyth confidence
+            pythConf = (
+                pythConf * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals())
+                    * oracleMiddleware.getConfRatio()
+            ) / oracleMiddleware.getConfRatioDenom();
 
             // middleware data
             PriceInfo memory middlewarePrice;
@@ -168,27 +172,23 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 );
             }
 
+            uint256 formattedPythPrice =
+                pythPrice * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals());
+
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
-
-            // formatted middleware price
-            uint256 middlewareFormattedPrice =
-                middlewarePrice.price * 10 ** oracleMiddleware.getPythDecimals() / 10 ** oracleMiddleware.getDecimals();
-
             // Price + conf
             if (action == ProtocolAction.ValidateOpenPosition) {
+                assertEq(middlewarePrice.price, formattedPythPrice + pythConf, priceError);
+            }
+            // Price - conf
+            else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
+                assertEq(middlewarePrice.price, formattedPythPrice - pythConf, priceError);
+            }
+            // Price only
+            else {
                 // check price
-                assertEq(middlewareFormattedPrice, pythPrice + pythConf, priceError);
-
-                // Price - conf
-            } else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
-                // check price
-                assertEq(middlewareFormattedPrice, pythPrice - pythConf, priceError);
-
-                // Price only
-            } else {
-                // check price
-                assertEq(middlewareFormattedPrice, pythPrice, priceError);
+                assertEq(middlewarePrice.price, formattedPythPrice, priceError);
             }
         }
     }
@@ -216,17 +216,16 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             }
 
             // timestamp error message
-            string memory timestampError =
-                string.concat("Wrong oracle middleware timestamp for action: ", uint256(action).toString());
+            string memory timestampError = string.concat("Wrong oracle middleware timestamp for ", actionNames[i]);
             // price error message
-            string memory priceError =
-                string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
+            string memory priceError = string.concat("Wrong oracle middleware price for ", actionNames[i]);
 
             // chainlink data
             (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
-            PriceInfo memory middlewarePrice =
-                oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(uint128(block.timestamp), action, "");
+            PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, ""
+            );
             // timestamp check
             assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
             // price check

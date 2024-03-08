@@ -134,59 +134,62 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:or the position value is 2.5 wstETH ($2000 at 4x)
      */
     function test_positionValue() public {
-        uint128 positionExpo = uint128(
+        uint128 positionTotalExpo = uint128(
             FixedPointMathLib.fullMulDiv(
                 1 ether, 2 * 10 ** protocol.LEVERAGE_DECIMALS(), 10 ** protocol.LEVERAGE_DECIMALS()
             )
         );
-        uint256 value = protocol.i_positionValue(2000 ether, 500 ether, positionExpo);
+        uint256 value = protocol.i_positionValue(2000 ether, 500 ether, positionTotalExpo);
         assertEq(value, 1.5 ether, "Position value should be 1.5 ether");
 
-        value = protocol.i_positionValue(1000 ether, 500 ether, positionExpo);
+        value = protocol.i_positionValue(1000 ether, 500 ether, positionTotalExpo);
         assertEq(value, 1 ether, "Position value should be 1 ether");
 
-        value = protocol.i_positionValue(500 ether, 500 ether, positionExpo);
+        value = protocol.i_positionValue(500 ether, 500 ether, positionTotalExpo);
         assertEq(value, 0 ether, "Position value should be 0");
 
-        positionExpo = uint128(
+        positionTotalExpo = uint128(
             FixedPointMathLib.fullMulDiv(
                 1 ether, 4 * 10 ** protocol.LEVERAGE_DECIMALS(), 10 ** protocol.LEVERAGE_DECIMALS()
             )
         );
-        value = protocol.i_positionValue(2000 ether, 750 ether, positionExpo);
+        value = protocol.i_positionValue(2000 ether, 750 ether, positionTotalExpo);
         assertEq(value, 2.5 ether, "Position with 4x leverage should have a 2.5 ether value");
     }
 
     /**
-     * @custom:scenario Check calculations of `_calculatePositionExpo`
+     * @custom:scenario Check calculations of `_calculatePositionTotalExpo`
      */
-    function test_calculatePositionExpo() public {
-        // amount / leverage = position expo
-        uint256 expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 1500 ether);
-        assertEq(expo, 4 ether, "Position expo should be 4 ether");
+    function test_calculatePositionTotalExpo() public {
+        uint256 expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1500 ether);
+        assertEq(expo, 4 ether, "Position total expo should be 4 ether");
 
-        expo = protocol.i_calculatePositionExpo(2 ether, 4000 ether, 1350 ether);
-        assertEq(expo, 3_018_867_924_528_301_886, "Position expo should be 3.018... ether");
+        expo = protocol.i_calculatePositionTotalExpo(2 ether, 4000 ether, 1350 ether);
+        assertEq(expo, 3_018_867_924_528_301_886, "Position total expo should be 3.018... ether");
 
-        expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 1000 ether);
-        assertEq(expo, 2 ether, "Position expo should be 2 ether");
+        expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1000 ether);
+        assertEq(expo, 2 ether, "Position total expo should be 2 ether");
     }
 
     /**
-     * @custom:scenario Call `_calculatePositionExpo` when the liquidation price is greater than
-     * or equal to the start price
-     * @custom:given An amount of 1 ether
-     * @custom:and a price of $2000
-     * @custom:and a liquidation price of $2000
-     * @custom:or a liquidation price of $3000
-     * @custom:when The current price is equal to the liquidation price without penalty
+     * @custom:scenario Call `_calculatePositionTotalExpo` reverts when the liquidation price is greater than
+     * the start price.
+     * @custom:given A liquidation price greater than or equal to the start price
+     * @custom:when _calculatePositionTotalExpo is called
+     * @custom:then The transaction reverts with a UsdnProtocolInvalidLiquidationPrice error
      */
-    function test_calculatePositionExpoReturns0WhenPriceLesserThanLiqPrice() public {
-        uint256 expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 2000 ether);
-        assertEq(expo, 0, "Position expo should be 0");
+    function test_RevertWhen_calculatePositionTotalExpoWithLiqPriceGreaterThanStartPrice() public {
+        uint128 startPrice = 2000 ether;
+        uint128 liqPrice = 2000 ether;
 
-        expo = protocol.i_calculatePositionExpo(1 ether, 2000 ether, 3000 ether);
-        assertEq(expo, 0, "Position expo should be 0");
+        /* ------------------------- startPrice == liqPrice ------------------------- */
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
+        protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
+
+        /* -------------------------- liqPrice > startPrice ------------------------- */
+        liqPrice = 2000 ether + 1;
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
+        protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
     }
 
     /**
@@ -249,11 +252,11 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         // Calculate the total expo of the position after the initialization
         assertEq(
-            initialTotalExpo + position.expo,
+            initialTotalExpo + position.totalExpo,
             protocol.getTotalExpo(),
             "Total expo should have increased by the position's total expo"
         );
-        assertEq(totalExpoForTick, position.expo, "Total expo on tick is not the expected value");
+        assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
 
         skip(oracleMiddleware.getValidationDelay() + 1);
 
@@ -262,23 +265,23 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         // Validate the position with the new price
         protocol.validateOpenPosition(abi.encode(price), "");
 
-        uint256 previousExpo = position.expo;
+        uint256 previousExpo = position.totalExpo;
         // Get the updated position
         position = protocol.getLongPosition(tick, tickVersion, index);
-        uint256 newExpo = position.expo;
+        uint256 newExpo = position.totalExpo;
 
         // Sanity check
         assertTrue(previousExpo != newExpo, "The expo changing is necessary for this test to work");
 
         // Calculate the total expo of the position after the validation
         assertEq(
-            initialTotalExpo + position.expo,
+            initialTotalExpo + position.totalExpo,
             protocol.getTotalExpo(),
             "Total expo should have increased by the position's new total expo"
         );
 
         totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
-        assertEq(totalExpoForTick, position.expo, "Total expo on tick is not the expected value");
+        assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
     }
 
     /**
