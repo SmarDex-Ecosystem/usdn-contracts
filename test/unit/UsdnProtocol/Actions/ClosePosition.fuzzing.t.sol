@@ -60,7 +60,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
 
             protocol.initiateClosePosition(tick, tickVersion, index, uint128(amountToClose), priceData, "");
             skip(oracleMiddleware.getValidationDelay() + 1);
-            protocol.validateClosePosition(priceData, "");
+            protocol.i_validateClosePosition(address(this), priceData);
 
             Position memory posAfter = protocol.getLongPosition(tick, tickVersion, index);
             assertEq(
@@ -80,7 +80,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
                 tick, tickVersion, index, uint128(amountToOpen - amountClosed), priceData, ""
             );
             skip(oracleMiddleware.getValidationDelay() + 1);
-            protocol.validateClosePosition(priceData, "");
+            protocol.i_validateClosePosition(address(this), priceData);
         }
 
         Position memory pos = protocol.getLongPosition(tick, tickVersion, index);

@@ -198,7 +198,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit ValidatedClosePosition(address(this), tick, tickVersion, index, expectedAmountReceived, -1);
-        protocol.validateClosePosition(priceData, "");
+        protocol.i_validateClosePosition(address(this), priceData);
 
         assertApproxEqAbs(
             protocol.getAsset().balanceOf(address(this)),
@@ -222,9 +222,10 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             "User should have received the amount to close approximately"
         );
 
+        /* --------------------- Close the rest of the position --------------------- */
         protocol.initiateClosePosition(tick, tickVersion, index, pos.amount - amountToClose, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
-        protocol.validateClosePosition(priceData, "");
+        protocol.i_validateClosePosition(address(this), priceData);
         posAfter = protocol.getLongPosition(tick, tickVersion, index);
         assertEq(posAfter.amount, 0, "The amount should be 0");
         assertApproxEqAbs(
@@ -275,7 +276,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         emit LiquidatedTick(tick, tickVersion, 0, 0, 0);
         vm.expectEmit(true, false, false, false);
         emit LiquidatedPosition(address(this), 0, 0, 0, 0, 0);
-        protocol.validateClosePosition(priceData, "");
+        protocol.i_validateClosePosition(address(this), priceData);
 
         assertEq(
             protocol.getAsset().balanceOf(address(this)),
