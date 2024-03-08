@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/console2.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {
@@ -19,7 +18,6 @@ import { ADMIN } from "test/utils/Constants.sol";
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x.
  * @custom:and A user with 100_000 wstETH in their wallet
- * @custom:and A position with 500 wstETH in collateral
  */
 contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture {
     using SafeCast for uint256;

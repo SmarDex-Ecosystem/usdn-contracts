@@ -121,9 +121,9 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * If the current tick version is greater than the tick version of the position (when it was opened), then the
      * position has been liquidated and the transaction will revert.
-     * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't
-     * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
-     * during the validate action.
+     * The appropriate amount and total expo are taken out of the tick and put in a pending state during this operation.
+     * Thus, calculations don't consider those anymore. The exit price (and thus profit) is not yet set definitively,
+     * and will be done during the validate action.
      * @param tick The tick containing the position to close
      * @param tickVersion The tick version of the position to close
      * @param index The index of the position inside the tick array

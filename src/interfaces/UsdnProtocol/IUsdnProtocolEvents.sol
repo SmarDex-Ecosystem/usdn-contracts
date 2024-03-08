@@ -95,13 +95,13 @@ interface IUsdnProtocolEvents {
     );
 
     /**
-     * @notice Emitted when a user initiates the closing of a long position.
+     * @notice Emitted when a user initiates the closing of all or part of a long position.
      * @param user The user address.
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
-     * @param amountRemaining The amount of collateral reminaing on the position.
-     * @param totalExpoRemaining The total expo remaining on the position.
+     * @param amountRemaining The amount of collateral remaining in the position.
+     * @param totalExpoRemaining The total expo remaining in the position.
      */
     event InitiatedClosePosition(
         address indexed user,
