@@ -53,7 +53,8 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         // Create a long position to liquidate
         setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
 
-        uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
+        uint128 liqPriceAfterFundings =
+            protocol.getEffectivePriceForTick(desiredLiqTick, protocol.getLiquidationMultiplier());
 
         // Calculate the collateral this position gives on liquidation
         int256 tickValue =
@@ -87,6 +88,57 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             protocol.getMaxInitializedTick(),
             desiredLiqTick,
             "The max Initialized tick should be lower than the last liquidated tick"
+        );
+    }
+
+    /**
+     * @custom:scenario A position becomes underwater because of fundings and can be liquidated
+     * @custom:given A position has its liquidation price above current price because of fundings
+     * @custom:and the asset's price did not move
+     * @custom:when User calls _liquidatePositions
+     * @custom:then It should liquidate the position.
+     */
+    function test_canLiquidateAPositionWithFundings() public {
+        uint128 price = 2000 ether;
+        int24 desiredLiqTick = protocol.getEffectiveTickForPrice(price - 200 ether);
+        uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
+
+        // Create a long position to liquidate
+        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
+
+        skip(34 days);
+        protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
+
+        uint128 liqPriceAfterFundings =
+            protocol.getEffectivePriceForTick(desiredLiqTick, protocol.getLiquidationMultiplier());
+        assertGt(
+            liqPriceAfterFundings, price, "The fundings did not push the liquidation price above the current price"
+        );
+
+        // Calculate the collateral this position gives on liquidation
+        int256 tickValue = protocol.i_tickValue(price, desiredLiqTick, protocol.getTotalExpoByTick(desiredLiqTick, 0));
+        // Sanity check
+        // Make sure we do not end up in a bad debt situation because of fundings
+        assertGt(tickValue, 1, "Waited too long before liquidation, lower the time skipped time");
+
+        vm.expectEmit();
+        emit LiquidatedTick(desiredLiqTick, 0, price, liqPriceAfterFundings, tickValue);
+        (
+            uint256 liquidatedPositions,
+            uint16 liquidatedTicks,
+            int256 collateralLiquidated,
+            uint256 newLongBalance,
+            uint256 newVaultBalance
+        ) = protocol.i_liquidatePositions(price, 1, 100 ether, 100 ether);
+
+        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(collateralLiquidated, tickValue, "Collateral liquidated should be equal to tickValue");
+        assertEq(
+            int256(newLongBalance), 100 ether - tickValue, "The long side should have paid tickValue to the vault side"
+        );
+        assertEq(
+            int256(newVaultBalance), 100 ether + tickValue, "The long side should have paid tickValue to the vault side"
         );
     }
 
