@@ -4,12 +4,7 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import {
-    ProtocolAction,
-    LongPendingAction,
-    PendingAction,
-    Position
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { LongPendingAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
