@@ -5,8 +5,6 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-import { console2 } from "forge-std/Test.sol";
-
 /**
  * @custom:feature The functions of the core of the protocol
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
@@ -128,16 +126,20 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_updateEma_negFunding() public {
         // TODO to fix
         vm.skip(true);
+        // Should be more amount in vault than long
 
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
         // protocol.initiateDeposit(
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+        protocol.initiateDeposit(0.9 ether, priceData, "");
+        protocol.validateDeposit(priceData, "");
 
         // );
         // we skip 1 day and call liquidate() to have a negative funding
-        skip(5 days);
+        skip(1 days);
         protocol.liquidate(priceData, 1);
-
         int256 lastFunding = protocol.getLastFunding();
+        assertLt(lastFunding, 0, "lastFunding should be negative");
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
         protocol.liquidate(priceData, 1);
@@ -228,7 +230,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // cannot work now
         // TODO to remove
         // vm.skip(true);
-
+        // bad dept: No enough in vault balance to repay long (simulate a large drawdown)
+        // add some assertEq
         skip(1 hours);
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
@@ -242,9 +245,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         protocol.liquidate(abi.encode(price / 10_000), 10);
         assertLt(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo should be negative");
         assertEq(protocol.getBalanceVault(), 0, "vault expo should be zero");
-        // TODO check error
-        console2.log(protocol.getBalanceVault());
-        console2.log(protocol.getTotalExpo());
+
         int256 EMA = protocol.getEMA();
         uint256 fundingSF = protocol.getFundingSF();
         (int256 fund_,) = protocol.funding(uint128(block.timestamp));
@@ -262,6 +263,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // cannot work now
         // TODO to remove
         vm.skip(true);
+        // Bad dept opposite: too much long profits
+        // check asserts and add if needed
 
         skip(1 hours);
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);

@@ -347,14 +347,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param depositValue the deposit value
      */
     function _imbalanceLimitDeposit(uint256 depositValue) internal view {
-        int256 longExpo = int256(_totalExpo - _balanceLong);
+        int256 longExpo = int256(_totalExpo).safeSub(int256(_balanceLong));
 
         int256 imbalancePercentage = (int256(_balanceVault).safeAdd(int256(depositValue))).safeSub(longExpo).safeMul(
             EXPO_IMBALANCE_LIMIT_DENOMINATOR
         ).safeDiv(longExpo);
 
         if (imbalancePercentage >= _softVaultExpoImbalanceLimit) {
-            revert UsdnProtocolSoftImbalanceLimitReached(imbalancePercentage);
+            revert UsdnProtocolSoftVaultImbalanceLimitReached(imbalancePercentage);
         }
     }
 
@@ -366,44 +366,49 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function _imbalanceLimitWithdrawal(uint256 withdrawalValue) internal view {
         int256 vaultExpo = int256(_balanceVault);
 
-        int256 imbalancePercentage = (int256(_totalExpo - _balanceLong).safeSub(vaultExpo - int256(withdrawalValue)))
-            .safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(vaultExpo);
+        int256 imbalancePercentage = (
+            (int256(_totalExpo).safeSub(int256(_balanceLong))).safeSub((vaultExpo.safeSub(int256(withdrawalValue))))
+        ).safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(vaultExpo);
 
         if (imbalancePercentage >= _hardLongExpoImbalanceLimit) {
-            revert UsdnProtocolHardImbalanceLimitReached(imbalancePercentage);
+            revert UsdnProtocolHardLongImbalanceLimitReached(imbalancePercentage);
         }
     }
 
     /**
      * @notice The open long imbalance soft limit state verification
      * @dev This is to ensure that the protocol does not unbalance more than the soft limit on long side
-     * @param openExpoValue The open position expo value
+     * @param openTotalExpoValue The open position expo value
      * @param openCollatValue The open position expo value
      */
-    function _imbalanceLimitOpen(uint256 openExpoValue, uint256 openCollatValue) internal view {
+    function _imbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) internal view {
         int256 vaultExpo = int256(_balanceVault);
         int256 imbalancePercentage = (
-            int256(_totalExpo + openExpoValue - (_balanceLong + openCollatValue)).safeSub(vaultExpo)
+            (int256(_totalExpo).safeAdd(int256(openTotalExpoValue))).safeSub(
+                int256(_balanceLong).safeAdd(int256(openCollatValue))
+            ).safeSub(vaultExpo)
         ).safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(vaultExpo);
 
         if (imbalancePercentage >= _softLongExpoImbalanceLimit) {
-            revert UsdnProtocolSoftImbalanceLimitReached(imbalancePercentage);
+            revert UsdnProtocolSoftLongImbalanceLimitReached(imbalancePercentage);
         }
     }
 
     /**
      * @notice The close vault imbalance hard limit state verification
      * @dev This is to ensure that the protocol does not unbalance more than the hard limit on vault side
-     * @param closeExpoValue The close expo value
+     * @param closeTotalExpoValue The close expo value
      */
-    function _imbalanceLimitClose(uint256 closeExpoValue, uint256 closeCollatValue) internal view {
-        int256 longExpo = int256(_totalExpo - _balanceLong);
+    function _imbalanceLimitClose(uint256 closeTotalExpoValue, uint256 closeCollatValue) internal view {
+        int256 longExpo = int256(_totalExpo).safeSub(int256(_balanceLong));
         int256 imbalancePercentage = (
-            int256(_balanceVault).safeSub(longExpo - int256(closeExpoValue - closeCollatValue))
+            int256(_balanceVault).safeSub(
+                longExpo.safeSub(int256(closeTotalExpoValue).safeSub(int256(closeCollatValue)))
+            )
         ).safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(longExpo);
 
         if (imbalancePercentage >= _hardVaultExpoImbalanceLimit) {
-            revert UsdnProtocolHardImbalanceLimitReached(imbalancePercentage);
+            revert UsdnProtocolHardVaultImbalanceLimitReached(imbalancePercentage);
         }
     }
 

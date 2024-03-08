@@ -36,7 +36,9 @@ contract TestUsdnProtocolExpoAboveLimits is UsdnProtocolBaseFixture {
         // call `imbalanceLimitDeposit` with vaultExpoValueToLimit + 1
         // should revert with the correct percentage
         vm.expectRevert(
-            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolSoftImbalanceLimitReached.selector, imbalancePct)
+            abi.encodeWithSelector(
+                IUsdnProtocolErrors.UsdnProtocolSoftVaultImbalanceLimitReached.selector, imbalancePct
+            )
         );
         protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit + 1);
     }
@@ -58,7 +60,7 @@ contract TestUsdnProtocolExpoAboveLimits is UsdnProtocolBaseFixture {
         // call `imbalanceLimitWithdrawal` with vaultExpoValueToLimit + 1
         // should revert with the correct percentage
         vm.expectRevert(
-            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolHardImbalanceLimitReached.selector, imbalancePct)
+            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolHardLongImbalanceLimitReached.selector, imbalancePct)
         );
         protocol.i_imbalanceLimitWithdrawal(vaultExpoValueToLimit + 1);
     }
@@ -86,7 +88,7 @@ contract TestUsdnProtocolExpoAboveLimits is UsdnProtocolBaseFixture {
         // call `imbalanceLimitOpen` with totalExpoValueToLimit + 1
         // should revert with the correct percentage
         vm.expectRevert(
-            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolSoftImbalanceLimitReached.selector, imbalancePct)
+            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolSoftLongImbalanceLimitReached.selector, imbalancePct)
         );
         protocol.i_imbalanceLimitOpen(totalExpoValueToLimit + 1, longAmount);
     }
@@ -115,7 +117,9 @@ contract TestUsdnProtocolExpoAboveLimits is UsdnProtocolBaseFixture {
         // call `imbalanceLimitClose` with totalExpoValueToLimit + 1
         // should revert with the correct percentage
         vm.expectRevert(
-            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolHardImbalanceLimitReached.selector, imbalancePct)
+            abi.encodeWithSelector(
+                IUsdnProtocolErrors.UsdnProtocolHardVaultImbalanceLimitReached.selector, imbalancePct
+            )
         );
         protocol.i_imbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
     }

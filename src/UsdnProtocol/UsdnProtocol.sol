@@ -105,7 +105,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         uint256 addExpo = FixedPointMathLib.fullMulDiv(longAmount, leverage, 10 ** LEVERAGE_DECIMALS);
 
         {
-            // verify expo is not imbalanced
+            // verify expo is not imbalanced on long side
             _imbalanceLimitOpen(addExpo, longAmount);
 
             _lastUpdateTimestamp = uint40(block.timestamp);
@@ -115,6 +115,9 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             _asset.safeTransferFrom(msg.sender, address(this), longAmount);
 
             _createInitialPosition(msg.sender, longAmount, price, tickWithoutPenalty, leverage, addExpo);
+
+            // // verify expo is not imbalanced on vault side
+            // _imbalanceLimitDeposit(0);
         }
 
         _refundExcessEther();

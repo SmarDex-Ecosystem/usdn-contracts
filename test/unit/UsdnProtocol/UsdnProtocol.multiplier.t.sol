@@ -14,7 +14,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialLong = 10 ether;
+        // params.initialLong = 10 ether;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
@@ -26,9 +26,10 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
      * @custom:then The liquidation multiplier increases
      */
     function test_liquidationMultiplierIncrease() public {
-        vm.skip(true);
+        // need positive funding: long to vault
         skip(1 hours);
         bytes memory priceData = abi.encode(params.initialPrice);
+
         // create a long position to have positive funding
         protocol.initiateOpenPosition(0.01 ether, params.initialPrice / 2, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
@@ -50,8 +51,9 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
      * @custom:then The liquidation multiplier decreases
      */
     function test_liquidationMultiplierDecrease() public {
-        // TODO to fix
         vm.skip(true);
+        // TODO TO FIX
+        // need negative funding
         skip(1 hours);
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a deposit to have negative funding
