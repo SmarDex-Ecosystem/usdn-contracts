@@ -8,7 +8,7 @@ import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 /**
- * @custom:feature The close position functions of the USDN Protocol
+ * @custom:feature Fuzzing tests for the "close position" part of the protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x.
  * @custom:and A user with 100_000 wstETH in their wallet
@@ -26,6 +26,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
 
+        // Open a position to avoid a bug in _positionValue
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
         protocol.initiateOpenPosition(
             uint128(wstETH.balanceOf(address(this)) / 2), params.initialPrice - 1000 ether, priceData, ""
