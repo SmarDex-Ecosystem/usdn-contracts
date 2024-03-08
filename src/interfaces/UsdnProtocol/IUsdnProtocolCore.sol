@@ -51,7 +51,8 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the long balance for the given asset price and timestamp
      * @dev The effect of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account
+     * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`. // TO DO : check error
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
@@ -63,7 +64,8 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the vault balance for the given asset price and timestamp
      * @dev The effect of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account
+     * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`. // TO DO : check error
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
@@ -108,6 +110,13 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      */
     function getUserPendingAction(address user) external view returns (PendingAction memory action_);
 
+    /**
+     * @notice Calculation of the EMA of the funding rate
+     * @param lastFunding The last funding rate
+     * @param secondsElapsed The number of seconds elapsed since the last protocol action
+     * @param emaPeriod The EMA period
+     * @param actualEMA The actual EMA
+     */
     function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 actualEMA)
         external
         pure

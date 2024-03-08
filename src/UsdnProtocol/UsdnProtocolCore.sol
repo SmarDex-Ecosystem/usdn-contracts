@@ -120,7 +120,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         view
         returns (int256 available_)
     {
-        require(timestamp >= _lastUpdateTimestamp, "UsdnProtocolTimestampTooOld");
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+        }
+
         int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
         (int256 fundAsset,) = fundingAsset(timestamp, ema);
 
@@ -139,7 +142,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         view
         returns (int256 available_)
     {
-        require(timestamp >= _lastUpdateTimestamp, "UsdnProtocolTimestampTooOld");
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+        }
+
         int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
         (int256 fundAsset,) = fundingAsset(timestamp, ema);
 
@@ -206,6 +212,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /// @inheritdoc IUsdnProtocolCore
     function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
         (action_,) = _getPendingAction(user);
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 actualEMA)
+        public
+        pure
+        returns (int256)
+    {
+        if (secondsElapsed >= emaPeriod) {
+            return lastFunding;
+        }
+
+        return (lastFunding + actualEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
     }
 
     /* --------------------------  Internal functions --------------------------- */
@@ -392,25 +411,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * funding value
      */
     function _updateEMA(uint128 secondsElapsed) internal returns (int256) {
-        // cache variable for optimization // TO DO : check this
-        // uint128 emaPeriod = _EMAPeriod;
-
         _EMA = calcEMA(_lastFunding, secondsElapsed, _EMAPeriod, _EMA);
 
         return _EMA;
-    }
-
-    // TO DO : change position of this function
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 actualEMA)
-        public
-        pure
-        returns (int256)
-    {
-        if (secondsElapsed >= emaPeriod) {
-            return lastFunding;
-        }
-
-        return (lastFunding + actualEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {
