@@ -119,7 +119,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         int256 tickValue = protocol.i_tickValue(price, desiredLiqTick, protocol.getTotalExpoByTick(desiredLiqTick, 0));
         // Sanity check
         // Make sure we do not end up in a bad debt situation because of fundings
-        assertGt(tickValue, 1, "Waited too long before liquidation, lower the time skipped time");
+        assertGt(tickValue, 1, "Waited too long before liquidation, lower the skipped time");
 
         vm.expectEmit();
         emit LiquidatedTick(desiredLiqTick, 0, price, liqPriceAfterFundings, tickValue);
