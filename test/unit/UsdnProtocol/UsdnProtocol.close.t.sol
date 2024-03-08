@@ -19,16 +19,17 @@ import { USER_1 } from "test/utils/Constants.sol";
  * @custom:and A position with 500 wstETH in collateral
  */
 contract TestUsdnProtocolClose is UsdnProtocolBaseFixture {
-    uint96 private amountPosition = 500 ether;
+    uint96 private amountPosition = 1 ether;
     int24 private tick;
     uint256 private tickVersion;
     uint256 private index;
+    bytes private priceData;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
 
-        bytes memory priceData = abi.encode(params.initialPrice);
+        priceData = abi.encode(params.initialPrice);
 
         (tick, tickVersion, index) =
             protocol.initiateOpenPosition(amountPosition, params.initialPrice / 2, priceData, "");
@@ -55,7 +56,7 @@ contract TestUsdnProtocolClose is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit InitiatedClosePosition(address(this), tick, tickVersion, index); // expected event
-        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(uint128(2000 ether)), "");
+        protocol.initiateClosePosition(tick, tickVersion, index, priceData, "");
 
         // the pending action should not yet be actionable by a third party
         vm.startPrank(address(0)); // simulate front-end calls by someone else
@@ -99,9 +100,35 @@ contract TestUsdnProtocolClose is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with `UsdnProtocolUnauthorized`
      */
     function test_RevertWhen_notUser() public {
-        bytes memory priceData = abi.encode(uint128(2000 ether));
         vm.prank(USER_1);
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
         protocol.initiateClosePosition(tick, tickVersion, index, priceData, "");
+    }
+
+    /**
+     * @custom:scenario The user validates a close position action
+     * @custom:given The user already have a position with 500 wstETH and initiated the close of the position
+     * @custom:when The user validate the close of the position
+     * @custom:then The protocol initiate the closure of the position and emits the ValidatedClosePosition event
+     */
+    function test_validateClosePosition() public {
+        bytes memory newPrice = abi.encode(params.initialPrice + 500 ether);
+        protocol.initiateClosePosition(tick, tickVersion, index, newPrice, "");
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+
+        uint256 liquidationMultiplier = protocol.getLiquidationMultiplier();
+        uint256 amountToTransfer =
+            protocol.i_assetToTransfer(tick, amountPosition, action.closeLeverage, liquidationMultiplier);
+
+        vm.expectEmit();
+        emit ValidatedClosePosition(
+            address(this),
+            tick,
+            tickVersion,
+            index,
+            amountToTransfer,
+            int256(amountToTransfer) - int256(uint256(amountPosition))
+        );
+        protocol.validateClosePosition(newPrice, "");
     }
 }
