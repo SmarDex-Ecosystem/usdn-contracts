@@ -103,7 +103,9 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:scenario Initiate close a position partially
      * @custom:given A validated open position
      * @custom:when The owner of the position closes half of the position at the same price as the opening
-     * @custom:then The state of the protocol is updated and an InitiatedClosePosition event is emitted
+     * @custom:then The state of the protocol is updated
+     * @custom:and an InitiatedClosePosition event is emitted
+     * @custom:and the position still exists
      */
     function test_initiatePartialClosePosition() external {
         uint128 price = DEFAULT_PARAMS.initialPrice;
@@ -128,11 +130,8 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         );
         protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
 
-        Position memory posAfter = protocol.getLongPosition(tick, tickVersion, index);
-        // If user is address(0), the position was deleted from the tick array
-        assertEq(posBefore.user, address(this), "The position should not have been deleted");
-
         /* ---------------------------- Position's state ---------------------------- */
+        Position memory posAfter = protocol.getLongPosition(tick, tickVersion, index);
         assertEq(posBefore.user, posAfter.user, "The user of the position should not have changed");
         assertEq(posBefore.timestamp, posAfter.timestamp, "Timestamp of the position should have stayed the same");
         assertEq(

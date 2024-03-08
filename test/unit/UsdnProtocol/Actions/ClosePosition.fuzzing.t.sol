@@ -39,8 +39,8 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
     {
         // Bound values
         iterations = bound(iterations, 1, 10);
-        // divided by 4 to have enough asset available to avoid bug in _positionValue
-        amountToOpen = bound(amountToOpen, 1, wstETH.balanceOf(address(this)) / 4);
+        // divided by 2 to have enough asset available to avoid bug in _positionValue
+        amountToOpen = bound(amountToOpen, 1, wstETH.balanceOf(address(this)) / 2);
 
         uint256 protocolTotalExpo = protocol.getTotalExpo();
         uint256 positionsAmount = protocol.getTotalLongPositions();
