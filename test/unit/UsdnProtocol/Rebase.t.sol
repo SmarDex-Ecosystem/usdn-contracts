@@ -36,7 +36,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenLiquidate() public {
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         skip(1 hours);
 
@@ -44,7 +44,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
 
         // price goes above rebase threshold due to change in asset price
         uint256 usdnPrice = protocol.usdnPrice(newPrice);
-        assertGt(usdnPrice, protocol.getUsdnRebaseThreshold(), "initial price");
+        assertGt(usdnPrice, protocol.getUsdnRebaseThreshold(), "price before rebase");
 
         // calculate expected new USDN divisor
         uint256 expectedVaultBalance =
@@ -82,9 +82,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @custom:then The USDN token is not rebased
      */
     function test_rebaseCheckInterval() public {
-        // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
-
         skip(1 hours);
 
         // initialize _lastRebaseCheck
@@ -116,9 +113,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @custom:then The USDN token is not rebased
      */
     function test_rebasePriceLowerThanThreshold() public {
-        // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
-
         // initialize _lastRebaseCheck
         protocol.i_usdnRebase(params.initialPrice, true);
         assertGt(protocol.getLastRebaseCheck(), 0, "last rebase check");
@@ -153,7 +147,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenInitiateDeposit() public {
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         skip(1 hours);
 
@@ -177,7 +171,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         protocol.initiateDeposit(1 ether, abi.encode(params.initialPrice), "");
 
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         // we wait long enough to check for a rebase again
         skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
@@ -198,7 +192,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenInitiateWithdrawal() public {
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         skip(1 hours);
 
@@ -229,7 +223,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.stopPrank();
 
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         // we wait long enough to check for a rebase again
         skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
@@ -251,7 +245,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenInitiateOpenPosition() public {
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         skip(1 hours);
 
@@ -275,7 +269,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         protocol.initiateOpenPosition(1 ether, params.initialPrice / 2, abi.encode(params.initialPrice), "");
 
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         // we wait long enough to check for a rebase again
         skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
@@ -298,7 +292,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 2)
             + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing();
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         skip(1 hours);
 
@@ -329,7 +323,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(params.initialPrice), "");
 
         // initial price is $1
-        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals());
+        assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         // we wait long enough to check for a rebase again
         skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
