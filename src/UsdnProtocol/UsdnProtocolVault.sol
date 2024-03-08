@@ -13,7 +13,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
         price_ = FixedPointMathLib.fullMulDiv(
-            vaultAssetAvailableWithFunding(currentPrice, timestamp).toUint256(),
+            vaultAssetAvailableWithFundingAndFees(currentPrice, timestamp).toUint256(),
             uint256(currentPrice) * 10 ** _usdnDecimals,
             _usdn.totalSupply() * 10 ** _assetDecimals
         );
