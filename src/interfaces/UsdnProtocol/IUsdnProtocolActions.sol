@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
+import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
@@ -18,11 +19,14 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * @param amount The amount of wstETH to deposit.
      * @param currentPriceData The current price data
-     * @param previousActionPriceData The price data of an actionable pending action.
+     * @param previousActionsData The data needed to validate actionable pending actions.
+     * provided.
      */
-    function initiateDeposit(uint128 amount, bytes calldata currentPriceData, bytes calldata previousActionPriceData)
-        external
-        payable;
+    function initiateDeposit(
+        uint128 amount,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable;
 
     /**
      * @notice Validate a pending deposit action.
@@ -33,9 +37,10 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * @param depositPriceData The price data corresponding to the sender's pending deposit action.
-     * @param previousActionPriceData The price data of an actionable pending action.
+     * @param previousActionsData The data needed to validate actionable pending actions.
+     * provided.
      */
-    function validateDeposit(bytes calldata depositPriceData, bytes calldata previousActionPriceData)
+    function validateDeposit(bytes calldata depositPriceData, PreviousActionsData calldata previousActionsData)
         external
         payable;
 
@@ -47,12 +52,13 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * @param usdnAmount The amount of USDN to burn.
      * @param currentPriceData The current price data
-     * @param previousActionPriceData The price data of an actionable pending action.
+     * @param previousActionsData The data needed to validate actionable pending actions.
+     * provided.
      */
     function initiateWithdrawal(
         uint128 usdnAmount,
         bytes calldata currentPriceData,
-        bytes calldata previousActionPriceData
+        PreviousActionsData calldata previousActionsData
     ) external payable;
 
     /**
@@ -64,9 +70,10 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action.
-     * @param previousActionPriceData The price data of an actionable pending action.
+     * @param previousActionsData The data needed to validate actionable pending actions.
+     * provided.
      */
-    function validateWithdrawal(bytes calldata withdrawalPriceData, bytes calldata previousActionPriceData)
+    function validateWithdrawal(bytes calldata withdrawalPriceData, PreviousActionsData calldata previousActionsData)
         external
         payable;
 
@@ -82,7 +89,8 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty.
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
-     * @param previousActionPriceData The price data of an actionable pending action.
+     * @param previousActionsData The data needed to validate actionable pending actions.
+     * provided.
      * @return tick_ The tick containing the new position
      * @return tickVersion_ The tick version
      * @return index_ The index of the new position inside the tick array
@@ -91,7 +99,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         uint96 amount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
-        bytes calldata previousActionPriceData
+        PreviousActionsData calldata previousActionsData
     ) external payable returns (int24 tick_, uint256 tickVersion_, uint256 index_);
 
     /**
@@ -106,9 +114,10 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * It is also possible for this operation to change the tick, tickVersion and index of the position, in which case
      * we emit the `LiquidationPriceUpdated` event.
      * @param openPriceData The price data corresponding to the sender's pending open position action.
-     * @param previousActionPriceData The price data of an actionable pending action.
+     * @param previousActionsData The data needed to validate actionable pending actions.
+     * provided.
      */
-    function validateOpenPosition(bytes calldata openPriceData, bytes calldata previousActionPriceData)
+    function validateOpenPosition(bytes calldata openPriceData, PreviousActionsData calldata previousActionsData)
         external
         payable;
 
@@ -128,14 +137,15 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param tickVersion The tick version of the position to close
      * @param index The index of the position inside the tick array
      * @param currentPriceData The current price data
-     * @param previousActionPriceData The price data of an actionable pending action.
+     * @param previousActionsData The data needed to validate actionable pending actions.
+     * provided.
      */
     function initiateClosePosition(
         int24 tick,
         uint256 tickVersion,
         uint256 index,
         bytes calldata currentPriceData,
-        bytes calldata previousActionPriceData
+        PreviousActionsData calldata previousActionsData
     ) external payable;
 
     /**
@@ -148,9 +158,10 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * (from the oracle middleware) to the timestamp of the initiate action.
      * This operation calculates the final exit price and profit of the long position and performs the payout.
      * @param closePriceData The price data corresponding to the sender's pending close position action.
-     * @param previousActionPriceData The price data of an actionable pending action.
+     * @param previousActionsData The data needed to validate actionable pending actions.
+     * provided.
      */
-    function validateClosePosition(bytes calldata closePriceData, bytes calldata previousActionPriceData)
+    function validateClosePosition(bytes calldata closePriceData, PreviousActionsData calldata previousActionsData)
         external
         payable;
 

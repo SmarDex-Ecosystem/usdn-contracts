@@ -95,4 +95,10 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided fee collector address is invalid
     error UsdnProtocolInvalidFeeCollector();
+
+    /**
+     * @dev Indicates that the data provided to validate an actionable pending action is invalid (zero length or length
+     * mismatch)
+     */
+    error UsdnProtocolInvalidPendingActionData();
 }

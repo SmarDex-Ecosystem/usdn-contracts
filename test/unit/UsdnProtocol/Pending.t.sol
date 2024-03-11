@@ -8,7 +8,8 @@ import {
     PendingAction,
     VaultPendingAction,
     LongPendingAction,
-    ProtocolAction
+    ProtocolAction,
+    PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -24,25 +25,28 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @dev Helper to test the functionality of `getActionablePendingAction` and `i_getActionablePendingAction`
      * @param func The function to call
      */
-    function _getActionablePendingActionHelper(function (uint256) external returns (PendingAction memory) func)
+    function _getActionablePendingActionHelper(function (uint256) external returns (PendingAction memory, uint128) func)
         internal
     {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         // there should be no pending action at this stage
-        PendingAction memory action = func(0);
+        (PendingAction memory action, uint128 rawIndex) = func(0);
         assertTrue(action.action == ProtocolAction.None, "pending action before initiate");
         // initiate long
         bytes memory priceData = abi.encode(2000 ether);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(
+            1 ether, 1000 ether, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         // the pending action is not yet actionable
         vm.prank(address(0)); // simulate front-end call by someone else
-        action = func(0);
+        (action, rawIndex) = func(0);
         assertTrue(action.action == ProtocolAction.None, "pending action after initiate");
         // the pending action is actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         vm.prank(address(0)); // simulate front-end call by someone else
-        action = func(0);
+        (action, rawIndex) = func(0);
         assertEq(action.user, address(this), "action user");
+        assertEq(rawIndex, 0, "raw index");
     }
 
     /**
@@ -72,9 +76,9 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * queue is sparsely populated
      * @param func The function to call
      */
-    function _getActionablePendingActionSparseHelper(function (uint256) external returns (PendingAction memory) func)
-        internal
-    {
+    function _getActionablePendingActionSparseHelper(
+        function (uint256) external returns (PendingAction memory, uint128) func
+    ) internal {
         wstETH.mint(USER_1, 100_000 ether);
         wstETH.mint(USER_2, 100_000 ether);
         wstETH.mint(USER_3, 100_000 ether);
@@ -82,15 +86,21 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // Setup 3 pending actions
         vm.startPrank(USER_1);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(
+            1 ether, 1000 ether, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         vm.stopPrank();
         vm.startPrank(USER_2);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(
+            1 ether, 1000 ether, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         vm.stopPrank();
         vm.startPrank(USER_3);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(
+            1 ether, 1000 ether, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         vm.stopPrank();
 
         // Simulate the second item in the queue being empty (sets it to zero values)
@@ -103,11 +113,12 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
 
         // With 1 max iter, we should not get any pending action (since the first item in the queue is zeroed)
-        PendingAction memory action = func(1);
+        (PendingAction memory action, uint128 rawIndex) = func(1);
         assertEq(action.user, address(0), "max iter 1");
         // With 2 max iter, we should get the action corresponding to the third user, which is actionable
-        action = func(2);
+        (action, rawIndex) = func(2);
         assertTrue(action.user == USER_3, "max iter 2");
+        assertEq(rawIndex, 2, "raw index");
     }
 
     /**
@@ -141,11 +152,12 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * queue is empty
      * @param func The function to call
      */
-    function _getActionablePendingActionEmptyHelper(function (uint256) external returns (PendingAction memory) func)
-        internal
-    {
-        PendingAction memory action = func(0);
-        assertEq(action.user, address(0));
+    function _getActionablePendingActionEmptyHelper(
+        function (uint256) external returns (PendingAction memory, uint128) func
+    ) internal {
+        (PendingAction memory action, uint128 rawIndex) = func(0);
+        assertEq(action.user, address(0), "action user");
+        assertEq(rawIndex, 0, "raw index");
     }
 
     /**
@@ -184,14 +196,17 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         wstETH.approve(address(protocol), type(uint256).max);
         // initiate long
         bytes memory priceData = abi.encode(2000 ether);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, "");
+        protocol.initiateOpenPosition(
+            1 ether, 1000 ether, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         // the pending action is actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         vm.prank(address(0)); // simulate front-end call by someone else
-        PendingAction memory action = protocol.getActionablePendingAction(0);
+        (PendingAction memory action, uint128 rawIndex) = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(this), "action user");
+        assertEq(rawIndex, 0, "action rawIndex");
         // but if the user himself calls the function, the action should not be returned
-        action = protocol.getActionablePendingAction(0);
+        (action, rawIndex) = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(0), "action user");
     }
 
@@ -278,12 +293,12 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // Setup 2 pending actions
         vm.startPrank(USER_1);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, data1, "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, data1, PreviousActionsData(new bytes[](0), new uint128[](0)));
         vm.stopPrank();
         skip(30);
         vm.startPrank(USER_2);
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, data2, "");
+        protocol.initiateOpenPosition(1 ether, 1000 ether, data2, PreviousActionsData(new bytes[](0), new uint128[](0)));
         vm.stopPrank();
 
         // Wait
@@ -291,9 +306,13 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
 
         // Second user tries to validate their action
         vm.prank(USER_2);
-        protocol.validateOpenPosition(data2, data1);
+        bytes[] memory previousData = new bytes[](1);
+        previousData[0] = data1;
+        uint128[] memory rawIndices = new uint128[](1);
+        rawIndices[0] = 0;
+        protocol.validateOpenPosition(data2, PreviousActionsData(previousData, rawIndices));
         // No more pending action
-        PendingAction memory action = protocol.getActionablePendingAction(0);
+        (PendingAction memory action,) = protocol.getActionablePendingAction(0);
         assertEq(action.user, address(0));
     }
 }

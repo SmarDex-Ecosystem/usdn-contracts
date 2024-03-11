@@ -371,8 +371,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getPendingActionAt(uint256 index) external view returns (PendingAction memory) {
-        return _pendingActionsQueue.at(index);
+    function getPendingActionAt(uint256 index) external view returns (PendingAction memory action_) {
+        (action_,) = _pendingActionsQueue.at(index);
     }
 
     /// @inheritdoc IUsdnProtocolStorage

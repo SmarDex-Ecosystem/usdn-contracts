@@ -3,6 +3,8 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
+import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature The functions of the core of the protocol
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
@@ -82,8 +84,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_updateEma_posFunding() public {
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
-        protocol.initiateOpenPosition(200 ether, DEFAULT_PARAMS.initialPrice / 2, priceData, "");
-        protocol.validateOpenPosition(priceData, "");
+        protocol.initiateOpenPosition(
+            200 ether, DEFAULT_PARAMS.initialPrice / 2, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
+        protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() - 1);
@@ -103,14 +107,18 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(20 ether, price / 2, priceData, "");
-        protocol.validateOpenPosition(priceData, "");
+        protocol.initiateOpenPosition(
+            20 ether, price / 2, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
+        protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         // we create a deposit to make the long and vault expos equal
         protocol.initiateDeposit(
-            uint128(uint256(protocol.i_longTradingExpo(price) - protocol.i_vaultTradingExpo(price))), priceData, ""
+            uint128(uint256(protocol.i_longTradingExpo(price) - protocol.i_vaultTradingExpo(price))),
+            priceData,
+            PreviousActionsData(new bytes[](0), new uint128[](0))
         );
-        protocol.validateDeposit(priceData, "");
+        protocol.validateDeposit(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         assertEq(
             protocol.i_longTradingExpo(price),
@@ -159,9 +167,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
+        protocol.initiateOpenPosition(
+            1000 ether, price * 90 / 100, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         skip(oracleMiddleware.getValidationDelay() + 1);
-        protocol.validateOpenPosition(priceData, "");
+        protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         skip(1 hours);
         protocol.liquidate(abi.encode(price / 100), 10);
@@ -187,9 +197,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
+        protocol.initiateOpenPosition(
+            1000 ether, price * 90 / 100, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         skip(oracleMiddleware.getValidationDelay() + 1);
-        protocol.validateOpenPosition(priceData, "");
+        protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         skip(1 hours);
         protocol.liquidate(abi.encode(price * 100), 10);

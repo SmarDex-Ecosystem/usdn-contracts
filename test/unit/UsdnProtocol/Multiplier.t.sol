@@ -5,6 +5,8 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
+import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature The `multiplier` variable of the USDN Protocol
  * @custom:background Given a protocol with ~10 ether of trading expo on either side (approx. equilibrium)
@@ -29,9 +31,11 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         skip(1 hours);
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a long position to have positive funding
-        protocol.initiateOpenPosition(10 ether, params.initialPrice / 2, priceData, "");
+        protocol.initiateOpenPosition(
+            10 ether, params.initialPrice / 2, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         skip(oracleMiddleware.getValidationDelay() + 1);
-        protocol.validateOpenPosition(priceData, "");
+        protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
         assertGt(protocol.i_longTradingExpo(params.initialPrice), protocol.i_vaultTradingExpo(params.initialPrice));
 
         // positive funding applies
@@ -52,9 +56,9 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         skip(1 hours);
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a deposit to have negative funding
-        protocol.initiateDeposit(10 ether, priceData, "");
+        protocol.initiateDeposit(10 ether, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
         skip(oracleMiddleware.getValidationDelay() + 1);
-        protocol.validateDeposit(priceData, "");
+        protocol.validateDeposit(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
         assertGt(protocol.i_vaultTradingExpo(params.initialPrice), protocol.i_longTradingExpo(params.initialPrice));
 
         // positive funding applies

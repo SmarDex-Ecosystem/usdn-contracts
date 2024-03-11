@@ -90,8 +90,12 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * correct actionable action for a given user.
      * @param maxIter The maximum number of iterations to find the first initialized item
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     * @return rawIndex_ The raw index of the pending action in the queue.
      */
-    function getActionablePendingAction(uint256 maxIter) external view returns (PendingAction memory action_);
+    function getActionablePendingAction(uint256 maxIter)
+        external
+        view
+        returns (PendingAction memory action_, uint128 rawIndex_);
 
     /**
      * @notice Retrieve a user pending action.

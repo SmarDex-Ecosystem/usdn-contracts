@@ -3,10 +3,10 @@ pragma solidity 0.8.20;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+
+import { Position, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
  * @custom:feature The getter functions of the USDN Protocol
@@ -50,11 +50,13 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_getMinLiquidationPrice_multiplierGtOne() public {
         bytes memory priceData = abi.encode(params.initialPrice);
 
-        protocol.initiateOpenPosition(500 ether, params.initialPrice / 2, priceData, "");
-        protocol.validateOpenPosition(priceData, "");
+        protocol.initiateOpenPosition(
+            500 ether, params.initialPrice / 2, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
+        protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
         skip(1 days);
-        protocol.initiateDeposit(1, priceData, "");
-        protocol.validateDeposit(priceData, "");
+        protocol.initiateDeposit(1, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateDeposit(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         assertGt(
             protocol.getLiquidationMultiplier(),
@@ -72,11 +74,11 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_getMinLiquidationPrice_multiplierLtOne() public {
         bytes memory priceData = abi.encode(params.initialPrice);
 
-        protocol.initiateDeposit(5000 ether, priceData, "");
-        protocol.validateDeposit(priceData, "");
+        protocol.initiateDeposit(5000 ether, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateDeposit(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
         skip(6 days);
-        protocol.initiateDeposit(1, priceData, "");
-        protocol.validateDeposit(priceData, "");
+        protocol.initiateDeposit(1, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateDeposit(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         assertLt(
             protocol.getLiquidationMultiplier(),
@@ -242,8 +244,9 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         assertEq(totalExpoForTick, 0, "Total expo for future position's tick should be empty");
 
         // Initiate a long position
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, abi.encode(price), "");
+        (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
+            1 ether, desiredLiqPrice, abi.encode(price), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
 
         totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
         Position memory position = protocol.getLongPosition(tick, tickVersion, index);
@@ -261,7 +264,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         // Change the price
         price = 1999 ether;
         // Validate the position with the new price
-        protocol.validateOpenPosition(abi.encode(price), "");
+        protocol.validateOpenPosition(abi.encode(price), PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         uint256 previousExpo = position.totalExpo;
         // Get the updated position
@@ -293,15 +296,18 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 1700 ether;
 
         // Initiate a long position
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, abi.encode(price), "");
+        (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
+            1 ether, desiredLiqPrice, abi.encode(price), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         skip(oracleMiddleware.getValidationDelay() + 1);
         // Validate the open position action
-        protocol.validateOpenPosition(abi.encode(price), "");
+        protocol.validateOpenPosition(abi.encode(price), PreviousActionsData(new bytes[](0), new uint128[](0)));
         skip(oracleMiddleware.getValidationDelay() + 1);
 
         vm.expectEmit();
         emit InitiatedClosePosition(address(this), tick, tickVersion, index);
-        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(price), "");
+        protocol.initiateClosePosition(
+            tick, tickVersion, index, abi.encode(price), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
     }
 }

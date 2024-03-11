@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Fuzzing tests for the core of the protocol
@@ -56,10 +56,16 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
                 wstETH.approve(address(protocol), type(uint256).max);
             }
 
-            (int24 tick, uint256 tickVersion, uint256 index) =
-                protocol.initiateOpenPosition(uint96(longAmount), uint128(longLiqPrice), abi.encode(currentPrice), "");
+            (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
+                uint96(longAmount),
+                uint128(longLiqPrice),
+                abi.encode(currentPrice),
+                PreviousActionsData(new bytes[](0), new uint128[](0))
+            );
             skip(oracleMiddleware.getValidationDelay() + 1);
-            protocol.validateOpenPosition(abi.encode(currentPrice), "");
+            protocol.validateOpenPosition(
+                abi.encode(currentPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
+            );
             pos[i] = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;
             indices[i] = index;
@@ -68,9 +74,11 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
             // create a random deposit position
             uint256 depositAmount = (random % 9 ether) + 1 ether;
-            protocol.initiateDeposit(uint128(depositAmount), abi.encode(currentPrice), "");
+            protocol.initiateDeposit(
+                uint128(depositAmount), abi.encode(currentPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
+            );
             skip(oracleMiddleware.getValidationDelay() + 1);
-            protocol.validateDeposit(abi.encode(currentPrice), "");
+            protocol.validateDeposit(abi.encode(currentPrice), PreviousActionsData(new bytes[](0), new uint128[](0)));
             vm.stopPrank();
 
             // increase the current price, each time by 100 dollars or less, the max price is 3000 dollars

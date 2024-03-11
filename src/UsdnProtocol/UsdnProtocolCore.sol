@@ -149,11 +149,15 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getActionablePendingAction(uint256 maxIter) external view returns (PendingAction memory action_) {
+    function getActionablePendingAction(uint256 maxIter)
+        external
+        view
+        returns (PendingAction memory action_, uint128 rawIndex_)
+    {
         uint256 queueLength = _pendingActionsQueue.length();
         if (queueLength == 0) {
             // empty queue, early return
-            return action_;
+            return (action_, 0);
         }
         // default max iterations
         if (maxIter == 0) {
@@ -166,7 +170,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         uint256 i = 0;
         do {
             // Since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
-            PendingAction memory candidate = _pendingActionsQueue.at(i);
+            (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.at(i);
             // gas optimization
             unchecked {
                 i++;
@@ -179,10 +183,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 continue;
             } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
-                return candidate;
+                return (candidate, rawIndex);
             }
             // the first pending action is not actionable
-            return action_;
+            return (action_, 0);
         } while (i < maxIter);
     }
 
@@ -493,11 +497,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param maxIter The maximum number of iterations to find the first initialized item
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
      */
-    function _getActionablePendingAction(uint256 maxIter) internal returns (PendingAction memory action_) {
+    function _getActionablePendingAction(uint256 maxIter)
+        internal
+        returns (PendingAction memory action_, uint128 rawIndex_)
+    {
         uint256 queueLength = _pendingActionsQueue.length();
         if (queueLength == 0) {
             // empty queue, early return
-            return action_;
+            return (action_, 0);
         }
         // default max iterations
         if (maxIter == 0) {
@@ -510,7 +517,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         uint256 i = 0;
         do {
             // Since we will never call `front` more than `queueLength` times, there is no risk of reverting
-            PendingAction memory candidate = _pendingActionsQueue.front();
+            (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.front();
             // gas optimization
             unchecked {
                 i++;
@@ -523,10 +530,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 continue;
             } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
-                return candidate;
+                return (candidate, rawIndex);
             }
             // the first pending action is not actionable
-            return action_;
+            return (action_, 0);
         } while (i < maxIter);
     }
 

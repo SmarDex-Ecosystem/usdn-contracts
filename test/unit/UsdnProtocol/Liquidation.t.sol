@@ -5,7 +5,7 @@ import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
@@ -48,7 +48,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
-        protocol.initiateDeposit(1 ether, abi.encode(effectivePriceForTick), "");
+        protocol.initiateDeposit(
+            1 ether, abi.encode(effectivePriceForTick), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
     }
 
     /**
@@ -77,7 +79,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
 
-        protocol.validateDeposit(abi.encode(effectivePriceForTick), "");
+        protocol.validateDeposit(
+            abi.encode(effectivePriceForTick), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
     }
 
     /**
@@ -109,7 +113,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
 
-        protocol.initiateWithdrawal(uint128(usdn.balanceOf(address(this))), abi.encode(effectivePriceForTick), "");
+        protocol.initiateWithdrawal(
+            uint128(usdn.balanceOf(address(this))),
+            abi.encode(effectivePriceForTick),
+            PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
     }
 
     /**
@@ -138,7 +146,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
 
-        protocol.validateWithdrawal(abi.encode(effectivePriceForTick), "");
+        protocol.validateWithdrawal(
+            abi.encode(effectivePriceForTick), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
     }
 
     /* -------------------------------------------------------------------------- */
@@ -170,7 +180,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
-        protocol.initiateOpenPosition(1 ether, desiredLiqPrice - 200 ether, abi.encode(effectivePriceForTick), "");
+        protocol.initiateOpenPosition(
+            1 ether,
+            desiredLiqPrice - 200 ether,
+            abi.encode(effectivePriceForTick),
+            PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
     }
 
     /**
@@ -201,7 +216,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
-        protocol.validateOpenPosition(abi.encode(effectivePriceForTick), "");
+        protocol.validateOpenPosition(
+            abi.encode(effectivePriceForTick), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
     }
 
     /**
@@ -237,7 +254,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatedTick(tickToLiquidate, tickVersionToLiquidate, 0, 0, 0);
 
         protocol.initiateClosePosition(
-            tickToClose, tickVersionToClose, indexToClose, abi.encode(effectivePriceForTick), ""
+            tickToClose,
+            tickVersionToClose,
+            indexToClose,
+            abi.encode(effectivePriceForTick),
+            PreviousActionsData(new bytes[](0), new uint128[](0))
         );
     }
 
@@ -270,7 +291,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tickToLiquidate, tickVersionToLiquidate, 0, 0, 0);
 
-        protocol.validateClosePosition(abi.encode(effectivePriceForTick), "");
+        protocol.validateClosePosition(
+            abi.encode(effectivePriceForTick), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
     }
 
     /* -------------------------------------------------------------------------- */
@@ -390,11 +413,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // create high risk position
         protocol.initiateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(5 ether, 9 * currentPrice / 10, priceData, "");
+        }(5 ether, 9 * currentPrice / 10, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
         skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-        }(priceData, "");
+        }(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
         assertEq(protocol.getTotalLongPositions(), initialTotalPos + 1, "total positions after create");
 
         // price drops

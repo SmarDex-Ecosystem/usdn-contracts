@@ -2,8 +2,9 @@
 pragma solidity 0.8.20;
 
 import { ADMIN } from "test/utils/Constants.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+
+import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature All fees functionality of the USDN Protocol
@@ -42,8 +43,12 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         emit FeeBpsUpdated(0);
         protocol.setProtocolFeeBps(0);
 
-        protocol.initiateDeposit(1000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        protocol.initiateDeposit(
+            1000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
+        protocol.validateDeposit(
+            abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
     }
 
@@ -94,8 +99,12 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
 
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
-        protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        protocol.initiateDeposit(
+            10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
+        protocol.validateDeposit(
+            abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         assertGt(protocol.getPendingProtocolFee(), 0, "pending protocol fee after deposit");
     }
 
@@ -109,16 +118,27 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     function test_feeHitThreshold() public {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
 
-        protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        protocol.initiateDeposit(
+            10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
+        protocol.validateDeposit(
+            abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         skip(4 days);
         protocol.initiateOpenPosition(
-            5000 ether, DEFAULT_PARAMS.initialPrice / 2, abi.encode(DEFAULT_PARAMS.initialPrice), ""
+            5000 ether,
+            DEFAULT_PARAMS.initialPrice / 2,
+            abi.encode(DEFAULT_PARAMS.initialPrice),
+            PreviousActionsData(new bytes[](0), new uint128[](0))
         );
-        protocol.validateOpenPosition(abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        protocol.validateOpenPosition(
+            abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         skip(8 days);
         assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");
-        protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        protocol.initiateDeposit(
+            10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
+        );
         assertGe(wstETH.balanceOf(ADMIN), protocol.getFeeThreshold(), "fee collector balance after collect");
     }
 }

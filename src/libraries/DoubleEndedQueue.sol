@@ -115,12 +115,14 @@ library DoubleEndedQueue {
      * Reverts with `QueueEmpty` if the queue is empty.
      * @param deque The queue.
      * @return value_ The item at the front of the queue.
+     * @return rawIndex_ The raw index of the returned item.
      */
-    function front(Deque storage deque) external view returns (PendingAction memory value_) {
+    function front(Deque storage deque) external view returns (PendingAction memory value_, uint128 rawIndex_) {
         if (empty(deque)) {
             revert QueueEmpty();
         }
-        value_ = deque._data[deque._begin];
+        rawIndex_ = deque._begin;
+        value_ = deque._data[rawIndex_];
     }
 
     /**
@@ -128,13 +130,15 @@ library DoubleEndedQueue {
      * Reverts with `QueueEmpty` if the queue is empty.
      * @param deque The queue.
      * @return value_ The item at the back of the queue.
+     * @return rawIndex_ The raw index of the returned item.
      */
-    function back(Deque storage deque) external view returns (PendingAction memory value_) {
+    function back(Deque storage deque) external view returns (PendingAction memory value_, uint128 rawIndex_) {
         if (empty(deque)) {
             revert QueueEmpty();
         }
         unchecked {
-            value_ = deque._data[deque._end - 1];
+            rawIndex_ = deque._end - 1;
+            value_ = deque._data[rawIndex_];
         }
     }
 
@@ -145,14 +149,20 @@ library DoubleEndedQueue {
      * @param deque The queue.
      * @param index The index of the item to return.
      * @return value_ The item at the given index.
+     * @return rawIndex_ The raw index of the item.
      */
-    function at(Deque storage deque, uint256 index) external view returns (PendingAction memory value_) {
+    function at(Deque storage deque, uint256 index)
+        external
+        view
+        returns (PendingAction memory value_, uint128 rawIndex_)
+    {
         if (index >= length(deque)) {
             revert QueueOutOfBounds();
         }
         // By construction, length is a uint128, so the check above ensures that index can be safely downcast to uint128
         unchecked {
-            value_ = deque._data[deque._begin + uint128(index)];
+            rawIndex_ = deque._begin + uint128(index);
+            value_ = deque._data[rawIndex_];
         }
     }
 
