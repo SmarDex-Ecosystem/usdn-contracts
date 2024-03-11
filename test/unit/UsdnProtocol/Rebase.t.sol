@@ -95,9 +95,11 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
 
         skip(protocol.getUsdnRebaseInterval() - 1);
 
-        // but since we checked more recently than `_usdnRebaseInterval` we do not rebase
+        // update balances
+        protocol.i_applyPnlAndFunding(newPrice, uint128(block.timestamp));
+        // since we checked more recently than `_usdnRebaseInterval`, we do not rebase
         vm.recordLogs();
-        protocol.initiateDeposit(1 ether, abi.encode(newPrice), "");
+        protocol.i_usdnRebase(newPrice, false);
         Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i; i < logs.length; i++) {
             // no log is a rebase log
@@ -129,9 +131,12 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         assertGt(usdnPrice, 1 ether, "new USDN price compared to initial price");
         assertLt(usdnPrice, protocol.getUsdnRebaseThreshold(), "new USDN price compared to threshold");
 
-        // but since the price of USDN didn't reach the threshold, we do not rebase
+        // update balances
+        protocol.i_applyPnlAndFunding(newPrice, uint128(block.timestamp));
+
+        // since the price of USDN didn't reach the threshold, we do not rebase
         vm.recordLogs();
-        protocol.initiateDeposit(1 ether, abi.encode(newPrice), "");
+        protocol.i_usdnRebase(newPrice, true);
         Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i; i < logs.length; i++) {
             // no log is a rebase log
