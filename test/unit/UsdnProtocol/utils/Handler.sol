@@ -37,13 +37,20 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _EMA = 0;
     }
 
-    function i_getPositionValue(
-        uint128 currentPrice,
-        uint128 liqPriceWithoutPenalty,
-        uint256 amount,
-        uint128 initLeverage
-    ) external pure returns (uint256 value_) {
-        return _positionValue(currentPrice, liqPriceWithoutPenalty, amount, initLeverage);
+    function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
+        external
+        pure
+        returns (uint256 value_)
+    {
+        return _positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
+    }
+
+    function i_calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+        external
+        pure
+        returns (uint256 totalExpo_)
+    {
+        return _calculatePositionTotalExpo(amount, startPrice, liquidationPrice);
     }
 
     function i_removePendingAction(uint128 rawIndex, address user) external {
@@ -112,14 +119,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _convertLongPendingAction(action);
     }
 
-    function i_assetToTransfer(
-        uint128 currentPrice,
-        int24 tick,
-        uint256 amount,
-        uint128 leverage,
-        uint256 liqMultiplier
-    ) external view returns (uint256) {
-        return _assetToTransfer(currentPrice, tick, amount, leverage, liqMultiplier);
+    function i_assetToTransfer(uint128 currentPrice, int24 tick, uint128 expo, uint256 liqMultiplier)
+        external
+        view
+        returns (uint256)
+    {
+        return _assetToTransfer(currentPrice, tick, expo, liqMultiplier);
     }
 
     function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {
