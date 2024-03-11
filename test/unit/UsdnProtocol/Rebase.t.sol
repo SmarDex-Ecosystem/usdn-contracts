@@ -4,7 +4,6 @@ pragma solidity 0.8.20;
 import { Vm } from "forge-std/Vm.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { DEPLOYER } from "test/utils/Constants.sol";
 
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
