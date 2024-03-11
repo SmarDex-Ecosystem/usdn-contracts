@@ -52,7 +52,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @notice Get the predicted value of the long balance for the given asset price and timestamp
      * @dev The effect of the funding rates and any profit or loss of the long positions since the last contract state
      * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
-     * update, the function reverts with `UsdnProtocolTimestampTooOld`. // TO DO : check error
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`.
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
@@ -65,7 +65,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @notice Get the predicted value of the vault balance for the given asset price and timestamp
      * @dev The effect of the funding rates and any profit or loss of the long positions since the last contract state
      * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
-     * update, the function reverts with `UsdnProtocolTimestampTooOld`. // TO DO : check error
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`.
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
