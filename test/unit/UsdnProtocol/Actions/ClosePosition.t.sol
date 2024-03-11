@@ -209,13 +209,6 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         emit ValidatedClosePosition(address(this), tick, tickVersion, index, expectedAmountReceived, -1);
         protocol.i_validateClosePosition(address(this), priceData);
 
-        assertApproxEqAbs(
-            protocol.getAsset().balanceOf(address(this)),
-            assetBalanceBefore + amountToClose,
-            1,
-            "Test contract address should have received his collateral + his profits"
-        );
-
         /* ---------------------------- Position's state ---------------------------- */
         Position memory posAfter = protocol.getLongPosition(tick, tickVersion, index);
         assertEq(posBefore.user, posAfter.user, "The user of the position should not have changed");

@@ -172,7 +172,7 @@ TestUsdnProtocolActionsClosePosition:test_RevertWhen_closePartialPositionWithAnO
 TestUsdnProtocolActionsClosePosition:test_RevertWhen_closePartialPositionWithZeroAmount() (gas: 32947)
 TestUsdnProtocolActionsClosePosition:test_initiatePartialClosePosition() (gas: 253279)
 TestUsdnProtocolActionsClosePosition:test_setUp() (gas: 13426421)
-TestUsdnProtocolActionsClosePosition:test_validatePartialClosePosition() (gas: 424466)
+TestUsdnProtocolActionsClosePosition:test_validatePartialClosePosition() (gas: 422676)
 TestUsdnProtocolActionsClosePosition:test_validatePartialClosePositionInProfit() (gas: 272277)
 TestUsdnProtocolActionsClosePosition:test_validatePartialCloseUnderwaterPosition() (gas: 310356)
 TestUsdnProtocolActionsClosePositionFuzzing:test() (gas: 208)
