@@ -265,7 +265,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         (bytes32 tickHash,) = _tickHash(tick);
         uint128 totalExpoToRemove;
         if (amountToRemove < pos.amount) {
-            totalExpoToRemove = uint128(FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToRemove, pos.amount));
+            totalExpoToRemove = FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToRemove, pos.amount).toUint128();
             _longPositions[tickHash][index] = Position({
                 timestamp: pos.timestamp,
                 user: pos.user,
