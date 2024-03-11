@@ -7,7 +7,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { DEPLOYER } from "test/utils/Constants.sol";
 
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the rebasing of the USDN token depending on its price
@@ -25,6 +25,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         super._setUp(params);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
+        usdn.approve(address(protocol), type(uint256).max);
     }
 
     /**
@@ -154,7 +155,8 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
-        skip(1 hours);
+        // we wait long enough to check for a rebase again
+        skip(protocol.getUsdnRebaseInterval() + 1);
 
         uint128 newPrice = params.initialPrice - 100 ether;
         assertEq(protocol.getLastRebaseCheck(), 0, "rebase never checked");
@@ -172,14 +174,13 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @custom:then The USDN token is rebased
      */
     function test_usdnRebaseWhenValidateDeposit() public {
-        skip(1 hours);
-        protocol.initiateDeposit(1 ether, abi.encode(params.initialPrice), "");
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
 
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
         // we wait long enough to check for a rebase again
-        skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
+        skip(protocol.getUsdnRebaseInterval() + 1);
 
         uint128 newPrice = params.initialPrice - 100 ether;
 
@@ -196,21 +197,19 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @custom:then The USDN token is rebased
      */
     function test_usdnRebaseWhenInitiateWithdrawal() public {
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
-        skip(1 hours);
-
         uint128 newPrice = params.initialPrice - 100 ether;
-        assertEq(protocol.getLastRebaseCheck(), 0, "rebase never checked");
 
-        vm.prank(DEPLOYER);
-        usdn.approve(address(protocol), 100 ether);
+        // we wait long enough to check for a rebase again
+        skip(protocol.getUsdnRebaseInterval() + 1);
 
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        vm.prank(DEPLOYER);
         protocol.initiateWithdrawal(100 ether, abi.encode(newPrice), "");
     }
 
@@ -221,24 +220,19 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @custom:then The USDN token is rebased
      */
     function test_usdnRebaseWhenValidateWithdrawal() public {
-        skip(1 hours);
-        vm.startPrank(DEPLOYER);
-        usdn.approve(address(protocol), 100 ether);
-        protocol.initiateWithdrawal(100 ether, abi.encode(params.initialPrice), "");
-        vm.stopPrank();
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 1 ether, params.initialPrice);
 
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
-        // we wait long enough to check for a rebase again
-        skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
-
         uint128 newPrice = params.initialPrice - 100 ether;
+
+        // we wait long enough to check for a rebase again
+        skip(protocol.getUsdnRebaseInterval() + 1);
 
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        vm.prank(DEPLOYER);
         protocol.validateWithdrawal(abi.encode(newPrice), "");
     }
 
@@ -252,7 +246,8 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
-        skip(1 hours);
+        // we wait long enough to check for a rebase again
+        skip(protocol.getUsdnRebaseInterval() + 1);
 
         uint128 newPrice = params.initialPrice - 100 ether;
         assertEq(protocol.getLastRebaseCheck(), 0, "rebase never checked");
@@ -270,16 +265,17 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @custom:then The USDN token is rebased
      */
     function test_usdnRebaseWhenValidateOpenPosition() public {
-        skip(1 hours);
-        protocol.initiateOpenPosition(1 ether, params.initialPrice / 2, abi.encode(params.initialPrice), "");
+        setUpUserPositionInLong(
+            address(this), ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+        );
 
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
-        // we wait long enough to check for a rebase again
-        skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
-
         uint128 newPrice = params.initialPrice - 100 ether;
+
+        // we wait long enough to check for a rebase again
+        skip(protocol.getUsdnRebaseInterval() + 1);
 
         // rebase
         vm.expectEmit(false, false, false, false);
@@ -294,21 +290,22 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @custom:then The USDN token is rebased
      */
     function test_usdnRebaseWhenInitiateClosePosition() public {
-        int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 2)
-            + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing();
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+        );
+
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
-        skip(1 hours);
-
         uint128 newPrice = params.initialPrice - 100 ether;
-        assertEq(protocol.getLastRebaseCheck(), 0, "rebase never checked");
+
+        // we wait long enough to check for a rebase again
+        skip(protocol.getUsdnRebaseInterval() + 1);
 
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        vm.prank(DEPLOYER);
-        protocol.initiateClosePosition(tick, 0, 0, abi.encode(newPrice), "");
+        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(newPrice), "");
     }
 
     /**
@@ -318,22 +315,17 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @custom:then The USDN token is rebased
      */
     function test_usdnRebaseWhenValidateClosePosition() public {
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, params.initialPrice / 2, abi.encode(params.initialPrice), "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
-        protocol.validateOpenPosition(abi.encode(params.initialPrice), "");
-
-        skip(1 hours);
-
-        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(params.initialPrice), "");
+        setUpUserPositionInLong(
+            address(this), ProtocolAction.InitiateClosePosition, 1 ether, params.initialPrice / 2, params.initialPrice
+        );
 
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
 
-        // we wait long enough to check for a rebase again
-        skip(oracleMiddleware.getValidationDelay() + protocol.getUsdnRebaseInterval() + 1);
-
         uint128 newPrice = params.initialPrice - 100 ether;
+
+        // we wait long enough to check for a rebase again
+        skip(protocol.getUsdnRebaseInterval() + 1);
 
         // rebase
         vm.expectEmit(false, false, false, false);
