@@ -215,7 +215,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 actualEMA)
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         public
         pure
         returns (int256)
@@ -224,7 +224,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return lastFunding;
         }
 
-        return (lastFunding + actualEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
+        return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
     }
 
     /* --------------------------  Internal functions --------------------------- */

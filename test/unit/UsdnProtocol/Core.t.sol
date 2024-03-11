@@ -3,6 +3,8 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature The functions of the core of the protocol
  * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
@@ -10,6 +12,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
     }
 
     /**
@@ -82,7 +85,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then EMA should be lower than the last funding
      */
     function test_updateEma_posFunding() public {
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
         protocol.initiateOpenPosition(200 ether, DEFAULT_PARAMS.initialPrice / 2, priceData, "");
         protocol.validateOpenPosition(priceData, "");
@@ -101,7 +103,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then fund should be equal to EMA
      */
     function test_fundingWhenEqualExpo() public {
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
@@ -137,7 +138,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then EMA should be equal to the last funding
      */
     function test_updateEma_whenTimeGtEMAPeriod() public {
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
         // we skip 1 day and call liquidate() to have a non-zero funding
         skip(1 days);
@@ -159,7 +159,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_funding_NegLong_ZeroVault() public {
         skip(1 hours);
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
@@ -187,7 +186,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_funding_PosLong_ZeroVault() public {
         skip(1 hours);
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
@@ -214,18 +212,16 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_longAssetAvailableWithFundingAndFees_posFund() public {
         skip(1 hours);
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(1 ether, price * 90 / 100, priceData, "");
-        _waitDelay();
-        protocol.validateOpenPosition(priceData, "");
-        skip(1 hours);
+        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, price * 90 / 100, price);
+        skip(30);
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
         assertGt(fund, 0, "funding should be positive");
 
+        // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.longAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(priceData, 5);
@@ -239,16 +235,28 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_longAssetAvailableWithFundingAndFees_negFund() public {
         skip(1 hours);
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
         assertLt(fund, 0, "funding should be negative");
 
+        // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.longAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(abi.encode(price), 5);
+
         assertEq(available, int256(protocol.getBalanceLong()), "long balance != available");
+    }
+
+    /**
+     * @custom:scenario Calling the `longAssetAvailableWithFundingAndFees` function
+     * @custom:when The timestamp is in the past
+     * @custom:then The protocol reverts with `UsdnProtocolTimestampTooOld`
+     */
+    function test_RevertWhen_longAssetAvailableWithFundingAndFees_pastTimestamp() public {
+        uint128 ts = protocol.getLastUpdateTimestamp();
+        vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
+        protocol.longAssetAvailableWithFundingAndFees(0, ts - 1);
     }
 
     /**
@@ -258,15 +266,16 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_vaultAssetAvailableWithFundingAndFees_negFund() public {
         skip(1 hours);
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
         assertLt(fund, 0, "funding should be negative");
 
+        // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.vaultAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(abi.encode(price), 5);
+
         assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
     }
 
@@ -277,21 +286,30 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_vaultAssetAvailableWithFundingAndFees_posFund() public {
         skip(1 hours);
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(1 ether, price * 90 / 100, priceData, "");
-        _waitDelay();
-        protocol.validateOpenPosition(priceData, "");
-        skip(1 hours);
+        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, price * 90 / 100, price);
+        skip(30);
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
         assertGt(fund, 0, "funding should be positive");
 
+        // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.vaultAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(priceData, 5);
         assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
+    }
+
+    /**
+     * @custom:scenario Calling the `vaultAssetAvailableWithFundingAndFees` function
+     * @custom:when The timestamp is in the past
+     * @custom:then The protocol reverts with `UsdnProtocolTimestampTooOld`
+     */
+    function test_RevertWhen_vaultAssetAvailableWithFundingAndFees_pastTimestamp() public {
+        uint128 ts = protocol.getLastUpdateTimestamp();
+        vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
+        protocol.vaultAssetAvailableWithFundingAndFees(0, ts - 1);
     }
 }
