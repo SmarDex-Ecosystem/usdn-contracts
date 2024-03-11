@@ -131,8 +131,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
             int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
-            // fee have the same sign as fundAsset (negative here), so we need to add them
-            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset + fee);
+            // fee have the same sign as fundAsset (negative here), so we need to sub them
+            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
         }
     }
 

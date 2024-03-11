@@ -208,4 +208,92 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         assertEq(fund_, int256(fundingSF) + EMA, "funding should be equal to fundingSF + EMA");
     }
+
+    /**
+     * @custom:scenario longAssetAvailableWithFundingAndFees calculation
+     * @custom:when the funding is positive
+     * @custom:then return value should be equal to the long balance
+     */
+    function test_longAssetAvailableWithFundingAndFees_posFund() public {
+        skip(1 hours);
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+        uint128 price = DEFAULT_PARAMS.initialPrice;
+        bytes memory priceData = abi.encode(price);
+
+        protocol.initiateOpenPosition(1 ether, price * 90 / 100, priceData, "");
+        _waitDelay();
+        protocol.validateOpenPosition(priceData, "");
+        skip(1 hours);
+
+        (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
+        assertGt(fund, 0, "funding should be positive");
+
+        int256 available = protocol.longAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
+        // call liquidate to update the contract state
+        protocol.liquidate(priceData, 5);
+        assertEq(available, int256(protocol.getBalanceLong()), "long balance != available");
+    }
+
+    /**
+     * @custom:scenario longAssetAvailableWithFundingAndFees calculation
+     * @custom:when the funding is negative
+     * @custom:then return value should be equal to the long balance
+     */
+    function test_longAssetAvailableWithFundingAndFees_negFund() public {
+        skip(1 hours);
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+        uint128 price = DEFAULT_PARAMS.initialPrice;
+
+        (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
+        assertLt(fund, 0, "funding should be negative");
+
+        int256 available = protocol.longAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
+        // call liquidate to update the contract state
+        protocol.liquidate(abi.encode(price), 5);
+        assertEq(available, int256(protocol.getBalanceLong()), "long balance != available");
+    }
+
+    /**
+     * @custom:scenario vaultAssetAvailableWithFundingAndFees calculation
+     * @custom:when the funding is negative
+     * @custom:then return value should be equal to the vault balance
+     */
+    function test_vaultAssetAvailableWithFundingAndFees_negFund() public {
+        skip(1 hours);
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+        uint128 price = DEFAULT_PARAMS.initialPrice;
+
+        (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
+        assertLt(fund, 0, "funding should be negative");
+
+        int256 available = protocol.vaultAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
+        // call liquidate to update the contract state
+        protocol.liquidate(abi.encode(price), 5);
+        assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
+    }
+
+    /**
+     * @custom:scenario vaultAssetAvailableWithFundingAndFees calculation
+     * @custom:when the funding is positive
+     * @custom:then return value should be equal to the vault balance
+     */
+    function test_vaultAssetAvailableWithFundingAndFees_posFund() public {
+        skip(1 hours);
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
+        uint128 price = DEFAULT_PARAMS.initialPrice;
+        bytes memory priceData = abi.encode(price);
+
+        protocol.initiateOpenPosition(1 ether, price * 90 / 100, priceData, "");
+        _waitDelay();
+        protocol.validateOpenPosition(priceData, "");
+        skip(1 hours);
+
+        (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
+        assertGt(fund, 0, "funding should be positive");
+
+        int256 available = protocol.vaultAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
+        // call liquidate to update the contract state
+        protocol.liquidate(priceData, 5);
+        assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
+    }
 }

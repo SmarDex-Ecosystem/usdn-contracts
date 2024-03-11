@@ -228,4 +228,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(a.var5, b.var5, string.concat(err, " - action var5"));
         assertEq(a.var6, b.var6, string.concat(err, " - action var6"));
     }
+
+    function _waitDelay() internal {
+        skip(oracleMiddleware.getValidationDelay() + 1);
+    }
 }
