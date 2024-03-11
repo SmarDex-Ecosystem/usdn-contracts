@@ -57,6 +57,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided tick version is outdated (transactions have been liquidated)
     error UsdnProtocolOutdatedTick(uint256 currentVersion, uint256 providedVersion);
 
+    /// @dev Indicates that the provided position fee exceeds the maximum allowed
+    error UsdnProtocolInvalidPositionFee();
+
     /// @dev Indicates that the new middleware address value is invalid.
     error UsdnProtocolInvalidMiddlewareAddress();
 
@@ -92,4 +95,10 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided fee collector address is invalid
     error UsdnProtocolInvalidFeeCollector();
+
+    /// @dev Indicates that the amount to close in a position is higher than the amount in the position itself.
+    error UsdnProtocolAmountToCloseHigherThanPositionAmount(uint128 positionAmount, uint128 amountToClose);
+
+    /// @dev Indicates that the amount to close in a position is 0.
+    error UsdnProtocolAmountToCloseIsZero();
 }

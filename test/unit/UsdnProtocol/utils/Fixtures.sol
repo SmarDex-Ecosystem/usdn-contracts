@@ -5,14 +5,14 @@ import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { MockChainlinkOnChain } from "test/unit/OracleMiddleware/utils/MockChainlinkOnChain.sol";
+import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { Position, PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 
 /**
@@ -26,6 +26,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         uint128 initialPrice;
         uint256 initialTimestamp;
         uint256 initialBlock;
+        bool enablePositionFees;
+        bool enableProtocolFees;
+        bool enableFunding;
     }
 
     SetUpParams public params;
@@ -34,7 +37,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         initialLong: 5 ether,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
-        initialBlock: block.number
+        initialBlock: block.number,
+        enablePositionFees: false,
+        enableProtocolFees: true,
+        enableFunding: true
     });
 
     Usdn public usdn;
@@ -44,8 +50,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
-    uint128 public initialLongLeverage;
+    uint128 public initialLongExpo;
     address[] public users;
+
+    modifier prankUser(address user) {
+        vm.startPrank(user);
+        _;
+        vm.stopPrank();
+    }
 
     function _setUp(SetUpParams memory testParams) public virtual {
         vm.warp(testParams.initialTimestamp);
@@ -66,6 +78,18 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             ADMIN // Fee collector
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
+
+        if (!testParams.enablePositionFees) {
+            protocol.setPositionFeeBps(0);
+        }
+        if (!testParams.enableProtocolFees) {
+            protocol.setProtocolFeeBps(0);
+        }
+        if (!testParams.enableFunding) {
+            protocol.setFundingSF(0);
+            protocol.resetEMA();
+        }
+
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
         protocol.initialize(
@@ -85,7 +109,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();
-        initialLongLeverage = firstPos.leverage;
+        initialLongExpo = firstPos.totalExpo;
         params = testParams;
     }
 
@@ -97,6 +121,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         );
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "usdn dead address balance");
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
+        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         Position memory firstPos = protocol.getLongPosition(
@@ -105,13 +130,84 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             0,
             0
         );
-        assertEq(firstPos.leverage, 1_983_994_053_940_692_631_258, "first pos leverage");
+        assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
         assertEq(protocol.getFeeCollector(), ADMIN, "fee collector");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
+    }
+
+    /**
+     * @notice Create user positions on the vault side (deposit and withdrawal)
+     * @dev The order in which the actions are performed are defined as followed:
+     * @dev InitiateDeposit -> ValidateDeposit -> InitiateWithdrawal -> ValidateWithdrawal
+     * @param user User that performs the actions
+     * @param untilAction Action after which the function returns
+     * @param positionSize Amount of wstEth to deposit
+     * @param price Current price
+     */
+    function setUpUserPositionInVault(address user, ProtocolAction untilAction, uint128 positionSize, uint256 price)
+        public
+        prankUser(user)
+    {
+        bytes memory priceData = abi.encode(price);
+
+        protocol.initiateDeposit(positionSize, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateDeposit) return;
+
+        protocol.validateDeposit(priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+        if (untilAction == ProtocolAction.ValidateDeposit) return;
+
+        protocol.initiateWithdrawal(uint128(usdn.balanceOf(user)), priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateWithdrawal) return;
+
+        protocol.validateWithdrawal(priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+    }
+
+    /**
+     * @notice Create user positions on the long side (open and close a position)
+     * @dev The order in which the actions are performed are defined as followed:
+     * @dev InitiateOpenPosition -> ValidateOpenPosition -> InitiateClosePosition -> ValidateWithdrawal
+     * @param user User that performs the actions
+     * @param untilAction Action after which the function returns
+     * @param positionSize Amount of wstEth to deposit
+     * @param desiredLiqPrice Price at which the position should be liquidated
+     * @param price Current price
+     * @return tick_ The tick at which the position was opened
+     * @return tickVersion_ The tick version of the price tick
+     * @return index_ The index of the new position inside the tick array
+     */
+    function setUpUserPositionInLong(
+        address user,
+        ProtocolAction untilAction,
+        uint96 positionSize,
+        uint128 desiredLiqPrice,
+        uint256 price
+    ) public prankUser(user) returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+        bytes memory priceData = abi.encode(price);
+
+        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(positionSize, desiredLiqPrice, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
+
+        protocol.validateOpenPosition(priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+        if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
+
+        protocol.initiateClosePosition(tick_, tickVersion_, index_, positionSize, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+        if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
+
+        protocol.validateClosePosition(priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+
+        return (tick_, tickVersion_, index_);
     }
 
     /**

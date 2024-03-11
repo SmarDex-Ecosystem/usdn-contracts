@@ -95,13 +95,22 @@ interface IUsdnProtocolEvents {
     );
 
     /**
-     * @notice Emitted when a user initiates the closing of a long position.
+     * @notice Emitted when a user initiates the closing of all or part of a long position.
      * @param user The user address.
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
+     * @param amountRemaining The amount of collateral remaining in the position.
+     * @param totalExpoRemaining The total expo remaining in the position.
      */
-    event InitiatedClosePosition(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
+    event InitiatedClosePosition(
+        address indexed user,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index,
+        uint128 amountRemaining,
+        uint128 totalExpoRemaining
+    );
 
     /**
      * @notice Emitted when a user validates the closing of a long position
@@ -159,6 +168,12 @@ interface IUsdnProtocolEvents {
      * @param index The index of the position inside the tick array.
      */
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
+
+    /**
+     * @notice Emitted when the position fees are updated.
+     * @param positionFee The new position fee (in percentage).
+     */
+    event PositionFeeUpdated(uint256 positionFee);
 
     /**
      * @notice Emitted when the oracle middleware is updated.

@@ -52,11 +52,11 @@ contract TestUsdnProtocolClose is UsdnProtocolBaseFixture {
         uint256 longPositionLengthBefore = protocol.getLongPositionsLength(tick);
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
         uint256 assetToTransfer =
-            protocol.i_assetToTransfer(tick, amountPosition, userPosition.leverage, liquidationMultiplier);
+            protocol.i_assetToTransfer(params.initialPrice, tick, userPosition.totalExpo, liquidationMultiplier);
 
         vm.expectEmit();
-        emit InitiatedClosePosition(address(this), tick, tickVersion, index); // expected event
-        protocol.initiateClosePosition(tick, tickVersion, index, priceData, "");
+        emit InitiatedClosePosition(address(this), tick, tickVersion, index, 0, 0); // expected event
+        protocol.initiateClosePosition(tick, tickVersion, index, amountPosition, priceData, "");
 
         // the pending action should not yet be actionable by a third party
         vm.startPrank(address(0)); // simulate front-end calls by someone else
@@ -69,7 +69,7 @@ contract TestUsdnProtocolClose is UsdnProtocolBaseFixture {
         assertEq(action.user, address(this), "action user");
         assertEq(action.tick, tick, "action tick");
         assertEq(action.closeAmount, amountPosition, "action closeAmount");
-        assertEq(action.closeLeverage, userPosition.leverage, "action closeLeverage");
+        assertEq(action.closeTotalExpo, userPosition.totalExpo, "action closeLeverage");
         assertEq(action.tickVersion, tickVersion, "action tickVersion");
         assertEq(action.index, index, "action index");
         assertEq(action.closeLiqMultiplier, liquidationMultiplier, "action closeLiqMultiplier");
@@ -102,7 +102,7 @@ contract TestUsdnProtocolClose is UsdnProtocolBaseFixture {
     function test_RevertWhen_notUser() public {
         vm.prank(USER_1);
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
-        protocol.initiateClosePosition(tick, tickVersion, index, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, 1, priceData, "");
     }
 
     /**
@@ -112,13 +112,14 @@ contract TestUsdnProtocolClose is UsdnProtocolBaseFixture {
      * @custom:then The protocol initiate the closure of the position and emits the ValidatedClosePosition event
      */
     function test_validateClosePosition() public {
-        bytes memory newPrice = abi.encode(params.initialPrice + 500 ether);
-        protocol.initiateClosePosition(tick, tickVersion, index, newPrice, "");
+        uint128 newPrice = params.initialPrice + 500 ether;
+        bytes memory newPriceData = abi.encode(newPrice);
+        protocol.initiateClosePosition(tick, tickVersion, index, amountPosition, newPriceData, "");
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
         uint256 liquidationMultiplier = protocol.getLiquidationMultiplier();
         uint256 amountToTransfer =
-            protocol.i_assetToTransfer(tick, amountPosition, action.closeLeverage, liquidationMultiplier);
+            protocol.i_assetToTransfer(newPrice, tick, action.closeTotalExpo, liquidationMultiplier);
 
         vm.expectEmit();
         emit ValidatedClosePosition(
@@ -129,6 +130,6 @@ contract TestUsdnProtocolClose is UsdnProtocolBaseFixture {
             amountToTransfer,
             int256(amountToTransfer) - int256(uint256(amountPosition))
         );
-        protocol.validateClosePosition(newPrice, "");
+        protocol.validateClosePosition(newPriceData, "");
     }
 }

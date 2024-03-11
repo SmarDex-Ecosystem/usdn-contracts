@@ -88,7 +88,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @return index_ The index of the new position inside the tick array
      */
     function initiateOpenPosition(
-        uint96 amount,
+        uint128 amount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
@@ -121,12 +121,13 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * If the current tick version is greater than the tick version of the position (when it was opened), then the
      * position has been liquidated and the transaction will revert.
-     * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't
-     * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
-     * during the validate action.
+     * The appropriate amount and total expo are taken out of the tick and put in a pending state during this operation.
+     * Thus, calculations don't consider those anymore. The exit price (and thus profit) is not yet set definitively,
+     * and will be done during the validate action.
      * @param tick The tick containing the position to close
      * @param tickVersion The tick version of the position to close
      * @param index The index of the position inside the tick array
+     * @param amountToClose The amount of asset to remove from the position's amount
      * @param currentPriceData The current price data
      * @param previousActionPriceData The price data of an actionable pending action.
      */
@@ -134,6 +135,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         int24 tick,
         uint256 tickVersion,
         uint256 index,
+        uint128 amountToClose,
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
     ) external payable;

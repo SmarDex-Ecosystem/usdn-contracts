@@ -12,6 +12,9 @@ interface IOracleMiddlewareErrors {
     /// @notice The oracle price is invalid (too old)
     error OracleMiddlewarePriceTooOld(uint256 timestamp);
 
+    /// @notice the confidence ratio is too high
+    error OracleMiddlewareConfRatioTooHigh();
+
     /// @notice Not enough ether was provided to cover the cost of price validation
     error OracleMiddlewareInsufficientFee();
 
