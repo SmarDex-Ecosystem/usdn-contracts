@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { LongPendingAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { LongPendingAction, Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
@@ -32,19 +32,22 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
 
-        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
-
-        (tick, tickVersion, index) =
-            protocol.initiateOpenPosition(positionAmount, params.initialPrice - 200 ether, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
-        protocol.validateOpenPosition(priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        (tick, tickVersion, index) = setUpUserPositionInLong(
+            address(this),
+            ProtocolAction.ValidateOpenPosition,
+            positionAmount,
+            params.initialPrice - 200 ether,
+            DEFAULT_PARAMS.initialPrice
+        );
 
         // Add more to balance long because of a bug in _positionValue calculation
-        protocol.initiateOpenPosition(100 ether, params.initialPrice - 1000 ether, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
-        protocol.validateOpenPosition(priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        setUpUserPositionInLong(
+            address(this),
+            ProtocolAction.ValidateOpenPosition,
+            100 ether,
+            params.initialPrice - 1000 ether,
+            DEFAULT_PARAMS.initialPrice
+        );
     }
 
     /**
