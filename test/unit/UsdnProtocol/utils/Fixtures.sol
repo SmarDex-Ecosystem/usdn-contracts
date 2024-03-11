@@ -186,7 +186,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     function setUpUserPositionInLong(
         address user,
         ProtocolAction untilAction,
-        uint96 positionSize,
+        uint128 positionSize,
         uint128 desiredLiqPrice,
         uint256 price
     ) public prankUser(user) returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
