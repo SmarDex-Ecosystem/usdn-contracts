@@ -12,7 +12,7 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 
 /**
  * @custom:feature The withdraw function of the USDN Protocol
- * @custom:background Given a protocol initialized at equilibrium
+ * @custom:background Given a protocol initialized with default params
  * @custom:and A user who deposited 1 wstETH at price $2000 to get 2000 USDN
  */
 contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
@@ -111,13 +111,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $3000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.361648278777805127
+     * @custom:then The user's wstETH balance increases by 0.425411621694649837
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.361648278777805127
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425411621694649837
      */
     function test_validateWithdrawPriceUp() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.361648278777805127 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.425411621694649837 ether);
     }
 
     /**
@@ -126,13 +126,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $2000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.417086001644829481
+     * @custom:then The user's wstETH balance increases by 0.455220982334125330
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.417086001644829481
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.455220982334125330
      */
     function test_validateWithdrawPriceDown() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.417086001644829481 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.45522098233412533 ether);
     }
 
     /**

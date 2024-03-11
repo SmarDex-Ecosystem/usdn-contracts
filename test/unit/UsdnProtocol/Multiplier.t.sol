@@ -7,7 +7,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 /**
  * @custom:feature The `multiplier` variable of the USDN Protocol
- * @custom:background Given a protocol initialized at equilibrium
+ * @custom:background Given a protocol initialized with default params
  */
 contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
     using SafeCast for uint256;

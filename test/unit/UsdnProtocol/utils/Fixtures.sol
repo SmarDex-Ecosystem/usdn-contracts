@@ -33,7 +33,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
-        initialDeposit: 4.919970269703463156 ether, // Same as the effective trading expo on the long side
+        initialDeposit: 10 ether,
         initialLong: 5 ether,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,

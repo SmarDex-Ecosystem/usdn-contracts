@@ -14,7 +14,9 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  */
 contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
+        super._setUp(params);
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 

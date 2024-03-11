@@ -13,7 +13,7 @@ import {
 
 /**
  * @custom:feature The open position function of the USDN Protocol
- * @custom:background Given a protocol initialized at equilibrium
+ * @custom:background Given a protocol initialized with default params
  * @custom:and A user with 10 wstETH in their wallet
  */
 contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {

@@ -8,14 +8,16 @@ import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdn
 
 /**
  * @custom:feature The deposit function of the USDN Protocol
- * @custom:background Given a protocol initialized at equilibrium with a long position leverage of ~2x.
+ * @custom:background Given a protocol initialized at equilibrium.
  * @custom:and A user with 10 wstETH in their wallet
  */
 contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
+        super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
     }
 
