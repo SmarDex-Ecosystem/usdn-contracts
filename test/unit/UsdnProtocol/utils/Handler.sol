@@ -181,6 +181,16 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _usdnRebase(assetPrice, ignoreInterval);
     }
 
+    function i_calcUsdnPrice(
+        uint256 vaultBalance,
+        uint128 assetPrice,
+        uint256 usdnTotalSupply,
+        uint8 usdnDecimals,
+        uint8 assetDecimals
+    ) external pure returns (uint256) {
+        return _calcUsdnPrice(vaultBalance, assetPrice, usdnTotalSupply, usdnDecimals, assetDecimals);
+    }
+
     function i_calcRebaseTotalSupply(
         uint256 vaultBalance,
         uint128 assetPrice,

@@ -29,6 +29,41 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
     }
 
     /**
+     * @custom:scenario Check calculation of the new total supply for a given target price
+     * @custom:given A vault balance between 1 token and uint128 max
+     * @custom:and An asset price between $0.01 and uint128 max
+     * @custom:and A target USDN price between $1 and $2
+     * @custom:and USDN and asset decimals between 6 and 18
+     * @custom:when We call `calcRebaseTotalSupply` and use the resulting total supply to calculate the new USDN price
+     * @custom:then The new price is within 0.02% of the target price
+     * @param vaultBalance The balance of the vault
+     * @param assetPrice The price of the asset
+     * @param targetPrice The target price for the USDN token
+     * @param usdnDecimals The number of decimals for the USDN token
+     * @param assetDecimals The number of decimals for the asset token
+     */
+    function testFuzz_calcRebaseTotalSupply(
+        uint128 vaultBalance,
+        uint128 assetPrice,
+        uint128 targetPrice,
+        uint8 usdnDecimals,
+        uint8 assetDecimals
+    ) public {
+        usdnDecimals = uint8(bound(usdnDecimals, 6, 18));
+        assetDecimals = uint8(bound(assetDecimals, 6, 18));
+        // when the balance becomes really small, the error on the final price becomes larger
+        vaultBalance = uint128(bound(vaultBalance, 10 ** assetDecimals, type(uint128).max));
+        assetPrice = uint128(bound(assetPrice, 0.01 ether, type(uint128).max));
+        targetPrice = uint128(bound(targetPrice, 1 ether, 2 ether));
+        uint256 newTotalSupply =
+            protocol.i_calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, usdnDecimals, assetDecimals);
+        vm.assume(newTotalSupply > 0);
+        uint256 newPrice =
+            protocol.i_calcUsdnPrice(vaultBalance, assetPrice, newTotalSupply, usdnDecimals, assetDecimals);
+        assertApproxEqRel(newPrice, targetPrice, 0.0002 ether, "final price");
+    }
+
+    /**
      * @custom:scenario Rebasing of the USDN token depending on the asset price
      * @custom:given An initial USDN price of $1
      * @custom:when The price of the asset is reduced by $100 and we call `liquidate`
