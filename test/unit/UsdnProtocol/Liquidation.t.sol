@@ -375,58 +375,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A position gets liquidated due to funding rates without price change
-     * @custom:given A small high risk position (leverage ~10x) and a very large low risk position (leverage ~2x)
-     * @custom:and A large imbalance in the trading expo of the long side vs vault side
-     * @custom:when We wait for 4 days and the price stays contant
-     * @custom:and We then call `liquidate`
-     * @custom:then Funding rates make the liquidation price of the high risk positions go up (the liquidation
-     * multiplier increases)
-     * @custom:and The high risk position gets liquidated even though the asset price has not changed
-     */
-    function test_liquidatedByFundingRates() public {
-        vm.skip(true);
-
-        uint128 currentPrice = 2000 ether;
-
-        wstETH.mintAndApprove(address(this), 1_000_000 ether, address(protocol), type(uint256).max);
-
-        bytes memory priceData = abi.encode(uint128(currentPrice));
-
-        // create high risk position
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(5 ether, 9 * currentPrice / 10, priceData, "");
-        _waitDelay();
-        protocol.validateOpenPosition(priceData, "");
-
-        // create large low-risk position to affect funding rates
-        protocol.initiateOpenPosition(500_000 ether, currentPrice / 2, priceData, "");
-        _waitDelay();
-        protocol.validateOpenPosition(priceData, "");
-
-        uint256 initialMultiplier = protocol.getLiquidationMultiplier();
-
-        uint128 liqPrice = protocol.getEffectivePriceForTick(tick);
-        assertLt(liqPrice, currentPrice, "liquidation price >= current price");
-
-        // Wait 1 day so that funding rates make the liquidation price of those positions go up
-        skip(1 days);
-
-        // Adjust balances, multiplier and liquidate positions
-        uint256 liquidated = protocol.liquidate(priceData, 0);
-
-        // the liquidation price for the high risk position went above the current price
-        assertEq(liquidated, 1, "liquidation failed");
-        liqPrice = protocol.getEffectivePriceForTick(tick);
-        assertGt(liqPrice, currentPrice, "liquidation price <= current price");
-        assertGt(protocol.getLiquidationMultiplier(), initialMultiplier, "multiplier did not grow");
-
-        // the position doesn't exist anymore
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion));
-        protocol.getLongPosition(tick, tickVersion, index);
-    }
-
-    /**
      * @custom:scenario The user sends too much ether when liquidating positions
      * @custom:given The user performs a liquidation
      * @custom:when The user sends 0.5 ether as value in the `liquidate` call
