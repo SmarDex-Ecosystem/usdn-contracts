@@ -347,7 +347,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * those will be managed off-chain.
      * @param liquidatedTicks The number of ticks that were liquidated.
      * @param liquidatedCollateral The amount of collateral lost due to the liquidations.
-     * @param rebased Wheter a USDN rebase was performed.
+     * @param rebased Whether a USDN rebase was performed.
      */
     function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 liquidatedCollateral, bool rebased) internal {
         // Get how much we should give to the liquidator as rewards
