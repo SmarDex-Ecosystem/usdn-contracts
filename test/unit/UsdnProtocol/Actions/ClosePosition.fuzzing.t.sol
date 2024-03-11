@@ -94,7 +94,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             userBalanceBefore,
             wstETH.balanceOf(address(this)),
             iterations + 1,
-            "The user should have gotten back his asset approximatively"
+            "The user should have gotten back approximately all of his assets"
         );
     }
 }
