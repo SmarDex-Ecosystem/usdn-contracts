@@ -78,7 +78,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @return rebased_ Whether a rebase was performed
      */
     function _usdnRebase(uint128 assetPrice, bool ignoreInterval) internal returns (bool rebased_) {
-        if (!ignoreInterval && block.timestamp - _lastRebaseCheck <= _usdnRebaseInterval) {
+        if (!ignoreInterval && block.timestamp - _lastRebaseCheck < _usdnRebaseInterval) {
             return false;
         }
         _lastRebaseCheck = block.timestamp;
