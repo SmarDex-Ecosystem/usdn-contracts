@@ -7,6 +7,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LongPendingAction, Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { USER_1 } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature The close position functions of the USDN Protocol
@@ -50,6 +51,10 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         );
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                                   Reverts                                  */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * @custom:scenario A user tries to close a position with an amount higher than the position's amount
      * @custom:given A validated open position
@@ -58,15 +63,26 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_closePartialPositionWithAmountHigherThanPositionAmount() external {
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
-        Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
-        uint128 amountToClose = pos.amount + 1;
+        uint128 amountToClose = positionAmount + 1;
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                UsdnProtocolAmountToCloseHigherThanPositionAmount.selector, pos.amount, amountToClose
+                UsdnProtocolAmountToCloseHigherThanPositionAmount.selector, positionAmount, amountToClose
             )
         );
         protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+    }
+
+    /**
+     * @custom:scenario The sender is not the owner of the position
+     * @custom:when The user initiates a close of another user's position
+     * @custom:then The protocol reverts with `UsdnProtocolUnauthorized`
+     */
+    function test_RevertWhen_notUser() public {
+        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        vm.prank(USER_1);
+        vm.expectRevert(UsdnProtocolUnauthorized.selector);
+        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, "");
     }
 
     /**
@@ -102,6 +118,43 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         protocol.initiateClosePosition(tick, tickVersion, index, positionAmount / 2, priceData, "");
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                           Initiate Close Position                          */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario Initiate close a position fully
+     * @custom:given A validated open position
+     * @custom:when The owner of the position closes all of the position at the same price as the opening
+     * @custom:then The state of the protocol is updated
+     * @custom:and an InitiatedClosePosition event is emitted
+     * @custom:and the position is deleted
+     */
+    function test_initiateClosePosition() external {
+        uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
+        uint256 longPositionLengthBefore = protocol.getLongPositionsLength(tick);
+        _initiateCloseAPositionHelper(positionAmount);
+
+        /* ---------------------------- Position's state ---------------------------- */
+        Position memory posAfter = protocol.getLongPosition(tick, tickVersion, index);
+        assertEq(posAfter.user, address(0), "The user of the position should have been reset");
+        assertEq(posAfter.timestamp, 0, "Timestamp of the position should have been reset");
+        assertEq(posAfter.totalExpo, 0, "The total expo of the position should be 0");
+        assertEq(posAfter.amount, 0, "The amount of the position should be 0");
+
+        /* ---------------------------- Protocol's State ---------------------------- */
+        assertEq(
+            totalLongPositionBefore - 1,
+            protocol.getTotalLongPositions(),
+            "The amount of long positions should have decreased by one"
+        );
+        assertEq(
+            longPositionLengthBefore - 1,
+            protocol.getLongPositionsLength(tick),
+            "The amount of long positions on the tick should have decreased by one"
+        );
+    }
+
     /**
      * @custom:scenario Initiate close a position partially
      * @custom:given A validated open position
@@ -110,29 +163,14 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:and an InitiatedClosePosition event is emitted
      * @custom:and the position still exists
      */
-    function test_initiatePartialClosePosition() external {
-        uint128 price = DEFAULT_PARAMS.initialPrice;
-        bytes memory priceData = abi.encode(price);
-
-        Position memory posBefore = protocol.getLongPosition(tick, tickVersion, index);
+    function test_initiateClosePositionPartially() external {
         uint128 amountToClose = positionAmount / 2;
+        uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
+        uint256 longPositionLengthBefore = protocol.getLongPositionsLength(tick);
+        Position memory posBefore = protocol.getLongPosition(tick, tickVersion, index);
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
-        uint256 totalExpoBefore = protocol.getTotalExpo();
-        uint256 balanceLongBefore = protocol.getBalanceLong();
-        uint256 longPositionsAmountBefore = protocol.getTotalLongPositions();
-
-        /* ------------------------ Initiate the close action ----------------------- */
-        vm.expectEmit();
-        emit InitiatedClosePosition(
-            address(this),
-            tick,
-            tickVersion,
-            index,
-            posBefore.amount - amountToClose,
-            posBefore.totalExpo - totalExpoToClose
-        );
-        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+        _initiateCloseAPositionHelper(amountToClose);
 
         /* ---------------------------- Position's state ---------------------------- */
         Position memory posAfter = protocol.getLongPosition(tick, tickVersion, index);
@@ -149,12 +187,66 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             "The amount to close should have been subtracted from the original amount of the position"
         );
 
+        /* ---------------------------- Protocol's State ---------------------------- */
+        assertEq(
+            totalLongPositionBefore,
+            protocol.getTotalLongPositions(),
+            "The amount of long positions should not have changed"
+        );
+        assertEq(
+            longPositionLengthBefore,
+            protocol.getLongPositionsLength(tick),
+            "The amount of long positions on the tick should not have changed"
+        );
+    }
+
+    /**
+     * @notice Helper function to avoid duplicating code between the partial and full close position tests
+     * @param amountToClose Amount of the position to close
+     */
+    function _initiateCloseAPositionHelper(uint128 amountToClose) internal {
+        uint256 liquidationMultiplier = protocol.getLiquidationMultiplier();
+
+        Position memory posBefore = protocol.getLongPosition(tick, tickVersion, index);
+        uint128 totalExpoToClose =
+            FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
+        uint256 assetToTransfer =
+            protocol.i_assetToTransfer(DEFAULT_PARAMS.initialPrice, tick, totalExpoToClose, liquidationMultiplier);
+
+        uint256 totalExpoBefore = protocol.getTotalExpo();
+        uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(tick, tickVersion);
+        uint256 balanceLongBefore = protocol.getBalanceLong();
+
+        /* ------------------------ Initiate the close action ----------------------- */
+        vm.expectEmit();
+        emit InitiatedClosePosition(
+            address(this),
+            tick,
+            tickVersion,
+            index,
+            posBefore.amount - amountToClose,
+            posBefore.totalExpo - totalExpoToClose
+        );
+        protocol.initiateClosePosition(
+            tick, tickVersion, index, amountToClose, abi.encode(DEFAULT_PARAMS.initialPrice), ""
+        );
+
         /* ------------------------- Pending action's state ------------------------- */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
+        assertEq(action.timestamp, block.timestamp, "The block timestamp shouold be now");
+        assertEq(action.user, address(this), "The user should be the transaction sender");
+        assertEq(action.tick, tick, "The position tick is wrong");
         assertEq(
             action.closeTotalExpo, totalExpoToClose, "Total expo of pending action should be equal to totalExpoToClose"
         );
-        assertEq(action.closeAmount, amountToClose, "Amount of pending action should be equal to the amount to close");
+        assertEq(
+            action.closeAmount, amountToClose, "Amount of the pending action should be equal to the amount to close"
+        );
+        assertEq(action.tickVersion, tickVersion, "action tickVersion");
+        assertEq(action.index, index, "action index");
+        assertEq(action.closeLiqMultiplier, liquidationMultiplier, "action closeLiqMultiplier");
+        assertEq(action.closeTempTransfer, assetToTransfer, "action closeTempTransfer");
 
         /* ----------------------------- Protocol State ----------------------------- */
         assertEq(
@@ -162,16 +254,55 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             protocol.getTotalExpo(),
             "totalExpoToClose should have been subtracted from the total expo of the protocol"
         );
-        uint256 assetToTransfer = protocol.i_assetToTransfer(price, tick, totalExpoToClose, action.closeLiqMultiplier);
+        assertEq(
+            totalExpoByTickBefore - totalExpoToClose,
+            protocol.getTotalExpoByTick(tick, tickVersion),
+            "totalExpoToClose should have been subtracted to the total expo on the tick"
+        );
         assertEq(
             balanceLongBefore - assetToTransfer,
             protocol.getBalanceLong(),
             "assetToTransfer should have been subtracted from the long balance of the protocol"
         );
-        assertEq(
-            longPositionsAmountBefore,
-            protocol.getTotalLongPositions(),
-            "The amount of long positions should not have changed"
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                           Validate Close Position                          */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario The user validates a close position action
+     * @custom:given A validated open position of 1 wsteth
+     * @custom:when The user validate the close of the position
+     * @custom:then The state of the protocol is updated
+     * @custom:and a ValidatedClosePosition event is emitted
+     * @custom:and the user receives half of the position amount
+     */
+    function test_validateClosePosition() public {
+        uint128 price = DEFAULT_PARAMS.initialPrice;
+        bytes memory priceData = abi.encode(price);
+
+        /* ------------------------- Initiate Close Position ------------------------ */
+        Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
+        uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
+        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+
+        /* ------------------------- Validate Close Position ------------------------ */
+        uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, positionAmount, pos.amount).toUint128();
+        uint256 liqMultiplier = protocol.getLiquidationMultiplier();
+        uint256 expectedAmountReceived = protocol.i_assetToTransfer(price, tick, totalExpoToClose, liqMultiplier);
+
+        vm.expectEmit();
+        emit ValidatedClosePosition(address(this), tick, tickVersion, index, expectedAmountReceived, -1);
+        protocol.i_validateClosePosition(address(this), priceData);
+
+        /* ----------------------------- User's Balance ----------------------------- */
+        assertApproxEqAbs(
+            assetBalanceBefore + positionAmount,
+            wstETH.balanceOf(address(this)),
+            1,
+            "User should have received the amount to close approximately"
         );
     }
 
@@ -209,13 +340,6 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         emit ValidatedClosePosition(address(this), tick, tickVersion, index, expectedAmountReceived, -1);
         protocol.i_validateClosePosition(address(this), priceData);
 
-        assertApproxEqAbs(
-            protocol.getAsset().balanceOf(address(this)),
-            assetBalanceBefore + amountToClose,
-            1,
-            "Test contract address should have received his collateral + his profits"
-        );
-
         /* ---------------------------- Position's state ---------------------------- */
         Position memory posAfter = protocol.getLongPosition(tick, tickVersion, index);
         assertEq(posBefore.user, posAfter.user, "The user of the position should not have changed");
@@ -234,8 +358,15 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         /* --------------------- Close the rest of the position --------------------- */
         protocol.initiateClosePosition(tick, tickVersion, index, pos.amount - amountToClose, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
+        expectedAmountReceived =
+            protocol.i_assetToTransfer(price, tick, pos.totalExpo - totalExpoToClose, liqMultiplier);
+
+        vm.expectEmit();
+        emit ValidatedClosePosition(address(this), tick, tickVersion, index, expectedAmountReceived, -1);
         protocol.i_validateClosePosition(address(this), priceData);
+
         posAfter = protocol.getLongPosition(tick, tickVersion, index);
+        assertEq(posAfter.user, address(0), "The address should be 0x0 (position deleted)");
         assertEq(posAfter.amount, 0, "The amount should be 0");
         assertApproxEqAbs(
             assetBalanceBefore + pos.amount,
@@ -255,7 +386,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:and a LiquidatedPosition event is emitted
      * @custom:and the user doesn't receive his funds back
      */
-    function test_validatePartialCloseUnderwaterPosition() external {
+    function test_validatePartialClosePositionThatShouldBeLiquidated() external {
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
