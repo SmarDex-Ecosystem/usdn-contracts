@@ -7,9 +7,9 @@ pragma solidity >=0.8.0;
  */
 interface IUsdnEvents {
     /**
-     * @notice Emitted when the divisor is adjusted.
-     * @param oldDivisor divisor before adjustment
-     * @param newDivisor divisor after adjustment
+     * @notice Emitted when the divisor is adjusted to rebase the user balances and total supply.
+     * @param oldDivisor divisor before rebase
+     * @param newDivisor divisor after rebase
      */
     event Rebase(uint256 oldDivisor, uint256 newDivisor);
 }

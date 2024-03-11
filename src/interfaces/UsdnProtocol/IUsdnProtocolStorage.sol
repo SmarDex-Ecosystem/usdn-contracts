@@ -161,6 +161,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The balance of deposits (with asset decimals)
     function getBalanceVault() external view returns (uint256);
 
+    /// @notice The timestamp when the last USDN rebase check was performed
+    function getLastRebaseCheck() external view returns (uint256);
+
     /// @notice The exponential moving average of the funding
     function getEMA() external view returns (int256);
 

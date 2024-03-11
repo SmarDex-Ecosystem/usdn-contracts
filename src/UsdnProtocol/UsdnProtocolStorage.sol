@@ -413,6 +413,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         return _balanceVault;
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
     function getLastRebaseCheck() external view returns (uint256) {
         return _lastRebaseCheck;
     }
