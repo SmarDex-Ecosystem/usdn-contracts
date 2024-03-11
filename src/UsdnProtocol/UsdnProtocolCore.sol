@@ -411,9 +411,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * funding value
      */
     function _updateEMA(uint128 secondsElapsed) internal returns (int256) {
-        _EMA = calcEMA(_lastFunding, secondsElapsed, _EMAPeriod, _EMA);
-
-        return _EMA;
+        return _EMA = calcEMA(_lastFunding, secondsElapsed, _EMAPeriod, _EMA);
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {
