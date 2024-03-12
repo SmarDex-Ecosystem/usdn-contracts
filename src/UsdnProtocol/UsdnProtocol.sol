@@ -68,57 +68,26 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
 
+        PriceInfo memory currentPrice =
+            _getOraclePrice(ProtocolAction.Initialize, uint40(block.timestamp), currentPriceData);
+
         // Create vault deposit
-        PriceInfo memory currentPrice;
-        {
-            PendingAction memory pendingAction = _convertVaultPendingAction(
-                VaultPendingAction({
-                    action: ProtocolAction.ValidateDeposit,
-                    timestamp: 0, // not needed since we have a special ProtocolAction for init
-                    user: msg.sender,
-                    _unused: 0, // unused
-                    amount: depositAmount,
-                    assetPrice: 0, // special case for init
-                    totalExpo: 0,
-                    balanceVault: 0,
-                    balanceLong: 0,
-                    usdnTotalSupply: 0
-                })
-            );
+        _createInitialDeposit(depositAmount, currentPrice.price.toUint128());
 
-            // Transfer the wstETH for the deposit
-            _asset.safeTransferFrom(msg.sender, address(this), depositAmount);
+        _lastUpdateTimestamp = uint40(block.timestamp);
+        _lastPrice = currentPrice.price.toUint128();
 
-            emit InitiatedDeposit(msg.sender, depositAmount);
-            // Mint USDN (a small amount is minted to the dead address)
-            // last parameter = initializing
-            currentPrice = _validateDepositWithAction(pendingAction, currentPriceData, true);
-        }
+        int24 tick = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
+        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
+        uint128 leverage = _getLeverage(currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
+        uint128 positionTotalExpo =
+            _calculatePositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
 
-        // effective liquidation tick without penalty
-        int24 tickWithoutPenalty = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
-        // casted current price
-        uint128 price = currentPrice.price.toUint128();
-        // open position leverage
-        uint128 leverage = _getLeverage(price, getEffectivePriceForTick(tickWithoutPenalty));
-        // open position expo value
-        uint256 addExpo = FixedPointMathLib.fullMulDiv(longAmount, leverage, 10 ** LEVERAGE_DECIMALS);
+        // verify expo is not imbalanced on long side
+        _imbalanceLimitOpen(positionTotalExpo, longAmount);
 
-        {
-            // verify expo is not imbalanced on long side
-            _imbalanceLimitOpen(addExpo, longAmount);
-
-            _lastUpdateTimestamp = uint40(block.timestamp);
-            _lastPrice = price;
-
-            // Transfer the wstETH for the long
-            _asset.safeTransferFrom(msg.sender, address(this), longAmount);
-
-            _createInitialPosition(msg.sender, longAmount, price, tickWithoutPenalty, leverage, addExpo);
-
-            // // verify expo is not imbalanced on vault side
-            // _imbalanceLimitDeposit(0);
-        }
+        // Create long position
+        _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, leverage, positionTotalExpo);
 
         _refundExcessEther();
     }
@@ -257,6 +226,16 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
+    function setPositionFeeBps(uint16 newPositionFee) external onlyOwner {
+        // newPositionFee greater than max 2000: 20%
+        if (newPositionFee > 2000) {
+            revert UsdnProtocolInvalidPositionFee();
+        }
+        _positionFeeBps = newPositionFee;
+        emit PositionFeeUpdated(newPositionFee);
+    }
+
+    /// @inheritdoc IUsdnProtocol
     function setFeeThreshold(uint256 newFeeThreshold) external onlyOwner {
         _feeThreshold = newFeeThreshold;
         emit FeeThresholdUpdated(newFeeThreshold);
@@ -275,9 +254,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setSoftLongExpoImbalanceLimit(int256 newLimit) external onlyOwner {
         if (newLimit < 0) {
             revert UsdnProtocolInvalidExpoImbalanceLimit();
-        } else if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
+
         // TODO different lower limit
         _softLongExpoImbalanceLimit = newLimit;
     }
@@ -286,9 +264,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setHardLongExpoImbalanceLimit(int256 newLimit) external onlyOwner {
         if (newLimit < _softLongExpoImbalanceLimit) {
             revert UsdnProtocolInvalidExpoImbalanceLimit();
-        } else if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
+
         // TODO different lower limit
         _hardLongExpoImbalanceLimit = newLimit;
     }
@@ -296,8 +273,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     /// @inheritdoc IUsdnProtocol
     function setSoftVaultExpoImbalanceLimit(int256 newLimit) external onlyOwner {
         if (newLimit < 0) {
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
-        } else if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
         // TODO different lower limit
@@ -308,37 +283,69 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setHardVaultExpoImbalanceLimit(int256 newLimit) external onlyOwner {
         if (newLimit < _softVaultExpoImbalanceLimit) {
             revert UsdnProtocolInvalidExpoImbalanceLimit();
-        } else if (newLimit > EXPO_IMBALANCE_LIMIT_DENOMINATOR) {
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
         // TODO different lower limit
         _hardVaultExpoImbalanceLimit = newLimit;
     }
 
     /**
-     * @notice Create initial open positions.
-     * @param user The initial position user address.
-     * @param amount The initial position amount.
-     * @param price The initial position price.
-     * @param tick The initial position tick.
-     * @dev To be called in contract initialize.
+     * @notice Create initial deposit
+     * @dev To be called from `initialize`
+     * @param amount The initial deposit amount
+     * @param price The current asset price
+     */
+    function _createInitialDeposit(uint128 amount, uint128 price) internal {
+        _checkUninitialized(); // prevent using this function after initialization
+
+        // Transfer the wstETH for the deposit
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
+        _balanceVault += amount;
+        emit InitiatedDeposit(msg.sender, amount);
+
+        // Calculate the total minted amount of USDN (vault balance and total supply are zero for now, we assume the
+        // USDN price to be $1)
+        uint256 usdnToMint = _calcMintUsdn(amount, 0, 0, price);
+        // Mint the min amount and send to dead address so it can never be removed from the total supply
+        _usdn.mint(DEAD_ADDRESS, MIN_USDN_SUPPLY);
+        // Mint the user's share
+        uint256 mintToUser = usdnToMint - MIN_USDN_SUPPLY;
+        _usdn.mint(msg.sender, mintToUser);
+
+        // Emit events
+        emit ValidatedDeposit(DEAD_ADDRESS, 0, MIN_USDN_SUPPLY);
+        emit ValidatedDeposit(msg.sender, amount, mintToUser);
+    }
+
+    /**
+     * @notice Create initial long position
+     * @dev To be called from `initialize`
+     * @param amount The initial position amount
+     * @param price The current asset price
+     * @param tick The tick corresponding to the liquidation price (without penalty)
      */
     function _createInitialPosition(
-        address user,
         uint128 amount,
         uint128 price,
         int24 tick,
         uint128 leverage,
-        uint256 addExpo
+        uint128 positionTotalExpo
     ) internal {
-        // apply liquidation penalty to the deployer's position
-        tick = tick + int24(_liquidationPenalty) * _tickSpacing;
-        Position memory long =
-            Position({ user: user, amount: amount, leverage: leverage, timestamp: uint40(block.timestamp) });
+        _checkUninitialized(); // prevent using this function after initialization
 
+        // Transfer the wstETH for the long
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
+
+        // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
+        tick = tick + int24(_liquidationPenalty) * _tickSpacing;
+        Position memory long = Position({
+            user: msg.sender,
+            amount: amount,
+            totalExpo: positionTotalExpo,
+            timestamp: uint40(block.timestamp)
+        });
         // Save the position and update the state
-        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long, addExpo);
-        emit InitiatedOpenPosition(user, long.timestamp, long.leverage, long.amount, price, tick, tickVersion, index);
-        emit ValidatedOpenPosition(user, long.leverage, price, tick, tickVersion, index);
+        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
+        emit InitiatedOpenPosition(msg.sender, long.timestamp, leverage, long.amount, price, tick, tickVersion, index);
+        emit ValidatedOpenPosition(msg.sender, leverage, price, tick, tickVersion, index);
     }
 }

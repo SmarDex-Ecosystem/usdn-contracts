@@ -107,6 +107,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The protocol fee in bps
     function getProtocolFeeBps() external view returns (uint16);
 
+    /// @notice The position fee in bps
+    function getPositionFeeBps() external view returns (uint16);
+
     /// @notice The fee threshold before fees are sent to the fee collector
     function getFeeThreshold() external view returns (uint256);
 

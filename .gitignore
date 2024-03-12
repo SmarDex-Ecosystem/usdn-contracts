@@ -25,3 +25,6 @@ lcov.info
 
 # docs
 docs/
+
+# IDE
+.idea/

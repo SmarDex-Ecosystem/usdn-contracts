@@ -23,4 +23,10 @@ interface IOracleMiddlewareEvents {
      * @param newDelay The new recent price delay.
      */
     event RecentPriceDelayUpdated(uint64 newDelay);
+
+    /**
+     * @notice Emitted when the confidence ratio is updated.
+     * @param newConfRatio new confidence ratio.
+     */
+    event ConfRatioUpdated(uint256 newConfRatio);
 }

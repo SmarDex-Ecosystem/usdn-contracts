@@ -10,11 +10,6 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  * @custom:background Given a protocol instance in balanced state with random expos
  */
 contract TestUsdnProtocolFuzzingExpoLimits is UsdnProtocolBaseFixture {
-    // the initial long expo
-    uint256 internal initialLongExpo;
-    // the initial vault expo
-    uint256 internal initialVaultExpo;
-
     /**
      * @custom:scenario The `imbalanceLimitDeposit` should pass with still balanced amounts with state
      * and revert when amounts bring protocol out of limits
@@ -67,7 +62,7 @@ contract TestUsdnProtocolFuzzingExpoLimits is UsdnProtocolBaseFixture {
         // new vault expo
         uint256 newVaultExpo = initialVaultExpo - withdrawalAmount;
         // expected imbalance percentage
-        int256 imbalancePct = (int256(initialLongExpo) - int256(newVaultExpo))
+        int256 imbalancePct = (int256(uint256(initialLongExpo)) - int256(newVaultExpo))
             * protocol.EXPO_IMBALANCE_LIMIT_DENOMINATOR() / int256(initialVaultExpo);
 
         // call `i_imbalanceLimitWithdrawal` with withdrawalAmount
@@ -142,7 +137,7 @@ contract TestUsdnProtocolFuzzingExpoLimits is UsdnProtocolBaseFixture {
                     (int256(protocol.getTotalExpo()) - int256(totalExpoToRemove))
                         - (int256(currentBalanceLong) - int256(closeAmount))
                 )
-        ) * protocol.EXPO_IMBALANCE_LIMIT_DENOMINATOR() / int256(initialLongExpo);
+        ) * protocol.EXPO_IMBALANCE_LIMIT_DENOMINATOR() / int256(uint256(initialLongExpo));
         // call `i_imbalanceLimitClose` with totalExpoToRemove and closeAmount
         if (imbalancePct >= protocol.getHardVaultExpoImbalanceLimit()) {
             // should revert with above hard vault imbalance limit
@@ -167,6 +162,7 @@ contract TestUsdnProtocolFuzzingExpoLimits is UsdnProtocolBaseFixture {
 
         // initial default params
         SetUpParams memory params = DEFAULT_PARAMS;
+        params.enableLimits = true;
 
         // min long expo to initiate a balanced protocol
         uint256 minLongExpo = initialDeposit - initialDeposit * 2 / 100;
@@ -217,9 +213,5 @@ contract TestUsdnProtocolFuzzingExpoLimits is UsdnProtocolBaseFixture {
 
         // init protocol
         super._setUp(params);
-
-        // store initial expos
-        initialLongExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
-        initialVaultExpo = protocol.getBalanceVault();
     }
 }

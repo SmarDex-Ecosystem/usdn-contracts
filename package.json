@@ -1,6 +1,6 @@
 {
   "name": "@usdn/usdn-contracts",
-  "version": "0.7.0",
+  "version": "0.9.0",
   "description": "Contracts for the USDN token and derivatives protocol",
   "repository": "git@github.com:Blockchain-RA2-Tech/usdn-contracts.git",
   "author": "RA2 Tech",
@@ -19,11 +19,15 @@
     "lint": "solhint 'src/**/*.sol'",
     "lint:test": "solhint -c test/.solhint.json 'test/**/*.sol'",
     "slither": "slither .",
-    "exportAbi": "forge build && ts-node ./script/exportAbi.ts -g '{Usdn.sol,UsdnProtocol/UsdnProtocol.sol,OracleMiddleware/OracleMiddleware.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
+    "exportAbi": "forge build --ast && ts-node ./script/exportAbi.ts -g '{Usdn.sol,UsdnProtocol/UsdnProtocol.sol,OracleMiddleware/OracleMiddleware.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
     "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf lib && forge clean && npm i && forge install"
   },
   "main": "dist/index.js",
-  "files": ["dist", "broadcast", "docs"],
+  "files": [
+    "dist",
+    "broadcast",
+    "docs"
+  ],
   "devDependencies": {
     "@biomejs/biome": "^1.5.3",
     "@chainlink/contracts": "^0.8.0",

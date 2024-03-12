@@ -57,6 +57,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided tick version is outdated (transactions have been liquidated)
     error UsdnProtocolOutdatedTick(uint256 currentVersion, uint256 providedVersion);
 
+    /// @dev Indicates that the provided position fee exceeds the maximum allowed
+    error UsdnProtocolInvalidPositionFee();
+
     /// @dev Indicates that the new middleware address value is invalid.
     error UsdnProtocolInvalidMiddlewareAddress();
 
@@ -107,4 +110,10 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the protocol vault imbalance hard limit is reached
     error UsdnProtocolHardVaultImbalanceLimitReached(int256 imbalancePct);
+
+    /// @dev Indicates that the protocol vault expo is invalid
+    error UsdnProtocolInvalidVaultExpo();
+
+    /// @dev Indicates that the protocol long expo is invalid
+    error UsdnProtocolInvalidLongExpo();
 }

@@ -9,7 +9,7 @@ edition = "2021"
 alloy-primitives = "0.6"
 alloy-sol-types = "0.6"
 anyhow = "1"
-base64 = "0.21"
+base64 = "0.22"
 clap = { version = "4", features = ["derive"] }
 const-hex = "1"
 reqwest = { version = "0.11", default-features = false, features = [

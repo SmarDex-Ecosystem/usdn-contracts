@@ -14,7 +14,12 @@ contract TestUsdnProtocolExpoAboveLimits is UsdnProtocolBaseFixture {
     uint256 internal expos;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        SetUpParams memory params = DEFAULT_PARAMS;
+        params.enableLimits = true;
+        params.initialDeposit = 49.199702697034631562 ether;
+        params.initialLong = 50 ether;
+
+        super._setUp(params);
         expos = protocol.getTotalExpo() - protocol.getBalanceLong();
         assertEq(expos, protocol.getBalanceVault(), "protocol not balanced");
     }

@@ -161,6 +161,12 @@ interface IUsdnProtocolEvents {
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
 
     /**
+     * @notice Emitted when the position fees are updated.
+     * @param positionFee The new position fee (in percentage).
+     */
+    event PositionFeeUpdated(uint256 positionFee);
+
+    /**
      * @notice Emitted when the oracle middleware is updated.
      * @param newMiddleware The new oracle middleware address.
      */
