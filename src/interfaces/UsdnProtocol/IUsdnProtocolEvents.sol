@@ -101,7 +101,9 @@ interface IUsdnProtocolEvents {
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
      * @param amountRemaining The amount of collateral remaining in the position.
+     * If the entirety of the position is being closed, this value is zero.
      * @param totalExpoRemaining The total expo remaining in the position.
+     * If the entirety of the position is being closed, this value is zero.
      */
     event InitiatedClosePosition(
         address indexed user,

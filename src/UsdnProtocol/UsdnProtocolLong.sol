@@ -258,14 +258,17 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param index Index of the position in the tick array
      * @param pos The position to remove the amount from
      * @param amountToRemove The amount to remove from the position
+     * @param totalExpoToRemove The total expo to remove from the position
      */
-    function _removeAmountFromPosition(int24 tick, uint256 index, Position memory pos, uint128 amountToRemove)
-        internal
-    {
+    function _removeAmountFromPosition(
+        int24 tick,
+        uint256 index,
+        Position memory pos,
+        uint128 amountToRemove,
+        uint128 totalExpoToRemove
+    ) internal {
         (bytes32 tickHash,) = _tickHash(tick);
-        uint128 totalExpoToRemove;
         if (amountToRemove < pos.amount) {
-            totalExpoToRemove = FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToRemove, pos.amount).toUint128();
             _longPositions[tickHash][index] = Position({
                 timestamp: pos.timestamp,
                 user: pos.user,

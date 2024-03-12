@@ -302,7 +302,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
 
             // Remove the position if it's fully closed
-            _removeAmountFromPosition(tick, index, pos, amountToClose);
+            _removeAmountFromPosition(tick, index, pos, amountToClose, totalExpoToClose);
         }
 
         emit InitiatedClosePosition(
@@ -550,7 +550,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // of _maxLeverage
         if (leverage > _maxLeverage) {
             // remove the position
-            _removeAmountFromPosition(long.tick, long.index, pos, pos.amount);
+            _removeAmountFromPosition(long.tick, long.index, pos, pos.amount, pos.totalExpo);
             // theoretical liquidation price for _maxLeverage
             liqPriceWithoutPenalty = _getLiquidationPrice(startPrice, _maxLeverage.toUint128());
             // adjust to closest valid tick down
