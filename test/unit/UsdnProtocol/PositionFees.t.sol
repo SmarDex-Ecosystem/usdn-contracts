@@ -305,7 +305,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
 
         usdn.approve(address(protocol), type(uint256).max);
-        protocol.initiateWithdrawal(uint128(mintedUsdn), currentPrice, "");
+        protocol.initiateWithdrawal{ value: securityDepositValue }(uint128(mintedUsdn), currentPrice, "");
         _waitDelay();
 
         PendingAction memory action = protocol.getUserPendingAction(address(this));
@@ -339,7 +339,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 mintedUsdn = usdnBalanceAfter - usdnBalanceBefore;
 
         usdn.approve(address(protocol), type(uint256).max);
-        protocol.initiateWithdrawal(uint128(mintedUsdn), currentPrice, "");
+        protocol.initiateWithdrawal{ value: securityDepositValue }(uint128(mintedUsdn), currentPrice, "");
         _waitDelay();
 
         usdnBalanceBefore = usdn.balanceOf(address(this));
@@ -435,7 +435,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(100); // 1% fees
 
-        protocol.initiateWithdrawal(uint128(usdn.balanceOf(address(this))), currentPrice, "");
+        protocol.initiateWithdrawal{ value: securityDepositValue }(
+            uint128(usdn.balanceOf(address(this))), currentPrice, ""
+        );
         _waitDelay();
 
         protocol.validateWithdrawal(currentPrice, "");
@@ -446,7 +448,9 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         /* --------------------- Validate without position fees --------------------- */
         vm.revertTo(snapshotId);
 
-        protocol.initiateWithdrawal(uint128(usdn.balanceOf(address(this))), currentPrice, "");
+        protocol.initiateWithdrawal{ value: securityDepositValue }(
+            uint128(usdn.balanceOf(address(this))), currentPrice, ""
+        );
         _waitDelay();
 
         protocol.validateWithdrawal(currentPrice, "");

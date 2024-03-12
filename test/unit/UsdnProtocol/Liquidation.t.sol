@@ -109,7 +109,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
 
-        protocol.initiateWithdrawal(uint128(usdn.balanceOf(address(this))), abi.encode(effectivePriceForTick), "");
+        protocol.initiateWithdrawal{ value: securityDepositValue }(
+            uint128(usdn.balanceOf(address(this))), abi.encode(effectivePriceForTick), ""
+        );
     }
 
     /**
