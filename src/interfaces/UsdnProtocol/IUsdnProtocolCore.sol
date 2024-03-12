@@ -22,8 +22,9 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @dev The effect of the funding rates since the last contract state update are taken into account. If the provided
      * timestamp is older than the last state update, the function reverts with `UsdnProtocolTimestampTooOld`.
      * @param timestamp The current timestamp
+     * @param ema The EMA of the funding rate
      */
-    function getLiquidationMultiplier(uint128 timestamp) external view returns (uint256);
+    function getLiquidationMultiplier(uint128 timestamp, int256 ema) external view returns (uint256);
 
     /**
      * @notice Get the predicted value of the funding since the last state update for the given timestamp
@@ -56,10 +57,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
-    function longAssetAvailableWithFundingAndFees(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (int256);
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
 
     /**
      * @notice Get the predicted value of the vault balance for the given asset price and timestamp
@@ -69,10 +67,7 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
-    function vaultAssetAvailableWithFundingAndFees(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (int256);
+    function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
 
     /**
      * @notice Get the predicted value of the long trading exposure for the given asset price and timestamp

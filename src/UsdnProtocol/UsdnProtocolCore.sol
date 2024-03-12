@@ -33,13 +33,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /* -------------------------- Public view functions ------------------------- */
 
     /// @inheritdoc IUsdnProtocolCore
-    function getLiquidationMultiplier(uint128 timestamp) public view returns (uint256) {
+    function getLiquidationMultiplier(uint128 timestamp, int256 ema) public view returns (uint256) {
         // slither-disable-next-line incorrect-equality
         if (timestamp == _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
         // timestamp < _lastUpdateTimestamp is checked in funding below and would revert
-        (int256 fund,) = funding(timestamp, _EMA);
+        (int256 fund,) = funding(timestamp, ema);
         // starting here, timestamp is strictly greater than _lastUpdateTimestamp
         return _getLiquidationMultiplier(fund, _liquidationMultiplier);
     }
@@ -115,7 +115,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function longAssetAvailableWithFundingAndFees(uint128 currentPrice, uint128 timestamp)
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 available_)
@@ -137,7 +137,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function vaultAssetAvailableWithFundingAndFees(uint128 currentPrice, uint128 timestamp)
+    function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
         view
         returns (int256 available_)
@@ -159,7 +159,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /// @inheritdoc IUsdnProtocolCore
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
-        expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFundingAndFees(currentPrice, timestamp));
+        expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -168,7 +168,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         view
         returns (int256 expo_)
     {
-        expo_ = vaultAssetAvailableWithFundingAndFees(currentPrice, timestamp);
+        expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
     }
 
     /// @inheritdoc IUsdnProtocolCore

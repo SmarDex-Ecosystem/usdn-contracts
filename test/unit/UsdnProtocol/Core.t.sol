@@ -206,11 +206,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario longAssetAvailableWithFundingAndFees calculation
+     * @custom:scenario longAssetAvailableWithFunding calculation
      * @custom:when the funding is positive
      * @custom:then return value should be equal to the long balance
      */
-    function test_longAssetAvailableWithFundingAndFees_posFund() public {
+    function test_longAssetAvailableWithFunding_posFund() public {
         skip(1 hours);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
@@ -222,18 +222,18 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertGt(fund, 0, "funding should be positive");
 
         // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.longAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
+        int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(priceData, 5);
         assertEq(available, int256(protocol.getBalanceLong()), "long balance != available");
     }
 
     /**
-     * @custom:scenario longAssetAvailableWithFundingAndFees calculation
+     * @custom:scenario longAssetAvailableWithFunding calculation
      * @custom:when the funding is negative
      * @custom:then return value should be equal to the long balance
      */
-    function test_longAssetAvailableWithFundingAndFees_negFund() public {
+    function test_longAssetAvailableWithFunding_negFund() public {
         skip(1 hours);
         uint128 price = DEFAULT_PARAMS.initialPrice;
 
@@ -241,7 +241,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertLt(fund, 0, "funding should be negative");
 
         // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.longAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
+        int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(abi.encode(price), 5);
 
@@ -249,22 +249,22 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Calling the `longAssetAvailableWithFundingAndFees` function
+     * @custom:scenario Calling the `longAssetAvailableWithFunding` function
      * @custom:when The timestamp is in the past
      * @custom:then The protocol reverts with `UsdnProtocolTimestampTooOld`
      */
-    function test_RevertWhen_longAssetAvailableWithFundingAndFees_pastTimestamp() public {
+    function test_RevertWhen_longAssetAvailableWithFunding_pastTimestamp() public {
         uint128 ts = protocol.getLastUpdateTimestamp();
         vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
-        protocol.longAssetAvailableWithFundingAndFees(0, ts - 1);
+        protocol.longAssetAvailableWithFunding(0, ts - 1);
     }
 
     /**
-     * @custom:scenario vaultAssetAvailableWithFundingAndFees calculation
+     * @custom:scenario vaultAssetAvailableWithFunding calculation
      * @custom:when the funding is negative
      * @custom:then return value should be equal to the vault balance
      */
-    function test_vaultAssetAvailableWithFundingAndFees_negFund() public {
+    function test_vaultAssetAvailableWithFunding_negFund() public {
         skip(1 hours);
         uint128 price = DEFAULT_PARAMS.initialPrice;
 
@@ -272,7 +272,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertLt(fund, 0, "funding should be negative");
 
         // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.vaultAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
+        int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(abi.encode(price), 5);
 
@@ -280,11 +280,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario vaultAssetAvailableWithFundingAndFees calculation
+     * @custom:scenario vaultAssetAvailableWithFunding calculation
      * @custom:when the funding is positive
      * @custom:then return value should be equal to the vault balance
      */
-    function test_vaultAssetAvailableWithFundingAndFees_posFund() public {
+    function test_vaultAssetAvailableWithFunding_posFund() public {
         skip(1 hours);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
@@ -296,20 +296,24 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertGt(fund, 0, "funding should be positive");
 
         // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
-        int256 available = protocol.vaultAssetAvailableWithFundingAndFees(price, uint128(block.timestamp) - 30);
+        int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(priceData, 5);
         assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
     }
 
     /**
-     * @custom:scenario Calling the `vaultAssetAvailableWithFundingAndFees` function
+     * @custom:scenario Calling the `vaultAssetAvailableWithFunding` function
      * @custom:when The timestamp is in the past
      * @custom:then The protocol reverts with `UsdnProtocolTimestampTooOld`
      */
-    function test_RevertWhen_vaultAssetAvailableWithFundingAndFees_pastTimestamp() public {
+    function test_RevertWhen_vaultAssetAvailableWithFunding_pastTimestamp() public {
         uint128 ts = protocol.getLastUpdateTimestamp();
         vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
-        protocol.vaultAssetAvailableWithFundingAndFees(0, ts - 1);
+        protocol.vaultAssetAvailableWithFunding(0, ts - 1);
+    }
+
+    function test_gas() public {
+        int256 ema = protocol.i_updateEMA(50);
     }
 }
