@@ -23,7 +23,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
     uint256 private index;
 
     function setUp() public {
-        SetUpParams memory params = DEFAULT_PARAMS;
+        params = DEFAULT_PARAMS;
         params.enableFunding = false;
         params.enablePositionFees = false;
         params.enableProtocolFees = false;
@@ -37,7 +37,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             ProtocolAction.ValidateOpenPosition,
             positionAmount,
             params.initialPrice - 200 ether,
-            DEFAULT_PARAMS.initialPrice
+            params.initialPrice
         );
 
         // Add more to balance long because of a bug in _positionValue calculation
@@ -46,7 +46,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             ProtocolAction.ValidateOpenPosition,
             100 ether,
             params.initialPrice - 1000 ether,
-            DEFAULT_PARAMS.initialPrice
+            params.initialPrice
         );
     }
 
@@ -57,7 +57,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:then The call reverts
      */
     function test_RevertWhen_closePartialPositionWithAmountHigherThanPositionAmount() external {
-        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        bytes memory priceData = abi.encode(params.initialPrice);
         Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
         uint128 amountToClose = pos.amount + 1;
 
@@ -76,7 +76,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:then The call reverts
      */
     function test_RevertWhen_closePartialPositionWithZeroAmount() external {
-        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        bytes memory priceData = abi.encode(params.initialPrice);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolAmountToCloseIsZero.selector));
         protocol.initiateClosePosition(tick, tickVersion, index, 0, priceData, "");
@@ -97,7 +97,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         assertGt(version, tickVersion, "The tick should have been liquidated");
 
         // Try to close the position once the price comes back up
-        priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        priceData = abi.encode(params.initialPrice);
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion));
         protocol.initiateClosePosition(tick, tickVersion, index, positionAmount / 2, priceData, "");
     }
@@ -111,7 +111,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:and the position still exists
      */
     function test_initiatePartialClosePosition() external {
-        uint128 price = DEFAULT_PARAMS.initialPrice;
+        uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
         Position memory posBefore = protocol.getLongPosition(tick, tickVersion, index);
@@ -185,7 +185,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:and the user receives half of the position amount
      */
     function test_validatePartialClosePosition() external {
-        uint128 price = DEFAULT_PARAMS.initialPrice;
+        uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
         /* ------------------------- Initiate Close Position ------------------------ */
@@ -249,7 +249,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:and the user doesn't receive his funds back
      */
     function test_validatePartialCloseUnderwaterPosition() external {
-        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
         Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
@@ -311,7 +311,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:and the user receives his funds back + some profits
      */
     function test_validatePartialClosePositionInProfit() external {
-        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
         Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
@@ -323,7 +323,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
 
         /* ------------------------- Validate Close Position ------------------------ */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
-        uint128 price = DEFAULT_PARAMS.initialPrice + 200 ether;
+        uint128 price = params.initialPrice + 200 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
         uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
         uint256 assetToTransfer =
