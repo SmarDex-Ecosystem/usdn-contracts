@@ -8,8 +8,7 @@ import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTy
 
 /**
  * @custom:feature All fees functionality of the USDN Protocol
- * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
- * leverage of ~2x.
+ * @custom:background Given a protocol initialized with default params
  * @custom:and A user with 10 wstETH in their wallet
  */
 contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
@@ -43,12 +42,8 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         emit FeeBpsUpdated(0);
         protocol.setProtocolFeeBps(0);
 
-        protocol.initiateDeposit(
-            1000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
-        );
-        protocol.validateDeposit(
-            abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
-        );
+        protocol.liquidate(abi.encode(DEFAULT_PARAMS.initialPrice), 0);
+
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
     }
 
@@ -102,6 +97,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         protocol.initiateDeposit(
             10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
         );
+        _waitDelay();
         protocol.validateDeposit(
             abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
         );
@@ -121,6 +117,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         protocol.initiateDeposit(
             10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
         );
+        _waitDelay();
         protocol.validateDeposit(
             abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
         );
@@ -131,6 +128,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
             abi.encode(DEFAULT_PARAMS.initialPrice),
             PreviousActionsData(new bytes[](0), new uint128[](0))
         );
+        _waitDelay();
         protocol.validateOpenPosition(
             abi.encode(DEFAULT_PARAMS.initialPrice), PreviousActionsData(new bytes[](0), new uint128[](0))
         );

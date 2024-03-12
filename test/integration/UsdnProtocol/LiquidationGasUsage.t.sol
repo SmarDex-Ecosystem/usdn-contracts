@@ -51,21 +51,21 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         protocol.initiateOpenPosition(
             1 ether, futurePythPrice + 150e18, data, PreviousActionsData(new bytes[](0), new uint128[](0))
         );
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         protocol.validateOpenPosition(data, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         /* ---------------------------- Set up position 2 --------------------------- */
         protocol.initiateOpenPosition(
             1 ether, futurePythPrice + 100e18, data, PreviousActionsData(new bytes[](0), new uint128[](0))
         );
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         protocol.validateOpenPosition(data, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         /* ---------------------------- Set up position 3 --------------------------- */
         protocol.initiateOpenPosition(
             1 ether, futurePythPrice + 50e18, data, PreviousActionsData(new bytes[](0), new uint128[](0))
         );
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         protocol.validateOpenPosition(data, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         /* ---------------------------- Start the checks ---------------------------- */

@@ -10,12 +10,13 @@ import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
  * @custom:feature The getter functions of the USDN Protocol
- * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
- * leverage of ~2x.
+ * @custom:background Given a protocol initialized at equilibrium
  */
 contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
+        super._setUp(params);
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
@@ -53,9 +54,11 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             500 ether, params.initialPrice / 2, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
         );
+        _waitDelay();
         protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
         skip(1 days);
         protocol.initiateDeposit(1, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        _waitDelay();
         protocol.validateDeposit(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         assertGt(
@@ -63,7 +66,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_030_444_330_272, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_041_868_027_046, "wrong minimum liquidation price");
     }
 
     /**
@@ -75,9 +78,11 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         protocol.initiateDeposit(5000 ether, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        _waitDelay();
         protocol.validateDeposit(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
         skip(6 days);
         protocol.initiateDeposit(1, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        _waitDelay();
         protocol.validateDeposit(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
 
         assertLt(
@@ -85,7 +90,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_046_330_385_990, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_045_981_660_235, "wrong minimum liquidation price");
     }
 
     /**
@@ -259,7 +264,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         );
         assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
 
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
 
         // Change the price
         price = 1999 ether;
@@ -299,10 +304,10 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
             1 ether, desiredLiqPrice, abi.encode(price), PreviousActionsData(new bytes[](0), new uint128[](0))
         );
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         // Validate the open position action
         protocol.validateOpenPosition(abi.encode(price), PreviousActionsData(new bytes[](0), new uint128[](0)));
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
 
         vm.expectEmit();
         emit InitiatedClosePosition(address(this), tick, tickVersion, index);

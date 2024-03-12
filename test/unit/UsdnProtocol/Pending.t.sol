@@ -14,7 +14,7 @@ import {
 
 /**
  * @custom:feature The functions handling the pending actions queue
- * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
+ * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     function setUp() public {

@@ -8,15 +8,16 @@ import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfac
 
 /**
  * @custom:feature The deposit function of the USDN Protocol
- * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
- * leverage of ~2x.
+ * @custom:background Given a protocol initialized at equilibrium.
  * @custom:and A user with 10 wstETH in their wallet
  */
 contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
+        super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
     }
 
@@ -98,12 +99,12 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2000 at the moment of initiation
      * @custom:and The price of the asset is $1900 at the moment of validation
      * @custom:when The user validates the deposit
-     * @custom:then The user's USDN balance increases by 1949.518048223628553344 USDN
-     * @custom:and The USDN total supply increases by 1949.518048223628553344 USDN
-     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1949.518048223628553344 USDN
+     * @custom:then The user's USDN balance increases by 1900 USDN
+     * @custom:and The USDN total supply increases by 1900 USDN
+     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1900 USDN
      */
     function test_validateDepositPriceDecrease() public {
-        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1949.518048223628553344 ether);
+        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1900 ether);
     }
 
     /**
@@ -139,7 +140,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             1 ether, currentPrice, PreviousActionsData(new bytes[](0), new uint128[](0))
         );
 
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
         assertEq(validationCost, 1);
@@ -170,8 +171,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation
-        uint256 validationDelay = oracleMiddleware.getValidationDelay();
-        skip(validationDelay + 1);
+        _waitDelay();
 
         // set the effective price used for minting USDN
         currentPrice = abi.encode(assetPrice);

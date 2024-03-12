@@ -9,15 +9,13 @@ import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTy
 
 /**
  * @custom:feature The `multiplier` variable of the USDN Protocol
- * @custom:background Given a protocol with ~10 ether of trading expo on either side (approx. equilibrium)
+ * @custom:background Given a protocol initialized with default params
  */
 contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.initialLong = 10 ether;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
@@ -34,7 +32,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             10 ether, params.initialPrice / 2, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
         );
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
         assertGt(protocol.i_longTradingExpo(params.initialPrice), protocol.i_vaultTradingExpo(params.initialPrice));
 
@@ -57,7 +55,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a deposit to have negative funding
         protocol.initiateDeposit(10 ether, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         protocol.validateDeposit(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
         assertGt(protocol.i_vaultTradingExpo(params.initialPrice), protocol.i_longTradingExpo(params.initialPrice));
 

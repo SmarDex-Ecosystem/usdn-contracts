@@ -14,8 +14,7 @@ import {
 
 /**
  * @custom:feature The open position function of the USDN Protocol
- * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
- * leverage of ~2x.
+ * @custom:background Given a protocol initialized with default params
  * @custom:and A user with 10 wstETH in their wallet
  */
 contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
@@ -214,7 +213,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         );
         Position memory tempPos = protocol.getLongPosition(tick, tickVersion, index);
 
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
 
         uint128 newPrice = CURRENT_PRICE + 100 ether;
 
@@ -253,7 +252,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         );
         Position memory tempPos = protocol.getLongPosition(tick, tickVersion, index);
 
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
 
         uint128 newPrice = CURRENT_PRICE - 100 ether;
         uint128 newLiqPrice = protocol.i_getLiquidationPrice(newPrice, uint128(protocol.getMaxLeverage()));
@@ -345,8 +344,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
         }(uint96(LONG_AMOUNT), desiredLiqPrice, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
-        skip(oracleMiddleware.getValidationDelay() + 1);
-
+        _waitDelay();
         uint256 balanceBefore = address(this).balance;
         uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition);
         protocol.validateOpenPosition{ value: 0.5 ether }(
