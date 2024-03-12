@@ -191,6 +191,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         {
+            // Calculate effective liquidation price
             uint128 liqPrice = getEffectivePriceForTick(tick_);
             // Liquidation price must be at least x% below current price
             _checkSafetyMargin(neutralPrice, liqPrice);
