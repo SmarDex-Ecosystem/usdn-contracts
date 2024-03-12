@@ -39,6 +39,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
+        uint256 balanceBefore = address(this).balance;
 
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.InitiateDeposit, uint40(block.timestamp), currentPriceData);
@@ -69,7 +70,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         emit InitiatedDeposit(msg.sender, amount);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther();
+        _refundExcessEther(balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -79,9 +80,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
+        uint256 balanceBefore = address(this).balance;
+
         _validateDeposit(msg.sender, depositPriceData);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther();
+        _refundExcessEther(balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -94,6 +97,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (usdnAmount == 0) {
             revert UsdnProtocolZeroAmount();
         }
+        uint256 balanceBefore = address(this).balance;
 
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.InitiateWithdrawal, uint40(block.timestamp), currentPriceData);
@@ -128,7 +132,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit InitiatedWithdrawal(msg.sender, usdnAmount);
 
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther();
+        _refundExcessEther(balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -138,9 +142,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
+        uint256 balanceBefore = address(this).balance;
+
         _validateWithdrawal(msg.sender, withdrawalPriceData);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther();
+        _refundExcessEther(balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -154,6 +160,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
+        // else if (msg.value < _securityDepositValue) {
+        //     // TO DO :
+        //     // revert UsdnProtocolInsufficientSecurityDeposit();
+        //     revert("Insufficient security deposit");
+        // }
+        // uint256 balanceBefore = address(this).balance;
 
         uint128 adjustedPrice; // the price returned by the oracle middleware, to be used for the user action
         uint128 neutralPrice;
@@ -229,7 +241,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther();
+
+        _refundExcessEther(address(this).balance);
         _checkPendingFee();
     }
 
@@ -239,9 +252,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
+        uint256 balanceBefore = address(this).balance;
+
         _validateOpenPosition(msg.sender, openPriceData);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther();
+        _refundExcessEther(balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -259,6 +274,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (pos.user != msg.sender) {
             revert UsdnProtocolUnauthorized();
         }
+
+        uint256 balanceBefore = address(this).balance;
 
         uint128 priceWithFees;
         {
@@ -298,7 +315,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit InitiatedClosePosition(msg.sender, tick, tickVersion, index);
 
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther();
+        _refundExcessEther(balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -308,9 +325,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
+        uint256 balanceBefore = address(this).balance;
+
         _validateClosePosition(msg.sender, closePriceData);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther();
+        _refundExcessEther(balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -320,6 +339,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         returns (uint256 liquidatedPositions_)
     {
+        uint256 balanceBefore = address(this).balance;
+
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
 
@@ -331,7 +352,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (liquidatedPositions_, liquidatedTicks, liquidatedCollateral, _balanceLong, _balanceVault) =
             _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
 
-        _refundExcessEther();
+        _refundExcessEther(balanceBefore - address(this).balance);
         _checkPendingFee();
 
         if (liquidatedTicks > 0) {
@@ -708,7 +729,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /// @notice Refund any excess ether to the user, making sure we don't lock ETH in the contract.
-    function _refundExcessEther() internal {
+    function _refundExcessEther(uint256 amount) internal {
         if (address(this).balance > 0) {
             (bool success,) = payable(msg.sender).call{ value: address(this).balance }("");
             if (!success) {

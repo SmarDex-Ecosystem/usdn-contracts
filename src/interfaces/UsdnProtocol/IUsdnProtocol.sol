@@ -85,6 +85,12 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setPositionFeeBps(uint16 newPositionFee) external;
 
     /**
+     * @notice Set the deposit value.
+     * @param securityDepositValue The deposit value.
+     */
+    function setDepositValue(uint256 securityDepositValue) external;
+
+    /**
      * @notice Set the minimum amount of fees to be collected before they can be withdrawn
      * @param newFeeThreshold The minimum amount of fees to be collected before they can be withdrawn
      */

@@ -112,6 +112,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The position fee in basis point
     uint16 internal _positionFeeBps = 4; // 0.04%
 
+    /// @notice The deposit required for a new position
+    uint256 internal _securityDepositValue = 0.5 ether;
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
@@ -319,6 +322,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getPositionFeeBps() external view returns (uint16) {
         return _positionFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getDepositValue() external view returns (uint256) {
+        return _securityDepositValue;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

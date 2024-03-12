@@ -67,6 +67,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
 
+        uint256 balanceBefore = address(this).balance;
+
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.Initialize, uint40(block.timestamp), currentPriceData);
 
@@ -83,7 +85,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             getEffectiveTickForPrice(desiredLiqPrice) // without penalty
         );
 
-        _refundExcessEther();
+        _refundExcessEther(balanceBefore - address(this).balance);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -227,6 +229,12 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _positionFeeBps = newPositionFee;
         emit PositionFeeUpdated(newPositionFee);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setDepositValue(uint256 securityDepositValue) external onlyOwner {
+        _securityDepositValue = securityDepositValue;
+        emit SecurityDepositValueUpdated(securityDepositValue);
     }
 
     /// @inheritdoc IUsdnProtocol
