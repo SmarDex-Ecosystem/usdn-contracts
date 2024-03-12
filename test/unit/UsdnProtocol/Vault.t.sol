@@ -16,11 +16,20 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
      * @custom:scenario Check calculation of USDN price
      * @custom:given The USDN token has 18 decimals
      * @custom:and The asset token has 6 decimals
-     * @custom:and The vault has 1000 tokens or 1100 tokens or 900 tokens
-     * @custom:and The price of the asset is $2000 or $1000
-     * @custom:and The total supply of USDN is 2M or 1M
-     * @custom:when We call `_calcUsdnPrice`
-     * @custom:then The price is $1 or $1.1 or $0.9 or $0.5 or $2
+     * @custom:and The normal vault balance is 1000 tokens
+     * @custom:and The normal asset price is $2000
+     * @custom:and The normal total USDN supply is 2M
+     * @custom:and The normal USDN price is $1
+     * @custom:when The vault has 1000 tokens
+     * @custom:then The price is $1
+     * @custom:when The vault has 1100 tokens
+     * @custom:then The price is $1.1
+     * @custom:when The vault has 900 tokens
+     * @custom:then The price is $0.9
+     * @custom:when The price of the asset is $1000
+     * @custom:then The price is $0.5
+     * @custom:when The total supply of USDN is 1M
+     * @custom:then The price is $2
      */
     function test_calcUsdnPrice() public {
         uint8 usdnDecimals = 18;
