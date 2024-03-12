@@ -88,7 +88,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_updateEma_posFunding() public {
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         bytes memory priceData = abi.encode(params.initialPrice);
-        protocol.initiateOpenPosition(200 ether, params.initialPrice / 2, priceData, "");
+        protocol.initiateOpenPosition{ value: securityDepositValue }(200 ether, params.initialPrice / 2, priceData, "");
         _waitDelay();
         protocol.validateOpenPosition(priceData, "");
 
@@ -153,7 +153,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
+        protocol.initiateOpenPosition{ value: securityDepositValue }(1000 ether, price * 90 / 100, priceData, "");
         _waitDelay();
         protocol.validateOpenPosition(priceData, "");
 
@@ -181,7 +181,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
+        protocol.initiateOpenPosition{ value: securityDepositValue }(1000 ether, price * 90 / 100, priceData, "");
         _waitDelay();
         protocol.validateOpenPosition(priceData, "");
 

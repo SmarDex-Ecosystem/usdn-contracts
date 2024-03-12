@@ -51,7 +51,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_getMinLiquidationPrice_multiplierGtOne() public {
         bytes memory priceData = abi.encode(params.initialPrice);
 
-        protocol.initiateOpenPosition(500 ether, params.initialPrice / 2, priceData, "");
+        protocol.initiateOpenPosition{ value: securityDepositValue }(500 ether, params.initialPrice / 2, priceData, "");
         _waitDelay();
         protocol.validateOpenPosition(priceData, "");
         skip(1 days);
@@ -247,8 +247,9 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         assertEq(totalExpoForTick, 0, "Total expo for future position's tick should be empty");
 
         // Initiate a long position
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, abi.encode(price), "");
+        (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition{ value: securityDepositValue }(
+            1 ether, desiredLiqPrice, abi.encode(price), ""
+        );
 
         totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
         Position memory position = protocol.getLongPosition(tick, tickVersion, index);
@@ -298,8 +299,9 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 1700 ether;
 
         // Initiate a long position
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, abi.encode(price), "");
+        (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition{ value: securityDepositValue }(
+            1 ether, desiredLiqPrice, abi.encode(price), ""
+        );
         _waitDelay();
         // Validate the open position action
         protocol.validateOpenPosition(abi.encode(price), "");

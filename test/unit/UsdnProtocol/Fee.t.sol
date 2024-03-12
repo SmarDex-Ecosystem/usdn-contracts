@@ -116,7 +116,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         _waitDelay();
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
         skip(4 days);
-        protocol.initiateOpenPosition(
+        protocol.initiateOpenPosition{ value: securityDepositValue }(
             5000 ether, DEFAULT_PARAMS.initialPrice / 2, abi.encode(DEFAULT_PARAMS.initialPrice), ""
         );
         _waitDelay();

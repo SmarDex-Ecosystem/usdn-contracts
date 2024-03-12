@@ -55,7 +55,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.recordLogs();
 
         bytes memory priceData = abi.encode(2000 ether);
-        protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+        protocol.initiateOpenPosition{ value: securityDepositValue }(1 ether, desiredLiqPrice, priceData, "");
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         (, uint128 leverage,, uint256 price,,,) =
@@ -81,7 +81,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether / 2;
 
         bytes memory priceData = abi.encode(2000 ether);
-        protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+        protocol.initiateOpenPosition{ value: securityDepositValue }(1 ether, desiredLiqPrice, priceData, "");
 
         _waitDelay();
         // Wait at least 30 seconds additionally to make sure liquidate updates the state
@@ -128,7 +128,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         bytes memory priceData = abi.encode(2000 ether);
         (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+            protocol.initiateOpenPosition{ value: securityDepositValue }(1 ether, desiredLiqPrice, priceData, "");
         _waitDelay();
 
         protocol.validateOpenPosition(priceData, "");
@@ -173,7 +173,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         bytes memory priceData = abi.encode(2000 ether);
         (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+            protocol.initiateOpenPosition{ value: securityDepositValue }(1 ether, desiredLiqPrice, priceData, "");
         _waitDelay();
 
         protocol.validateOpenPosition(priceData, "");
@@ -479,7 +479,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         skip(1 hours);
 
-        protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+        protocol.initiateOpenPosition{ value: securityDepositValue }(1 ether, desiredLiqPrice, priceData, "");
         _waitDelay();
 
         vm.recordLogs();
@@ -499,7 +499,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         skip(1 hours);
 
-        protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+        protocol.initiateOpenPosition{ value: securityDepositValue }(1 ether, desiredLiqPrice, priceData, "");
         _waitDelay();
 
         vm.recordLogs();
@@ -535,7 +535,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.setPositionFeeBps(0); // 0% fees
 
         (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+            protocol.initiateOpenPosition{ value: securityDepositValue }(1 ether, desiredLiqPrice, priceData, "");
         _waitDelay();
 
         protocol.validateOpenPosition(priceData, "");
@@ -564,7 +564,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(100); // 1% fees
 
-        (tick, tickVersion, index) = protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, "");
+        (tick, tickVersion, index) =
+            protocol.initiateOpenPosition{ value: securityDepositValue }(1 ether, desiredLiqPrice, priceData, "");
         _waitDelay();
 
         protocol.validateOpenPosition(priceData, "");

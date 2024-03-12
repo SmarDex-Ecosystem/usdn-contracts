@@ -56,6 +56,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     UsdnProtocolHandler public protocol;
     WstETH public wstETH;
     MockPyth public mockPyth;
+    uint256 public securityDepositValue;
     MockChainlinkOnChain public mockChainlinkOnChain;
     WstEthOracleMiddleware public oracleMiddleware;
     LiquidationRewardsManager public liquidationRewardsManager;
@@ -107,6 +108,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
         vm.stopPrank();
         params = testParams;
+        securityDepositValue = protocol.getSecurityDepositValue();
     }
 
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)

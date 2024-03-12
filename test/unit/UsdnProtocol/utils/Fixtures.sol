@@ -193,7 +193,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     ) public prankUser(user) returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         bytes memory priceData = abi.encode(price);
 
-        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(positionSize, desiredLiqPrice, priceData, "");
+        (tick_, tickVersion_, index_) =
+            protocol.initiateOpenPosition{ value: securityDepositValue }(positionSize, desiredLiqPrice, priceData, "");
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
 

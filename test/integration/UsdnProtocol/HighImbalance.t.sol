@@ -44,9 +44,9 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         require(success, "USER_1 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
 
-        protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            132 ether, 2563 ether, "", ""
-        );
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) + securityDepositValue
+        }(132 ether, 2563 ether, "", "");
 
         vm.warp(1_708_090_246);
         mockPyth.updatePrice(3290e8);
@@ -60,9 +60,9 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockChainlinkOnChain.setLastPublishTime(1_708_090_342 - 10 minutes);
         mockChainlinkOnChain.setLastPrice(3290e8);
 
-        protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, 2674 ether, "", ""
-        );
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) + securityDepositValue
+        }(1 ether, 2674 ether, "", "");
 
         vm.warp(1_708_090_438);
         mockPyth.updatePrice(3281e8);
@@ -83,9 +83,9 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         require(success, "USER_2 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
 
-        protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, 1684 ether, "", ""
-        );
+        protocol.initiateOpenPosition{
+            value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) + securityDepositValue
+        }(1 ether, 1684 ether, "", "");
         vm.stopPrank();
 
         assertGe(protocol.longTradingExpoWithFunding(3381 ether, uint128(block.timestamp)), 0, "long expo");

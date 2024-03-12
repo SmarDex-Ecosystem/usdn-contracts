@@ -170,7 +170,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
-        protocol.initiateOpenPosition(1 ether, desiredLiqPrice - 200 ether, abi.encode(effectivePriceForTick), "");
+        protocol.initiateOpenPosition{ value: securityDepositValue }(
+            1 ether, desiredLiqPrice - 200 ether, abi.encode(effectivePriceForTick), ""
+        );
     }
 
     /**
@@ -389,7 +391,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // create high risk position
         protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
+            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition) + securityDepositValue
         }(5 ether, 9 * currentPrice / 10, priceData, "");
         _waitDelay();
         protocol.validateOpenPosition{
