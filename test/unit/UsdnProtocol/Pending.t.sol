@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1, USER_2, USER_3 } from "test/utils/Constants.sol";
+import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
 
 import {
     PendingAction,
@@ -215,6 +215,54 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(actions.length, 0, "no action");
         (PendingAction memory action,) = protocol.i_getActionablePendingAction();
         assertTrue(action.action == ProtocolAction.None, "no action (internal)");
+    }
+
+    /**
+     * @custom:scenario Two actionable pending actions are validated by two other users in the same block
+     * @custom:given Two users have initiated deposits and the deadline has elapsed
+     * @custom:when Two other users validate the pending actions in the same block
+     * @custom:then Both positions are validated with different prices and there are no reverts
+     */
+    function test_twoUsersValidatingInSameBlock() public {
+        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(USER_2, 100_000 ether, address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(USER_3, 100_000 ether, address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(USER_4, 100_000 ether, address(protocol), type(uint256).max);
+        uint128 price1 = 2000 ether;
+        uint128 price2 = 2100 ether;
+
+        uint256 user1BalanceBefore = usdn.balanceOf(USER_1);
+        uint256 user2BalanceBefore = usdn.balanceOf(USER_2);
+
+        // Setup 2 pending actions
+        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 1 ether, price1);
+        setUpUserPositionInVault(USER_2, ProtocolAction.InitiateDeposit, 1 ether, price2);
+
+        // Wait
+        skip(protocol.getValidationDeadline() + 1);
+
+        // Two users want to now enter the protocol
+        (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions();
+        assertEq(actions.length, 2, "actions length");
+        bytes[] memory previousPriceData = new bytes[](actions.length);
+        previousPriceData[0] = abi.encode(price1);
+        previousPriceData[1] = abi.encode(price2);
+        PreviousActionsData memory previousActionsData =
+            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+        vm.prank(USER_3);
+        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData);
+        vm.prank(USER_4);
+        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData);
+
+        // They should have validated both pending actions
+        (actions, rawIndices) = protocol.getActionablePendingActions();
+        assertEq(actions.length, 0, "final actions length");
+
+        // We indeed validated with different price data
+        assertTrue(
+            usdn.balanceOf(USER_1) - user1BalanceBefore != usdn.balanceOf(USER_2) - user2BalanceBefore,
+            "user 1 and 2 have different minted amount"
+        );
     }
 
     /**
