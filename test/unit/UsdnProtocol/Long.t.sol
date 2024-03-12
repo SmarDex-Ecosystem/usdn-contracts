@@ -309,6 +309,6 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit InitiatedClosePosition(address(this), tick, tickVersion, index);
-        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(price), "");
+        protocol.initiateClosePosition{ value: securityDepositValue }(tick, tickVersion, index, abi.encode(price), "");
     }
 }

@@ -155,11 +155,22 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
     ) external payable initializedAndNonReentrant {
+        if (msg.value < _securityDepositValue) {
+            revert UsdnProtocolSecurityDepositTooLow();
+        }
         uint256 balanceBefore = address(this).balance - msg.value;
 
         _initiateClosePosition(msg.sender, tick, tickVersion, index, currentPriceData);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther(address(this).balance - balanceBefore);
+
+        if (address(this).balance < _securityDepositValue + balanceBefore) {
+            revert UsdnProtocolUnexpectedBalance();
+        }
+        unchecked {
+            uint256 amountToRefund = address(this).balance - balanceBefore - _securityDepositValue;
+            _refundExcessEther(amountToRefund);
+        }
+
         _checkPendingFee();
     }
 
