@@ -179,7 +179,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:scenario Validate a partial close of a position
      * @custom:given A validated open position
      * @custom:and the initiate position is already done for half of the position
-     * @custom:when The owner of the position validates the position closing
+     * @custom:when The owner of the position validates the close position action
      * @custom:then The state of the protocol is updated
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives half of the position amount
@@ -221,7 +221,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             assetBalanceBefore + amountToClose,
             wstETH.balanceOf(address(this)),
             1,
-            "User should have received the amount to close approximately"
+            "User should have received approximately the amount to close"
         );
 
         /* --------------------- Close the rest of the position --------------------- */
@@ -239,16 +239,124 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario Validate a partial close of a position that is losing money
+     * @custom:given A validated open position
+     * @custom:and The initiate position is already done for half of the position
+     * @custom:and The price dipped below the entry price before the validation
+     * @custom:when The owner of the position validates the close position action
+     * @custom:then The state of the protocol is updated
+     * @custom:and a ValidatedClosePosition event is emitted
+     * @custom:and the user receive parts of hid funds back
+     */
+    function test_validatePartialCloseUnderwaterPosition() external {
+        bytes memory priceData = abi.encode(params.initialPrice);
+
+        /* ------------------------- Initiate Close Position ------------------------ */
+        Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
+        uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
+
+        uint128 amountToClose = pos.amount / 2;
+        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+
+        /* ------------------------- Validate Close Position ------------------------ */
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        uint128 timestamp = uint128(block.timestamp);
+        uint128 priceAfterInit = params.initialPrice - 50 ether;
+        uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, timestamp));
+        uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(priceAfterInit, timestamp));
+        uint256 assetToTransfer =
+            protocol.i_assetToTransfer(priceAfterInit, action.tick, action.closeTotalExpo, action.closeLiqMultiplier);
+        priceData = abi.encode(priceAfterInit);
+        int256 losses = int256(assetToTransfer) - int256(uint256(action.closeAmount));
+
+        assertLt(losses, 0, "User should have lost money on his position");
+
+        vm.expectEmit();
+        emit ValidatedClosePosition(address(this), tick, tickVersion, index, assetToTransfer, losses);
+        protocol.i_validateClosePosition(address(this), priceData);
+
+        assertEq(
+            protocol.getAsset().balanceOf(address(this)),
+            // Losses is a negative value
+            assetBalanceBefore + uint256(int128(action.closeAmount) + losses),
+            "User should have received his assets minus his losses"
+        );
+
+        /* -------------------------- Balance Vault & Long -------------------------- */
+        assertEq(vaultBalanceBefore, protocol.getBalanceVault(), "Balance of the vault should not have changed");
+        assertApproxEqAbs(
+            uint256(int256(longBalanceBefore) - losses),
+            protocol.getBalanceLong(),
+            1,
+            "Profits should have been subtracted from the long's balance"
+        );
+    }
+
+    /**
+     * @custom:scenario Validate a partial close of a position that just went in profit
+     * @custom:given A validated open position
+     * @custom:and The initiate position is already done for half of the position
+     * @custom:and The price increased above by 200$ before the validation
+     * @custom:when The owner of the position validates the close position action
+     * @custom:then The state of the protocol is updated
+     * @custom:and a ValidatedClosePosition event is emitted
+     * @custom:and the user receives his funds back + some profits
+     */
+    function test_validatePartialClosePositionInProfit() external {
+        bytes memory priceData = abi.encode(params.initialPrice);
+
+        /* ------------------------- Initiate Close Position ------------------------ */
+        Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
+        uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
+
+        uint128 amountToClose = pos.amount / 2;
+        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+        skip(oracleMiddleware.getValidationDelay() + 1);
+
+        /* ------------------------- Validate Close Position ------------------------ */
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        uint128 price = params.initialPrice + 200 ether;
+        uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
+        uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
+        uint256 assetToTransfer =
+            protocol.i_assetToTransfer(price, action.tick, action.closeTotalExpo, action.closeLiqMultiplier);
+        priceData = abi.encode(price);
+        int256 profits = int256(assetToTransfer - action.closeAmount);
+
+        assertGt(profits, 0, "User should be in profits");
+
+        vm.expectEmit();
+        emit ValidatedClosePosition(address(this), tick, tickVersion, index, assetToTransfer, profits);
+        protocol.i_validateClosePosition(address(this), priceData);
+
+        assertEq(
+            protocol.getAsset().balanceOf(address(this)),
+            assetBalanceBefore + action.closeAmount + uint256(profits),
+            "User should have received his assets + profits"
+        );
+
+        /* -------------------------- Balance Vault & Long -------------------------- */
+        assertEq(vaultBalanceBefore, protocol.getBalanceVault(), "Balance of the vault should not have changed");
+        assertApproxEqAbs(
+            longBalanceBefore - uint256(profits),
+            protocol.getBalanceLong(),
+            1,
+            "Profits should have been subtracted from the long's balance"
+        );
+    }
+
+    /**
      * @custom:scenario Validate a partial close of a position that should be liquidated
      * @custom:given A validated open position
      * @custom:and The initiate position is already done for half of the position
      * @custom:and The price dipped below its liquidation price before the validation
-     * @custom:when The owner of the position validates the position closing
+     * @custom:when The owner of the position validates the close position action
      * @custom:then The state of the protocol is updated
      * @custom:and a LiquidatedPosition event is emitted
      * @custom:and the user doesn't receive his funds back
      */
-    function test_validatePartialCloseUnderwaterPosition() external {
+    function test_validatePartialCloseLiquidatePosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
@@ -298,58 +406,6 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         );
         assertEq(
             protocol.getTotalLongPositions(), longPositionsAmountBefore - 1, "The position should have been removed"
-        );
-    }
-
-    /**
-     * @custom:scenario Validate a partial close of a position that just went in profit
-     * @custom:given A validated open position
-     * @custom:and The initiate position is already done for half of the position
-     * @custom:and The price increased above by 200$ before the validation
-     * @custom:when The owner of the position validates the position closing
-     * @custom:then The state of the protocol is updated
-     * @custom:and the user receives his funds back + some profits
-     */
-    function test_validatePartialClosePositionInProfit() external {
-        bytes memory priceData = abi.encode(params.initialPrice);
-
-        /* ------------------------- Initiate Close Position ------------------------ */
-        Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
-        uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
-
-        uint128 amountToClose = pos.amount / 2;
-        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
-
-        /* ------------------------- Validate Close Position ------------------------ */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
-        uint128 price = params.initialPrice + 200 ether;
-        uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
-        uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
-        uint256 assetToTransfer =
-            protocol.i_assetToTransfer(price, action.tick, action.closeTotalExpo, action.closeLiqMultiplier);
-        priceData = abi.encode(price);
-        int256 profits = int256(assetToTransfer - action.closeAmount);
-
-        assertGt(profits, 0, "User should be in profits");
-
-        vm.expectEmit();
-        emit ValidatedClosePosition(address(this), tick, tickVersion, index, assetToTransfer, profits);
-        protocol.i_validateClosePosition(address(this), priceData);
-
-        assertEq(
-            protocol.getAsset().balanceOf(address(this)),
-            assetBalanceBefore + assetToTransfer,
-            "Test contract address should not have received any asset"
-        );
-
-        /* -------------------------- Balance Vault & Long -------------------------- */
-        assertEq(vaultBalanceBefore, protocol.getBalanceVault(), "Balance of the vault should not have changed");
-        assertApproxEqAbs(
-            longBalanceBefore - uint256(profits),
-            protocol.getBalanceLong(),
-            1,
-            "Profits should have been subtracted from the long's balance"
         );
     }
 }
