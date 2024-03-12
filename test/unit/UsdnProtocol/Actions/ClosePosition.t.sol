@@ -39,15 +39,6 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             params.initialPrice - 200 ether,
             params.initialPrice
         );
-
-        // Add more to balance long because of a bug in _positionValue calculation
-        setUpUserPositionInLong(
-            address(this),
-            ProtocolAction.ValidateOpenPosition,
-            100 ether,
-            params.initialPrice - 1000 ether,
-            params.initialPrice
-        );
     }
 
     /**
@@ -168,7 +159,9 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             protocol.getTotalExpoByTick(tick, tickVersion),
             "totalExpoToClose should have been subtracted from the total expo of the tick"
         );
-        uint256 assetToTransfer = protocol.i_assetToTransfer(price, tick, totalExpoToClose, action.closeLiqMultiplier);
+        uint256 assetToTransfer = protocol.i_assetToTransfer(
+            price, tick, totalExpoToClose, action.closeLiqMultiplier, action.closeTempTransfer
+        );
         assertEq(
             balanceLongBefore - assetToTransfer,
             protocol.getBalanceLong(),
@@ -202,11 +195,13 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         skip(oracleMiddleware.getValidationDelay() + 1);
 
         /* ------------------------- Validate Close Position ------------------------ */
+        Position memory posBefore = protocol.getLongPosition(tick, tickVersion, index);
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToClose, pos.amount).toUint128();
         uint256 liqMultiplier = protocol.getLiquidationMultiplier();
-        uint256 expectedAmountReceived = protocol.i_assetToTransfer(price, tick, totalExpoToClose, liqMultiplier);
+        uint256 expectedAmountReceived =
+            protocol.i_assetToTransfer(price, tick, totalExpoToClose, liqMultiplier, action.closeTempTransfer);
 
-        Position memory posBefore = protocol.getLongPosition(tick, tickVersion, index);
         // Sanity Check
         // If user is address(0), the position was deleted from the tick array
         assertEq(posBefore.user, address(this), "The position should not have been deleted");
@@ -271,8 +266,9 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         uint128 priceAfterInit = params.initialPrice - 50 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, timestamp));
         uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(priceAfterInit, timestamp));
-        uint256 assetToTransfer =
-            protocol.i_assetToTransfer(priceAfterInit, action.tick, action.closeTotalExpo, action.closeLiqMultiplier);
+        uint256 assetToTransfer = protocol.i_assetToTransfer(
+            priceAfterInit, action.tick, action.closeTotalExpo, action.closeLiqMultiplier, action.closeTempTransfer
+        );
         priceData = abi.encode(priceAfterInit);
         int256 losses = int256(assetToTransfer) - int256(uint256(action.closeAmount));
 
@@ -325,8 +321,9 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         uint128 price = params.initialPrice + 200 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
         uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
-        uint256 assetToTransfer =
-            protocol.i_assetToTransfer(price, action.tick, action.closeTotalExpo, action.closeLiqMultiplier);
+        uint256 assetToTransfer = protocol.i_assetToTransfer(
+            price, action.tick, action.closeTotalExpo, action.closeLiqMultiplier, action.closeTempTransfer
+        );
         priceData = abi.encode(price);
         int256 profits = int256(assetToTransfer - action.closeAmount);
 
@@ -383,8 +380,9 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         uint256 longBalanceBefore =
             uint256(protocol.longAssetAvailableWithFunding(liquidationPrice, uint128(block.timestamp)));
         uint256 remainingPosTickValue = uint256(protocol.i_tickValue(liquidationPrice, tick, remainingPos.totalExpo));
-        uint256 assetToTransfer =
-            protocol.i_assetToTransfer(liquidationPrice, action.tick, action.closeTotalExpo, action.closeLiqMultiplier);
+        uint256 assetToTransfer = protocol.i_assetToTransfer(
+            liquidationPrice, action.tick, action.closeTotalExpo, action.closeLiqMultiplier, action.closeTempTransfer
+        );
         uint256 longPositionsAmountBefore = protocol.getTotalLongPositions();
         priceData = abi.encode(liquidationPrice);
 

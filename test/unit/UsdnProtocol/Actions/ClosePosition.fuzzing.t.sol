@@ -25,15 +25,6 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
         super._setUp(params);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
-
-        // Open a position to avoid a bug in _positionValue
-        setUpUserPositionInLong(
-            address(this),
-            ProtocolAction.ValidateOpenPosition,
-            uint128(wstETH.balanceOf(address(this)) / 2),
-            params.initialPrice - 1000 ether,
-            params.initialPrice
-        );
     }
 
     /**
@@ -53,8 +44,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
     {
         // Bound values
         iterations = bound(iterations, 1, 10);
-        // divided by 2 to have enough asset available to avoid bug in _positionValue
-        amountToOpen = bound(amountToOpen, 1, wstETH.balanceOf(address(this)) / 2);
+        amountToOpen = bound(amountToOpen, 1, wstETH.balanceOf(address(this)));
 
         uint256 protocolTotalExpo = protocol.getTotalExpo();
         uint256 initialPosCount = protocol.getTotalLongPositions();
