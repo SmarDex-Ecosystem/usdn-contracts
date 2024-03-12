@@ -7,13 +7,14 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 /**
  * @custom:feature Test the _assetToTransfer internal function of the actions layer
+ * @custom:background Given a protocol initialized with slightly more trading expo in the vault side.
  */
 contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
     using Strings for uint256;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialLong = 10 ether;
+        params.initialDeposit = 5 ether;
         super._setUp(params);
     }
 
@@ -52,7 +53,7 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Check value of the `assetToTransfer` function when the long balance is zero
-     * @custom:given The long balance is empty
+     * @custom:given The long balance is empty due to funding and price change
      * @custom:when the asset to transfer is calculated
      * @custom:then The asset to transfer is zero
      */
