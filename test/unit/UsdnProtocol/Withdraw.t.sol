@@ -83,10 +83,10 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + initialUsdnBalance, "usdn total supply");
         // the pending action should not yet be actionable by a third party
         vm.prank(address(0)); // simulate front-end call by someone else
-        (PendingAction memory action, uint128 rawIndex) = protocol.getActionablePendingAction(0);
-        assertTrue(action.action == ProtocolAction.None, "no pending action");
+        (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions();
+        assertEq(actions.length, 0, "no pending action");
 
-        action = protocol.getUserPendingAction(address(this));
+        PendingAction memory action = protocol.getUserPendingAction(address(this));
         assertTrue(action.action == ProtocolAction.ValidateWithdrawal, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
@@ -95,9 +95,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         vm.prank(address(0)); // simulate front-end call by someone else
-        (action, rawIndex) = protocol.getActionablePendingAction(0);
-        assertEq(action.user, address(this), "pending action user");
-        assertEq(rawIndex, 1, "raw index");
+        (actions, rawIndices) = protocol.getActionablePendingActions();
+        assertEq(actions[0].user, address(this), "pending action user");
+        assertEq(rawIndices[0], 1, "raw index");
     }
 
     /**

@@ -669,7 +669,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _executePendingAction(PreviousActionsData calldata data) internal {
-        (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction(0); // use default maxIter
+        (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction();
         if (pending.action == ProtocolAction.None) {
             // no pending action
             return;

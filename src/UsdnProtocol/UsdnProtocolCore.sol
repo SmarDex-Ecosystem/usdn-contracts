@@ -28,7 +28,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     address public constant DEAD_ADDRESS = address(0xdead);
 
     /// @inheritdoc IUsdnProtocolCore
-    uint256 public constant DEFAULT_QUEUE_MAX_ITER = 10;
+    uint256 public constant MAX_ACTIONABLE_PENDING_ACTIONS = 20;
 
     /* -------------------------- Public view functions ------------------------- */
 
@@ -149,45 +149,62 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getActionablePendingAction(uint256 maxIter)
+    function getActionablePendingActions()
         external
         view
-        returns (PendingAction memory action_, uint128 rawIndex_)
+        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
         uint256 queueLength = _pendingActionsQueue.length();
         if (queueLength == 0) {
             // empty queue, early return
-            return (action_, 0);
+            return (actions_, rawIndices_);
         }
-        // default max iterations
-        if (maxIter == 0) {
-            maxIter = DEFAULT_QUEUE_MAX_ITER;
-        }
+        actions_ = new PendingAction[](MAX_ACTIONABLE_PENDING_ACTIONS);
+        rawIndices_ = new uint128[](MAX_ACTIONABLE_PENDING_ACTIONS);
+        uint256 maxIter = MAX_ACTIONABLE_PENDING_ACTIONS;
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }
 
         uint256 i = 0;
+        uint256 arrayLen = 0;
         do {
             // Since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
             (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.at(i);
-            // gas optimization
-            unchecked {
-                i++;
-            }
             // If the msg.sender is equal to the user of the pending action, then the pending action is not actionable
             // by this user (it will get validated automatically by their action). And so we need to return the next
             // item in the queue so that they can validate a third-party pending action (if any).
             if (candidate.timestamp == 0 || candidate.user == msg.sender) {
                 // try the next one
-                continue;
+                unchecked {
+                    i++;
+                }
             } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
-                return (candidate, rawIndex);
+                actions_[i] = candidate;
+                rawIndices_[i] = rawIndex;
+
+                // continue looking
+                unchecked {
+                    i++;
+                    arrayLen = i;
+                }
+            } else {
+                // the pending action is not actionable (it is too recent), following actions can't be actionable
+                // either so we return
+                assembly {
+                    // shrink the size of the arrays
+                    mstore(actions_, arrayLen)
+                    mstore(rawIndices_, arrayLen)
+                }
+                return (actions_, rawIndices_);
             }
-            // the first pending action is not actionable
-            return (action_, 0);
         } while (i < maxIter);
+        assembly {
+            // shrink the size of the arrays
+            mstore(actions_, arrayLen)
+            mstore(rawIndices_, arrayLen)
+        }
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -494,22 +511,17 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
      * are removed.
-     * @param maxIter The maximum number of iterations to find the first initialized item
-     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     * @return action_ The first actionable pending action if any, otherwise a struct with all fields set to zero and
+     * ProtocolAction.None
+     * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
      */
-    function _getActionablePendingAction(uint256 maxIter)
-        internal
-        returns (PendingAction memory action_, uint128 rawIndex_)
-    {
+    function _getActionablePendingAction() internal returns (PendingAction memory action_, uint128 rawIndex_) {
         uint256 queueLength = _pendingActionsQueue.length();
         if (queueLength == 0) {
             // empty queue, early return
-            return (action_, 0);
+            return (action_, rawIndex_);
         }
-        // default max iterations
-        if (maxIter == 0) {
-            maxIter = DEFAULT_QUEUE_MAX_ITER;
-        }
+        uint256 maxIter = MAX_ACTIONABLE_PENDING_ACTIONS;
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }
@@ -533,7 +545,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 return (candidate, rawIndex);
             }
             // the first pending action is not actionable
-            return (action_, 0);
+            return (action_, rawIndex_);
         } while (i < maxIter);
     }
 

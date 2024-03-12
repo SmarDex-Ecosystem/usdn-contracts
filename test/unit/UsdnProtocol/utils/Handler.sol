@@ -58,8 +58,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         delete _pendingActions[user];
     }
 
-    function i_getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory, uint128) {
-        return _getActionablePendingAction(maxIter);
+    function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
+        return _getActionablePendingAction();
     }
 
     function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {

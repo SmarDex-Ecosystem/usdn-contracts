@@ -93,11 +93,10 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
         // the pending action should not yet be actionable by a third party
         vm.startPrank(address(0)); // simulate front-end calls by someone else
-        (PendingAction memory pendingAction,) = protocol.getActionablePendingAction(0);
-        LongPendingAction memory action = protocol.i_toLongPendingAction(pendingAction);
-        assertTrue(action.action == ProtocolAction.None, "no pending action");
+        (PendingAction[] memory pendingActions,) = protocol.getActionablePendingActions();
+        assertEq(pendingActions.length, 0, "no pending action");
 
-        action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         assertTrue(action.action == ProtocolAction.ValidateOpenPosition, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
@@ -107,8 +106,8 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
-        (pendingAction,) = protocol.getActionablePendingAction(0);
-        action = protocol.i_toLongPendingAction(pendingAction);
+        (pendingActions,) = protocol.getActionablePendingActions();
+        action = protocol.i_toLongPendingAction(pendingActions[0]);
         assertEq(action.user, address(this), "pending action user");
         vm.stopPrank();
     }

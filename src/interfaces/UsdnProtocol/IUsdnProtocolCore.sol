@@ -12,8 +12,8 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /// @notice The address that holds the minimum supply of USDN and first minimum long position.
     function DEAD_ADDRESS() external pure returns (address);
 
-    /// @notice The default max number of iterations for the checking the pending actions queue
-    function DEFAULT_QUEUE_MAX_ITER() external pure returns (uint256);
+    /// @notice The maximum number of actionable pending action items returned by `getActionablePendingActions`
+    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
 
     /* -------------------------- Public view functions ------------------------- */
 
@@ -88,14 +88,14 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * for this pending action as the last parameter.
      * @dev Front-ends are encouraged to set the `from` address when calling this function, so that we can return the
      * correct actionable action for a given user.
-     * @param maxIter The maximum number of iterations to find the first initialized item
-     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
-     * @return rawIndex_ The raw index of the pending action in the queue.
+     * @return actions_ The pending actions if any, otherwise an empty array
+     * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
+     * array.
      */
-    function getActionablePendingAction(uint256 maxIter)
+    function getActionablePendingActions()
         external
         view
-        returns (PendingAction memory action_, uint128 rawIndex_);
+        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
 
     /**
      * @notice Retrieve a user pending action.
