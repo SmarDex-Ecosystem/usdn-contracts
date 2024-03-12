@@ -58,6 +58,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     uint128 public initialLongExpo;
     address[] public users;
 
+    PreviousActionsData internal EMPTY_PREVIOUS_DATA =
+        PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
+
     modifier prankUser(address user) {
         vm.startPrank(user);
         _;
@@ -158,21 +161,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     {
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateDeposit(positionSize, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.initiateDeposit(positionSize, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
-        protocol.validateDeposit(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
-        protocol.initiateWithdrawal(
-            uint128(usdn.balanceOf(user)), priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
-        );
+        protocol.initiateWithdrawal(uint128(usdn.balanceOf(user)), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
 
-        protocol.validateWithdrawal(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
     }
 
@@ -198,23 +199,20 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     ) public prankUser(user) returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         bytes memory priceData = abi.encode(price);
 
-        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(
-            positionSize, desiredLiqPrice, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
-        );
+        (tick_, tickVersion_, index_) =
+            protocol.initiateOpenPosition(positionSize, desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
 
-        protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
 
-        protocol.initiateClosePosition(
-            tick_, tickVersion_, index_, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
-        );
+        protocol.initiateClosePosition(tick_, tickVersion_, index_, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
 
-        protocol.validateClosePosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
         return (tick_, tickVersion_, index_);

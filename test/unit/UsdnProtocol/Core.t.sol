@@ -3,8 +3,6 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature The functions of the core of the protocol
  * @custom:background Given a protocol instance that was initialized at equilibrium
@@ -67,9 +65,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // we create a deposit and skip 1 day and call liquidate() to have a negative funding
         bytes memory priceData = abi.encode(params.initialPrice);
         wstETH.mintAndApprove(address(this), 10 ether, address(protocol), type(uint256).max);
-        protocol.initiateDeposit(10 ether, priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.initiateDeposit(10 ether, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        protocol.validateDeposit(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
         skip(1 days);
         protocol.liquidate(priceData, 1);
 
@@ -90,11 +88,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_updateEma_posFunding() public {
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
-        protocol.initiateOpenPosition(
-            200 ether, DEFAULT_PARAMS.initialPrice / 2, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
-        );
+        protocol.initiateOpenPosition(200 ether, DEFAULT_PARAMS.initialPrice / 2, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
 
         int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() - 1);
@@ -157,11 +153,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(
-            1000 ether, price * 90 / 100, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
-        );
+        protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
 
         skip(1 hours);
         protocol.liquidate(abi.encode(price / 100), 10);
@@ -187,11 +181,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateOpenPosition(
-            1000 ether, price * 90 / 100, priceData, PreviousActionsData(new bytes[](0), new uint128[](0))
-        );
+        protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        protocol.validateOpenPosition(priceData, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
 
         skip(1 hours);
         protocol.liquidate(abi.encode(price * 100), 10);

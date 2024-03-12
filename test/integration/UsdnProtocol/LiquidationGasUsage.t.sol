@@ -6,7 +6,7 @@ import { DEPLOYER, PYTH_STETH_USD } from "test/utils/Constants.sol";
 
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
-import { ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 
 /**
@@ -48,25 +48,19 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         uint128 futurePythPrice = uint128(pythPrice + 500e8) * 10 ** 10;
 
         /* ---------------------------- Set up position 1 --------------------------- */
-        protocol.initiateOpenPosition(
-            1 ether, futurePythPrice + 150e18, data, PreviousActionsData(new bytes[](0), new uint128[](0))
-        );
+        protocol.initiateOpenPosition(1 ether, futurePythPrice + 150e18, data, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        protocol.validateOpenPosition(data, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateOpenPosition(data, EMPTY_PREVIOUS_DATA);
 
         /* ---------------------------- Set up position 2 --------------------------- */
-        protocol.initiateOpenPosition(
-            1 ether, futurePythPrice + 100e18, data, PreviousActionsData(new bytes[](0), new uint128[](0))
-        );
+        protocol.initiateOpenPosition(1 ether, futurePythPrice + 100e18, data, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        protocol.validateOpenPosition(data, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateOpenPosition(data, EMPTY_PREVIOUS_DATA);
 
         /* ---------------------------- Set up position 3 --------------------------- */
-        protocol.initiateOpenPosition(
-            1 ether, futurePythPrice + 50e18, data, PreviousActionsData(new bytes[](0), new uint128[](0))
-        );
+        protocol.initiateOpenPosition(1 ether, futurePythPrice + 50e18, data, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        protocol.validateOpenPosition(data, PreviousActionsData(new bytes[](0), new uint128[](0)));
+        protocol.validateOpenPosition(data, EMPTY_PREVIOUS_DATA);
 
         /* ---------------------------- Start the checks ---------------------------- */
         // Put the original oracle back
