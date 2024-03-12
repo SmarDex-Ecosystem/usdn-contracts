@@ -391,7 +391,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
         }(5 ether, 9 * currentPrice / 10, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
         }(priceData, "");

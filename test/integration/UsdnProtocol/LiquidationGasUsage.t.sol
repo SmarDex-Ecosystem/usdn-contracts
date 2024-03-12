@@ -93,7 +93,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         protocol.initiateOpenPosition(1 ether, pythPriceNormalized + 100e18, hex"beef", "");
         vm.prank(USER_3);
         protocol.initiateOpenPosition(1 ether, pythPriceNormalized + 50e18, hex"beef", "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         vm.prank(USER_1);
         protocol.validateOpenPosition(hex"beef", "");
         vm.prank(USER_2);
