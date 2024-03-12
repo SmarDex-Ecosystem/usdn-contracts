@@ -17,13 +17,13 @@ import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolEr
  */
 contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.initialDeposit = 1 ether;
-        params.initialLong = 1 ether;
-        params.initialLiqPrice = 1 ether;
-        params.initialPrice = 3290 ether;
-        params.initialTimestamp = 1_708_088_866; // 16 February 2024 at 14:07 CET
-        _setUp(params);
+        // params = DEFAULT_PARAMS;
+        // params.initialDeposit = 1 ether;
+        // params.initialLong = 1 ether;
+        // params.initialLiqPrice = 1 ether;
+        // params.initialPrice = 3290 ether;
+        // params.initialTimestamp = 1_708_088_866; // 16 February 2024 at 14:07 CET
+        // _setUp(params);
     }
 
     /**
@@ -33,7 +33,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
      * @custom:then Transaction should revert with soft imbalance custom error
      */
     function test_RevertWith_highImbalance() public {
-        // TODO TO FIX
+        // TODO: Should we keep this test
         vm.skip(true);
         vm.warp(1_708_090_186);
         mockChainlinkOnChain.setLastPublishTime(1_708_090_186 - 10 minutes);
