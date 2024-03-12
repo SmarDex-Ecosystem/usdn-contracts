@@ -120,9 +120,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();
-        initialLongExpo = firstPos.totalExpo;
-        initialVaultExpo = protocol.getBalanceLong();
+        initialVaultExpo = protocol.getBalanceVault();
         initialLongLeverage = protocol.i_getLeverage(testParams.initialPrice, testParams.initialPrice / 2);
+        initialLongExpo = firstPos.totalExpo - testParams.initialLong;
 
         params = testParams;
     }
@@ -244,5 +244,68 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
     function _waitDelay() internal {
         skip(oracleMiddleware.getValidationDelay() + 1);
+    }
+
+    /// @dev Calculate proper initial values from randoms to initiate a balanced protocol
+    function _randInitBalanced(uint128 initialDeposit, uint128 initialLong) internal {
+        // initial default params
+        params = DEFAULT_PARAMS;
+        params.enableLimits = true;
+
+        // cannot be less than 1 ether
+        initialDeposit = uint128(bound(initialDeposit, uint128(1 ether), uint128(5000 ether)));
+        // cannot be less than 1 ether
+        initialLong = uint128(bound(initialLong, uint128(1 ether), uint128(5000 ether)));
+
+        // min long expo to initiate a balanced protocol
+        uint256 minLongExpo = initialDeposit - initialDeposit * 2 / 100;
+        // max long expo to initiate a balanced protocol
+        uint256 maxLongExpo = initialDeposit + initialDeposit * 2 / 100;
+
+        // initial leverage
+        uint128 initialLeverage = uint128(
+            10 ** 21 * uint256(params.initialPrice) / (uint256(params.initialPrice) - uint256(params.initialPrice / 2))
+        );
+
+        /* 
+            Retrieve long balance from long expo:
+            ---------------------------------------------------------------
+            
+            totalExpo(TX) = LongExpo(LE) + LongBalance(LB)        
+            totalExpo(TX) = LongBalance(LB) x leverage(l) / LeverageDecimal(LD)
+
+            TX = LB . l / LD
+            TX . LD = LB . l
+            TX . LD / LB = l
+            (LE + LB) . LD / LB = l
+            (LE . LD / LB) + (LB . LD / LB) = l
+            LE . LD / LB + LD  = l
+            LE . LD / LB  = l - LD
+            LB = LE . LD / (l - LD)
+             
+            LongBalance = (LongExpo x LeverageDecimal) / (leverage - LeverageDecimal)
+        
+            ---------------------------------------------------------------
+         */
+
+        // min long amount
+        uint256 minLongAmount = uint128(uint256(minLongExpo) * 10 ** 21 / (uint256(initialLeverage) - 10 ** 21));
+        // max long amount
+        uint256 maxLongAmount = uint128(uint256(maxLongExpo) * 10 ** 21 / (uint256(initialLeverage) - 10 ** 21));
+
+        // assign initial long amount in range min max
+        initialLong = uint128(bound(initialLong, uint128(minLongAmount), uint128(maxLongAmount)));
+
+        // calculation doesn't take count of min allowed by the protocol
+        if (initialLong < 1 ether) {
+            initialLong = 1 ether;
+        }
+
+        // assign initial values
+        params.initialDeposit = initialDeposit;
+        params.initialLong = initialLong;
+
+        // init protocol
+        _setUp(params);
     }
 }
