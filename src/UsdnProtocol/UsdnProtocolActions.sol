@@ -168,6 +168,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit LiquidatorRewarded(msg.sender, liquidationRewards);
     }
 
+    /**
+     * @notice Initiate a deposit of assets into the vault to mint USDN.
+     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
+     * the `ProtocolAction.InitiateDeposit` action.
+     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * of the middleware.
+     * @param user The address of theuser initiating the deposit.
+     * @param amount The amount of wstETH to deposit.
+     * @param currentPriceData The current price data
+     */
     function _initiateDeposit(address user, uint128 amount, bytes calldata currentPriceData) internal {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
@@ -264,6 +274,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint);
     }
 
+    /**
+     * @notice Initiate a withdrawal of assets from the vault by providing USDN tokens.
+     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
+     * the `ProtocolAction.InitiateWithdrawal` action.
+     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * of the middleware.
+     * @param user The address of the user initiating the withdrawal.
+     * @param usdnAmount The amount of USDN to burn.
+     * @param currentPriceData The current price data
+     */
     function _initiateWithdrawal(address user, uint128 usdnAmount, bytes calldata currentPriceData) internal {
         if (usdnAmount == 0) {
             revert UsdnProtocolZeroAmount();
@@ -364,6 +384,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amount);
     }
 
+    /**
+     * @notice Initiate an open position action.
+     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
+     * the `ProtocolAction.InitiateOpenPosition` action.
+     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * of the middleware.
+     * The position is immediately included in the protocol calculations with a temporary entry price (and thus
+     * leverage). The validation operation then updates the entry price and leverage with fresher data.
+     * @param user The address of the user initiating the open position.
+     * @param amount The amount of wstETH to deposit.
+     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty.
+     * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
+     * pending validation)
+     */
     function _initiateOpenPosition(
         address user,
         uint96 amount,
@@ -528,6 +562,23 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
+    /**
+     * @notice Initiate a close position action.
+     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
+     * the `ProtocolAction.InitiateClosePosition` action.
+     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * of the middleware.
+     * If the current tick version is greater than the tick version of the position (when it was opened), then the
+     * position has been liquidated and the transaction will revert.
+     * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't
+     * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
+     * during the validate action.
+     * @param user The address of the user initiating the close position.
+     * @param tick The tick containing the position to close
+     * @param tickVersion The tick version of the position to close
+     * @param index The index of the position inside the tick array
+     * @param currentPriceData The current price data
+     */
     function _initiateClosePosition(
         address user,
         int24 tick,
@@ -646,6 +697,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         );
     }
 
+    /**
+     * @notice Liquidate positions according to the current asset price, limited to a maximum of `iterations` ticks.
+     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
+     * the `ProtocolAction.Liquidation` action.
+     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * of the middleware.
+     * Each tick is liquidated in constant time. The tick version is incremented for each tick that was liquidated.
+     * At least one tick will be liquidated, even if the `iterations` parameter is zero.
+     * @param currentPriceData The most recent price data
+     * @param iterations The maximum number of ticks to liquidate
+     * @return liquidatedPositions_ The number of positions that were liquidated
+     */
     function _liquidate(bytes calldata currentPriceData, uint16 iterations)
         internal
         returns (uint256 liquidatedPositions_)
