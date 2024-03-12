@@ -615,12 +615,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToClose, pos.amount).toUint128();
         {
             uint256 liqMultiplier = _liquidationMultiplier;
-            uint256 tempTransfer = _assetToTransfer(priceWithFees, tick, totalExpoToClose, liqMultiplier);
+            uint256 tempTransfer = _assetToTransfer(priceWithFees, tick, totalExpoToClose, liqMultiplier, 0);
 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
                 timestamp: uint40(block.timestamp),
-                user: msg.sender,
+                user: user,
                 tick: tick,
                 closeAmount: amountToClose,
                 closeTotalExpo: totalExpoToClose,
@@ -634,14 +634,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // transfer will be done after validation
             _balanceLong -= tempTransfer;
 
-            _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
+            _addPendingAction(user, _convertLongPendingAction(pendingAction));
 
             // Remove the position if it's fully closed
             _removeAmountFromPosition(tick, index, pos, amountToClose, totalExpoToClose);
         }
 
         emit InitiatedClosePosition(
-            msg.sender, tick, tickVersion, index, pos.amount - amountToClose, pos.totalExpo - totalExpoToClose
+            user, tick, tickVersion, index, pos.amount - amountToClose, pos.totalExpo - totalExpoToClose
         );
     }
 
@@ -670,8 +670,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Apply fees on price
         uint128 priceWithFees = (price.price - (price.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
-        uint256 assetToTransfer =
-            _assetToTransfer(priceWithFees, long.tick, long.closeTotalExpo, long.closeLiqMultiplier);
+        uint256 assetToTransfer = _assetToTransfer(
+            priceWithFees, long.tick, long.closeTotalExpo, long.closeLiqMultiplier, long.closeTempTransfer
+        );
 
         // adjust long balance that was previously optimistically decreased
         if (assetToTransfer > long.closeTempTransfer) {
@@ -750,14 +751,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param tick The tick of the position
      * @param posExpo The total expo of the position
      * @param liqMultiplier The liquidation multiplier at the moment of closing the position
+     * @param tempTransferred An amount that was already subtracted from the long balance
      */
-    function _assetToTransfer(uint128 currentPrice, int24 tick, uint128 posExpo, uint256 liqMultiplier)
-        internal
-        view
-        returns (uint256 assetToTransfer_)
-    {
-        // calculate amount to transfer
-        uint256 available = _balanceLong;
+    function _assetToTransfer(
+        uint128 currentPrice,
+        int24 tick,
+        uint128 posExpo,
+        uint256 liqMultiplier,
+        uint256 tempTransferred
+    ) internal view returns (uint256 assetToTransfer_) {
+        // The available amount of asset on the long side
+        uint256 available = _balanceLong + tempTransferred;
 
         // Calculate position value
         uint256 value = _positionValue(
