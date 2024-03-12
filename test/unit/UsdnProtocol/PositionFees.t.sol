@@ -145,11 +145,11 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
         uint256 expectedTempTransfer = protocol.i_assetToTransfer(
-            protocol.getBalanceLong(),
             uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
             tick,
             action.closeTotalExpo,
-            protocol.getLiquidationMultiplier()
+            protocol.getLiquidationMultiplier(),
+            0
         );
 
         uint256 storageBalanceAfter = protocol.getBalanceLong();
@@ -188,11 +188,11 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
         uint256 expectedTransfer = protocol.i_assetToTransfer(
-            protocol.getBalanceLong() - action.closeTempTransfer,
             uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
             tick,
             action.closeTotalExpo,
-            action.closeLiqMultiplier
+            action.closeLiqMultiplier,
+            action.closeTempTransfer
         );
 
         _waitDelay();

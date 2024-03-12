@@ -120,13 +120,13 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     function i_assetToTransfer(
-        uint256 availableLongBalance,
         uint128 currentPrice,
         int24 tick,
         uint128 expo,
-        uint256 liqMultiplier
+        uint256 liqMultiplier,
+        uint256 tempTransferred
     ) external view returns (uint256) {
-        return _assetToTransfer(availableLongBalance, currentPrice, tick, expo, liqMultiplier);
+        return _assetToTransfer(currentPrice, tick, expo, liqMultiplier, tempTransferred);
     }
 
     function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {

@@ -604,7 +604,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         {
             uint256 liqMultiplier = _liquidationMultiplier;
-            uint256 tempTransfer = _assetToTransfer(_balanceLong, priceWithFees, tick, pos.totalExpo, liqMultiplier);
+            uint256 tempTransfer = _assetToTransfer(priceWithFees, tick, pos.totalExpo, liqMultiplier, 0);
 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
@@ -657,12 +657,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 priceWithFees = (price.price - (price.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
         uint256 assetToTransfer = _assetToTransfer(
-            // Add the temp value to avoid a double subtraction
-            _balanceLong + long.closeTempTransfer,
-            priceWithFees,
-            long.tick,
-            long.closeTotalExpo,
-            long.closeLiqMultiplier
+            priceWithFees, long.tick, long.closeTotalExpo, long.closeLiqMultiplier, long.closeTempTransfer
         );
 
         // adjust long balance that was previously optimistically decreased
@@ -738,19 +733,22 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     /**
      * @notice Calculate how much wstETH must be transferred to a user to close a position.
      * @dev The amount is bound by the amount of wstETH available in the long side.
-     * @param availableLongBalance The available balance on the long side
      * @param currentPrice The current price of the asset
      * @param tick The tick of the position
      * @param posExpo The total expo of the position
      * @param liqMultiplier The liquidation multiplier at the moment of closing the position
+     * @param tempTransferred An amount that was already subtracted from the long balance
      */
     function _assetToTransfer(
-        uint256 availableLongBalance,
         uint128 currentPrice,
         int24 tick,
         uint128 posExpo,
-        uint256 liqMultiplier
+        uint256 liqMultiplier,
+        uint256 tempTransferred
     ) internal view returns (uint256 assetToTransfer_) {
+        // The available amount of asset on the long side
+        uint256 available = _balanceLong + tempTransferred;
+
         // Calculate position value
         uint256 value = _positionValue(
             currentPrice,
@@ -758,8 +756,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             posExpo
         );
 
-        if (value > availableLongBalance) {
-            assetToTransfer_ = availableLongBalance;
+        if (value > available) {
+            assetToTransfer_ = available;
         } else {
             assetToTransfer_ = value;
         }
