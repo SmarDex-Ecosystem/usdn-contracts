@@ -220,7 +220,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(depositAmount, currentPrice, "");
 
         VaultPendingAction memory action = protocol.i_toVaultPendingAction(protocol.getUserPendingAction(address(this)));
 
@@ -241,7 +241,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(depositAmount, currentPrice, "");
 
         uint256 expectedBalanceA = protocol.i_calcMintUsdn(
             depositAmount,
@@ -295,7 +295,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(depositAmount, currentPrice, "");
 
         _waitDelay();
 
@@ -329,7 +329,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
         uint256 initialAssetBalance = wstETH.balanceOf(address(this));
 
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(depositAmount, currentPrice, "");
 
         _waitDelay();
 
@@ -376,7 +376,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(0); // 0% fees
 
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(depositAmount, currentPrice, "");
 
         _waitDelay();
 
@@ -391,7 +391,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(100); // 1% fees
 
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(depositAmount, currentPrice, "");
 
         _waitDelay();
 
@@ -422,7 +422,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(depositAmount, currentPrice, "");
         _waitDelay();
 
         protocol.validateDeposit(currentPrice, "");

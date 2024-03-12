@@ -50,6 +50,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
+    uint256 public securityDepositValue;
     uint128 public initialLongExpo;
     address[] public users;
 
@@ -111,6 +112,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdnInitialTotalSupply = usdn.totalSupply();
         initialLongExpo = firstPos.totalExpo;
         params = testParams;
+        securityDepositValue = protocol.getSecurityDepositValue();
     }
 
     function test_setUp() public {
@@ -153,7 +155,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     {
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateDeposit(positionSize, priceData, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(positionSize, priceData, "");
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 

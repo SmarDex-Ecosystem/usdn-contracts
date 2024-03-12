@@ -30,7 +30,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         usdn.approve(address(protocol), type(uint256).max);
         // user deposits wstETH at price $2000
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        protocol.initiateDeposit(DEPOSIT_AMOUNT, currentPrice, "");
+        protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(DEPOSIT_AMOUNT, currentPrice, "");
         _waitDelay();
         protocol.validateDeposit(currentPrice, "");
         initialUsdnBalance = usdn.balanceOf(address(this));

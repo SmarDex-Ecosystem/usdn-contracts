@@ -39,7 +39,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit InitiatedDeposit(address(this), depositAmount); // expected event
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(depositAmount, currentPrice, "");
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
         assertEq(
@@ -75,7 +75,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAmount() public {
         bytes memory priceData = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateDeposit(0, priceData, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(0, priceData, "");
     }
 
     /**
@@ -109,7 +109,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user sends too much ether when initiating a deposit
      * @custom:given The user deposits 1 wstETH
-     * @custom:when The user sends 0.5 ether as value in the `initiateDeposit` call
+     * @custom:when The user sends 0.5 ether + securityDepositValue as value in the `initiateDeposit` call
      * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
      */
     function test_initiateDepositEtherRefund() public {
@@ -117,14 +117,16 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
-        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, "");
-        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+        protocol.initiateDeposit{ value: 0.5 ether + securityDepositValue }(1 ether, currentPrice, "");
+        assertEq(
+            address(this).balance, balanceBefore - validationCost - securityDepositValue, "user balance after refund"
+        );
     }
 
     /**
      * @custom:scenario The user sends too much ether when validating a deposit
      * @custom:given The user initiated a deposit of 1 wstETH and validates it
-     * @custom:when The user sends 0.5 ether as value in the `validateDeposit` call
+     * @custom:when The user sends 0.5 ether + securityDepositValue as value in the `validateDeposit` call
      * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
      */
     function test_validateDepositEtherRefund() public {
@@ -133,7 +135,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         assertEq(validationCost, 1);
-        protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, "");
+        protocol.initiateDeposit{ value: validationCost + securityDepositValue }(1 ether, currentPrice, "");
 
         _waitDelay();
         // validate
@@ -160,7 +162,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 
-        protocol.initiateDeposit(depositAmount, currentPrice, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(depositAmount, currentPrice, "");
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation

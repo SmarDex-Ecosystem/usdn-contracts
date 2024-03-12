@@ -48,7 +48,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
-        protocol.initiateDeposit(1 ether, abi.encode(effectivePriceForTick), "");
+        protocol.initiateDeposit{ value: securityDepositValue }(1 ether, abi.encode(effectivePriceForTick), "");
     }
 
     /**

@@ -55,7 +55,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         _waitDelay();
         protocol.validateOpenPosition(priceData, "");
         skip(1 days);
-        protocol.initiateDeposit(1, priceData, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(1, priceData, "");
         _waitDelay();
         protocol.validateDeposit(priceData, "");
 
@@ -75,11 +75,11 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_getMinLiquidationPrice_multiplierLtOne() public {
         bytes memory priceData = abi.encode(params.initialPrice);
 
-        protocol.initiateDeposit(5000 ether, priceData, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(5000 ether, priceData, "");
         _waitDelay();
         protocol.validateDeposit(priceData, "");
         skip(6 days);
-        protocol.initiateDeposit(1, priceData, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(1, priceData, "");
         _waitDelay();
         protocol.validateDeposit(priceData, "");
 

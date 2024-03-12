@@ -92,7 +92,9 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
 
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
-        protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        protocol.initiateDeposit{ value: securityDepositValue }(
+            10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), ""
+        );
         _waitDelay();
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
         assertGt(protocol.getPendingProtocolFee(), 0, "pending protocol fee after deposit");
@@ -108,7 +110,9 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     function test_feeHitThreshold() public {
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
 
-        protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        protocol.initiateDeposit{ value: securityDepositValue }(
+            10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), ""
+        );
         _waitDelay();
         protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
         skip(4 days);
@@ -119,7 +123,9 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         protocol.validateOpenPosition(abi.encode(DEFAULT_PARAMS.initialPrice), "");
         skip(8 days);
         assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");
-        protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        protocol.initiateDeposit{ value: securityDepositValue }(
+            10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), ""
+        );
         assertGe(wstETH.balanceOf(ADMIN), protocol.getFeeThreshold(), "fee collector balance after collect");
     }
 }

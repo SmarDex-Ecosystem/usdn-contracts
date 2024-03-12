@@ -50,7 +50,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         skip(1 hours);
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a deposit to have negative funding
-        protocol.initiateDeposit(10 ether, priceData, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(10 ether, priceData, "");
         _waitDelay();
         protocol.validateDeposit(priceData, "");
         assertGt(protocol.i_vaultTradingExpo(params.initialPrice), protocol.i_longTradingExpo(params.initialPrice));

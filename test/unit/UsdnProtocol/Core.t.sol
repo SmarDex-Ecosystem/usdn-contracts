@@ -65,7 +65,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // we create a deposit and skip 1 day and call liquidate() to have a negative funding
         bytes memory priceData = abi.encode(params.initialPrice);
         wstETH.mintAndApprove(address(this), 10 ether, address(protocol), type(uint256).max);
-        protocol.initiateDeposit(10 ether, priceData, "");
+        protocol.initiateDeposit{ value: securityDepositValue }(10 ether, priceData, "");
         _waitDelay();
         protocol.validateDeposit(priceData, "");
         skip(1 days);
