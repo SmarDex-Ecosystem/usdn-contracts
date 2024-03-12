@@ -18,7 +18,6 @@ import {
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { console2 } from "forge-std/Test.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -37,13 +36,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 balanceBefore = address(this).balance;
-        console2.log("balance before: ", balanceBefore);
+        uint256 balanceBefore = address(this).balance - msg.value;
+
         _initiateDeposit(msg.sender, amount, currentPriceData);
         _executePendingAction(previousActionPriceData);
-        console2.log("balance after: ", address(this).balance);
-        console2.log("diff ", balanceBefore - address(this).balance);
-        _refundExcessEther(balanceBefore - address(this).balance);
+        _refundExcessEther(address(this).balance - balanceBefore);
         _checkPendingFee();
     }
 
@@ -53,11 +50,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 balanceBefore = address(this).balance;
+        uint256 balanceBefore = address(this).balance - msg.value;
 
         _validateDeposit(msg.sender, depositPriceData);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther(balanceBefore - address(this).balance);
+        _refundExcessEther(address(this).balance - balanceBefore);
         _checkPendingFee();
     }
 
@@ -67,9 +64,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
     ) external payable initializedAndNonReentrant {
+        uint256 balanceBefore = address(this).balance - msg.value;
+
         _initiateWithdrawal(msg.sender, usdnAmount, currentPriceData);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther(address(this).balance);
+        _refundExcessEther(address(this).balance - balanceBefore);
         _checkPendingFee();
     }
 
@@ -79,11 +78,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 balanceBefore = address(this).balance;
+        uint256 balanceBefore = address(this).balance - msg.value;
 
         _validateWithdrawal(msg.sender, withdrawalPriceData);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther(balanceBefore - address(this).balance);
+        _refundExcessEther(address(this).balance - balanceBefore);
         _checkPendingFee();
     }
 
@@ -94,10 +93,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
     ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+        uint256 balanceBefore = address(this).balance - msg.value;
+
         (tick_, tickVersion_, index_) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
         _executePendingAction(previousActionPriceData);
-
-        _refundExcessEther(address(this).balance);
+        _refundExcessEther(address(this).balance - balanceBefore);
         _checkPendingFee();
     }
 
@@ -107,11 +107,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 balanceBefore = address(this).balance;
+        uint256 balanceBefore = address(this).balance - msg.value;
 
         _validateOpenPosition(msg.sender, openPriceData);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther(balanceBefore - address(this).balance);
+        _refundExcessEther(address(this).balance - balanceBefore);
         _checkPendingFee();
     }
 
@@ -123,9 +123,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
     ) external payable initializedAndNonReentrant {
+        uint256 balanceBefore = address(this).balance - msg.value;
+
         _initiateClosePosition(msg.sender, tick, tickVersion, index, currentPriceData);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther(address(this).balance);
+        _refundExcessEther(address(this).balance - balanceBefore);
         _checkPendingFee();
     }
 
@@ -135,11 +137,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 balanceBefore = address(this).balance;
+        uint256 balanceBefore = address(this).balance - msg.value;
 
         _validateClosePosition(msg.sender, closePriceData);
         _executePendingAction(previousActionPriceData);
-        _refundExcessEther(balanceBefore - address(this).balance);
+        _refundExcessEther(address(this).balance - balanceBefore);
         _checkPendingFee();
     }
 
@@ -149,8 +151,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         returns (uint256 liquidatedPositions_)
     {
+        uint256 balanceBefore = address(this).balance - msg.value;
+
         liquidatedPositions_ = _liquidate(currentPriceData, iterations);
-        _refundExcessEther(1);
+        _refundExcessEther(address(this).balance - balanceBefore);
         _checkPendingFee();
     }
 
@@ -815,8 +819,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /// @notice Refund any excess ether to the user, making sure we don't lock ETH in the contract.
     function _refundExcessEther(uint256 amount) internal {
-        if (address(this).balance > 0) {
-            (bool success,) = payable(msg.sender).call{ value: address(this).balance }("");
+        if (amount != 0) {
+            (bool success,) = payable(msg.sender).call{ value: amount }("");
             if (!success) {
                 revert UsdnProtocolEtherRefundFailed();
             }

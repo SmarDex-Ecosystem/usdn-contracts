@@ -325,7 +325,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getDepositValue() external view returns (uint256) {
+    function getSecurityDepositValue() external view returns (uint256) {
         return _securityDepositValue;
     }
 
