@@ -246,7 +246,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
      * @custom:when The owner of the position validates the close position action
      * @custom:then The state of the protocol is updated
      * @custom:and a ValidatedClosePosition event is emitted
-     * @custom:and the user receive parts of hid funds back
+     * @custom:and the user receive parts of his funds back
      */
     function test_validatePartialCloseUnderwaterPosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);

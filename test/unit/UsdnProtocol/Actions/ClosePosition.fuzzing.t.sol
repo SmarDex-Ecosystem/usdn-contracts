@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
@@ -27,14 +27,27 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
 
         // Open a position to avoid a bug in _positionValue
-        bytes memory priceData = abi.encode(params.initialPrice);
-        protocol.initiateOpenPosition(
-            uint128(wstETH.balanceOf(address(this)) / 2), params.initialPrice - 1000 ether, priceData, ""
+        setUpUserPositionInLong(
+            address(this),
+            ProtocolAction.ValidateOpenPosition,
+            uint128(wstETH.balanceOf(address(this)) / 2),
+            params.initialPrice - 1000 ether,
+            params.initialPrice
         );
-        skip(oracleMiddleware.getValidationDelay() + 1);
-        protocol.validateOpenPosition(priceData, "");
     }
 
+    /**
+     * @custom:scenario Initiate and validate a partial close of a position until the position is fully closed
+     * @custom:given A user with 100_000 wsteth
+     * @custom:when The owner of the position close the position partially n times
+     * @custom:and and fully close the position if there is any leftover
+     * @custom:then The state of the protocol is updated
+     * @custom:and the user receives all of his funds back
+     *
+     * @param iterations The amount of time we want to close the position
+     * @param amountToOpen The amount of assets in the position
+     * @param amountToClose The amount to close per iteration
+     */
     function testFuzz_closePositionWithAmount(uint256 iterations, uint256 amountToOpen, uint256 amountToClose)
         external
     {
