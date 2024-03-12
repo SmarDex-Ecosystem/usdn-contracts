@@ -7,7 +7,7 @@ import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Fuzzing tests for the core of the protocol
- * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
+ * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
     function setUp() public {
@@ -58,7 +58,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
             (int24 tick, uint256 tickVersion, uint256 index) =
                 protocol.initiateOpenPosition(uint96(longAmount), uint128(longLiqPrice), abi.encode(currentPrice), "");
-            skip(oracleMiddleware.getValidationDelay() + 1);
+            _waitDelay();
             protocol.validateOpenPosition(abi.encode(currentPrice), "");
             pos[i] = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;
@@ -69,7 +69,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             // create a random deposit position
             uint256 depositAmount = (random % 9 ether) + 1 ether;
             protocol.initiateDeposit(uint128(depositAmount), abi.encode(currentPrice), "");
-            skip(oracleMiddleware.getValidationDelay() + 1);
+            _waitDelay();
             protocol.validateDeposit(abi.encode(currentPrice), "");
             vm.stopPrank();
 
