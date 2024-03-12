@@ -766,15 +766,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // no pending action
             return;
         }
-        // TODO: check if length needs to be cached in memory
-        if (
-            data.rawIndices.length != data.priceData.length || data.priceData.length < 1
-                || data.rawIndices[0] > rawIndex
-        ) {
+        uint256 length = data.priceData.length;
+        if (data.rawIndices.length != length || length < 1 || data.rawIndices[0] > rawIndex) {
             revert UsdnProtocolInvalidPendingActionData();
         }
         uint128 offset = rawIndex - data.rawIndices[0];
-        if (offset >= data.priceData.length) {
+        if (offset >= length) {
             revert UsdnProtocolInvalidPendingActionData();
         }
         bytes calldata priceData = data.priceData[offset];
