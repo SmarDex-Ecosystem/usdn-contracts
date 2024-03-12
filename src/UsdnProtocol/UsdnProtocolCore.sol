@@ -175,6 +175,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // by this user (it will get validated automatically by their action). And so we need to return the next
             // item in the queue so that they can validate a third-party pending action (if any).
             if (candidate.timestamp == 0 || candidate.user == msg.sender) {
+                rawIndices_[i] = rawIndex;
                 // try the next one
                 unchecked {
                     i++;
