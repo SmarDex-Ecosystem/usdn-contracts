@@ -36,7 +36,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        _initiateDeposit(amount, currentPriceData);
+        _initiateDeposit(msg.sender, amount, currentPriceData);
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
         _checkPendingFee();
@@ -60,7 +60,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
     ) external payable initializedAndNonReentrant {
-        _initiateWithdrawal(usdnAmount, currentPriceData);
+        _initiateWithdrawal(msg.sender, usdnAmount, currentPriceData);
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
         _checkPendingFee();
@@ -85,7 +85,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
     ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
-        (tick_, tickVersion_, index_) = _initiateOpenPosition(amount, desiredLiqPrice, currentPriceData);
+        (tick_, tickVersion_, index_) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
         _checkPendingFee();
@@ -111,7 +111,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         bytes calldata previousActionPriceData
     ) external payable initializedAndNonReentrant {
-        _initiateClosePosition(tick, tickVersion, index, currentPriceData);
+        _initiateClosePosition(msg.sender, tick, tickVersion, index, currentPriceData);
         _executePendingAction(previousActionPriceData);
         _refundExcessEther();
         _checkPendingFee();
@@ -168,7 +168,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit LiquidatorRewarded(msg.sender, liquidationRewards);
     }
 
-    function _initiateDeposit(uint128 amount, bytes calldata currentPriceData) internal {
+    function _initiateDeposit(address user, uint128 amount, bytes calldata currentPriceData) internal {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -185,7 +185,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
-            user: msg.sender,
+            user: user,
             _unused: 0,
             amount: amount,
             assetPrice: pendingActionPrice,
@@ -196,11 +196,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             usdnTotalSupply: _usdn.totalSupply()
         });
 
-        _addPendingAction(msg.sender, _convertVaultPendingAction(pendingAction));
+        _addPendingAction(user, _convertVaultPendingAction(pendingAction));
 
-        _asset.safeTransferFrom(msg.sender, address(this), amount);
+        _asset.safeTransferFrom(user, address(this), amount);
 
-        emit InitiatedDeposit(msg.sender, amount);
+        emit InitiatedDeposit(user, amount);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
@@ -264,7 +264,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint);
     }
 
-    function _initiateWithdrawal(uint128 usdnAmount, bytes calldata currentPriceData) internal {
+    function _initiateWithdrawal(address user, uint128 usdnAmount, bytes calldata currentPriceData) internal {
         if (usdnAmount == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -283,7 +283,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateWithdrawal,
             timestamp: uint40(block.timestamp),
-            user: msg.sender,
+            user: user,
             _unused: 0,
             amount: usdnAmount,
             assetPrice: pendingActionPrice,
@@ -294,12 +294,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             usdnTotalSupply: _usdn.totalSupply()
         });
 
-        _addPendingAction(msg.sender, _convertVaultPendingAction(pendingAction));
+        _addPendingAction(user, _convertVaultPendingAction(pendingAction));
 
         // retrieve the USDN tokens, checks that balance is sufficient
-        _usdn.safeTransferFrom(msg.sender, address(this), usdnAmount);
+        _usdn.safeTransferFrom(user, address(this), usdnAmount);
 
-        emit InitiatedWithdrawal(msg.sender, usdnAmount);
+        emit InitiatedWithdrawal(user, usdnAmount);
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
@@ -364,10 +364,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amount);
     }
 
-    function _initiateOpenPosition(uint96 amount, uint128 desiredLiqPrice, bytes calldata currentPriceData)
-        internal
-        returns (int24 tick_, uint256 tickVersion_, uint256 index_)
-    {
+    function _initiateOpenPosition(
+        address user,
+        uint96 amount,
+        uint128 desiredLiqPrice,
+        bytes calldata currentPriceData
+    ) internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -418,7 +420,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Register position and adjust contract state
         {
             Position memory long = Position({
-                user: msg.sender,
+                user: user,
                 amount: amount,
                 totalExpo: positionTotalExpo,
                 timestamp: uint40(block.timestamp)
@@ -429,7 +431,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateOpenPosition,
                 timestamp: uint40(block.timestamp),
-                user: msg.sender,
+                user: user,
                 tick: tick_,
                 closeAmount: 0,
                 closeTotalExpo: 0,
@@ -438,12 +440,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 closeLiqMultiplier: 0,
                 closeTempTransfer: 0
             });
-            _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
+            _addPendingAction(user, _convertLongPendingAction(pendingAction));
             emit InitiatedOpenPosition(
-                msg.sender, long.timestamp, leverage, long.amount, adjustedPrice, tick_, tickVersion_, index_
+                user, long.timestamp, leverage, long.amount, adjustedPrice, tick_, tickVersion_, index_
             );
         }
-        _asset.safeTransferFrom(msg.sender, address(this), amount);
+        _asset.safeTransferFrom(user, address(this), amount);
     }
 
     function _validateOpenPosition(address user, bytes calldata priceData) internal {
@@ -527,13 +529,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
-    function _initiateClosePosition(int24 tick, uint256 tickVersion, uint256 index, bytes calldata currentPriceData)
-        internal
-    {
+    function _initiateClosePosition(
+        address user,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index,
+        bytes calldata currentPriceData
+    ) internal {
         // check if the position belongs to the user
         // this reverts if the position was liquidated
         Position memory pos = getLongPosition(tick, tickVersion, index);
-        if (pos.user != msg.sender) {
+        if (pos.user != user) {
             revert UsdnProtocolUnauthorized();
         }
 
@@ -553,7 +559,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
                 timestamp: uint40(block.timestamp),
-                user: msg.sender,
+                user: user,
                 tick: tick,
                 closeAmount: pos.amount,
                 closeTotalExpo: pos.totalExpo,
@@ -567,12 +573,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // transfer will be done after validation
             _balanceLong -= tempTransfer;
 
-            _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
+            _addPendingAction(user, _convertLongPendingAction(pendingAction));
         }
 
         _removePosition(tick, tickVersion, index);
 
-        emit InitiatedClosePosition(msg.sender, tick, tickVersion, index);
+        emit InitiatedClosePosition(user, tick, tickVersion, index);
     }
 
     function _validateClosePosition(address user, bytes calldata priceData) internal {
