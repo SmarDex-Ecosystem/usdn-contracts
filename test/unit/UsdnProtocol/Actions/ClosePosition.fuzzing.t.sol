@@ -17,7 +17,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
     using SafeCast for uint256;
 
     function setUp() public {
-        SetUpParams memory params = DEFAULT_PARAMS;
+        params = DEFAULT_PARAMS;
         params.enableFunding = false;
         params.enablePositionFees = false;
         params.enableProtocolFees = false;
@@ -27,7 +27,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
 
         // Open a position to avoid a bug in _positionValue
-        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        bytes memory priceData = abi.encode(params.initialPrice);
         protocol.initiateOpenPosition(
             uint128(wstETH.balanceOf(address(this)) / 2), params.initialPrice - 1000 ether, priceData, ""
         );
@@ -47,7 +47,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
         uint256 positionsAmount = protocol.getTotalLongPositions();
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
-        bytes memory priceData = abi.encode(DEFAULT_PARAMS.initialPrice);
+        bytes memory priceData = abi.encode(params.initialPrice);
         (int24 tick, uint256 tickVersion, uint256 index) =
             protocol.initiateOpenPosition(uint128(amountToOpen), params.initialPrice - 200 ether, priceData, "");
         skip(oracleMiddleware.getValidationDelay() + 1);
