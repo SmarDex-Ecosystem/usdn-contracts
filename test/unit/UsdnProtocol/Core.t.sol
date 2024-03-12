@@ -312,8 +312,4 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
         protocol.vaultAssetAvailableWithFunding(0, ts - 1);
     }
-
-    function test_gas() public {
-        int256 ema = protocol.i_updateEMA(50);
-    }
 }

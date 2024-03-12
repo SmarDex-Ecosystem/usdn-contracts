@@ -33,12 +33,15 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /* -------------------------- Public view functions ------------------------- */
 
     /// @inheritdoc IUsdnProtocolCore
-    function getLiquidationMultiplier(uint128 timestamp, int256 ema) public view returns (uint256) {
+    function getLiquidationMultiplier(uint128 timestamp) public view returns (uint256) {
         // slither-disable-next-line incorrect-equality
         if (timestamp == _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
-        // timestamp < _lastUpdateTimestamp is checked in funding below and would revert
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+        }
+        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
         (int256 fund,) = funding(timestamp, ema);
         // starting here, timestamp is strictly greater than _lastUpdateTimestamp
         return _getLiquidationMultiplier(fund, _liquidationMultiplier);

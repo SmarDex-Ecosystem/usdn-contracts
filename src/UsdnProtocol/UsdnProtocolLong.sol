@@ -61,8 +61,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         returns (uint256 value_)
     {
         Position memory pos = getLongPosition(tick, tickVersion, index);
-        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
-        uint256 liquidationMultiplier = getLiquidationMultiplier(timestamp, ema);
+        uint256 liquidationMultiplier = getLiquidationMultiplier(timestamp);
         uint128 liqPrice =
             getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liquidationMultiplier);
         value_ = _positionValue(price, liqPrice, pos.totalExpo);
