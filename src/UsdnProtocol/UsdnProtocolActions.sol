@@ -37,38 +37,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
-        if (amount == 0) {
-            revert UsdnProtocolZeroAmount();
-        }
-
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateDeposit, uint40(block.timestamp), currentPriceData);
-
-        _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
-
-        // Apply fees on price
-        uint128 pendingActionPrice =
-            (currentPrice.price - currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
-
-        VaultPendingAction memory pendingAction = VaultPendingAction({
-            action: ProtocolAction.ValidateDeposit,
-            timestamp: uint40(block.timestamp),
-            user: msg.sender,
-            _unused: 0,
-            amount: amount,
-            assetPrice: pendingActionPrice,
-            totalExpo: _totalExpo,
-            balanceVault: _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
-                .toUint256(),
-            balanceLong: _balanceLong,
-            usdnTotalSupply: _usdn.totalSupply()
-        });
-
-        _addPendingAction(msg.sender, _convertVaultPendingAction(pendingAction));
-
-        _asset.safeTransferFrom(msg.sender, address(this), amount);
-
-        emit InitiatedDeposit(msg.sender, amount);
+        _initiateDeposit(msg.sender, amount, currentPriceData);
         _executePendingAction(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
@@ -92,42 +61,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
-        if (usdnAmount == 0) {
-            revert UsdnProtocolZeroAmount();
-        }
-
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateWithdrawal, uint40(block.timestamp), currentPriceData);
-
-        _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
-
-        // Apply fees on price
-        uint128 pendingActionPrice =
-            (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
-
-        uint256 totalExpo = _totalExpo;
-
-        VaultPendingAction memory pendingAction = VaultPendingAction({
-            action: ProtocolAction.ValidateWithdrawal,
-            timestamp: uint40(block.timestamp),
-            user: msg.sender,
-            _unused: 0,
-            amount: usdnAmount,
-            assetPrice: pendingActionPrice,
-            totalExpo: totalExpo,
-            balanceVault: _vaultAssetAvailable(totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
-                .toUint256(),
-            balanceLong: _balanceLong,
-            usdnTotalSupply: _usdn.totalSupply()
-        });
-
-        _addPendingAction(msg.sender, _convertVaultPendingAction(pendingAction));
-
-        // retrieve the USDN tokens, checks that balance is sufficient
-        _usdn.safeTransferFrom(msg.sender, address(this), usdnAmount);
-
-        emit InitiatedWithdrawal(msg.sender, usdnAmount);
-
+        _initiateWithdrawal(msg.sender, usdnAmount, currentPriceData);
         _executePendingAction(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
@@ -152,82 +86,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
-        if (amount == 0) {
-            revert UsdnProtocolZeroAmount();
-        }
-
-        uint128 adjustedPrice; // the price returned by the oracle middleware, to be used for the user action
-        uint128 neutralPrice;
-        {
-            PriceInfo memory currentPrice =
-                _getOraclePrice(ProtocolAction.InitiateOpenPosition, uint40(block.timestamp), currentPriceData);
-
-            // Apply fees on price
-            adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
-
-            neutralPrice = currentPrice.neutralPrice.toUint128();
-
-            _applyPnlAndFundingAndLiquidate(neutralPrice, currentPrice.timestamp);
-        }
-
-        uint128 leverage;
-        uint128 positionTotalExpo;
-        {
-            // we calculate the closest valid tick down for the desired liq price with liquidation penalty
-            tick_ = getEffectiveTickForPrice(desiredLiqPrice);
-
-            // remove liquidation penalty for leverage calculation
-            uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - int24(_liquidationPenalty) * _tickSpacing);
-            positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
-
-            // calculate position leverage
-            // reverts if liquidationPrice >= entryPrice
-            leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
-            if (leverage < _minLeverage) {
-                revert UsdnProtocolLeverageTooLow();
-            }
-            if (leverage > _maxLeverage) {
-                revert UsdnProtocolLeverageTooHigh();
-            }
-        }
-
-        {
-            // Calculate effective liquidation price
-            uint128 liqPrice = getEffectivePriceForTick(tick_);
-            // Liquidation price must be at least x% below current price
-            _checkSafetyMargin(neutralPrice, liqPrice);
-        }
-
-        // Register position and adjust contract state
-        {
-            Position memory long = Position({
-                user: msg.sender,
-                amount: amount,
-                totalExpo: positionTotalExpo,
-                timestamp: uint40(block.timestamp)
-            });
-            (tickVersion_, index_) = _saveNewPosition(tick_, long);
-
-            // Register pending action
-            LongPendingAction memory pendingAction = LongPendingAction({
-                action: ProtocolAction.ValidateOpenPosition,
-                timestamp: uint40(block.timestamp),
-                user: msg.sender,
-                tick: tick_,
-                closeAmount: 0,
-                closeTotalExpo: 0,
-                tickVersion: tickVersion_,
-                index: index_,
-                closeLiqMultiplier: 0,
-                closeTempTransfer: 0
-            });
-            _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
-            emit InitiatedOpenPosition(
-                msg.sender, long.timestamp, leverage, long.amount, adjustedPrice, tick_, tickVersion_, index_
-            );
-        }
-        _asset.safeTransferFrom(msg.sender, address(this), amount);
-
+        (tick_, tickVersion_, index_) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
         _executePendingAction(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
@@ -253,50 +112,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
-        // check if the position belongs to the user
-        // this reverts if the position was liquidated
-        Position memory pos = getLongPosition(tick, tickVersion, index);
-        if (pos.user != msg.sender) {
-            revert UsdnProtocolUnauthorized();
-        }
-
-        uint128 priceWithFees;
-        {
-            PriceInfo memory currentPrice =
-                _getOraclePrice(ProtocolAction.InitiateClosePosition, uint40(block.timestamp), currentPriceData);
-
-            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
-            priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
-        }
-
-        {
-            uint256 liqMultiplier = _liquidationMultiplier;
-            uint256 tempTransfer = _assetToTransfer(priceWithFees, tick, pos.totalExpo, liqMultiplier);
-
-            LongPendingAction memory pendingAction = LongPendingAction({
-                action: ProtocolAction.ValidateClosePosition,
-                timestamp: uint40(block.timestamp),
-                user: msg.sender,
-                tick: tick,
-                closeAmount: pos.amount,
-                closeTotalExpo: pos.totalExpo,
-                tickVersion: tickVersion,
-                index: index,
-                closeLiqMultiplier: liqMultiplier,
-                closeTempTransfer: tempTransfer
-            });
-
-            // decrease balance optimistically (exact amount will be recalculated during validation)
-            // transfer will be done after validation
-            _balanceLong -= tempTransfer;
-
-            _addPendingAction(msg.sender, _convertLongPendingAction(pendingAction));
-        }
-
-        _removePosition(tick, tickVersion, index);
-
-        emit InitiatedClosePosition(msg.sender, tick, tickVersion, index);
-
+        _initiateClosePosition(msg.sender, tick, tickVersion, index, currentPriceData);
         _executePendingAction(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
@@ -320,23 +136,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         returns (uint256 liquidatedPositions_)
     {
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
-
-        (, int256 tempLongBalance, int256 tempVaultBalance) =
-            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
-
-        uint16 liquidatedTicks;
-        int256 liquidatedCollateral;
-        (liquidatedPositions_, liquidatedTicks, liquidatedCollateral, _balanceLong, _balanceVault) =
-            _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
-
+        liquidatedPositions_ = _liquidate(currentPriceData, iterations);
         _refundExcessEther();
         _checkPendingFee();
-
-        if (liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral);
-        }
     }
 
     /**
@@ -365,6 +167,51 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _asset.safeTransfer(msg.sender, liquidationRewards);
 
         emit LiquidatorRewarded(msg.sender, liquidationRewards);
+    }
+
+    /**
+     * @notice Initiate a deposit of assets into the vault to mint USDN.
+     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
+     * the `ProtocolAction.InitiateDeposit` action.
+     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * of the middleware.
+     * @param user The address of theuser initiating the deposit.
+     * @param amount The amount of wstETH to deposit.
+     * @param currentPriceData The current price data
+     */
+    function _initiateDeposit(address user, uint128 amount, bytes calldata currentPriceData) internal {
+        if (amount == 0) {
+            revert UsdnProtocolZeroAmount();
+        }
+
+        PriceInfo memory currentPrice =
+            _getOraclePrice(ProtocolAction.InitiateDeposit, uint40(block.timestamp), currentPriceData);
+
+        _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
+
+        // Apply fees on price
+        uint128 pendingActionPrice =
+            (currentPrice.price - currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
+
+        VaultPendingAction memory pendingAction = VaultPendingAction({
+            action: ProtocolAction.ValidateDeposit,
+            timestamp: uint40(block.timestamp),
+            user: user,
+            _unused: 0,
+            amount: amount,
+            assetPrice: pendingActionPrice,
+            totalExpo: _totalExpo,
+            balanceVault: _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
+                .toUint256(),
+            balanceLong: _balanceLong,
+            usdnTotalSupply: _usdn.totalSupply()
+        });
+
+        _addPendingAction(user, _convertVaultPendingAction(pendingAction));
+
+        _asset.safeTransferFrom(user, address(this), amount);
+
+        emit InitiatedDeposit(user, amount);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
@@ -428,6 +275,54 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint);
     }
 
+    /**
+     * @notice Initiate a withdrawal of assets from the vault by providing USDN tokens.
+     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
+     * the `ProtocolAction.InitiateWithdrawal` action.
+     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * of the middleware.
+     * @param user The address of the user initiating the withdrawal.
+     * @param usdnAmount The amount of USDN to burn.
+     * @param currentPriceData The current price data
+     */
+    function _initiateWithdrawal(address user, uint128 usdnAmount, bytes calldata currentPriceData) internal {
+        if (usdnAmount == 0) {
+            revert UsdnProtocolZeroAmount();
+        }
+
+        PriceInfo memory currentPrice =
+            _getOraclePrice(ProtocolAction.InitiateWithdrawal, uint40(block.timestamp), currentPriceData);
+
+        _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
+
+        // Apply fees on price
+        uint128 pendingActionPrice =
+            (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
+
+        uint256 totalExpo = _totalExpo;
+
+        VaultPendingAction memory pendingAction = VaultPendingAction({
+            action: ProtocolAction.ValidateWithdrawal,
+            timestamp: uint40(block.timestamp),
+            user: user,
+            _unused: 0,
+            amount: usdnAmount,
+            assetPrice: pendingActionPrice,
+            totalExpo: totalExpo,
+            balanceVault: _vaultAssetAvailable(totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
+                .toUint256(),
+            balanceLong: _balanceLong,
+            usdnTotalSupply: _usdn.totalSupply()
+        });
+
+        _addPendingAction(user, _convertVaultPendingAction(pendingAction));
+
+        // retrieve the USDN tokens, checks that balance is sufficient
+        _usdn.safeTransferFrom(user, address(this), usdnAmount);
+
+        emit InitiatedWithdrawal(user, usdnAmount);
+    }
+
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
         PendingAction memory pending = _getAndClearPendingAction(user);
 
@@ -488,6 +383,103 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amount);
+    }
+
+    /**
+     * @notice Initiate an open position action.
+     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
+     * the `ProtocolAction.InitiateOpenPosition` action.
+     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * of the middleware.
+     * The position is immediately included in the protocol calculations with a temporary entry price (and thus
+     * leverage). The validation operation then updates the entry price and leverage with fresher data.
+     * @param user The address of the user initiating the open position.
+     * @param amount The amount of wstETH to deposit.
+     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty.
+     * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
+     * pending validation)
+     */
+    function _initiateOpenPosition(
+        address user,
+        uint96 amount,
+        uint128 desiredLiqPrice,
+        bytes calldata currentPriceData
+    ) internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+        if (amount == 0) {
+            revert UsdnProtocolZeroAmount();
+        }
+
+        uint128 adjustedPrice; // the price returned by the oracle middleware, to be used for the user action
+        uint128 neutralPrice;
+        {
+            PriceInfo memory currentPrice =
+                _getOraclePrice(ProtocolAction.InitiateOpenPosition, uint40(block.timestamp), currentPriceData);
+
+            // Apply fees on price
+            adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+
+            neutralPrice = currentPrice.neutralPrice.toUint128();
+
+            _applyPnlAndFundingAndLiquidate(neutralPrice, currentPrice.timestamp);
+        }
+
+        uint128 leverage;
+        uint128 positionTotalExpo;
+        {
+            // we calculate the closest valid tick down for the desired liq price with liquidation penalty
+            tick_ = getEffectiveTickForPrice(desiredLiqPrice);
+
+            // remove liquidation penalty for leverage calculation
+            uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - int24(_liquidationPenalty) * _tickSpacing);
+            positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
+
+            // calculate position leverage
+            // reverts if liquidationPrice >= entryPrice
+            leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+            if (leverage < _minLeverage) {
+                revert UsdnProtocolLeverageTooLow();
+            }
+            if (leverage > _maxLeverage) {
+                revert UsdnProtocolLeverageTooHigh();
+            }
+        }
+
+        {
+            // Calculate effective liquidation price
+            uint128 liqPrice = getEffectivePriceForTick(tick_);
+            // Liquidation price must be at least x% below current price
+            _checkSafetyMargin(neutralPrice, liqPrice);
+        }
+
+        // Register position and adjust contract state
+        {
+            Position memory long = Position({
+                user: user,
+                amount: amount,
+                totalExpo: positionTotalExpo,
+                timestamp: uint40(block.timestamp)
+            });
+            (tickVersion_, index_) = _saveNewPosition(tick_, long);
+
+            // Register pending action
+            LongPendingAction memory pendingAction = LongPendingAction({
+                action: ProtocolAction.ValidateOpenPosition,
+                timestamp: uint40(block.timestamp),
+                user: user,
+                tick: tick_,
+                closeAmount: 0,
+                closeTotalExpo: 0,
+                tickVersion: tickVersion_,
+                index: index_,
+                closeLiqMultiplier: 0,
+                closeTempTransfer: 0
+            });
+            _addPendingAction(user, _convertLongPendingAction(pendingAction));
+            emit InitiatedOpenPosition(
+                user, long.timestamp, leverage, long.amount, adjustedPrice, tick_, tickVersion_, index_
+            );
+        }
+        _asset.safeTransferFrom(user, address(this), amount);
     }
 
     function _validateOpenPosition(address user, bytes calldata priceData) internal {
@@ -571,6 +563,75 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
+    /**
+     * @notice Initiate a close position action.
+     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
+     * the `ProtocolAction.InitiateClosePosition` action.
+     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * of the middleware.
+     * If the current tick version is greater than the tick version of the position (when it was opened), then the
+     * position has been liquidated and the transaction will revert.
+     * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't
+     * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
+     * during the validate action.
+     * @param user The address of the user initiating the close position.
+     * @param tick The tick containing the position to close
+     * @param tickVersion The tick version of the position to close
+     * @param index The index of the position inside the tick array
+     * @param currentPriceData The current price data
+     */
+    function _initiateClosePosition(
+        address user,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index,
+        bytes calldata currentPriceData
+    ) internal {
+        // check if the position belongs to the user
+        // this reverts if the position was liquidated
+        Position memory pos = getLongPosition(tick, tickVersion, index);
+        if (pos.user != user) {
+            revert UsdnProtocolUnauthorized();
+        }
+
+        uint128 priceWithFees;
+        {
+            PriceInfo memory currentPrice =
+                _getOraclePrice(ProtocolAction.InitiateClosePosition, uint40(block.timestamp), currentPriceData);
+
+            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
+            priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+        }
+
+        {
+            uint256 liqMultiplier = _liquidationMultiplier;
+            uint256 tempTransfer = _assetToTransfer(priceWithFees, tick, pos.totalExpo, liqMultiplier);
+
+            LongPendingAction memory pendingAction = LongPendingAction({
+                action: ProtocolAction.ValidateClosePosition,
+                timestamp: uint40(block.timestamp),
+                user: user,
+                tick: tick,
+                closeAmount: pos.amount,
+                closeTotalExpo: pos.totalExpo,
+                tickVersion: tickVersion,
+                index: index,
+                closeLiqMultiplier: liqMultiplier,
+                closeTempTransfer: tempTransfer
+            });
+
+            // decrease balance optimistically (exact amount will be recalculated during validation)
+            // transfer will be done after validation
+            _balanceLong -= tempTransfer;
+
+            _addPendingAction(user, _convertLongPendingAction(pendingAction));
+        }
+
+        _removePosition(tick, tickVersion, index);
+
+        emit InitiatedClosePosition(user, tick, tickVersion, index);
+    }
+
     function _validateClosePosition(address user, bytes calldata priceData) internal {
         PendingAction memory pending = _getAndClearPendingAction(user);
 
@@ -635,6 +696,38 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             assetToTransfer,
             int256(assetToTransfer) - _toInt256(long.closeAmount)
         );
+    }
+
+    /**
+     * @notice Liquidate positions according to the current asset price, limited to a maximum of `iterations` ticks.
+     * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
+     * the `ProtocolAction.Liquidation` action.
+     * The price validation might require payment according to the return value of the `getValidationCost` function
+     * of the middleware.
+     * Each tick is liquidated in constant time. The tick version is incremented for each tick that was liquidated.
+     * At least one tick will be liquidated, even if the `iterations` parameter is zero.
+     * @param currentPriceData The most recent price data
+     * @param iterations The maximum number of ticks to liquidate
+     * @return liquidatedPositions_ The number of positions that were liquidated
+     */
+    function _liquidate(bytes calldata currentPriceData, uint16 iterations)
+        internal
+        returns (uint256 liquidatedPositions_)
+    {
+        PriceInfo memory currentPrice =
+            _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
+
+        (, int256 tempLongBalance, int256 tempVaultBalance) =
+            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+
+        uint16 liquidatedTicks;
+        int256 liquidatedCollateral;
+        (liquidatedPositions_, liquidatedTicks, liquidatedCollateral, _balanceLong, _balanceVault) =
+            _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
+
+        if (liquidatedTicks > 0) {
+            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral);
+        }
     }
 
     /**
