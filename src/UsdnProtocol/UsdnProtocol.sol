@@ -83,9 +83,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Create long position
         _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, leverage, positionTotalExpo);
 
-        // verify expo is not imbalanced on vault side
-        _imbalanceLimitDeposit(0);
-
         _refundExcessEther();
     }
 
