@@ -73,7 +73,9 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             abi.encode(CURRENT_PRICE),
             PreviousActionsData(new bytes[](0), new uint128[](0))
         );
-        uint256 tickLiqPrice = protocol.getEffectivePriceForTick(tick);
+        uint256 tickLiqPrice = protocol.getEffectivePriceForTick(
+            tick - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
+        );
 
         // check state after opening the position
         assertEq(tick, expectedTick, "tick number");
