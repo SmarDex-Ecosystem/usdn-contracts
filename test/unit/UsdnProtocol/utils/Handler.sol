@@ -119,12 +119,14 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _convertLongPendingAction(action);
     }
 
-    function i_assetToTransfer(uint128 currentPrice, int24 tick, uint128 expo, uint256 liqMultiplier)
-        external
-        view
-        returns (uint256)
-    {
-        return _assetToTransfer(currentPrice, tick, expo, liqMultiplier);
+    function i_assetToTransfer(
+        uint256 availableLongBalance,
+        uint128 currentPrice,
+        int24 tick,
+        uint128 expo,
+        uint256 liqMultiplier
+    ) external view returns (uint256) {
+        return _assetToTransfer(availableLongBalance, currentPrice, tick, expo, liqMultiplier);
     }
 
     function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {
