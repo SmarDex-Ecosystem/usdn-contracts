@@ -57,14 +57,17 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
         amountToOpen = bound(amountToOpen, 1, wstETH.balanceOf(address(this)) / 2);
 
         uint256 protocolTotalExpo = protocol.getTotalExpo();
-        uint256 positionsAmount = protocol.getTotalLongPositions();
+        uint256 initialPosCount = protocol.getTotalLongPositions();
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         bytes memory priceData = abi.encode(params.initialPrice);
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(uint128(amountToOpen), params.initialPrice - 200 ether, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
-        protocol.validateOpenPosition(priceData, "");
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            address(this),
+            ProtocolAction.ValidateOpenPosition,
+            uint128(amountToOpen),
+            params.initialPrice - 200 ether,
+            params.initialPrice
+        );
 
         uint256 amountClosed;
         for (uint256 i = 0; i < iterations; ++i) {
@@ -102,7 +105,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
         assertEq(pos.user, address(0), "Position should have been deleted from the tick array");
 
         assertEq(protocolTotalExpo, protocol.getTotalExpo(), "Total expo should be the same");
-        assertEq(positionsAmount, protocol.getTotalLongPositions(), "Amount of positions should be the same");
+        assertEq(initialPosCount, protocol.getTotalLongPositions(), "Amount of positions should be the same");
         assertApproxEqAbs(
             userBalanceBefore,
             wstETH.balanceOf(address(this)),
