@@ -170,12 +170,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         uint128 leverage;
+        uint128 positionTotalExpo;
         {
             // we calculate the closest valid tick down for the desired liq price with liquidation penalty
             tick_ = getEffectiveTickForPrice(desiredLiqPrice);
 
             // remove liquidation penalty for leverage calculation
             uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - int24(_liquidationPenalty) * _tickSpacing);
+            positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
 
             // calculate position leverage
             // reverts if liquidationPrice >= entryPrice
@@ -188,14 +190,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             }
         }
 
-        uint128 positionTotalExpo;
         {
-            // Calculate effective liquidation price
-            uint128 liquidationPrice = getEffectivePriceForTick(tick_);
-
+            uint128 liqPrice = getEffectivePriceForTick(tick_);
             // Liquidation price must be at least x% below current price
-            _checkSafetyMargin(neutralPrice, liquidationPrice);
-            positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liquidationPrice);
+            _checkSafetyMargin(neutralPrice, liqPrice);
         }
 
         // Register position and adjust contract state
