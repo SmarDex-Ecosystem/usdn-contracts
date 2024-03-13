@@ -7,6 +7,7 @@ import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The getter functions of the USDN Protocol
@@ -17,7 +18,6 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
         super._setUp(params);
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /**
@@ -49,22 +49,18 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:and The multiplier is > 1.
      */
     function test_getMinLiquidationPrice_multiplierGtOne() public {
-        bytes memory priceData = abi.encode(params.initialPrice);
-
-        protocol.initiateOpenPosition(500 ether, params.initialPrice / 2, priceData, "");
-        _waitDelay();
-        protocol.validateOpenPosition(priceData, "");
+        setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 500 ether, params.initialPrice / 2, params.initialPrice
+        );
         skip(1 days);
-        protocol.initiateDeposit(1, priceData, "");
-        _waitDelay();
-        protocol.validateDeposit(priceData, "");
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
 
         assertGt(
             protocol.getLiquidationMultiplier(),
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_041_868_027_046, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_042_020_904_951, "wrong minimum liquidation price");
     }
 
     /**
@@ -73,22 +69,16 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:and The multiplier is < 1.
      */
     function test_getMinLiquidationPrice_multiplierLtOne() public {
-        bytes memory priceData = abi.encode(params.initialPrice);
-
-        protocol.initiateDeposit(5000 ether, priceData, "");
-        _waitDelay();
-        protocol.validateDeposit(priceData, "");
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 5000 ether, params.initialPrice);
         skip(6 days);
-        protocol.initiateDeposit(1, priceData, "");
-        _waitDelay();
-        protocol.validateDeposit(priceData, "");
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
 
         assertLt(
             protocol.getLiquidationMultiplier(),
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_045_981_660_235, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_045_368_555_235, "wrong minimum liquidation price");
     }
 
     /**
@@ -247,8 +237,9 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         assertEq(totalExpoForTick, 0, "Total expo for future position's tick should be empty");
 
         // Initiate a long position
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, abi.encode(price), "");
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether
+        );
 
         totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
         Position memory position = protocol.getLongPosition(tick, tickVersion, index);
@@ -297,13 +288,9 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint128 price = 2000 ether;
         uint128 desiredLiqPrice = 1700 ether;
 
-        // Initiate a long position
+        // Initiate and Validate a long position
         (int24 tick, uint256 tickVersion, uint256 index) =
-            protocol.initiateOpenPosition(1 ether, desiredLiqPrice, abi.encode(price), "");
-        _waitDelay();
-        // Validate the open position action
-        protocol.validateOpenPosition(abi.encode(price), "");
-        _waitDelay();
+            setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, price);
 
         vm.expectEmit();
         emit InitiatedClosePosition(address(this), tick, tickVersion, index);

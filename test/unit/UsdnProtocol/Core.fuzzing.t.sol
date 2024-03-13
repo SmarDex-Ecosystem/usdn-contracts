@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Fuzzing tests for the core of the protocol
@@ -40,24 +41,27 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         // create 10 random positions on each side of the protocol
         for (uint256 i = 0; i < 10; i++) {
             random = uint256(keccak256(abi.encode(random, i)));
-
-            // create a random long position
-            uint256 longAmount = (random % 9 ether) + 1 ether;
-            uint256 longLeverage = (random % 3) + 2;
-            uint256 longLiqPrice = currentPrice / longLeverage;
+            uint256 longAmount;
+            uint256 longLiqPrice;
+            {
+                longAmount = (random % 9 ether) + 1 ether;
+                uint256 longLeverage = (random % 3) + 2;
+                longLiqPrice = currentPrice / longLeverage;
+            }
 
             // create a random user with ~8.5K wstETH
+            address user;
             {
-                address user = vm.addr(i + 1);
+                user = vm.addr(i + 1);
                 vm.deal(user, 20_000 ether);
                 vm.startPrank(user);
                 (bool success,) = address(wstETH).call{ value: 10_000 ether }("");
                 require(success, "wstETH mint failed");
-                wstETH.approve(address(protocol), type(uint256).max);
             }
 
-            (int24 tick, uint256 tickVersion, uint256 index) =
-                protocol.initiateOpenPosition(uint96(longAmount), uint128(longLiqPrice), abi.encode(currentPrice), "");
+            (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+                user, ProtocolAction.InitiateOpenPosition, uint96(longAmount), uint128(longLiqPrice), currentPrice
+            );
             _waitDelay();
             protocol.validateOpenPosition(abi.encode(currentPrice), "");
             pos[i] = protocol.getLongPosition(tick, tickVersion, index);

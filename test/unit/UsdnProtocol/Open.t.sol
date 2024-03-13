@@ -23,8 +23,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mint(address(this), INITIAL_WSTETH_BALANCE);
-        wstETH.approve(address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
     }
 
     /**
@@ -255,6 +254,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     function test_stalePendingActionReInit() public {
         (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
 
+        wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         bytes memory priceData = abi.encode(uint128(1500 ether));
         // we should be able to open a new position
         vm.expectEmit();
@@ -325,15 +325,13 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
      * @return index_ The index of the new position
      */
     function _createStalePendingActionHelper() internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
-        wstETH.mintAndApprove(address(this), 2 ether, address(protocol), type(uint256).max);
         // create a pending action with a liquidation price around $1700
-        bytes memory priceData = abi.encode(uint128(2000 ether));
-        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(1 ether, 1700 ether, priceData, "");
+        (tick_, tickVersion_, index_) =
+            setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1700 ether, 2000 ether);
 
         // the price drops to $1500 and the position gets liquidated
         skip(30);
-        priceData = abi.encode(uint128(1500 ether));
-        protocol.liquidate(priceData, 10);
+        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
 
         // the pending action is stale
         uint256 currentTickVersion = protocol.getTickVersion(tick_);
