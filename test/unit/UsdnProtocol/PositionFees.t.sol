@@ -18,8 +18,6 @@ import {
  * @custom:feature The entry/exit position fees mechanism of the protocol
  */
 contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
-    uint256 internal constant INITIAL_WSTETH_BALANCE = 10_000 ether;
-
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.enablePositionFees = true;
@@ -322,6 +320,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         skip(1 hours);
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply funding
+        uint256 initialAssetBalance = wstETH.balanceOf(address(this));
 
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
 
@@ -340,7 +339,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 finalAssetBalance = wstETH.balanceOf(address(this));
 
         assertEq(usdnBalanceAfter, usdnBalanceBefore, "usdn balance withdraw");
-        assertLt(finalAssetBalance, INITIAL_WSTETH_BALANCE, "wstETH balance before and after");
+        assertGt(finalAssetBalance, initialAssetBalance, "wstETH balance before and after");
     }
 
     /* -------------------------------------------------------------------------- */
