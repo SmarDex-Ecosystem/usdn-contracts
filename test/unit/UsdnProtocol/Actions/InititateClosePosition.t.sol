@@ -32,6 +32,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         super._setUp(params);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
 
         (tick, tickVersion, index) = setUpUserPositionInLong(
             address(this),
@@ -109,7 +110,50 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                           Initiate Close Position                          */
+    /*                            initiateClosePosition                           */
+    /* -------------------------------------------------------------------------- */
+
+    /// @custom:todo add NatSpec
+    function test_initiateClosePositionRefundExcessEther() external {
+        bytes memory priceData = abi.encode(params.initialPrice);
+        uint256 etherBalanceBefore = address(this).balance;
+
+        protocol.initiateClosePosition{ value: 1 ether }(tick, tickVersion, index, positionAmount, priceData, "");
+
+        assertEq(
+            etherBalanceBefore,
+            address(this).balance,
+            "The sent ether should have been refunded as none of it was spent"
+        );
+    }
+
+    function test_initiateClosePositionValidatePendingAction() external {
+        bytes memory priceData = abi.encode(params.initialPrice);
+        setUpUserPositionInLong(
+            USER_1,
+            ProtocolAction.InitiateOpenPosition,
+            positionAmount,
+            params.initialPrice - 200 ether,
+            params.initialPrice
+        );
+
+        skip(protocol.getValidationDeadline());
+
+        vm.expectEmit(true, false, false, false);
+        emit ValidatedOpenPosition(USER_1, 0, 0, 0, 0, 0);
+        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, priceData);
+    }
+
+    function test_initiateClosePosition() external {
+        bytes memory priceData = abi.encode(params.initialPrice);
+
+        vm.expectEmit(true, true, true, false);
+        emit InitiatedClosePosition(address(this), tick, tickVersion, 0, 0, 0);
+        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, "");
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                           _initiateClosePosition                           */
     /* -------------------------------------------------------------------------- */
 
     /**
@@ -120,7 +164,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and an InitiatedClosePosition event is emitted
      * @custom:and the position is deleted
      */
-    function test_initiateClosePosition() external {
+    function test_internal_initiateClosePosition() external {
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
         uint256 longPositionLengthBefore = protocol.getLongPositionsLength(tick);
         _initiateCloseAPositionHelper(positionAmount);
@@ -255,4 +299,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             "assetToTransfer should have been subtracted from the long balance of the protocol"
         );
     }
+
+    /// @dev Allow refund tests
+    receive() external payable { }
 }

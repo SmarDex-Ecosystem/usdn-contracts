@@ -7,6 +7,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LongPendingAction, Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { USER_1 } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature The initiate close position functions of the USDN Protocol
@@ -31,6 +32,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         super._setUp(params);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
 
         (tick, tickVersion, index) = setUpUserPositionInLong(
             address(this),
@@ -41,6 +43,59 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                            validateClosePosition                           */
+    /* -------------------------------------------------------------------------- */
+
+    /// @custom:todo add NatSpec
+    function test_validateClosePositionRefundExcessEther() external {
+        bytes memory priceData = abi.encode(params.initialPrice);
+        uint256 etherBalanceBefore = address(this).balance;
+
+        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, "");
+        _waitDelay();
+        protocol.validateClosePosition{ value: 1 ether }(priceData, "");
+
+        assertEq(
+            etherBalanceBefore,
+            address(this).balance,
+            "The sent ether should have been refunded as none of it was spent"
+        );
+    }
+
+    function test_validateClosePositionValidatePendingAction() external {
+        bytes memory priceData = abi.encode(params.initialPrice);
+        setUpUserPositionInLong(
+            USER_1,
+            ProtocolAction.InitiateOpenPosition,
+            positionAmount,
+            params.initialPrice - 200 ether,
+            params.initialPrice
+        );
+
+        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, "");
+
+        skip(protocol.getValidationDeadline());
+
+        vm.expectEmit(true, false, false, false);
+        emit ValidatedOpenPosition(USER_1, 0, 0, 0, 0, 0);
+        protocol.validateClosePosition(priceData, priceData);
+    }
+
+    function test_validateClosePosition() external {
+        bytes memory priceData = abi.encode(params.initialPrice);
+        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, "");
+        _waitDelay();
+
+        vm.expectEmit(true, true, true, false);
+        emit ValidatedClosePosition(address(this), tick, tickVersion, 0, 0, 0);
+        protocol.validateClosePosition(priceData, "");
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                           _validateClosePosition                           */
+    /* -------------------------------------------------------------------------- */
+
     /**
      * @custom:scenario The user validates a close position action
      * @custom:given A validated open position of 1 wsteth
@@ -49,7 +104,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives half of the position amount
      */
-    function test_validateClosePosition() public {
+    function test__validateClosePosition() public {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
@@ -88,7 +143,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives half of the position amount
      */
-    function test_validatePartialClosePosition() external {
+    function test__validatePartialClosePosition() external {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
@@ -163,7 +218,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receive parts of his funds back
      */
-    function test_validatePartialCloseUnderwaterPosition() external {
+    function test__validatePartialCloseUnderwaterPosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
@@ -219,7 +274,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives his funds back + some profits
      */
-    function test_validatePartialClosePositionInProfit() external {
+    function test__validatePartialClosePositionInProfit() external {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
@@ -273,7 +328,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a LiquidatedPosition event is emitted
      * @custom:and the user doesn't receive his funds back
      */
-    function test_validatePartialCloseLiquidatePosition() external {
+    function test__validatePartialCloseLiquidatePosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
@@ -326,4 +381,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             protocol.getTotalLongPositions(), longPositionsAmountBefore - 1, "The position should have been removed"
         );
     }
+
+    /// @dev Allow refund tests
+    receive() external payable { }
 }
