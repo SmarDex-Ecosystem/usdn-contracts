@@ -143,7 +143,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
             tick,
             action.closeTotalExpo,
-            protocol.getLiquidationMultiplier()
+            protocol.getLiquidationMultiplier(),
+            0
         );
 
         uint256 storageBalanceAfter = protocol.getBalanceLong();
@@ -184,7 +185,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
             tick,
             action.closeTotalExpo,
-            action.closeLiqMultiplier
+            action.closeLiqMultiplier,
+            action.closeTempTransfer
         );
 
         _waitDelay();
