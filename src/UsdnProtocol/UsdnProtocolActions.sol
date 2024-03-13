@@ -426,11 +426,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Apply fees on price
         uint128 pendingActionPrice =
             (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
+        uint256 totalExpo = _totalExpo;
+        uint256 balanceVault =
+            _vaultAssetAvailable(totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice).toUint256();
+        uint256 usdnTotalSupply = _usdn.totalSupply();
 
         // verify hard long imbalance limit
-        _imbalanceLimitWithdrawal(uint256(pendingActionPrice) * uint256(usdnAmount));
-
-        uint256 totalExpo = _totalExpo;
+        _imbalanceLimitWithdrawal(FixedPointMathLib.fullMulDiv(usdnAmount, balanceVault, usdnTotalSupply));
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateWithdrawal,
@@ -440,10 +442,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             amount: usdnAmount,
             assetPrice: pendingActionPrice,
             totalExpo: totalExpo,
-            balanceVault: _vaultAssetAvailable(totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
-                .toUint256(),
+            balanceVault: balanceVault,
             balanceLong: _balanceLong,
-            usdnTotalSupply: _usdn.totalSupply()
+            usdnTotalSupply: usdnTotalSupply
         });
 
         _addPendingAction(user, _convertVaultPendingAction(pendingAction));
