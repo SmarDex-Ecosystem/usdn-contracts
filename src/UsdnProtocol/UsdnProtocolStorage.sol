@@ -65,6 +65,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The decimals of the USDN token.
     uint8 internal immutable _usdnDecimals;
 
+    /// @notice The MIN_DIVISOR constant of the USDN token.
+    uint256 internal immutable _usdnMinDivisor;
+
     /* -------------------------------------------------------------------------- */
     /*                                 Parameters                                 */
     /* -------------------------------------------------------------------------- */
@@ -111,6 +114,18 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The position fee in basis point
     uint16 internal _positionFeeBps = 4; // 0.04%
 
+    /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
+    uint128 internal _targetUsdnPrice;
+
+    /// @notice The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
+    uint128 internal _usdnRebaseThreshold;
+
+    /**
+     * @notice The interval between two automatic rebase checks
+     * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
+     */
+    uint256 internal _usdnRebaseInterval = 12 hours;
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
@@ -150,6 +165,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The balance of deposits (with asset decimals)
     uint256 internal _balanceVault;
+
+    /// @notice The timestamp when the last USDN rebase check was performed
+    uint256 internal _lastRebaseCheck;
 
     /* ----------------------------- Long positions ----------------------------- */
 
@@ -210,6 +228,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
         _usdn = usdn;
         _usdnDecimals = usdn.decimals();
+        _usdnMinDivisor = usdn.MIN_DIVISOR();
         _asset = asset;
         _assetDecimals = asset.decimals();
         if (_assetDecimals < FUNDING_SF_DECIMALS) {
@@ -220,6 +239,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _liquidationRewardsManager = liquidationRewardsManager;
         _tickSpacing = tickSpacing;
         _feeCollector = feeCollector;
+
+        _targetUsdnPrice = uint128(102 * 10 ** (_priceFeedDecimals - 2)); // $1.02
+        _usdnRebaseThreshold = uint128(1021 * 10 ** (_priceFeedDecimals - 3)); // $1.021
     }
 
     /* -------------------------------------------------------------------------- */
@@ -254,6 +276,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getUsdnDecimals() external view returns (uint8) {
         return _usdnDecimals;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getUsdnMinDivisor() external view returns (uint256) {
+        return _usdnMinDivisor;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -335,6 +362,21 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         return _oracleMiddleware.getValidationDelay();
     }
 
+    /// @inheritdoc IUsdnProtocolStorage
+    function getTargetUsdnPrice() external view returns (uint128) {
+        return _targetUsdnPrice;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getUsdnRebaseThreshold() external view returns (uint128) {
+        return _usdnRebaseThreshold;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getUsdnRebaseInterval() external view returns (uint256) {
+        return _usdnRebaseInterval;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
@@ -377,6 +419,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getBalanceVault() external view returns (uint256) {
         return _balanceVault;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getLastRebaseCheck() external view returns (uint256) {
+        return _lastRebaseCheck;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
