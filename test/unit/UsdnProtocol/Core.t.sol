@@ -221,7 +221,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
         assertGt(fund, 0, "funding should be positive");
 
-        // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
+        // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(priceData, 5);
@@ -240,7 +240,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
         assertLt(fund, 0, "funding should be negative");
 
-        // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
+        // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(abi.encode(price), 5);
@@ -271,7 +271,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
         assertLt(fund, 0, "funding should be negative");
 
-        // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
+        // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(abi.encode(price), 5);
@@ -295,7 +295,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
         assertGt(fund, 0, "funding should be positive");
 
-        // we have to substract 30 seconds from the timestamp because of the mock oracle middleware behavior
+        // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
         protocol.liquidate(priceData, 5);

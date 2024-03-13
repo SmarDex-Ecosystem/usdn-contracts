@@ -109,9 +109,9 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @param lastFunding The last funding rate
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
      * @param emaPeriod The EMA period
-     * @param actualEMA The actual EMA
+     * @param previousEMA The previous EMA
      */
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 actualEMA)
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         external
         pure
         returns (int256);
