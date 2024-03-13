@@ -60,10 +60,8 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             }
 
             (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-                user, ProtocolAction.InitiateOpenPosition, uint96(longAmount), uint128(longLiqPrice), currentPrice
+                user, ProtocolAction.ValidateOpenPosition, uint96(longAmount), uint128(longLiqPrice), currentPrice
             );
-            _waitDelay();
-            protocol.validateOpenPosition(abi.encode(currentPrice), "");
             pos[i] = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;
             indices[i] = index;
@@ -72,9 +70,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
             // create a random deposit position
             uint256 depositAmount = (random % 9 ether) + 1 ether;
-            protocol.initiateDeposit(uint128(depositAmount), abi.encode(currentPrice), "");
-            _waitDelay();
-            protocol.validateDeposit(abi.encode(currentPrice), "");
+            setUpUserPositionInVault(user, ProtocolAction.ValidateDeposit, uint96(depositAmount), currentPrice);
             vm.stopPrank();
 
             // increase the current price, each time by 100 dollars or less, the max price is 3000 dollars
