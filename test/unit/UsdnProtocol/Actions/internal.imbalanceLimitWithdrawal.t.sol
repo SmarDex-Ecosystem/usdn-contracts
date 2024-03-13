@@ -8,7 +8,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 /**
  * @custom:feature Test of the protocol expo limits for `imbalanceLimitWithdrawal` in balanced state
  */
-contract TestUsdnProtocolExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
+contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     uint256 internal expos;
 
     function setUp() public {

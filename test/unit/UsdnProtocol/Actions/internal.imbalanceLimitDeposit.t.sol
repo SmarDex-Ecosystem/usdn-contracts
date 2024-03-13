@@ -8,7 +8,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 /**
  * @custom:feature Test of the protocol expo limits for `imbalanceLimitDeposit` in balanced state
  */
-contract TestUsdnProtocolExpoLimitsDeposit is UsdnProtocolBaseFixture {
+contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     uint256 internal expos;
 
     function setUp() public {
