@@ -155,15 +155,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 currentLongExpo = int256(_totalExpo).safeSub(int256(_balanceLong));
+        int256 currentLongExpo = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
 
         // cannot be calculated
         if (currentLongExpo == 0) {
             revert UsdnProtocolInvalidLongExpo();
         }
 
-        int256 imbalancePercentage = (int256(_balanceVault).safeAdd(int256(depositValue))).safeSub(currentLongExpo)
-            .safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(currentLongExpo);
+        int256 imbalancePercentage = ((_balanceVault + depositValue).toInt256().safeSub(currentLongExpo)).safeMul(
+            EXPO_IMBALANCE_LIMIT_DENOMINATOR
+        ).safeDiv(currentLongExpo);
 
         if (imbalancePercentage >= softVaultExpoImbalanceLimit) {
             revert UsdnProtocolSoftVaultImbalanceLimitReached(imbalancePercentage);
@@ -183,7 +184,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 currentVaultExpo = int256(_balanceVault);
+        int256 currentVaultExpo = _balanceVault.toInt256();
 
         // cannot be calculated
         if (currentVaultExpo == 0) {
@@ -191,8 +192,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         int256 imbalancePercentage = (
-            (int256(_totalExpo).safeSub(int256(_balanceLong))).safeSub(
-                currentVaultExpo.safeSub(int256(withdrawalValue))
+            (_totalExpo.toInt256().safeSub(_balanceLong.toInt256())).safeSub(
+                currentVaultExpo.safeSub(withdrawalValue.toInt256())
             )
         ).safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(currentVaultExpo);
 
@@ -215,7 +216,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 currentVaultExpo = int256(_balanceVault);
+        int256 currentVaultExpo = _balanceVault.toInt256();
 
         // cannot be calculated
         if (currentVaultExpo == 0) {
@@ -223,9 +224,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         int256 imbalancePercentage = (
-            (int256(_totalExpo).safeAdd(int256(openTotalExpoValue))).safeSub(
-                int256(_balanceLong).safeAdd(int256(openCollatValue))
-            ).safeSub(currentVaultExpo)
+            ((_totalExpo + openTotalExpoValue).toInt256().safeSub((_balanceLong + openCollatValue).toInt256())).safeSub(
+                currentVaultExpo
+            )
         ).safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(currentVaultExpo);
 
         if (imbalancePercentage >= softLongExpoImbalanceLimit) {
@@ -246,7 +247,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 currentLongExpo = int256(_totalExpo).safeSub(int256(_balanceLong));
+        int256 currentLongExpo = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
 
         // cannot be calculated
         if (currentLongExpo == 0) {
@@ -254,9 +255,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         int256 imbalancePercentage = (
-            int256(_balanceVault).safeSub(
-                (int256(_totalExpo).safeSub(int256(closeTotalExpoValue))).safeSub(
-                    int256(_balanceLong).safeSub(int256(closeCollatValue))
+            _balanceVault.toInt256().safeSub(
+                _totalExpo.toInt256().safeSub(closeTotalExpoValue.toInt256()).safeSub(
+                    _balanceLong.toInt256().safeSub(closeCollatValue.toInt256())
                 )
             )
         ).safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(currentLongExpo);
@@ -832,7 +833,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             long.tickVersion,
             long.index,
             assetToTransfer,
-            int256(assetToTransfer) - _toInt256(long.closeAmount)
+            assetToTransfer.toInt256() - _toInt256(long.closeAmount)
         );
     }
 
