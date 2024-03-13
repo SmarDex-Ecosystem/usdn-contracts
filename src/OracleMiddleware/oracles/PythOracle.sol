@@ -104,9 +104,9 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
      * @notice Get the price of the asset from pyth, formatted to the specified number of decimals
      * @param priceUpdateData The data required to update the price feed
      * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices.
-     * @param _decimals The number of decimals to format the price to
+     * @param decimals The number of decimals to format the price to
      */
-    function _getFormattedPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp, uint256 _decimals)
+    function _getFormattedPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp, uint256 decimals)
         internal
         returns (FormattedPythPrice memory pythPrice_)
     {
@@ -114,8 +114,8 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         PythStructs.Price memory pythPrice = _getPythPrice(priceUpdateData, targetTimestamp);
 
         pythPrice_ = FormattedPythPrice({
-            price: uint256(uint64(pythPrice.price)) * 10 ** _decimals / 10 ** DECIMALS,
-            conf: uint256(pythPrice.conf) * 10 ** _decimals / 10 ** DECIMALS,
+            price: uint256(uint64(pythPrice.price)) * 10 ** decimals / 10 ** DECIMALS,
+            conf: uint256(pythPrice.conf) * 10 ** decimals / 10 ** DECIMALS,
             expo: pythPrice.expo,
             publishTime: pythPrice.publishTime
         });
