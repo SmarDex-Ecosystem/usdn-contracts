@@ -39,6 +39,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint128 initialLiqPrice;
         uint128 initialPrice;
         uint256 initialTimestamp;
+        bool enableLimits;
         bool fork;
     }
 
@@ -49,6 +50,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialLiqPrice: 1000 ether, // leverage approx 2x
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
+        enableLimits: true,
         fork: false
     });
 
@@ -101,6 +103,14 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
+
+        if (!testParams.enableLimits) {
+            protocol.setSoftLongExpoImbalanceLimit(type(int256).max);
+            protocol.setHardLongExpoImbalanceLimit(type(int256).max);
+            protocol.setSoftVaultExpoImbalanceLimit(type(int256).max);
+            protocol.setHardVaultExpoImbalanceLimit(type(int256).max);
+        }
+
         // leverage approx 2x
         protocol.initialize{ value: oracleMiddleware.validationCost("", ProtocolAction.Initialize) }(
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
