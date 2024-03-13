@@ -20,20 +20,20 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The `imbalanceLimitDeposit` function should not revert when contract is balanced
      * and position is within limit
-     * @custom:given The expo balanced protocol state
+     * @custom:given The protocol is in a balanced state
      * @custom:when The `imbalanceLimitDeposit` function is called with a value inside limit
      * @custom:then The transaction should not revert
      */
     function test_imbalanceLimitDeposit() public view {
         (, uint256 vaultExpoValueToLimit) = _testHelper();
-        // call `imbalanceLimitDeposit` with vaultExpoValueToLimit should not revert at the edge
+        // call `imbalanceLimitDeposit` function with vaultExpoValueToLimit should not revert at the edge
         protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit);
     }
 
     /**
      * @custom:scenario The `imbalanceLimitDeposit` function should revert when contract is balanced
      * and position value imbalance it
-     * @custom:given The expo balanced protocol state
+     * @custom:given The protocol is in a balanced state
      * @custom:when The `imbalanceLimitDeposit` function is called with a value above the soft vault limit
      * @custom:then The transaction should revert
      */

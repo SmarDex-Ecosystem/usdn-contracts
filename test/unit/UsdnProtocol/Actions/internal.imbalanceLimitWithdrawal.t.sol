@@ -20,20 +20,20 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The `imbalanceLimitWithdrawal` function should not revert when contract is balanced
      * and position is within limit
-     * @custom:given The expo balanced protocol state
+     * @custom:given The protocol is in a balanced state
      * @custom:when The `imbalanceLimitWithdrawal` function is called with a value inside limit
      * @custom:then The transaction should not revert
      */
     function test_imbalanceLimitWithdrawal() public view {
         (, uint256 longExpoValueToLimit) = _testHelper();
-        // call `imbalanceLimitWithdrawal` with longExpoValueToLimit
+        // call `imbalanceLimitWithdrawal` function with longExpoValueToLimit
         protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit);
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitWithdrawal` should revert when contract is balanced
+     * @custom:scenario The `imbalanceLimitWithdrawal` function should revert when contract is balanced
      * and position value imbalance it
-     * @custom:given The expo balanced protocol state
+     * @custom:given The protocol is in a balanced state
      * @custom:when The `imbalanceLimitWithdrawal` function is called with a value above the hard long limit
      * @custom:then The transaction should revert
      */

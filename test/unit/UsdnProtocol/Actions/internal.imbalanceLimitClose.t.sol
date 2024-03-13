@@ -20,21 +20,21 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The `imbalanceLimitClose` function should not revert when contract is balanced
      * and position is within limit
-     * @custom:given The expo balanced protocol state
+     * @custom:given The protocol is in a balanced state
      * @custom:when The `imbalanceLimitClose` function is called with a value inside limit
      * @custom:then The transaction should not revert
      */
     function test_imbalanceLimitClose() public view {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _testHelper();
-        // call `imbalanceLimitClose` with totalExpoValueToLimit should not revert at the edge
+        // call `imbalanceLimitClose` function with totalExpoValueToLimit should not revert at the edge
         protocol.i_imbalanceLimitClose(totalExpoValueToLimit, longAmount);
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitClose` should revert when contract is balanced
+     * @custom:scenario The `imbalanceLimitClose` function should revert when contract is balanced
      * and position value imbalance it
-     * @custom:given The expo balanced protocol state
-     * @custom:when The `imbalanceLimitClose` is called with values above the vault hard limit
+     * @custom:given The protocol is in a balanced state
+     * @custom:when The `imbalanceLimitClose` function is called with values above the vault hard limit
      * @custom:then The transaction should revert
      */
     function test_RevertWith_imbalanceLimitCloseOutLimit() public {
