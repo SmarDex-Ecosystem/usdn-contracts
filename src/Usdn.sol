@@ -172,15 +172,16 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @inheritdoc IUsdn
     function rebase(uint256 newDivisor) external onlyRole(REBASER_ROLE) {
         uint256 oldDivisor = _divisor;
-        if (newDivisor >= oldDivisor) {
+        if (newDivisor > oldDivisor) {
             // Divisor can only be decreased
-            revert UsdnInvalidDivisor(newDivisor);
+            newDivisor = oldDivisor;
+        } else if (newDivisor < MIN_DIVISOR) {
+            newDivisor = MIN_DIVISOR;
         }
-        if (newDivisor < MIN_DIVISOR) {
-            revert UsdnInvalidDivisor(newDivisor);
+        if (newDivisor != oldDivisor) {
+            emit Rebase(oldDivisor, newDivisor);
+            _divisor = newDivisor;
         }
-        emit Rebase(oldDivisor, newDivisor);
-        _divisor = newDivisor;
     }
 
     /* -------------------------------------------------------------------------- */

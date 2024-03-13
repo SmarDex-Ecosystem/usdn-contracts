@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Vm } from "forge-std/Vm.sol";
+
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 import { USER_1 } from "test/utils/Constants.sol";
@@ -46,7 +48,7 @@ contract TestUsdnRebase is UsdnTokenFixture {
 
         usdn.mint(USER_1, 100 ether);
 
-        vm.expectEmit(address(usdn));
+        vm.expectEmit();
         emit Rebase(maxDivisor, maxDivisor / 10); // expected event
         usdn.rebase(maxDivisor / 10);
 
@@ -76,28 +78,60 @@ contract TestUsdnRebase is UsdnTokenFixture {
      * @custom:given This contract has the `REBASER_ROLE`
      * @custom:when The divisor is adjusted to MAX_DIVISOR
      * @custom:or The divisor is adjusted to 2x MAX_DIVISOR
-     * @custom:then The transaction reverts with the `UsdnInvalidDivisor` error
+     * @custom:then The transaction does not change the divisor or rebase
      */
-    function test_RevertWhen_invalidDivisor() public {
+    function test_invalidDivisor() public {
         usdn.grantRole(usdn.REBASER_ROLE(), address(this));
 
-        vm.expectRevert(abi.encodeWithSelector(UsdnInvalidDivisor.selector, maxDivisor));
-        usdn.rebase(maxDivisor);
+        uint256 divisorBefore = usdn.divisor();
 
-        vm.expectRevert(abi.encodeWithSelector(UsdnInvalidDivisor.selector, 2 * maxDivisor));
+        vm.recordLogs();
+        usdn.rebase(maxDivisor);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        assertEq(divisorBefore, usdn.divisor(), "divisor for same divisor");
+        assertEq(logs.length, 0, "logs for same divisor");
+
+        vm.recordLogs();
         usdn.rebase(2 * maxDivisor);
+        logs = vm.getRecordedLogs();
+
+        assertEq(divisorBefore, usdn.divisor(), "divisor for larger divisor");
+        assertEq(logs.length, 0, "logs for larger divisor");
     }
 
     /**
      * @custom:scenario The divisor is adjusted to a value that is too small
      * @custom:given This contract has the `REBASER_ROLE`
      * @custom:when The divisor is adjusted to MIN_DIVISOR - 1
-     * @custom:then The transaction reverts with the `UsdnInvalidDivisor` error
+     * @custom:then The transaction sets the divisor to MIN_DIVISOR
+     * @custom:and Emits the Rebase event
      */
-    function test_RevertWhen_divisorTooSmall() public {
+    function test_divisorTooSmallButRebase() public {
         usdn.grantRole(usdn.REBASER_ROLE(), address(this));
 
-        vm.expectRevert(abi.encodeWithSelector(UsdnInvalidDivisor.selector, minDivisor - 1));
+        vm.expectEmit();
+        emit Rebase(maxDivisor, minDivisor); // expected event
         usdn.rebase(minDivisor - 1);
+
+        assertEq(usdn.divisor(), minDivisor, "divisor");
+    }
+
+    /**
+     * @custom:scenario The rebase function is called with MIN_DIVISOR - 1 but it's already MIN_DIVISOR
+     * @custom:given This contract has the `REBASER_ROLE` and the divisor is MIN_DIVISOR
+     * @custom:when The divisor is adjusted to MIN_DIVISOR - 1
+     * @custom:then The transaction does not change the divisor or rebase
+     */
+    function test_divisorTooSmallButNoRebase() public {
+        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
+        usdn.rebase(minDivisor);
+
+        vm.recordLogs();
+        usdn.rebase(minDivisor - 1);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        assertEq(usdn.divisor(), minDivisor, "divisor");
+        assertEq(logs.length, 0, "logs");
     }
 }

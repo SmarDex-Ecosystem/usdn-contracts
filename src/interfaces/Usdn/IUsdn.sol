@@ -75,7 +75,8 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /**
      * @notice Restricted function to decrease the global divisor, which effectively grows all balances and the total
      * supply.
-     * @param divisor the new divisor, must be strictly smaller than the current one
+     * @param divisor the new divisor, must be strictly smaller than the current one and greater or equal to
+     * MIN_DIVISOR.
      */
     function rebase(uint256 divisor) external;
 
