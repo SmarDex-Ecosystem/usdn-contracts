@@ -71,9 +71,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      */
     function test_RevertWhen_notUser() public {
         bytes memory priceData = abi.encode(params.initialPrice);
-        vm.prank(USER_1);
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
-        protocol.i_initiateClosePosition(address(this), tick, tickVersion, index, positionAmount, priceData);
+        protocol.i_initiateClosePosition(USER_1, tick, tickVersion, index, positionAmount, priceData);
     }
 
     /**
