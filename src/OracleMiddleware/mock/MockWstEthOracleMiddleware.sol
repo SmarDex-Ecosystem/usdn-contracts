@@ -47,7 +47,9 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         // Parse and validate from parent wsteth middleware.
         // This aim to verify pyth price hermes signature in any case.
         if (_verifySignature || _wstethMockedPrice == 0) {
-            price_ = this.parseAndValidatePrice(targetTimestamp, action, data);
+            price_ = super.parseAndValidatePrice(targetTimestamp, action, data);
+        } else {
+            price_.timestamp = targetTimestamp;
         }
 
         // If mocked price is not set, return.

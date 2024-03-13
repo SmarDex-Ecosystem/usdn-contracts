@@ -31,7 +31,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /// @inheritdoc IUsdn
-    bytes32 public constant ADJUSTMENT_ROLE = keccak256("ADJUSTMENT_ROLE");
+    bytes32 public constant REBASER_ROLE = keccak256("REBASER_ROLE");
 
     /// @dev The maximum divisor that can be set. This is the initial value.
     uint256 public constant MAX_DIVISOR = 1e18;
@@ -58,13 +58,18 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @dev Divisor used to convert between shares and tokens.
     uint256 internal _divisor = MAX_DIVISOR;
 
-    constructor(address minter, address adjuster) ERC20(NAME, SYMBOL) ERC20Permit(NAME) {
+    /**
+     * @notice Create an instance of the USDN token
+     * @param minter Address which should have the minter role by default (zero address to skip)
+     * @param rebaser Address which should have the rebaser role by default (zero address to skip)
+     */
+    constructor(address minter, address rebaser) ERC20(NAME, SYMBOL) ERC20Permit(NAME) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         if (minter != address(0)) {
             _grantRole(MINTER_ROLE, minter);
         }
-        if (adjuster != address(0)) {
-            _grantRole(ADJUSTMENT_ROLE, adjuster);
+        if (rebaser != address(0)) {
+            _grantRole(REBASER_ROLE, rebaser);
         }
     }
 
@@ -165,16 +170,18 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /// @inheritdoc IUsdn
-    function adjustDivisor(uint256 newDivisor) external onlyRole(ADJUSTMENT_ROLE) {
-        if (newDivisor >= _divisor) {
+    function rebase(uint256 newDivisor) external onlyRole(REBASER_ROLE) {
+        uint256 oldDivisor = _divisor;
+        if (newDivisor > oldDivisor) {
             // Divisor can only be decreased
-            revert UsdnInvalidDivisor(newDivisor);
+            newDivisor = oldDivisor;
+        } else if (newDivisor < MIN_DIVISOR) {
+            newDivisor = MIN_DIVISOR;
         }
-        if (newDivisor < MIN_DIVISOR) {
-            revert UsdnInvalidDivisor(newDivisor);
+        if (newDivisor != oldDivisor) {
+            emit Rebase(oldDivisor, newDivisor);
+            _divisor = newDivisor;
         }
-        emit DivisorAdjusted(_divisor, newDivisor);
-        _divisor = newDivisor;
     }
 
     /* -------------------------------------------------------------------------- */

@@ -12,7 +12,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
     }
 
     /**
@@ -29,7 +29,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         tokens = bound(tokens, 0, usdn.maxTokens());
 
         if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.adjustDivisor(divisor);
+            usdn.rebase(divisor);
         }
 
         uint256 shares = usdn.convertToShares(tokens);
@@ -54,7 +54,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         transferAmount = bound(transferAmount, 0, usdn.maxTokens());
 
         if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.adjustDivisor(divisor);
+            usdn.rebase(divisor);
         }
 
         usdn.mint(address(this), usdn.maxTokens());
@@ -87,7 +87,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         usdn.mint(address(this), usdn.maxTokens());
 
         if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.adjustDivisor(divisor);
+            usdn.rebase(divisor);
         }
 
         uint256 balanceBefore = usdn.balanceOf(address(this));
@@ -111,7 +111,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
     function testFuzz_totalSupply(uint256 divisor) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.adjustDivisor(divisor);
+            usdn.rebase(divisor);
         }
 
         uint256 totalHolders = 10;
@@ -141,7 +141,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
 
         usdn.mint(address(this), tokens);
         if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.adjustDivisor(divisor);
+            usdn.rebase(divisor);
         }
 
         usdn.burn(usdn.balanceOf(address(this)));
@@ -168,7 +168,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         usdn.mint(address(this), usdn.maxTokens());
         uint256 sharesBefore = usdn.sharesOf(address(this));
         if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.adjustDivisor(divisor);
+            usdn.rebase(divisor);
         }
 
         uint256 balanceBefore = usdn.balanceOf(address(this));
@@ -178,7 +178,7 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
         assertEq(usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), sharesBefore, "sum of the share balances");
 
         if (divisor != usdn.MIN_DIVISOR()) {
-            usdn.adjustDivisor(usdn.MIN_DIVISOR());
+            usdn.rebase(usdn.MIN_DIVISOR());
         }
 
         assertEq(usdn.balanceOf(address(this)) + usdn.balanceOf(USER_1), usdn.totalSupply(), "total supply");

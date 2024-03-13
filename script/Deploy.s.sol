@@ -106,7 +106,7 @@ contract Deploy is Script {
             liquidationRewardsManagerAddress = address(LiquidationRewardsManager_);
         }
 
-        // Deploy USDN token, without a specific minter or adjuster for now
+        // Deploy USDN token, without a specific minter or rebaser for now
         address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
         if (usdnAddress != address(0)) {
             Usdn_ = Usdn(usdnAddress);
@@ -120,10 +120,11 @@ contract Deploy is Script {
             Usdn_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_, 100, vm.envAddress("FEE_COLLECTOR")
         );
 
-        // Grant USDN minter role to protocol and approve wstETH spending
-
+        // Grant USDN minter & rebaser roles to protocol and approve wstETH spending
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
+        Usdn_.grantRole(Usdn_.REBASER_ROLE(), address(UsdnProtocol_));
         WstETH_.approve(address(UsdnProtocol_), depositAmount + longAmount);
+
         // Initialize if needed
         if (depositAmount > 0 && longAmount > 0) {
             uint256 desiredLiqPrice;
