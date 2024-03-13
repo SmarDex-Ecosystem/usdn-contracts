@@ -14,13 +14,14 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
  * price of the USDN underlying asset.
  */
 abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
-    uint256 internal constant PYTH_DECIMALS = 8;
-
     bytes32 internal immutable _priceID;
     IPyth internal immutable _pyth;
 
     /// @notice The maximum age of a recent price to be considered valid
     uint64 internal _recentPriceDelay = 45 seconds;
+
+    /// @notice The last number of decimals reported by pyth for this price feed
+    uint256 internal _lastSeenDecimals = 8; // initial value will be overwritten once a price update is processed
 
     constructor(address pythAddress, bytes32 pythPriceID) {
         _pyth = IPyth(pythAddress);
@@ -28,12 +29,12 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     }
 
     /// @inheritdoc IPythOracle
-    function getPythDecimals() public pure returns (uint256) {
-        return PYTH_DECIMALS;
+    function getPythDecimals() external view returns (uint256) {
+        return _lastSeenDecimals;
     }
 
     /// @inheritdoc IPythOracle
-    function getPyth() public view returns (IPyth) {
+    function getPyth() external view returns (IPyth) {
         return _pyth;
     }
 
@@ -104,19 +105,25 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
      * @notice Get the price of the asset from pyth, formatted to the specified number of decimals
      * @param priceUpdateData The data required to update the price feed
      * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices.
-     * @param decimals The number of decimals to format the price to
+     * @param middlewareDecimals The number of decimals to format the price to
      */
-    function _getFormattedPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp, uint256 decimals)
+    function _getFormattedPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp, uint256 middlewareDecimals)
         internal
         returns (FormattedPythPrice memory pythPrice_)
     {
         // this call checks that the price is strictly positive
         PythStructs.Price memory pythPrice = _getPythPrice(priceUpdateData, targetTimestamp);
 
+        if (pythPrice.expo > 0) {
+            revert OracleMiddlewarePythExponent(pythPrice.expo);
+        }
+
+        uint256 pythDecimals = uint32(-pythPrice.expo);
+        _lastSeenDecimals = pythDecimals;
+
         pythPrice_ = FormattedPythPrice({
-            price: uint256(uint64(pythPrice.price)) * 10 ** decimals / 10 ** PYTH_DECIMALS,
-            conf: uint256(pythPrice.conf) * 10 ** decimals / 10 ** PYTH_DECIMALS,
-            expo: pythPrice.expo,
+            price: uint256(uint64(pythPrice.price)) * 10 ** middlewareDecimals / 10 ** pythDecimals,
+            conf: uint256(pythPrice.conf) * 10 ** middlewareDecimals / 10 ** pythDecimals,
             publishTime: pythPrice.publishTime
         });
     }

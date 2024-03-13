@@ -41,14 +41,13 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         public
         payable
-        virtual
         override
         returns (PriceInfo memory price_)
     {
         // Parse and validate from parent wsteth middleware.
         // This aim to verify pyth price hermes signature in any case.
         if (_verifySignature || _wstethMockedPrice == 0) {
-            price_ = super.parseAndValidatePrice(targetTimestamp, action, data);
+            price_ = this.parseAndValidatePrice(targetTimestamp, action, data);
         }
 
         // If mocked price is not set, return.
@@ -116,7 +115,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
 
     /// @inheritdoc OracleMiddleware
     function validationCost(bytes calldata data, ProtocolAction action)
-        public
+        external
         view
         override
         returns (uint256 result_)
@@ -124,6 +123,6 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         // No signature verification -> no oracle fee
         if (!_verifySignature) return 0;
 
-        return super.validationCost(data, action);
+        return this.validationCost(data, action);
     }
 }

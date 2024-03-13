@@ -86,7 +86,7 @@ contract MockPyth is IMockPythError {
 
         priceFeeds = new PythStructs.PriceFeed[](priceIds.length);
         PythStructs.Price memory _price =
-            PythStructs.Price({ price: price, conf: conf, expo: 8, publishTime: lastPublishTime });
+            PythStructs.Price({ price: price, conf: conf, expo: -8, publishTime: lastPublishTime });
 
         for (uint256 i; i < priceIds.length;) {
             priceFeeds[i] = PythStructs.PriceFeed({ id: bytes32(priceIds[i]), price: _price, emaPrice: _price });
