@@ -28,3 +28,6 @@ docs/
 
 # IDE
 .idea/
+
+# Natspec smells report
+natspec-smells.txt

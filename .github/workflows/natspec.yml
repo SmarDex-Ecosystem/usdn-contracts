@@ -1,0 +1,29 @@
+name: Natspec verification
+on:
+  workflow_dispatch:
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  natspec-smells:
+    runs-on: ubuntu-latest
+    # /* --------------------- TODO: write a report in the PR --------------------- */
+    # permissions:
+    #   contents: read
+    #   pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci && forge install
+
+      - name: Generate natspec smells report
+        run: npm run natspec
