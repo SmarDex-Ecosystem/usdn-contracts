@@ -67,6 +67,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The decimals of the USDN token.
     function getUsdnDecimals() external view returns (uint8);
 
+    /// @notice The MIN_DIVISOR constant of the USDN token.
+    function getUsdnMinDivisor() external view returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                 Parameters getters                         */
     /* -------------------------------------------------------------------------- */

@@ -65,6 +65,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The decimals of the USDN token.
     uint8 internal immutable _usdnDecimals;
 
+    /// @notice The MIN_DIVISOR constant of the USDN token.
+    uint256 internal immutable _usdnMinDivisor;
+
     /* -------------------------------------------------------------------------- */
     /*                                 Parameters                                 */
     /* -------------------------------------------------------------------------- */
@@ -226,6 +229,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
         _usdn = usdn;
         _usdnDecimals = usdn.decimals();
+        _usdnMinDivisor = usdn.MIN_DIVISOR();
         _asset = asset;
         _assetDecimals = asset.decimals();
         if (_assetDecimals < FUNDING_SF_DECIMALS) {
@@ -273,6 +277,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getUsdnDecimals() external view returns (uint8) {
         return _usdnDecimals;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getUsdnMinDivisor() external view returns (uint256) {
+        return _usdnMinDivisor;
     }
 
     /* -------------------------------------------------------------------------- */

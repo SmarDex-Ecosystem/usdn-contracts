@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { Vm } from "forge-std/Vm.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { DEPLOYER } from "test/utils/Constants.sol";
 
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -135,6 +136,27 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // since we checked more recently than `_usdnRebaseInterval`, we do not rebase
         vm.recordLogs();
         protocol.i_usdnRebase(newPrice, false);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        for (uint256 i; i < logs.length; i++) {
+            // no log is a rebase log
+            assertTrue(logs[i].topics[0] != Rebase.selector, "log topic");
+        }
+    }
+
+    /**
+     * @custom:scenario USDN rebase when the divisor is already MIN_DIVISOR
+     * @custom:given A USDN token already set to have its divisor to MIN_DIVISOR
+     * @custom:when The rebase function is called
+     * @custom:then The USDN token is not rebased
+     */
+    function test_rebaseCheckMinDivisor() public {
+        vm.startPrank(DEPLOYER);
+        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
+        vm.stopPrank();
+        usdn.rebase(usdn.MIN_DIVISOR());
+
+        vm.recordLogs();
+        protocol.i_usdnRebase(params.initialPrice, true);
         Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i; i < logs.length; i++) {
             // no log is a rebase log

@@ -82,10 +82,15 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
             return false;
         }
         _lastRebaseCheck = block.timestamp;
+        IUsdn usdn = _usdn;
+        uint256 divisor = usdn.divisor();
+        if (divisor <= _usdnMinDivisor) {
+            // no need to rebase, the USDN divisor cannot go lower
+            return false;
+        }
         uint256 balanceVault = _balanceVault;
         uint8 usdnDecimals = _usdnDecimals;
         uint8 assetDecimals = _assetDecimals;
-        IUsdn usdn = _usdn;
         uint256 usdnTotalSupply = usdn.totalSupply();
         uint256 uPrice = _calcUsdnPrice(balanceVault, assetPrice, usdnTotalSupply, usdnDecimals, assetDecimals);
         if (uPrice <= _usdnRebaseThreshold) {
@@ -93,7 +98,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         }
         uint256 targetTotalSupply =
             _calcRebaseTotalSupply(balanceVault, assetPrice, _targetUsdnPrice, usdnDecimals, assetDecimals);
-        uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, usdn.divisor(), targetTotalSupply);
+        uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
         usdn.rebase(newDivisor);
         rebased_ = true;
     }
