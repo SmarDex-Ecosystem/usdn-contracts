@@ -3,10 +3,10 @@ pragma solidity 0.8.20;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
+import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
-
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
