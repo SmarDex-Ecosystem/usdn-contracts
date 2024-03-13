@@ -60,6 +60,11 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.assume(newTotalSupply > 0);
         uint256 newPrice =
             protocol.i_calcUsdnPrice(vaultBalance, assetPrice, newTotalSupply, usdnDecimals, assetDecimals);
+
+        // Here we potentially have a small error, in part due to how the price results from the total supply, which
+        // itself results from the division by the divisor. We can't expect the price to be exactly the target price.
+        // Another part of the error comes from the potential difference in the number of decimals for the USDN token
+        // and the asset token.
         assertApproxEqRel(newPrice, targetPrice, 0.0002 ether, "final price");
     }
 
