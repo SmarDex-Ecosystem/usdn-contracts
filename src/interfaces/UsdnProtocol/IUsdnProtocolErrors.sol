@@ -101,4 +101,10 @@ interface IUsdnProtocolErrors {
      * mismatch)
      */
     error UsdnProtocolInvalidPendingActionData();
+
+    /// @dev Indicates that the provided target USDN price is invalid
+    error UsdnProtocolInvalidTargetUsdnPrice();
+
+    /// @dev Indicates that the provided USDN rebase threshold is invalid
+    error UsdnProtocolInvalidUsdnRebaseThreshold();
 }
