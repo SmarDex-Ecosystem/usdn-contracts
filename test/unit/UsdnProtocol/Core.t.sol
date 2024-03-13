@@ -14,6 +14,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
         super._setUp(params);
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
     }
 
     /**
@@ -231,8 +232,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then return value should be equal to the long balance
      */
     function test_longAssetAvailableWithFunding_negFund() public {
-        skip(1 hours);
         uint128 price = DEFAULT_PARAMS.initialPrice;
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, price);
+        skip(1 hours);
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
         assertLt(fund, 0, "funding should be negative");
@@ -262,8 +264,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then return value should be equal to the vault balance
      */
     function test_vaultAssetAvailableWithFunding_negFund() public {
-        skip(1 hours);
         uint128 price = DEFAULT_PARAMS.initialPrice;
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, price);
+        skip(1 hours);
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp), protocol.getEMA());
         assertLt(fund, 0, "funding should be negative");
