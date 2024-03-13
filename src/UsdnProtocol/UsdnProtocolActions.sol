@@ -251,11 +251,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 usdnToMint2 = _calcMintUsdn(
             deposit.amount,
             // Calculate the available balance in the vault side if the price moves to `priceWithFees`
-            uint256(
-                _vaultAssetAvailable(
-                    deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
-                )
-            ),
+            _vaultAssetAvailable(
+                deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
+            ).toUint256(),
             deposit.usdnTotalSupply,
             priceWithFees
         );
@@ -353,15 +351,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
         // redeem the underlying asset share.
         uint256 available1 = withdrawal.balanceVault;
-        uint256 available2 = uint256(
-            _vaultAssetAvailable(
-                withdrawal.totalExpo,
-                withdrawal.balanceVault,
-                withdrawal.balanceLong,
-                withdrawalPriceWithFees, // new price
-                withdrawal.assetPrice // old price
-            )
-        );
+        uint256 available2 = _vaultAssetAvailable(
+            withdrawal.totalExpo,
+            withdrawal.balanceVault,
+            withdrawal.balanceLong,
+            withdrawalPriceWithFees,
+            withdrawal.assetPrice
+        ).toUint256();
         uint256 available;
         if (available1 <= available2) {
             available = available1;
