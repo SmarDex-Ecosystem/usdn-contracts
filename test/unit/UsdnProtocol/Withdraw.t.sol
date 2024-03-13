@@ -18,7 +18,6 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
 
-    uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
     uint128 internal constant USDN_AMOUNT = 1000 ether;
     uint256 internal initialWstETHBalance;
