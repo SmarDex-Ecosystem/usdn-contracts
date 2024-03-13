@@ -269,12 +269,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     ) internal {
         (bytes32 tickHash,) = _tickHash(tick);
         if (amountToRemove < pos.amount) {
-            _longPositions[tickHash][index] = Position({
-                timestamp: pos.timestamp,
-                user: pos.user,
-                totalExpo: pos.totalExpo - totalExpoToRemove,
-                amount: pos.amount - amountToRemove
-            });
+            Position storage position = _longPositions[tickHash][index];
+            position.totalExpo = pos.totalExpo - totalExpoToRemove;
+            position.amount = pos.amount - amountToRemove;
         } else {
             totalExpoToRemove = pos.totalExpo;
             --_positionsInTick[tickHash];
