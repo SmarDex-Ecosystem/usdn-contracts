@@ -63,20 +63,20 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
 
     /**
      * @notice Get the price of the asset from Chainlink, formatted to the specified number of decimals
-     * @param decimals The number of decimals to format the price to
+     * @param middlewareDecimals The number of decimals to format the price to
      * @return formattedPrice_ The formatted price of the asset
      */
-    function _getFormattedChainlinkPrice(uint256 decimals)
+    function _getFormattedChainlinkPrice(uint256 middlewareDecimals)
         internal
         view
         returns (ChainlinkPriceInfo memory formattedPrice_)
     {
-        uint256 oracleDecimal = _priceFeed.decimals();
+        uint8 oracleDecimals = _priceFeed.decimals();
         formattedPrice_ = _getChainlinkPrice();
         if (formattedPrice_.price == PRICE_TOO_OLD) {
             return formattedPrice_;
         }
 
-        formattedPrice_.price = formattedPrice_.price * int256(10 ** decimals) / int256(10 ** oracleDecimal);
+        formattedPrice_.price = formattedPrice_.price * int256(10 ** middlewareDecimals) / int256(10 ** oracleDecimals);
     }
 }

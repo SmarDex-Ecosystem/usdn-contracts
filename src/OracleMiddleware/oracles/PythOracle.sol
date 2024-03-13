@@ -14,7 +14,7 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
  * price of the USDN underlying asset.
  */
 abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
-    uint256 internal constant DECIMALS = 8;
+    uint256 internal constant PYTH_DECIMALS = 8;
 
     bytes32 internal immutable _priceID;
     IPyth internal immutable _pyth;
@@ -29,7 +29,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
 
     /// @inheritdoc IPythOracle
     function getPythDecimals() public pure returns (uint256) {
-        return DECIMALS;
+        return PYTH_DECIMALS;
     }
 
     /// @inheritdoc IPythOracle
@@ -114,8 +114,8 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         PythStructs.Price memory pythPrice = _getPythPrice(priceUpdateData, targetTimestamp);
 
         pythPrice_ = FormattedPythPrice({
-            price: uint256(uint64(pythPrice.price)) * 10 ** decimals / 10 ** DECIMALS,
-            conf: uint256(pythPrice.conf) * 10 ** decimals / 10 ** DECIMALS,
+            price: uint256(uint64(pythPrice.price)) * 10 ** decimals / 10 ** PYTH_DECIMALS,
+            conf: uint256(pythPrice.conf) * 10 ** decimals / 10 ** PYTH_DECIMALS,
             expo: pythPrice.expo,
             publishTime: pythPrice.publishTime
         });
