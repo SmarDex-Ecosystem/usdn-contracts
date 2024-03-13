@@ -133,7 +133,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _tickValue(currentPrice, tick, tickTotalExpo);
     }
 
-    function i_getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
+    function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
         external
         payable
         returns (PriceInfo memory)

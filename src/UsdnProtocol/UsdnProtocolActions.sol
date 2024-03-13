@@ -184,7 +184,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateDeposit, uint40(block.timestamp), currentPriceData);
+            _getOraclePrice(ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
@@ -288,7 +288,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateWithdrawal, uint40(block.timestamp), currentPriceData);
+            _getOraclePrice(ProtocolAction.InitiateWithdrawal, block.timestamp, currentPriceData);
 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
@@ -408,7 +408,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 neutralPrice;
         {
             PriceInfo memory currentPrice =
-                _getOraclePrice(ProtocolAction.InitiateOpenPosition, uint40(block.timestamp), currentPriceData);
+                _getOraclePrice(ProtocolAction.InitiateOpenPosition, block.timestamp, currentPriceData);
 
             // Apply fees on price
             adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
@@ -592,7 +592,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 priceWithFees;
         {
             PriceInfo memory currentPrice =
-                _getOraclePrice(ProtocolAction.InitiateClosePosition, uint40(block.timestamp), currentPriceData);
+                _getOraclePrice(ProtocolAction.InitiateClosePosition, block.timestamp, currentPriceData);
 
             _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
             priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
@@ -710,8 +710,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         internal
         returns (uint256 liquidatedPositions_)
     {
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, block.timestamp, currentPriceData);
 
         (, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -777,7 +776,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
-    function _getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
+    function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
         internal
         returns (PriceInfo memory price_)
     {
@@ -785,7 +784,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (address(this).balance < validationCost) {
             revert UsdnProtocolInsufficientOracleFee();
         }
-        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(timestamp, action, priceData);
+        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(uint128(timestamp), action, priceData);
     }
 
     function _applyPnlAndFundingAndLiquidate(uint256 neutralPrice, uint256 timestamp) internal {

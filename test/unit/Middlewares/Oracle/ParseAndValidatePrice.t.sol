@@ -88,11 +88,17 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
             }(uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, abi.encode("data"));
 
             // Price + conf
-            if (action == ProtocolAction.ValidateOpenPosition) {
+            if (
+                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
+                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
+            ) {
                 assertEq(price.price, FORMATTED_ETH_PRICE + FORMATTED_ETH_CONF, errorMessage);
             }
             // Price - conf
-            else if (action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.ValidateDeposit) {
+            else if (
+                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
+                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
+            ) {
                 assertEq(price.price, FORMATTED_ETH_PRICE - FORMATTED_ETH_CONF, errorMessage);
             } else {
                 assertEq(price.price, FORMATTED_ETH_PRICE, errorMessage);

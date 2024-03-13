@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
+import { IChainlinkOracle } from "src/interfaces/OracleMiddleware/IChainlinkOracle.sol";
 import { ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddlewareErrors.sol";
 
@@ -11,7 +12,7 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
  * @notice This contract is used to get the price of an asset from Chainlink. It is used by the USDN protocol to get the
  * price of the USDN underlying asset, and by the LiquidationRewardsManager to get the price of the gas.
  */
-abstract contract ChainlinkOracle is IOracleMiddlewareErrors {
+abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
     /// @notice Price that indicates that the data returned by the oracle is too old
     int256 public constant PRICE_TOO_OLD = type(int256).min;
 
@@ -29,17 +30,19 @@ abstract contract ChainlinkOracle is IOracleMiddlewareErrors {
         _timeElapsedLimit = timeElapsedLimit;
     }
 
-    /**
-     * @notice Get the number of decimals of the asset from Chainlink
-     * @return decimals_ The number of decimals of the asset
-     */
+    /// @inheritdoc IChainlinkOracle
     function getChainlinkDecimals() public view returns (uint256) {
         return _priceFeed.decimals();
     }
 
-    /// @notice Returns the Chainlink price feed aggregator contract
+    /// @inheritdoc IChainlinkOracle
     function getPriceFeed() public view returns (AggregatorV3Interface) {
         return _priceFeed;
+    }
+
+    /// @inheritdoc IChainlinkOracle
+    function getChainlinkTimeElapsedLimit() external view returns (uint256) {
+        return _timeElapsedLimit;
     }
 
     /**

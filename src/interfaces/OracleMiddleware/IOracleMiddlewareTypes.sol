@@ -28,17 +28,17 @@ struct ChainlinkPriceInfo {
 }
 
 /**
- * @notice Struct representing a Pyth price with a int256 price.
+ * @notice Struct representing a Pyth price with a uint256 price.
  * @param price The price of the asset
  * @param conf The confidence interval around the price (in dollars, absolute value)
  * @param expo The number of decimals of the price
  * @param publishTime Unix timestamp describing when the price was published
  */
 struct FormattedPythPrice {
-    int256 price;
+    uint256 price;
     uint256 conf;
     int128 expo;
-    uint128 publishTime;
+    uint256 publishTime;
 }
 
 /**
