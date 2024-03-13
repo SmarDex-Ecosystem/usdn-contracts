@@ -49,6 +49,8 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         // This aim to verify pyth price hermes signature in any case.
         if (_verifySignature || _wstethMockedPrice == 0) {
             price_ = super.parseAndValidatePrice(targetTimestamp, action, data);
+        } else {
+            price_.timestamp = targetTimestamp;
         }
 
         // If mocked price is not set, return.
