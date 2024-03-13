@@ -7,13 +7,14 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 /**
  * @custom:feature Test the _assetToTransfer internal function of the actions layer
+ * @custom:background Given a protocol initialized with slightly more trading expo in the vault side.
  */
 contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
     using Strings for uint256;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialLong = 10 ether;
+        params.initialDeposit = 5 ether;
         super._setUp(params);
     }
 
@@ -29,7 +30,7 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
     function test_assetToTransfer() public {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
         uint256 res =
-            protocol.i_assetToTransfer(params.initialPrice, tick, 2 ether, protocol.getLiquidationMultiplier());
+            protocol.i_assetToTransfer(params.initialPrice, tick, 2 ether, protocol.getLiquidationMultiplier(), 0);
         assertEq(res, 1.512304848730381401 ether);
     }
 
@@ -46,13 +47,13 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
         uint256 longAvailable = uint256(protocol.i_longAssetAvailable(params.initialPrice)); // 5 ether
         uint256 res =
-            protocol.i_assetToTransfer(params.initialPrice, tick, 200 ether, protocol.getLiquidationMultiplier());
+            protocol.i_assetToTransfer(params.initialPrice, tick, 200 ether, protocol.getLiquidationMultiplier(), 0);
         assertEq(res, longAvailable);
     }
 
     /**
      * @custom:scenario Check value of the `assetToTransfer` function when the long balance is zero
-     * @custom:given The long balance is empty
+     * @custom:given The long balance is empty due to funding and price change
      * @custom:when the asset to transfer is calculated
      * @custom:then The asset to transfer is zero
      */
@@ -69,7 +70,7 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
 
         int24 tick = protocol.getEffectiveTickForPrice(price);
         uint256 res =
-            protocol.i_assetToTransfer(params.initialPrice, tick, 100 ether, protocol.getLiquidationMultiplier());
+            protocol.i_assetToTransfer(params.initialPrice, tick, 100 ether, protocol.getLiquidationMultiplier(), 0);
         assertEq(res, 0, "asset to transfer");
     }
 }

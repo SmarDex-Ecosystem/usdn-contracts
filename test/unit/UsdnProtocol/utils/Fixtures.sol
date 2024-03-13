@@ -124,12 +124,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
+        int24 firstPosTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
         Position memory firstPos = protocol.getLongPosition(
-            protocol.getEffectiveTickForPrice(params.initialPrice / 2)
-                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
-            0,
-            0
+            firstPosTick + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(), 0, 0
         );
+
         assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
         assertEq(firstPos.user, DEPLOYER, "first pos user");
@@ -155,19 +154,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit(positionSize, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
         protocol.validateDeposit(priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
         protocol.initiateWithdrawal(uint128(usdn.balanceOf(user)), priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
 
         protocol.validateWithdrawal(priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
     }
 
     /**
@@ -193,19 +192,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         bytes memory priceData = abi.encode(price);
 
         (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(positionSize, desiredLiqPrice, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
 
         protocol.validateOpenPosition(priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
 
         protocol.initiateClosePosition(tick_, tickVersion_, index_, priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
         if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
 
         protocol.validateClosePosition(priceData, "");
-        skip(oracleMiddleware.getValidationDelay() + 1);
+        _waitDelay();
 
         return (tick_, tickVersion_, index_);
     }
