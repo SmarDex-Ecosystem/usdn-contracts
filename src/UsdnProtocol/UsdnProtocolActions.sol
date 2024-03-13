@@ -596,7 +596,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         if (amountToClose > pos.amount) {
-            revert UsdnProtocolAmountToCloseHigherThanPositionAmount(pos.amount, amountToClose);
+            revert UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
         }
 
         if (amountToClose == 0) {

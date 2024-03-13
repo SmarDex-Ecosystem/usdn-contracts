@@ -54,7 +54,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                UsdnProtocolAmountToCloseHigherThanPositionAmount.selector, pos.amount, amountToClose
+                UsdnProtocolAmountToCloseHigherThanPositionAmount.selector, amountToClose, pos.amount
             )
         );
         protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
