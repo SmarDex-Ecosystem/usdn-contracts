@@ -11,7 +11,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 /**
  * @custom:feature The admin functions of the protocol
- * @custom:background Given a protocol instance that was initialized with 2 longs and 1 short
+ * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function setUp() public {
