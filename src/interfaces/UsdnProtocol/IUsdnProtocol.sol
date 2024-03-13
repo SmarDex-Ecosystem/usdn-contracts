@@ -100,25 +100,25 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Set the soft long expo imbalance limit percentage
-     * @param newLimit The new percentage limit (based on EXPO_IMBALANCE_LIMIT_DENOMINATOR)
+     * @param newLimit The new percentage limit (based on BPS_DIVISOR)
      */
     function setSoftLongExpoImbalanceLimit(int256 newLimit) external;
 
     /**
      * @notice Set the hard long expo imbalance limit percentage
-     * @param newLimit The new percentage limit (based on EXPO_IMBALANCE_LIMIT_DENOMINATOR)
+     * @param newLimit The new percentage limit (based on BPS_DIVISOR)
      */
     function setHardLongExpoImbalanceLimit(int256 newLimit) external;
 
     /**
      * @notice Set the soft vault expo imbalance limit percentage
-     * @param newLimit The new percentage limit (based on EXPO_IMBALANCE_LIMIT_DENOMINATOR)
+     * @param newLimit The new percentage limit (based on BPS_DIVISOR)
      */
     function setSoftVaultExpoImbalanceLimit(int256 newLimit) external;
 
     /**
      * @notice Set the hard vault expo imbalance limit percentage
-     * @param newLimit The new percentage limit (based on EXPO_IMBALANCE_LIMIT_DENOMINATOR)
+     * @param newLimit The new percentage limit (based on BPS_DIVISOR)
      */
     function setHardVaultExpoImbalanceLimit(int256 newLimit) external;
 }

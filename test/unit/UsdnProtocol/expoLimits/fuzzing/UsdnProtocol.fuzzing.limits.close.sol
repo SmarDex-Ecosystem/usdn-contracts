@@ -35,8 +35,7 @@ contract TestUsdnProtocolFuzzingExpoLimitsClose is UsdnProtocolBaseFixture {
             (currentTotalExpo - int256(totalExpoToRemove)) - (int256(currentBalanceLong) - int256(closeAmount));
 
         // expected imbalance percentage
-        int256 imbalancePct =
-            (int256(initialVaultExpo) - newLongExpo) * protocol.EXPO_IMBALANCE_LIMIT_DENOMINATOR() / longExpo;
+        int256 imbalancePct = (int256(initialVaultExpo) - newLongExpo) * int256(protocol.BPS_DIVISOR()) / longExpo;
 
         // call `i_imbalanceLimitClose` with totalExpoToRemove and closeAmount
         if (imbalancePct >= protocol.getHardVaultExpoImbalanceLimit()) {

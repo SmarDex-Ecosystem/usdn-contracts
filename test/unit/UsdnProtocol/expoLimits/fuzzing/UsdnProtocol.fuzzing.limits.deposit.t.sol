@@ -27,8 +27,8 @@ contract TestUsdnProtocolFuzzingExpoLimitsDeposit is UsdnProtocolBaseFixture {
         // new vault expo
         int256 newExpoVault = int256(initialVaultExpo + depositAmount);
         // expected imbalance percentage
-        int256 imbalancePct = (newExpoVault - int256(uint256(initialLongExpo)))
-            * protocol.EXPO_IMBALANCE_LIMIT_DENOMINATOR() / int256(uint256(initialLongExpo));
+        int256 imbalancePct = (newExpoVault - int256(uint256(initialLongExpo))) * int256(protocol.BPS_DIVISOR())
+            / int256(uint256(initialLongExpo));
 
         // call `imbalanceLimitDeposit` with depositAmount
         if (imbalancePct >= protocol.getSoftVaultExpoImbalanceLimit()) {

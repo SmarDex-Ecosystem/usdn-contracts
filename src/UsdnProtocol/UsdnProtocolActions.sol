@@ -162,12 +162,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidLongExpo();
         }
 
-        int256 imbalancePercentage = ((_balanceVault + depositValue).toInt256().safeSub(currentLongExpo)).safeMul(
-            EXPO_IMBALANCE_LIMIT_DENOMINATOR
+        int256 imbalanceBps = ((_balanceVault + depositValue).toInt256().safeSub(currentLongExpo)).safeMul(
+            BPS_DIVISOR.toInt256()
         ).safeDiv(currentLongExpo);
 
-        if (imbalancePercentage >= softVaultExpoImbalanceLimit) {
-            revert UsdnProtocolSoftVaultImbalanceLimitReached(imbalancePercentage);
+        if (imbalanceBps >= softVaultExpoImbalanceLimit) {
+            revert UsdnProtocolSoftVaultImbalanceLimitReached(imbalanceBps);
         }
     }
 
@@ -191,14 +191,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidVaultExpo();
         }
 
-        int256 imbalancePercentage = (
+        int256 imbalanceBps = (
             (_totalExpo.toInt256().safeSub(_balanceLong.toInt256())).safeSub(
                 currentVaultExpo.safeSub(withdrawalValue.toInt256())
             )
-        ).safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(currentVaultExpo);
+        ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentVaultExpo);
 
-        if (imbalancePercentage >= _hardLongExpoImbalanceLimit) {
-            revert UsdnProtocolHardLongImbalanceLimitReached(imbalancePercentage);
+        if (imbalanceBps >= _hardLongExpoImbalanceLimit) {
+            revert UsdnProtocolHardLongImbalanceLimitReached(imbalanceBps);
         }
     }
 
@@ -223,14 +223,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidVaultExpo();
         }
 
-        int256 imbalancePercentage = (
+        int256 imbalanceBps = (
             ((_totalExpo + openTotalExpoValue).toInt256().safeSub((_balanceLong + openCollatValue).toInt256())).safeSub(
                 currentVaultExpo
             )
-        ).safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(currentVaultExpo);
+        ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentVaultExpo);
 
-        if (imbalancePercentage >= softLongExpoImbalanceLimit) {
-            revert UsdnProtocolSoftLongImbalanceLimitReached(imbalancePercentage);
+        if (imbalanceBps >= softLongExpoImbalanceLimit) {
+            revert UsdnProtocolSoftLongImbalanceLimitReached(imbalanceBps);
         }
     }
 
@@ -254,16 +254,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidLongExpo();
         }
 
-        int256 imbalancePercentage = (
+        int256 imbalanceBps = (
             _balanceVault.toInt256().safeSub(
                 _totalExpo.toInt256().safeSub(closeTotalExpoValue.toInt256()).safeSub(
                     _balanceLong.toInt256().safeSub(closeCollatValue.toInt256())
                 )
             )
-        ).safeMul(EXPO_IMBALANCE_LIMIT_DENOMINATOR).safeDiv(currentLongExpo);
+        ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentLongExpo);
 
-        if (imbalancePercentage >= hardVaultExpoImbalanceLimit) {
-            revert UsdnProtocolHardVaultImbalanceLimitReached(imbalancePercentage);
+        if (imbalanceBps >= hardVaultExpoImbalanceLimit) {
+            revert UsdnProtocolHardVaultImbalanceLimitReached(imbalanceBps);
         }
     }
 

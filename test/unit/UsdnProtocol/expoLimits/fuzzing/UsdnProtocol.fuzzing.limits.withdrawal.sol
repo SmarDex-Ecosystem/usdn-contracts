@@ -27,8 +27,8 @@ contract TestUsdnProtocolFuzzingExpoLimitsWithdrawal is UsdnProtocolBaseFixture 
         // new vault expo
         uint256 newVaultExpo = initialVaultExpo - withdrawalAmount;
         // expected imbalance percentage
-        int256 imbalancePct = (int256(uint256(initialLongExpo)) - int256(newVaultExpo))
-            * protocol.EXPO_IMBALANCE_LIMIT_DENOMINATOR() / int256(initialVaultExpo);
+        int256 imbalancePct = (int256(uint256(initialLongExpo)) - int256(newVaultExpo)) * int256(protocol.BPS_DIVISOR())
+            / int256(initialVaultExpo);
 
         // call `i_imbalanceLimitWithdrawal` with withdrawalAmount
         if (imbalancePct >= protocol.getHardLongExpoImbalanceLimit()) {

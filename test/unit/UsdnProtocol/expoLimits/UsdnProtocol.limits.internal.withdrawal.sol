@@ -43,7 +43,7 @@ contract TestUsdnProtocolExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         // imbalance percentage limit
         uint256 imbalancePct = uint256(protocol.getHardLongExpoImbalanceLimit());
         // current vault expo value to unbalance protocol
-        uint256 vaultExpoValueToLimit = expos * imbalancePct / uint256(protocol.EXPO_IMBALANCE_LIMIT_DENOMINATOR());
+        uint256 vaultExpoValueToLimit = expos * imbalancePct / protocol.BPS_DIVISOR();
         // call `imbalanceLimitWithdrawal` with vaultExpoValueToLimit should not revert at the edge
         protocol.i_imbalanceLimitWithdrawal(vaultExpoValueToLimit);
         // call `imbalanceLimitWithdrawal` with vaultExpoValueToLimit + 1

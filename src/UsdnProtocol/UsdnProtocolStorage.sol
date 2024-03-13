@@ -39,9 +39,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     uint16 public constant MAX_LIQUIDATION_ITERATION = 10;
 
-    /// @inheritdoc IUsdnProtocolStorage
-    int256 public constant EXPO_IMBALANCE_LIMIT_DENOMINATOR = 10_000;
-
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
     /* -------------------------------------------------------------------------- */
@@ -139,6 +136,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * the hard vault rebalancing mechanism is triggered, preventing the close of existing long position.
      */
     int256 internal _hardVaultExpoImbalanceLimit = 600;
+
     /// @notice The position fee in basis point
     uint16 internal _positionFeeBps = 4; // 0.04%
 

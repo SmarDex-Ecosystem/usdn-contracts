@@ -28,7 +28,7 @@ contract TestUsdnProtocolFuzzingExpoLimitsOpen is UsdnProtocolBaseFixture {
         int256 imbalancePct = (
             (int256(protocol.getTotalExpo() + totalExpoToAdd) - int256(protocol.getBalanceLong() + openAmount))
                 - int256(initialVaultExpo)
-        ) * protocol.EXPO_IMBALANCE_LIMIT_DENOMINATOR() / int256(initialVaultExpo);
+        ) * int256(protocol.BPS_DIVISOR()) / int256(initialVaultExpo);
         // call `i_imbalanceLimitWithdrawal` with withdrawalAmount
         if (imbalancePct >= protocol.getSoftLongExpoImbalanceLimit()) {
             // should revert with above soft long imbalance limit
