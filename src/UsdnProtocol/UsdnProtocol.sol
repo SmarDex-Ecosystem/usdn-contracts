@@ -74,8 +74,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         int24 tick = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
         uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
         uint128 leverage = _getLeverage(currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
-        uint128 positionTotalExpo =
-            _calculatePositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
+        uint128 positionTotalExpo = (uint256(longAmount) * leverage / 10 ** LEVERAGE_DECIMALS).toUint128();
 
         // verify expo is not imbalanced on long side
         _imbalanceLimitOpen(positionTotalExpo, longAmount);
