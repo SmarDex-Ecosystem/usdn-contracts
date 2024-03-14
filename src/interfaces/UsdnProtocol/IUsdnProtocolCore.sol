@@ -37,19 +37,10 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_);
 
     /**
-     * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
-     * timestamp
-     * @dev If the provided timestamp is older than the last state update, the result will be zero.
-     * @param timestamp The current timestamp
-     * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
-     * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
-     */
-    function fundingAsset(uint128 timestamp) external view returns (int256 fundingAsset_, int256 fund_);
-
-    /**
      * @notice Get the predicted value of the long balance for the given asset price and timestamp
      * @dev The effect of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account
+     * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`.
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
@@ -58,7 +49,8 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the vault balance for the given asset price and timestamp
      * @dev The effect of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account
+     * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`.
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
@@ -99,4 +91,16 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
      */
     function getUserPendingAction(address user) external view returns (PendingAction memory action_);
+
+    /**
+     * @notice Calculation of the EMA of the funding rate
+     * @param lastFunding The last funding rate
+     * @param secondsElapsed The number of seconds elapsed since the last protocol action
+     * @param emaPeriod The EMA period
+     * @param previousEMA The previous EMA
+     */
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+        external
+        pure
+        returns (int256);
 }

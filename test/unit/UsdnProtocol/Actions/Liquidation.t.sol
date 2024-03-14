@@ -11,8 +11,6 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
-        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
 
         usdn.approve(address(protocol), type(uint256).max);
 
@@ -45,6 +43,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
 
+        wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
@@ -167,6 +166,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
 
+        wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
@@ -336,12 +336,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 1000 gwei, 20_000);
+        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 1000 gwei, 20_000);
 
         // Trigger PnL and funding calculations now to avoid having to predict them later
         protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
 
-        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
+        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
         // Sanity check
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
 

@@ -7,13 +7,6 @@ pragma solidity >=0.8.0;
  */
 interface IUsdnErrors {
     /**
-     * @dev Indicates that the provided divisor is invalid. This is usually because the new value is larger or
-     * equal to the current divisor, or the new divisor is too small.
-     * @param divisor invalid divisor
-     */
-    error UsdnInvalidDivisor(uint256 divisor);
-
-    /**
      * @dev Indicates that the number of tokens exceeds the maximum allowed value.
      * @param value invalid token value
      */

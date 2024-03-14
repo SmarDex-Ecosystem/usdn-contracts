@@ -127,7 +127,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param tick The tick containing the position to close
      * @param tickVersion The tick version of the position to close
      * @param index The index of the position inside the tick array
-     * @param amountToClose The amount of asset to remove from the position's amount
+     * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
      * @param previousActionPriceData The price data of an actionable pending action.
      */

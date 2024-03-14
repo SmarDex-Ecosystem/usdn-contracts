@@ -38,80 +38,18 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (timestamp == _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
-        // timestamp < _lastUpdateTimestamp is checked in funding below and would revert
-        (int256 fund,) = funding(timestamp);
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+        }
+        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        (int256 fund,) = _funding(timestamp, ema);
         // starting here, timestamp is strictly greater than _lastUpdateTimestamp
         return _getLiquidationMultiplier(fund, _liquidationMultiplier);
     }
 
     /// @inheritdoc IUsdnProtocolCore
     function funding(uint128 timestamp) public view returns (int256 fund_, int256 oldLongExpo_) {
-        oldLongExpo_ = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
-
-        if (timestamp < _lastUpdateTimestamp) {
-            revert UsdnProtocolTimestampTooOld();
-            // slither-disable-next-line incorrect-equality
-        } else if (timestamp == _lastUpdateTimestamp) {
-            return (0, oldLongExpo_);
-        }
-
-        int256 oldVaultExpo = _balanceVault.toInt256();
-
-        // ImbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
-        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) + _EMA
-        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
-        // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
-
-        int256 numerator = oldLongExpo_ - oldVaultExpo;
-        // optimization : if the numerator is zero, then return the EMA
-        // slither-disable-next-line incorrect-equality
-        if (numerator == 0) {
-            return (_EMA, oldLongExpo_);
-        }
-
-        if (oldLongExpo_ <= 0) {
-            // if oldLongExpo is negative, then we cap the imbalance index to -1
-            // oldVaultExpo is always positive
-            return (-int256(_fundingSF) + _EMA, oldLongExpo_);
-        } else if (oldVaultExpo == 0) {
-            // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
-            // oldLongExpo must be positive in this case
-            return (int256(_fundingSF) + _EMA, oldLongExpo_);
-        }
-        // starting here, oldLongExpo and oldVaultExpo are always strictly positive
-
-        uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
-        uint256 numerator_squared = uint256(numerator * numerator);
-
-        uint256 denominator;
-        if (oldVaultExpo > oldLongExpo_) {
-            // we have to multiply by 1 day to get the correct units
-            denominator = uint256(oldVaultExpo * oldVaultExpo) * 1 days;
-            fund_ = -int256(
-                FixedPointMathLib.fullMulDiv(
-                    numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
-                    denominator
-                )
-            ) + _EMA;
-        } else {
-            // we have to multiply by 1 day to get the correct units
-            denominator = uint256(oldLongExpo_ * oldLongExpo_) * 1 days;
-            fund_ = int256(
-                FixedPointMathLib.fullMulDiv(
-                    numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
-                    denominator
-                )
-            ) + _EMA;
-        }
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function fundingAsset(uint128 timestamp) public view returns (int256 fundingAsset_, int256 fund_) {
-        int256 oldLongExpo;
-        (fund_, oldLongExpo) = funding(timestamp);
-        fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** FUNDING_RATE_DECIMALS;
+        (fund_, oldLongExpo_) = _funding(timestamp, _EMA);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -120,8 +58,20 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         view
         returns (int256 available_)
     {
-        (int256 fundAsset,) = fundingAsset(timestamp);
-        available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+        }
+
+        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        (int256 fundAsset,) = _fundingAsset(timestamp, ema);
+
+        if (fundAsset > 0) {
+            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
+        } else {
+            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
+            // fee have the same sign as fundAsset (negative here), so we need to sub them
+            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
+        }
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -130,8 +80,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         view
         returns (int256 available_)
     {
-        (int256 fundAsset,) = fundingAsset(timestamp);
-        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+        }
+
+        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        (int256 fundAsset,) = _fundingAsset(timestamp, ema);
+
+        if (fundAsset < 0) {
+            available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
+        } else {
+            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
+            available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset - fee);
+        }
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -191,7 +152,97 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         (action_,) = _getPendingAction(user);
     }
 
+    /// @inheritdoc IUsdnProtocolCore
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+        public
+        pure
+        returns (int256)
+    {
+        if (secondsElapsed >= emaPeriod) {
+            return lastFunding;
+        }
+
+        return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
+    }
+
     /* --------------------------  Internal functions --------------------------- */
+
+    function _funding(uint128 timestamp, int256 ema) internal view returns (int256 fund_, int256 oldLongExpo_) {
+        oldLongExpo_ = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
+
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+            // slither-disable-next-line incorrect-equality
+        } else if (timestamp == _lastUpdateTimestamp) {
+            return (0, oldLongExpo_);
+        }
+
+        int256 oldVaultExpo = _balanceVault.toInt256();
+
+        // ImbalanceIndex = (longExpo - vaultExpo) / max(longExpo, vaultExpo)
+        // fund = (sign(ImbalanceIndex) * ImbalanceIndex^2 * fundingSF) + _EMA
+        // fund = (sign(ImbalanceIndex) * (longExpo - vaultExpo)^2 * fundingSF / denominator) + _EMA
+        // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
+
+        int256 numerator = oldLongExpo_ - oldVaultExpo;
+        // optimization : if the numerator is zero, then return the EMA
+        // slither-disable-next-line incorrect-equality
+        if (numerator == 0) {
+            return (ema, oldLongExpo_);
+        }
+
+        if (oldLongExpo_ <= 0) {
+            // if oldLongExpo is negative, then we cap the imbalance index to -1
+            // oldVaultExpo is always positive
+            return (-int256(_fundingSF) + ema, oldLongExpo_);
+        } else if (oldVaultExpo == 0) {
+            // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
+            // oldLongExpo must be positive in this case
+            return (int256(_fundingSF) + ema, oldLongExpo_);
+        }
+        // starting here, oldLongExpo and oldVaultExpo are always strictly positive
+
+        uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
+        uint256 numerator_squared = uint256(numerator * numerator);
+
+        uint256 denominator;
+        if (oldVaultExpo > oldLongExpo_) {
+            // we have to multiply by 1 day to get the correct units
+            denominator = uint256(oldVaultExpo * oldVaultExpo) * 1 days;
+            fund_ = -int256(
+                FixedPointMathLib.fullMulDiv(
+                    numerator_squared * elapsedSeconds,
+                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
+                    denominator
+                )
+            ) + ema;
+        } else {
+            // we have to multiply by 1 day to get the correct units
+            denominator = uint256(oldLongExpo_ * oldLongExpo_) * 1 days;
+            fund_ = int256(
+                FixedPointMathLib.fullMulDiv(
+                    numerator_squared * elapsedSeconds,
+                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
+                    denominator
+                )
+            ) + ema;
+        }
+    }
+
+    /**
+     * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
+     * timestamp
+     * @dev If the provided timestamp is older than the last state update, the result will be zero.
+     * @param timestamp The current timestamp
+     * @param ema The EMA of the funding rate
+     * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
+     * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
+     */
+    function _fundingAsset(uint128 timestamp, int256 ema) internal view returns (int256 fundingAsset_, int256 fund_) {
+        int256 oldLongExpo;
+        (fund_, oldLongExpo) = _funding(timestamp, ema);
+        fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** FUNDING_RATE_DECIMALS;
+    }
 
     function _getLiquidationMultiplier(int256 fund, uint256 liquidationMultiplier)
         internal
@@ -332,10 +383,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
 
         // Update the funding EMA
-        _updateEMA(timestamp - lastUpdateTimestamp);
+        int256 ema = _updateEMA(timestamp - lastUpdateTimestamp);
 
         // Calculate the funding
-        (int256 fundAsset, int256 fund) = fundingAsset(timestamp);
+        (int256 fundAsset, int256 fund) = _fundingAsset(timestamp, ema);
 
         // Take protocol fee on the funding value
         (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(fund, fundAsset);
@@ -374,16 +425,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @dev If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
      * funding value
      */
-    function _updateEMA(uint128 secondsElapsed) internal {
-        // cache variable for optimization
-        uint128 emaPeriod = _EMAPeriod;
-
-        if (secondsElapsed >= emaPeriod) {
-            _EMA = _lastFunding;
-            return;
-        }
-
-        _EMA = (_lastFunding + _EMA * (_toInt256(emaPeriod) - _toInt256(secondsElapsed))) / _toInt256(emaPeriod);
+    function _updateEMA(uint128 secondsElapsed) internal returns (int256) {
+        return _EMA = calcEMA(_lastFunding, secondsElapsed, _EMAPeriod, _EMA);
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {

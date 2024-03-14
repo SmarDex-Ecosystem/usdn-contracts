@@ -75,9 +75,10 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /**
      * @notice Restricted function to decrease the global divisor, which effectively grows all balances and the total
      * supply.
-     * @param divisor the new divisor, must be strictly smaller than the current one
+     * @param divisor the new divisor, must be strictly smaller than the current one and greater or equal to
+     * MIN_DIVISOR.
      */
-    function adjustDivisor(uint256 divisor) external;
+    function rebase(uint256 divisor) external;
 
     /* -------------------------------------------------------------------------- */
     /*                             Dev view functions                             */
@@ -89,8 +90,8 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /// @dev Minter role signature.
     function MINTER_ROLE() external pure returns (bytes32);
 
-    /// @dev Adjustment role signature.
-    function ADJUSTMENT_ROLE() external pure returns (bytes32);
+    /// @dev Rebaser role signature.
+    function REBASER_ROLE() external pure returns (bytes32);
 
     /// @dev Maximum value of the divisor, which is also the initial value.
     function MAX_DIVISOR() external pure returns (uint256);

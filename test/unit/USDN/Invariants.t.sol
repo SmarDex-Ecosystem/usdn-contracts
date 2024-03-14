@@ -17,7 +17,7 @@ contract TestUsdnInvariants is UsdnTokenFixture {
 
         targetContract(address(usdn));
         bytes4[] memory selectors = new bytes4[](4);
-        selectors[0] = usdn.adjustDivisorTest.selector;
+        selectors[0] = usdn.rebaseTest.selector;
         selectors[1] = usdn.mintTest.selector;
         selectors[2] = usdn.burnTest.selector;
         selectors[3] = usdn.transferTest.selector;
