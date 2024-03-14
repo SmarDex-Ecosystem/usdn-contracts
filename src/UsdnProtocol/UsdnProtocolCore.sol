@@ -154,12 +154,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             } else {
                 // the pending action is not actionable (it is too recent), following actions can't be actionable
                 // either so we return
-                assembly {
-                    // shrink the size of the arrays
-                    mstore(actions_, arrayLen)
-                    mstore(rawIndices_, arrayLen)
-                }
-                return (actions_, rawIndices_);
+                break;
             }
         } while (i < maxIter);
         assembly {
