@@ -332,13 +332,13 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Revert when executing a pending action with a wrap-around of the raw index
+     * @custom:scenario Executing a pending action with a wrap-around of the raw index
      * @custom:given Two pending actions in queue, with raw indices uint256.max (USER_1) and 0 (this contract)
      * @custom:when The second pending action is executed (uint256.max)
      * @custom:then The execution does not revert and the first pending action is processed
      * @custom:and The remaining pending action is the one for this contract (rawIndex 0)
      */
-    function test_RevertWhen_executePendingActionWrapAround() public {
+    function test_executePendingActionWrapAround() public {
         uint128 rawIndex2 = _addDummyPendingAction();
         assertEq(rawIndex2, 0, "raw index 2");
 
