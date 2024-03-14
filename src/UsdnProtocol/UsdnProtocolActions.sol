@@ -783,7 +783,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // underflow is desired here (wrap-around)
             offset = rawIndex - data.rawIndices[0];
         }
-        if (offset >= length) {
+        if (offset >= length || data.rawIndices[offset] != rawIndex) {
             revert UsdnProtocolInvalidPendingActionData();
         }
         bytes calldata priceData = data.priceData[offset];
