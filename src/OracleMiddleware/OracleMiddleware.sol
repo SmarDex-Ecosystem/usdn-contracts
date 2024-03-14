@@ -86,16 +86,16 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             // Special case, if we pass a timestamp of zero, then we accept all prices newer than `_recentPriceDelay`
             return _getLowLatencyPrice(data, 0, ConfidenceInterval.None);
         } else if (action == ProtocolAction.InitiateDeposit) {
-            // If the user chooses to intitiate with a pyth price, we apply the relevant confidence interval adjustment
+            // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
             return _getInitiateActionPrice(data, ConfidenceInterval.Down);
         } else if (action == ProtocolAction.InitiateWithdrawal) {
-            // If the user chooses to intitiate with a pyth price, we apply the relevant confidence interval adjustment
+            // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
             return _getInitiateActionPrice(data, ConfidenceInterval.Up);
         } else if (action == ProtocolAction.InitiateOpenPosition) {
-            // If the user chooses to intitiate with a pyth price, we apply the relevant confidence interval adjustment
+            // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
             return _getInitiateActionPrice(data, ConfidenceInterval.Up);
         } else if (action == ProtocolAction.InitiateClosePosition) {
-            // If the user chooses to intitiate with a pyth price, we apply the relevant confidence interval adjustment
+            // If the user chooses to initiate with a pyth price, we apply the relevant confidence interval adjustment
             return _getInitiateActionPrice(data, ConfidenceInterval.Down);
         }
     }
@@ -174,7 +174,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     {
         // If data is not empty, use pyth
         if (data.length > 0) {
-            // since we use this function for `intitiate` type actions which pass `targetTimestamp = block.timestamp`,
+            // since we use this function for `initiate` type actions which pass `targetTimestamp = block.timestamp`,
             // we should pass `0` to the function below to signal that we accept any recent price
             return _getLowLatencyPrice(data, 0, dir);
         }
