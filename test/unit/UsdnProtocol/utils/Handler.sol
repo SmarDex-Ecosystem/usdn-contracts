@@ -182,4 +182,32 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
         return _getLeverage(price, liqPrice);
     }
+
+    function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
+        return _updateEMA(secondsElapsed);
+    }
+
+    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool) {
+        return _usdnRebase(assetPrice, ignoreInterval);
+    }
+
+    function i_calcUsdnPrice(
+        uint256 vaultBalance,
+        uint128 assetPrice,
+        uint256 usdnTotalSupply,
+        uint8 usdnDecimals,
+        uint8 assetDecimals
+    ) external pure returns (uint256) {
+        return _calcUsdnPrice(vaultBalance, assetPrice, usdnTotalSupply, usdnDecimals, assetDecimals);
+    }
+
+    function i_calcRebaseTotalSupply(
+        uint256 vaultBalance,
+        uint128 assetPrice,
+        uint128 targetPrice,
+        uint8 usdnDecimals,
+        uint8 assetDecimals
+    ) external pure returns (uint256) {
+        return _calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, usdnDecimals, assetDecimals);
+    }
 }

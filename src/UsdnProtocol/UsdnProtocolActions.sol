@@ -146,11 +146,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * those will be managed off-chain.
      * @param liquidatedTicks The number of ticks that were liquidated.
      * @param liquidatedCollateral The amount of collateral lost due to the liquidations.
+     * @param rebased Whether a USDN rebase was performed.
      */
-    function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 liquidatedCollateral) internal {
+    function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 liquidatedCollateral, bool rebased) internal {
         // Get how much we should give to the liquidator as rewards
         uint256 liquidationRewards =
-            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, liquidatedCollateral);
+            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, liquidatedCollateral, rebased);
 
         // Avoid underflows in situation of extreme bad debt
         if (_balanceVault < liquidationRewards) {
@@ -739,8 +740,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (liquidatedPositions_, liquidatedTicks, liquidatedCollateral, _balanceLong, _balanceVault) =
             _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
 
+        // Always perform the rebase check during liquidation
+        bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
+
         if (liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral);
+            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
         }
     }
 
@@ -814,6 +818,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (priceUpdated) {
             (,,, _balanceLong, _balanceVault) =
                 _liquidatePositions(neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
+            // rebase USDN if needed (interval has elapsed and price threshold was reached)
+            _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
         }
     }
 

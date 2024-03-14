@@ -44,8 +44,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 31_976,
-            otherGasUsed: 288_093,
+            gasUsedPerTick: 31_971,
+            otherGasUsed: 389_968,
+            rebaseGasUsed: 9618,
             gasPriceLimit: uint64(1000 gwei),
             multiplierBps: 20_000
         });
@@ -55,7 +56,11 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      * @inheritdoc ILiquidationRewardsManager
      * @dev In the current implementation, the `int256 amountLiquidated` parameter is not used
      */
-    function getLiquidationRewards(uint16 tickAmount, int256) external view returns (uint256 wstETHRewards_) {
+    function getLiquidationRewards(uint16 tickAmount, int256, bool rebased)
+        external
+        view
+        returns (uint256 wstETHRewards_)
+    {
         // Do not give rewards if no ticks were liquidated.
         if (tickAmount == 0) {
             return 0;
@@ -65,7 +70,9 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         // Calculate the amount of gas spent during the liquidation.
         uint256 gasUsed =
             rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
-
+        if (rebased) {
+            gasUsed += rewardsParameters.rebaseGasUsed;
+        }
         // Multiply by the gas price and the rewards multiplier.
         wstETHRewards_ = _wstEth.getWstETHByStETH(
             gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplierBps / REWARDS_MULTIPLIER_DENOMINATOR
@@ -81,6 +88,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     function setRewardsParameters(
         uint32 gasUsedPerTick,
         uint32 otherGasUsed,
+        uint32 rebaseGasUsed,
         uint64 gasPriceLimit,
         uint32 multiplierBps
     ) external onlyOwner {
@@ -88,15 +96,23 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             revert LiquidationRewardsManagerGasUsedPerTickTooHigh(gasUsedPerTick);
         } else if (otherGasUsed > 1_000_000) {
             revert LiquidationRewardsManagerOtherGasUsedTooHigh(otherGasUsed);
+        } else if (rebaseGasUsed > 200_000) {
+            revert LiquidationRewardsManagerRebaseGasUsedTooHigh(rebaseGasUsed);
         } else if (gasPriceLimit > 8000 gwei) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
         } else if (multiplierBps > 10 * REWARDS_MULTIPLIER_DENOMINATOR) {
             revert LiquidationRewardsManagerMultiplierBpsTooHigh(multiplierBps);
         }
 
-        _rewardsParameters = RewardsParameters(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplierBps);
+        _rewardsParameters = RewardsParameters({
+            gasUsedPerTick: gasUsedPerTick,
+            otherGasUsed: otherGasUsed,
+            rebaseGasUsed: rebaseGasUsed,
+            gasPriceLimit: gasPriceLimit,
+            multiplierBps: multiplierBps
+        });
 
-        emit RewardsParametersUpdated(gasUsedPerTick, otherGasUsed, gasPriceLimit, multiplierBps);
+        emit RewardsParametersUpdated(gasUsedPerTick, otherGasUsed, rebaseGasUsed, gasPriceLimit, multiplierBps);
     }
 
     /**
