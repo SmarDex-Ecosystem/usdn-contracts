@@ -289,7 +289,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
 
         vm.expectRevert(UsdnProtocolInvalidPendingActionData.selector);
-        protocol.i_executePendingAction(data);
+        protocol.i_executePendingActionOrRevert(data);
     }
 
     /**
@@ -307,7 +307,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
 
         vm.expectRevert(UsdnProtocolInvalidPendingActionData.selector);
-        protocol.i_executePendingAction(data);
+        protocol.i_executePendingActionOrRevert(data);
     }
 
     /**
@@ -328,7 +328,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
 
         vm.expectRevert(UsdnProtocolInvalidPendingActionData.selector);
-        protocol.i_executePendingAction(data);
+        protocol.i_executePendingActionOrRevert(data);
     }
 
     /**
@@ -355,7 +355,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         rawIndices[1] = rawIndex2;
         PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
 
-        protocol.i_executePendingAction(data); // should validate `pending` for USER_1
+        protocol.i_executePendingActionOrRevert(data); // should validate `pending` for USER_1
 
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "one pending action left");
