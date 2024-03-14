@@ -44,6 +44,27 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     }
 
     /* -------------------------------------------------------------------------- */
+    /*                                   Reverts                                  */
+    /* -------------------------------------------------------------------------- */
+
+    function test_RevertsWhen_validateClosePositionWithTheWrongPendingAction() external {
+        // Setup an initiate action to have a pending validate action for this user
+        setUpUserPositionInLong(
+            address(this),
+            ProtocolAction.InitiateOpenPosition,
+            positionAmount,
+            params.initialPrice - 200 ether,
+            params.initialPrice
+        );
+
+        bytes memory priceData = abi.encode(params.initialPrice);
+
+        // Try to validate a close position action with a pending action different than ValidateClosePosition
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidPendingAction.selector));
+        protocol.i_validateClosePosition(address(this), priceData);
+    }
+
+    /* -------------------------------------------------------------------------- */
     /*                            validateClosePosition                           */
     /* -------------------------------------------------------------------------- */
 
