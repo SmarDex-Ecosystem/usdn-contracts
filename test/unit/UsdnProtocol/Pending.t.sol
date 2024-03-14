@@ -332,7 +332,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Revert when executing a pending action with a wrap-around of the raw index
+     * @custom:scenario Executing a pending action with a wrap-around of the raw index
      * @custom:given Two pending actions in queue, with raw indices uint256.max (USER_1) and 0 (this contract)
      * @custom:when The second pending action is executed (uint256.max)
      * @custom:then The execution does not revert and the first pending action is processed
