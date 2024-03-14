@@ -83,16 +83,18 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
 
     /**
-     * @notice Retrieve a pending action that must be validated by the next user action in the protocol.
-     * @dev If this function returns a pending action, then the next user action MUST include the price update data
-     * for this pending action as the last parameter.
-     * @dev Front-ends are encouraged to set the `from` address when calling this function, so that we can return the
-     * correct actionable action for a given user.
-     * @return actions_ The pending actions if any, otherwise an empty array
+     * @notice Retrieve a list of pending actions, one of which must be validated by the next user action in the
+     * protocol.
+     * @dev If this function returns a non-empty list of pending actions, then the next user action MUST include the
+     * corresponding list of price update data and raw indices as the last parameter.
+     * @param currentUser The address of the user that will submit the price signatures for third-party actions
+     * validations. This is used to filter out their own actions from the returned list.
+     * @return actions_ The pending actions if any, otherwise an empty array. Note that some items can be zero-valued
+     * and there is no need to provide price data for those (an empty `bytes` suffices).
      * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
      * array.
      */
-    function getActionablePendingActions()
+    function getActionablePendingActions(address currentUser)
         external
         view
         returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);

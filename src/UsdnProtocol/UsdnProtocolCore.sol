@@ -149,7 +149,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /// @inheritdoc IUsdnProtocolCore
-    function getActionablePendingActions()
+    function getActionablePendingActions(address currentUser)
         external
         view
         returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
@@ -174,7 +174,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // If the msg.sender is equal to the user of the pending action, then the pending action is not actionable
             // by this user (it will get validated automatically by their action). And so we need to return the next
             // item in the queue so that they can validate a third-party pending action (if any).
-            if (candidate.timestamp == 0 || candidate.user == msg.sender) {
+            if (candidate.timestamp == 0 || candidate.user == currentUser) {
                 rawIndices_[i] = rawIndex;
                 // try the next one
                 unchecked {

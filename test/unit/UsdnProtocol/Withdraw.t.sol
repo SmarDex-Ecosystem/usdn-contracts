@@ -77,8 +77,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         // no USDN should be burned yet
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + initialUsdnBalance, "usdn total supply");
         // the pending action should not yet be actionable by a third party
-        vm.prank(address(0)); // simulate front-end call by someone else
-        (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions();
+        (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no pending action");
 
         PendingAction memory action = protocol.getUserPendingAction(address(this));
@@ -89,8 +88,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
-        vm.prank(address(0)); // simulate front-end call by someone else
-        (actions, rawIndices) = protocol.getActionablePendingActions();
+        (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions[0].user, address(this), "pending action user");
         assertEq(rawIndices[0], 1, "raw index");
     }
