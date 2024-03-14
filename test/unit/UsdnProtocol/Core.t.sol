@@ -67,10 +67,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_updateEma_negFunding() public {
         // we create a deposit and skip 1 day and call liquidate() to have a negative funding
         bytes memory priceData = abi.encode(params.initialPrice);
-        wstETH.mintAndApprove(address(this), 10 ether, address(protocol), type(uint256).max);
-        protocol.initiateDeposit(10 ether, priceData, "");
-        _waitDelay();
-        protocol.validateDeposit(priceData, "");
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, params.initialPrice);
         skip(1 days);
         protocol.liquidate(priceData, 1);
 
@@ -89,16 +86,14 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then EMA should be lower than the last funding
      */
     function test_updateEma_posFunding() public {
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
-        bytes memory priceData = abi.encode(params.initialPrice);
-        protocol.initiateOpenPosition(200 ether, params.initialPrice / 2, priceData, "");
-        _waitDelay();
-        protocol.validateOpenPosition(priceData, "");
+        setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 200 ether, params.initialPrice / 2, params.initialPrice
+        );
 
         int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
-        protocol.liquidate(priceData, 1);
+        protocol.liquidate(abi.encode(params.initialPrice), 1);
 
         assertLt(protocol.getEMA(), lastFunding);
     }
@@ -154,13 +149,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_funding_NegLong_ZeroVault() public {
         skip(1 hours);
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = params.initialPrice;
-        bytes memory priceData = abi.encode(price);
-
-        protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
-        _waitDelay();
-        protocol.validateOpenPosition(priceData, "");
+        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1000 ether, price * 90 / 100, price);
 
         skip(1 hours);
         protocol.liquidate(abi.encode(price / 100), 10);
@@ -182,13 +172,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_funding_PosLong_ZeroVault() public {
         skip(1 hours);
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
         uint128 price = params.initialPrice;
-        bytes memory priceData = abi.encode(price);
-
-        protocol.initiateOpenPosition(1000 ether, price * 90 / 100, priceData, "");
-        _waitDelay();
-        protocol.validateOpenPosition(priceData, "");
+        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1000 ether, price * 90 / 100, price);
 
         skip(1 hours);
         protocol.liquidate(abi.encode(price * 100), 10);
