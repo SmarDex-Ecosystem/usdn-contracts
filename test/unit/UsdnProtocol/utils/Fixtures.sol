@@ -30,6 +30,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         bool enableProtocolFees;
         bool enableFunding;
         bool enableLimits;
+        bool enableUsdnRebase;
     }
 
     SetUpParams public params;
@@ -42,7 +43,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         enablePositionFees: false,
         enableProtocolFees: true,
         enableFunding: true,
-        enableLimits: false
+        enableLimits: false,
+        enableUsdnRebase: false
     });
 
     Usdn public usdn;
@@ -82,6 +84,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             ADMIN // Fee collector
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 
         if (!testParams.enablePositionFees) {
             protocol.setPositionFeeBps(0);
@@ -92,6 +95,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         if (!testParams.enableFunding) {
             protocol.setFundingSF(0);
             protocol.resetEMA();
+        }
+        if (!params.enableUsdnRebase) {
+            // set a high target price to effectively disable rebases
+            protocol.setUsdnRebaseThreshold(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
+            protocol.setTargetUsdnPrice(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
         }
 
         if (!testParams.enableLimits) {

@@ -67,6 +67,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The decimals of the USDN token.
     function getUsdnDecimals() external view returns (uint8);
 
+    /// @notice The MIN_DIVISOR constant of the USDN token.
+    function getUsdnMinDivisor() external view returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                 Parameters getters                         */
     /* -------------------------------------------------------------------------- */
@@ -144,6 +147,15 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      */
     function getHardVaultExpoImbalanceLimit() external view returns (int256);
 
+    /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
+    function getTargetUsdnPrice() external view returns (uint128);
+
+    /// @notice The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
+    function getUsdnRebaseThreshold() external view returns (uint128);
+
+    /// @notice The interval between two automatic rebase checks
+    function getUsdnRebaseInterval() external view returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
@@ -179,6 +191,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The balance of deposits (with asset decimals)
     function getBalanceVault() external view returns (uint256);
+
+    /// @notice The timestamp when the last USDN rebase check was performed
+    function getLastRebaseCheck() external view returns (uint256);
 
     /// @notice The exponential moving average of the funding
     function getEMA() external view returns (int256);

@@ -9,14 +9,14 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 /**
  * @custom:feature The `burn` function of `USDN`
  * @custom:background Given a user with 100 tokens
- * @custom:and The contract has the `MINTER_ROLE` and `ADJUSTMENT_ROLE`
+ * @custom:and The contract has the `MINTER_ROLE` and `REBASER_ROLE`
  * @custom:and The divisor is MAX_DIVISOR
  */
 contract TestUsdnBurn is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
         usdn.mint(USER_1, 100 ether);
     }
 
@@ -33,7 +33,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * @custom:and The total shares are decreased by 25
      */
     function test_burnPartial() public {
-        usdn.adjustDivisor(usdn.MAX_DIVISOR() / 2);
+        usdn.rebase(usdn.MAX_DIVISOR() / 2);
         assertEq(usdn.balanceOf(USER_1), 200 ether, "initial balance");
         assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.MAX_DIVISOR(), "initial shares");
 
@@ -62,7 +62,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * tokens, they might have a fraction of a token left.
      */
     function test_burnAll() public {
-        usdn.adjustDivisor(9 * usdn.MAX_DIVISOR() / 10);
+        usdn.rebase(9 * usdn.MAX_DIVISOR() / 10);
         assertEq(usdn.balanceOf(USER_1), 111_111_111_111_111_111_111, "initial balance");
         assertEq(usdn.sharesOf(USER_1), 100 ether * usdn.MAX_DIVISOR(), "initial shares");
 
@@ -96,7 +96,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
      * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
      */
     function test_RevertWhen_burnInsufficientBalanceWithMultiplier() public {
-        usdn.adjustDivisor(usdn.MAX_DIVISOR() / 2);
+        usdn.rebase(usdn.MAX_DIVISOR() / 2);
         assertEq(usdn.balanceOf(USER_1), 200 ether);
 
         vm.expectRevert(
@@ -121,7 +121,7 @@ contract TestUsdnBurn is UsdnTokenFixture {
         vm.prank(USER_1);
         usdn.approve(address(this), 50 ether);
 
-        usdn.adjustDivisor(usdn.MAX_DIVISOR() / 2);
+        usdn.rebase(usdn.MAX_DIVISOR() / 2);
         // changing multiplier doesn't affect allowance
         assertEq(usdn.allowance(USER_1, address(this)), 50 ether, "initial allowance");
 

@@ -41,7 +41,7 @@ contract TestUsdnMint is UsdnTokenFixture {
 
     /**
      * @custom:scenario Minting tokens with a divisor
-     * @custom:given This contract has the `ADJUSTMENT_ROLE`
+     * @custom:given This contract has the `REBASER_ROLE`
      * @custom:when The divisor is adjusted to 0.5x MAX_DIVISOR
      * @custom:and 100 tokens are minted to a user
      * @custom:then The `Transfer` event is emitted with the zero address as the sender, the user as the recipient and
@@ -52,9 +52,9 @@ contract TestUsdnMint is UsdnTokenFixture {
      * @custom:and The total shares are 50
      */
     function test_mintWithMultiplier() public {
-        usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
 
-        usdn.adjustDivisor(usdn.MAX_DIVISOR() / 2);
+        usdn.rebase(usdn.MAX_DIVISOR() / 2);
 
         vm.expectEmit(address(usdn));
         emit Transfer(address(0), USER_1, 100 ether); // expected event
@@ -68,18 +68,18 @@ contract TestUsdnMint is UsdnTokenFixture {
 
     /**
      * @custom:scenario Minting maximum tokens at maximum divisor then decreasing divisor to min value
-     * @custom:given This contract has the `ADJUSTMENT_ROLE`
+     * @custom:given This contract has the `REBASER_ROLE`
      * @custom:when MAX_TOKENS is minted at the max divisor
      * @custom:and The divisor is adjusted to the minimum value
      * @custom:then The user's balance is MAX_TOKENS * MAX_DIVISOR / MIN_DIVISOR and nothing reverts
      */
     function test_mintMaxAndIncreaseMultiplier() public {
-        usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
 
         uint256 maxTokens = usdn.maxTokens();
         usdn.mint(USER_1, maxTokens);
 
-        usdn.adjustDivisor(usdn.MIN_DIVISOR());
+        usdn.rebase(usdn.MIN_DIVISOR());
 
         assertEq(usdn.balanceOf(USER_1), maxTokens * usdn.MAX_DIVISOR() / usdn.MIN_DIVISOR());
     }

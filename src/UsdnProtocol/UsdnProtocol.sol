@@ -260,7 +260,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
 
-        // TODO different lower limit
         _hardLongExpoImbalanceLimit = newLimit;
     }
 
@@ -269,6 +268,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         if (newLimit < 0) {
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
+
         // TODO different lower limit
         _softVaultExpoImbalanceLimit = newLimit;
     }
@@ -278,8 +278,35 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         if (newLimit < _softVaultExpoImbalanceLimit) {
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
-        // TODO different lower limit
+
         _hardVaultExpoImbalanceLimit = newLimit;
+    }
+
+    function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
+        if (newPrice > _usdnRebaseThreshold) {
+            revert UsdnProtocolInvalidTargetUsdnPrice();
+        }
+        if (newPrice < uint128(10 ** _priceFeedDecimals)) {
+            // values smaller than $1 are not allowed
+            revert UsdnProtocolInvalidTargetUsdnPrice();
+        }
+        _targetUsdnPrice = newPrice;
+        emit TargetUsdnPriceUpdated(newPrice);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setUsdnRebaseThreshold(uint128 newThreshold) external onlyOwner {
+        if (newThreshold < _targetUsdnPrice) {
+            revert UsdnProtocolInvalidUsdnRebaseThreshold();
+        }
+        _usdnRebaseThreshold = newThreshold;
+        emit UsdnRebaseThresholdUpdated(newThreshold);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setUsdnRebaseInterval(uint256 newInterval) external onlyOwner {
+        _usdnRebaseInterval = newInterval;
+        emit UsdnRebaseIntervalUpdated(newInterval);
     }
 
     /**
