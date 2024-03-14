@@ -41,9 +41,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         (uint256 imbalanceBps, uint256 vaultExpoValueToLimit) = _testHelper();
         // call `imbalanceLimitDeposit` function with vaultExpoValueToLimit + 1
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IUsdnProtocolErrors.UsdnProtocolSoftVaultImbalanceLimitReached.selector, imbalanceBps
-            )
+            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
         );
         // should revert
         protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit + 1);

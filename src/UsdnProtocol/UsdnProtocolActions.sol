@@ -151,7 +151,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         int256 depositExpoImbalanceLimit = _depositExpoImbalanceLimit;
 
         // early return in case limit is disabled
-        if (depositExpoImbalanceLimit == type(int256).max) {
+        if (depositExpoImbalanceLimit == 0) {
             return;
         }
 
@@ -167,7 +167,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         ).safeDiv(currentLongExpo);
 
         if (imbalanceBps >= depositExpoImbalanceLimit) {
-            revert UsdnProtocolSoftVaultImbalanceLimitReached(imbalanceBps);
+            revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
 
@@ -180,7 +180,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         int256 withdrawalExpoImbalanceLimit = _withdrawalExpoImbalanceLimit;
 
         // early return in case limit is disabled
-        if (withdrawalExpoImbalanceLimit == type(int256).max) {
+        if (withdrawalExpoImbalanceLimit == 0) {
             return;
         }
 
@@ -198,7 +198,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentVaultExpo);
 
         if (imbalanceBps >= withdrawalExpoImbalanceLimit) {
-            revert UsdnProtocolHardLongImbalanceLimitReached(imbalanceBps);
+            revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
 
@@ -212,7 +212,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         int256 openExpoImbalanceLimit = _openExpoImbalanceLimit;
 
         // early return in case limit is disabled
-        if (openExpoImbalanceLimit == type(int256).max) {
+        if (openExpoImbalanceLimit == 0) {
             return;
         }
 
@@ -230,7 +230,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentVaultExpo);
 
         if (imbalanceBps >= openExpoImbalanceLimit) {
-            revert UsdnProtocolSoftLongImbalanceLimitReached(imbalanceBps);
+            revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
 
@@ -243,7 +243,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         int256 closeExpoImbalanceLimit = _closeExpoImbalanceLimit;
 
         // early return in case limit is disabled
-        if (closeExpoImbalanceLimit == type(int256).max) {
+        if (closeExpoImbalanceLimit == 0) {
             return;
         }
 
@@ -263,7 +263,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentLongExpo);
 
         if (imbalanceBps >= closeExpoImbalanceLimit) {
-            revert UsdnProtocolHardVaultImbalanceLimitReached(imbalanceBps);
+            revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
 

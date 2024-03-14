@@ -245,41 +245,43 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setOpenExpoImbalanceLimit(int256 newLimit) external onlyOwner {
-        if (newLimit < 0) {
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
-        }
-
-        // TODO different lower limit
-        _openExpoImbalanceLimit = newLimit;
+    function setOpenExpoImbalanceLimit(uint256 newLimit) external onlyOwner {
+        _openExpoImbalanceLimit = newLimit.toInt256();
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setWithdrawalExpoImbalanceLimit(int256 newLimit) external onlyOwner {
-        if (newLimit < _withdrawalExpoImbalanceLimit) {
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
+    function setWithdrawalExpoImbalanceLimit(uint256 newLimit) external onlyOwner {
+        // cast newLimit to int256
+        int256 newLimitInt = newLimit.toInt256();
+
+        if (newLimit != 0) {
+            // withdrawal limit lower than open not permitted
+            if (newLimitInt < _openExpoImbalanceLimit) {
+                revert UsdnProtocolInvalidExpoImbalanceLimit();
+            }
         }
 
-        _withdrawalExpoImbalanceLimit = newLimit;
+        _withdrawalExpoImbalanceLimit = newLimitInt;
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setDepositExpoImbalanceLimit(int256 newLimit) external onlyOwner {
-        if (newLimit < 0) {
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
-        }
-
-        // TODO different lower limit
-        _depositExpoImbalanceLimit = newLimit;
+    function setDepositExpoImbalanceLimit(uint256 newLimit) external onlyOwner {
+        _depositExpoImbalanceLimit = newLimit.toInt256();
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setCloseExpoImbalanceLimit(int256 newLimit) external onlyOwner {
-        if (newLimit < _closeExpoImbalanceLimit) {
-            revert UsdnProtocolInvalidExpoImbalanceLimit();
+    function setCloseExpoImbalanceLimit(uint256 newLimit) external onlyOwner {
+        // cast newLimit to int256
+        int256 newLimitInt = newLimit.toInt256();
+
+        if (newLimit != 0) {
+            // close limit lower than deposit not permitted
+            if (newLimitInt < _depositExpoImbalanceLimit) {
+                revert UsdnProtocolInvalidExpoImbalanceLimit();
+            }
         }
 
-        _closeExpoImbalanceLimit = newLimit;
+        _closeExpoImbalanceLimit = newLimitInt;
     }
 
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {

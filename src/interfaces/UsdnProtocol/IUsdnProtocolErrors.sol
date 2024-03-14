@@ -99,17 +99,8 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the soft longExpo imbalance limit provided is invalid
     error UsdnProtocolInvalidExpoImbalanceLimit();
 
-    /// @dev Indicates that the protocol long imbalance soft limit is reached
-    error UsdnProtocolSoftLongImbalanceLimitReached(int256 imbalanceBps);
-
-    /// @dev Indicates that the protocol long imbalance limit is reached
-    error UsdnProtocolHardLongImbalanceLimitReached(int256 imbalanceBps);
-
-    /// @dev Indicates that the protocol vault imbalance limit is reached
-    error UsdnProtocolSoftVaultImbalanceLimitReached(int256 imbalanceBps);
-
-    /// @dev Indicates that the protocol vault imbalance limit is reached
-    error UsdnProtocolHardVaultImbalanceLimitReached(int256 imbalanceBps);
+    /// @dev Indicates that the protocol imbalance limit is reached
+    error UsdnProtocolImbalanceLimitReached(int256 imbalanceBps);
 
     /// @dev Indicates that the protocol vault expo is invalid
     error UsdnProtocolInvalidVaultExpo();

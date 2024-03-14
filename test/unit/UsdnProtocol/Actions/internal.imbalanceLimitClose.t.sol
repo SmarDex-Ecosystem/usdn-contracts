@@ -34,16 +34,14 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      * @custom:scenario The `imbalanceLimitClose` function should revert when contract is balanced
      * and position value imbalance it
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `imbalanceLimitClose` function is called with values above the vault hard limit
+     * @custom:when The `imbalanceLimitClose` function is called with values above the close limit
      * @custom:then The transaction should revert
      */
     function test_RevertWith_imbalanceLimitCloseOutLimit() public {
         (uint256 imbalanceBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _testHelper();
         // call `imbalanceLimitClose` function with totalExpoValueToLimit + 1
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IUsdnProtocolErrors.UsdnProtocolHardVaultImbalanceLimitReached.selector, imbalanceBps
-            )
+            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
         );
         // should revert
         protocol.i_imbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);

@@ -41,9 +41,7 @@ contract FuzzingImbalanceLimitClose is UsdnProtocolBaseFixture {
         if (imbalanceBps >= protocol.getCloseExpoImbalanceLimit()) {
             // should revert with above close imbalance limit
             vm.expectRevert(
-                abi.encodeWithSelector(
-                    IUsdnProtocolErrors.UsdnProtocolHardVaultImbalanceLimitReached.selector, imbalanceBps
-                )
+                abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
             );
         }
 

@@ -41,7 +41,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         (uint256 imbalanceBps, uint256 longExpoValueToLimit) = _testHelper();
         // call `imbalanceLimitWithdrawal` function with vaultExpoValueToLimit + 1
         vm.expectRevert(
-            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolHardLongImbalanceLimitReached.selector, imbalanceBps)
+            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
         );
         // should revert
         protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit + 1);

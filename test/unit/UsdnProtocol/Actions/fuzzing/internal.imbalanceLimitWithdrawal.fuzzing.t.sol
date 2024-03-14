@@ -32,11 +32,9 @@ contract FuzzingImbalanceLimitWithdrawal is UsdnProtocolBaseFixture {
 
         // call `i_imbalanceLimitWithdrawal` with withdrawalAmount
         if (imbalanceBps >= protocol.getWithdrawalExpoImbalanceLimit()) {
-            // should revert with above hard long imbalance limit
+            // should revert with above withdrawal imbalance limit
             vm.expectRevert(
-                abi.encodeWithSelector(
-                    IUsdnProtocolErrors.UsdnProtocolHardLongImbalanceLimitReached.selector, imbalanceBps
-                )
+                abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
             );
         }
 

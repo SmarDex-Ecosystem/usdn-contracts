@@ -41,7 +41,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         (uint256 imbalanceBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _testHelper();
         // call `imbalanceLimitOpen` function with totalExpoValueToLimit + 1
         vm.expectRevert(
-            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolSoftLongImbalanceLimitReached.selector, imbalanceBps)
+            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
         );
         // should revert
         protocol.i_imbalanceLimitOpen(totalExpoValueToLimit + 1, longAmount);
