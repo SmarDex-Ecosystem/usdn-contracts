@@ -338,7 +338,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then The execution does not revert and the first pending action is processed
      * @custom:and The remaining pending action is the one for this contract (rawIndex 0)
      */
-    function test_RevertWhen_executePendingActionWrapAround() public {
+    function test_executePendingActionWrapAround() public {
         uint128 rawIndex2 = _addDummyPendingAction();
         assertEq(rawIndex2, 0, "raw index 2");
 
