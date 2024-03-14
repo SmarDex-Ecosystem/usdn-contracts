@@ -4,9 +4,9 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+
+import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
  * @custom:feature Fuzzing tests for the long part of the protocol
