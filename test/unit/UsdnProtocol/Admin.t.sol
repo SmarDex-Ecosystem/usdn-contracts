@@ -2,11 +2,13 @@
 pragma solidity 0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 /**
@@ -15,7 +17,9 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  */
 contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        SetUpParams memory params = DEFAULT_PARAMS;
+        params.enableLimits = true;
+        super._setUp(params);
     }
 
     /**
@@ -66,6 +70,18 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(customError);
         protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(this)));
+
+        vm.expectRevert(customError);
+        protocol.setOpenExpoImbalanceLimit(0);
+
+        vm.expectRevert(customError);
+        protocol.setWithdrawalExpoImbalanceLimit(0);
+
+        vm.expectRevert(customError);
+        protocol.setDepositExpoImbalanceLimit(0);
+
+        vm.expectRevert(customError);
+        protocol.setCloseExpoImbalanceLimit(0);
     }
 
     /**
@@ -502,5 +518,163 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setLiquidationRewardsManager(expectedNewValue);
         // assert new liquidation reward manager equal expectedNewValue
         assertEq(address(protocol.getLiquidationRewardsManager()), address(expectedNewValue));
+    }
+
+    /**
+     * @custom:scenario Call "setOpenExpoImbalanceLimit" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function with above signed int max value.
+     * @custom:then transaction should revert.
+     */
+    function test_RevertWhen_setOpenExpoImbalanceLimitMax() external adminPrank {
+        uint256 aboveSignedMax = uint256(type(int256).max) + 1;
+        // expected revert
+        vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintToInt.selector, aboveSignedMax));
+        // set open expo imbalance limit
+        protocol.setOpenExpoImbalanceLimit(aboveSignedMax);
+    }
+
+    /**
+     * @custom:scenario Call "setOpenExpoImbalanceLimit" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
+     * @custom:then Value should be updated.
+     */
+    function test_setOpenExpoImbalanceLimit() external adminPrank {
+        // value to assign
+        uint256 expectedNewValue = 0;
+        // expected event
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.ImbalanceLimitUpdated(expectedNewValue);
+        // set open expo imbalance limit
+        protocol.setOpenExpoImbalanceLimit(expectedNewValue);
+        // assert new open expo imbalance limit equal expected
+        assertEq(uint256(protocol.getOpenExpoImbalanceLimit()), expectedNewValue);
+    }
+
+    /**
+     * @custom:scenario Call "setWithdrawalExpoImbalanceLimit" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function with above signed int max value.
+     * @custom:then transaction should revert.
+     */
+    function test_RevertWhen_setWithdrawalExpoImbalanceLimitMax() external adminPrank {
+        uint256 aboveSignedMax = uint256(type(int256).max) + 1;
+        // expected revert
+        vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintToInt.selector, aboveSignedMax));
+        // set withdrawal expo imbalance limit
+        protocol.setWithdrawalExpoImbalanceLimit(aboveSignedMax);
+    }
+
+    /**
+     * @custom:scenario Call "setWithdrawalExpoImbalanceLimit" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function with below min value.
+     * @custom:then transaction should revert.
+     */
+    function test_RevertWhen_setWithdrawalExpoImbalanceLimitLow() external adminPrank {
+        // value lower than open expo imbalance limit
+        uint256 lowValue = uint256(protocol.getOpenExpoImbalanceLimit() - 1);
+        // expected revert
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit.selector);
+        // set withdrawal expo imbalance limit
+        protocol.setWithdrawalExpoImbalanceLimit(lowValue);
+    }
+
+    /**
+     * @custom:scenario Call "setWithdrawalExpoImbalanceLimit" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
+     * @custom:then Value should be updated.
+     */
+    function test_setWithdrawalExpoImbalanceLimit() external adminPrank {
+        // value to assign
+        uint256 expectedNewValue = 0;
+        // expected event
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.ImbalanceLimitUpdated(expectedNewValue);
+        // set withdrawal expo imbalance limit
+        protocol.setWithdrawalExpoImbalanceLimit(expectedNewValue);
+        // assert new withdrawal expo imbalance limit equal expected
+        assertEq(uint256(protocol.getWithdrawalExpoImbalanceLimit()), expectedNewValue);
+    }
+
+    /**
+     * @custom:scenario Call "setDepositExpoImbalanceLimit" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function with above signed int max value.
+     * @custom:then transaction should revert.
+     */
+    function test_RevertWhen_setDepositExpoImbalanceLimitMax() external adminPrank {
+        uint256 aboveSignedMax = uint256(type(int256).max) + 1;
+        // expected revert
+        vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintToInt.selector, aboveSignedMax));
+        // set deposit expo imbalance limit
+        protocol.setDepositExpoImbalanceLimit(aboveSignedMax);
+    }
+
+    /**
+     * @custom:scenario Call "setDepositExpoImbalanceLimit" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
+     * @custom:then Value should be updated.
+     */
+    function test_setDepositExpoImbalanceLimit() external adminPrank {
+        // value to assign
+        uint256 expectedNewValue = 0;
+        // expected event
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.ImbalanceLimitUpdated(expectedNewValue);
+        // set deposit expo imbalance limit
+        protocol.setDepositExpoImbalanceLimit(expectedNewValue);
+        // assert new deposit expo imbalance limit equal expected
+        assertEq(uint256(protocol.getDepositExpoImbalanceLimit()), expectedNewValue);
+    }
+
+    /**
+     * @custom:scenario Call "setCloseExpoImbalanceLimit" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function with above signed int max value.
+     * @custom:then transaction should revert.
+     */
+    function test_RevertWhen_setCloseExpoImbalanceLimitMax() external adminPrank {
+        uint256 aboveSignedMax = uint256(type(int256).max) + 1;
+        // expected revert
+        vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintToInt.selector, aboveSignedMax));
+        // set close expo imbalance limit
+        protocol.setCloseExpoImbalanceLimit(aboveSignedMax);
+    }
+
+    /**
+     * @custom:scenario Call "setCloseExpoImbalanceLimit" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function with below min value.
+     * @custom:then transaction should revert.
+     */
+    function test_RevertWhen_setCloseExpoImbalanceLimitLow() external adminPrank {
+        // value lower than deposit expo imbalance limit
+        uint256 lowValue = uint256(protocol.getDepositExpoImbalanceLimit() - 1);
+        // expected revert
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit.selector);
+        // set close expo imbalance limit
+        protocol.setCloseExpoImbalanceLimit(lowValue);
+    }
+
+    /**
+     * @custom:scenario Call "setCloseExpoImbalanceLimit" from admin.
+     * @custom:given The initial usdnProtocol state from admin wallet.
+     * @custom:when Admin wallet trigger admin contract function.
+     * @custom:then Value should be updated.
+     */
+    function test_setCloseExpoImbalanceLimit() external adminPrank {
+        // value to assign
+        uint256 expectedNewValue = 0;
+        // expected event
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.ImbalanceLimitUpdated(expectedNewValue);
+        // set close expo imbalance limit
+        protocol.setCloseExpoImbalanceLimit(expectedNewValue);
+        // assert new close expo imbalance limit equal expected
+        assertEq(uint256(protocol.getCloseExpoImbalanceLimit()), expectedNewValue);
     }
 }
