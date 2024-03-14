@@ -47,6 +47,12 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     /*                                   Reverts                                  */
     /* -------------------------------------------------------------------------- */
 
+    /**
+     * @custom:scenario A user tries to validate a close position action with the wrong action pending
+     * @custom:given An initiated open position
+     * @custom:when The owner of the position calls _validateClosePosition
+     * @custom:then The call reverts because the pending action is not ValidateClosePosition
+     */
     function test_RevertsWhen_validateClosePositionWithTheWrongPendingAction() external {
         // Setup an initiate action to have a pending validate action for this user
         setUpUserPositionInLong(
@@ -59,7 +65,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         bytes memory priceData = abi.encode(params.initialPrice);
 
-        // Try to validate a close position action with a pending action different than ValidateClosePosition
+        // Try to validate a close position action with a pending action other than ValidateClosePosition
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidPendingAction.selector));
         protocol.i_validateClosePosition(address(this), priceData);
     }
@@ -94,7 +100,6 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:scenario A user validate closes a position with a pending action
      * @custom:given A validated long position
      * @custom:and an initiated open position action from another user
-     * @custom:and oracle validation cost == 0
      * @custom:when User calls validateClosePosition with valid price data for the pending action
      * @custom:then The user validates the pending action
      */
@@ -146,7 +151,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives half of the position amount
      */
-    function test__validateClosePosition() public {
+    function test__validateClosePosition() external {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 

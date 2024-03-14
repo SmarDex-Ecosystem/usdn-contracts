@@ -13,7 +13,6 @@ import { USER_1 } from "test/utils/Constants.sol";
  * @custom:feature The validate close position functions of the USDN Protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x.
- * @custom:and A user with 100_000 wstETH in their wallet
  */
 contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
@@ -30,9 +29,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         params.enableProtocolFees = false;
 
         super._setUp(params);
-
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
-        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
 
         (tick, tickVersion, index) = setUpUserPositionInLong(
             address(this),
@@ -137,7 +133,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:scenario A user initiates a close position action with a pending action
      * @custom:given A validated long position
      * @custom:and an initiated open position action from another user
-     * @custom:and oracle validation cost == 0
      * @custom:when User calls initiateClosePosition with valid price data for the pending action
      * @custom:then The user validates the pending action
      */
@@ -289,7 +284,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------- Pending action's state ------------------------- */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         assertTrue(action.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
-        assertEq(action.timestamp, block.timestamp, "The block timestamp shouold be now");
+        assertEq(action.timestamp, block.timestamp, "The block timestamp should be now");
         assertEq(action.user, address(this), "The user should be the transaction sender");
         assertEq(action.tick, tick, "The position tick is wrong");
         assertEq(
@@ -298,10 +293,10 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         assertEq(
             action.closeAmount, amountToClose, "Amount of the pending action should be equal to the amount to close"
         );
-        assertEq(action.tickVersion, tickVersion, "action tickVersion");
-        assertEq(action.index, index, "action index");
-        assertEq(action.closeLiqMultiplier, liquidationMultiplier, "action closeLiqMultiplier");
-        assertEq(action.closeTempTransfer, assetToTransfer, "action closeTempTransfer");
+        assertEq(action.tickVersion, tickVersion, "The tick version should not have changed");
+        assertEq(action.index, index, "The index should not have changed");
+        assertEq(action.closeLiqMultiplier, liquidationMultiplier, "The liquidation multiplier should not have changed");
+        assertEq(action.closeTempTransfer, assetToTransfer, "The close temp transfer should not have changed");
 
         /* ----------------------------- Protocol State ----------------------------- */
         assertEq(
