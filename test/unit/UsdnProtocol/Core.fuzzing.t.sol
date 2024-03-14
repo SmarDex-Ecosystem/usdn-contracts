@@ -70,7 +70,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
             // create a random deposit position
             uint256 depositAmount = (random % 9 ether) + 1 ether;
-            setUpUserPositionInVault(user, ProtocolAction.ValidateDeposit, uint96(depositAmount), currentPrice);
+            setUpUserPositionInVault(user, ProtocolAction.ValidateDeposit, uint128(depositAmount), currentPrice);
             vm.stopPrank();
 
             // increase the current price, each time by 100 dollars or less, the max price is 3000 dollars
