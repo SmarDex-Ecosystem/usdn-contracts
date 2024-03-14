@@ -277,8 +277,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             }
         } else {
             totalExpoToRemove = pos.totalExpo;
-            --_positionsInTick[tickHash];
-            --_totalLongPositions;
+            unchecked {
+                --_positionsInTick[tickHash];
+                --_totalLongPositions;
+            }
 
             // Remove from tick array (set to zero to avoid shifting indices)
             delete _longPositions[tickHash][index];
