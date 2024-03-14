@@ -579,6 +579,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param tick The tick containing the position to close
      * @param tickVersion The tick version of the position to close
      * @param index The index of the position inside the tick array
+     * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
      */
     function _initiateClosePosition(
