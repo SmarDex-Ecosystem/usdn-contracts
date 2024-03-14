@@ -5,6 +5,8 @@ import { ADMIN } from "test/utils/Constants.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature All fees functionality of the USDN Protocol
  * @custom:background Given a protocol initialized with default params
@@ -89,12 +91,10 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:then The pending protocol fee is > 0
      */
     function test_pendingProtocolFee() public {
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
-
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
-        protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        _waitDelay();
-        protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        setUpUserPositionInVault(
+            address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
+        );
         assertGt(protocol.getPendingProtocolFee(), 0, "pending protocol fee after deposit");
     }
 
@@ -106,20 +106,22 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      * @custom:then The pending protocol fee is distributed to the fee collector
      */
     function test_feeHitThreshold() public {
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), 100_000 ether);
-
-        protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        _waitDelay();
-        protocol.validateDeposit(abi.encode(DEFAULT_PARAMS.initialPrice), "");
-        skip(4 days);
-        protocol.initiateOpenPosition(
-            5000 ether, DEFAULT_PARAMS.initialPrice / 2, abi.encode(DEFAULT_PARAMS.initialPrice), ""
+        setUpUserPositionInVault(
+            address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
-        _waitDelay();
-        protocol.validateOpenPosition(abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        skip(4 days);
+        setUpUserPositionInLong(
+            address(this),
+            ProtocolAction.ValidateOpenPosition,
+            5000 ether,
+            DEFAULT_PARAMS.initialPrice / 2,
+            DEFAULT_PARAMS.initialPrice
+        );
         skip(8 days);
         assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");
-        protocol.initiateDeposit(10_000 ether, abi.encode(DEFAULT_PARAMS.initialPrice), "");
+        setUpUserPositionInVault(
+            address(this), ProtocolAction.InitiateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
+        );
         assertGe(wstETH.balanceOf(ADMIN), protocol.getFeeThreshold(), "fee collector balance after collect");
     }
 }
