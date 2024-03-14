@@ -136,7 +136,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 storageBalanceBefore = protocol.getBalanceLong();
 
-        protocol.initiateClosePosition(tick, tickVersion, index, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, "");
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
@@ -176,7 +176,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 balanceBefore = wstETH.balanceOf(address(this));
 
-        protocol.initiateClosePosition(tick, tickVersion, index, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, "");
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
@@ -519,7 +519,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         skip(1 hours);
 
-        protocol.initiateClosePosition(tick, tickVersion, index, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, "");
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
@@ -546,7 +546,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         );
         skip(1 hours);
 
-        protocol.initiateClosePosition(tick, tickVersion, index, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, "");
 
         action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 

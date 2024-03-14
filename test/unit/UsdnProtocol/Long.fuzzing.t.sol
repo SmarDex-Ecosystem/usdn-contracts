@@ -21,7 +21,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Check calculations of `_positionValue`
-     * @custom:given An amount between 1 wei and type(uint96).max ether
+     * @custom:given An amount between 1 wei and type(uint128).max ether
      * @custom:and an opening price between the protocol's min price and type(uint128).max
      * @custom:and a current price between the opening price and type(uint128).max
      * @custom:and a leverage between the protocol's min and max values
@@ -32,21 +32,21 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
      * @param currentPrice The price of the asset now
      * @param leverage The leverage of the position
      */
-    function testFuzz_positionValue(uint96 amount, uint128 priceAtOpening, uint128 currentPrice, uint256 leverage)
+    function testFuzz_positionValue(uint128 amount, uint128 priceAtOpening, uint128 currentPrice, uint256 leverage)
         public
     {
         uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
+        uint256 maxLeverage = protocol.getMaxLeverage();
 
         // Set some boundaries for the fuzzed inputs
-        amount = bound(amount, 1, type(uint96).max).toUint96();
+        amount = bound(amount, 1, type(uint128).max * levDecimals / maxLeverage).toUint128();
         // Take uint128 max value as the upper limit because TickMath.MAX_PRICE is above it
         priceAtOpening = bound(priceAtOpening, TickMath.MIN_PRICE, type(uint128).max).toUint128();
         currentPrice = bound(currentPrice, priceAtOpening, type(uint128).max).toUint128();
-        leverage = bound(leverage, protocol.getMinLeverage(), protocol.getMaxLeverage());
+        leverage = bound(leverage, protocol.getMinLeverage(), maxLeverage);
 
         // Start checks
-        uint128 liqPrice =
-            priceAtOpening - FixedPointMathLib.fullMulDiv(priceAtOpening, levDecimals, leverage).toUint128();
+        uint128 liqPrice = protocol.i_getLiquidationPrice(priceAtOpening, uint128(leverage));
         uint128 positionTotalExpo = FixedPointMathLib.fullMulDiv(amount, leverage, levDecimals).toUint128();
         uint256 expectedValue = FixedPointMathLib.fullMulDiv(positionTotalExpo, (currentPrice - liqPrice), currentPrice);
         uint256 value = protocol.i_positionValue(currentPrice, liqPrice, positionTotalExpo);
@@ -55,7 +55,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Compare the implementation of `_positionValue` with leverage vs with expo
-     * @custom:given An amount between 1 wei and type(uint96).max ether
+     * @custom:given An amount between 1 wei and type(uint128).max ether
      * @custom:and an opening price between the protocol's min price and type(uint128).max
      * @custom:and a current price between the opening price and type(uint128).max
      * @custom:and a leverage between the protocol's min and max values
@@ -68,23 +68,23 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
      * @param leverage The leverage of the position
      */
     function testFuzz_comparePositionValueCalculationWithExpoVSWithLeverage(
-        uint96 amount,
+        uint128 amount,
         uint128 priceAtOpening,
         uint128 currentPrice,
         uint256 leverage
     ) public {
         uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
+        uint256 maxLeverage = protocol.getMaxLeverage();
 
         // Set some boundaries for the fuzzed inputs
-        amount = bound(amount, 1, type(uint96).max).toUint96();
+        amount = bound(amount, 1, type(uint128).max * levDecimals / maxLeverage).toUint128();
         // Take uint128 max value as the upper limit because TickMath.MAX_PRICE is above it
         priceAtOpening = bound(priceAtOpening, TickMath.MIN_PRICE, type(uint128).max).toUint128();
         currentPrice = bound(currentPrice, priceAtOpening, type(uint128).max).toUint128();
-        leverage = bound(leverage, protocol.getMinLeverage(), protocol.getMaxLeverage());
+        leverage = bound(leverage, protocol.getMinLeverage(), maxLeverage);
 
         // Start checks
-        uint128 liqPrice =
-            priceAtOpening - FixedPointMathLib.fullMulDiv(priceAtOpening, levDecimals, leverage).toUint128();
+        uint128 liqPrice = protocol.i_getLiquidationPrice(priceAtOpening, uint128(leverage));
         uint128 positionTotalExpo = FixedPointMathLib.fullMulDiv(amount, leverage, levDecimals).toUint128();
 
         // Current implementation of position value's calculation

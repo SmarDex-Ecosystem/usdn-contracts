@@ -293,7 +293,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, price);
 
         vm.expectEmit();
-        emit InitiatedClosePosition(address(this), tick, tickVersion, index);
-        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(price), "");
+        emit InitiatedClosePosition(address(this), tick, tickVersion, index, 0, 0);
+        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, abi.encode(price), "");
     }
 }
