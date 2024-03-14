@@ -44,11 +44,11 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             string memory priceError = string.concat("Wrong oracle middleware price for ", actionNames[i]);
 
             // pyth data
-            (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = getMockedPythSignature();
+            (uint256 pythPrice, uint256 pythConf, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
+                getMockedPythSignature();
             // Apply conf ratio to pyth confidence
             pythConf = (
-                pythConf * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals())
-                    * oracleMiddleware.getConfRatio()
+                pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatio()
             ) / oracleMiddleware.getConfRatioDenom();
 
             // middleware data
@@ -67,8 +67,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
 
-            uint256 formattedPythPrice =
-                pythPrice * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals());
+            uint256 formattedPythPrice = pythPrice * 10 ** (oracleMiddleware.getDecimals() - 8);
 
             // Price + conf
             if (
@@ -158,12 +157,11 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             string memory priceError = string.concat("Wrong oracle middleware price for ", actionNames[i]);
 
             // pyth data
-            (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
+            (uint256 pythPrice, uint256 pythConf, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
                 getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
             // Apply conf ratio to pyth confidence
             pythConf = (
-                pythConf * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals())
-                    * oracleMiddleware.getConfRatio()
+                pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatio()
             ) / oracleMiddleware.getConfRatioDenom();
 
             // middleware data
@@ -178,8 +176,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 );
             }
 
-            uint256 formattedPythPrice =
-                pythPrice * 10 ** (oracleMiddleware.getDecimals() - oracleMiddleware.getPythDecimals());
+            uint256 formattedPythPrice = pythPrice * 10 ** (oracleMiddleware.getDecimals() - pythDecimals);
 
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);

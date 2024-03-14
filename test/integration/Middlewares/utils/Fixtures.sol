@@ -70,7 +70,7 @@ contract CommonBaseIntegrationFixture is BaseFixture {
 
     function _getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
-        returns (uint256, uint256, uint256, bytes memory)
+        returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
     {
         string[] memory cmds = new string[](4);
         cmds[0] = "./test_utils/target/release/test_utils";
@@ -78,7 +78,7 @@ contract CommonBaseIntegrationFixture is BaseFixture {
         cmds[2] = vm.toString(feed);
         cmds[3] = vm.toString(timestamp);
         bytes memory result = vm.ffi(cmds);
-        return abi.decode(result, (uint256, uint256, uint256, bytes));
+        return abi.decode(result, (uint256, uint256, uint256, uint256, bytes));
     }
 
     function getChainlinkPrice() internal view returns (uint256, uint256) {
@@ -88,7 +88,7 @@ contract CommonBaseIntegrationFixture is BaseFixture {
 
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
-        returns (uint256, uint256, uint256, bytes memory)
+        returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
     {
         return _getHermesApiSignature(feed, timestamp);
     }
@@ -117,8 +117,12 @@ contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture,
         oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_WSTETH_USD, address(chainlinkOnChain), 1 hours);
     }
 
-    function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
-        return (PYTH_DATA_PRICE, PYTH_DATA_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA);
+    function getMockedPythSignature()
+        internal
+        pure
+        returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
+    {
+        return (PYTH_DATA_PRICE, PYTH_DATA_CONF, 8, PYTH_DATA_TIMESTAMP, PYTH_DATA);
     }
 }
 
@@ -143,8 +147,12 @@ contract WstethIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegr
             new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH, 1 hours);
     }
 
-    function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
-        return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
+    function getMockedPythSignature()
+        internal
+        pure
+        returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
+    {
+        return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, 8, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
     }
 
     function stethToWsteth(uint256 amount) public view returns (uint256) {

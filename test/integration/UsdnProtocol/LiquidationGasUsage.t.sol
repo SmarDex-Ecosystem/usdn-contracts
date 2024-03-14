@@ -65,7 +65,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
     }
 
     function _forkGasUsageHelper(bool withRebase) public {
-        (uint256 pythPriceWstETH,,,) =
+        (uint256 pythPriceWstETH,,,,) =
             getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp + oracleMiddleware.getValidationDelay());
         uint128 pythPriceNormalized = uint128(pythPriceWstETH * 10 ** 10);
 
@@ -111,7 +111,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
             liquidationRewardsManager.getRewardsParameters();
 
         skip(1 minutes);
-        (,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
+        (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
         uint256 oracleFee = oracleMiddleware.validationCost(data, ProtocolAction.Liquidation);
 
         // If required, enable rebase

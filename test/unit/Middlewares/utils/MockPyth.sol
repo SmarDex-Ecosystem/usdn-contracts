@@ -102,4 +102,9 @@ contract MockPyth is IMockPythError {
     function getUpdateFee(bytes[] calldata updateData) public pure returns (uint256) {
         return 1 wei * updateData.length;
     }
+
+    /// @dev Simulate an invalid price so that the cached price is never used in testing
+    function getPriceUnsafe(bytes32) public pure returns (PythStructs.Price memory price_) {
+        price_.price = -1;
+    }
 }

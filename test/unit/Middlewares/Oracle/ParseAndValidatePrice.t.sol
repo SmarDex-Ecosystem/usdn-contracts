@@ -24,10 +24,8 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     constructor() {
         super.setUp();
 
-        FORMATTED_ETH_PRICE =
-            (ETH_PRICE * (10 ** oracleMiddleware.getDecimals())) / (10 ** oracleMiddleware.getPythDecimals());
-        FORMATTED_ETH_CONF = (ETH_CONF * (10 ** oracleMiddleware.getDecimals()))
-            / (10 ** oracleMiddleware.getPythDecimals()) * oracleMiddleware.getConfRatio()
+        FORMATTED_ETH_PRICE = (ETH_PRICE * (10 ** oracleMiddleware.getDecimals())) / 1e8;
+        FORMATTED_ETH_CONF = (ETH_CONF * (10 ** oracleMiddleware.getDecimals())) / 1e8 * oracleMiddleware.getConfRatio()
             / oracleMiddleware.getConfRatioDenom();
     }
 

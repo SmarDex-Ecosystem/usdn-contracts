@@ -20,17 +20,9 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     /// @notice The maximum age of a recent price to be considered valid
     uint64 internal _recentPriceDelay = 45 seconds;
 
-    /// @notice The last number of decimals reported by pyth for this price feed
-    uint256 internal _lastSeenDecimals = 8; // initial value will be overwritten once a price update is processed
-
     constructor(address pythAddress, bytes32 pythPriceID) {
         _pyth = IPyth(pythAddress);
         _priceID = pythPriceID;
-    }
-
-    /// @inheritdoc IPythOracle
-    function getPythDecimals() external view returns (uint256) {
-        return _lastSeenDecimals;
     }
 
     /// @inheritdoc IPythOracle
@@ -109,7 +101,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
      */
     function _getFormattedPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp, uint256 middlewareDecimals)
         internal
-        returns (FormattedPythPrice memory pythPrice_)
+        returns (FormattedPythPrice memory price_)
     {
         // this call checks that the price is strictly positive
         PythStructs.Price memory pythPrice = _getPythPrice(priceUpdateData, targetTimestamp);
@@ -118,10 +110,17 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
             revert OracleMiddlewarePythExponent(pythPrice.expo);
         }
 
-        uint256 pythDecimals = uint32(-pythPrice.expo);
-        _lastSeenDecimals = pythDecimals;
+        price_ = _formatPythPrice(pythPrice, middlewareDecimals);
+    }
 
-        pythPrice_ = FormattedPythPrice({
+    function _formatPythPrice(PythStructs.Price memory pythPrice, uint256 middlewareDecimals)
+        internal
+        pure
+        returns (FormattedPythPrice memory price_)
+    {
+        uint256 pythDecimals = uint32(-pythPrice.expo);
+
+        price_ = FormattedPythPrice({
             price: uint256(uint64(pythPrice.price)) * 10 ** middlewareDecimals / 10 ** pythDecimals,
             conf: uint256(pythPrice.conf) * 10 ** middlewareDecimals / 10 ** pythDecimals,
             publishTime: pythPrice.publishTime
@@ -138,5 +137,24 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         pricesUpdateData[0] = priceUpdateData;
 
         return _pyth.getUpdateFee(pricesUpdateData);
+    }
+
+    /**
+     * @notice Get the latest seen (cached) price from the pyth contract
+     * @param middlewareDecimals The number of decimals for the returned price
+     * @return price_ The formatted cached Pyth price, or all-zero values if there was no valid pyth price on-chain
+     */
+    function _getLatestStoredPythPrice(uint256 middlewareDecimals)
+        internal
+        view
+        returns (FormattedPythPrice memory price_)
+    {
+        // we use getPriceUnsafe to get the latest price without reverting, no mater how old
+        PythStructs.Price memory pythPrice = _pyth.getPriceUnsafe(_priceID);
+        // negative or zero prices are considered invalid, we return zero
+        if (pythPrice.price <= 0) {
+            return price_;
+        }
+        price_ = _formatPythPrice(pythPrice, middlewareDecimals);
     }
 }
