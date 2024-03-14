@@ -10,7 +10,6 @@ import { TickMath } from "src/libraries/TickMath.sol";
 contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /**
