@@ -7,7 +7,11 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { ADMIN } from "test/utils/Constants.sol";
 
 import {
-    PendingAction, VaultPendingAction, LongPendingAction
+    Position,
+    PendingAction,
+    ProtocolAction,
+    VaultPendingAction,
+    LongPendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
