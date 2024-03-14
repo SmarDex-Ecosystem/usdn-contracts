@@ -20,7 +20,6 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param amount The amount of wstETH to deposit.
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
-     * provided.
      */
     function initiateDeposit(
         uint128 amount,
@@ -38,7 +37,6 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * (from the oracle middleware) to the timestamp of the initiate action.
      * @param depositPriceData The price data corresponding to the sender's pending deposit action.
      * @param previousActionsData The data needed to validate actionable pending actions.
-     * provided.
      */
     function validateDeposit(bytes calldata depositPriceData, PreviousActionsData calldata previousActionsData)
         external
@@ -53,7 +51,6 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param usdnAmount The amount of USDN to burn.
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
-     * provided.
      */
     function initiateWithdrawal(
         uint128 usdnAmount,
@@ -71,7 +68,6 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * (from the oracle middleware) to the timestamp of the initiate action.
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action.
      * @param previousActionsData The data needed to validate actionable pending actions.
-     * provided.
      */
     function validateWithdrawal(bytes calldata withdrawalPriceData, PreviousActionsData calldata previousActionsData)
         external
@@ -90,7 +86,6 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions.
-     * provided.
      * @return tick_ The tick containing the new position
      * @return tickVersion_ The tick version
      * @return index_ The index of the new position inside the tick array
@@ -115,7 +110,6 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * we emit the `LiquidationPriceUpdated` event.
      * @param openPriceData The price data corresponding to the sender's pending open position action.
      * @param previousActionsData The data needed to validate actionable pending actions.
-     * provided.
      */
     function validateOpenPosition(bytes calldata openPriceData, PreviousActionsData calldata previousActionsData)
         external
@@ -139,7 +133,6 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
-     * provided.
      */
     function initiateClosePosition(
         int24 tick,
@@ -161,7 +154,6 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * This operation calculates the final exit price and profit of the long position and performs the payout.
      * @param closePriceData The price data corresponding to the sender's pending close position action.
      * @param previousActionsData The data needed to validate actionable pending actions.
-     * provided.
      */
     function validateClosePosition(bytes calldata closePriceData, PreviousActionsData calldata previousActionsData)
         external
