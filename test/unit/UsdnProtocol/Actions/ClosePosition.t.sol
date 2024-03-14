@@ -57,7 +57,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
                 UsdnProtocolAmountToCloseHigherThanPositionAmount.selector, amountToClose, pos.amount
             )
         );
-        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -70,7 +70,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolAmountToCloseIsZero.selector));
-        protocol.initiateClosePosition(tick, tickVersion, index, 0, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, 0, priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -90,7 +90,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         // Try to close the position once the price comes back up
         priceData = abi.encode(params.initialPrice);
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion));
-        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount / 2, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount / 2, priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -124,7 +124,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
             posBefore.amount - amountToClose,
             posBefore.totalExpo - totalExpoToClose
         );
-        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA);
 
         /* ---------------------------- Position's state ---------------------------- */
         Position memory posAfter = protocol.getLongPosition(tick, tickVersion, index);
@@ -191,7 +191,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
         uint128 amountToClose = 100_000;
-        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA);
         skip(oracleMiddleware.getValidationDelay() + 1);
 
         /* ------------------------- Validate Close Position ------------------------ */
@@ -226,7 +226,9 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         );
 
         /* --------------------- Close the rest of the position --------------------- */
-        protocol.initiateClosePosition(tick, tickVersion, index, pos.amount - amountToClose, priceData, "");
+        protocol.initiateClosePosition(
+            tick, tickVersion, index, pos.amount - amountToClose, priceData, EMPTY_PREVIOUS_DATA
+        );
         skip(oracleMiddleware.getValidationDelay() + 1);
         protocol.i_validateClosePosition(address(this), priceData);
         posAfter = protocol.getLongPosition(tick, tickVersion, index);
@@ -257,7 +259,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
 
         uint128 amountToClose = pos.amount / 2;
-        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA);
         skip(oracleMiddleware.getValidationDelay() + 1);
 
         /* ------------------------- Validate Close Position ------------------------ */
@@ -313,7 +315,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
 
         uint128 amountToClose = pos.amount / 2;
-        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA);
         skip(oracleMiddleware.getValidationDelay() + 1);
 
         /* ------------------------- Validate Close Position ------------------------ */
@@ -367,7 +369,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
 
         uint128 amountToClose = pos.amount / 2;
-        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA);
         skip(oracleMiddleware.getValidationDelay() + 1);
 
         Position memory remainingPos = protocol.getLongPosition(tick, tickVersion, index);

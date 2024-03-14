@@ -7,7 +7,8 @@ import {
     PendingAction,
     VaultPendingAction,
     LongPendingAction,
-    ProtocolAction
+    ProtocolAction,
+    PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -37,6 +38,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _EMA = 0;
     }
 
+    /// @dev Push a pending item to the front of the pending actions queue
+    function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
+        rawIndex_ = _pendingActionsQueue.pushFront(action);
+        _pendingActions[action.user] = uint256(rawIndex_) + 1;
+    }
+
     function i_validateClosePosition(address user, bytes calldata priceData) external {
         _validateClosePosition(user, priceData);
     }
@@ -62,8 +69,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         delete _pendingActions[user];
     }
 
-    function i_getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory) {
-        return _getActionablePendingAction(maxIter);
+    function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
+        return _getActionablePendingAction();
     }
 
     function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
@@ -209,5 +216,17 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint8 assetDecimals
     ) external pure returns (uint256) {
         return _calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, usdnDecimals, assetDecimals);
+    }
+
+    function i_addPendingAction(address user, PendingAction memory action) external {
+        _addPendingAction(user, action);
+    }
+
+    function i_getPendingAction(address user) external view returns (PendingAction memory, uint128) {
+        return _getPendingAction(user);
+    }
+
+    function i_executePendingAction(PreviousActionsData calldata data) external {
+        _executePendingAction(data);
     }
 }

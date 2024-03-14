@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { USER_1, USER_2, PYTH_STETH_USD } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
 
-import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Validating two positions with Pyth prices at the same time
@@ -31,7 +31,7 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         require(success, "USER_1 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
         protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, 1000 ether, "", ""
+            1 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA
         );
         uint256 ts1 = block.timestamp;
         vm.stopPrank();
@@ -41,7 +41,7 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         require(success, "USER_2 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
         protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, 1000 ether, "", ""
+            1 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA
         );
         uint256 ts2 = block.timestamp;
         vm.stopPrank();
@@ -54,12 +54,17 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         uint256 data1Fee = oracleMiddleware.validationCost(data1, ProtocolAction.ValidateOpenPosition);
         (,,,, bytes memory data2) = getHermesApiSignature(PYTH_STETH_USD, ts2 + oracleMiddleware.getValidationDelay());
         uint256 data2Fee = oracleMiddleware.validationCost(data2, ProtocolAction.ValidateOpenPosition);
+        bytes[] memory previousData = new bytes[](1);
+        previousData[0] = data1;
+        uint128[] memory rawIndices = new uint128[](1);
+        rawIndices[0] = 0;
         vm.prank(USER_2);
-        protocol.validateOpenPosition{ value: data1Fee + data2Fee }(data2, data1);
+        protocol.validateOpenPosition{ value: data1Fee + data2Fee }(
+            data2, PreviousActionsData(previousData, rawIndices)
+        );
         // No more pending action
-        vm.prank(address(0)); // simulate front-end call by someone else
-        PendingAction memory action = protocol.getActionablePendingAction(0);
-        assertEq(action.user, address(0));
+        (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 0, "pending actions length");
         vm.stopPrank();
     }
 }

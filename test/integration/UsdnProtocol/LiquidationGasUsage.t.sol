@@ -87,19 +87,20 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         vm.stopPrank();
 
         /* ---------------------------- Set up positions ---------------------------- */
+
         vm.prank(USER_1);
-        protocol.initiateOpenPosition(1 ether, pythPriceNormalized + 150e18, hex"beef", "");
+        protocol.initiateOpenPosition(1 ether, pythPriceNormalized + 150e18, hex"beef", EMPTY_PREVIOUS_DATA);
         vm.prank(USER_2);
-        protocol.initiateOpenPosition(1 ether, pythPriceNormalized + 100e18, hex"beef", "");
+        protocol.initiateOpenPosition(1 ether, pythPriceNormalized + 100e18, hex"beef", EMPTY_PREVIOUS_DATA);
         vm.prank(USER_3);
-        protocol.initiateOpenPosition(1 ether, pythPriceNormalized + 50e18, hex"beef", "");
+        protocol.initiateOpenPosition(1 ether, pythPriceNormalized + 50e18, hex"beef", EMPTY_PREVIOUS_DATA);
         _waitDelay();
         vm.prank(USER_1);
-        protocol.validateOpenPosition(hex"beef", "");
+        protocol.validateOpenPosition(hex"beef", EMPTY_PREVIOUS_DATA);
         vm.prank(USER_2);
-        protocol.validateOpenPosition(hex"beef", "");
+        protocol.validateOpenPosition(hex"beef", EMPTY_PREVIOUS_DATA);
         vm.prank(USER_3);
-        protocol.validateOpenPosition(hex"beef", "");
+        protocol.validateOpenPosition(hex"beef", EMPTY_PREVIOUS_DATA);
 
         /* ---------------------------- Start the checks ---------------------------- */
         // Put the original oracle back
