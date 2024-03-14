@@ -27,15 +27,15 @@ contract FuzzingImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         // new vault expo
         int256 newExpoVault = int256(initialVaultExpo + depositAmount);
         // expected imbalance percentage
-        int256 imbalancePct = (newExpoVault - int256(uint256(initialLongExpo))) * int256(protocol.BPS_DIVISOR())
+        int256 imbalanceBps = (newExpoVault - int256(uint256(initialLongExpo))) * int256(protocol.BPS_DIVISOR())
             / int256(uint256(initialLongExpo));
 
         // call `imbalanceLimitDeposit` with depositAmount
-        if (imbalancePct >= protocol.getSoftVaultExpoImbalanceLimit()) {
-            // should revert with above soft vault imbalance limit
+        if (imbalanceBps >= protocol.getDepositExpoImbalanceLimit()) {
+            // should revert with above deposit imbalance limit
             vm.expectRevert(
                 abi.encodeWithSelector(
-                    IUsdnProtocolErrors.UsdnProtocolSoftVaultImbalanceLimitReached.selector, imbalancePct
+                    IUsdnProtocolErrors.UsdnProtocolSoftVaultImbalanceLimitReached.selector, imbalanceBps
                 )
             );
         }

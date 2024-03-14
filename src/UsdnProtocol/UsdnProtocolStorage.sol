@@ -112,32 +112,32 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _feeThreshold = 1 ether;
 
     /**
-     * @notice The soft longExpo imbalance limit.
-     * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of long
-     * the soft long rebalancing mechanism is triggered, preventing the opening of a new long position.
+     * @notice The open long expo imbalance limit.
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long
+     * the open rebalancing mechanism is triggered, preventing the opening of a new long position.
      */
-    int256 internal _softLongExpoImbalanceLimit = 200;
+    int256 internal _openExpoImbalanceLimit = 200;
 
     /**
-     * @notice The hard longExpo imbalance limit.
-     * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of long,
-     * the hard long rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
+     * @notice The withdrawal long expo imbalance limit.
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long,
+     * the withdrawal rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
      */
-    int256 internal _hardLongExpoImbalanceLimit = 600;
+    int256 internal _withdrawalExpoImbalanceLimit = 600;
 
     /**
-     * @notice The soft vaultExpo imbalance limit.
-     * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of vault,
-     * the soft vault rebalancing mechanism is triggered, preventing the opening of new vault position.
+     * @notice The deposit vault expo imbalance limit.
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the deposit vault rebalancing mechanism is triggered, preventing the opening of new vault position.
      */
-    int256 internal _softVaultExpoImbalanceLimit = 200;
+    int256 internal _depositExpoImbalanceLimit = 200;
 
     /**
-     * @notice The hard vaultExpo imbalance limit.
-     * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of vault,
-     * the hard vault rebalancing mechanism is triggered, preventing the close of existing long position.
+     * @notice The close vault expo imbalance limit.
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the withdrawal vault rebalancing mechanism is triggered, preventing the close of existing long position.
      */
-    int256 internal _hardVaultExpoImbalanceLimit = 600;
+    int256 internal _closeExpoImbalanceLimit = 600;
 
     /// @notice The position fee in basis point
     uint16 internal _positionFeeBps = 4; // 0.04%
@@ -523,22 +523,22 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getSoftLongExpoImbalanceLimit() external view returns (int256) {
-        return _softLongExpoImbalanceLimit;
+    function getOpenExpoImbalanceLimit() external view returns (int256) {
+        return _openExpoImbalanceLimit;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getHardLongExpoImbalanceLimit() external view returns (int256) {
-        return _hardLongExpoImbalanceLimit;
+    function getWithdrawalExpoImbalanceLimit() external view returns (int256) {
+        return _withdrawalExpoImbalanceLimit;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getSoftVaultExpoImbalanceLimit() external view returns (int256) {
-        return _softVaultExpoImbalanceLimit;
+    function getDepositExpoImbalanceLimit() external view returns (int256) {
+        return _depositExpoImbalanceLimit;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getHardVaultExpoImbalanceLimit() external view returns (int256) {
-        return _hardVaultExpoImbalanceLimit;
+    function getCloseExpoImbalanceLimit() external view returns (int256) {
+        return _closeExpoImbalanceLimit;
     }
 }

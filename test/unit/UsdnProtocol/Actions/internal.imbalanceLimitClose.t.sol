@@ -57,7 +57,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         // current long expo
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
         // imbalance bps
-        imbalanceBps_ = uint256(protocol.getHardVaultExpoImbalanceLimit());
+        imbalanceBps_ = uint256(protocol.getCloseExpoImbalanceLimit());
         // current vault expo value for imbalance
         uint256 vaultExpoValueToLimit = longExpo * imbalanceBps_ / protocol.BPS_DIVISOR();
         // long amount for vaultExpoValueToLimit and leverage

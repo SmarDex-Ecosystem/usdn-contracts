@@ -245,41 +245,41 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setSoftLongExpoImbalanceLimit(int256 newLimit) external onlyOwner {
+    function setOpenExpoImbalanceLimit(int256 newLimit) external onlyOwner {
         if (newLimit < 0) {
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
 
         // TODO different lower limit
-        _softLongExpoImbalanceLimit = newLimit;
+        _openExpoImbalanceLimit = newLimit;
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setHardLongExpoImbalanceLimit(int256 newLimit) external onlyOwner {
-        if (newLimit < _softLongExpoImbalanceLimit) {
+    function setWithdrawalExpoImbalanceLimit(int256 newLimit) external onlyOwner {
+        if (newLimit < _withdrawalExpoImbalanceLimit) {
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
 
-        _hardLongExpoImbalanceLimit = newLimit;
+        _withdrawalExpoImbalanceLimit = newLimit;
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setSoftVaultExpoImbalanceLimit(int256 newLimit) external onlyOwner {
+    function setDepositExpoImbalanceLimit(int256 newLimit) external onlyOwner {
         if (newLimit < 0) {
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
 
         // TODO different lower limit
-        _softVaultExpoImbalanceLimit = newLimit;
+        _depositExpoImbalanceLimit = newLimit;
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setHardVaultExpoImbalanceLimit(int256 newLimit) external onlyOwner {
-        if (newLimit < _softVaultExpoImbalanceLimit) {
+    function setCloseExpoImbalanceLimit(int256 newLimit) external onlyOwner {
+        if (newLimit < _closeExpoImbalanceLimit) {
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
 
-        _hardVaultExpoImbalanceLimit = newLimit;
+        _closeExpoImbalanceLimit = newLimit;
     }
 
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {

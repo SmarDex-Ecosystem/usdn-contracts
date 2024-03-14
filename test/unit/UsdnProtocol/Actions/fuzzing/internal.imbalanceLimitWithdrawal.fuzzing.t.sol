@@ -26,16 +26,16 @@ contract FuzzingImbalanceLimitWithdrawal is UsdnProtocolBaseFixture {
         withdrawalAmount = bound(withdrawalAmount, 1, initialVaultExpo);
         // new vault expo
         uint256 newVaultExpo = initialVaultExpo - withdrawalAmount;
-        // expected imbalance percentage
-        int256 imbalancePct = (int256(uint256(initialLongExpo)) - int256(newVaultExpo)) * int256(protocol.BPS_DIVISOR())
+        // expected imbalance bps
+        int256 imbalanceBps = (int256(uint256(initialLongExpo)) - int256(newVaultExpo)) * int256(protocol.BPS_DIVISOR())
             / int256(initialVaultExpo);
 
         // call `i_imbalanceLimitWithdrawal` with withdrawalAmount
-        if (imbalancePct >= protocol.getHardLongExpoImbalanceLimit()) {
+        if (imbalanceBps >= protocol.getWithdrawalExpoImbalanceLimit()) {
             // should revert with above hard long imbalance limit
             vm.expectRevert(
                 abi.encodeWithSelector(
-                    IUsdnProtocolErrors.UsdnProtocolHardLongImbalanceLimitReached.selector, imbalancePct
+                    IUsdnProtocolErrors.UsdnProtocolHardLongImbalanceLimitReached.selector, imbalanceBps
                 )
             );
         }

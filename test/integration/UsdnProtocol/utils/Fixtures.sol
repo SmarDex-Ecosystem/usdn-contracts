@@ -110,11 +110,12 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
 
+        // disable imbalance limits
         if (!testParams.enableLimits) {
-            protocol.setSoftLongExpoImbalanceLimit(type(int256).max);
-            protocol.setHardLongExpoImbalanceLimit(type(int256).max);
-            protocol.setSoftVaultExpoImbalanceLimit(type(int256).max);
-            protocol.setHardVaultExpoImbalanceLimit(type(int256).max);
+            protocol.setOpenExpoImbalanceLimit(type(int256).max);
+            protocol.setWithdrawalExpoImbalanceLimit(type(int256).max);
+            protocol.setDepositExpoImbalanceLimit(type(int256).max);
+            protocol.setCloseExpoImbalanceLimit(type(int256).max);
         }
 
         // leverage approx 2x

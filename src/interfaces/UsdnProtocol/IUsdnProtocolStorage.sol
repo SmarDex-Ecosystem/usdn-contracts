@@ -120,32 +120,32 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getMiddlewareValidationDelay() external view returns (uint256);
 
     /**
-     * @notice Get the soft longExpo imbalance limit.
-     * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of long
-     * the soft long rebalancing mechanism is triggered, preventing the opening of a new long position.
+     * @notice Get the open long expo imbalance limit.
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long
+     * the open rebalancing mechanism is triggered, preventing the opening of a new long position.
      */
-    function getSoftLongExpoImbalanceLimit() external view returns (int256);
+    function getOpenExpoImbalanceLimit() external view returns (int256);
 
     /**
-     * @notice Get the hard longExpo imbalance limit.
-     * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of long,
-     * the hard long rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
+     * @notice Get the withdrawal long expo imbalance limit.
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long,
+     * the withdrawal rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
      */
-    function getHardLongExpoImbalanceLimit() external view returns (int256);
+    function getWithdrawalExpoImbalanceLimit() external view returns (int256);
 
     /**
-     * @notice Get the soft vaultExpo imbalance limit.
-     * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of vault,
-     * the soft vault rebalancing mechanism is triggered, preventing the opening of new vault position.
+     * @notice Get the deposit vault expo imbalance limit.
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the deposit rebalancing mechanism is triggered, preventing the opening of new vault position.
      */
-    function getSoftVaultExpoImbalanceLimit() external view returns (int256);
+    function getDepositExpoImbalanceLimit() external view returns (int256);
 
     /**
-     * @notice Get the hard vaultExpo imbalance limit.
-     * @dev As soon as the difference between vault expo and long expo exceeds this percentage limit in favor of vault,
-     * the hard vault rebalancing mechanism is triggered, preventing the close of existing long position.
+     * @notice Get the close vault expo imbalance limit.
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the close rebalancing mechanism is triggered, preventing the close of existing long position.
      */
-    function getHardVaultExpoImbalanceLimit() external view returns (int256);
+    function getCloseExpoImbalanceLimit() external view returns (int256);
 
     /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
     function getTargetUsdnPrice() external view returns (uint128);

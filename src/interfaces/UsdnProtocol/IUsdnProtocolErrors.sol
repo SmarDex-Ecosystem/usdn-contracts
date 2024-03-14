@@ -90,7 +90,7 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided address for the LiquidationRewardsManager contract address is invalid.
     error UsdnProtocolInvalidLiquidationRewardsManagerAddress();
 
-    /// @dev Indicates that the provided fee percentage value is invalid.
+    /// @dev Indicates that the provided fee basis point value is invalid.
     error UsdnProtocolInvalidProtocolFeeBps();
 
     /// @dev Indicates that the provided fee collector address is invalid
@@ -100,16 +100,16 @@ interface IUsdnProtocolErrors {
     error UsdnProtocolInvalidExpoImbalanceLimit();
 
     /// @dev Indicates that the protocol long imbalance soft limit is reached
-    error UsdnProtocolSoftLongImbalanceLimitReached(int256 imbalancePct);
+    error UsdnProtocolSoftLongImbalanceLimitReached(int256 imbalanceBps);
 
-    /// @dev Indicates that the protocol long imbalance hard limit is reached
-    error UsdnProtocolHardLongImbalanceLimitReached(int256 imbalancePct);
+    /// @dev Indicates that the protocol long imbalance limit is reached
+    error UsdnProtocolHardLongImbalanceLimitReached(int256 imbalanceBps);
 
-    /// @dev Indicates that the protocol vault imbalance soft limit is reached
-    error UsdnProtocolSoftVaultImbalanceLimitReached(int256 imbalancePct);
+    /// @dev Indicates that the protocol vault imbalance limit is reached
+    error UsdnProtocolSoftVaultImbalanceLimitReached(int256 imbalanceBps);
 
-    /// @dev Indicates that the protocol vault imbalance hard limit is reached
-    error UsdnProtocolHardVaultImbalanceLimitReached(int256 imbalancePct);
+    /// @dev Indicates that the protocol vault imbalance limit is reached
+    error UsdnProtocolHardVaultImbalanceLimitReached(int256 imbalanceBps);
 
     /// @dev Indicates that the protocol vault expo is invalid
     error UsdnProtocolInvalidVaultExpo();

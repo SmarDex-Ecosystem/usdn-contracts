@@ -34,7 +34,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario The `imbalanceLimitDeposit` function should revert when contract is balanced
      * and position value imbalance it
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `imbalanceLimitDeposit` function is called with a value above the soft vault limit
+     * @custom:when The `imbalanceLimitDeposit` function is called with a value above the deposit limit
      * @custom:then The transaction should revert
      */
     function test_RevertWith_imbalanceLimitDepositOutLimit() public {
@@ -53,7 +53,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         // current long expo
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
         // imbalance bps
-        imbalanceBps_ = uint256(protocol.getSoftVaultExpoImbalanceLimit());
+        imbalanceBps_ = uint256(protocol.getDepositExpoImbalanceLimit());
         // current vault expo value to imbalance the protocol
         vaultExpoValueToLimit_ = longExpo * imbalanceBps_ / protocol.BPS_DIVISOR();
     }

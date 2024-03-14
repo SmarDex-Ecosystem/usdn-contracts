@@ -34,7 +34,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
      * @custom:scenario The `imbalanceLimitWithdrawal` function should revert when contract is balanced
      * and position value imbalance it
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `imbalanceLimitWithdrawal` function is called with a value above the hard long limit
+     * @custom:when The `imbalanceLimitWithdrawal` function is called with a value above the withdrawal limit
      * @custom:then The transaction should revert
      */
     function test_RevertWith_imbalanceLimitWithdrawalOutLimit() public {
@@ -50,7 +50,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     function _testHelper() private view returns (uint256 imbalanceBps_, uint256 longExpoValueToLimit_) {
         uint256 vaultExpo_ = protocol.getBalanceVault();
         // imbalance bps
-        imbalanceBps_ = uint256(protocol.getHardLongExpoImbalanceLimit());
+        imbalanceBps_ = uint256(protocol.getWithdrawalExpoImbalanceLimit());
         // current long expo value to imbalance the protocol
         longExpoValueToLimit_ = vaultExpo_ * imbalanceBps_ / protocol.BPS_DIVISOR();
     }
