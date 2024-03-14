@@ -62,7 +62,6 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (actions,) = protocol.getActionablePendingActions(address(0));
-        emit log_named_uint("array length", actions.length);
         assertEq(actions[0].user, address(this), "pending action user");
     }
 
