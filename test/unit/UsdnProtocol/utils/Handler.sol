@@ -179,6 +179,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getLeverage(price, liqPrice);
     }
 
+    function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
+        return _updateEMA(secondsElapsed);
+    }
+
     function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool) {
         return _usdnRebase(assetPrice, ignoreInterval);
     }
