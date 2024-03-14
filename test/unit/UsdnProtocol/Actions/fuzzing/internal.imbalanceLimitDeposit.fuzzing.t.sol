@@ -38,10 +38,8 @@ contract FuzzingImbalanceLimitDeposit is UsdnProtocolBaseFixture {
                     IUsdnProtocolErrors.UsdnProtocolSoftVaultImbalanceLimitReached.selector, imbalancePct
                 )
             );
-            protocol.i_imbalanceLimitDeposit(depositAmount);
-        } else {
-            // should not revert
-            protocol.i_imbalanceLimitDeposit(depositAmount);
         }
+
+        protocol.i_imbalanceLimitDeposit(depositAmount);
     }
 }

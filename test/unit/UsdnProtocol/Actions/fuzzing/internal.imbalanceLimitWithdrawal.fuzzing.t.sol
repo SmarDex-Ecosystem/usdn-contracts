@@ -38,10 +38,8 @@ contract FuzzingImbalanceLimitWithdrawal is UsdnProtocolBaseFixture {
                     IUsdnProtocolErrors.UsdnProtocolHardLongImbalanceLimitReached.selector, imbalancePct
                 )
             );
-            protocol.i_imbalanceLimitWithdrawal(withdrawalAmount);
-        } else {
-            // should not revert
-            protocol.i_imbalanceLimitWithdrawal(withdrawalAmount);
         }
+
+        protocol.i_imbalanceLimitWithdrawal(withdrawalAmount);
     }
 }

@@ -45,10 +45,8 @@ contract FuzzingImbalanceLimitClose is UsdnProtocolBaseFixture {
                     IUsdnProtocolErrors.UsdnProtocolHardVaultImbalanceLimitReached.selector, imbalancePct
                 )
             );
-            protocol.i_imbalanceLimitClose(totalExpoToRemove, closeAmount);
-        } else {
-            // should not revert
-            protocol.i_imbalanceLimitClose(totalExpoToRemove, closeAmount);
         }
+
+        protocol.i_imbalanceLimitClose(totalExpoToRemove, closeAmount);
     }
 }

@@ -37,10 +37,8 @@ contract FuzzingImbalanceLimitOpen is UsdnProtocolBaseFixture {
                     IUsdnProtocolErrors.UsdnProtocolSoftLongImbalanceLimitReached.selector, imbalancePct
                 )
             );
-            protocol.i_imbalanceLimitOpen(totalExpoToAdd, openAmount);
-        } else {
-            // should not revert
-            protocol.i_imbalanceLimitOpen(totalExpoToAdd, openAmount);
         }
+
+        protocol.i_imbalanceLimitOpen(totalExpoToAdd, openAmount);
     }
 }
