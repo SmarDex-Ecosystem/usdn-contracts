@@ -37,6 +37,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _EMA = 0;
     }
 
+    function i_validateClosePosition(address user, bytes calldata priceData) external {
+        _validateClosePosition(user, priceData);
+    }
+
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         external
         pure
