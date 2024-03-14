@@ -113,7 +113,13 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     /*                            initiateClosePosition                           */
     /* -------------------------------------------------------------------------- */
 
-    /// @custom:todo add NatSpec
+    /**
+     * @custom:scenario A user initiates a close position action but sends too much ether
+     * @custom:given A validated long position
+     * @custom:and oracle validation cost == 0
+     * @custom:when User calls initiateClosePosition with an amount of ether greater than the validation cost
+     * @custom:then The protocol refunds the amount sent
+     */
     function test_initiateClosePositionRefundExcessEther() external {
         bytes memory priceData = abi.encode(params.initialPrice);
         uint256 etherBalanceBefore = address(this).balance;
@@ -127,8 +133,17 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
     }
 
+    /**
+     * @custom:scenario A user initiates a close position action with a pending action
+     * @custom:given A validated long position
+     * @custom:and an initiated open position action from another user
+     * @custom:and oracle validation cost == 0
+     * @custom:when User calls initiateClosePosition with valid price data for the pending action
+     * @custom:then The user validates the pending action
+     */
     function test_initiateClosePositionValidatePendingAction() external {
         bytes memory priceData = abi.encode(params.initialPrice);
+        // Initiate an open position action for another user
         setUpUserPositionInLong(
             USER_1,
             ProtocolAction.InitiateOpenPosition,
@@ -144,6 +159,12 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, priceData);
     }
 
+    /**
+     * @custom:scenario A user initiates a close position action
+     * @custom:given A validated long position
+     * @custom:when User calls initiateClosePosition
+     * @custom:then The user initiates a close position action for his position
+     */
     function test_initiateClosePosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);
 

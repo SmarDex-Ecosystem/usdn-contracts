@@ -20,13 +20,19 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         (_tick, _tickVersion, _index) = setUpUserPositionInLong(
             address(this),
             ProtocolAction.ValidateOpenPosition,
-            1 ether,
+            _positionAmount,
             params.initialPrice - 200 ether,
             params.initialPrice
         );
     }
 
-    /// @custom:todo NatSpec
+    /**
+     * @custom:scenario A user wants to remove the full amount from a position
+     * @custom:given A validated long position
+     * @custom:when User calls _removeAmountFromPosition with the full position amount
+     * @custom:then The position should be deleted from the tick array
+     * @custom:and the protocol's state should be updated
+     */
     function test_removeAmountFromPosition_removingEverythingDeletesThePosition() external {
         Position memory posBefore = protocol.getLongPosition(_tick, _tickVersion, _index);
         uint256 bitmapIndexBefore = protocol.i_tickBitmapFindLastSet(_tick);
@@ -61,6 +67,13 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         );
     }
 
+    /**
+     * @custom:scenario A user wants to remove the some amount from a position
+     * @custom:given A validated long position
+     * @custom:when User calls _removeAmountFromPosition with the half the amount of a position
+     * @custom:then The position should be updated
+     * @custom:and the protocol's state should be updated
+     */
     function test_removeAmountFromPosition_removingSomeAmountUpdatesThePosition() external {
         Position memory posBefore = protocol.getLongPosition(_tick, _tickVersion, _index);
         uint256 bitmapIndexBefore = protocol.i_tickBitmapFindLastSet(_tick);
