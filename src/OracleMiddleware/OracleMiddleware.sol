@@ -182,7 +182,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
                 price_.price = 1;
             } else {
                 // strictly positive
-                price_.price = pythPrice.price - adjust;
+                unchecked {
+                    price_.price = pythPrice.price - adjust;
+                }
             }
         } else if (conf == ConfidenceInterval.Up) {
             price_.price = pythPrice.price + ((pythPrice.conf * _confRatio) / CONF_RATIO_DENOM);
