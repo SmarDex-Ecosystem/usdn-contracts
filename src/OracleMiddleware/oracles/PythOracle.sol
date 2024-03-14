@@ -115,7 +115,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
         PythStructs.Price memory pythPrice = _getPythPrice(priceUpdateData, targetTimestamp);
 
         if (pythPrice.expo > 0) {
-            revert OracleMiddlewarePythExponent(pythPrice.expo);
+            revert OracleMiddlewarePythPositiveExponent(pythPrice.expo);
         }
 
         uint256 pythDecimals = uint32(-pythPrice.expo);
