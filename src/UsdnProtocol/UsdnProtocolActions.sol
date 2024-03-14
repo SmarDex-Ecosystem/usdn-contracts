@@ -775,10 +775,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
         uint256 length = data.priceData.length;
-        if (data.rawIndices.length != length || length < 1 || data.rawIndices[0] > rawIndex) {
+        if (data.rawIndices.length != length || length < 1) {
             revert UsdnProtocolInvalidPendingActionData();
         }
-        uint128 offset = rawIndex - data.rawIndices[0];
+        uint128 offset;
+        unchecked {
+            // underflow is desired here (wrap-around)
+            offset = rawIndex - data.rawIndices[0];
+        }
         if (offset >= length) {
             revert UsdnProtocolInvalidPendingActionData();
         }
