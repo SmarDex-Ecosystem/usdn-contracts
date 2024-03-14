@@ -25,7 +25,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      * @custom:then The transaction should not revert
      */
     function test_imbalanceLimitClose() public view {
-        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _testHelper();
+        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseValues();
         // call `imbalanceLimitClose` function with totalExpoValueToLimit should not revert at the edge
         protocol.i_imbalanceLimitClose(totalExpoValueToLimit, longAmount);
     }
@@ -38,7 +38,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert
      */
     function test_RevertWith_imbalanceLimitCloseOutLimit() public {
-        (uint256 imbalanceBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _testHelper();
+        (uint256 imbalanceBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseValues();
         // call `imbalanceLimitClose` function with totalExpoValueToLimit + 1
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
@@ -47,7 +47,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         protocol.i_imbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
     }
 
-    function _testHelper()
+    function _getCloseValues()
         private
         view
         returns (uint256 imbalanceBps_, uint256 longAmount_, uint256 totalExpoValueToLimit_)

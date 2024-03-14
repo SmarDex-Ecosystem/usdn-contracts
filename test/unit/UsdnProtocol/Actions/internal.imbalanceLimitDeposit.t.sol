@@ -25,7 +25,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
      * @custom:then The transaction should not revert
      */
     function test_imbalanceLimitDeposit() public view {
-        (, uint256 vaultExpoValueToLimit) = _testHelper();
+        (, uint256 vaultExpoValueToLimit) = _getDepositValues();
         // call `imbalanceLimitDeposit` function with vaultExpoValueToLimit should not revert at the edge
         protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit);
     }
@@ -38,7 +38,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert
      */
     function test_RevertWith_imbalanceLimitDepositOutLimit() public {
-        (uint256 imbalanceBps, uint256 vaultExpoValueToLimit) = _testHelper();
+        (uint256 imbalanceBps, uint256 vaultExpoValueToLimit) = _getDepositValues();
         // call `imbalanceLimitDeposit` function with vaultExpoValueToLimit + 1
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
@@ -47,7 +47,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit + 1);
     }
 
-    function _testHelper() private view returns (uint256 imbalanceBps_, uint256 vaultExpoValueToLimit_) {
+    function _getDepositValues() private view returns (uint256 imbalanceBps_, uint256 vaultExpoValueToLimit_) {
         // current long expo
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
         // imbalance bps
