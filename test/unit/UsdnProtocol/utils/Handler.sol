@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import {
     PendingAction,
@@ -9,7 +10,7 @@ import {
     LongPendingAction,
     ProtocolAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocol, Position } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -22,6 +23,7 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
  */
 contract UsdnProtocolHandler is UsdnProtocol {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
+    using LibBitmap for LibBitmap.Bitmap;
 
     constructor(
         IUsdn usdn,
@@ -50,6 +52,16 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
         _validateClosePosition(user, priceData);
+    }
+
+    function i_removeAmountFromPosition(
+        int24 tick,
+        uint256 index,
+        Position memory pos,
+        uint128 amountToRemove,
+        uint128 totalExpoToRemove
+    ) external {
+        return _removeAmountFromPosition(tick, index, pos, amountToRemove, totalExpoToRemove);
     }
 
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
@@ -192,5 +204,17 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
         return _getLeverage(price, liqPrice);
+    }
+
+    function i_bitmapIndexToTick(uint256 index) external view returns (int24) {
+        return _bitmapIndexToTick(index);
+    }
+
+    function i_tickBitmapToIndex(int24 tick) external view returns (uint256) {
+        return _tickToBitmapIndex(tick);
+    }
+
+    function i_tickBitmapFindLastSet(int24 tick) external view returns (uint256 index) {
+        return _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
     }
 }
