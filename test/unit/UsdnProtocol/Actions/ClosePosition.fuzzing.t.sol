@@ -23,8 +23,6 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
         params.enableProtocolFees = false;
 
         super._setUp(params);
-
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /**
@@ -44,11 +42,11 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
     {
         // Bound values
         iterations = bound(iterations, 1, 10);
-        amountToOpen = bound(amountToOpen, 1, wstETH.balanceOf(address(this)));
+        amountToOpen = bound(amountToOpen, 1, 100_000 ether);
 
         uint256 protocolTotalExpo = protocol.getTotalExpo();
         uint256 initialPosCount = protocol.getTotalLongPositions();
-        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
+        uint256 userBalanceBefore = amountToOpen;
 
         bytes memory priceData = abi.encode(params.initialPrice);
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
