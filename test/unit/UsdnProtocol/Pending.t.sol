@@ -166,7 +166,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then Their pending action in the queue is skipped and not returned
      */
     function test_getActionablePendingActionSameUser() public {
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         // initiate long
         setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
         // the pending action is actionable after the validation deadline

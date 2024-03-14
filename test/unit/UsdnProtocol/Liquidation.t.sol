@@ -11,8 +11,6 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
-        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
 
         usdn.approve(address(protocol), type(uint256).max);
 
@@ -45,6 +43,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
 
+        wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
@@ -169,6 +168,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
 
+        wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
