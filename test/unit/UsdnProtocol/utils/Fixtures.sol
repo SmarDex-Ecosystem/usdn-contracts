@@ -174,6 +174,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         public
         prankUser(user)
     {
+        wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit(positionSize, priceData, "");
@@ -208,10 +209,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     function setUpUserPositionInLong(
         address user,
         ProtocolAction untilAction,
-        uint96 positionSize,
+        uint128 positionSize,
         uint128 desiredLiqPrice,
         uint256 price
     ) public prankUser(user) returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+        wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 
         (tick_, tickVersion_, index_) = protocol.initiateOpenPosition(positionSize, desiredLiqPrice, priceData, "");
@@ -222,7 +224,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         _waitDelay();
         if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
 
-        protocol.initiateClosePosition(tick_, tickVersion_, index_, priceData, "");
+        protocol.initiateClosePosition(tick_, tickVersion_, index_, positionSize, priceData, "");
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
 
