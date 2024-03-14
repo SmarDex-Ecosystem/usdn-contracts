@@ -44,6 +44,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _pendingActions[action.user] = uint256(rawIndex_) + 1;
     }
 
+    function i_validateClosePosition(address user, bytes calldata priceData) external {
+        _validateClosePosition(user, priceData);
+    }
+
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         external
         pure

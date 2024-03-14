@@ -366,7 +366,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateClosePosition(tick, tickVersion, index, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
