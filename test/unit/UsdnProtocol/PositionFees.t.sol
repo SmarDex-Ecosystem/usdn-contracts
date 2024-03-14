@@ -339,7 +339,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 finalAssetBalance = wstETH.balanceOf(address(this));
 
         assertEq(usdnBalanceAfter, usdnBalanceBefore, "usdn balance withdraw");
-        assertGt(finalAssetBalance, initialAssetBalance, "wstETH balance before and after");
+        assertLt(finalAssetBalance - initialAssetBalance, depositAmount, "wstETH balance minus fees");
     }
 
     /* -------------------------------------------------------------------------- */
