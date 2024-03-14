@@ -254,11 +254,9 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // safe cast newLimit to signed
         int256 signedNewLimit = newLimit.toInt256();
 
-        if (signedNewLimit != 0) {
+        if (signedNewLimit != 0 && signedNewLimit < _openExpoImbalanceLimit) {
             // withdrawal limit lower than open not permitted
-            if (signedNewLimit < _openExpoImbalanceLimit) {
-                revert UsdnProtocolInvalidExpoImbalanceLimit();
-            }
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
 
         _withdrawalExpoImbalanceLimit = signedNewLimit;
@@ -276,11 +274,9 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // safe cast newLimit to signed
         int256 signedNewLimit = newLimit.toInt256();
 
-        if (signedNewLimit != 0) {
+        if (signedNewLimit != 0 && signedNewLimit < _depositExpoImbalanceLimit) {
             // close limit lower than deposit not permitted
-            if (signedNewLimit < _depositExpoImbalanceLimit) {
-                revert UsdnProtocolInvalidExpoImbalanceLimit();
-            }
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
 
         _closeExpoImbalanceLimit = signedNewLimit;
