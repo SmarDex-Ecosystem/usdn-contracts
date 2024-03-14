@@ -7,7 +7,8 @@ import {
     PendingAction,
     VaultPendingAction,
     LongPendingAction,
-    ProtocolAction
+    ProtocolAction,
+    PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -35,6 +36,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
     /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
     function resetEMA() external {
         _EMA = 0;
+    }
+
+    /// @dev Push a pending item to the front of the pending actions queue
+    function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
+        rawIndex_ = _pendingActionsQueue.pushFront(action);
+        _pendingActions[action.user] = uint256(rawIndex_) + 1;
     }
 
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
@@ -201,5 +208,17 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint8 assetDecimals
     ) external pure returns (uint256) {
         return _calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, usdnDecimals, assetDecimals);
+    }
+
+    function i_addPendingAction(address user, PendingAction memory action) external {
+        _addPendingAction(user, action);
+    }
+
+    function i_getPendingAction(address user) external view returns (PendingAction memory, uint128) {
+        return _getPendingAction(user);
+    }
+
+    function i_executePendingAction(PreviousActionsData calldata data) external {
+        _executePendingAction(data);
     }
 }
