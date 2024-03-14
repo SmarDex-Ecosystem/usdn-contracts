@@ -105,7 +105,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         assertEq(
             positionsCountBefore,
             protocol.getLongPositionsLength(_tick),
-            "The number of positions shouldn't have changed"
+            "The number of positions should not have changed"
         );
         assertEq(
             bitmapIndexBefore - protocol.i_tickBitmapFindLastSet(_tick), 0, "The last bitmap index should be the same"
