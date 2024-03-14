@@ -214,7 +214,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _tickToBitmapIndex(tick);
     }
 
-    function i_tickBitmapFindLastSet(int24 tick) external view returns (uint256 index) {
+    function findLastSetInTickBitmap(int24 tick) external view returns (uint256 index) {
         return _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
     }
 

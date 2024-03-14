@@ -35,7 +35,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
      */
     function test_removeAmountFromPosition_removingEverythingDeletesThePosition() external {
         Position memory posBefore = protocol.getLongPosition(_tick, _tickVersion, _index);
-        uint256 bitmapIndexBefore = protocol.i_tickBitmapFindLastSet(_tick);
+        uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
         uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(_tick, _tickVersion);
         uint256 positionsCountBefore = protocol.getLongPositionsLength(_tick);
@@ -53,7 +53,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
             positionsCountBefore - 1, protocol.getLongPositionsLength(_tick), "The position should have been removed"
         );
         assertGt(
-            bitmapIndexBefore - protocol.i_tickBitmapFindLastSet(_tick), 0, "The last bitmap index should have changed"
+            bitmapIndexBefore - protocol.findLastSetInTickBitmap(_tick), 0, "The last bitmap index should have changed"
         );
         assertEq(
             totalExpoBefore - protocol.getTotalExpo(),
@@ -76,7 +76,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
      */
     function test_removeAmountFromPosition_removingSomeAmountUpdatesThePosition() external {
         Position memory posBefore = protocol.getLongPosition(_tick, _tickVersion, _index);
-        uint256 bitmapIndexBefore = protocol.i_tickBitmapFindLastSet(_tick);
+        uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
         uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(_tick, _tickVersion);
         uint256 positionsCountBefore = protocol.getLongPositionsLength(_tick);
@@ -108,7 +108,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
             "The number of positions should not have changed"
         );
         assertEq(
-            bitmapIndexBefore - protocol.i_tickBitmapFindLastSet(_tick), 0, "The last bitmap index should be the same"
+            bitmapIndexBefore - protocol.findLastSetInTickBitmap(_tick), 0, "The last bitmap index should be the same"
         );
         assertEq(
             totalExpoBefore - totalExpoToRemove,
