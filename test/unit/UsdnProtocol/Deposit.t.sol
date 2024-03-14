@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Vm } from "forge-std/Vm.sol";
+
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN } from "test/utils/Constants.sol";
 
@@ -38,7 +40,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
 
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), depositAmount); // expected event
+        emit InitiatedDeposit(address(this), depositAmount, block.timestamp); // expected event
         protocol.initiateDeposit(depositAmount, currentPrice, "");
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
@@ -160,6 +162,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 
+        uint256 initialeDepositTimestamp = block.timestamp;
+        vm.expectEmit();
+        emit InitiatedDeposit(address(this), depositAmount, initialeDepositTimestamp); // expected event
         protocol.initiateDeposit(depositAmount, currentPrice, "");
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
 
@@ -179,7 +184,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(mintedAmount, expectedUsdnAmount, "minted amount");
 
         vm.expectEmit();
-        emit ValidatedDeposit(address(this), depositAmount, mintedAmount); // expected event
+        emit ValidatedDeposit(address(this), depositAmount, mintedAmount, initialeDepositTimestamp); // expected event
         protocol.validateDeposit(currentPrice, "");
 
         assertEq(usdn.balanceOf(address(this)), mintedAmount, "USDN user balance");

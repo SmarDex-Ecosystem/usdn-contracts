@@ -10,31 +10,35 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when a user initiates a deposit.
      * @param user The user address.
      * @param amount The amount of asset that were deposited.
+     * @param timestamp The timestamp of the action.
      */
-    event InitiatedDeposit(address indexed user, uint256 amount);
+    event InitiatedDeposit(address indexed user, uint256 amount, uint256 timestamp);
 
     /**
      * @notice Emitted when a user validates a deposit.
      * @param user The user address.
      * @param amountDeposited The amount of asset that were deposited.
      * @param usdnMinted The amount of USDN that were minted.
+     * @param timestamp The timestamp of the InitiatedDeposit action.
      */
-    event ValidatedDeposit(address indexed user, uint256 amountDeposited, uint256 usdnMinted);
+    event ValidatedDeposit(address indexed user, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp);
 
     /**
      * @notice Emitted when a user initiates a withdrawal.
      * @param user The user address.
      * @param usdnAmount The amount of USDN that will be burned.
+     * @param timestamp The timestamp of the action.
      */
-    event InitiatedWithdrawal(address indexed user, uint256 usdnAmount);
+    event InitiatedWithdrawal(address indexed user, uint256 usdnAmount, uint256 timestamp);
 
     /**
      * @notice Emitted when a user validates a withdrawal.
      * @param user The user address.
      * @param amountWithdrawn The amount of asset that were withdrawn.
      * @param usdnBurned The amount of USDN that were burned.
+     * @param timestamp The timestamp of the InitiatedWithdrawal action.
      */
-    event ValidatedWithdrawal(address indexed user, uint256 amountWithdrawn, uint256 usdnBurned);
+    event ValidatedWithdrawal(address indexed user, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp);
 
     /**
      * @notice Emitted when a user initiates the opening of a long position.

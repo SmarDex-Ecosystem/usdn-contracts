@@ -62,7 +62,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(3000 ether));
 
         vm.expectEmit();
-        emit InitiatedWithdrawal(address(this), USDN_AMOUNT); // expected event
+        emit InitiatedWithdrawal(address(this), USDN_AMOUNT, block.timestamp); // expected event
         protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, "");
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "usdn user balance");
@@ -230,7 +230,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertEq(withdrawnAmount, expectedAssetAmount, "asset amount");
 
         vm.expectEmit();
-        emit ValidatedWithdrawal(address(this), withdrawnAmount, USDN_AMOUNT); // expected event
+        emit ValidatedWithdrawal(address(this), withdrawnAmount, USDN_AMOUNT, withdrawal.timestamp); // expected event
         protocol.validateWithdrawal(currentPrice, "");
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");
