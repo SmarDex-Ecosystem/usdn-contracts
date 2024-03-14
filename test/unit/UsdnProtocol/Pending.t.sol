@@ -33,11 +33,10 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then The pending actions are returned
      */
     function test_getActionablePendingActions() public {
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         // there should be no pending action at this stage
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "pending action before initiate");
-        // initiate long
+        // initiate deposit
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
         // the pending action is not yet actionable
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
@@ -58,7 +57,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then The pending action is returned
      */
     function test_internalGetActionablePendingAction() public {
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         // there should be no pending action at this stage
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.action == ProtocolAction.None, "pending action before initiate");
@@ -79,9 +77,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * first item in the queue being zero-valued.
      */
     function _setupSparsePendingActionsQueue() internal {
-        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
-        wstETH.mintAndApprove(USER_2, 100_000 ether, address(protocol), type(uint256).max);
-        wstETH.mintAndApprove(USER_3, 100_000 ether, address(protocol), type(uint256).max);
         // Setup 3 pending actions
         setUpUserPositionInLong(USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
         setUpUserPositionInLong(USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
@@ -188,8 +183,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then Both positions are validated
      */
     function test_twoPending() public {
-        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
-        wstETH.mintAndApprove(USER_2, 100_000 ether, address(protocol), type(uint256).max);
         uint128 price1 = 2000 ether;
         uint128 price2 = 2100 ether;
         // Setup 2 pending actions
@@ -220,10 +213,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      * @custom:then Both positions are validated with different prices and there are no reverts
      */
     function test_twoUsersValidatingInSameBlock() public {
-        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
-        wstETH.mintAndApprove(USER_2, 100_000 ether, address(protocol), type(uint256).max);
-        wstETH.mintAndApprove(USER_3, 100_000 ether, address(protocol), type(uint256).max);
-        wstETH.mintAndApprove(USER_4, 100_000 ether, address(protocol), type(uint256).max);
         uint128 price1 = 2000 ether;
         uint128 price2 = 2100 ether;
 
@@ -238,6 +227,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
 
         // Two other users want to now enter the protocol
+        wstETH.mintAndApprove(USER_3, 100_000 ether, address(protocol), type(uint256).max);
+        wstETH.mintAndApprove(USER_4, 100_000 ether, address(protocol), type(uint256).max);
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 2, "actions length");
         bytes[] memory previousPriceData = new bytes[](actions.length);

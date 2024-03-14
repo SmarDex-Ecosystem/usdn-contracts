@@ -86,7 +86,6 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions.
-     * provided.
      * @return tick_ The tick containing the new position
      * @return tickVersion_ The tick version
      * @return index_ The index of the new position inside the tick array
