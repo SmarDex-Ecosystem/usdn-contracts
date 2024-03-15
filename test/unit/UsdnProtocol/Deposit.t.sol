@@ -162,9 +162,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
 
-        uint256 initialeDepositTimestamp = block.timestamp;
+        uint256 initiateDepositTimestamp = block.timestamp;
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), depositAmount, initialeDepositTimestamp); // expected event
+        emit InitiatedDeposit(address(this), depositAmount, initiateDepositTimestamp); // expected event
         protocol.initiateDeposit(depositAmount, currentPrice, "");
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
 
