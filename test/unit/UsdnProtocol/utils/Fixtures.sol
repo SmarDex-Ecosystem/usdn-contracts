@@ -12,7 +12,12 @@ import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewar
 import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { Position, PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    Position,
+    PendingAction,
+    ProtocolAction,
+    PreviousActionsData
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 
 /**
@@ -29,6 +34,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         bool enablePositionFees;
         bool enableProtocolFees;
         bool enableFunding;
+        bool enableUsdnRebase;
+        bool enableSecurityDeposit;
     }
 
     SetUpParams public params;
@@ -40,7 +47,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         initialBlock: block.number,
         enablePositionFees: false,
         enableProtocolFees: true,
-        enableFunding: true
+        enableFunding: true,
+        enableUsdnRebase: false,
+        enableSecurityDeposit: false
     });
 
     Usdn public usdn;
@@ -50,9 +59,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
-    uint256 public securityDepositValue;
     uint128 public initialLongExpo;
     address[] public users;
+
+    PreviousActionsData internal EMPTY_PREVIOUS_DATA =
+        PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
     modifier prankUser(address user) {
         vm.startPrank(user);
@@ -79,6 +90,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             ADMIN // Fee collector
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 
         if (!testParams.enablePositionFees) {
             protocol.setPositionFeeBps(0);
@@ -89,6 +101,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         if (!testParams.enableFunding) {
             protocol.setFundingSF(0);
             protocol.resetEMA();
+        }
+        if (!params.enableUsdnRebase) {
+            // set a high target price to effectively disable rebases
+            protocol.setUsdnRebaseThreshold(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
+            protocol.setTargetUsdnPrice(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
+        }
+        if (!params.enableSecurityDeposit) {
+            protocol.setSecurityDepositValue(0);
         }
 
         wstETH.approve(address(protocol), type(uint256).max);
@@ -112,7 +132,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdnInitialTotalSupply = usdn.totalSupply();
         initialLongExpo = firstPos.totalExpo;
         params = testParams;
-        securityDepositValue = protocol.getSecurityDepositValue();
     }
 
     function test_setUp() public {
@@ -153,21 +172,22 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         public
         prankUser(user)
     {
+        wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateDeposit{ value: securityDepositValue }(positionSize, priceData, "");
+        protocol.initiateDeposit(positionSize, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
-        protocol.validateDeposit(priceData, "");
+        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
-        protocol.initiateWithdrawal{ value: securityDepositValue }(uint128(usdn.balanceOf(user)), priceData, "");
+        protocol.initiateWithdrawal(uint128(usdn.balanceOf(user)), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
 
-        protocol.validateWithdrawal(priceData, "");
+        protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
     }
 
@@ -187,26 +207,27 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     function setUpUserPositionInLong(
         address user,
         ProtocolAction untilAction,
-        uint96 positionSize,
+        uint128 positionSize,
         uint128 desiredLiqPrice,
         uint256 price
     ) public prankUser(user) returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+        wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 
         (tick_, tickVersion_, index_) =
-            protocol.initiateOpenPosition{ value: securityDepositValue }(positionSize, desiredLiqPrice, priceData, "");
+            protocol.initiateOpenPosition(positionSize, desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
 
-        protocol.validateOpenPosition(priceData, "");
+        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
 
-        protocol.initiateClosePosition{ value: securityDepositValue }(tick_, tickVersion_, index_, priceData, "");
+        protocol.initiateClosePosition(tick_, tickVersion_, index_, positionSize, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
 
-        protocol.validateClosePosition(priceData, "");
+        protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
         return (tick_, tickVersion_, index_);

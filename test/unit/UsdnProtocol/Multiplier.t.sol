@@ -5,6 +5,8 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
 /**
  * @custom:feature The `multiplier` variable of the USDN Protocol
  * @custom:background Given a protocol initialized with default params
@@ -14,7 +16,6 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
     }
 
     /**
@@ -27,9 +28,9 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         skip(1 hours);
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a long position to have positive funding
-        protocol.initiateOpenPosition{ value: securityDepositValue }(10 ether, params.initialPrice / 2, priceData, "");
-        _waitDelay();
-        protocol.validateOpenPosition(priceData, "");
+        setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 10 ether, params.initialPrice / 2, params.initialPrice
+        );
         assertGt(protocol.i_longTradingExpo(params.initialPrice), protocol.i_vaultTradingExpo(params.initialPrice));
 
         // positive funding applies
@@ -50,9 +51,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         skip(1 hours);
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a deposit to have negative funding
-        protocol.initiateDeposit{ value: securityDepositValue }(10 ether, priceData, "");
-        _waitDelay();
-        protocol.validateDeposit(priceData, "");
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, params.initialPrice);
         assertGt(protocol.i_vaultTradingExpo(params.initialPrice), protocol.i_longTradingExpo(params.initialPrice));
 
         // positive funding applies

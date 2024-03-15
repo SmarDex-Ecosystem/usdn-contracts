@@ -18,7 +18,6 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
 
-    uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
     uint128 internal constant USDN_AMOUNT = 1000 ether;
     uint256 internal initialWstETHBalance;
@@ -26,13 +25,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), INITIAL_WSTETH_BALANCE);
         usdn.approve(address(protocol), type(uint256).max);
         // user deposits wstETH at price $2000
-        bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(DEPOSIT_AMOUNT, currentPrice, "");
-        _waitDelay();
-        protocol.validateDeposit(currentPrice, "");
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
         initialUsdnBalance = usdn.balanceOf(address(this));
         initialWstETHBalance = wstETH.balanceOf(address(this));
     }
@@ -46,7 +41,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     function test_withdrawSetUp() public {
         // Using the price computed with the default position fees
         assertEq(initialUsdnBalance, 2000 * DEPOSIT_AMOUNT, "initial usdn balance");
-        assertEq(initialWstETHBalance, INITIAL_WSTETH_BALANCE - DEPOSIT_AMOUNT, "initial wstETH balance");
+        assertEq(initialWstETHBalance, 0, "initial wstETH balance");
     }
 
     /**
@@ -68,7 +63,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit InitiatedWithdrawal(address(this), USDN_AMOUNT); // expected event
-        protocol.initiateWithdrawal{ value: securityDepositValue }(USDN_AMOUNT, currentPrice, "");
+        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "usdn user balance");
         assertEq(usdn.balanceOf(address(protocol)), USDN_AMOUNT, "usdn protocol balance");
@@ -77,11 +72,10 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         // no USDN should be burned yet
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + initialUsdnBalance, "usdn total supply");
         // the pending action should not yet be actionable by a third party
-        vm.prank(address(0)); // simulate front-end call by someone else
-        PendingAction memory action = protocol.getActionablePendingAction(0);
-        assertTrue(action.action == ProtocolAction.None, "no pending action");
+        (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions.length, 0, "no pending action");
 
-        action = protocol.getUserPendingAction(address(this));
+        PendingAction memory action = protocol.getUserPendingAction(address(this));
         assertTrue(action.action == ProtocolAction.ValidateWithdrawal, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
@@ -89,9 +83,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
-        vm.prank(address(0)); // simulate front-end call by someone else
-        action = protocol.getActionablePendingAction(0);
-        assertEq(action.user, address(this), "pending action user");
+        (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
+        assertEq(actions[0].user, address(this), "pending action user");
+        assertEq(rawIndices[0], 1, "raw index");
     }
 
     /**
@@ -102,7 +96,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAmount() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateWithdrawal{ value: securityDepositValue }(0, currentPrice, "");
+        protocol.initiateWithdrawal(0, currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -111,13 +105,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $3000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.425411621694649837
+     * @custom:then The user's wstETH balance increases by 0.425409641068422497
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425411621694649837
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425409641068422497
      */
     function test_validateWithdrawPriceUp() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.425411621694649837 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(3000 ether), 0.425409641068422497 ether);
     }
 
     /**
@@ -126,13 +120,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $2000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.455220982334125330
+     * @custom:then The user's wstETH balance increases by 0.455218606057907765
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.455220982334125330
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.455218606057907765
      */
     function test_validateWithdrawPriceDown() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.45522098233412533 ether);
+        _checkValidateWithdrawWithPrice(uint128(2500 ether), uint128(2000 ether), 0.455218606057907765 ether);
     }
 
     /**
@@ -146,10 +140,8 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
-        protocol.initiateWithdrawal{ value: validationCost + securityDepositValue }(USDN_AMOUNT, currentPrice, "");
-        assertEq(
-            address(this).balance, balanceBefore - validationCost - securityDepositValue, "user balance after refund"
-        );
+        protocol.initiateWithdrawal{ value: validationCost }(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA);
+        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
     /**
@@ -163,13 +155,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         // initiate
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
-        protocol.initiateWithdrawal{ value: validationCost + securityDepositValue }(USDN_AMOUNT, currentPrice, "");
+        protocol.initiateWithdrawal{ value: validationCost }(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA);
 
         _waitDelay();
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateWithdrawal);
         uint256 balanceBefore = address(this).balance;
-        protocol.validateWithdrawal{ value: 0.5 ether }(currentPrice, "");
+        protocol.validateWithdrawal{ value: 0.5 ether }(currentPrice, EMPTY_PREVIOUS_DATA);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -187,7 +179,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         protocol.setPositionFeeBps(0); // 0% fees
 
         bytes memory currentPrice = abi.encode(initialPrice);
-        protocol.initiateWithdrawal{ value: securityDepositValue }(USDN_AMOUNT, currentPrice, "");
+        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA);
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         VaultPendingAction memory withdrawal = protocol.i_toVaultPendingAction(pending);
@@ -238,7 +230,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit ValidatedWithdrawal(address(this), withdrawnAmount, USDN_AMOUNT); // expected event
-        protocol.validateWithdrawal(currentPrice, "");
+        protocol.validateWithdrawal(currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");
         assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance + withdrawnAmount, "final wstETH balance");

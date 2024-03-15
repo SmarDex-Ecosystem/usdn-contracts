@@ -101,4 +101,21 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the balance at the end of the action is not the expected one
     error UsdnProtocolUnexpectedBalance();
+    /**
+     * @dev Indicates that the data provided to validate an actionable pending action is invalid (zero length or length
+     * mismatch)
+     */
+    error UsdnProtocolInvalidPendingActionData();
+
+    /// @dev Indicates that the provided target USDN price is invalid
+    error UsdnProtocolInvalidTargetUsdnPrice();
+
+    /// @dev Indicates that the provided USDN rebase threshold is invalid
+    error UsdnProtocolInvalidUsdnRebaseThreshold();
+
+    /// @dev Indicates that the amount to close in a position is higher than the amount in the position itself.
+    error UsdnProtocolAmountToCloseHigherThanPositionAmount(uint128 amountToClose, uint128 positionAmount);
+
+    /// @dev Indicates that the amount to close in a position is 0.
+    error UsdnProtocolAmountToCloseIsZero();
 }

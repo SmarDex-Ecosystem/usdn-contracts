@@ -95,13 +95,24 @@ interface IUsdnProtocolEvents {
     );
 
     /**
-     * @notice Emitted when a user initiates the closing of a long position.
+     * @notice Emitted when a user initiates the closing of all or part of a long position.
      * @param user The user address.
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
+     * @param amountRemaining The amount of collateral remaining in the position.
+     * If the entirety of the position is being closed, this value is zero.
+     * @param totalExpoRemaining The total expo remaining in the position.
+     * If the entirety of the position is being closed, this value is zero.
      */
-    event InitiatedClosePosition(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
+    event InitiatedClosePosition(
+        address indexed user,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index,
+        uint128 amountRemaining,
+        uint128 totalExpoRemaining
+    );
 
     /**
      * @notice Emitted when a user validates the closing of a long position
@@ -263,4 +274,22 @@ interface IUsdnProtocolEvents {
      * @param feeThreshold The new fee threshold.
      */
     event FeeThresholdUpdated(uint256 feeThreshold);
+
+    /**
+     * @notice Emitted when the target USDN price is updated.
+     * @param price The new target USDN price.
+     */
+    event TargetUsdnPriceUpdated(uint128 price);
+
+    /**
+     * @notice Emitted when the USDN rebase threshold is updated.
+     * @param threshold The new target USDN price.
+     */
+    event UsdnRebaseThresholdUpdated(uint128 threshold);
+
+    /**
+     * @notice Emitted when the USDN rebase interval is updated.
+     * @param interval The new interval.
+     */
+    event UsdnRebaseIntervalUpdated(uint256 interval);
 }

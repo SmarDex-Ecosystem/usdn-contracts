@@ -232,7 +232,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setDepositValue(uint256 securityDepositValue) external onlyOwner {
+    function setSecurityDepositValue(uint256 securityDepositValue) external onlyOwner {
         _securityDepositValue = securityDepositValue;
         emit SecurityDepositValueUpdated(securityDepositValue);
     }
@@ -250,6 +250,34 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _feeCollector = newFeeCollector;
         emit FeeCollectorUpdated(newFeeCollector);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
+        if (newPrice > _usdnRebaseThreshold) {
+            revert UsdnProtocolInvalidTargetUsdnPrice();
+        }
+        if (newPrice < uint128(10 ** _priceFeedDecimals)) {
+            // values smaller than $1 are not allowed
+            revert UsdnProtocolInvalidTargetUsdnPrice();
+        }
+        _targetUsdnPrice = newPrice;
+        emit TargetUsdnPriceUpdated(newPrice);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setUsdnRebaseThreshold(uint128 newThreshold) external onlyOwner {
+        if (newThreshold < _targetUsdnPrice) {
+            revert UsdnProtocolInvalidUsdnRebaseThreshold();
+        }
+        _usdnRebaseThreshold = newThreshold;
+        emit UsdnRebaseThresholdUpdated(newThreshold);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setUsdnRebaseInterval(uint256 newInterval) external onlyOwner {
+        _usdnRebaseInterval = newInterval;
+        emit UsdnRebaseIntervalUpdated(newInterval);
     }
 
     /**

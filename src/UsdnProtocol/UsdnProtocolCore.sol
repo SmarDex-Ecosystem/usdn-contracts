@@ -28,7 +28,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     address public constant DEAD_ADDRESS = address(0xdead);
 
     /// @inheritdoc IUsdnProtocolCore
-    uint256 public constant DEFAULT_QUEUE_MAX_ITER = 10;
+    uint256 public constant MAX_ACTIONABLE_PENDING_ACTIONS = 20;
 
     /* -------------------------- Public view functions ------------------------- */
 
@@ -38,14 +38,153 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (timestamp == _lastUpdateTimestamp) {
             return _liquidationMultiplier;
         }
-        // timestamp < _lastUpdateTimestamp is checked in funding below and would revert
-        (int256 fund,) = funding(timestamp);
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+        }
+        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        (int256 fund,) = _funding(timestamp, ema);
         // starting here, timestamp is strictly greater than _lastUpdateTimestamp
         return _getLiquidationMultiplier(fund, _liquidationMultiplier);
     }
 
     /// @inheritdoc IUsdnProtocolCore
     function funding(uint128 timestamp) public view returns (int256 fund_, int256 oldLongExpo_) {
+        (fund_, oldLongExpo_) = _funding(timestamp, _EMA);
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available_)
+    {
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+        }
+
+        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        (int256 fundAsset,) = _fundingAsset(timestamp, ema);
+
+        if (fundAsset > 0) {
+            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
+        } else {
+            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
+            // fee have the same sign as fundAsset (negative here), so we need to sub them
+            available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
+        }
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        public
+        view
+        returns (int256 available_)
+    {
+        if (timestamp < _lastUpdateTimestamp) {
+            revert UsdnProtocolTimestampTooOld();
+        }
+
+        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        (int256 fundAsset,) = _fundingAsset(timestamp, ema);
+
+        if (fundAsset < 0) {
+            available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
+        } else {
+            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
+            available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset - fee);
+        }
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
+        expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (int256 expo_)
+    {
+        expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function getActionablePendingActions(address currentUser)
+        external
+        view
+        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
+    {
+        uint256 queueLength = _pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
+            return (actions_, rawIndices_);
+        }
+        actions_ = new PendingAction[](MAX_ACTIONABLE_PENDING_ACTIONS);
+        rawIndices_ = new uint128[](MAX_ACTIONABLE_PENDING_ACTIONS);
+        uint256 maxIter = MAX_ACTIONABLE_PENDING_ACTIONS;
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
+
+        uint256 i = 0;
+        uint256 arrayLen = 0;
+        do {
+            // Since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
+            (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.at(i);
+            // If the msg.sender is equal to the user of the pending action, then the pending action is not actionable
+            // by this user (it will get validated automatically by their action). And so we need to return the next
+            // item in the queue so that they can validate a third-party pending action (if any).
+            if (candidate.timestamp == 0 || candidate.user == currentUser) {
+                rawIndices_[i] = rawIndex;
+                // try the next one
+                unchecked {
+                    i++;
+                }
+            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
+                // we found an actionable pending action
+                actions_[i] = candidate;
+                rawIndices_[i] = rawIndex;
+
+                // continue looking
+                unchecked {
+                    i++;
+                    arrayLen = i;
+                }
+            } else {
+                // the pending action is not actionable (it is too recent), following actions can't be actionable
+                // either so we return
+                break;
+            }
+        } while (i < maxIter);
+        assembly {
+            // shrink the size of the arrays
+            mstore(actions_, arrayLen)
+            mstore(rawIndices_, arrayLen)
+        }
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
+        (action_,) = _getPendingAction(user);
+    }
+
+    /// @inheritdoc IUsdnProtocolCore
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+        public
+        pure
+        returns (int256)
+    {
+        if (secondsElapsed >= emaPeriod) {
+            return lastFunding;
+        }
+
+        return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
+    }
+
+    /* --------------------------  Internal functions --------------------------- */
+
+    function _funding(uint128 timestamp, int256 ema) internal view returns (int256 fund_, int256 oldLongExpo_) {
         oldLongExpo_ = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
 
         if (timestamp < _lastUpdateTimestamp) {
@@ -66,17 +205,17 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // optimization : if the numerator is zero, then return the EMA
         // slither-disable-next-line incorrect-equality
         if (numerator == 0) {
-            return (_EMA, oldLongExpo_);
+            return (ema, oldLongExpo_);
         }
 
         if (oldLongExpo_ <= 0) {
             // if oldLongExpo is negative, then we cap the imbalance index to -1
             // oldVaultExpo is always positive
-            return (-int256(_fundingSF) + _EMA, oldLongExpo_);
+            return (-int256(_fundingSF) + ema, oldLongExpo_);
         } else if (oldVaultExpo == 0) {
             // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
             // oldLongExpo must be positive in this case
-            return (int256(_fundingSF) + _EMA, oldLongExpo_);
+            return (int256(_fundingSF) + ema, oldLongExpo_);
         }
         // starting here, oldLongExpo and oldVaultExpo are always strictly positive
 
@@ -93,7 +232,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                     _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
                     denominator
                 )
-            ) + _EMA;
+            ) + ema;
         } else {
             // we have to multiply by 1 day to get the correct units
             denominator = uint256(oldLongExpo_ * oldLongExpo_) * 1 days;
@@ -103,95 +242,24 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                     _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
                     denominator
                 )
-            ) + _EMA;
+            ) + ema;
         }
     }
 
-    /// @inheritdoc IUsdnProtocolCore
-    function fundingAsset(uint128 timestamp) public view returns (int256 fundingAsset_, int256 fund_) {
+    /**
+     * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
+     * timestamp
+     * @dev If the provided timestamp is older than the last state update, the result will be zero.
+     * @param timestamp The current timestamp
+     * @param ema The EMA of the funding rate
+     * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
+     * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
+     */
+    function _fundingAsset(uint128 timestamp, int256 ema) internal view returns (int256 fundingAsset_, int256 fund_) {
         int256 oldLongExpo;
-        (fund_, oldLongExpo) = funding(timestamp);
+        (fund_, oldLongExpo) = _funding(timestamp, ema);
         fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 available_)
-    {
-        (int256 fundAsset,) = fundingAsset(timestamp);
-        available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        public
-        view
-        returns (int256 available_)
-    {
-        (int256 fundAsset,) = fundingAsset(timestamp);
-        available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256 expo_) {
-        expo_ = _totalExpo.toInt256().safeSub(longAssetAvailableWithFunding(currentPrice, timestamp));
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (int256 expo_)
-    {
-        expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function getActionablePendingAction(uint256 maxIter) external view returns (PendingAction memory action_) {
-        uint256 queueLength = _pendingActionsQueue.length();
-        if (queueLength == 0) {
-            // empty queue, early return
-            return action_;
-        }
-        // default max iterations
-        if (maxIter == 0) {
-            maxIter = DEFAULT_QUEUE_MAX_ITER;
-        }
-        if (queueLength < maxIter) {
-            maxIter = queueLength;
-        }
-
-        uint256 i = 0;
-        do {
-            // Since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
-            PendingAction memory candidate = _pendingActionsQueue.at(i);
-            // gas optimization
-            unchecked {
-                i++;
-            }
-            // If the msg.sender is equal to the user of the pending action, then the pending action is not actionable
-            // by this user (it will get validated automatically by their action). And so we need to return the next
-            // item in the queue so that they can validate a third-party pending action (if any).
-            if (candidate.timestamp == 0 || candidate.user == msg.sender) {
-                // try the next one
-                continue;
-            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
-                // we found an actionable pending action
-                return candidate;
-            }
-            // the first pending action is not actionable
-            return action_;
-        } while (i < maxIter);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
-    function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
-        (action_,) = _getPendingAction(user);
-    }
-
-    /* --------------------------  Internal functions --------------------------- */
 
     function _getLiquidationMultiplier(int256 fund, uint256 liquidationMultiplier)
         internal
@@ -332,10 +400,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         }
 
         // Update the funding EMA
-        _updateEMA(timestamp - lastUpdateTimestamp);
+        int256 ema = _updateEMA(timestamp - lastUpdateTimestamp);
 
         // Calculate the funding
-        (int256 fundAsset, int256 fund) = fundingAsset(timestamp);
+        (int256 fundAsset, int256 fund) = _fundingAsset(timestamp, ema);
 
         // Take protocol fee on the funding value
         (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(fund, fundAsset);
@@ -374,16 +442,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @dev If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
      * funding value
      */
-    function _updateEMA(uint128 secondsElapsed) internal {
-        // cache variable for optimization
-        uint128 emaPeriod = _EMAPeriod;
-
-        if (secondsElapsed >= emaPeriod) {
-            _EMA = _lastFunding;
-            return;
-        }
-
-        _EMA = (_lastFunding + _EMA * (_toInt256(emaPeriod) - _toInt256(secondsElapsed))) / _toInt256(emaPeriod);
+    function _updateEMA(uint128 secondsElapsed) internal returns (int256) {
+        return _EMA = calcEMA(_lastFunding, secondsElapsed, _EMAPeriod, _EMA);
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {
@@ -490,19 +550,17 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
      * are removed.
-     * @param maxIter The maximum number of iterations to find the first initialized item
-     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     * @return action_ The first actionable pending action if any, otherwise a struct with all fields set to zero and
+     * ProtocolAction.None
+     * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
      */
-    function _getActionablePendingAction(uint256 maxIter) internal returns (PendingAction memory action_) {
+    function _getActionablePendingAction() internal returns (PendingAction memory action_, uint128 rawIndex_) {
         uint256 queueLength = _pendingActionsQueue.length();
         if (queueLength == 0) {
             // empty queue, early return
-            return action_;
+            return (action_, rawIndex_);
         }
-        // default max iterations
-        if (maxIter == 0) {
-            maxIter = DEFAULT_QUEUE_MAX_ITER;
-        }
+        uint256 maxIter = MAX_ACTIONABLE_PENDING_ACTIONS;
         if (queueLength < maxIter) {
             maxIter = queueLength;
         }
@@ -510,7 +568,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         uint256 i = 0;
         do {
             // Since we will never call `front` more than `queueLength` times, there is no risk of reverting
-            PendingAction memory candidate = _pendingActionsQueue.front();
+            (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.front();
             // gas optimization
             unchecked {
                 i++;
@@ -523,10 +581,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 continue;
             } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
-                return candidate;
+                return (candidate, rawIndex);
             }
             // the first pending action is not actionable
-            return action_;
+            return (action_, rawIndex_);
         } while (i < maxIter);
     }
 

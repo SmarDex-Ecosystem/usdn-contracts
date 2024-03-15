@@ -19,11 +19,11 @@ contract TestUsdnConvert is UsdnTokenFixture {
      * @custom:then The call does not revert
      */
     function test_maxShares() public {
-        usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
 
         usdn.convertToShares(usdn.maxTokens());
 
-        usdn.adjustDivisor(usdn.MIN_DIVISOR());
+        usdn.rebase(usdn.MIN_DIVISOR());
 
         usdn.convertToShares(usdn.maxTokens());
     }
@@ -36,12 +36,12 @@ contract TestUsdnConvert is UsdnTokenFixture {
      * @custom:then The call does not revert
      */
     function test_maxTokens() public {
-        usdn.grantRole(usdn.ADJUSTMENT_ROLE(), address(this));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
 
         uint256 max_shares = usdn.convertToShares(usdn.maxTokens());
         uint256 tokens = usdn.convertToTokens(max_shares);
 
-        usdn.adjustDivisor(usdn.MIN_DIVISOR());
+        usdn.rebase(usdn.MIN_DIVISOR());
 
         max_shares = usdn.convertToShares(usdn.maxTokens());
         tokens = usdn.convertToTokens(max_shares);

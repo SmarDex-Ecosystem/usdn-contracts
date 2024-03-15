@@ -28,7 +28,7 @@ import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 
@@ -38,8 +38,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint128 initialLong;
         uint128 initialLiqPrice;
         uint128 initialPrice;
-        uint256 initialTimestamp;
+        uint256 initialTimestamp; // ignored if fork is true
         bool fork;
+        uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
     }
 
     SetUpParams public params;
@@ -49,17 +50,20 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialLiqPrice: 1000 ether, // leverage approx 2x
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
-        fork: false
+        fork: false,
+        forkWarp: 0
     });
 
     Usdn public usdn;
     UsdnProtocolHandler public protocol;
     WstETH public wstETH;
     MockPyth public mockPyth;
-    uint256 public securityDepositValue;
     MockChainlinkOnChain public mockChainlinkOnChain;
     WstEthOracleMiddleware public oracleMiddleware;
     LiquidationRewardsManager public liquidationRewardsManager;
+
+    PreviousActionsData internal EMPTY_PREVIOUS_DATA =
+        PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
 
     function _setUp(SetUpParams memory testParams) public virtual {
         if (testParams.fork) {
@@ -67,6 +71,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             vm.createSelectFork(url);
             uint256 initBlock = block.number - 1000;
             vm.rollFork(initBlock);
+            if (testParams.forkWarp > 0) {
+                vm.warp(testParams.forkWarp);
+            }
             dealAccounts(); // provide test accounts with ETH again
             wstETH = WstETH(payable(WSTETH));
             IPyth pyth = IPyth(PYTH_ORACLE);
@@ -101,6 +108,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
         protocol.initialize{ value: oracleMiddleware.validationCost("", ProtocolAction.Initialize) }(
@@ -108,12 +116,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
         vm.stopPrank();
         params = testParams;
-        securityDepositValue = protocol.getSecurityDepositValue();
     }
 
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
-        returns (uint256, uint256, uint256, bytes memory)
+        returns (uint256 price_, uint256 conf_, uint256 timestamp_, bytes memory data_)
     {
         string[] memory cmds = new string[](4);
         cmds[0] = "./test_utils/target/release/test_utils";
