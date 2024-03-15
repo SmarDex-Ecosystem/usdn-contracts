@@ -28,15 +28,15 @@ contract DequeHandler {
         return DoubleEndedQueue.popFront(queue);
     }
 
-    function front() public view returns (PendingAction memory) {
+    function front() public view returns (PendingAction memory, uint128) {
         return DoubleEndedQueue.front(queue);
     }
 
-    function back() public view returns (PendingAction memory) {
+    function back() public view returns (PendingAction memory, uint128) {
         return DoubleEndedQueue.back(queue);
     }
 
-    function at(uint256 index) public view returns (PendingAction memory) {
+    function at(uint256 index) public view returns (PendingAction memory, uint128) {
         return DoubleEndedQueue.at(queue, index);
     }
 

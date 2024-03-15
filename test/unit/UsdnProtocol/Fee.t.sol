@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { ADMIN } from "test/utils/Constants.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -44,6 +43,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         protocol.setProtocolFeeBps(0);
 
         protocol.liquidate(abi.encode(DEFAULT_PARAMS.initialPrice), 0);
+
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
     }
 

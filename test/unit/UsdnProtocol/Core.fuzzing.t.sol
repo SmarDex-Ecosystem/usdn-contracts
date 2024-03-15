@@ -60,7 +60,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             }
 
             (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-                user, ProtocolAction.ValidateOpenPosition, uint96(longAmount), uint128(longLiqPrice), currentPrice
+                user, ProtocolAction.ValidateOpenPosition, uint128(longAmount), uint128(longLiqPrice), currentPrice
             );
             pos[i] = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;
