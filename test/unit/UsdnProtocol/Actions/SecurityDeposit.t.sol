@@ -46,6 +46,11 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(address(protocol).balance, balanceProtocolBefore);
     }
 
+    function test_RevertWhen_secDec_lt_deposit() public {
+        vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE - 1 }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
+    }
+
     function test_securityDeposit_withdrawal() public {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
 
@@ -66,6 +71,13 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(address(protocol).balance, balanceProtocolBefore);
     }
 
+    function test_RevertWhen_secDec_lt_withdrawal() public {
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+
+        vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE - 1 }(1, priceData, EMPTY_PREVIOUS_DATA);
+    }
+
     function test_securityDeposit_openPosition() public {
         uint256 balanceSenderBefore = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
@@ -82,6 +94,13 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
         assertEq(address(this).balance, balanceSenderBefore);
         assertEq(address(protocol).balance, balanceProtocolBefore);
+    }
+
+    function test_RevertWhen_secDec_lt_openPosition() public {
+        vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
+        protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
+            1 ether, params.initialPrice / 2, priceData, EMPTY_PREVIOUS_DATA
+        );
     }
 
     function test_securityDeposit_closePosition() public {
@@ -104,6 +123,17 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
         assertEq(address(this).balance, balanceSenderBefore);
         assertEq(address(protocol).balance, balanceProtocolBefore);
+    }
+
+    function test_RevertWhen_secDec_lt_closePosition() public {
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+        );
+
+        vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
+        protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
+            tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA
+        );
     }
 
     receive() external payable { }

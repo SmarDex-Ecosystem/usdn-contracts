@@ -101,6 +101,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the balance at the end of the action is not the expected one
     error UsdnProtocolUnexpectedBalance();
+
     /**
      * @dev Indicates that the data provided to validate an actionable pending action is invalid (zero length or length
      * mismatch)
