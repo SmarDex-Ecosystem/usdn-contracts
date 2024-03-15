@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature Test of the protocol expo limit for `imbalanceLimitClose` function in a balanced state
@@ -45,6 +46,56 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         );
         // should revert
         protocol.i_imbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
+    }
+
+    /**
+     * @custom:scenario The `imbalanceLimitClose` function should revert when long expo equal 0
+     * @custom:given The initial long positions is closed
+     * @custom:and The protocol is imbalanced
+     * @custom:when The `imbalanceLimitClose` function is called
+     * @custom:then The transaction should revert
+     */
+    function test_RevertWith_imbalanceLimitCloseZeroLongExpo() public {
+        // initial limit
+        uint256 initialCloseExpoImbalanceLimit = uint256(protocol.getCloseExpoImbalanceLimit());
+
+        // disable close limit
+        vm.prank(ADMIN);
+        protocol.setCloseExpoImbalanceLimit(0);
+
+        // the initialized tick
+        int24 tick = protocol.getMaxInitializedTick();
+
+        vm.startPrank(DEPLOYER);
+
+        // initiate close
+        protocol.initiateClosePosition(
+            tick,
+            0, // no liquidation
+            0, // unique long
+            params.initialLong,
+            abi.encode(params.initialPrice),
+            abi.encode(params.initialPrice)
+        );
+
+        // wait more than 2 blocks
+        skip(25);
+
+        // validate close
+        protocol.validateClosePosition(abi.encode(params.initialPrice), abi.encode(params.initialPrice));
+
+        vm.stopPrank();
+
+        // long expo should be equal 0
+        assertEq(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo isn't 0");
+
+        // reassign limit to activate verification
+        vm.prank(ADMIN);
+        protocol.setCloseExpoImbalanceLimit(initialCloseExpoImbalanceLimit);
+
+        // should revert
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
+        protocol.i_imbalanceLimitClose(0, 0);
     }
 
     function _getCloseValues()

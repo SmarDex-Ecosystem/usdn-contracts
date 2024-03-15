@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature Test of the protocol expo limit for `imbalanceLimitDeposit` function in balanced state
@@ -28,6 +29,49 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         (, uint256 vaultExpoValueToLimit) = _getDepositValues();
         // call `imbalanceLimitDeposit` function with vaultExpoValueToLimit should not revert at the edge
         protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit);
+    }
+
+    /**
+     * @custom:scenario The `imbalanceLimitDeposit` function should revert when long expo equal 0
+     * @custom:given The initial long position is closed
+     * @custom:and The protocol is imbalanced
+     * @custom:when The `imbalanceLimitDeposit` function is called
+     * @custom:then The transaction should revert
+     */
+    function test_RevertWith_imbalanceLimitDepositZeroLongExpo() public {
+        // disable close limit
+        vm.prank(ADMIN);
+        protocol.setCloseExpoImbalanceLimit(0);
+
+        // the initial tick
+        int24 tick = protocol.getMaxInitializedTick();
+
+        vm.startPrank(DEPLOYER);
+
+        // initiate close
+        protocol.initiateClosePosition(
+            tick,
+            0, // no liquidation
+            0, // unique long
+            params.initialLong,
+            abi.encode(params.initialPrice),
+            abi.encode(params.initialPrice)
+        );
+
+        // wait more than 2 blocks
+        skip(25);
+
+        // validate close
+        protocol.validateClosePosition(abi.encode(params.initialPrice), abi.encode(params.initialPrice));
+
+        vm.stopPrank();
+
+        // long expo should be equal 0
+        assertEq(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo isn't 0");
+
+        // should revert
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
+        protocol.i_imbalanceLimitDeposit(0);
     }
 
     /**
