@@ -62,10 +62,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
     {
         uint256 balanceBefore = address(this).balance - msg.value;
-
         _validateDeposit(msg.sender, depositPriceData);
         _executePendingAction(previousActionsData);
-        _refundExcessEther(address(this).balance - balanceBefore);
+        _refundExcessEther(address(this).balance - balanceBefore + _securityDepositValue);
         _checkPendingFee();
     }
 
@@ -102,7 +101,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _validateWithdrawal(msg.sender, withdrawalPriceData);
         _executePendingAction(previousActionsData);
-        _refundExcessEther(address(this).balance - balanceBefore);
+        _refundExcessEther(address(this).balance - balanceBefore + _securityDepositValue);
         _checkPendingFee();
     }
 
@@ -116,7 +115,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (msg.value < _securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
-
         uint256 balanceBefore = address(this).balance - msg.value;
 
         (tick_, tickVersion_, index_) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
@@ -143,7 +141,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _validateOpenPosition(msg.sender, openPriceData);
         _executePendingAction(previousActionsData);
-        _refundExcessEther(address(this).balance - balanceBefore);
+        _refundExcessEther(address(this).balance - balanceBefore + _securityDepositValue);
         _checkPendingFee();
     }
 
@@ -185,7 +183,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _validateClosePosition(msg.sender, closePriceData);
         _executePendingAction(previousActionsData);
-        _refundExcessEther(address(this).balance - balanceBefore);
+        _refundExcessEther(address(this).balance - balanceBefore + _securityDepositValue);
         _checkPendingFee();
     }
 
