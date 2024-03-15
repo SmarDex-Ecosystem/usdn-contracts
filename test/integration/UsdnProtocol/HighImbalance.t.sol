@@ -46,7 +46,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         wstETH.approve(address(protocol), type(uint256).max);
 
         protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            132 ether, 2563 ether, "", ""
+            132 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA
         );
 
         vm.warp(1_708_090_246);
@@ -55,14 +55,14 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
 
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost("beef", ProtocolAction.ValidateOpenPosition)
-        }("beef", "");
+        }("beef", EMPTY_PREVIOUS_DATA);
 
         vm.warp(1_708_090_342);
         mockChainlinkOnChain.setLastPublishTime(1_708_090_342 - 10 minutes);
         mockChainlinkOnChain.setLastPrice(3290e8);
 
         protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, 2674 ether, "", ""
+            1 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA
         );
 
         vm.warp(1_708_090_438);
@@ -71,7 +71,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
 
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost("beef", ProtocolAction.ValidateOpenPosition)
-        }("beef", "");
+        }("beef", EMPTY_PREVIOUS_DATA);
 
         vm.stopPrank();
 
@@ -85,7 +85,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         wstETH.approve(address(protocol), type(uint256).max);
 
         protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, 1684 ether, "", ""
+            1 ether, 1684 ether, "", EMPTY_PREVIOUS_DATA
         );
         vm.stopPrank();
 

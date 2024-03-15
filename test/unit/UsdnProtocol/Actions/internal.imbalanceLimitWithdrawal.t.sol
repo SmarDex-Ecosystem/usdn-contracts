@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN } from "test/utils/Constants.sol";
@@ -45,16 +46,18 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         // mint and approve wsteth
         wstETH.mintAndApprove(address(this), 1000 ether, address(protocol), type(uint256).max);
 
+        bytes[] memory priceData = new bytes[](1);
+        priceData[0] = abi.encode(params.initialPrice);
+
+        PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: new uint128[](1) });
         // initiate open
-        protocol.initiateOpenPosition(
-            0.1 ether, params.initialPrice / 2, abi.encode(params.initialPrice), bytes("bird")
-        );
+        protocol.initiateOpenPosition(0.1 ether, params.initialPrice / 2, abi.encode(params.initialPrice), data);
 
         // wait more than 2 blocks
         skip(25);
 
         // validate open position
-        protocol.validateOpenPosition(abi.encode(params.initialPrice), abi.encode(params.initialPrice));
+        protocol.validateOpenPosition(abi.encode(params.initialPrice), data);
 
         // new price below any position but only one will be liquidated
         protocol.liquidate(abi.encode(params.initialPrice / 3), 1);

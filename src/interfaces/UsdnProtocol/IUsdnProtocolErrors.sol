@@ -108,6 +108,12 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the protocol long expo is invalid
     error UsdnProtocolInvalidLongExpo();
 
+    /**
+     * @dev Indicates that the data provided to validate an actionable pending action is invalid (zero length or length
+     * mismatch)
+     */
+    error UsdnProtocolInvalidPendingActionData();
+
     /// @dev Indicates that the provided target USDN price is invalid
     error UsdnProtocolInvalidTargetUsdnPrice();
 

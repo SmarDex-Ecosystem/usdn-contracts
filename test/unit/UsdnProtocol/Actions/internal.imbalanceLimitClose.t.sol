@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
@@ -86,6 +87,11 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         vm.startPrank(DEPLOYER);
 
+        bytes[] memory priceData = new bytes[](1);
+        priceData[0] = abi.encode(params.initialPrice);
+
+        PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: new uint128[](1) });
+
         // initiate close
         protocol.initiateClosePosition(
             tick,
@@ -93,14 +99,14 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
             0, // unique long
             params.initialLong,
             abi.encode(params.initialPrice),
-            abi.encode(params.initialPrice)
+            data
         );
 
         // wait more than 2 blocks
         skip(25);
 
         // validate close
-        protocol.validateClosePosition(abi.encode(params.initialPrice), abi.encode(params.initialPrice));
+        protocol.validateClosePosition(abi.encode(params.initialPrice), data);
 
         vm.stopPrank();
 
