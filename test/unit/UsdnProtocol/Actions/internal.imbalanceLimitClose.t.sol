@@ -49,6 +49,24 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The `imbalanceLimitClose` function should not revert
+     * when limit is disabled
+     * @custom:given The protocol is in a balanced state
+     * @custom:when The `imbalanceLimitClose` function is called with values above the close limit
+     * @custom:then The transaction should not revert
+     */
+    function test_imbalanceLimitCloseDisabled() public {
+        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseValues();
+
+        vm.prank(ADMIN);
+        // disable limit
+        protocol.setCloseExpoImbalanceLimit(0);
+
+        // should not revert
+        protocol.i_imbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
+    }
+
+    /**
      * @custom:scenario The `imbalanceLimitClose` function should revert when long expo equal 0
      * @custom:given The initial long positions is closed
      * @custom:and The protocol is imbalanced

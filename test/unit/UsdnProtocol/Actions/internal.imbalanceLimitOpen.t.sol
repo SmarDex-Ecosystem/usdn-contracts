@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature Test of the protocol expo limit for `imbalanceLimitOpen` function in balanced state
@@ -28,6 +29,24 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseValues();
         // call `imbalanceLimitOpen` function with totalExpoValueToLimit should not revert at the edge
         protocol.i_imbalanceLimitOpen(totalExpoValueToLimit, longAmount);
+    }
+
+    /**
+     * @custom:scenario The `imbalanceLimitOpen` function should not revert
+     * when limit is disabled
+     * @custom:given The protocol is in a balanced state
+     * @custom:when The `imbalanceLimitOpen` function is called with values above the open limit
+     * @custom:then The transaction should not revert
+     */
+    function test_imbalanceLimitOpenDisabled() public {
+        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseValues();
+
+        // disable open limit
+        vm.prank(ADMIN);
+        protocol.setOpenExpoImbalanceLimit(0);
+
+        // should not revert
+        protocol.i_imbalanceLimitOpen(totalExpoValueToLimit + 1, longAmount);
     }
 
     /**
