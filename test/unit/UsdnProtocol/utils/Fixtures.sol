@@ -278,27 +278,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             10 ** 21 * uint256(params.initialPrice) / (uint256(params.initialPrice) - uint256(params.initialPrice / 2))
         );
 
-        /* 
-            Retrieve long balance from long expo:
-            ---------------------------------------------------------------
-            
-            totalExpo(TX) = LongExpo(LE) + LongBalance(LB)        
-            totalExpo(TX) = LongBalance(LB) x leverage(l) / LeverageDecimal(LD)
-
-            TX = LB . l / LD
-            TX . LD = LB . l
-            TX . LD / LB = l
-            (LE + LB) . LD / LB = l
-            (LE . LD / LB) + (LB . LD / LB) = l
-            LE . LD / LB + LD  = l
-            LE . LD / LB  = l - LD
-            LB = LE . LD / (l - LD)
-             
-            LongBalance = (LongExpo x LeverageDecimal) / (leverage - LeverageDecimal)
-        
-            ---------------------------------------------------------------
-         */
-
         // min long amount
         uint256 minLongAmount = uint128(uint256(minLongExpo) * 10 ** 21 / (uint256(initialLeverage) - 10 ** 21));
         // max long amount

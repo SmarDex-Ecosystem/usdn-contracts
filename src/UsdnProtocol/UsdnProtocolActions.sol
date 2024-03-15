@@ -145,10 +145,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     /**
      * @notice The deposit vault imbalance limit state verification
      * @dev To ensure that the protocol does not imbalance more than the deposit limit on vault side
-     * @param depositValue the deposit value
+     * @param depositValue the deposit value in asset
      */
     function _imbalanceLimitDeposit(uint256 depositValue) internal view {
-        int256 depositExpoImbalanceLimit = _depositExpoImbalanceLimit;
+        int256 depositExpoImbalanceLimit = _depositExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
         if (depositExpoImbalanceLimit == 0) {
@@ -174,10 +174,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     /**
      * @notice The withdrawal imbalance limit state verification
      * @dev This is to ensure that the protocol does not unbalance more than the withdrawal limit on long side
-     * @param withdrawalValue The withdrawal value
+     * @param withdrawalValue The withdrawal value in asset
      */
     function _imbalanceLimitWithdrawal(uint256 withdrawalValue) internal view {
-        int256 withdrawalExpoImbalanceLimit = _withdrawalExpoImbalanceLimit;
+        int256 withdrawalExpoImbalanceLimit = _withdrawalExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
         if (withdrawalExpoImbalanceLimit == 0) {
@@ -206,10 +206,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice The open long imbalance limit state verification
      * @dev This is to ensure that the protocol does not unbalance more than the open limit on long side
      * @param openTotalExpoValue The open position expo value
-     * @param openCollatValue The open position expo value
+     * @param openCollatValue The open position collateral value
      */
     function _imbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) internal view {
-        int256 openExpoImbalanceLimit = _openExpoImbalanceLimit;
+        int256 openExpoImbalanceLimit = _openExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
         if (openExpoImbalanceLimit == 0) {
@@ -237,10 +237,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     /**
      * @notice The close vault imbalance limit state verification
      * @dev This is to ensure that the protocol does not unbalance more than the close limit on vault side
-     * @param closeTotalExpoValue The close expo value
+     * @param closeTotalExpoValue The close position total expo value
+     * @param closeCollatValue The close position collateral value
      */
     function _imbalanceLimitClose(uint256 closeTotalExpoValue, uint256 closeCollatValue) internal view {
-        int256 closeExpoImbalanceLimit = _closeExpoImbalanceLimit;
+        int256 closeExpoImbalanceLimit = _closeExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
         if (closeExpoImbalanceLimit == 0) {

@@ -34,11 +34,11 @@ contract FuzzingImbalanceLimitClose is UsdnProtocolBaseFixture {
         int256 newLongExpo =
             (currentTotalExpo - int256(totalExpoToRemove)) - (int256(currentBalanceLong) - int256(closeAmount));
 
-        // expected imbalance percentage
+        // expected imbalance bps
         int256 imbalanceBps = (int256(initialVaultExpo) - newLongExpo) * int256(protocol.BPS_DIVISOR()) / longExpo;
 
         // call `i_imbalanceLimitClose` with totalExpoToRemove and closeAmount
-        if (imbalanceBps >= protocol.getCloseExpoImbalanceLimit()) {
+        if (imbalanceBps >= protocol.getCloseExpoImbalanceLimitBps()) {
             // should revert with above close imbalance limit
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)

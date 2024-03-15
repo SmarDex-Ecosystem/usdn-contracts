@@ -113,7 +113,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         // current long expo
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
         // imbalance bps
-        imbalanceBps_ = uint256(protocol.getDepositExpoImbalanceLimit());
+        imbalanceBps_ = uint256(protocol.getDepositExpoImbalanceLimitBps());
         // current vault expo value to imbalance the protocol
         vaultExpoValueToLimit_ = longExpo * imbalanceBps_ / protocol.BPS_DIVISOR();
     }

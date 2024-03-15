@@ -111,7 +111,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     function _getWithdrawalValues() private view returns (uint256 imbalanceBps_, uint256 longExpoValueToLimit_) {
         uint256 vaultExpo_ = protocol.getBalanceVault();
         // imbalance bps
-        imbalanceBps_ = uint256(protocol.getWithdrawalExpoImbalanceLimit());
+        imbalanceBps_ = uint256(protocol.getWithdrawalExpoImbalanceLimitBps());
         // current long expo value to imbalance the protocol
         longExpoValueToLimit_ = vaultExpo_ * imbalanceBps_ / protocol.BPS_DIVISOR();
     }

@@ -246,7 +246,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setOpenExpoImbalanceLimit(uint256 newLimit) external onlyOwner {
-        _openExpoImbalanceLimit = newLimit.toInt256();
+        _openExpoImbalanceLimitBps = newLimit.toInt256();
         emit ImbalanceLimitUpdated(newLimit);
     }
 
@@ -255,18 +255,18 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // safe cast newLimit to signed
         int256 signedNewLimit = newLimit.toInt256();
 
-        if (signedNewLimit != 0 && signedNewLimit < _openExpoImbalanceLimit) {
+        if (signedNewLimit != 0 && signedNewLimit < _openExpoImbalanceLimitBps) {
             // withdrawal limit lower than open not permitted
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
 
-        _withdrawalExpoImbalanceLimit = signedNewLimit;
+        _withdrawalExpoImbalanceLimitBps = signedNewLimit;
         emit ImbalanceLimitUpdated(newLimit);
     }
 
     /// @inheritdoc IUsdnProtocol
     function setDepositExpoImbalanceLimit(uint256 newLimit) external onlyOwner {
-        _depositExpoImbalanceLimit = newLimit.toInt256();
+        _depositExpoImbalanceLimitBps = newLimit.toInt256();
         emit ImbalanceLimitUpdated(newLimit);
     }
 
@@ -275,12 +275,12 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // safe cast newLimit to signed
         int256 signedNewLimit = newLimit.toInt256();
 
-        if (signedNewLimit != 0 && signedNewLimit < _depositExpoImbalanceLimit) {
+        if (signedNewLimit != 0 && signedNewLimit < _depositExpoImbalanceLimitBps) {
             // close limit lower than deposit not permitted
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
 
-        _closeExpoImbalanceLimit = signedNewLimit;
+        _closeExpoImbalanceLimitBps = signedNewLimit;
         emit ImbalanceLimitUpdated(newLimit);
     }
 

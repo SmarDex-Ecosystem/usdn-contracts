@@ -549,7 +549,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // set open expo imbalance limit
         protocol.setOpenExpoImbalanceLimit(expectedNewValue);
         // assert new open expo imbalance limit equal expected
-        assertEq(uint256(protocol.getOpenExpoImbalanceLimit()), expectedNewValue);
+        assertEq(uint256(protocol.getOpenExpoImbalanceLimitBps()), expectedNewValue);
     }
 
     /**
@@ -574,7 +574,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setWithdrawalExpoImbalanceLimitLow() external adminPrank {
         // value lower than open expo imbalance limit
-        uint256 lowValue = uint256(protocol.getOpenExpoImbalanceLimit() - 1);
+        uint256 lowValue = uint256(protocol.getOpenExpoImbalanceLimitBps() - 1);
         // expected revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit.selector);
         // set withdrawal expo imbalance limit
@@ -596,7 +596,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // set withdrawal expo imbalance limit
         protocol.setWithdrawalExpoImbalanceLimit(expectedNewValue);
         // assert new withdrawal expo imbalance limit equal expected
-        assertEq(uint256(protocol.getWithdrawalExpoImbalanceLimit()), expectedNewValue);
+        assertEq(uint256(protocol.getWithdrawalExpoImbalanceLimitBps()), expectedNewValue);
     }
 
     /**
@@ -628,7 +628,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // set deposit expo imbalance limit
         protocol.setDepositExpoImbalanceLimit(expectedNewValue);
         // assert new deposit expo imbalance limit equal expected
-        assertEq(uint256(protocol.getDepositExpoImbalanceLimit()), expectedNewValue);
+        assertEq(uint256(protocol.getDepositExpoImbalanceLimitBps()), expectedNewValue);
     }
 
     /**
@@ -653,7 +653,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setCloseExpoImbalanceLimitLow() external adminPrank {
         // value lower than deposit expo imbalance limit
-        uint256 lowValue = uint256(protocol.getDepositExpoImbalanceLimit() - 1);
+        uint256 lowValue = uint256(protocol.getDepositExpoImbalanceLimitBps() - 1);
         // expected revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit.selector);
         // set close expo imbalance limit
@@ -675,6 +675,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // set close expo imbalance limit
         protocol.setCloseExpoImbalanceLimit(expectedNewValue);
         // assert new close expo imbalance limit equal expected
-        assertEq(uint256(protocol.getCloseExpoImbalanceLimit()), expectedNewValue);
+        assertEq(uint256(protocol.getCloseExpoImbalanceLimitBps()), expectedNewValue);
     }
 }

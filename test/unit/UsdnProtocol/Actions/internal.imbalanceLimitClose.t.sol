@@ -75,7 +75,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      */
     function test_RevertWith_imbalanceLimitCloseZeroLongExpo() public {
         // initial limit
-        uint256 initialCloseExpoImbalanceLimit = uint256(protocol.getCloseExpoImbalanceLimit());
+        uint256 initialCloseExpoImbalanceLimit = uint256(protocol.getCloseExpoImbalanceLimitBps());
 
         // disable close limit
         vm.prank(ADMIN);
@@ -124,7 +124,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         // current long expo
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
         // imbalance bps
-        imbalanceBps_ = uint256(protocol.getCloseExpoImbalanceLimit());
+        imbalanceBps_ = uint256(protocol.getCloseExpoImbalanceLimitBps());
         // current vault expo value for imbalance
         uint256 vaultExpoValueToLimit = longExpo * imbalanceBps_ / protocol.BPS_DIVISOR();
         // long amount for vaultExpoValueToLimit and leverage

@@ -26,12 +26,12 @@ contract FuzzingImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         depositAmount = bound(depositAmount, 1, type(uint128).max);
         // new vault expo
         int256 newExpoVault = int256(initialVaultExpo + depositAmount);
-        // expected imbalance percentage
+        // expected imbalance bps
         int256 imbalanceBps = (newExpoVault - int256(uint256(initialLongExpo))) * int256(protocol.BPS_DIVISOR())
             / int256(uint256(initialLongExpo));
 
         // call `imbalanceLimitDeposit` with depositAmount
-        if (imbalanceBps >= protocol.getDepositExpoImbalanceLimit()) {
+        if (imbalanceBps >= protocol.getDepositExpoImbalanceLimitBps()) {
             // should revert with above deposit imbalance limit
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
