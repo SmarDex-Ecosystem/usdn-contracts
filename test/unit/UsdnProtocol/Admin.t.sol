@@ -66,6 +66,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(customError);
         protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(this)));
+
+        vm.expectRevert(customError);
+        protocol.setSecurityDepositValue(0);
     }
 
     /**
@@ -502,5 +505,22 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setLiquidationRewardsManager(expectedNewValue);
         // assert new liquidation reward manager equal expectedNewValue
         assertEq(address(protocol.getLiquidationRewardsManager()), address(expectedNewValue));
+    }
+
+    /**
+     * @custom:scenario Call "setSecurityDepositValue" from admin.
+     * @custom:given The initial usdnProtocol state.
+     * @custom:when Admin wallet trigger the function.
+     * @custom:then The value should be updated.
+     */
+    function test_setSecurityDepositValue() external adminPrank {
+        uint256 newValue = 1 ether;
+        // expected event
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.SecurityDepositValueUpdated(newValue);
+        // set security deposit
+        protocol.setSecurityDepositValue(newValue);
+        // assert new middleware equal randAddress
+        assertEq(protocol.getSecurityDepositValue(), newValue);
     }
 }

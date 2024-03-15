@@ -12,10 +12,11 @@ import {
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @custom:feature The open position function of the USDN Protocol
+ * @custom:feature The security deposit of the USDN Protocol
  * @custom:background Given a protocol initialized with default params
- * @custom:and A user with 10 wstETH in their wallet
+ * @custom:and A security deposit of 0.5 ether
  */
+// TO DO : test with multiple users
 contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     uint256 internal SECURITY_DEPOSIT_VALUE;
     bytes priceData;
@@ -31,6 +32,12 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertGt(SECURITY_DEPOSIT_VALUE, 0);
     }
 
+    /**
+     * @custom:scenario The user initiates and validates an deposit action
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user at the initialisation of the deposit
+     * @custom:and The protocol returns the security deposit to the user at the validation of the deposit
+     */
     function test_securityDeposit_deposit() public {
         uint256 balanceSenderBefore = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
@@ -46,11 +53,22 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(address(protocol).balance, balanceProtocolBefore);
     }
 
+    /**
+     * @custom:scenario The user initiates an deposit action with less than the security deposit value
+     * @custom:when The user initiates an deposit with SECURITY_DEPOSIT_VALUE - 1 value
+     * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
+     */
     function test_RevertWhen_secDec_lt_deposit() public {
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE - 1 }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
     }
 
+    /**
+     * @custom:scenario The user initiates and validates an withdrawal action
+     * @custom:given The value of security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user at the initialisation of the withdrawal
+     * @custom:and The protocol returns the security deposit to the user at the validation of the withdrawal
+     */
     function test_securityDeposit_withdrawal() public {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
 
@@ -71,6 +89,11 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(address(protocol).balance, balanceProtocolBefore);
     }
 
+    /**
+     * @custom:scenario The user initiates an withdrawal action with less than the security deposit value
+     * @custom:when The user initiates an withdrawal with SECURITY_DEPOSIT_VALUE - 1 value
+     * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
+     */
     function test_RevertWhen_secDec_lt_withdrawal() public {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
 
@@ -78,6 +101,12 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE - 1 }(1, priceData, EMPTY_PREVIOUS_DATA);
     }
 
+    /**
+     * @custom:scenario The user initiates and validates an open position action
+     * @custom:given The value of security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user at the initialisation of the open position
+     * @custom:and The protocol returns the security deposit to the user at the validation of the open position
+     */
     function test_securityDeposit_openPosition() public {
         uint256 balanceSenderBefore = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
@@ -96,6 +125,11 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(address(protocol).balance, balanceProtocolBefore);
     }
 
+    /**
+     * @custom:scenario The user initiates an open position action with less than the security deposit value
+     * @custom:when The user initiates an open position with SECURITY_DEPOSIT_VALUE - 1 value
+     * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
+     */
     function test_RevertWhen_secDec_lt_openPosition() public {
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
@@ -103,6 +137,12 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario The user initiates and validates an close position action
+     * @custom:given The value of security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user at the initialisation of the close position
+     * @custom:and The protocol returns the security deposit to the user at the validation of the close position
+     */
     function test_securityDeposit_closePosition() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
             address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
@@ -125,6 +165,11 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(address(protocol).balance, balanceProtocolBefore);
     }
 
+    /**
+     * @custom:scenario The user initiates an close position action with less than the security deposit value
+     * @custom:when The user initiates an close position with SECURITY_DEPOSIT_VALUE - 1 value
+     * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
+     */
     function test_RevertWhen_secDec_lt_closePosition() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
             address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
