@@ -42,7 +42,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 balanceBefore = address(this).balance - msg.value;
 
         _initiateDeposit(msg.sender, amount, currentPriceData);
-        _executePendingAction(previousActionsData);
+        if (_executePendingAction(previousActionsData)) {
+            balanceBefore -= _securityDepositValue;
+        }
 
         if (address(this).balance < _securityDepositValue + balanceBefore) {
             revert UsdnProtocolUnexpectedBalance();
@@ -63,7 +65,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         uint256 balanceBefore = address(this).balance - msg.value;
         _validateDeposit(msg.sender, depositPriceData);
-        _executePendingAction(previousActionsData);
+        if (_executePendingAction(previousActionsData)) {
+            balanceBefore -= _securityDepositValue;
+        }
         _refundExcessEther(address(this).balance - balanceBefore + _securityDepositValue);
         _checkPendingFee();
     }
@@ -842,11 +846,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
-    function _executePendingAction(PreviousActionsData calldata data) internal {
+    function _executePendingAction(PreviousActionsData calldata data) internal returns (bool actionExecuted) {
         (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction();
         if (pending.action == ProtocolAction.None) {
             // no pending action
-            return;
+            return false;
         }
         uint256 length = data.priceData.length;
         if (data.rawIndices.length != length || length < 1) {
@@ -871,6 +875,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         } else if (pending.action == ProtocolAction.ValidateClosePosition) {
             _validateClosePositionWithAction(pending, priceData);
         }
+
+        return true;
     }
 
     function _getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)

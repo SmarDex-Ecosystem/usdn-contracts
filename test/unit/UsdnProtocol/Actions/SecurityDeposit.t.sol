@@ -2,21 +2,25 @@
 pragma solidity 0.8.20;
 
 import { ADMIN } from "test/utils/Constants.sol";
+import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import {
     ProtocolAction,
     LongPendingAction,
     Position,
-    PendingAction
+    PendingAction,
+    PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
+import { console2 } from "forge-std/Test.sol";
 
 /**
  * @custom:feature The security deposit of the USDN Protocol
  * @custom:background Given a protocol initialized with default params
  * @custom:and A security deposit of 0.5 ether
  */
-// TO DO : test with multiple users
+// TO DO : test with multiple users and mor thatn SECURITY_DEPOSIT_VALUE and msg in assertEq
 contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     uint256 internal SECURITY_DEPOSIT_VALUE;
     bytes priceData;
@@ -64,10 +68,88 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user0 initiates an deposit action and user1 validates user0 action
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the deposit
+     * @custom:and The protocol returns the security deposit to the user1 at the initialisation of his deposit
+     */
+    function test_securityDeposit_initiateDeposit_multipleUsers() public {
+        uint256 balanceUser0Before = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
+        skip(protocol.getValidationDeadline() + 1);
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
+
+        vm.startPrank(USER_1);
+        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
+        uint256 balanceUser1Before = USER_1.balance;
+
+        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
+        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
+        previousPriceData[0] = priceData;
+        PreviousActionsData memory previousActionsData =
+            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(1 ether, priceData, previousActionsData);
+        _waitDelay();
+
+        assertEq(USER_1.balance, balanceUser1Before);
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
+
+        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore);
+        assertEq(USER_1.balance, balanceUser1Before + SECURITY_DEPOSIT_VALUE);
+    }
+
+    /**
+     * @custom:scenario The user0 initiates an deposit action and user1 validates user0 action
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the deposit
+     * @custom:and The protocol returns the security deposit to the user1 at the validation of his deposit
+     */
+    function test_securityDeposit_validateDeposit_multipleUsers() public {
+        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
+        uint256 balanceUser1Before = USER_1.balance;
+        uint256 balanceUser0Before = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
+
+        vm.prank(USER_1);
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
+        skip(protocol.getValidationDeadline() + 1);
+
+        assertEq(USER_1.balance, balanceUser1Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + 2 * SECURITY_DEPOSIT_VALUE);
+
+        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
+        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
+        previousPriceData[0] = priceData;
+        PreviousActionsData memory previousActionsData =
+            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+
+        vm.prank(USER_1);
+        protocol.validateDeposit(priceData, previousActionsData);
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore);
+        assertEq(USER_1.balance, balanceUser1Before + SECURITY_DEPOSIT_VALUE);
+    }
+
+    /**
      * @custom:scenario The user initiates and validates an withdrawal action
      * @custom:given The value of security deposit is SECURITY_DEPOSIT_VALUE
      * @custom:then The protocol takes the security deposit from the user at the initialisation of the withdrawal
-     * @custom:and The protocol returns the security deposit to the user at the validation of the withdrawal
+     * @custom:and The protocol returns the security deposit to the user at the initialisation of the withdrawal
      */
     function test_securityDeposit_withdrawal() public {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
