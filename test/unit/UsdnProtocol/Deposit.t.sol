@@ -182,7 +182,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(mintedAmount, expectedUsdnAmount, "minted amount");
 
         vm.expectEmit();
-        emit ValidatedDeposit(address(this), depositAmount, mintedAmount, initialeDepositTimestamp); // expected event
+        emit ValidatedDeposit(address(this), depositAmount, mintedAmount, initiateDepositTimestamp); // expected event
         protocol.validateDeposit(currentPrice, "");
 
         assertEq(usdn.balanceOf(address(this)), mintedAmount, "USDN user balance");
