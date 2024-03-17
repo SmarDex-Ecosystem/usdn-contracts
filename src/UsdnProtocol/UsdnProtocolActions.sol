@@ -36,21 +36,24 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
-        if (msg.value < _securityDepositValue) {
+        uint256 securityDepositValue = _securityDepositValue;
+
+        if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
+
         uint256 balanceBefore = address(this).balance - msg.value;
 
         _initiateDeposit(msg.sender, amount, currentPriceData);
         if (_executePendingAction(previousActionsData)) {
-            balanceBefore -= _securityDepositValue;
+            securityDepositValue = 0;
         }
 
-        if (address(this).balance < _securityDepositValue + balanceBefore) {
+        if (address(this).balance < securityDepositValue + balanceBefore) {
             revert UsdnProtocolUnexpectedBalance();
         }
         unchecked {
-            uint256 amountToRefund = address(this).balance - balanceBefore - _securityDepositValue;
+            uint256 amountToRefund = address(this).balance - balanceBefore - securityDepositValue;
             _refundExcessEther(amountToRefund);
         }
 
@@ -63,12 +66,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
+        uint256 securityDepositValue = _securityDepositValue;
         uint256 balanceBefore = address(this).balance - msg.value;
         _validateDeposit(msg.sender, depositPriceData);
         if (_executePendingAction(previousActionsData)) {
-            balanceBefore -= _securityDepositValue;
+            securityDepositValue += securityDepositValue;
         }
-        _refundExcessEther(address(this).balance - balanceBefore + _securityDepositValue);
+        _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
         _checkPendingFee();
     }
 
@@ -78,20 +82,22 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
-        if (msg.value < _securityDepositValue) {
+        uint256 securityDepositValue = _securityDepositValue;
+
+        if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
         uint256 balanceBefore = address(this).balance - msg.value;
 
         _initiateWithdrawal(msg.sender, usdnAmount, currentPriceData);
         if (_executePendingAction(previousActionsData)) {
-            balanceBefore -= _securityDepositValue;
+            securityDepositValue = 0;
         }
-        if (address(this).balance < _securityDepositValue + balanceBefore) {
+        if (address(this).balance < securityDepositValue + balanceBefore) {
             revert UsdnProtocolUnexpectedBalance();
         }
         unchecked {
-            uint256 amountToRefund = address(this).balance - balanceBefore - _securityDepositValue;
+            uint256 amountToRefund = address(this).balance - balanceBefore - securityDepositValue;
             _refundExcessEther(amountToRefund);
         }
         _checkPendingFee();
@@ -103,13 +109,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
+        uint256 securityDepositValue = _securityDepositValue;
         uint256 balanceBefore = address(this).balance - msg.value;
 
         _validateWithdrawal(msg.sender, withdrawalPriceData);
         if (_executePendingAction(previousActionsData)) {
-            balanceBefore -= _securityDepositValue;
+            securityDepositValue += securityDepositValue;
         }
-        _refundExcessEther(address(this).balance - balanceBefore + _securityDepositValue);
+        _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
         _checkPendingFee();
     }
 
@@ -120,21 +127,23 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
-        if (msg.value < _securityDepositValue) {
+        uint256 securityDepositValue = _securityDepositValue;
+
+        if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
         uint256 balanceBefore = address(this).balance - msg.value;
 
         (tick_, tickVersion_, index_) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
         if (_executePendingAction(previousActionsData)) {
-            balanceBefore -= _securityDepositValue;
+            securityDepositValue = 0;
         }
 
-        if (address(this).balance < _securityDepositValue + balanceBefore) {
+        if (address(this).balance < securityDepositValue + balanceBefore) {
             revert UsdnProtocolUnexpectedBalance();
         }
         unchecked {
-            uint256 amountToRefund = address(this).balance - balanceBefore - _securityDepositValue;
+            uint256 amountToRefund = address(this).balance - balanceBefore - securityDepositValue;
             _refundExcessEther(amountToRefund);
         }
 
@@ -147,13 +156,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
+        uint256 securityDepositValue = _securityDepositValue;
         uint256 balanceBefore = address(this).balance - msg.value;
 
         _validateOpenPosition(msg.sender, openPriceData);
         if (_executePendingAction(previousActionsData)) {
-            balanceBefore -= _securityDepositValue;
+            securityDepositValue += securityDepositValue;
         }
-        _refundExcessEther(address(this).balance - balanceBefore + _securityDepositValue);
+        _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
         _checkPendingFee();
     }
 
@@ -166,21 +176,23 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
-        if (msg.value < _securityDepositValue) {
+        uint256 securityDepositValue = _securityDepositValue;
+
+        if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
         uint256 balanceBefore = address(this).balance - msg.value;
 
         _initiateClosePosition(msg.sender, tick, tickVersion, index, amountToClose, currentPriceData);
         if (_executePendingAction(previousActionsData)) {
-            balanceBefore -= _securityDepositValue;
+            securityDepositValue = 0;
         }
 
-        if (address(this).balance < _securityDepositValue + balanceBefore) {
+        if (address(this).balance < securityDepositValue + balanceBefore) {
             revert UsdnProtocolUnexpectedBalance();
         }
         unchecked {
-            uint256 amountToRefund = address(this).balance - balanceBefore - _securityDepositValue;
+            uint256 amountToRefund = address(this).balance - balanceBefore - securityDepositValue;
             _refundExcessEther(amountToRefund);
         }
 
@@ -193,13 +205,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
+        uint256 securityDepositValue = _securityDepositValue;
         uint256 balanceBefore = address(this).balance - msg.value;
 
         _validateClosePosition(msg.sender, closePriceData);
         if (_executePendingAction(previousActionsData)) {
-            balanceBefore -= _securityDepositValue;
+            securityDepositValue += securityDepositValue;
         }
-        _refundExcessEther(address(this).balance - balanceBefore + _securityDepositValue);
+        _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
         _checkPendingFee();
     }
 
