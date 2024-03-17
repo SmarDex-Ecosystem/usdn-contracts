@@ -158,9 +158,9 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         uint256 balanceSenderBefore = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
 
-        uint256 balanceOf = usdn.balanceOf(address(this));
-        usdn.approve(address(protocol), balanceOf);
-        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA);
+        // we initaite a 1 wei withdrawal
+        usdn.approve(address(protocol), 1);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
         assertEq(address(this).balance, balanceSenderBefore - SECURITY_DEPOSIT_VALUE);
@@ -182,6 +182,98 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE - 1 }(1, priceData, EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario The user0 initiates an Withdrawal action and user1 validates user0 action
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the withdrawal
+     * @custom:and The protocol returns the security deposit to the user1 at the initialisation of his withdrawal
+     */
+    function test_securityDeposit_initiateWithdrawal_multipleUsers() public {
+        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
+        uint256 balanceUser0Before = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+        uint256 balanceUser1Before = USER_1.balance;
+
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+
+        // we initaite a 1 wei withdrawal
+        usdn.approve(address(protocol), 1);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, EMPTY_PREVIOUS_DATA);
+        skip(protocol.getValidationDeadline() + 1);
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
+
+        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
+        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
+        previousPriceData[0] = priceData;
+        PreviousActionsData memory previousActionsData =
+            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+
+        vm.startPrank(USER_1);
+        usdn.approve(address(protocol), 1);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, previousActionsData);
+        _waitDelay();
+
+        assertEq(USER_1.balance, balanceUser1Before);
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
+
+        protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore);
+        assertEq(USER_1.balance, balanceUser1Before + SECURITY_DEPOSIT_VALUE);
+    }
+
+    /**
+     * @custom:scenario The user0 initiates an withdrawal action and user1 validates user0 action
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the withdrawal
+     * @custom:and The protocol returns the security deposit to the user1 at the validation of his withdrawal
+     */
+    function test_securityDeposit_validateWithdrawal_multipleUsers() public {
+        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
+        uint256 balanceUser1Before = USER_1.balance;
+        uint256 balanceUser0Before = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+
+        // we initaite a 1 wei withdrawal
+        usdn.approve(address(protocol), 1);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, EMPTY_PREVIOUS_DATA);
+        _waitDelay();
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
+
+        vm.startPrank(USER_1);
+        usdn.approve(address(protocol), 1);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, EMPTY_PREVIOUS_DATA);
+        skip(protocol.getValidationDeadline() + 1);
+
+        assertEq(USER_1.balance, balanceUser1Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + 2 * SECURITY_DEPOSIT_VALUE);
+
+        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
+        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
+        previousPriceData[0] = priceData;
+        PreviousActionsData memory previousActionsData =
+            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+
+        protocol.validateWithdrawal(priceData, previousActionsData);
+        vm.stopPrank();
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore);
+        assertEq(USER_1.balance, balanceUser1Before + SECURITY_DEPOSIT_VALUE);
     }
 
     /**
