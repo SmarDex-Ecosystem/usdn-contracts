@@ -318,7 +318,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
      * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the deposit
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his deposit
      */
-    function test_securityDeposit_openPosition_multipleUsers() public {
+    function test_securityDeposit_initaiteOpenPosition_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         uint256 balanceUser0Before = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
@@ -389,6 +389,49 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user0 initiates an open position action and user1 validates user0 action
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the open position
+     * @custom:and The protocol returns the security deposit to the user1 at the initialisation of his open position
+     */
+    function test_securityDeposit_validateOpenPosition_multipleUsers() public {
+        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
+        uint256 balanceUser1Before = USER_1.balance;
+        uint256 balanceUser0Before = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+
+        protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, params.initialPrice / 2, priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
+
+        vm.prank(USER_1);
+        protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
+            1 ether, params.initialPrice / 2, priceData, EMPTY_PREVIOUS_DATA
+        );
+        skip(protocol.getValidationDeadline() + 1);
+
+        assertEq(USER_1.balance, balanceUser1Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + 2 * SECURITY_DEPOSIT_VALUE);
+
+        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
+        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
+        previousPriceData[0] = priceData;
+        PreviousActionsData memory previousActionsData =
+            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+
+        vm.prank(USER_1);
+        protocol.validateOpenPosition(priceData, previousActionsData);
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore);
+        assertEq(USER_1.balance, balanceUser1Before + SECURITY_DEPOSIT_VALUE);
+    }
+
+    /**
      * @custom:scenario The user initiates and validates an close position action
      * @custom:given The value of security deposit is SECURITY_DEPOSIT_VALUE
      * @custom:then The protocol takes the security deposit from the user at the initialisation of the close position
@@ -430,6 +473,108 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
             tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA
         );
+    }
+
+    /**
+     * @custom:scenario The user0 initiates an Withdrawal action and user1 validates user0 action
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the withdrawal
+     * @custom:and The protocol returns the security deposit to the user1 at the initialisation of his withdrawal
+     */
+    function test_securityDeposit_initiateClosePosition_multipleUsers() public {
+        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
+        uint256 balanceUser0Before = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+        uint256 balanceUser1Before = USER_1.balance;
+
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+        );
+        (int24 tick1, uint256 tickVersion1, uint256 index1) = setUpUserPositionInLong(
+            USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+        );
+
+        protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
+            tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA
+        );
+        skip(protocol.getValidationDeadline() + 1);
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
+
+        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
+        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
+        previousPriceData[0] = priceData;
+        PreviousActionsData memory previousActionsData =
+            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+
+        vm.startPrank(USER_1);
+        protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
+            tick1, tickVersion1, index1, 1 ether, priceData, previousActionsData
+        );
+        _waitDelay();
+
+        assertEq(USER_1.balance, balanceUser1Before);
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
+
+        protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore);
+        assertEq(USER_1.balance, balanceUser1Before + SECURITY_DEPOSIT_VALUE);
+    }
+
+    /**
+     * @custom:scenario The user0 initiates an withdrawal action and user1 validates user0 action
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the withdrawal
+     * @custom:and The protocol returns the security deposit to the user1 at the validation of his withdrawal
+     */
+    function test_securityDeposit_validateClosePosition_multipleUsers() public {
+        wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
+        uint256 balanceUser1Before = USER_1.balance;
+        uint256 balanceUser0Before = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+        );
+        (int24 tick1, uint256 tickVersion1, uint256 index1) = setUpUserPositionInLong(
+            USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+        );
+
+        protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
+            tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
+
+        vm.startPrank(USER_1);
+        protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
+            tick1, tickVersion1, index1, 1 ether, priceData, EMPTY_PREVIOUS_DATA
+        );
+        skip(protocol.getValidationDeadline() + 1);
+
+        assertEq(USER_1.balance, balanceUser1Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + 2 * SECURITY_DEPOSIT_VALUE);
+
+        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
+        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
+        previousPriceData[0] = priceData;
+        PreviousActionsData memory previousActionsData =
+            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+
+        protocol.validateClosePosition(priceData, previousActionsData);
+        vm.stopPrank();
+
+        assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore);
+        assertEq(USER_1.balance, balanceUser1Before + SECURITY_DEPOSIT_VALUE);
     }
 
     receive() external payable { }
