@@ -37,7 +37,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
         uint256 securityDepositValue = _securityDepositValue;
-
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
@@ -68,9 +67,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         uint256 securityDepositValue = _securityDepositValue;
         uint256 balanceBefore = address(this).balance - msg.value;
+
         _validateDeposit(msg.sender, depositPriceData);
         if (_executePendingAction(previousActionsData)) {
             securityDepositValue += securityDepositValue;
+        }
+        if (address(this).balance < balanceBefore - securityDepositValue) {
+            revert UsdnProtocolUnexpectedBalance();
         }
         _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
         _checkPendingFee();
@@ -83,10 +86,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
         uint256 securityDepositValue = _securityDepositValue;
-
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
+
         uint256 balanceBefore = address(this).balance - msg.value;
 
         _initiateWithdrawal(msg.sender, usdnAmount, currentPriceData);
@@ -116,6 +119,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (_executePendingAction(previousActionsData)) {
             securityDepositValue += securityDepositValue;
         }
+        if (address(this).balance < balanceBefore - securityDepositValue) {
+            revert UsdnProtocolUnexpectedBalance();
+        }
         _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
         _checkPendingFee();
     }
@@ -128,17 +134,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         uint256 securityDepositValue = _securityDepositValue;
-
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
+
         uint256 balanceBefore = address(this).balance - msg.value;
 
         (tick_, tickVersion_, index_) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
         if (_executePendingAction(previousActionsData)) {
             securityDepositValue = 0;
         }
-
         if (address(this).balance < securityDepositValue + balanceBefore) {
             revert UsdnProtocolUnexpectedBalance();
         }
@@ -163,6 +168,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (_executePendingAction(previousActionsData)) {
             securityDepositValue += securityDepositValue;
         }
+        if (address(this).balance < balanceBefore - securityDepositValue) {
+            revert UsdnProtocolUnexpectedBalance();
+        }
         _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
         _checkPendingFee();
     }
@@ -177,17 +185,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
         uint256 securityDepositValue = _securityDepositValue;
-
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
+
         uint256 balanceBefore = address(this).balance - msg.value;
 
         _initiateClosePosition(msg.sender, tick, tickVersion, index, amountToClose, currentPriceData);
         if (_executePendingAction(previousActionsData)) {
             securityDepositValue = 0;
         }
-
         if (address(this).balance < securityDepositValue + balanceBefore) {
             revert UsdnProtocolUnexpectedBalance();
         }
@@ -211,6 +218,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _validateClosePosition(msg.sender, closePriceData);
         if (_executePendingAction(previousActionsData)) {
             securityDepositValue += securityDepositValue;
+        }
+        if (address(this).balance < balanceBefore - securityDepositValue) {
+            revert UsdnProtocolUnexpectedBalance();
         }
         _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
         _checkPendingFee();
