@@ -122,7 +122,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 balanceBefore = address(this).balance - msg.value;
 
         (tick_, tickVersion_, index_) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
-        _executePendingAction(previousActionsData);
+        if (_executePendingAction(previousActionsData)) {
+            balanceBefore -= _securityDepositValue;
+        }
 
         if (address(this).balance < _securityDepositValue + balanceBefore) {
             revert UsdnProtocolUnexpectedBalance();

@@ -108,44 +108,6 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates and validates an withdrawal action
-     * @custom:given The value of security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user at the initialisation of the withdrawal
-     * @custom:and The protocol returns the security deposit to the user at the initialisation of the withdrawal
-     */
-    function test_securityDeposit_withdrawal() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
-
-        uint256 balanceSenderBefore = address(this).balance;
-        uint256 balanceProtocolBefore = address(protocol).balance;
-
-        uint256 balanceOf = usdn.balanceOf(address(this));
-        usdn.approve(address(protocol), balanceOf);
-        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA);
-        _waitDelay();
-
-        assertEq(address(this).balance, balanceSenderBefore - SECURITY_DEPOSIT_VALUE);
-        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
-
-        protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
-
-        assertEq(address(this).balance, balanceSenderBefore);
-        assertEq(address(protocol).balance, balanceProtocolBefore);
-    }
-
-    /**
-     * @custom:scenario The user initiates an withdrawal action with less than the security deposit value
-     * @custom:when The user initiates an withdrawal with SECURITY_DEPOSIT_VALUE - 1 value
-     * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
-     */
-    function test_RevertWhen_secDec_lt_withdrawal() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
-
-        vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
-        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE - 1 }(1, priceData, EMPTY_PREVIOUS_DATA);
-    }
-
-    /**
      * @custom:scenario The user0 initiates an open position action and user1 validates user0 action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
      * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the open position
@@ -182,6 +144,44 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, balanceUser0Before - SECURITY_DEPOSIT_VALUE);
         assertEq(address(protocol).balance, balanceProtocolBefore);
         assertEq(USER_1.balance, balanceUser1Before + SECURITY_DEPOSIT_VALUE);
+    }
+
+    /**
+     * @custom:scenario The user initiates and validates an withdrawal action
+     * @custom:given The value of security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user at the initialisation of the withdrawal
+     * @custom:and The protocol returns the security deposit to the user at the initialisation of the withdrawal
+     */
+    function test_securityDeposit_withdrawal() public {
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+
+        uint256 balanceSenderBefore = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+
+        uint256 balanceOf = usdn.balanceOf(address(this));
+        usdn.approve(address(protocol), balanceOf);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA);
+        _waitDelay();
+
+        assertEq(address(this).balance, balanceSenderBefore - SECURITY_DEPOSIT_VALUE);
+        assertEq(address(protocol).balance, balanceProtocolBefore + SECURITY_DEPOSIT_VALUE);
+
+        protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
+
+        assertEq(address(this).balance, balanceSenderBefore);
+        assertEq(address(protocol).balance, balanceProtocolBefore);
+    }
+
+    /**
+     * @custom:scenario The user initiates an withdrawal action with less than the security deposit value
+     * @custom:when The user initiates an withdrawal with SECURITY_DEPOSIT_VALUE - 1 value
+     * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
+     */
+    function test_RevertWhen_secDec_lt_withdrawal() public {
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+
+        vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE - 1 }(1, priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /**
