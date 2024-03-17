@@ -18,7 +18,7 @@ import {
  * @custom:background Given a protocol initialized with default params
  * @custom:and A security deposit of 0.5 ether
  */
-// TO DO : test with multiple validation in same block and more than SECURITY_DEPOSIT_VALUE and error msg in assertEq
+// TO DO : test with multiple validations in the same block and more than SECURITY_DEPOSIT_VALUE
 contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     uint256 internal SECURITY_DEPOSIT_VALUE;
     bytes priceData;
@@ -35,9 +35,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates and validates an deposit action
+     * @custom:scenario The user initiates and validates a deposit action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user at the initialisation of the deposit
+     * @custom:then The protocol takes the security deposit from the user at the initialization of the deposit
      * @custom:and The protocol returns the security deposit to the user at the validation of the deposit
      */
     function test_securityDeposit_deposit() public {
@@ -49,12 +49,12 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "balance of the user after initialisation should have SECURITY_DEPOSIT_VALUE less"
+            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
         );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "balance of the protocol after initialisation should have SECURITY_DEPOSIT_VALUE more"
+            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
         );
 
         protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
@@ -62,18 +62,18 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceSenderBefore,
-            "balance of the user after validate should be the same than before all actions"
+            "balance of the user after validation should be the same than before all actions"
         );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "balance of the protocol after validate should be the same than before all actions"
+            "balance of the protocol after validation should be the same than before all actions"
         );
     }
 
     /**
-     * @custom:scenario The user initiates an deposit action with less than the security deposit value
-     * @custom:when The user initiates an deposit with SECURITY_DEPOSIT_VALUE - 1 value
+     * @custom:scenario The user initiates a deposit action with less than the security deposit value
+     * @custom:when The user initiates a deposit with SECURITY_DEPOSIT_VALUE - 1 value
      * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
      */
     function test_RevertWhen_secDec_lt_deposit() public {
@@ -82,11 +82,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates an deposit action and user1 validates user0 action
+     * @custom:scenario The user0 initiates a deposit action and user1 validates user0 action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the deposit
+     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the deposit
      * @custom:then We skip validation deadline + 1
-     * @custom:and The protocol returns the security deposit to the user1 at the initialisation of his deposit
+     * @custom:and The protocol returns the security deposit to the user1 at the initialization of his deposit
      */
     function test_securityDeposit_initiateDeposit_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
@@ -100,12 +100,12 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "balance of the user0 after initialisation should have SECURITY_DEPOSIT_VALUE less"
+            "balance of the user0 after initialization should have SECURITY_DEPOSIT_VALUE less"
         );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "balance of the protocol after initialisation should have SECURITY_DEPOSIT_VALUE more"
+            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
         );
 
         (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
@@ -126,7 +126,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "after user1 initiate, user0 should not have change in his balance"
+            "after user1 initiates, user0 should not have a change in his balance"
         );
         assertEq(
             address(protocol).balance,
@@ -145,12 +145,12 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the begining"
+            "protocol balance after all actions should be the same than a the beginning"
         );
         assertEq(
             USER_1.balance,
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
-            "user1 should have retrieved his security deposit in addition of user0's"
+            "user1 should have retrieved his security deposit in addition to user0's"
         );
         // TO DO : check that user0 initiate is good and user1 validate also
     }
@@ -158,8 +158,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user0 initiates an open position action and user1 validates user0 action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the open position
-     * @custom:and The protocol returns the security deposit to the user1 at the initialisation of his open position
+     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the open position
+     * @custom:then We skip validation deadline + 1
+     * @custom:and The protocol returns the security deposit to the user1 at the validation of his open position
      */
     function test_securityDeposit_validateDeposit_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
@@ -172,12 +173,12 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "balance of the user0 after initialisation should have SECURITY_DEPOSIT_VALUE less"
+            "balance of the user0 after initialization should have SECURITY_DEPOSIT_VALUE less"
         );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "balance of the protocol after initialisation should have SECURITY_DEPOSIT_VALUE more"
+            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
         );
 
         vm.prank(USER_1);
@@ -215,20 +216,20 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the begining"
+            "protocol balance after all actions should be the same than a the beginning"
         );
         assertEq(
             USER_1.balance,
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
-            "user1 should have retrieved his security deposit in addition of user0's"
+            "user1 should have retrieved his security deposit in addition to user0's"
         );
     }
 
     /**
-     * @custom:scenario The user initiates and validates an withdrawal action
-     * @custom:given The value of security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user at the initialisation of the withdrawal
-     * @custom:and The protocol returns the security deposit to the user at the initialisation of the withdrawal
+     * @custom:scenario The user initiates and validates a withdrawal action
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user at the initialization of the withdrawal
+     * @custom:and The protocol returns the security deposit to the user at the initialization of the withdrawal
      */
     function test_securityDeposit_withdrawal() public {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
@@ -236,7 +237,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 balanceSenderBefore = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
 
-        // we initaite a 1 wei withdrawal
+        // we initiate a 1 wei withdrawal
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
@@ -244,7 +245,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "user should have paid the security deposit"
+            "the user should have paid the security deposit"
         );
         assertEq(
             address(protocol).balance,
@@ -258,13 +259,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the begining"
+            "protocol balance after all actions should be the same than a the beginning"
         );
     }
 
     /**
-     * @custom:scenario The user initiates an withdrawal action with less than the security deposit value
-     * @custom:when The user initiates an withdrawal with SECURITY_DEPOSIT_VALUE - 1 value
+     * @custom:scenario The user initiates a withdrawal action with less than the security deposit value
+     * @custom:when The user initiates a withdrawal with SECURITY_DEPOSIT_VALUE - 1 value
      * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
      */
     function test_RevertWhen_secDec_lt_withdrawal() public {
@@ -275,10 +276,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates an Withdrawal action and user1 validates user0 action
+     * @custom:scenario The user0 initiates a withdrawal action and user1 validates user0 action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the withdrawal
-     * @custom:and The protocol returns the security deposit to the user1 at the initialisation of his withdrawal
+     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the withdrawal
+     * @custom:then We skip validation deadline + 1
+     * @custom:and The protocol returns the security deposit to the user1 at the initialization of his withdrawal
      */
     function test_securityDeposit_initiateWithdrawal_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
@@ -289,7 +291,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
         setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
 
-        // we initaite a 1 wei withdrawal
+        // we initiate a 1 wei withdrawal
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, EMPTY_PREVIOUS_DATA);
         skip(protocol.getValidationDeadline() + 1);
@@ -324,7 +326,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "after user1 initiate, user0 should not have change in his balance"
+            "after user1 initiates, user0 should not have a change in his balance"
         );
         assertEq(
             address(protocol).balance,
@@ -343,19 +345,20 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the begining"
+            "protocol balance after all actions should be the same than a the beginning"
         );
         assertEq(
             USER_1.balance,
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
-            "user1 should have retrieved his security deposit in addition of user0's"
+            "user1 should have retrieved his security deposit in addition to user0's"
         );
     }
 
     /**
-     * @custom:scenario The user0 initiates an withdrawal action and user1 validates user0 action
+     * @custom:scenario The user0 initiates a withdrawal action and user1 validates user0 action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the withdrawal
+     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the withdrawal
+     * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his withdrawal
      */
     function test_securityDeposit_validateWithdrawal_multipleUsers() public {
@@ -367,7 +370,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
         setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
 
-        // we initaite a 1 wei withdrawal
+        // we initiate a 1 wei withdrawal
         usdn.approve(address(protocol), 1);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
@@ -419,19 +422,19 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the begining"
+            "protocol balance after all actions should be the same than a the beginning"
         );
         assertEq(
             USER_1.balance,
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
-            "user1 should have retrieved his security deposit in addition of user0's"
+            "user1 should have retrieved his security deposit in addition to user0's"
         );
     }
 
     /**
      * @custom:scenario The user initiates and validates an open position action
-     * @custom:given The value of security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user at the initialisation of the open position
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user at the initialization of the open position
      * @custom:and The protocol returns the security deposit to the user at the validation of the open position
      */
     function test_securityDeposit_openPosition() public {
@@ -446,7 +449,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "user should have paid the security deposit"
+            "The user should have paid the security deposit"
         );
         assertEq(
             address(protocol).balance,
@@ -460,7 +463,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the begining"
+            "protocol balance after all actions should be the same than a the beginning"
         );
     }
 
@@ -477,12 +480,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates an deposit action and user1 validates user0 action
+     * @custom:scenario The user0 initiates a open position action and user1 validates user0 action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the deposit
-     * @custom:and The protocol returns the security deposit to the user1 at the validation of his deposit
+     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the open position
+     * @custom:then We skip validation deadline + 1
+     * @custom:and The protocol returns the security deposit to the user1 at the initialization of his open position
      */
-    function test_securityDeposit_initaiteOpenPosition_multipleUsers() public {
+    function test_securityDeposit_initiateOpenPosition_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         uint256 balanceUser0Before = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
@@ -543,20 +547,21 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "balance of the protocol after after all actions should be balanceProtocol of the begining"
+            "balance of the protocol after all actions should be balanceProtocol of the beginning"
         );
         assertEq(
             USER_1.balance,
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
-            "balance of user1 should have SECURITY_DEPOSIT_VALUE more than at the begining"
+            "balance of user1 should have SECURITY_DEPOSIT_VALUE more than at the beginning"
         );
     }
 
     /**
      * @custom:scenario The user0 initiates an open position action and user1 validates user0 action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the open position
-     * @custom:and The protocol returns the security deposit to the user1 at the initialisation of his open position
+     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the open position
+     * @custom:then We skip validation deadline + 1
+     * @custom:and The protocol returns the security deposit to the user1 at the validation of his open position
      */
     function test_securityDeposit_validateOpenPosition_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
@@ -615,19 +620,19 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the begining"
+            "protocol balance after all actions should be the same than a the beginning"
         );
         assertEq(
             USER_1.balance,
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
-            "user1 should have retrieved his security deposit in addition of user0's"
+            "user1 should have retrieved his security deposit in addition to user0's"
         );
     }
 
     /**
-     * @custom:scenario The user initiates and validates an close position action
-     * @custom:given The value of security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user at the initialisation of the close position
+     * @custom:scenario The user initiates and validates a close position action
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user at the initialization of the close position
      * @custom:and The protocol returns the security deposit to the user at the validation of the close position
      */
     function test_securityDeposit_closePosition() public {
@@ -646,7 +651,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "user should have paid the security deposit"
+            "the user should have paid the security deposit"
         );
         assertEq(
             address(protocol).balance,
@@ -660,13 +665,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the begining"
+            "protocol balance after all actions should be the same than a the beginning"
         );
     }
 
     /**
-     * @custom:scenario The user initiates an close position action with less than the security deposit value
-     * @custom:when The user initiates an close position with SECURITY_DEPOSIT_VALUE - 1 value
+     * @custom:scenario The user initiates a close position action with less than the security deposit value
+     * @custom:when The user initiates a close position with SECURITY_DEPOSIT_VALUE - 1 value
      * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
      */
     function test_RevertWhen_secDec_lt_closePosition() public {
@@ -681,10 +686,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates an Withdrawal action and user1 validates user0 action
+     * @custom:scenario The user0 initiates a close position action and user1 validates user0 action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the withdrawal
-     * @custom:and The protocol returns the security deposit to the user1 at the initialisation of his withdrawal
+     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the close position
+     * @custom:then We skip validation deadline + 1
+     * @custom:and The protocol returns the security deposit to the user1 at the initialization of his close position
      */
     function test_securityDeposit_initiateClosePosition_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
@@ -754,20 +760,21 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the begining"
+            "protocol balance after all actions should be the same than a the beginning"
         );
         assertEq(
             USER_1.balance,
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
-            "user1 should have retrieved his security deposit in addition of user0's"
+            "user1 should have retrieved his security deposit in addition to user0's"
         );
     }
 
     /**
-     * @custom:scenario The user0 initiates an withdrawal action and user1 validates user0 action
+     * @custom:scenario The user0 initiates a close position action and user1 validates user0 action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialisation of the withdrawal
-     * @custom:and The protocol returns the security deposit to the user1 at the validation of his withdrawal
+     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the close position
+     * @custom:then We skip validation deadline + 1
+     * @custom:and The protocol returns the security deposit to the user1 at the validation of his close position
      */
     function test_securityDeposit_validateClosePosition_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
@@ -835,12 +842,12 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the begining"
+            "protocol balance after all actions should be the same than a the beginning"
         );
         assertEq(
             USER_1.balance,
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
-            "user1 should have retrieved his security deposit in addition of user0's"
+            "user1 should have retrieved his security deposit in addition to user0's"
         );
     }
 
