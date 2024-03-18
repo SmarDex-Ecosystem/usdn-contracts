@@ -749,13 +749,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
-            // verify withdrawal imbalance limit
-            _imbalanceLimitClose(pos.totalExpo, pos.amount);
-
             priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
         }
 
         uint128 totalExpoToClose = (uint256(pos.totalExpo) * amountToClose / pos.amount).toUint128();
+
+        // verify withdrawal imbalance limit
+        _imbalanceLimitClose(totalExpoToClose, amountToClose);
+
         {
             uint256 liqMultiplier = _liquidationMultiplier;
             uint256 tempTransfer = _assetToTransfer(priceWithFees, tick, totalExpoToClose, liqMultiplier, 0);
