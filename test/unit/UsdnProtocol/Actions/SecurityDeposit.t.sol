@@ -83,6 +83,30 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user initiates a deposit action with more than the security deposit value
+     * @custom:when The user initiates a deposit with SECURITY_DEPOSIT_VALUE + 100 value
+     * @custom:then The protocol refund the excess to the user
+     */
+    function test_RevertWhen_secDec_gt_deposit() public {
+        uint256 balanceSenderBefore = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE + 100 }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
+        _waitDelay();
+
+        assertEq(
+            address(this).balance,
+            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
+            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
+            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
+        );
+    }
+
+    /**
      * @custom:scenario The user0 initiates a deposit action and user1 validates user0 action with a initiateDeposit
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
      * @custom:then The protocol takes the security deposit from the user0 at the initialization of the deposit
@@ -289,6 +313,32 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE - 1 }(1, priceData, EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario The user initiates a withrawal action with more than the security deposit value
+     * @custom:when The user initiates a withrawal with SECURITY_DEPOSIT_VALUE + 100 value
+     * @custom:then The protocol refund the excess to the user
+     */
+    function test_RevertWhen_secDec_gt_withrawal() public {
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        uint256 balanceSenderBefore = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+
+        usdn.approve(address(protocol), 1);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE + 100 }(1, priceData, EMPTY_PREVIOUS_DATA);
+        _waitDelay();
+
+        assertEq(
+            address(this).balance,
+            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
+            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
+            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
+        );
     }
 
     /**
@@ -514,6 +564,31 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user initiates a open position action with more than the security deposit value
+     * @custom:when The user initiates a deposit with SECURITY_DEPOSIT_VALUE + 100 value
+     * @custom:then The protocol refund the excess to the user
+     */
+    function test_RevertWhen_secDec_gt_openPosition() public {
+        uint256 balanceSenderBefore = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+
+        protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE + 100 }(
+            1 ether, params.initialPrice / 2, priceData, EMPTY_PREVIOUS_DATA
+        );
+
+        assertEq(
+            address(this).balance,
+            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
+            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
+            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
+        );
+    }
+
+    /**
      * @custom:scenario The user0 initiates a open position action and user1 validates user0 action with a
      * initiateOpenPosition
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
@@ -725,6 +800,35 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
             tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario The user initiates a close position action with more than the security deposit value
+     * @custom:when The user initiates a close position with SECURITY_DEPOSIT_VALUE + 100 value
+     * @custom:then The protocol refund the excess to the user
+     */
+    function test_RevertWhen_secDec_gt_closePosition() public {
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+        );
+        uint256 balanceSenderBefore = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+
+        protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE + 100 }(
+            tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+
+        assertEq(
+            address(this).balance,
+            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
+            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
+            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
         );
     }
 
