@@ -4,7 +4,12 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { LongPendingAction, Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    LongPendingAction,
+    Position,
+    PreviousActionsData,
+    ProtocolAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
@@ -120,7 +125,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
         uint256 etherBalanceBefore = address(this).balance;
 
-        protocol.initiateClosePosition{ value: 1 ether }(tick, tickVersion, index, positionAmount, priceData, "");
+        protocol.initiateClosePosition{ value: 1 ether }(
+            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA
+        );
 
         assertEq(
             etherBalanceBefore,
@@ -149,9 +156,16 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         skip(protocol.getValidationDeadline());
 
+        bytes[] memory previousData = new bytes[](1);
+        previousData[0] = priceData;
+        uint128[] memory rawIndices = new uint128[](1);
+        rawIndices[0] = 1;
+
         vm.expectEmit(true, false, false, false);
         emit ValidatedOpenPosition(USER_1, 0, 0, 0, 0, 0);
-        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, priceData);
+        protocol.initiateClosePosition(
+            tick, tickVersion, index, positionAmount, priceData, PreviousActionsData(previousData, rawIndices)
+        );
     }
 
     /**
@@ -165,7 +179,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit(true, true, true, false);
         emit InitiatedClosePosition(address(this), tick, tickVersion, 0, 0, 0);
-        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, "");
+        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /* -------------------------------------------------------------------------- */

@@ -216,4 +216,65 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         value = protocol.i_tickValue(protocol.getEffectivePriceForTick(tick), tick, 10 ether);
         assertEq(value, 0.198003465594229687 ether, "current price = liq price with penalty");
     }
+
+    /**
+     * @custom:scenario Check that the leverage and total expo of a position is re-calculated on validation
+     * @custom:given An initialized position
+     * @custom:when The position is validated
+     * @custom:and The price fluctuated a bit
+     * @custom:and Funding calculations were applied
+     * @custom:then The leverage of the position should be adjusted, changing the value of the total expo for the tick
+     * and the protocol
+     */
+    function test_validateAPositionAfterPriceChangedRecalculateLeverageAndTotalExpo() external {
+        uint128 price = 2000 ether;
+        uint128 desiredLiqPrice = 1700 ether;
+
+        uint256 initialTotalExpo = protocol.getTotalExpo();
+        uint256 totalExpoForTick =
+            protocol.getCurrentTotalExpoByTick(protocol.getEffectiveTickForPrice(desiredLiqPrice));
+
+        assertEq(totalExpoForTick, 0, "Total expo for future position's tick should be empty");
+
+        // Initiate a long position
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether
+        );
+
+        totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
+        Position memory position = protocol.getLongPosition(tick, tickVersion, index);
+
+        // Calculate the total expo of the position after the initialization
+        assertEq(
+            initialTotalExpo + position.totalExpo,
+            protocol.getTotalExpo(),
+            "Total expo should have increased by the position's total expo"
+        );
+        assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
+
+        _waitDelay();
+
+        // Change the price
+        price = 1999 ether;
+        // Validate the position with the new price
+        protocol.validateOpenPosition(abi.encode(price), EMPTY_PREVIOUS_DATA);
+
+        uint256 previousExpo = position.totalExpo;
+        // Get the updated position
+        position = protocol.getLongPosition(tick, tickVersion, index);
+        uint256 newExpo = position.totalExpo;
+
+        // Sanity check
+        assertTrue(previousExpo != newExpo, "The expo changing is necessary for this test to work");
+
+        // Calculate the total expo of the position after the validation
+        assertEq(
+            initialTotalExpo + position.totalExpo,
+            protocol.getTotalExpo(),
+            "Total expo should have increased by the position's new total expo"
+        );
+
+        totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
+        assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
+    }
 }

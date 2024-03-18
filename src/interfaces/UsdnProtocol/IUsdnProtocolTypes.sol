@@ -123,3 +123,15 @@ struct LongPendingAction {
     uint256 closeLiqMultiplier; // 32 bytes
     uint256 closeTempTransfer; // 32 bytes
 }
+
+/**
+ * @notice The data allowing to validate an actionable pending action.
+ * @param priceData An array of bytes, each representing the data to be forwarded to the oracle middleware to validate
+ * a pending action in the queue.
+ * @param rawIndices An array of raw indices in the pending actions queue, in the same order as the corresponding
+ * priceData
+ */
+struct PreviousActionsData {
+    bytes[] priceData;
+    uint128[] rawIndices;
+}
