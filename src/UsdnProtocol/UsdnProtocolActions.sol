@@ -212,7 +212,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _asset.safeTransferFrom(user, address(this), amount);
 
-        emit InitiatedDeposit(user, amount);
+        emit InitiatedDeposit(user, amount, block.timestamp);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
@@ -273,7 +273,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _balanceVault += deposit.amount;
 
         _usdn.mint(deposit.user, usdnToMint);
-        emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint);
+        emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint, deposit.timestamp);
     }
 
     /**
@@ -321,7 +321,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // retrieve the USDN tokens, checks that balance is sufficient
         _usdn.safeTransferFrom(user, address(this), usdnAmount);
 
-        emit InitiatedWithdrawal(user, usdnAmount);
+        emit InitiatedWithdrawal(user, usdnAmount, block.timestamp);
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
@@ -383,7 +383,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _asset.safeTransfer(withdrawal.user, assetToTransfer);
         }
 
-        emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amount);
+        emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amount, withdrawal.timestamp);
     }
 
     /**
