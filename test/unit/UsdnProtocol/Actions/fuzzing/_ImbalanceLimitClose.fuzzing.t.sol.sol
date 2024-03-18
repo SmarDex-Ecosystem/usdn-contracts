@@ -28,14 +28,15 @@ contract FuzzingImbalanceLimitClose is UsdnProtocolBaseFixture {
         closeAmount = bound(closeAmount, 1, currentBalanceLong);
         // total expo to remove
         uint256 totalExpoToRemove = closeAmount * uint256(currentTotalExpo) / params.initialLong;
-        // total expo to remove
+        // current long expo
         int256 longExpo = currentTotalExpo - int256(currentBalanceLong);
         // new long expo
         int256 newLongExpo =
             (currentTotalExpo - int256(totalExpoToRemove)) - (int256(currentBalanceLong) - int256(closeAmount));
 
         // expected imbalance bps
-        int256 imbalanceBps = (int256(initialVaultExpo) - newLongExpo) * int256(protocol.BPS_DIVISOR()) / longExpo;
+        int256 imbalanceBps =
+            (int256(int128(params.initialDeposit)) - newLongExpo) * int256(protocol.BPS_DIVISOR()) / longExpo;
 
         // initial close limit bps
         (,,, int256 initialCloseLimit) = protocol.getExpoImbalanceLimitsBps();

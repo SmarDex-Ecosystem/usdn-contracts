@@ -22,13 +22,15 @@ contract FuzzingImbalanceLimitWithdrawal is UsdnProtocolBaseFixture {
     {
         // initialize random balanced protocol
         _randInitBalanced(initialDeposit, initialLong);
+        uint256 vaultExpo = protocol.getBalanceVault();
+        int256 currentLongExpo = int256(protocol.getTotalExpo() - protocol.getBalanceLong());
         // range withdrawalAmount properly
-        withdrawalAmount = bound(withdrawalAmount, 1, initialVaultExpo);
+        withdrawalAmount = bound(withdrawalAmount, 1, uint256(vaultExpo));
         // new vault expo
-        uint256 newVaultExpo = initialVaultExpo - withdrawalAmount;
+        uint256 newVaultExpo = vaultExpo - withdrawalAmount;
         // expected imbalance bps
-        int256 imbalanceBps = (int256(uint256(initialLongExpo)) - int256(newVaultExpo)) * int256(protocol.BPS_DIVISOR())
-            / int256(initialVaultExpo);
+        int256 imbalanceBps =
+            (currentLongExpo - int256(newVaultExpo)) * int256(protocol.BPS_DIVISOR()) / int256(vaultExpo);
 
         // initial withdrawal limit bps
         (,, int256 withdrawalLimit,) = protocol.getExpoImbalanceLimitsBps();

@@ -59,9 +59,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
-    uint128 public initialLongExpo;
-    uint256 public initialVaultExpo;
-    uint256 public initialLongLeverage;
+    uint256 public constant LEVERAGE_DECIMALS = 21;
     address[] public users;
 
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
@@ -123,21 +121,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
-        Position memory firstPos = protocol.getLongPosition(
-            protocol.getEffectiveTickForPrice(testParams.initialPrice / 2)
-                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
-            0,
-            0
-        );
+
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();
-        initialVaultExpo = protocol.getBalanceVault();
-        initialLongLeverage = protocol.i_getLeverage(testParams.initialPrice, testParams.initialPrice / 2);
-        initialLongExpo = firstPos.totalExpo - testParams.initialLong;
-
         params = testParams;
     }
 
@@ -264,7 +253,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     }
 
     /// @dev Calculate proper initial values from randoms to initiate a balanced protocol
-    function _randInitBalanced(uint128 initialDeposit, uint128 initialLong) internal {
+    function _randInitBalanced(uint128 initialDeposit, uint128 initialLong)
+        internal
+        returns (uint256 initialLeverage_)
+    {
         // initial default params
         params = DEFAULT_PARAMS;
         params.enableLimits = true;
@@ -281,13 +273,18 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
         // initial leverage
         uint128 initialLeverage = uint128(
-            10 ** 21 * uint256(params.initialPrice) / (uint256(params.initialPrice) - uint256(params.initialPrice / 2))
+            10 ** LEVERAGE_DECIMALS * uint256(params.initialPrice)
+                / (uint256(params.initialPrice) - uint256(params.initialPrice / 2))
         );
 
         // min long amount
-        uint256 minLongAmount = uint128(uint256(minLongExpo) * 10 ** 21 / (uint256(initialLeverage) - 10 ** 21));
+        uint256 minLongAmount = uint128(
+            uint256(minLongExpo) * 10 ** LEVERAGE_DECIMALS / (uint256(initialLeverage) - 10 ** LEVERAGE_DECIMALS)
+        );
         // max long amount
-        uint256 maxLongAmount = uint128(uint256(maxLongExpo) * 10 ** 21 / (uint256(initialLeverage) - 10 ** 21));
+        uint256 maxLongAmount = uint128(
+            uint256(maxLongExpo) * 10 ** LEVERAGE_DECIMALS / (uint256(initialLeverage) - 10 ** LEVERAGE_DECIMALS)
+        );
 
         // assign initial long amount in range min max
         initialLong = uint128(bound(initialLong, uint128(minLongAmount), uint128(maxLongAmount)));
@@ -303,5 +300,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
         // init protocol
         _setUp(params);
+
+        // initial leverage
+        initialLeverage_ = protocol.i_getLeverage(params.initialPrice, params.initialPrice / 2);
     }
 }
