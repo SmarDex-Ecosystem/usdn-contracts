@@ -18,7 +18,6 @@ import {
  * @custom:background Given a protocol initialized with default params
  * @custom:and A security deposit of 0.5 ether
  */
-// TO DO : test with multiple validations in the same block and more than SECURITY_DEPOSIT_VALUE
 contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     uint256 internal SECURITY_DEPOSIT_VALUE;
     bytes priceData;

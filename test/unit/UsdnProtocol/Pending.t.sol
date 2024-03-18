@@ -26,7 +26,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Get the first actionable pending action
+     * @custom:scenario Get the actionable pending actions
      * @custom:given The user has initiated a deposit
      * @custom:and The validation deadline has elapsed
      * @custom:when The actionable pending actions are requested
