@@ -384,6 +384,62 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario A liquidator liquidate a tick and receive a reward but the vault doesn't have enough balance
+     * @custom:given There is a tick that can be liquidated
+     * @custom:and The vault doesn't have enough assets to cover the liquidator rewards
+     * @custom:when A liquidator calls the function liquidate()
+     * @custom:then The tick is liquidated
+     * @custom:and The protocol send rewards for the liquidation based on what's left in the vault
+     */
+    function test_canLiquidateAndReceiveRewardsUpToTheVaultBalance() public {
+        uint128 price = 2000 ether;
+
+        // Setup a long position from another user
+        (int24 tick,,) =
+            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, price);
+
+        // Change The rewards calculations parameters to not be dependent of the initial values
+        vm.prank(DEPLOYER);
+        // Put incredibly high values to empty the vault
+        liquidationRewardsManager.setRewardsParameters(500_000, 1_000_000, 200_000, 8000 gwei, 20_000);
+
+        uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
+        uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
+
+        // Set high gas fees
+        chainlinkGasPriceFeed.setLatestRoundData(1, 8000 gwei, block.timestamp, 1);
+        vm.txGasPrice(8000 gwei);
+
+        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
+        // Sanity check
+        assertGt(
+            expectedLiquidatorRewards,
+            vaultBalanceBeforeRewards,
+            "The expected liquidation rewards should be higher than the balance of the vault"
+        );
+
+        // Get the proper liquidation price for the tick
+        price = protocol.getEffectivePriceForTick(tick);
+        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTotalExpoByTick(tick, 0));
+
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.LiquidatorRewarded(
+            address(this), vaultBalanceBeforeRewards + uint256(collateralLiquidated)
+        );
+        uint256 liquidatedPositions = protocol.liquidate(abi.encode(price), 1);
+
+        // Check that the right number of positions have been liquidated
+        assertEq(liquidatedPositions, 1, "One position should have been liquidated");
+
+        assertEq(
+            wstETH.balanceOf(address(this)) - wstETHBalanceBeforeRewards,
+            vaultBalanceBeforeRewards + uint256(collateralLiquidated),
+            "The liquidator did not receive the right amount of rewards"
+        );
+        assertEq(protocol.getBalanceVault(), 0, "The vault should have given what was left");
+    }
+
+    /**
      * @custom:scenario The user sends too much ether when liquidating positions
      * @custom:given The user performs a liquidation
      * @custom:when The user sends 0.5 ether as value in the `liquidate` call
