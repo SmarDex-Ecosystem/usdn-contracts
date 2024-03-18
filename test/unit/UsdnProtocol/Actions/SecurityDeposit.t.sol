@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { ADMIN } from "test/utils/Constants.sol";
 import { USER_1 } from "test/utils/Constants.sol";
+
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import {
@@ -12,6 +12,7 @@ import {
     PendingAction,
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { console2 } from "forge-std/Test.sol";
 
 /**
  * @custom:feature The security deposit of the USDN Protocol
@@ -43,6 +44,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     function test_securityDeposit_deposit() public {
         uint256 balanceSenderBefore = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
+
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
@@ -82,7 +84,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates a deposit action and user1 validates user0 action
+     * @custom:scenario The user0 initiates a deposit action and user1 validates user0 action with a initiateDeposit
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
      * @custom:then The protocol takes the security deposit from the user0 at the initialization of the deposit
      * @custom:then We skip validation deadline + 1
@@ -93,6 +95,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 balanceUser0Before = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
         uint256 balanceUser1Before = USER_1.balance;
+        uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
+        uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
         skip(protocol.getValidationDeadline() + 1);
@@ -126,7 +130,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "after user1 initiates, user0 should not have a change in his balance"
+            "after user1 initiate, user0 should not have a change in his balance"
         );
         assertEq(
             address(protocol).balance,
@@ -152,21 +156,25 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
             "user1 should have retrieved his security deposit in addition to user0's"
         );
-        // TO DO : check that user0 initiate is good and user1 validate also
+        // we assert that both deposit went through
+        assertGt(usdn.balanceOf(address(this)), usdnBalanceUser0Before, "user0 should have received usdn");
+        assertGt(usdn.balanceOf(USER_1), usdnBalanceUser1Before, "user1 should have received usdn");
     }
 
     /**
-     * @custom:scenario The user0 initiates an open position action and user1 validates user0 action
+     * @custom:scenario The user0 initiates a deposit action and user1 validates user0 action with a validateDeposit
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the open position
+     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the deposit
      * @custom:then We skip validation deadline + 1
-     * @custom:and The protocol returns the security deposit to the user1 at the validation of his open position
+     * @custom:and The protocol returns the security deposit to the user1 at the validation of his deposit
      */
     function test_securityDeposit_validateDeposit_multipleUsers() public {
         wstETH.mintAndApprove(USER_1, 100 ether, address(protocol), type(uint256).max);
         uint256 balanceUser1Before = USER_1.balance;
         uint256 balanceUser0Before = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
+        uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
+        uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
 
@@ -186,7 +194,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
 
         assertEq(
-            USER_1.balance, balanceUser1Before - SECURITY_DEPOSIT_VALUE, "user1 should have paid the security deposit"
+            USER_1.balance,
+            balanceUser1Before - SECURITY_DEPOSIT_VALUE,
+            "user1 should have paid the security deposit to the protocol"
         );
         assertEq(
             address(this).balance,
@@ -196,7 +206,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore + 2 * SECURITY_DEPOSIT_VALUE,
-            "the protocol should have two security deposits"
+            "the protocol should have both security deposits"
         );
 
         (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
@@ -223,17 +233,20 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
             "user1 should have retrieved his security deposit in addition to user0's"
         );
+        // we assert that both deposit went through
+        assertGt(usdn.balanceOf(address(this)), usdnBalanceUser0Before, "user0 should have received usdn");
+        assertGt(usdn.balanceOf(USER_1), usdnBalanceUser1Before, "user1 should have received usdn");
     }
 
     /**
      * @custom:scenario The user initiates and validates a withdrawal action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
      * @custom:then The protocol takes the security deposit from the user at the initialization of the withdrawal
-     * @custom:and The protocol returns the security deposit to the user at the initialization of the withdrawal
+     * @custom:and The protocol returns the security deposit to the user at the validation of the withdrawal
      */
     function test_securityDeposit_withdrawal() public {
+        // we create a position to be able to withdraw
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
-
         uint256 balanceSenderBefore = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
 
@@ -255,7 +268,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
 
-        assertEq(address(this).balance, balanceSenderBefore, "user should have retrieved his deposit");
+        assertEq(
+            address(this).balance,
+            balanceSenderBefore,
+            "user should have retrieved his deposit from the protocol at the end"
+        );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
@@ -276,7 +293,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates a withdrawal action and user1 validates user0 action
+     * @custom:scenario The user0 initiates a withdrawal action and user1 validates user0 action with a
+     * initiateWithdrawal
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
      * @custom:then The protocol takes the security deposit from the user0 at the initialization of the withdrawal
      * @custom:then We skip validation deadline + 1
@@ -290,6 +308,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
         setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
+        uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
         // we initiate a 1 wei withdrawal
         usdn.approve(address(protocol), 1);
@@ -304,7 +324,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "the protocol should have user deposit"
+            "the protocol should have user0 deposit"
         );
 
         (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
@@ -321,7 +341,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             USER_1.balance,
             balanceUser1Before,
-            "user1 should have taken user0 security deposit with his initiate deposit action"
+            "user1 should have taken user0 security deposit with his initiate withdrawal action"
         );
         assertEq(
             address(this).balance,
@@ -340,7 +360,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "user 0 should not have retrieved his security deposit"
+            "user0 should not have retrieved his security deposit"
         );
         assertEq(
             address(protocol).balance,
@@ -352,10 +372,14 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
             "user1 should have retrieved his security deposit in addition to user0's"
         );
+        // we assert that both withdrawal went through
+        assertLt(usdn.balanceOf(address(this)), usdnBalanceUser0Before, "user0 should have received usdn");
+        assertLt(usdn.balanceOf(USER_1), usdnBalanceUser1Before, "user1 should have received usdn");
     }
 
     /**
-     * @custom:scenario The user0 initiates a withdrawal action and user1 validates user0 action
+     * @custom:scenario The user0 initiates a withdrawal action and user1 validates user0 action with a
+     * validateWithdrawal
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
      * @custom:then The protocol takes the security deposit from the user0 at the initialization of the withdrawal
      * @custom:then We skip validation deadline + 1
@@ -369,6 +393,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
         setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, 1 ether, params.initialPrice);
+        uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
+        uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
         // we initiate a 1 wei withdrawal
         usdn.approve(address(protocol), 1);
@@ -392,17 +418,19 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
 
         assertEq(
-            USER_1.balance, balanceUser1Before - SECURITY_DEPOSIT_VALUE, "user1 should have paid the security deposit"
+            USER_1.balance,
+            balanceUser1Before - SECURITY_DEPOSIT_VALUE,
+            "user1 should have paid the security deposit to the protocol"
         );
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "user0 should have paid the security deposit"
+            "user0 should have paid the security deposit to the protocol"
         );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore + 2 * SECURITY_DEPOSIT_VALUE,
-            "the protocol should have two security deposits"
+            "the protocol should have both security deposits"
         );
 
         (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
@@ -429,6 +457,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             balanceUser1Before + SECURITY_DEPOSIT_VALUE,
             "user1 should have retrieved his security deposit in addition to user0's"
         );
+        // we assert that both withdrawal went through
+        assertLt(usdn.balanceOf(address(this)), usdnBalanceUser0Before, "user0 should have received usdn");
+        assertLt(usdn.balanceOf(USER_1), usdnBalanceUser1Before, "user1 should have received usdn");
     }
 
     /**
@@ -459,11 +490,15 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
 
-        assertEq(address(this).balance, balanceSenderBefore, "user should have retrieved his deposit");
+        assertEq(
+            address(this).balance,
+            balanceSenderBefore,
+            "user should have retrieved his security deposit from the protocol"
+        );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the beginning"
+            "protocol balance after all actions should be the same than at the beginning"
         );
     }
 
@@ -480,7 +515,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates a open position action and user1 validates user0 action
+     * @custom:scenario The user0 initiates a open position action and user1 validates user0 action with a
+     * initiateOpenPosition
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
      * @custom:then The protocol takes the security deposit from the user0 at the initialization of the open position
      * @custom:then We skip validation deadline + 1
