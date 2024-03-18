@@ -523,22 +523,12 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getOpenExpoImbalanceLimitBps() external view returns (int256) {
-        return _openExpoImbalanceLimitBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256) {
-        return _withdrawalExpoImbalanceLimitBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getDepositExpoImbalanceLimitBps() external view returns (int256) {
-        return _depositExpoImbalanceLimitBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getCloseExpoImbalanceLimitBps() external view returns (int256) {
-        return _closeExpoImbalanceLimitBps;
+    function getExpoImbalanceLimitsBps() external view returns (int256, int256, int256, int256) {
+        return (
+            _openExpoImbalanceLimitBps,
+            _depositExpoImbalanceLimitBps,
+            _withdrawalExpoImbalanceLimitBps,
+            _closeExpoImbalanceLimitBps
+        );
     }
 }

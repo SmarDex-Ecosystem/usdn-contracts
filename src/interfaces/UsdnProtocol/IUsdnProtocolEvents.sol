@@ -288,8 +288,13 @@ interface IUsdnProtocolEvents {
     event UsdnRebaseIntervalUpdated(uint256 interval);
 
     /**
-     * @notice Emitted when a imbalance limit is updated.
-     * @param newLimit The new imbalance limit.
+     * @notice Emitted when imbalance limit are updated.
+     * @param newOpenLimit The new open limit.
+     * @param newDepositLimit The new deposit limit.
+     * @param newWithdrawalLimit The new withdrawal limit.
+     * @param newCloseLimit The new close limit.
      */
-    event ImbalanceLimitUpdated(uint256 newLimit);
+    event ImbalanceLimitsUpdated(
+        uint256 newOpenLimit, uint256 newDepositLimit, uint256 newWithdrawalLimit, uint256 newCloseLimit
+    );
 }

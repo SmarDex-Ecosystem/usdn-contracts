@@ -304,7 +304,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * the `ProtocolAction.InitiateDeposit` action.
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
-     * @param user The address of theuser initiating the deposit.
+     * @param user The address of the user initiating the deposit.
      * @param amount The amount of wstETH to deposit.
      * @param currentPriceData The current price data
      */

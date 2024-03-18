@@ -120,32 +120,13 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getMiddlewareValidationDelay() external view returns (uint256);
 
     /**
-     * @notice Get the open long expo imbalance limit basis point.
-     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long
-     * the open rebalancing mechanism is triggered, preventing the opening of a new long position.
+     * @notice Get expo imbalance limits basis point
+     * @return The open expo imbalance limit
+     * @return The deposit expo imbalance limit
+     * @return The withdrawal expo imbalance limit
+     * @return The close expo imbalance limit
      */
-    function getOpenExpoImbalanceLimitBps() external view returns (int256);
-
-    /**
-     * @notice Get the withdrawal long expo imbalance limit basis point.
-     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long,
-     * the withdrawal rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
-     */
-    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256);
-
-    /**
-     * @notice Get the deposit vault expo imbalance limit basis point.
-     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
-     * the deposit rebalancing mechanism is triggered, preventing the opening of new vault position.
-     */
-    function getDepositExpoImbalanceLimitBps() external view returns (int256);
-
-    /**
-     * @notice Get the close vault expo imbalance limit basis point.
-     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
-     * the close rebalancing mechanism is triggered, preventing the close of existing long position.
-     */
-    function getCloseExpoImbalanceLimitBps() external view returns (int256);
+    function getExpoImbalanceLimitsBps() external view returns (int256, int256, int256, int256);
 
     /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
     function getTargetUsdnPrice() external view returns (uint128);

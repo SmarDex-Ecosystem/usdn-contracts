@@ -41,7 +41,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     function test_RevertWith_imbalanceLimitDepositZeroLongExpo() public {
         // disable close limit
         vm.prank(ADMIN);
-        protocol.setCloseExpoImbalanceLimitBps(0);
+        protocol.setExpoImbalanceLimitsBps(200, 200, 600, 0);
 
         // the initial tick
         int24 tick = protocol.getMaxInitializedTick();
@@ -64,7 +64,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         );
 
         // wait more than 2 blocks
-        skip(25);
+        _waitDelay();
 
         // validate close
         protocol.validateClosePosition(abi.encode(params.initialPrice), data);
@@ -90,7 +90,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
 
         // disable deposit limit
         vm.prank(ADMIN);
-        protocol.setDepositExpoImbalanceLimitBps(0);
+        protocol.setExpoImbalanceLimitsBps(200, 0, 600, 600);
 
         protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit + 1);
     }
@@ -113,8 +113,10 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     function _setupDeposit() private view returns (uint256 imbalanceBps_, uint256 vaultExpoValueToLimit_) {
         // current long expo
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
+        // initial deposit limit bps
+        (, int256 depositLimit,,) = protocol.getExpoImbalanceLimitsBps();
         // imbalance bps
-        imbalanceBps_ = uint256(protocol.getDepositExpoImbalanceLimitBps());
+        imbalanceBps_ = uint256(depositLimit);
         // current vault expo value to imbalance the protocol
         vaultExpoValueToLimit_ = longExpo * imbalanceBps_ / protocol.BPS_DIVISOR();
     }

@@ -112,10 +112,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
         // disable imbalance limits
         if (!testParams.enableLimits) {
-            protocol.setOpenExpoImbalanceLimitBps(0);
-            protocol.setWithdrawalExpoImbalanceLimitBps(0);
-            protocol.setDepositExpoImbalanceLimitBps(0);
-            protocol.setCloseExpoImbalanceLimitBps(0);
+            protocol.setExpoImbalanceLimitsBps(0, 0, 0, 0);
         }
 
         wstETH.approve(address(protocol), type(uint256).max);

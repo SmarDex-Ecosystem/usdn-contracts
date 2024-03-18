@@ -53,7 +53,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(0.1 ether, params.initialPrice / 2, abi.encode(params.initialPrice), data);
 
         // wait more than 2 blocks
-        skip(25);
+        _waitDelay();
 
         // validate open position
         protocol.validateOpenPosition(abi.encode(params.initialPrice), data);
@@ -86,7 +86,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
         // disable withdrawal limit
         vm.prank(ADMIN);
-        protocol.setWithdrawalExpoImbalanceLimitBps(0);
+        protocol.setExpoImbalanceLimitsBps(200, 200, 0, 600);
 
         protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit + 1);
     }
@@ -108,8 +108,10 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
     function _setupWithdrawal() private view returns (uint256 imbalanceBps_, uint256 longExpoValueToLimit_) {
         uint256 vaultExpo_ = protocol.getBalanceVault();
+        // initial withdrawal limit bps
+        (,, int256 withdrawalLimit,) = protocol.getExpoImbalanceLimitsBps();
         // imbalance bps
-        imbalanceBps_ = uint256(protocol.getWithdrawalExpoImbalanceLimitBps());
+        imbalanceBps_ = uint256(withdrawalLimit);
         // current long expo value to imbalance the protocol
         longExpoValueToLimit_ = vaultExpo_ * imbalanceBps_ / protocol.BPS_DIVISOR();
     }

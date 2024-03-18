@@ -42,7 +42,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
 
         // disable open limit
         vm.prank(ADMIN);
-        protocol.setOpenExpoImbalanceLimitBps(0);
+        protocol.setExpoImbalanceLimitsBps(0, 200, 600, 600);
 
         protocol.i_imbalanceLimitOpen(totalExpoValueToLimit + 1, longAmount);
     }
@@ -85,7 +85,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(0.1 ether, params.initialPrice / 2, abi.encode(params.initialPrice), data);
 
         // wait more than 2 blocks
-        skip(25);
+        _waitDelay();
 
         // validate open position
         protocol.validateOpenPosition(abi.encode(params.initialPrice), data);
@@ -114,8 +114,10 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
     {
         // current vault expo
         uint256 vaultExpo = protocol.getBalanceVault();
+        // initial open limit bps
+        (int256 openLimit,,,) = protocol.getExpoImbalanceLimitsBps();
         // imbalance bps
-        imbalanceBps_ = uint256(protocol.getOpenExpoImbalanceLimitBps());
+        imbalanceBps_ = uint256(openLimit);
         // current long expo value to unbalance protocol
         uint256 longExpoValueToLimit = vaultExpo * imbalanceBps_ / protocol.BPS_DIVISOR();
         // long amount for vaultExpoValueToLimit and leverage

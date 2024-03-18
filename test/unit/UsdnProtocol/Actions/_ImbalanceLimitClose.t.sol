@@ -57,7 +57,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         vm.prank(ADMIN);
         // disable limit
-        protocol.setCloseExpoImbalanceLimitBps(0);
+        protocol.setExpoImbalanceLimitsBps(200, 200, 600, 0);
 
         protocol.i_imbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
     }
@@ -71,11 +71,11 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      */
     function test_RevertWith_imbalanceLimitCloseZeroLongExpo() public {
         // initial limit
-        uint256 initialCloseExpoImbalanceLimit = uint256(protocol.getCloseExpoImbalanceLimitBps());
+        (,,, int256 initialCloseLimit) = protocol.getExpoImbalanceLimitsBps();
 
-        // disable close limit
+        // disable limits
         vm.prank(ADMIN);
-        protocol.setCloseExpoImbalanceLimitBps(0);
+        protocol.setExpoImbalanceLimitsBps(0, 0, 0, 0);
 
         // the initialized tick
         int24 tick = protocol.getMaxInitializedTick();
@@ -98,7 +98,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         );
 
         // wait more than 2 blocks
-        skip(25);
+        _waitDelay();
 
         // validate close
         protocol.validateClosePosition(abi.encode(params.initialPrice), data);
@@ -110,7 +110,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // reassign limit to activate verification
         vm.prank(ADMIN);
-        protocol.setCloseExpoImbalanceLimitBps(initialCloseExpoImbalanceLimit);
+        protocol.setExpoImbalanceLimitsBps(0, 0, 0, uint256(initialCloseLimit));
 
         // should revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
@@ -124,8 +124,10 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
     {
         // current long expo
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
+        // initial close limit bps
+        (,,, int256 initialCloseLimit) = protocol.getExpoImbalanceLimitsBps();
         // imbalance bps
-        imbalanceBps_ = uint256(protocol.getCloseExpoImbalanceLimitBps());
+        imbalanceBps_ = uint256(initialCloseLimit);
         // current vault expo value for imbalance
         uint256 vaultExpoValueToLimit = longExpo * imbalanceBps_ / protocol.BPS_DIVISOR();
         // long amount for vaultExpoValueToLimit and leverage

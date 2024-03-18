@@ -29,8 +29,12 @@ contract FuzzingImbalanceLimitOpen is UsdnProtocolBaseFixture {
             (int256(protocol.getTotalExpo() + totalExpoToAdd) - int256(protocol.getBalanceLong() + openAmount))
                 - int256(initialVaultExpo)
         ) * int256(protocol.BPS_DIVISOR()) / int256(initialVaultExpo);
+
+        // initial open limit bps
+        (int256 openLimit,,,) = protocol.getExpoImbalanceLimitsBps();
+
         // call `i_imbalanceLimitWithdrawal` with withdrawalAmount
-        if (imbalanceBps >= protocol.getOpenExpoImbalanceLimitBps()) {
+        if (imbalanceBps >= openLimit) {
             // should revert with above open imbalance limit
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
