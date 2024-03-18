@@ -15,6 +15,8 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * The fix is now to allow balances to become negative temporarily during calculations.
  */
 contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
+    uint256 securityDeposit;
+
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 1 ether;
@@ -23,6 +25,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         params.initialPrice = 3290 ether;
         params.initialTimestamp = 1_708_088_866; // 16 February 2024 at 14:07 CET
         _setUp(params);
+        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -36,7 +39,6 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
      */
     function test_highImbalance() public {
         vm.warp(1_708_090_186);
-        uint256 securityDeposit = protocol.getSecurityDepositValue();
         mockChainlinkOnChain.setLastPublishTime(1_708_090_186 - 10 minutes);
         mockChainlinkOnChain.setLastPrice(3290e8);
 
