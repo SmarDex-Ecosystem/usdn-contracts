@@ -8,7 +8,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
 
 /**
- * @custom:feature Test of the protocol expo limit for `imbalanceLimitClose` function in a balanced state
+ * @custom:feature Test of the protocol expo limit for `_imbalanceLimitClose` function in a balanced state
  */
 contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
     function setUp() public {
@@ -20,58 +20,53 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitClose` function should not revert when contract is balanced
+     * @custom:scenario The `_imbalanceLimitClose` function should not revert when contract is balanced
      * and position is within limit
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `imbalanceLimitClose` function is called with a value inside limit
+     * @custom:when The `_imbalanceLimitClose` function is called with a value below the close limit
      * @custom:then The transaction should not revert
      */
     function test_imbalanceLimitClose() public view {
-        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseValues();
-        // call `imbalanceLimitClose` function with totalExpoValueToLimit should not revert at the edge
+        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _setupClose();
         protocol.i_imbalanceLimitClose(totalExpoValueToLimit, longAmount);
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitClose` function should revert when contract is balanced
+     * @custom:scenario The `_imbalanceLimitClose` function should revert when contract is balanced
      * and position value imbalance it
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `imbalanceLimitClose` function is called with values above the close limit
+     * @custom:when The `_imbalanceLimitClose` function is called with values above the close limit
      * @custom:then The transaction should revert
      */
     function test_RevertWith_imbalanceLimitCloseOutLimit() public {
-        (uint256 imbalanceBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseValues();
-        // call `imbalanceLimitClose` function with totalExpoValueToLimit + 1
+        (uint256 imbalanceBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _setupClose();
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
         );
-        // should revert
         protocol.i_imbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitClose` function should not revert
-     * when limit is disabled
+     * @custom:scenario The `_imbalanceLimitClose` function should not revert when limit is disabled
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `imbalanceLimitClose` function is called with values above the close limit
+     * @custom:when The `_imbalanceLimitClose` function is called with values above the close limit
      * @custom:then The transaction should not revert
      */
     function test_imbalanceLimitCloseDisabled() public {
-        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseValues();
+        (, uint256 longAmount, uint256 totalExpoValueToLimit) = _setupClose();
 
         vm.prank(ADMIN);
         // disable limit
         protocol.setCloseExpoImbalanceLimit(0);
 
-        // should not revert
         protocol.i_imbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
     }
 
     /**
-     * @custom:scenario The `imbalanceLimitClose` function should revert when long expo equal 0
+     * @custom:scenario The `_imbalanceLimitClose` function should revert when long expo equal 0
      * @custom:given The initial long positions is closed
      * @custom:and The protocol is imbalanced
-     * @custom:when The `imbalanceLimitClose` function is called
+     * @custom:when The `_imbalanceLimitClose` function is called
      * @custom:then The transaction should revert
      */
     function test_RevertWith_imbalanceLimitCloseZeroLongExpo() public {
@@ -122,7 +117,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         protocol.i_imbalanceLimitClose(0, 0);
     }
 
-    function _getCloseValues()
+    function _setupClose()
         private
         view
         returns (uint256 imbalanceBps_, uint256 longAmount_, uint256 totalExpoValueToLimit_)
