@@ -174,7 +174,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice The withdrawal imbalance limit state verification
-     * @dev This is to ensure that the protocol does not unbalance more than the withdrawal limit on long side
+     * @dev This is to ensure that the protocol does not imbalance more than the withdrawal limit on long side
      * @param withdrawalValue The withdrawal value in asset
      */
     function _imbalanceLimitWithdrawal(uint256 withdrawalValue) internal view {
@@ -205,7 +205,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice The open long imbalance limit state verification
-     * @dev This is to ensure that the protocol does not unbalance more than the open limit on long side
+     * @dev This is to ensure that the protocol does not imbalance more than the open limit on long side
      * @param openTotalExpoValue The open position expo value
      * @param openCollatValue The open position collateral value
      */
@@ -237,7 +237,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice The close vault imbalance limit state verification
-     * @dev This is to ensure that the protocol does not unbalance more than the close limit on vault side
+     * @dev This is to ensure that the protocol does not imbalance more than the close limit on vault side
      * @param closeTotalExpoValue The close position total expo value
      * @param closeCollatValue The close position collateral value
      */

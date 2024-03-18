@@ -86,7 +86,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
         // disable withdrawal limit
         vm.prank(ADMIN);
-        protocol.setWithdrawalExpoImbalanceLimit(0);
+        protocol.setWithdrawalExpoImbalanceLimitBps(0);
 
         protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit + 1);
     }

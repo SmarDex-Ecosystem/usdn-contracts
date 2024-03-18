@@ -245,13 +245,13 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setOpenExpoImbalanceLimit(uint256 newLimit) external onlyOwner {
+    function setOpenExpoImbalanceLimitBps(uint256 newLimit) external onlyOwner {
         _openExpoImbalanceLimitBps = newLimit.toInt256();
         emit ImbalanceLimitUpdated(newLimit);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setWithdrawalExpoImbalanceLimit(uint256 newLimit) external onlyOwner {
+    function setWithdrawalExpoImbalanceLimitBps(uint256 newLimit) external onlyOwner {
         // safe cast newLimit to signed
         int256 signedNewLimit = newLimit.toInt256();
 
@@ -265,13 +265,13 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setDepositExpoImbalanceLimit(uint256 newLimit) external onlyOwner {
+    function setDepositExpoImbalanceLimitBps(uint256 newLimit) external onlyOwner {
         _depositExpoImbalanceLimitBps = newLimit.toInt256();
         emit ImbalanceLimitUpdated(newLimit);
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setCloseExpoImbalanceLimit(uint256 newLimit) external onlyOwner {
+    function setCloseExpoImbalanceLimitBps(uint256 newLimit) external onlyOwner {
         // safe cast newLimit to signed
         int256 signedNewLimit = newLimit.toInt256();
 

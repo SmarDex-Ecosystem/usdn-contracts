@@ -72,16 +72,16 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(this)));
 
         vm.expectRevert(customError);
-        protocol.setOpenExpoImbalanceLimit(0);
+        protocol.setOpenExpoImbalanceLimitBps(0);
 
         vm.expectRevert(customError);
-        protocol.setWithdrawalExpoImbalanceLimit(0);
+        protocol.setWithdrawalExpoImbalanceLimitBps(0);
 
         vm.expectRevert(customError);
-        protocol.setDepositExpoImbalanceLimit(0);
+        protocol.setDepositExpoImbalanceLimitBps(0);
 
         vm.expectRevert(customError);
-        protocol.setCloseExpoImbalanceLimit(0);
+        protocol.setCloseExpoImbalanceLimitBps(0);
     }
 
     /**
@@ -531,7 +531,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // expected revert
         vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintToInt.selector, aboveSignedMax));
         // set open expo imbalance limit
-        protocol.setOpenExpoImbalanceLimit(aboveSignedMax);
+        protocol.setOpenExpoImbalanceLimitBps(aboveSignedMax);
     }
 
     /**
@@ -547,7 +547,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.ImbalanceLimitUpdated(expectedNewValue);
         // set open expo imbalance limit
-        protocol.setOpenExpoImbalanceLimit(expectedNewValue);
+        protocol.setOpenExpoImbalanceLimitBps(expectedNewValue);
         // assert new open expo imbalance limit equal expected
         assertEq(uint256(protocol.getOpenExpoImbalanceLimitBps()), expectedNewValue);
     }
@@ -563,7 +563,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // expected revert
         vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintToInt.selector, aboveSignedMax));
         // set withdrawal expo imbalance limit
-        protocol.setWithdrawalExpoImbalanceLimit(aboveSignedMax);
+        protocol.setWithdrawalExpoImbalanceLimitBps(aboveSignedMax);
     }
 
     /**
@@ -578,7 +578,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // expected revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit.selector);
         // set withdrawal expo imbalance limit
-        protocol.setWithdrawalExpoImbalanceLimit(lowValue);
+        protocol.setWithdrawalExpoImbalanceLimitBps(lowValue);
     }
 
     /**
@@ -594,7 +594,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.ImbalanceLimitUpdated(expectedNewValue);
         // set withdrawal expo imbalance limit
-        protocol.setWithdrawalExpoImbalanceLimit(expectedNewValue);
+        protocol.setWithdrawalExpoImbalanceLimitBps(expectedNewValue);
         // assert new withdrawal expo imbalance limit equal expected
         assertEq(uint256(protocol.getWithdrawalExpoImbalanceLimitBps()), expectedNewValue);
     }
@@ -610,7 +610,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // expected revert
         vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintToInt.selector, aboveSignedMax));
         // set deposit expo imbalance limit
-        protocol.setDepositExpoImbalanceLimit(aboveSignedMax);
+        protocol.setDepositExpoImbalanceLimitBps(aboveSignedMax);
     }
 
     /**
@@ -626,7 +626,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.ImbalanceLimitUpdated(expectedNewValue);
         // set deposit expo imbalance limit
-        protocol.setDepositExpoImbalanceLimit(expectedNewValue);
+        protocol.setDepositExpoImbalanceLimitBps(expectedNewValue);
         // assert new deposit expo imbalance limit equal expected
         assertEq(uint256(protocol.getDepositExpoImbalanceLimitBps()), expectedNewValue);
     }
@@ -642,7 +642,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // expected revert
         vm.expectRevert(abi.encodeWithSelector(SafeCast.SafeCastOverflowedUintToInt.selector, aboveSignedMax));
         // set close expo imbalance limit
-        protocol.setCloseExpoImbalanceLimit(aboveSignedMax);
+        protocol.setCloseExpoImbalanceLimitBps(aboveSignedMax);
     }
 
     /**
@@ -657,7 +657,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // expected revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit.selector);
         // set close expo imbalance limit
-        protocol.setCloseExpoImbalanceLimit(lowValue);
+        protocol.setCloseExpoImbalanceLimitBps(lowValue);
     }
 
     /**
@@ -673,7 +673,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.ImbalanceLimitUpdated(expectedNewValue);
         // set close expo imbalance limit
-        protocol.setCloseExpoImbalanceLimit(expectedNewValue);
+        protocol.setCloseExpoImbalanceLimitBps(expectedNewValue);
         // assert new close expo imbalance limit equal expected
         assertEq(uint256(protocol.getCloseExpoImbalanceLimitBps()), expectedNewValue);
     }

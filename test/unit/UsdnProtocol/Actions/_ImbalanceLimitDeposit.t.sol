@@ -41,7 +41,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     function test_RevertWith_imbalanceLimitDepositZeroLongExpo() public {
         // disable close limit
         vm.prank(ADMIN);
-        protocol.setCloseExpoImbalanceLimit(0);
+        protocol.setCloseExpoImbalanceLimitBps(0);
 
         // the initial tick
         int24 tick = protocol.getMaxInitializedTick();
@@ -90,7 +90,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
 
         // disable deposit limit
         vm.prank(ADMIN);
-        protocol.setDepositExpoImbalanceLimit(0);
+        protocol.setDepositExpoImbalanceLimitBps(0);
 
         protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit + 1);
     }

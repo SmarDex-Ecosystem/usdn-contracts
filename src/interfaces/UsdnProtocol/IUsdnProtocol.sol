@@ -102,25 +102,25 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @notice Set the open expo imbalance limit basis point
      * @param newLimit The new basis point limit (based on BPS_DIVISOR)
      */
-    function setOpenExpoImbalanceLimit(uint256 newLimit) external;
+    function setOpenExpoImbalanceLimitBps(uint256 newLimit) external;
 
     /**
      * @notice Set the withdrawal expo imbalance limit basis point
      * @param newLimit The new basis point limit (based on BPS_DIVISOR)
      */
-    function setWithdrawalExpoImbalanceLimit(uint256 newLimit) external;
+    function setWithdrawalExpoImbalanceLimitBps(uint256 newLimit) external;
 
     /**
      * @notice Set the deposit expo imbalance limit basis point
      * @param newLimit The new basis point limit (based on BPS_DIVISOR)
      */
-    function setDepositExpoImbalanceLimit(uint256 newLimit) external;
+    function setDepositExpoImbalanceLimitBps(uint256 newLimit) external;
 
     /**
      * @notice Set the close expo imbalance limit basis point
      * @param newLimit The new basis point limit (based on BPS_DIVISOR)
      */
-    function setCloseExpoImbalanceLimit(uint256 newLimit) external;
+    function setCloseExpoImbalanceLimitBps(uint256 newLimit) external;
 
     /**
      * @notice Set the target USDN price

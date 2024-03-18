@@ -115,10 +115,10 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
         // disable imbalance limits
         if (!testParams.enableLimits) {
-            protocol.setOpenExpoImbalanceLimit(0);
-            protocol.setWithdrawalExpoImbalanceLimit(0);
-            protocol.setDepositExpoImbalanceLimit(0);
-            protocol.setCloseExpoImbalanceLimit(0);
+            protocol.setOpenExpoImbalanceLimitBps(0);
+            protocol.setWithdrawalExpoImbalanceLimitBps(0);
+            protocol.setDepositExpoImbalanceLimitBps(0);
+            protocol.setCloseExpoImbalanceLimitBps(0);
         }
 
         // leverage approx 2x
