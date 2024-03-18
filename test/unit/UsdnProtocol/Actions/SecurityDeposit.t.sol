@@ -12,7 +12,6 @@ import {
     PendingAction,
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { console2 } from "forge-std/Test.sol";
 
 /**
  * @custom:feature The security deposit of the USDN Protocol
@@ -536,12 +535,12 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "balance of user0 after initiateOpenPosition"
+            "balance of the user0 after initiateOpenPosition should have SECURITY_DEPOSIT_VALUE less"
         );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "balance of the protocol after initiateOpenPosition"
+            "balance of the protocol after initiateOpenPosition should have SECURITY_DEPOSIT_VALUE more"
         );
 
         (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
@@ -559,17 +558,17 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             USER_1.balance,
             balanceUser1Before,
-            "balance of user1 after his initiateOpenPosition should have user0 SECURITY_DEPOSIT_VALUE"
+            "balance of user1 after his initiateOpenPosition should have user0 security deposit"
         );
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "balance of user0 after user1 initiateOpenPosition"
+            "balance of user0 should have SECURITY_DEPOSIT_VALUE less than at the beginning"
         );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "balance of the protocol after user1 initiateOpenPosition"
+            "balance of the protocol after user1 open position should have SECURITY_DEPOSIT_VALUE more"
         );
 
         vm.prank(USER_1);
@@ -593,7 +592,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user0 initiates an open position action and user1 validates user0 action
+     * @custom:scenario The user0 initiates an open position action and user1 validates user0 action with a
+     * validateOpenPosition
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
      * @custom:then The protocol takes the security deposit from the user0 at the initialization of the open position
      * @custom:then We skip validation deadline + 1
@@ -627,18 +627,21 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
 
         assertEq(
-            USER_1.balance, balanceUser1Before - SECURITY_DEPOSIT_VALUE, "user1 should have paid the security deposit"
+            USER_1.balance,
+            balanceUser1Before - SECURITY_DEPOSIT_VALUE,
+            "user1 should have paid the security deposit to the protocol"
         );
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "user0 should have paid the security deposit"
+            "user0 should have paid the security deposit to the protocol"
         );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore + 2 * SECURITY_DEPOSIT_VALUE,
             "the protocol should have two security deposits"
         );
+
         (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(USER_1);
         bytes[] memory previousPriceData = new bytes[](rawIndices.length);
         previousPriceData[0] = priceData;
@@ -697,7 +700,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
 
-        assertEq(address(this).balance, balanceSenderBefore, "user should have retrieved his deposit");
+        assertEq(
+            address(this).balance,
+            balanceSenderBefore,
+            "user should have retrieved his deposit from the protocol at the end"
+        );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
@@ -763,7 +770,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
-        vm.startPrank(USER_1);
+        vm.prank(USER_1);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
             tick1, tickVersion1, index1, 1 ether, priceData, previousActionsData
         );
@@ -772,7 +779,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             USER_1.balance,
             balanceUser1Before,
-            "user1 should have taken user0 security deposit with his initiate deposit action"
+            "user1 should have taken user0 security deposit with his initiate close position action"
         );
         assertEq(
             address(this).balance,
@@ -785,13 +792,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             "the protocol should have user deposit"
         );
 
+        vm.prank(USER_1);
         protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
-        vm.stopPrank();
 
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "user 0 should not have retrieved his security deposit"
+            "user0 should not have retrieved his security deposit"
         );
         assertEq(
             address(protocol).balance,
@@ -848,12 +855,14 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
 
         assertEq(
-            USER_1.balance, balanceUser1Before - SECURITY_DEPOSIT_VALUE, "user1 should have paid the security deposit"
+            USER_1.balance,
+            balanceUser1Before - SECURITY_DEPOSIT_VALUE,
+            "user1 should have paid the security deposit to the protocol"
         );
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "user0 should have paid the security deposit"
+            "user0 should have paid the security deposit to the protocol"
         );
         assertEq(
             address(protocol).balance,
@@ -873,7 +882,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertEq(
             address(this).balance,
             balanceUser0Before - SECURITY_DEPOSIT_VALUE,
-            "user 0 should not have retrieved his security deposit"
+            "user0 should not have retrieved his security deposit"
         );
         assertEq(
             address(protocol).balance,
