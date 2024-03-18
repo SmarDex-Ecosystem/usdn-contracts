@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.20;
+
+import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
+import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
+
+import { Wusdn } from "src/Wusdn.sol";
+
+/**
+ * @custom:feature The `deposit` function of `WUSDN`
+ * @custom:background  Given this contract has the MINTER_ROLE and mint tokens to USER_1
+ */
+contract TestWusdnDeposit is UsdnTokenFixture {
+    Wusdn wusdn;
+
+    function setUp() public override {
+        super.setUp();
+
+        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
+        usdn.mint(USER_1, 100 ether);
+
+        wusdn = new Wusdn(usdn);
+    }
+
+    /**
+     * @custom:scenario Test deposit function
+     * @custom:given The user has initiated a deposit
+     * @custom:and The validation deadline has elapsed
+     * @custom:when The test_deposit function is called
+     * @custom:then The deposit is successful
+     */
+    function test_deposit() public {
+        uint256 shares = wusdn.previewDeposit(1 ether);
+        uint256 balanceBeforeWithdraw = usdn.balanceOf(address(USER_1));
+        uint256 shareBeforeWithdraw = wusdn.balanceOf(address(USER_1));
+        vm.startPrank(USER_1);
+        usdn.approve(address(wusdn), type(uint256).max);
+        wusdn.deposit(1 ether, USER_1);
+        vm.stopPrank();
+        uint256 balanceAfterwithdraw = usdn.balanceOf(address(USER_1));
+        uint256 shareAfterwithdraw = wusdn.balanceOf(address(USER_1));
+        require(balanceBeforeWithdraw - balanceAfterwithdraw > 0, "Wusdn: deposit failed");
+        require(balanceBeforeWithdraw - balanceAfterwithdraw == 1 ether, "Wusdn: deposit balance mismatch");
+        require(shareAfterwithdraw - shareBeforeWithdraw == shares, "Wusdn: deposit shares mismatch");
+    }
+}
