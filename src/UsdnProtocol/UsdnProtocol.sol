@@ -67,8 +67,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
 
-        uint256 balanceBefore = address(this).balance;
-
         PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Initialize, block.timestamp, currentPriceData);
 
         // Create vault deposit
@@ -84,7 +82,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             getEffectiveTickForPrice(desiredLiqPrice) // without penalty
         );
 
-        _refundExcessEther(balanceBefore - address(this).balance);
+        _refundExcessEther(0, address(this).balance, address(this).balance);
     }
 
     /// @inheritdoc IUsdnProtocol

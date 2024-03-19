@@ -19,6 +19,7 @@ import {
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { console2 } from "forge-std/Test.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -41,21 +42,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolSecurityDepositTooLow();
         }
 
-        uint256 balanceBefore = address(this).balance - msg.value;
+        uint256 balanceBefore = address(this).balance;
 
         _initiateDeposit(msg.sender, amount, currentPriceData);
-        if (_executePendingAction(previousActionsData)) {
-            securityDepositValue = 0;
-        }
-
-        if (address(this).balance < securityDepositValue + balanceBefore) {
-            revert UsdnProtocolUnexpectedBalance();
-        }
-        unchecked {
-            uint256 amountToRefund = address(this).balance - balanceBefore - securityDepositValue;
-            _refundExcessEther(amountToRefund);
-        }
-
+        uint256 amountToRefund = _executePendingAction(previousActionsData);
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -65,17 +56,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 securityDepositValue = _securityDepositValue;
-        uint256 balanceBefore = address(this).balance - msg.value;
+        uint256 balanceBefore = address(this).balance;
 
-        _validateDeposit(msg.sender, depositPriceData);
-        if (_executePendingAction(previousActionsData)) {
-            securityDepositValue += securityDepositValue;
-        }
-        if (address(this).balance < balanceBefore - securityDepositValue) {
-            revert UsdnProtocolUnexpectedBalance();
-        }
-        _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
+        uint256 amountToRefund = _validateDeposit(msg.sender, depositPriceData);
+        amountToRefund += _executePendingAction(previousActionsData);
+        _refundExcessEther(0, amountToRefund, balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -90,19 +75,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolSecurityDepositTooLow();
         }
 
-        uint256 balanceBefore = address(this).balance - msg.value;
+        uint256 balanceBefore = address(this).balance;
 
         _initiateWithdrawal(msg.sender, usdnAmount, currentPriceData);
-        if (_executePendingAction(previousActionsData)) {
-            securityDepositValue = 0;
-        }
-        if (address(this).balance < securityDepositValue + balanceBefore) {
-            revert UsdnProtocolUnexpectedBalance();
-        }
-        unchecked {
-            uint256 amountToRefund = address(this).balance - balanceBefore - securityDepositValue;
-            _refundExcessEther(amountToRefund);
-        }
+        uint256 amountToRefund = _executePendingAction(previousActionsData);
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -112,17 +89,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 securityDepositValue = _securityDepositValue;
-        uint256 balanceBefore = address(this).balance - msg.value;
+        uint256 balanceBefore = address(this).balance;
 
-        _validateWithdrawal(msg.sender, withdrawalPriceData);
-        if (_executePendingAction(previousActionsData)) {
-            securityDepositValue += securityDepositValue;
-        }
-        if (address(this).balance < balanceBefore - securityDepositValue) {
-            revert UsdnProtocolUnexpectedBalance();
-        }
-        _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
+        uint256 amountToRefund = _validateWithdrawal(msg.sender, withdrawalPriceData);
+        amountToRefund += _executePendingAction(previousActionsData);
+        _refundExcessEther(0, amountToRefund, balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -138,20 +109,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolSecurityDepositTooLow();
         }
 
-        uint256 balanceBefore = address(this).balance - msg.value;
+        uint256 balanceBefore = address(this).balance;
 
         (tick_, tickVersion_, index_) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
-        if (_executePendingAction(previousActionsData)) {
-            securityDepositValue = 0;
-        }
-        if (address(this).balance < securityDepositValue + balanceBefore) {
-            revert UsdnProtocolUnexpectedBalance();
-        }
-        unchecked {
-            uint256 amountToRefund = address(this).balance - balanceBefore - securityDepositValue;
-            _refundExcessEther(amountToRefund);
-        }
-
+        uint256 amountToRefund = _executePendingAction(previousActionsData);
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -161,17 +123,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 securityDepositValue = _securityDepositValue;
-        uint256 balanceBefore = address(this).balance - msg.value;
+        uint256 balanceBefore = address(this).balance;
 
-        _validateOpenPosition(msg.sender, openPriceData);
-        if (_executePendingAction(previousActionsData)) {
-            securityDepositValue += securityDepositValue;
-        }
-        if (address(this).balance < balanceBefore - securityDepositValue) {
-            revert UsdnProtocolUnexpectedBalance();
-        }
-        _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
+        uint256 amountToRefund = _validateOpenPosition(msg.sender, openPriceData);
+        amountToRefund += _executePendingAction(previousActionsData);
+        _refundExcessEther(0, amountToRefund, balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -189,20 +145,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolSecurityDepositTooLow();
         }
 
-        uint256 balanceBefore = address(this).balance - msg.value;
+        uint256 balanceBefore = address(this).balance;
 
         _initiateClosePosition(msg.sender, tick, tickVersion, index, amountToClose, currentPriceData);
-        if (_executePendingAction(previousActionsData)) {
-            securityDepositValue = 0;
-        }
-        if (address(this).balance < securityDepositValue + balanceBefore) {
-            revert UsdnProtocolUnexpectedBalance();
-        }
-        unchecked {
-            uint256 amountToRefund = address(this).balance - balanceBefore - securityDepositValue;
-            _refundExcessEther(amountToRefund);
-        }
-
+        uint256 amountToRefund = _executePendingAction(previousActionsData);
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -212,17 +159,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         initializedAndNonReentrant
     {
-        uint256 securityDepositValue = _securityDepositValue;
-        uint256 balanceBefore = address(this).balance - msg.value;
+        uint256 balanceBefore = address(this).balance;
 
-        _validateClosePosition(msg.sender, closePriceData);
-        if (_executePendingAction(previousActionsData)) {
-            securityDepositValue += securityDepositValue;
-        }
-        if (address(this).balance < balanceBefore - securityDepositValue) {
-            revert UsdnProtocolUnexpectedBalance();
-        }
-        _refundExcessEther(address(this).balance - balanceBefore + securityDepositValue);
+        uint256 amountToRefund = _validateClosePosition(msg.sender, closePriceData);
+        amountToRefund += _executePendingAction(previousActionsData);
+        _refundExcessEther(0, amountToRefund, balanceBefore - address(this).balance);
         _checkPendingFee();
     }
 
@@ -232,10 +173,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         returns (uint256 liquidatedPositions_)
     {
-        uint256 balanceBefore = address(this).balance - msg.value;
+        // uint256 amountToRefund = address(this).balance - msg.value;
 
         liquidatedPositions_ = _liquidate(currentPriceData, iterations);
-        _refundExcessEther(address(this).balance - balanceBefore);
+        _refundExcessEther(0, address(this).balance, address(this).balance);
         _checkPendingFee();
     }
 
@@ -314,7 +255,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit InitiatedDeposit(user, amount, block.timestamp);
     }
 
-    function _validateDeposit(address user, bytes calldata priceData) internal {
+    function _validateDeposit(address user, bytes calldata priceData)
+        internal
+        returns (uint256 securityDepositValue_)
+    {
         PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
@@ -327,6 +271,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateDepositWithAction(pending, priceData);
+        return (pending.securityDepositValue * 10 ** SECURITY_DEPOSIT_FACTOR);
     }
 
     function _validateDepositWithAction(PendingAction memory pending, bytes calldata priceData)
@@ -422,7 +367,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit InitiatedWithdrawal(user, usdnAmount, block.timestamp);
     }
 
-    function _validateWithdrawal(address user, bytes calldata priceData) internal {
+    function _validateWithdrawal(address user, bytes calldata priceData)
+        internal
+        returns (uint256 securityDepositValue_)
+    {
         PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
@@ -435,6 +383,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateWithdrawalWithAction(pending, priceData);
+        return (pending.securityDepositValue * 10 ** SECURITY_DEPOSIT_FACTOR);
     }
 
     function _validateWithdrawalWithAction(PendingAction memory pending, bytes calldata priceData) internal {
@@ -580,7 +529,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _asset.safeTransferFrom(user, address(this), amount);
     }
 
-    function _validateOpenPosition(address user, bytes calldata priceData) internal {
+    function _validateOpenPosition(address user, bytes calldata priceData)
+        internal
+        returns (uint256 securityDepositValue_)
+    {
         PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
@@ -593,6 +545,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateOpenPositionWithAction(pending, priceData);
+        return (pending.securityDepositValue * 10 ** SECURITY_DEPOSIT_FACTOR);
     }
 
     function _validateOpenPositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
@@ -746,7 +699,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         );
     }
 
-    function _validateClosePosition(address user, bytes calldata priceData) internal {
+    function _validateClosePosition(address user, bytes calldata priceData)
+        internal
+        returns (uint256 securityDepositValue_)
+    {
         PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
@@ -759,6 +715,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateClosePositionWithAction(pending, priceData);
+        return (pending.securityDepositValue * 10 ** SECURITY_DEPOSIT_FACTOR);
     }
 
     function _validateClosePositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
@@ -880,11 +837,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
-    function _executePendingAction(PreviousActionsData calldata data) internal returns (bool actionExecuted) {
+    function _executePendingAction(PreviousActionsData calldata data)
+        internal
+        returns (uint256 securityDepositValue_)
+    {
         (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction();
         if (pending.action == ProtocolAction.None) {
             // no pending action
-            return false;
+            return 0;
         }
         uint256 length = data.priceData.length;
         if (data.rawIndices.length != length || length < 1) {
@@ -910,7 +870,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _validateClosePositionWithAction(pending, priceData);
         }
 
-        return true;
+        return (pending.securityDepositValue * 10 ** SECURITY_DEPOSIT_FACTOR);
     }
 
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
@@ -938,9 +898,28 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /// @notice Refund any excess ether to the user, making sure we don't lock ETH in the contract.
-    function _refundExcessEther(uint256 amount) internal {
+    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 validationCost)
+        internal
+    {
+        int256 amount = int256(amountToRefund) - int256(validationCost);
+        if (securityDepositValue == 0 && amountToRefund == 0) {
+            amount = int256(validationCost);
+        } else if (securityDepositValue > 0) {
+            amount += int256(msg.value) - int256(securityDepositValue);
+        }
+
+        console2.log("amountToRefund", amountToRefund);
+        // console2.log("balanceBefore", balanceBefore);
+        console2.log("address(this).balance", address(this).balance);
+        console2.log("msg.value", msg.value);
+        console2.log("securityDepositValue", securityDepositValue);
+        console2.log("amount", amount);
+        if (amount < 0) {
+            revert UsdnProtocolUnexpectedBalance();
+        }
+
         if (amount != 0) {
-            (bool success,) = payable(msg.sender).call{ value: amount }("");
+            (bool success,) = payable(msg.sender).call{ value: uint256(amount) }("");
             if (!success) {
                 revert UsdnProtocolEtherRefundFailed();
             }
