@@ -113,8 +113,8 @@ contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture,
 
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
-        chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE);
-        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_WSTETH_USD, address(chainlinkOnChain), 1 hours);
+        chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
+        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), 1 hours);
     }
 
     function getMockedPythSignature()

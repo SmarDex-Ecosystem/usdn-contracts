@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { OracleMiddlewareBaseIntegrationFixture } from "test/integration/Middlewares/utils/Fixtures.sol";
-import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
+import { PYTH_STETH_USD } from "test/utils/Constants.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -158,7 +158,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
-                getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
+                getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
             // Apply conf ratio to pyth confidence
             pythConf = (
                 pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatio()
@@ -245,6 +245,38 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 priceError
             );
         }
+    }
+
+    /**
+     * @custom:scenario Use cached Pyth value for initiate actions if possible
+     * @custom:given A pyth signature was provided to the oracle more recently than the latest chainlink on-chain data
+     * @custom:when A user retrieves a price for a `initiate` action without providing data
+     * @custom:then The price retrieved by the oracle middleware is the one from pyth
+     */
+    function test_ForkFFIUseCachedPythPrice() public ethMainnetFork reSetUp {
+        // chainlink data
+        (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
+
+        // get pyth price that must be more recent than chainlink data
+        (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, chainlinkTimestamp + 1);
+
+        // submit to oracle middleware so it gets cached by Pyth
+        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+            uint128(chainlinkTimestamp + 1 - oracleMiddleware.getValidationDelay()),
+            ProtocolAction.ValidateDeposit,
+            data
+        );
+
+        // get oracle middleware price without providing data
+        PriceInfo memory cachedMiddlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+            uint128(block.timestamp), ProtocolAction.InitiateDeposit, ""
+        );
+
+        // timestamp check
+        assertEq(cachedMiddlewarePrice.timestamp, middlewarePrice.timestamp, "timestamp equal to pyth timestamp");
+        assertGt(cachedMiddlewarePrice.timestamp, chainlinkTimestamp, "timestamp greater than chainlink timestamp");
+        assertEq(cachedMiddlewarePrice.price, middlewarePrice.price, "price equal to pyth price");
+        assertTrue(cachedMiddlewarePrice.price != chainlinkPrice, "price different from chainlink price");
     }
 
     // receive ether refunds
