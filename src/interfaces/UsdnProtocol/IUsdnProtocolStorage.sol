@@ -183,18 +183,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getTickVersion(int24 tick) external view returns (uint256);
 
     /**
-     * @notice Total exposure per versioned tick.
+     * @notice Total exposure in the last version of the given tick.
      * @param tick The tick number.
-     * @param version The tick version.
      */
-    function getTotalExpoByTick(int24 tick, uint256 version) external view returns (uint256);
-
-    /**
-     * @notice The number of positions per tick.
-     * @param tick The tick number.
-     * @param version The tick version.
-     */
-    function getPositionsInTick(int24 tick, uint256 version) external view returns (uint256);
+    function getTotalExpoByTick(int24 tick) external view returns (uint256);
 
     /**
      * @notice The long position per current tick (liquidation price) by position index
