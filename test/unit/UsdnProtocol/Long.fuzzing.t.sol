@@ -100,4 +100,37 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
             "Current and former implementation's difference is above tolerance"
         );
     }
+
+    /**
+     * @custom:scenario Compare calculations of `_calculatePositionTotalExpo` with more precise values
+     */
+    function testFuzzFFI_calculatePositionTotalExpo(uint256 amount, uint256 startPrice, uint256 liqPrice) public {
+        uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
+        amount = bound(amount, 1, (type(uint128).max * levDecimals / protocol.getMaxLeverage()) / 2);
+        startPrice = bound(startPrice, TickMath.MIN_PRICE, type(uint128).max);
+        uint256 minLiqrice = startPrice - (startPrice * levDecimals / protocol.getMinLeverage());
+        uint256 maxLiqrice = startPrice - (startPrice * levDecimals / protocol.getMaxLeverage());
+        liqPrice = bound(liqPrice, minLiqrice, maxLiqrice);
+
+        string[] memory cmds = new string[](5);
+        cmds[0] = "./test_utils/target/release/test_utils";
+        cmds[1] = "calc-expo";
+        cmds[2] = vm.toString(startPrice);
+        cmds[3] = vm.toString(liqPrice);
+        cmds[4] = vm.toString(amount);
+        bytes memory result = vm.ffi(cmds);
+
+        // Sanity check
+        require(keccak256(result) != keccak256(""), "Rust implementation returned an error");
+
+        uint256 positionTotalExpoRust = abi.decode(result, (uint256));
+        uint256 positionTotalExpoSol =
+            protocol.i_calculatePositionTotalExpo(uint128(amount), uint128(startPrice), uint128(liqPrice));
+        assertApproxEqAbs(
+            positionTotalExpoSol,
+            positionTotalExpoRust,
+            1,
+            "Difference between rust and solidity versions should have a max delta of 1"
+        );
+    }
 }
