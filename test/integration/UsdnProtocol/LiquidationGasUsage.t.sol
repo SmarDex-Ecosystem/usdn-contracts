@@ -7,16 +7,18 @@ import { DEPLOYER, USER_1, USER_2, USER_3, PYTH_STETH_USD, PYTH_WSTETH_USD } fro
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEthOracleMiddleware.sol";
 
 /**
  * @custom:feature Checking the gas usage of a liquidation.
  * @custom:background Given a forked ethereum mainnet chain
  */
-contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationFixture {
+contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationFixture, IUsdnEvents {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialLong = 100 ether;
+        params.initialLong = 10 ether;
+        params.initialDeposit = 100 ether;
         params.fork = true; // all tests in this contract must be labelled `Fork`
         params.forkWarp = 1_709_794_800; // Thu Mar 07 2024 07:00:00 UTC
         _setUp(params);
@@ -126,6 +128,12 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         // Take a snapshot to re-do liquidations with different iterations
         uint256 snapshotId = vm.snapshot();
         for (uint16 ticksToLiquidate = 1; ticksToLiquidate <= 3; ++ticksToLiquidate) {
+            if (withRebase) {
+                // Sanity check, make sure a rebase was executed
+                vm.expectEmit(false, false, false, false);
+                emit Rebase(0, 0);
+            }
+
             // Get a price that liquidates `ticksToLiquidate` ticks
             uint256 startGas = gasleft();
             uint256 positionsLiquidated = protocol.liquidate{ value: oracleFee }(data, ticksToLiquidate);
