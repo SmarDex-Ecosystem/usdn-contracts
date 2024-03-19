@@ -26,6 +26,7 @@ contract MockPyth is IMockPythError {
     uint64 public lastPublishTime;
     int64 public price = int64(uint64(ETH_PRICE));
     uint64 public conf = uint64(ETH_CONF);
+    int32 public expo = -8;
 
     constructor() {
         lastPublishTime = uint64(block.timestamp);
@@ -43,8 +44,24 @@ contract MockPyth is IMockPythError {
      * @notice Update manually the price.
      * @param _price New price.
      */
-    function updatePrice(int64 _price) external {
+    function setPrice(int64 _price) external {
         price = _price;
+    }
+
+    /**
+     * @notice Update manually the confidence interval.
+     * @param _conf New confidence interval
+     */
+    function setConf(uint64 _conf) external {
+        conf = _conf;
+    }
+
+    /**
+     * @notice Update manually the exponent.
+     * @param _expo New exponent
+     */
+    function setExpo(int32 _expo) external {
+        expo = _expo;
     }
 
     /**
@@ -86,7 +103,7 @@ contract MockPyth is IMockPythError {
 
         priceFeeds = new PythStructs.PriceFeed[](priceIds.length);
         PythStructs.Price memory _price =
-            PythStructs.Price({ price: price, conf: conf, expo: -8, publishTime: lastPublishTime });
+            PythStructs.Price({ price: price, conf: conf, expo: expo, publishTime: lastPublishTime });
 
         for (uint256 i; i < priceIds.length;) {
             priceFeeds[i] = PythStructs.PriceFeed({ id: bytes32(priceIds[i]), price: _price, emaPrice: _price });
