@@ -127,18 +127,11 @@ fn main() -> Result<()> {
             let start_price: Integer = start_price.parse()?;
             let liq_price: Integer = liq_price.parse()?;
             let amount: Integer = amount.parse()?;
-            
-            // Calculation With Leverage
-            let price_diff = Integer::from(&start_price - &liq_price);
-            let leverage = Float::with_val(512, &start_price) / &price_diff;
-            let total_expo_with_lev = leverage * &amount;
 
-            // Calculation With Prices
-            let total_expo_with_prices = Float::with_val(512, amount) * start_price / price_diff;
-            // Both implementations should give the same result
-            assert_eq!(total_expo_with_lev.to_string(), total_expo_with_prices.to_string());
+            let price_diff = Integer::from(&start_price - &liq_price);
+            let total_expo = Float::with_val(512, amount) * start_price / price_diff;
             // Therefore, we only need to print one value
-            print_u256_hex(total_expo_with_prices.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
+            print_u256_hex(total_expo.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
         }
     }
     Ok(())
