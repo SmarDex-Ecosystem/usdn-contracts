@@ -178,6 +178,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         _waitDelay();
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
+        usdn.approve(address(protocol), usdn.balanceOf(user));
         protocol.initiateWithdrawal(uint128(usdn.balanceOf(user)), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
