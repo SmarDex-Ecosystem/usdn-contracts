@@ -19,7 +19,7 @@ contract Wusdn is ERC4626, ERC20Permit {
 
     string internal constant NAME = "Wrapped Ultimate Synthetic Delta Neutral";
     string internal constant SYMBOL = "WUSDN";
-    uint8 internal constant DECIMALS = 18;
+    uint8 internal constant DECIMALS = 36;
     IUsdn private immutable _asset;
 
     constructor(IUsdn asset_) ERC20(NAME, SYMBOL) ERC4626(asset_) ERC20Permit(NAME) {
