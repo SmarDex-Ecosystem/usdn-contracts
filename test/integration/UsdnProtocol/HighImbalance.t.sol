@@ -49,7 +49,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         );
 
         vm.warp(1_708_090_246);
-        mockPyth.updatePrice(3290e8);
+        mockPyth.setPrice(3290e8);
         mockPyth.setLastPublishTime(1_708_090_186 + 24);
 
         protocol.validateOpenPosition{
@@ -65,7 +65,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         );
 
         vm.warp(1_708_090_438);
-        mockPyth.updatePrice(3281e8);
+        mockPyth.setPrice(3281e8);
         mockPyth.setLastPublishTime(1_708_090_342 + 24);
 
         protocol.validateOpenPosition{

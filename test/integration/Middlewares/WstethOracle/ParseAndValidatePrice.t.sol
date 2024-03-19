@@ -74,12 +74,18 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             ) / wstethMiddleware.getConfRatioDenom();
 
             // Price + conf
-            if (action == ProtocolAction.ValidateOpenPosition) {
+            if (
+                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
+                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
+            ) {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
 
                 // Price - conf
-            } else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
+            } else if (
+                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
+                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
+            ) {
                 // check price
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
 
@@ -192,11 +198,17 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             ) / wstethMiddleware.getConfRatioDenom();
 
             // Price + conf
-            if (action == ProtocolAction.ValidateOpenPosition) {
+            if (
+                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
+                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
+            ) {
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice + formattedPythConf), priceError);
             }
             // Price - conf
-            else if (action == ProtocolAction.ValidateDeposit || action == ProtocolAction.ValidateClosePosition) {
+            else if (
+                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
+                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
+            ) {
                 assertEq(middlewarePrice.price, stethToWsteth(formattedPythPrice - formattedPythConf), priceError);
             }
             // Price only

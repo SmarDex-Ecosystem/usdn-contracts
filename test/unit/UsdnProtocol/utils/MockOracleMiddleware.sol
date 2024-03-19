@@ -83,11 +83,6 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getChainlinkTimeElapsedLimit() external view returns (uint256) {
-        return _timeElapsedLimit;
-    }
-
-    /// @inheritdoc IOracleMiddleware
     function setValidationDelay(uint256 newDelay) external {
         _validationDelay = newDelay;
     }

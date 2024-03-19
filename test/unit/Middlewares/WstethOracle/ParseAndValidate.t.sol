@@ -66,13 +66,19 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
             }(timestamp, action, abi.encode("data"));
 
             // Price + conf
-            if (action == ProtocolAction.ValidateOpenPosition) {
+            if (
+                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
+                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
+            ) {
                 assertEq(
                     price.price, stethToWsteth(FORMATTED_STETH_PRICE + STETH_CONF_RATIO, STETH_PER_TOKEN), errorMessage
                 );
             }
             // Price - conf
-            else if (action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.ValidateDeposit) {
+            else if (
+                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
+                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
+            ) {
                 assertEq(
                     price.price, stethToWsteth(FORMATTED_STETH_PRICE - STETH_CONF_RATIO, STETH_PER_TOKEN), errorMessage
                 );

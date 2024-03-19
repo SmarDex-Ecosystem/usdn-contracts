@@ -42,9 +42,6 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
      */
     function getValidationDelay() external view returns (uint256);
 
-    /// @notice Returns the amount of time we consider the data from Chainlink valid.
-    function getChainlinkTimeElapsedLimit() external view returns (uint256);
-
     /// @notice Returns the number of decimals for the price (constant)
     function getDecimals() external view returns (uint8);
 
