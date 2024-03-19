@@ -53,7 +53,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             address(this),
             ProtocolAction.ValidateOpenPosition,
             uint128(amountToOpen),
-            params.initialPrice - 200 ether,
+            params.initialPrice - (params.initialPrice / 5),
             params.initialPrice
         );
 

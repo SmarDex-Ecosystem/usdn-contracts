@@ -25,7 +25,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
             address(this),
             ProtocolAction.ValidateOpenPosition,
             _positionAmount,
-            params.initialPrice - 200 ether,
+            params.initialPrice - (params.initialPrice / 5),
             params.initialPrice
         );
     }
@@ -85,8 +85,9 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(_tick, _tickVersion);
         uint256 positionsCountBefore = protocol.getLongPositionsLength(_tick);
         uint128 amountToRemove = posBefore.amount / 2;
-        uint128 totalExpoToRemove =
-            protocol.i_calculatePositionTotalExpo(amountToRemove, params.initialPrice, params.initialPrice - 200 ether);
+        uint128 totalExpoToRemove = protocol.i_calculatePositionTotalExpo(
+            amountToRemove, params.initialPrice, params.initialPrice - (params.initialPrice / 5)
+        );
 
         protocol.i_removeAmountFromPosition(_tick, _tickVersion, posBefore, amountToRemove, totalExpoToRemove);
 

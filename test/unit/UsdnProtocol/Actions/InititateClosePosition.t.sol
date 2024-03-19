@@ -40,7 +40,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             address(this),
             ProtocolAction.ValidateOpenPosition,
             positionAmount,
-            params.initialPrice - 200 ether,
+            params.initialPrice - (params.initialPrice / 5),
             params.initialPrice
         );
     }
@@ -151,7 +151,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             USER_1,
             ProtocolAction.InitiateOpenPosition,
             positionAmount,
-            params.initialPrice - 200 ether,
+            params.initialPrice - (params.initialPrice / 5),
             params.initialPrice
         );
 
