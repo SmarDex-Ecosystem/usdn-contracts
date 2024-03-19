@@ -2,31 +2,20 @@
 pragma solidity 0.8.20;
 
 import { USER_1 } from "test/utils/Constants.sol";
-import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
-
-import { Wusdn } from "src/Wusdn.sol";
+import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
 
 /**
  * @custom:feature Invariants of `WUSDN`
  * @custom:background  Given four users that can mint tokens to themselves, burn their balance of tokens, and transfer
  *  to other users. Fallow invariants in Wusdn
  */
-contract TestWusdnInvariants is UsdnTokenFixture {
-    Wusdn wusdn;
+contract TestWusdnInvariants is WusdnTokenFixture {
     uint256 internal constant INITIAL_WUSDN_DEPOSIT = 1 ether;
 
     function setUp() public override {
         super.setUp();
-
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.mint(USER_1, 100 ether);
-
-        wusdn = new Wusdn(usdn);
-
-        vm.startPrank(USER_1);
         usdn.approve(address(wusdn), type(uint256).max);
-        wusdn.deposit(INITIAL_WUSDN_DEPOSIT, USER_1);
-        vm.stopPrank();
+        wusdn.deposit(INITIAL_WUSDN_DEPOSIT, address(this));
 
         targetContract(address(usdn));
         bytes4[] memory selectors = new bytes4[](4);

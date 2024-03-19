@@ -3,31 +3,15 @@ pragma solidity 0.8.20;
 
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
-import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
-
-import { Wusdn } from "src/Wusdn.sol";
+import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
 
 /**
  * @custom:feature The `deposit` function of `WUSDN`
  * @custom:background  Given this contract has the MINTER_ROLE and mint tokens to USER_1
  */
-contract TestWusdnDeposit is UsdnTokenFixture {
-    /// Events coming from the OpenZeppelin ERC4626
-    error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
-
-    Wusdn wusdn;
-    uint256 oneUSDN;
-
+contract TestWusdnDeposit is WusdnTokenFixture {
     function setUp() public override {
         super.setUp();
-
-        wusdn = new Wusdn(usdn);
-
-        uint256 decimals = usdn.decimals();
-        oneUSDN = 1 * 10 ** decimals;
-
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.mint(address(this), 100 * oneUSDN);
     }
 
     /**
