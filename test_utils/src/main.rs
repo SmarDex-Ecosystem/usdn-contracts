@@ -130,7 +130,7 @@ fn main() -> Result<()> {
 
             let price_diff = Integer::from(&start_price - &liq_price);
             let total_expo = Float::with_val(512, amount) * start_price / price_diff;
-            // Therefore, we only need to print one value
+            
             print_u256_hex(total_expo.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
         }
     }
