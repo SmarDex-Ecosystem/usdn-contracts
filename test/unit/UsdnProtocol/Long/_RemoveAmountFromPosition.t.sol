@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
+import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+
+/**
+ * @custom:feature The _removeAmountFromPosition internal function of the UsdnProtocolActions contract.
+ * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
+ * leverage of ~2x
+ * @custom:and a validated long position of 1 ether with 10x leverage
+ */
 contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture {
     int24 private _tick;
     uint256 private _tickVersion;
@@ -12,9 +18,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
     uint128 private _positionAmount = 1 ether;
 
     function setUp() external {
-        params = DEFAULT_PARAMS;
-        params.initialPrice = 2000 ether;
-        _setUp(params);
+        _setUp(DEFAULT_PARAMS);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         (_tick, _tickVersion, _index) = setUpUserPositionInLong(
