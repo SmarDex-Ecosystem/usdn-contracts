@@ -12,6 +12,7 @@ import { Wusdn } from "src/Wusdn.sol";
  */
 contract TestWusdnDeposit is UsdnTokenFixture {
     Wusdn wusdn;
+    uint256 oneUSDN;
 
     function setUp() public override {
         super.setUp();
@@ -20,6 +21,9 @@ contract TestWusdnDeposit is UsdnTokenFixture {
         usdn.mint(USER_1, 100 ether);
 
         wusdn = new Wusdn(usdn);
+
+        uint256 decimals = usdn.decimals();
+        oneUSDN = 1 * 10 ** decimals;
     }
 
     /**
@@ -30,14 +34,14 @@ contract TestWusdnDeposit is UsdnTokenFixture {
      * @custom:then The deposit is successful
      */
     function test_deposit_to_wusdn() public {
-        uint256 shares = wusdn.previewDeposit(1 ether);
+        uint256 shares = wusdn.previewDeposit(oneUSDN);
         uint256 balanceBeforeDeposit = usdn.balanceOf(USER_1);
         uint256 shareBeforeDeposit = wusdn.balanceOf(USER_1);
         vm.startPrank(USER_1);
         usdn.approve(address(wusdn), type(uint256).max);
-        wusdn.deposit(1 ether, USER_1);
+        wusdn.deposit(oneUSDN, USER_1);
         vm.stopPrank();
-        assertEq(balanceBeforeDeposit - usdn.balanceOf(USER_1), 1 ether, "total supply");
+        assertEq(balanceBeforeDeposit - usdn.balanceOf(USER_1), oneUSDN, "total supply");
         assertEq(wusdn.balanceOf(address(USER_1)) - shareBeforeDeposit, shares, "total shares");
     }
 }
