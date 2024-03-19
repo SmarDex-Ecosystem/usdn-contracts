@@ -1,6 +1,5 @@
 use std::ops::DivAssign;
-
-use alloy_primitives::{FixedBytes, I256, U256};
+use alloy_primitives::{Bytes, FixedBytes, I256, U256};
 use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose::STANDARD, Engine as _};
@@ -64,6 +63,12 @@ enum Commands {
         /// The publish time
         publish_time: u64,
     },
+    /// Compare different total expo calculation implementations
+    CalcExpo {
+        start_price: String,
+        liq_price: String,
+        amount: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -118,6 +123,23 @@ fn main() -> Result<()> {
             let price: HermesResponse = response.json()?;
             print_pyth_response(price)?;
         }
+        Commands::CalcExpo { start_price, liq_price, amount } => {
+            let start_price: Integer = start_price.parse()?;
+            let liq_price: Integer = liq_price.parse()?;
+            let amount: Integer = amount.parse()?;
+            
+            // Calculation With Leverage
+            let price_diff = Integer::from(&start_price - &liq_price);
+            let leverage = Float::with_val(512, &start_price) / &price_diff;
+            let total_expo_with_lev = leverage * &amount;
+
+            // Calculation With Prices
+            let total_expo_with_prices = Float::with_val(512, amount) * start_price / price_diff;
+            // Both implementations should give the same result
+            assert_eq!(total_expo_with_lev.to_string(), total_expo_with_prices.to_string());
+            // Therefore, we only need to print one value
+            print_u256_hex(total_expo_with_prices.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
+        }
     }
     Ok(())
 }
@@ -152,6 +174,8 @@ fn print_pyth_response(response: HermesResponse) -> Result<()> {
         U256::from(response.price.publish_time),
         &decoded_vaa,
     );
-    print!("{}", const_hex::encode_prefixed(data.abi_encode_params()));
+    let bytes = data.abi_encode_params();
+    let bytes: Bytes = bytes.into();
+    print!("{bytes}");
     Ok(())
 }
