@@ -37,13 +37,13 @@ contract TestWusdnWithdraw is UsdnTokenFixture {
      */
     function test_withdraw_to_wusdn() public {
         uint256 shares = wusdn.previewWithdraw(0.1 ether);
-        uint256 balanceBeforeWithdraw = usdn.balanceOf(address(USER_1));
-        uint256 shareBeforeWithdraw = wusdn.balanceOf(address(USER_1));
+        uint256 balanceBeforeWithdraw = usdn.balanceOf(USER_1);
+        uint256 shareBeforeWithdraw = wusdn.balanceOf(USER_1);
         vm.startPrank(USER_1);
         wusdn.withdraw(0.1 ether, USER_1, USER_1);
         vm.stopPrank();
-        assertGt(usdn.balanceOf(address(USER_1)), balanceBeforeWithdraw, "deposit failed");
-        assertEq(usdn.balanceOf(address(USER_1)) - balanceBeforeWithdraw, 0.1 ether, "total supply");
-        assertEq(shareBeforeWithdraw - wusdn.balanceOf(address(USER_1)), shares, "total shares");
+        assertGt(usdn.balanceOf(USER_1), balanceBeforeWithdraw, "deposit failed");
+        assertEq(usdn.balanceOf(USER_1) - balanceBeforeWithdraw, 0.1 ether, "total supply");
+        assertEq(shareBeforeWithdraw - wusdn.balanceOf(USER_1), shares, "total shares");
     }
 }
