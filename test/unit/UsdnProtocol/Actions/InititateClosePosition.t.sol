@@ -195,7 +195,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and an InitiatedClosePosition event is emitted
      * @custom:and the position is deleted
      */
-    function test__initiateClosePosition() external {
+    function test_internalInitiateClosePosition() external {
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
         uint256 longPositionLengthBefore = protocol.getLongPositionsLength(tick);
         _initiateCloseAPositionHelper(positionAmount);
@@ -228,7 +228,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and an InitiatedClosePosition event is emitted
      * @custom:and the position still exists
      */
-    function test__initiateClosePositionPartially() external {
+    function test_internalInitiateClosePositionPartially() external {
         uint128 amountToClose = positionAmount / 2;
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
         uint256 longPositionLengthBefore = protocol.getLongPositionsLength(tick);

@@ -159,7 +159,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives half of the position amount
      */
-    function test__validateClosePosition() external {
+    function test_internalValidateClosePosition() external {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
@@ -198,7 +198,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives half of the position amount
      */
-    function test__validatePartialClosePosition() external {
+    function test_internalValidatePartialClosePosition() external {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
@@ -275,7 +275,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receive parts of his funds back
      */
-    function test__validatePartialCloseUnderwaterPosition() external {
+    function test_internalValidatePartialCloseUnderwaterPosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
@@ -331,7 +331,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a ValidatedClosePosition event is emitted
      * @custom:and the user receives his funds back + some profits
      */
-    function test__validatePartialClosePositionInProfit() external {
+    function test_internalValidatePartialClosePositionInProfit() external {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
@@ -385,7 +385,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and a LiquidatedPosition event is emitted
      * @custom:and the user doesn't receive his funds back
      */
-    function test__validatePartialCloseLiquidatePosition() external {
+    function test_internalValidatePartialCloseLiquidatePosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
