@@ -40,13 +40,16 @@ contract TestWusdnWithdraw is UsdnTokenFixture {
      * @custom:then The user's share of wusdn decreases by the expected amount
      */
     function test_withdraw_to_wusdn() public {
+        uint256 shareBeforeWithdraw = wusdn.totalSupply();
         uint256 shares = wusdn.previewWithdraw(oneUSDN / 10);
         uint256 balanceBeforeWithdraw = usdn.balanceOf(USER_1);
-        uint256 shareBeforeWithdraw = wusdn.balanceOf(USER_1);
+        uint256 shareUser1BeforeWithdraw = wusdn.balanceOf(USER_1);
         vm.startPrank(USER_1);
         wusdn.withdraw(oneUSDN / 10, USER_1, USER_1);
         vm.stopPrank();
-        assertEq(usdn.balanceOf(USER_1) - balanceBeforeWithdraw, oneUSDN / 10, "total supply");
-        assertEq(shareBeforeWithdraw - wusdn.balanceOf(USER_1), shares, "total shares");
+        assertEq(usdn.balanceOf(USER_1) - balanceBeforeWithdraw, oneUSDN / 10, "usdn balance of USER_1");
+        assertEq(usdn.balanceOf(address(wusdn)), oneUSDN - oneUSDN / 10, "usdn balance of wusdn");
+        assertEq(shareUser1BeforeWithdraw - wusdn.balanceOf(USER_1), shares, "wusdn share of USER_1");
+        assertEq(shareBeforeWithdraw, wusdn.totalSupply() + shares, "wusdn total shares");
     }
 }

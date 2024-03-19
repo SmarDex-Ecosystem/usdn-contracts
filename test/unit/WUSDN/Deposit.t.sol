@@ -41,7 +41,9 @@ contract TestWusdnDeposit is UsdnTokenFixture {
         usdn.approve(address(wusdn), type(uint256).max);
         wusdn.deposit(oneUSDN, USER_1);
         vm.stopPrank();
-        assertEq(balanceBeforeDeposit - usdn.balanceOf(USER_1), oneUSDN, "total supply");
-        assertEq(wusdn.balanceOf(address(USER_1)) - shareBeforeDeposit, shares, "total shares");
+        assertEq(balanceBeforeDeposit - usdn.balanceOf(USER_1), oneUSDN, "usdn balance of USER_1");
+        assertEq(usdn.balanceOf(address(wusdn)), oneUSDN, "usdn balance of wusdn");
+        assertEq(wusdn.balanceOf(address(USER_1)) - shareBeforeDeposit, shares, "wusdn share of USER_1");
+        assertEq(wusdn.totalSupply(), shares, "wusdn total shares");
     }
 }
