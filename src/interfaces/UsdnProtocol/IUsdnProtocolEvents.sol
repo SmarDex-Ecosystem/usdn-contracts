@@ -292,7 +292,7 @@ interface IUsdnProtocolEvents {
     event UsdnRebaseIntervalUpdated(uint256 interval);
 
     /**
-     * @notice Emitted when imbalance limit are updated.
+     * @notice Emitted when imbalance limits are updated.
      * @param newOpenLimit The new open limit.
      * @param newDepositLimit The new deposit limit.
      * @param newWithdrawalLimit The new withdrawal limit.

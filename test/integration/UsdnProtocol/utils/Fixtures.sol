@@ -39,8 +39,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint128 initialLiqPrice;
         uint128 initialPrice;
         uint256 initialTimestamp; // ignored if fork is true
-        uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
         bool fork;
+        uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
     }
 
     SetUpParams public params;
@@ -50,8 +50,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialLiqPrice: 1000 ether, // leverage approx 2x
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
-        forkWarp: 0,
-        fork: false
+        fork: false,
+        forkWarp: 0
     });
 
     Usdn public usdn;
@@ -110,7 +110,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
-
         // leverage approx 2x
         protocol.initialize{ value: oracleMiddleware.validationCost("", ProtocolAction.Initialize) }(
             testParams.initialDeposit, testParams.initialLong, testParams.initialLiqPrice, ""
