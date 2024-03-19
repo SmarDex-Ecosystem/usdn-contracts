@@ -176,6 +176,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice The withdrawal imbalance limit state verification
      * @dev This is to ensure that the protocol does not imbalance more than the withdrawal limit on long side
      * @param withdrawalValue The withdrawal value in asset
+     * @param totalExpo The current total expo
      */
     function _imbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal view {
         int256 withdrawalExpoImbalanceLimit = _withdrawalExpoImbalanceLimitBps;
