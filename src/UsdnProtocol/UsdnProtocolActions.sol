@@ -149,6 +149,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
         returns (uint256 validatedActions_)
     {
+        if (maxValidations > previousActionsData.rawIndices.length) {
+            maxValidations = previousActionsData.rawIndices.length;
+        }
         do {
             (bool success, bool executed) = _executePendingAction(previousActionsData);
             if (!success || !executed) {
