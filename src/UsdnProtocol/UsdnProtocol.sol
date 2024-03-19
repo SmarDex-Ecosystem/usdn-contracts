@@ -284,7 +284,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Transfer the wstETH for the deposit
         _asset.safeTransferFrom(msg.sender, address(this), amount);
         _balanceVault += amount;
-        emit InitiatedDeposit(msg.sender, amount);
+        emit InitiatedDeposit(msg.sender, amount, block.timestamp);
 
         // Calculate the total minted amount of USDN (vault balance and total supply are zero for now, we assume the
         // USDN price to be $1)
@@ -296,8 +296,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _usdn.mint(msg.sender, mintToUser);
 
         // Emit events
-        emit ValidatedDeposit(DEAD_ADDRESS, 0, MIN_USDN_SUPPLY);
-        emit ValidatedDeposit(msg.sender, amount, mintToUser);
+        emit ValidatedDeposit(DEAD_ADDRESS, 0, MIN_USDN_SUPPLY, block.timestamp);
+        emit ValidatedDeposit(msg.sender, amount, mintToUser, block.timestamp);
     }
 
     /**

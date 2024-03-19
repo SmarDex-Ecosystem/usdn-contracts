@@ -41,8 +41,8 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         Position memory posBefore = protocol.getLongPosition(_tick, _tickVersion, _index);
         uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
-        uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(_tick, _tickVersion);
-        uint256 positionsCountBefore = protocol.getLongPositionsLength(_tick);
+        uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(_tick);
+        uint256 positionsCountBefore = protocol.getPositionsInTick(_tick);
         protocol.i_removeAmountFromPosition(_tick, _tickVersion, posBefore, posBefore.amount, posBefore.totalExpo);
 
         /* ----------------------------- Position State ----------------------------- */
@@ -53,9 +53,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         assertEq(posAfter.amount, 0, "Amount of the position should have been reset");
 
         /* ----------------------------- Protocol State ----------------------------- */
-        assertEq(
-            positionsCountBefore - 1, protocol.getLongPositionsLength(_tick), "The position should have been removed"
-        );
+        assertEq(positionsCountBefore - 1, protocol.getPositionsInTick(_tick), "The position should have been removed");
         assertGt(
             bitmapIndexBefore - protocol.findLastSetInTickBitmap(_tick), 0, "The last bitmap index should have changed"
         );
@@ -65,7 +63,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
             "The total expo of the position should have been subtracted from the total expo of the protocol"
         );
         assertEq(
-            totalExpoByTickBefore - protocol.getTotalExpoByTick(_tick, _tickVersion),
+            totalExpoByTickBefore - protocol.getTotalExpoByTick(_tick),
             posBefore.totalExpo,
             "The total expo of the position should have been subtracted from the total expo of the tick"
         );
@@ -82,8 +80,8 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         Position memory posBefore = protocol.getLongPosition(_tick, _tickVersion, _index);
         uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
-        uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(_tick, _tickVersion);
-        uint256 positionsCountBefore = protocol.getLongPositionsLength(_tick);
+        uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(_tick);
+        uint256 positionsCountBefore = protocol.getPositionsInTick(_tick);
         uint128 amountToRemove = posBefore.amount / 2;
         uint128 totalExpoToRemove = protocol.i_calculatePositionTotalExpo(
             amountToRemove, params.initialPrice, params.initialPrice - (params.initialPrice / 5)
@@ -108,9 +106,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
 
         /* ----------------------------- Protocol State ----------------------------- */
         assertEq(
-            positionsCountBefore,
-            protocol.getLongPositionsLength(_tick),
-            "The number of positions should not have changed"
+            positionsCountBefore, protocol.getPositionsInTick(_tick), "The number of positions should not have changed"
         );
         assertEq(
             bitmapIndexBefore - protocol.findLastSetInTickBitmap(_tick), 0, "The last bitmap index should be the same"
@@ -122,7 +118,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         );
         assertEq(
             totalExpoByTickBefore - totalExpoToRemove,
-            protocol.getTotalExpoByTick(_tick, _tickVersion),
+            protocol.getTotalExpoByTick(_tick),
             "The total expo to remove should have been subtracted from the total expo of the tick"
         );
     }

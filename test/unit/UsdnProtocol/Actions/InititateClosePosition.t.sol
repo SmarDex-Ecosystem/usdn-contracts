@@ -197,7 +197,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      */
     function test_internalInitiateClosePosition() external {
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
-        uint256 longPositionLengthBefore = protocol.getLongPositionsLength(tick);
+        uint256 longPositionLengthBefore = protocol.getPositionsInTick(tick);
         _initiateCloseAPositionHelper(positionAmount);
 
         /* ---------------------------- Position's state ---------------------------- */
@@ -215,7 +215,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
         assertEq(
             longPositionLengthBefore - 1,
-            protocol.getLongPositionsLength(tick),
+            protocol.getPositionsInTick(tick),
             "The amount of long positions on the tick should have decreased by one"
         );
     }
@@ -231,7 +231,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_internalInitiateClosePositionPartially() external {
         uint128 amountToClose = positionAmount / 2;
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
-        uint256 longPositionLengthBefore = protocol.getLongPositionsLength(tick);
+        uint256 longPositionLengthBefore = protocol.getPositionsInTick(tick);
         Position memory posBefore = protocol.getLongPosition(tick, tickVersion, index);
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
@@ -260,7 +260,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
         assertEq(
             longPositionLengthBefore,
-            protocol.getLongPositionsLength(tick),
+            protocol.getPositionsInTick(tick),
             "The amount of long positions on the tick should not have changed"
         );
     }
@@ -279,7 +279,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             protocol.i_assetToTransfer(params.initialPrice, tick, totalExpoToClose, liquidationMultiplier, 0);
 
         uint256 totalExpoBefore = protocol.getTotalExpo();
-        uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(tick, tickVersion);
+        uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(tick);
         uint256 balanceLongBefore = protocol.getBalanceLong();
 
         /* ------------------------ Initiate the close action ----------------------- */
@@ -321,7 +321,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
         assertEq(
             totalExpoByTickBefore - totalExpoToClose,
-            protocol.getTotalExpoByTick(tick, tickVersion),
+            protocol.getTotalExpoByTick(tick),
             "totalExpoToClose should have been subtracted to the total expo on the tick"
         );
         assertEq(
