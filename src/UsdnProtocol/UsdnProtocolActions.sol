@@ -143,7 +143,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /// @inheritdoc IUsdnProtocolActions
-    function validateActionablePendingAction(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
+    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
         external
         payable
         initializedAndNonReentrant
@@ -158,6 +158,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 validatedActions_++;
             }
         } while (validatedActions_ < maxValidations);
+        _refundExcessEther();
+        _checkPendingFee();
     }
 
     /**
