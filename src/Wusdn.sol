@@ -6,21 +6,20 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { ERC4626 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { IWusdn } from "src/interfaces/IWusdn.sol";
 
 /**
- * @title WUSDN token contract
- * @notice The USDN token is a delta neutral token that is inflating all users wallet. In order ton increase its value
- * value instead of getting inflated, the WUSDN token was created, a wrapped token of the USDN that is not inflating,
- * but increasing in value
+ * @title Wusdn token contract
+ * @notice The Wusdn token is a wrapped token of the Ultimate Synthetic Delta Neutral (USDN) token.
+ * Users can convert their USDN tokens to Wusdn tokens to use it with all protocols.
  */
 contract Wusdn is ERC4626, ERC20Permit {
     using SafeERC20 for IUsdn;
 
     string internal constant NAME = "Wrapped Ultimate Synthetic Delta Neutral";
     string internal constant SYMBOL = "WUSDN";
-    uint8 internal constant DECIMALS = 36;
+    uint8 internal constant DECIMALS = 18;
     IUsdn private immutable _asset;
 
     constructor(IUsdn asset_) ERC20(NAME, SYMBOL) ERC4626(asset_) ERC20Permit(NAME) {

@@ -29,18 +29,16 @@ contract TestWusdnDeposit is UsdnTokenFixture {
      * @custom:when The test_deposit function is called
      * @custom:then The deposit is successful
      */
-    function test_deposit() public {
+    function test_deposit_to_wusdn() public {
         uint256 shares = wusdn.previewDeposit(1 ether);
-        uint256 balanceBeforeWithdraw = usdn.balanceOf(address(USER_1));
-        uint256 shareBeforeWithdraw = wusdn.balanceOf(address(USER_1));
+        uint256 balanceBeforeDeposit = usdn.balanceOf(address(USER_1));
+        uint256 shareBeforeDeposit = wusdn.balanceOf(address(USER_1));
         vm.startPrank(USER_1);
         usdn.approve(address(wusdn), type(uint256).max);
         wusdn.deposit(1 ether, USER_1);
         vm.stopPrank();
-        uint256 balanceAfterwithdraw = usdn.balanceOf(address(USER_1));
-        uint256 shareAfterwithdraw = wusdn.balanceOf(address(USER_1));
-        require(balanceBeforeWithdraw - balanceAfterwithdraw > 0, "Wusdn: deposit failed");
-        require(balanceBeforeWithdraw - balanceAfterwithdraw == 1 ether, "Wusdn: deposit balance mismatch");
-        require(shareAfterwithdraw - shareBeforeWithdraw == shares, "Wusdn: deposit shares mismatch");
+        assertGt(balanceBeforeDeposit, usdn.balanceOf(address(USER_1)), "deposit failed");
+        assertEq(balanceBeforeDeposit - usdn.balanceOf(address(USER_1)), 1 ether, "total supply");
+        assertEq(wusdn.balanceOf(address(USER_1)) - shareBeforeDeposit, shares, "total shares");
     }
 }
