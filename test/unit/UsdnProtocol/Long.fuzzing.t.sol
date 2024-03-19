@@ -126,11 +126,10 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         uint256 positionTotalExpoRust = abi.decode(result, (uint256));
         uint256 positionTotalExpoSol =
             protocol.i_calculatePositionTotalExpo(uint128(amount), uint128(startPrice), uint128(liqPrice));
-        assertApproxEqAbs(
+        assertEq(
             positionTotalExpoSol,
             positionTotalExpoRust,
-            1,
-            "Difference between rust and solidity versions should have a max delta of 1"
+            "The rust and solidity implementations should return the same value"
         );
     }
 }

@@ -129,7 +129,8 @@ fn main() -> Result<()> {
             let amount: Integer = amount.parse()?;
 
             let price_diff = Integer::from(&start_price - &liq_price);
-            let total_expo = Float::with_val(512, amount) * start_price / price_diff;
+            let mut total_expo = Float::with_val(512, amount) * start_price / price_diff;
+            total_expo.floor_mut();
             
             print_u256_hex(total_expo.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
         }
