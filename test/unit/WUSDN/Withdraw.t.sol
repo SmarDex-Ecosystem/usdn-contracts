@@ -42,7 +42,6 @@ contract TestWusdnWithdraw is UsdnTokenFixture {
         vm.startPrank(USER_1);
         wusdn.withdraw(0.1 ether, USER_1, USER_1);
         vm.stopPrank();
-        assertGt(usdn.balanceOf(USER_1), balanceBeforeWithdraw, "deposit failed");
         assertEq(usdn.balanceOf(USER_1) - balanceBeforeWithdraw, 0.1 ether, "total supply");
         assertEq(shareBeforeWithdraw - wusdn.balanceOf(USER_1), shares, "total shares");
     }
