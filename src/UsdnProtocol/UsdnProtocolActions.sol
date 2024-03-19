@@ -434,8 +434,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 pendingActionPrice =
             (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
         uint256 totalExpo = _totalExpo;
+        uint256 balanceLong = _balanceLong;
         uint256 balanceVault =
-            _vaultAssetAvailable(totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice).toUint256();
+            _vaultAssetAvailable(totalExpo, _balanceVault, balanceLong, pendingActionPrice, _lastPrice).toUint256();
         uint256 usdnTotalSupply = _usdn.totalSupply();
 
         // verify withdrawal imbalance limit
@@ -450,7 +451,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             assetPrice: pendingActionPrice,
             totalExpo: totalExpo,
             balanceVault: balanceVault,
-            balanceLong: _balanceLong,
+            balanceLong: balanceLong,
             usdnTotalSupply: usdnTotalSupply
         });
 
