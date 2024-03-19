@@ -549,50 +549,57 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Value should be updated.
      */
     function test_setExpoImbalanceLimits() external adminPrank {
-        // value to assign
-        uint256 expectedNewValue = 0;
-        // signed value
-        int256 expectedSignedValue = int256(expectedNewValue);
+        // limit basis point to assign
+        uint256 expectedNewLimitBps = 0;
+        // signed limit basis point
+        int256 expectedSignedLimitBps = int256(expectedNewLimitBps);
 
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.ImbalanceLimitsUpdated(
-            expectedNewValue, expectedNewValue, expectedNewValue, expectedNewValue
+            expectedNewLimitBps, expectedNewLimitBps, expectedNewLimitBps, expectedNewLimitBps
         );
-        // set expo imbalance limits
-        protocol.setExpoImbalanceLimitsBps(expectedNewValue, expectedNewValue, expectedNewValue, expectedNewValue);
 
-        // get limits
-        (int256 openValue, int256 depositValue, int256 withdrawalValue, int256 closeValue) =
+        // set expo imbalance limits basis point
+        protocol.setExpoImbalanceLimitsBps(
+            expectedNewLimitBps, expectedNewLimitBps, expectedNewLimitBps, expectedNewLimitBps
+        );
+
+        // get signed limits basis point
+        (int256 openLimitBps, int256 depositLimitBps, int256 withdrawalLimitBps, int256 closeLimitBps) =
             protocol.getExpoImbalanceLimitsBps();
 
         // assert values are updated
-        assertEq(openValue, expectedSignedValue);
-        assertEq(depositValue, expectedSignedValue);
-        assertEq(withdrawalValue, expectedSignedValue);
-        assertEq(closeValue, expectedSignedValue);
+        assertEq(openLimitBps, expectedSignedLimitBps);
+        assertEq(depositLimitBps, expectedSignedLimitBps);
+        assertEq(withdrawalLimitBps, expectedSignedLimitBps);
+        assertEq(closeLimitBps, expectedSignedLimitBps);
     }
 
     /**
-     * @custom:scenario Call "setWithdrawalExpoImbalanceLimit" from admin.
+     * @custom:scenario Call "setExpoImbalanceLimits" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
      * @custom:when Admin wallet trigger admin contract function with below min values.
      * @custom:then transaction should revert.
      */
     function test_RevertWhen_setExpoImbalanceLimitsLow() external adminPrank {
-        // value lower than open expo imbalance limit
-        (int256 openLimit, int256 depositLimit,,) = protocol.getExpoImbalanceLimitsBps();
+        // open and deposit limits basis point
+        (int256 openLimitBps, int256 depositLimitBps,,) = protocol.getExpoImbalanceLimitsBps();
 
-        uint256 withdrawalValueBelowOpen = uint256(openLimit - 1);
+        uint256 withdrawalLimitBpsBelowOpen = uint256(openLimitBps - 1);
         // expected revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit.selector);
-        // set withdrawal expo imbalance limit
-        protocol.setExpoImbalanceLimitsBps(uint256(openLimit), uint256(depositLimit), withdrawalValueBelowOpen, 0);
+        // set expo imbalance limits basis point
+        protocol.setExpoImbalanceLimitsBps(
+            uint256(openLimitBps), uint256(depositLimitBps), withdrawalLimitBpsBelowOpen, 0
+        );
 
-        uint256 closeValueBelowDeposit = uint256(depositLimit - 1);
+        uint256 closeLimitBpsBelowDeposit = uint256(depositLimitBps - 1);
         // expected revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidExpoImbalanceLimit.selector);
-        // set close expo imbalance limit
-        protocol.setExpoImbalanceLimitsBps(uint256(openLimit), uint256(depositLimit), 0, closeValueBelowDeposit);
+        // set expo imbalance limits basis point
+        protocol.setExpoImbalanceLimitsBps(
+            uint256(openLimitBps), uint256(depositLimitBps), 0, closeLimitBpsBelowDeposit
+        );
     }
 }
