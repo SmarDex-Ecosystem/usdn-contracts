@@ -17,7 +17,7 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
         params = DEFAULT_PARAMS;
         params.enableProtocolFees = false;
         params.enableFunding = false;
-        super._setUp(params);
+        _setUp(params);
     }
 
     /**
