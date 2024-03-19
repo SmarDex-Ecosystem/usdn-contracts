@@ -41,7 +41,6 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         public
         payable
-        virtual
         override
         returns (PriceInfo memory price_)
     {
@@ -118,7 +117,7 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
 
     /// @inheritdoc OracleMiddleware
     function validationCost(bytes calldata data, ProtocolAction action)
-        public
+        external
         view
         override
         returns (uint256 result_)
@@ -126,6 +125,6 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
         // No signature verification -> no oracle fee
         if (!_verifySignature) return 0;
 
-        return super.validationCost(data, action);
+        return this.validationCost(data, action);
     }
 }

@@ -284,7 +284,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateDeposit, uint40(block.timestamp), currentPriceData);
+            _getOraclePrice(ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
@@ -311,7 +311,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _asset.safeTransferFrom(user, address(this), amount);
 
-        emit InitiatedDeposit(user, amount);
+        emit InitiatedDeposit(user, amount, block.timestamp);
     }
 
     function _validateDeposit(address user, bytes calldata priceData) internal {
@@ -352,11 +352,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 usdnToMint2 = _calcMintUsdn(
             deposit.amount,
             // Calculate the available balance in the vault side if the price moves to `priceWithFees`
-            uint256(
-                _vaultAssetAvailable(
-                    deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
-                )
-            ),
+            _vaultAssetAvailable(
+                deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
+            ).toUint256(),
             deposit.usdnTotalSupply,
             priceWithFees
         );
@@ -372,7 +370,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _balanceVault += deposit.amount;
 
         _usdn.mint(deposit.user, usdnToMint);
-        emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint);
+        emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint, deposit.timestamp);
     }
 
     /**
@@ -391,7 +389,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateWithdrawal, uint40(block.timestamp), currentPriceData);
+            _getOraclePrice(ProtocolAction.InitiateWithdrawal, block.timestamp, currentPriceData);
 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
@@ -421,7 +419,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // retrieve the USDN tokens, checks that balance is sufficient
         _usdn.safeTransferFrom(user, address(this), usdnAmount);
 
-        emit InitiatedWithdrawal(user, usdnAmount);
+        emit InitiatedWithdrawal(user, usdnAmount, block.timestamp);
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData) internal {
@@ -455,15 +453,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
         // redeem the underlying asset share.
         uint256 available1 = withdrawal.balanceVault;
-        uint256 available2 = uint256(
-            _vaultAssetAvailable(
-                withdrawal.totalExpo,
-                withdrawal.balanceVault,
-                withdrawal.balanceLong,
-                withdrawalPriceWithFees, // new price
-                withdrawal.assetPrice // old price
-            )
-        );
+        uint256 available2 = _vaultAssetAvailable(
+            withdrawal.totalExpo,
+            withdrawal.balanceVault,
+            withdrawal.balanceLong,
+            withdrawalPriceWithFees,
+            withdrawal.assetPrice
+        ).toUint256();
         uint256 available;
         if (available1 <= available2) {
             available = available1;
@@ -483,7 +479,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _asset.safeTransfer(withdrawal.user, assetToTransfer);
         }
 
-        emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amount);
+        emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, withdrawal.amount, withdrawal.timestamp);
     }
 
     /**
@@ -514,7 +510,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 neutralPrice;
         {
             PriceInfo memory currentPrice =
-                _getOraclePrice(ProtocolAction.InitiateOpenPosition, uint40(block.timestamp), currentPriceData);
+                _getOraclePrice(ProtocolAction.InitiateOpenPosition, block.timestamp, currentPriceData);
 
             // Apply fees on price
             adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
@@ -710,7 +706,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 priceWithFees;
         {
             PriceInfo memory currentPrice =
-                _getOraclePrice(ProtocolAction.InitiateClosePosition, uint40(block.timestamp), currentPriceData);
+                _getOraclePrice(ProtocolAction.InitiateClosePosition, block.timestamp, currentPriceData);
 
             _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
             priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
@@ -833,8 +829,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         internal
         returns (uint256 liquidatedPositions_)
     {
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, block.timestamp, currentPriceData);
 
         (, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -918,7 +913,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         return true;
     }
 
-    function _getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
+    function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
         internal
         returns (PriceInfo memory price_)
     {
@@ -926,7 +921,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (address(this).balance < validationCost) {
             revert UsdnProtocolInsufficientOracleFee();
         }
-        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(timestamp, action, priceData);
+        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(uint128(timestamp), action, priceData);
     }
 
     function _applyPnlAndFundingAndLiquidate(uint256 neutralPrice, uint256 timestamp) internal {

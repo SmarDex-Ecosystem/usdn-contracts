@@ -424,6 +424,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @inheritdoc IUsdnProtocolStorage
     function getPendingActionAt(uint256 index) external view returns (PendingAction memory action_) {
+        // slither-disable-next-line unused-return
         (action_,) = _pendingActionsQueue.at(index);
     }
 
@@ -458,15 +459,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getTotalExpoByTick(int24 tick, uint256 version) external view returns (uint256) {
-        bytes32 cachedTickHash = tickHash(tick, version);
+    function getTotalExpoByTick(int24 tick) external view returns (uint256) {
+        bytes32 cachedTickHash = tickHash(tick, _tickVersion[tick]);
         return _totalExpoByTick[cachedTickHash];
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getPositionsInTick(int24 tick, uint256 version) external view returns (uint256) {
-        bytes32 cachedTickHash = tickHash(tick, version);
-        return _positionsInTick[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
