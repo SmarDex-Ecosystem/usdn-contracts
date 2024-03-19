@@ -190,8 +190,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _imbalanceLimitDeposit(depositValue);
     }
 
-    function i_imbalanceLimitWithdrawal(uint256 withdrawalValue) external view {
-        _imbalanceLimitWithdrawal(withdrawalValue);
+    function i_imbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view {
+        _imbalanceLimitWithdrawal(withdrawalValue, totalExpo);
     }
 
     function i_imbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view {

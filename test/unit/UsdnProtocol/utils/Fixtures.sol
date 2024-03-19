@@ -253,10 +253,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     }
 
     /// @dev Calculate proper initial values from randoms to initiate a balanced protocol
-    function _randInitBalanced(uint128 initialDeposit, uint128 initialLong)
-        internal
-        returns (uint256 initialLeverage_)
-    {
+    function _randInitBalanced(uint128 initialDeposit, uint128 initialLong) internal {
         // initial default params
         params = DEFAULT_PARAMS;
         params.enableLimits = true;
@@ -300,8 +297,5 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
         // init protocol
         _setUp(params);
-
-        // initial leverage
-        initialLeverage_ = protocol.i_getLeverage(params.initialPrice, params.initialPrice / 2);
     }
 }

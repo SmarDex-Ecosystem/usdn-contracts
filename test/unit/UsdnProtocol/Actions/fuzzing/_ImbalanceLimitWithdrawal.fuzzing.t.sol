@@ -43,6 +43,6 @@ contract FuzzingImbalanceLimitWithdrawal is UsdnProtocolBaseFixture {
             );
         }
 
-        protocol.i_imbalanceLimitWithdrawal(withdrawalAmount);
+        protocol.i_imbalanceLimitWithdrawal(withdrawalAmount, protocol.getTotalExpo());
     }
 }

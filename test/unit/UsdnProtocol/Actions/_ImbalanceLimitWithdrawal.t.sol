@@ -28,7 +28,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
      */
     function test_imbalanceLimitWithdrawal() public view {
         (, uint256 longExpoValueToLimit) = _setupWithdrawal();
-        protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit);
+        protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit, protocol.getTotalExpo());
     }
 
     /**
@@ -60,7 +60,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
         // should revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidVaultExpo.selector);
-        protocol.i_imbalanceLimitWithdrawal(0);
+        protocol.i_imbalanceLimitWithdrawal(0, 0);
     }
 
     /**
@@ -76,7 +76,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setExpoImbalanceLimitsBps(200, 200, 0, 600);
 
-        protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit + 1);
+        protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit + 1, protocol.getTotalExpo());
     }
 
     /**
@@ -91,7 +91,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
         );
-        protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit + 1);
+        protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit + 1, protocol.getTotalExpo());
     }
 
     function _setupWithdrawal() private view returns (uint256 imbalanceBps_, uint256 longExpoValueToLimit_) {

@@ -177,7 +177,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @dev This is to ensure that the protocol does not imbalance more than the withdrawal limit on long side
      * @param withdrawalValue The withdrawal value in asset
      */
-    function _imbalanceLimitWithdrawal(uint256 withdrawalValue) internal view {
+    function _imbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal view {
         int256 withdrawalExpoImbalanceLimit = _withdrawalExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
@@ -193,7 +193,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         int256 imbalanceBps = (
-            (_totalExpo.toInt256().safeSub(_balanceLong.toInt256())).safeSub(
+            (totalExpo.toInt256().safeSub(_balanceLong.toInt256())).safeSub(
                 currentVaultExpo.safeSub(withdrawalValue.toInt256())
             )
         ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentVaultExpo);
@@ -249,7 +249,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 currentLongExpo = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
+        int256 totalExpo = _totalExpo.toInt256();
+        int256 balanceLong = _balanceLong.toInt256();
+
+        int256 currentLongExpo = totalExpo.safeSub(balanceLong);
 
         // cannot be calculated
         if (currentLongExpo == 0) {
@@ -258,8 +261,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         int256 imbalanceBps = (
             _balanceVault.toInt256().safeSub(
-                _totalExpo.toInt256().safeSub(closeTotalExpoValue.toInt256()).safeSub(
-                    _balanceLong.toInt256().safeSub(closeCollatValue.toInt256())
+                totalExpo.safeSub(closeTotalExpoValue.toInt256()).safeSub(
+                    balanceLong.safeSub(closeCollatValue.toInt256())
                 )
             )
         ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentLongExpo);
@@ -436,7 +439,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 usdnTotalSupply = _usdn.totalSupply();
 
         // verify withdrawal imbalance limit
-        _imbalanceLimitWithdrawal(FixedPointMathLib.fullMulDiv(usdnAmount, balanceVault, usdnTotalSupply));
+        _imbalanceLimitWithdrawal(FixedPointMathLib.fullMulDiv(usdnAmount, balanceVault, usdnTotalSupply), totalExpo);
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateWithdrawal,
