@@ -110,7 +110,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
         uint256 totalExpoBefore = protocol.getTotalExpo();
-        uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(tick, tickVersion);
+        uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(tick);
         uint256 balanceLongBefore = protocol.getBalanceLong();
         uint256 longPositionsAmountBefore = protocol.getTotalLongPositions();
 
@@ -156,7 +156,7 @@ contract TestUsdnProtocolActionsClosePosition is UsdnProtocolBaseFixture {
         );
         assertEq(
             totalExpoByTickBefore - totalExpoToClose,
-            protocol.getTotalExpoByTick(tick, tickVersion),
+            protocol.getTotalExpoByTick(tick),
             "totalExpoToClose should have been subtracted from the total expo of the tick"
         );
         uint256 assetToTransfer = protocol.i_assetToTransfer(
