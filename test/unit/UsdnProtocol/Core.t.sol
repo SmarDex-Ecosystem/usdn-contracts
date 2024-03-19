@@ -4,7 +4,6 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { console2 } from "forge-std/Test.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol
