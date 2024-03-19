@@ -59,7 +59,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
-    uint256 public constant LEVERAGE_DECIMALS = 21;
     address[] public users;
 
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
@@ -254,42 +253,43 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
     /// @dev Calculate proper initial values from randoms to initiate a balanced protocol
     function _randInitBalanced(uint128 initialDeposit, uint128 initialLong) internal {
-        // initial default params
+        // deploy protocol at equilibrium temporarily to get access to constants and calculations
+        // it will be re-deployed at the end of the function with new initial values
         params = DEFAULT_PARAMS;
         params.enableLimits = true;
+        params.initialDeposit = 5 ether;
+        params.initialLong = 5 ether;
+        _setUp(params);
 
         // cannot be less than 1 ether
-        initialDeposit = uint128(bound(initialDeposit, uint128(1 ether), uint128(5000 ether)));
-        // cannot be less than 1 ether
-        initialLong = uint128(bound(initialLong, uint128(1 ether), uint128(5000 ether)));
+        initialDeposit = uint128(bound(initialDeposit, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
+
+        (int256 openLimit,,,) = protocol.getExpoImbalanceLimitsBps();
+        uint128 margin = uint128(initialDeposit * uint256(openLimit) / protocol.BPS_DIVISOR());
 
         // min long expo to initiate a balanced protocol
-        uint256 minLongExpo = initialDeposit - initialDeposit * 2 / 100;
+        uint256 minLongExpo = initialDeposit - margin;
         // max long expo to initiate a balanced protocol
-        uint256 maxLongExpo = initialDeposit + initialDeposit * 2 / 100;
+        uint256 maxLongExpo = initialDeposit + margin;
 
-        // initial leverage
-        uint128 initialLeverage = uint128(
-            10 ** LEVERAGE_DECIMALS * uint256(params.initialPrice)
-                / (uint256(params.initialPrice) - uint256(params.initialPrice / 2))
-        );
+        uint128 liquidationPriceWithoutPenalty =
+            protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
 
         // min long amount
-        uint256 minLongAmount = uint128(
-            uint256(minLongExpo) * 10 ** LEVERAGE_DECIMALS / (uint256(initialLeverage) - 10 ** LEVERAGE_DECIMALS)
+        uint128 minLongAmount = uint128(
+            minLongExpo * (params.initialPrice - liquidationPriceWithoutPenalty) / liquidationPriceWithoutPenalty
         );
+        // bound to the minimum value
+        if (minLongAmount < protocol.MIN_INIT_DEPOSIT()) {
+            minLongAmount = uint128(protocol.MIN_INIT_DEPOSIT());
+        }
         // max long amount
-        uint256 maxLongAmount = uint128(
-            uint256(maxLongExpo) * 10 ** LEVERAGE_DECIMALS / (uint256(initialLeverage) - 10 ** LEVERAGE_DECIMALS)
+        uint128 maxLongAmount = uint128(
+            maxLongExpo * (params.initialPrice - liquidationPriceWithoutPenalty) / liquidationPriceWithoutPenalty
         );
 
         // assign initial long amount in range min max
-        initialLong = uint128(bound(initialLong, uint128(minLongAmount), uint128(maxLongAmount)));
-
-        // calculation doesn't take count of min allowed by the protocol
-        if (initialLong < 1 ether) {
-            initialLong = 1 ether;
-        }
+        initialLong = uint128(bound(initialLong, minLongAmount, maxLongAmount));
 
         // assign initial values
         params.initialDeposit = initialDeposit;
