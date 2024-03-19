@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { Test } from "forge-std/Test.sol";
-
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { TickMath } from "src/libraries/TickMath.sol";
+
+import { BaseFixture } from "test/utils/Fixtures.sol";
 
 /**
  * @custom:feature Solady math library fuzzing (diff testing)
@@ -23,7 +23,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
  * acceptable range (see comments in the tests below).
  *
  */
-contract TestSoladyMath is Test {
+contract TestSoladyMath is BaseFixture {
     /**
      * @custom:scenario Fuzzing the `expWad` function
      * @custom:given A value between -42_139_678_854_452_767_552 and 135_305_999_368_893_231_588
