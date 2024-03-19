@@ -41,7 +41,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getLongPositionsLength(int24 tick) external view returns (uint256 len_) {
+    function getPositionsInTick(int24 tick) external view returns (uint256 len_) {
         (bytes32 tickHash,) = _tickHash(tick);
         len_ = _positionsInTick[tickHash];
     }
