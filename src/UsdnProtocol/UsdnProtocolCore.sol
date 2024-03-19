@@ -211,12 +211,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (oldLongExpo_ <= 0) {
             // if oldLongExpo is negative, then we cap the imbalance index to -1
             // oldVaultExpo is always positive
-            return (-int256(_fundingSF) + ema, oldLongExpo_);
+            return (-int256(_fundingSF) * int256(10 ** FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS) + ema, oldLongExpo_);
         } else if (oldVaultExpo == 0) {
             // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
             // oldLongExpo must be positive in this case
-            return (int256(_fundingSF) + ema, oldLongExpo_);
+            return (int256(_fundingSF) * int256(10 ** FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS) + ema, oldLongExpo_);
         }
+
         // starting here, oldLongExpo and oldVaultExpo are always strictly positive
 
         uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
