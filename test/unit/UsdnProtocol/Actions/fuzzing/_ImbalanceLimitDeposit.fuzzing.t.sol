@@ -7,12 +7,12 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 /**
  * @custom:feature Fuzzing tests of the protocol expo limit for internal `imbalanceLimitDeposit`
- * @custom:background Given a protocol instance in balanced state with random expos
+ * @custom:background Given a protocol instance in balanced state with random vault expo and long expo
  */
 contract FuzzingImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     /**
-     * @custom:scenario The `imbalanceLimitDeposit` should pass with still balanced amounts with state
-     * and revert when amounts bring protocol out of limits
+     * @custom:scenario The `imbalanceLimitDeposit` should pass on still balanced state
+     * or revert when amounts bring protocol out of limits
      * @custom:given The randomized expo balanced protocol state
      * @custom:when The `imbalanceLimitDeposit` is called with a random amount
      * @custom:then The transaction should revert in case imbalance or pass if still balanced

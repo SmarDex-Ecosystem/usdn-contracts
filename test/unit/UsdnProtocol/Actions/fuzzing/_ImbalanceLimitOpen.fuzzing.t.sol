@@ -11,8 +11,8 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  */
 contract FuzzingImbalanceLimitOpen is UsdnProtocolBaseFixture {
     /**
-     * @custom:scenario The `imbalanceLimitOpen` should pass with still balanced amounts with state
-     * and revert when amounts bring protocol out of limits
+     * @custom:scenario The `imbalanceLimitOpen` should pass on still balanced state
+     * or revert when amounts bring protocol out of limits
      * @custom:given The randomized expo balanced protocol state
      * @custom:when The `imbalanceLimitOpen` is called with a random amount
      * @custom:then The transaction should revert in case imbalance or pass if still balanced
