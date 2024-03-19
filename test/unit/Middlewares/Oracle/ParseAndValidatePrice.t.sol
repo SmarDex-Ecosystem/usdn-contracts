@@ -151,7 +151,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      */
     function test_RevertWhen_parseAndValidatePriceWithNegativeEthPrice() public {
         // Update price to -1 USD in pyth oracle
-        mockPyth.updatePrice(-1);
+        mockPyth.setPrice(-1);
         uint256 timestamp = block.timestamp - oracleMiddleware.getValidationDelay();
 
         // Expect revert when validating price for None action
