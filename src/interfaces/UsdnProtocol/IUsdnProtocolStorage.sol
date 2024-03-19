@@ -121,12 +121,20 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Get expo imbalance limits basis point
-     * @return The open expo imbalance limit
-     * @return The deposit expo imbalance limit
-     * @return The withdrawal expo imbalance limit
-     * @return The close expo imbalance limit
+     * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
+     * @return depositExpoImbalanceLimitBps_ The deposit expo imbalance limit
+     * @return withdrawalExpoImbalanceLimitBps_ The withdrawal expo imbalance limit
+     * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
      */
-    function getExpoImbalanceLimitsBps() external view returns (int256, int256, int256, int256);
+    function getExpoImbalanceLimitsBps()
+        external
+        view
+        returns (
+            int256 openExpoImbalanceLimitBps_,
+            int256 depositExpoImbalanceLimitBps_,
+            int256 withdrawalExpoImbalanceLimitBps_,
+            int256 closeExpoImbalanceLimitBps_
+        );
 
     /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
     function getTargetUsdnPrice() external view returns (uint128);

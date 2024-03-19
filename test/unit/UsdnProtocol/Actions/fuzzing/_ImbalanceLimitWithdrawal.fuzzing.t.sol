@@ -35,6 +35,7 @@ contract FuzzingImbalanceLimitWithdrawal is UsdnProtocolBaseFixture {
         // initial withdrawal limit bps
         (,, int256 withdrawalLimit,) = protocol.getExpoImbalanceLimitsBps();
 
+        uint256 totalExpo = protocol.getTotalExpo();
         // call `i_imbalanceLimitWithdrawal` with withdrawalAmount
         if (imbalanceBps >= withdrawalLimit) {
             // should revert with above withdrawal imbalance limit
@@ -43,6 +44,6 @@ contract FuzzingImbalanceLimitWithdrawal is UsdnProtocolBaseFixture {
             );
         }
 
-        protocol.i_imbalanceLimitWithdrawal(withdrawalAmount, protocol.getTotalExpo());
+        protocol.i_imbalanceLimitWithdrawal(withdrawalAmount, totalExpo);
     }
 }
