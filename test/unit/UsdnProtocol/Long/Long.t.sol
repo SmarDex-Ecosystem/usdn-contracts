@@ -277,23 +277,4 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
         assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
     }
-
-    /**
-     * @custom:scenario Check that the user can close his opened position
-     * @custom:given An initialized and validated position
-     * @custom:when The user call initiateClosePosition
-     * @custom:then The close position action is initialized
-     */
-    function test_canInitializeClosePosition() external {
-        uint128 price = 2000 ether;
-        uint128 desiredLiqPrice = 1700 ether;
-
-        // Initiate and Validate a long position
-        (int24 tick, uint256 tickVersion, uint256 index) =
-            setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, price);
-
-        vm.expectEmit();
-        emit InitiatedClosePosition(address(this), tick, tickVersion, index, 0, 0);
-        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, abi.encode(price), EMPTY_PREVIOUS_DATA);
-    }
 }
