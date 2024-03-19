@@ -97,7 +97,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
             posValueWithExpo,
             posValueWithLeverage,
             1,
-            "Current and former implementation's difference is above tolerance"
+            "Difference between current and former implementations is above tolerance"
         );
     }
 
