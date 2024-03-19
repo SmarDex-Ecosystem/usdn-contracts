@@ -27,7 +27,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
      * @custom:then The transaction should not revert
      */
     function test_imbalanceLimitWithdrawal() public view {
-        (, uint256 longExpoValueToLimit) = _setupWithdrawal();
+        (, uint256 longExpoValueToLimit) = _getWithdrawalLimitValues();
         protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit, protocol.getTotalExpo());
     }
 
@@ -70,7 +70,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
      * @custom:then The transaction should not revert
      */
     function test_imbalanceLimitWithdrawalDisabled() public {
-        (, uint256 longExpoValueToLimit) = _setupWithdrawal();
+        (, uint256 longExpoValueToLimit) = _getWithdrawalLimitValues();
 
         // disable withdrawal limit
         vm.prank(ADMIN);
@@ -87,22 +87,24 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert
      */
     function test_RevertWith_imbalanceLimitWithdrawalOutLimit() public {
-        (uint256 imbalanceBps, uint256 longExpoValueToLimit) = _setupWithdrawal();
+        (int256 withdrawalLimitBps, uint256 longExpoValueToLimit) = _getWithdrawalLimitValues();
         uint256 totalExpo = protocol.getTotalExpo();
         vm.expectRevert(
-            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
+            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, withdrawalLimitBps)
         );
 
         protocol.i_imbalanceLimitWithdrawal(longExpoValueToLimit + 1, totalExpo);
     }
 
-    function _setupWithdrawal() private view returns (uint256 imbalanceBps_, uint256 longExpoValueToLimit_) {
+    function _getWithdrawalLimitValues()
+        private
+        view
+        returns (int256 withdrawalLimitBps_, uint256 longExpoValueToLimit_)
+    {
         uint256 vaultExpo_ = protocol.getBalanceVault();
-        // initial withdrawal limit bps
-        (,, int256 withdrawalLimit,) = protocol.getExpoImbalanceLimitsBps();
-        // imbalance bps
-        imbalanceBps_ = uint256(withdrawalLimit);
+        // withdrawal limit bps
+        (,, withdrawalLimitBps_,) = protocol.getExpoImbalanceLimitsBps();
         // current long expo value to imbalance the protocol
-        longExpoValueToLimit_ = vaultExpo_ * imbalanceBps_ / protocol.BPS_DIVISOR();
+        longExpoValueToLimit_ = vaultExpo_ * uint256(withdrawalLimitBps_) / protocol.BPS_DIVISOR();
     }
 }

@@ -22,15 +22,14 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         params.initialLiqPrice = 1 ether;
         params.initialPrice = 3290 ether;
         params.initialTimestamp = 1_708_088_866; // 16 February 2024 at 14:07 CET
-        params.enableLimits = false;
         _setUp(params);
     }
 
     /**
-     * @custom:scenario A very large long position is in large bad debt and gets liquidated
+     * @custom:scenario A long position is in large bad debt and gets liquidated
      * @custom:given An initial position of 1 ether with leverage ~1x
-     * @custom:and A user position of 132 ether with leverage ~4.5x
-     * @custom:and A user position of 1 ether with leverage ~5.3x
+     * @custom:and A user position of 0.5 ether with leverage ~4.5x
+     * @custom:and A user position of 0.01 ether with leverage ~5.3x
      * @custom:when The funding rates make the liquidation prices of both positions go up
      * @custom:and The positions get liquidated by a new user action, way too late
      * @custom:then The bad debt should be paid by the vault side and the long trading expo should be positive
@@ -46,7 +45,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         wstETH.approve(address(protocol), type(uint256).max);
 
         protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            132 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA
+            0.5 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA
         );
 
         vm.warp(1_708_090_246);
@@ -62,7 +61,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockChainlinkOnChain.setLastPrice(3290e8);
 
         protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA
+            0.01 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA
         );
 
         vm.warp(1_708_090_438);
@@ -85,7 +84,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         wstETH.approve(address(protocol), type(uint256).max);
 
         protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, 1684 ether, "", EMPTY_PREVIOUS_DATA
+            0.0001 ether, 1684 ether, "", EMPTY_PREVIOUS_DATA
         );
         vm.stopPrank();
 

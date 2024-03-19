@@ -40,7 +40,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint128 initialPrice;
         uint256 initialTimestamp; // ignored if fork is true
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
-        bool enableLimits;
         bool fork;
     }
 
@@ -52,7 +51,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
         forkWarp: 0,
-        enableLimits: true,
         fork: false
     });
 
@@ -112,11 +110,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
-
-        // disable imbalance limits
-        if (!testParams.enableLimits) {
-            protocol.setExpoImbalanceLimitsBps(0, 0, 0, 0);
-        }
 
         // leverage approx 2x
         protocol.initialize{ value: oracleMiddleware.validationCost("", ProtocolAction.Initialize) }(

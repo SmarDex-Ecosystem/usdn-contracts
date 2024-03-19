@@ -27,7 +27,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
      * @custom:then The transaction should not revert
      */
     function test_imbalanceLimitDeposit() public view {
-        (, uint256 vaultExpoValueToLimit) = _setupDeposit();
+        (, uint256 vaultExpoValueToLimit) = _getDepositLimitValues();
         protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit);
     }
 
@@ -86,7 +86,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
      * @custom:then The transaction should not revert
      */
     function test_imbalanceLimitDepositDisabled() public {
-        (, uint256 vaultExpoValueToLimit) = _setupDeposit();
+        (, uint256 vaultExpoValueToLimit) = _getDepositLimitValues();
 
         // disable deposit limit
         vm.prank(ADMIN);
@@ -103,21 +103,19 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert
      */
     function test_RevertWith_imbalanceLimitDepositOutLimit() public {
-        (uint256 imbalanceBps, uint256 vaultExpoValueToLimit) = _setupDeposit();
+        (int256 depositLimitBps, uint256 vaultExpoValueToLimit) = _getDepositLimitValues();
         vm.expectRevert(
-            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
+            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, depositLimitBps)
         );
         protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit + 1);
     }
 
-    function _setupDeposit() private view returns (uint256 imbalanceBps_, uint256 vaultExpoValueToLimit_) {
+    function _getDepositLimitValues() private view returns (int256 depositLimitBps_, uint256 vaultExpoValueToLimit_) {
         // current long expo
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
-        // initial deposit limit bps
-        (, int256 depositLimit,,) = protocol.getExpoImbalanceLimitsBps();
-        // imbalance bps
-        imbalanceBps_ = uint256(depositLimit);
+        // deposit limit bps
+        (, depositLimitBps_,,) = protocol.getExpoImbalanceLimitsBps();
         // current vault expo value to imbalance the protocol
-        vaultExpoValueToLimit_ = longExpo * imbalanceBps_ / protocol.BPS_DIVISOR();
+        vaultExpoValueToLimit_ = longExpo * uint256(depositLimitBps_) / protocol.BPS_DIVISOR();
     }
 }
