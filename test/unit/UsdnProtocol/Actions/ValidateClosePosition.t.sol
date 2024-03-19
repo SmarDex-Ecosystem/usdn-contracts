@@ -18,8 +18,8 @@ import { USER_1 } from "test/utils/Constants.sol";
 /**
  * @custom:feature The initiate close position functions of the USDN Protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
- * leverage of ~2x.
- * @custom:and A user with 100_000 wstETH in their wallet
+ * leverage of ~2x
+ * @custom:and a validated long position of 1 ether with 10x leverage.
  */
 contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
@@ -36,9 +36,6 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         params.enableProtocolFees = false;
 
         super._setUp(params);
-
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
-        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
 
         (tick, tickVersion, index) = setUpUserPositionInLong(
             address(this),
@@ -145,8 +142,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
-        vm.expectEmit(true, true, true, false);
-        emit ValidatedClosePosition(address(this), tick, tickVersion, 0, 0, 0);
+        vm.expectEmit(true, false, false, false);
+        emit ValidatedClosePosition(address(this), tick, tickVersion, index, positionAmount, -1);
         protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
     }
 

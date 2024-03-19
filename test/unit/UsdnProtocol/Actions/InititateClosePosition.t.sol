@@ -17,7 +17,8 @@ import { USER_1 } from "test/utils/Constants.sol";
 /**
  * @custom:feature The validate close position functions of the USDN Protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
- * leverage of ~2x.
+ * leverage of ~2x
+ * @custom:and a validated long position of 1 ether with 10x leverage
  */
 contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
@@ -177,8 +178,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_initiateClosePosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);
 
-        vm.expectEmit(true, true, true, false);
-        emit InitiatedClosePosition(address(this), tick, tickVersion, 0, 0, 0);
+        vm.expectEmit();
+        emit InitiatedClosePosition(address(this), tick, tickVersion, index, 0, 0);
         protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA);
     }
 

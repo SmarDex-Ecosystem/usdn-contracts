@@ -217,12 +217,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _bitmapIndexToTick(index);
     }
 
-    function i_tickBitmapToIndex(int24 tick) external view returns (uint256) {
+    function i_tickToBitmapIndex(int24 tick) external view returns (uint256) {
         return _tickToBitmapIndex(tick);
     }
 
-    function findLastSetInTickBitmap(int24 tick) external view returns (uint256 index) {
-        return _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+    function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
+        return _tickBitmap.findLastSet(_tickToBitmapIndex(searchFrom));
     }
 
     function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
