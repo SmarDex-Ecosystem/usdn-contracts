@@ -134,10 +134,27 @@ contract BaseFixture is Test {
         cmds[3] = parameter2;
         cmds[4] = parameter3;
 
-        result_ = vm.ffi(cmds);
+        // As of now, the first 3 arguments are always used
+        uint8 usedParametersCount = 3;
+        if (bytes(parameter2).length > 0) ++usedParametersCount;
+        if (bytes(parameter3).length > 0) ++usedParametersCount;
 
-        // Sanity check
-        require(keccak256(result_) != keccak256(""), "Rust command returned an error");
+        result_ = _vmFFIRustCommand(cmds, usedParametersCount);
+    }
+
+    /**
+     * @notice Execute the given command
+     * @dev Will shrink the cmds array to a length of `argsCount`
+     * @param cmds The different parts of the command to execute
+     * @param argsCount The number of used parameters
+     */
+    function _vmFFIRustCommand(string[] memory cmds, uint8 argsCount) private returns (bytes memory) {
+        assembly {
+            // shrink the array to avoid passing too many arguments to the command
+            mstore(cmds, argsCount)
+        }
+
+        return vm.ffi(cmds);
     }
 
     // force ignore from coverage report
