@@ -229,7 +229,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
+                    _fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
@@ -239,7 +239,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
+                    _fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
