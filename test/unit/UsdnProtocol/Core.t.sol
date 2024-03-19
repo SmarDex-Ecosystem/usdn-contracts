@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { console2 } from "forge-std/Test.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol
@@ -161,7 +162,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint256 fundingSF = protocol.getFundingSF();
         (int256 fund_,) = protocol.funding(uint128(block.timestamp));
 
-        assertEq(fund_, -int256(fundingSF) + EMA, "funding should be equal to -fundingSF + EMA");
+        assertEq(
+            fund_,
+            -int256(fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS())) + EMA,
+            "funding should be equal to -fundingSF + EMA"
+        );
     }
 
     /**
@@ -184,7 +189,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint256 fundingSF = protocol.getFundingSF();
         (int256 fund_,) = protocol.funding(uint128(block.timestamp));
 
-        assertEq(fund_, int256(fundingSF) + EMA, "funding should be equal to fundingSF + EMA");
+        assertEq(
+            fund_,
+            int256(fundingSF * 10 ** (protocol.FUNDING_RATE_DECIMALS() - protocol.FUNDING_SF_DECIMALS())) + EMA,
+            "funding should be equal to fundingSF + EMA"
+        );
     }
 
     /**
