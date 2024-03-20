@@ -211,12 +211,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (oldLongExpo_ <= 0) {
             // if oldLongExpo is negative, then we cap the imbalance index to -1
             // oldVaultExpo is always positive
-            return (-int256(_fundingSF) + ema, oldLongExpo_);
+            return (-int256(_fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
         } else if (oldVaultExpo == 0) {
             // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
             // oldLongExpo must be positive in this case
-            return (int256(_fundingSF) + ema, oldLongExpo_);
+            return (int256(_fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
         }
+
         // starting here, oldLongExpo and oldVaultExpo are always strictly positive
 
         uint256 elapsedSeconds = timestamp - _lastUpdateTimestamp;
@@ -229,7 +230,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
+                    _fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
@@ -239,7 +240,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (_assetDecimals - FUNDING_SF_DECIMALS),
+                    _fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
@@ -633,19 +634,40 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Get the pending action for a user
+     * @dev To check for the presence of a pending action, compare `action_.action` to `ProtocolAction.None`. There is
+     * a pending action only if the action is different from `ProtocolAction.None`.
      * @param user The user address
-     * @return action_ The pending action struct
+     * @return action_ The pending action struct if any, otherwise a zero-initialized struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
     function _getPendingAction(address user) internal view returns (PendingAction memory action_, uint128 rawIndex_) {
         uint256 pendingActionIndex = _pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
-            revert UsdnProtocolNoPendingAction();
+            // no pending action
+            return (action_, rawIndex_);
         }
 
         rawIndex_ = uint128(pendingActionIndex - 1);
         action_ = _pendingActionsQueue.atRaw(rawIndex_);
+    }
+
+    /**
+     * @notice Get the pending action for a user
+     * @dev This function reverts if there is no pending action for the user
+     * @param user The user address
+     * @return action_ The pending action struct
+     * @return rawIndex_ The raw index of the pending action in the queue
+     */
+    function _getPendingActionOrRevert(address user)
+        internal
+        view
+        returns (PendingAction memory action_, uint128 rawIndex_)
+    {
+        (action_, rawIndex_) = _getPendingAction(user);
+        if (action_.action == ProtocolAction.None) {
+            revert UsdnProtocolNoPendingAction();
+        }
     }
 
     /**
@@ -655,7 +677,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      */
     function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
         uint128 rawIndex;
-        (action_, rawIndex) = _getPendingAction(user);
+        (action_, rawIndex) = _getPendingActionOrRevert(user);
         _pendingActionsQueue.clearAt(rawIndex);
         delete _pendingActions[user];
     }
