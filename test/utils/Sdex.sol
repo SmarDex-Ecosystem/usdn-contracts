@@ -7,7 +7,7 @@ import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 /**
  * @title SmardexToken (SDEX), ERC-20 token
  */
-contract SmardexToken is ERC20Permit {
+contract Sdex is ERC20Permit {
     constructor() ERC20("Smardex", "SDEX") ERC20Permit("Smardex") { }
 
     /**

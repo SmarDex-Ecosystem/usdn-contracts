@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { Script } from "forge-std/Script.sol";
 
 import { WstETH } from "test/utils/WstEth.sol";
-import { SmardexToken } from "test/utils/Sdex.sol";
+import { Sdex } from "test/utils/Sdex.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
@@ -20,7 +20,7 @@ contract Deploy is Script {
         external
         returns (
             WstETH WstETH_,
-            SmardexToken Sdex_,
+            Sdex Sdex_,
             WstEthOracleMiddleware WstEthOracleMiddleware_,
             LiquidationRewardsManager LiquidationRewardsManager_,
             Usdn Usdn_,
@@ -49,9 +49,9 @@ contract Deploy is Script {
         // Deploy SDEX if needed
         address sdexAddress = payable(vm.envOr("SDEX_ADDRESS", address(0)));
         if (sdexAddress != address(0)) {
-            Sdex_ = SmardexToken(sdexAddress);
+            Sdex_ = Sdex(sdexAddress);
         } else {
-            Sdex_ = new SmardexToken();
+            Sdex_ = new Sdex();
             sdexAddress = address(Sdex_);
         }
 
@@ -128,7 +128,13 @@ contract Deploy is Script {
 
         // Deploy the protocol with tick spacing 100 = 1%
         UsdnProtocol_ = new UsdnProtocol(
-            Usdn_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_, 100, vm.envAddress("FEE_COLLECTOR")
+            Usdn_,
+            Sdex_,
+            WstETH_,
+            WstEthOracleMiddleware_,
+            LiquidationRewardsManager_,
+            100,
+            vm.envAddress("FEE_COLLECTOR")
         );
 
         // Grant USDN minter & rebaser roles to protocol and approve wstETH spending
