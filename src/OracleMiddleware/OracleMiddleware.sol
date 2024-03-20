@@ -162,7 +162,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
      * @notice Get the price for an initiate action of the protocol.
      * @dev If the data parameter is not empty, validate the price with PythOracle. Else, get the on-chain price from
      * Chainlink and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more recent, we return
-     * it. Otherwise we return the chainlink price. In case of on-chain price, we don't have a confidence interval and
+     * it. Otherwise we return the chainlink price. In case of chainlink price, we don't have a confidence interval and
      * so both `neutralPrice` and `price` are equal.
      * @param data An optional VAA from Pyth
      * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
