@@ -54,8 +54,13 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // middleware data
             PriceInfo memory middlewarePrice;
 
-            if (action == ProtocolAction.Liquidation) {
-                // Pyth requires that the price data timestamp is recent compared to block.timestamp
+            if (
+                action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
+                    || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
+                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+            ) {
+                // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
+                // is recent compared to block.timestamp
                 vm.warp(pythTimestamp);
                 middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
             } else {
@@ -166,8 +171,13 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // middleware data
             PriceInfo memory middlewarePrice;
-            if (action == ProtocolAction.Liquidation) {
-                // Pyth requires that the price data timestamp is recent compared to block.timestamp
+            if (
+                action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
+                    || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
+                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+            ) {
+                // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
+                // is recent compared to block.timestamp
                 vm.warp(pythTimestamp);
                 middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
             } else {
