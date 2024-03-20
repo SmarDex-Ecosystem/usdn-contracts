@@ -16,10 +16,12 @@ import {
 import {
     PYTH_DATA_PRICE,
     PYTH_DATA_CONF,
+    PYTH_DATA_DECIMALS,
     PYTH_DATA_TIMESTAMP,
     PYTH_DATA,
     PYTH_DATA_STETH_PRICE,
     PYTH_DATA_STETH_CONF,
+    PYTH_DATA_STETH_DECIMALS,
     PYTH_DATA_STETH
 } from "test/integration/Middlewares/utils/Constants.sol";
 
@@ -122,7 +124,7 @@ contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture,
         pure
         returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
     {
-        return (PYTH_DATA_PRICE, PYTH_DATA_CONF, 8, PYTH_DATA_TIMESTAMP, PYTH_DATA);
+        return (PYTH_DATA_PRICE, PYTH_DATA_CONF, PYTH_DATA_DECIMALS, PYTH_DATA_TIMESTAMP, PYTH_DATA);
     }
 }
 
@@ -152,7 +154,9 @@ contract WstethIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegr
         pure
         returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
     {
-        return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, 8, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
+        return (
+            PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_STETH_DECIMALS, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH
+        );
     }
 
     function stethToWsteth(uint256 amount) public view returns (uint256) {

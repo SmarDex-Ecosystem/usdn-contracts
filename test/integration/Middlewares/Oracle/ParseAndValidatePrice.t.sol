@@ -67,7 +67,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // timestamp check
             assertEq(middlewarePrice.timestamp, pythTimestamp);
 
-            uint256 formattedPythPrice = pythPrice * 10 ** (oracleMiddleware.getDecimals() - 8);
+            uint256 formattedPythPrice = pythPrice * 10 ** (oracleMiddleware.getDecimals() - pythDecimals);
 
             // Price + conf
             if (
@@ -275,6 +275,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
         // timestamp check
         assertEq(cachedMiddlewarePrice.timestamp, middlewarePrice.timestamp, "timestamp equal to pyth timestamp");
         assertGt(cachedMiddlewarePrice.timestamp, chainlinkTimestamp, "timestamp greater than chainlink timestamp");
+        // price check
         assertEq(cachedMiddlewarePrice.price, middlewarePrice.price, "price equal to pyth price");
         assertTrue(cachedMiddlewarePrice.price != chainlinkPrice, "price different from chainlink price");
     }
