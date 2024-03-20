@@ -175,4 +175,20 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         external
         payable
         returns (uint256 liquidatedPositions_);
+
+    /**
+     * @notice Manually validate one or more actionable pending actions.
+     * @dev The price validation might require payment according to the return value of the `getValidationCost`
+     * function of the middleware.
+     * The timestamp for the price data of each actionable pending action is calculated by adding the mandatory
+     * `validationDelay` (from the oracle middleware) to the timestamp of the pending action.
+     * @param previousActionsData The data needed to validate actionable pending actions.
+     * @param maxValidations The maximum number of actionable pending actions to validate. Even if zero, at least one
+     * validation will be performed.
+     * @return validatedActions_ The number of validated actionable pending actions.
+     */
+    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
+        external
+        payable
+        returns (uint256 validatedActions_);
 }
