@@ -97,16 +97,4 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
      */
     function getUserPendingAction(address user) external view returns (PendingAction memory action_);
-
-    /**
-     * @notice Calculation of the EMA of the funding rate
-     * @param lastFunding The last funding rate
-     * @param secondsElapsed The number of seconds elapsed since the last protocol action
-     * @param emaPeriod The EMA period
-     * @param previousEMA The previous EMA
-     */
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        external
-        pure
-        returns (int256);
 }

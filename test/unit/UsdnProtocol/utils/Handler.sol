@@ -133,26 +133,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
-    function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {
-        return _toVaultPendingAction(action);
-    }
-
-    function i_toLongPendingAction(PendingAction memory action) external pure returns (LongPendingAction memory) {
-        return _toLongPendingAction(action);
-    }
-
-    function i_convertVaultPendingAction(VaultPendingAction memory action)
-        external
-        pure
-        returns (PendingAction memory)
-    {
-        return _convertVaultPendingAction(action);
-    }
-
-    function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory) {
-        return _convertLongPendingAction(action);
-    }
-
     function i_assetToTransfer(
         uint128 currentPrice,
         int24 tick,

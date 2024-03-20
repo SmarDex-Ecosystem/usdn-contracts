@@ -10,6 +10,7 @@ import {
     Position,
     PendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 /**
  * @custom:feature The open position function of the USDN Protocol
@@ -91,7 +92,8 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         (PendingAction[] memory pendingActions,) = protocol.getActionablePendingActions(address(0));
         assertEq(pendingActions.length, 0, "no pending action");
 
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action =
+            UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
         assertTrue(action.action == ProtocolAction.ValidateOpenPosition, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
@@ -102,7 +104,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (pendingActions,) = protocol.getActionablePendingActions(address(0));
-        action = protocol.i_toLongPendingAction(pendingActions[0]);
+        action = UsdnProtocolLib.toLongPendingAction(pendingActions[0]);
         assertEq(action.user, address(this), "pending action user");
         vm.stopPrank();
     }

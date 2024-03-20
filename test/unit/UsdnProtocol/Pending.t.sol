@@ -11,6 +11,7 @@ import {
     ProtocolAction,
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 /**
  * @custom:feature The functions handling the pending actions queue
@@ -271,7 +272,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             var5: 9000,
             var6: 23
         });
-        VaultPendingAction memory vaultAction = protocol.i_toVaultPendingAction(action);
+        VaultPendingAction memory vaultAction = UsdnProtocolLib.toVaultPendingAction(action);
         assertTrue(vaultAction.action == action.action, "action action");
         assertEq(vaultAction.timestamp, action.timestamp, "action timestamp");
         assertEq(vaultAction.user, action.user, "action user");
@@ -281,7 +282,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(vaultAction.balanceVault, action.var4, "action balance vault");
         assertEq(vaultAction.balanceLong, action.var5, "action balance long");
         assertEq(vaultAction.usdnTotalSupply, action.var6, "action total supply");
-        PendingAction memory result = protocol.i_convertVaultPendingAction(vaultAction);
+        PendingAction memory result = UsdnProtocolLib.convertVaultPendingAction(vaultAction);
         _assertActionsEqual(action, result, "vault pending action conversion");
     }
 
@@ -304,7 +305,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             var5: 9000,
             var6: 23
         });
-        LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
+        LongPendingAction memory longAction = UsdnProtocolLib.toLongPendingAction(action);
         assertTrue(longAction.action == action.action, "action action");
         assertEq(longAction.timestamp, action.timestamp, "action timestamp");
         assertEq(longAction.user, action.user, "action user");
@@ -315,7 +316,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(longAction.index, action.var4, "action index");
         assertEq(longAction.closeLiqMultiplier, action.var5, "action multiplier");
         assertEq(longAction.closeTempTransfer, action.var6, "action transfer");
-        PendingAction memory result = protocol.i_convertLongPendingAction(longAction);
+        PendingAction memory result = UsdnProtocolLib.convertLongPendingAction(longAction);
         _assertActionsEqual(action, result, "long pending action conversion");
     }
 }

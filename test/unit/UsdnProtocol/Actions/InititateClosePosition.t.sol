@@ -10,6 +10,7 @@ import {
     PreviousActionsData,
     ProtocolAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
@@ -297,7 +298,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
 
         /* ------------------------- Pending action's state ------------------------- */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action =
+            UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
         assertTrue(action.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
         assertEq(action.timestamp, block.timestamp, "The block timestamp should be now");
         assertEq(action.user, address(this), "The user should be the transaction sender");

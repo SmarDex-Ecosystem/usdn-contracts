@@ -19,6 +19,7 @@ import {
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -232,7 +233,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             usdnTotalSupply: _usdn.totalSupply()
         });
 
-        _addPendingAction(user, _convertVaultPendingAction(pendingAction));
+        _addPendingAction(user, UsdnProtocolLib.convertVaultPendingAction(pendingAction));
 
         _asset.safeTransferFrom(user, address(this), amount);
 
@@ -258,7 +259,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         internal
         returns (PriceInfo memory depositPrice_)
     {
-        VaultPendingAction memory deposit = _toVaultPendingAction(pending);
+        VaultPendingAction memory deposit = UsdnProtocolLib.toVaultPendingAction(pending);
 
         depositPrice_ = _getOraclePrice(ProtocolAction.ValidateDeposit, deposit.timestamp, priceData);
 
@@ -338,7 +339,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             usdnTotalSupply: _usdn.totalSupply()
         });
 
-        _addPendingAction(user, _convertVaultPendingAction(pendingAction));
+        _addPendingAction(user, UsdnProtocolLib.convertVaultPendingAction(pendingAction));
 
         // retrieve the USDN tokens, checks that balance is sufficient
         _usdn.safeTransferFrom(user, address(this), usdnAmount);
@@ -362,7 +363,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateWithdrawalWithAction(PendingAction memory pending, bytes calldata priceData) internal {
-        VaultPendingAction memory withdrawal = _toVaultPendingAction(pending);
+        VaultPendingAction memory withdrawal = UsdnProtocolLib.toVaultPendingAction(pending);
 
         PriceInfo memory withdrawalPrice =
             _getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, priceData);
@@ -495,7 +496,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 closeLiqMultiplier: 0,
                 closeTempTransfer: 0
             });
-            _addPendingAction(user, _convertLongPendingAction(pendingAction));
+            _addPendingAction(user, UsdnProtocolLib.convertLongPendingAction(pendingAction));
             emit InitiatedOpenPosition(
                 user, long.timestamp, leverage, long.amount, adjustedPrice, tick_, tickVersion_, index_
             );
@@ -519,7 +520,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateOpenPositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
-        LongPendingAction memory long = _toLongPendingAction(pending);
+        LongPendingAction memory long = UsdnProtocolLib.toLongPendingAction(pending);
 
         uint128 startPrice;
         {
@@ -657,7 +658,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // transfer will be done after validation
             _balanceLong -= tempTransfer;
 
-            _addPendingAction(user, _convertLongPendingAction(pendingAction));
+            _addPendingAction(user, UsdnProtocolLib.convertLongPendingAction(pendingAction));
 
             // Remove the position if it's fully closed
             _removeAmountFromPosition(tick, index, pos, amountToClose, totalExpoToClose);
@@ -684,7 +685,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateClosePositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
-        LongPendingAction memory long = _toLongPendingAction(pending);
+        LongPendingAction memory long = UsdnProtocolLib.toLongPendingAction(pending);
 
         PriceInfo memory price = _getOraclePrice(ProtocolAction.ValidateClosePosition, long.timestamp, priceData);
 
@@ -731,7 +732,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             long.tickVersion,
             long.index,
             assetToTransfer,
-            int256(assetToTransfer) - _toInt256(long.closeAmount)
+            int256(assetToTransfer) - UsdnProtocolLib.toInt256(long.closeAmount)
         );
     }
 

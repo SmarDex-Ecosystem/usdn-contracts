@@ -9,6 +9,7 @@ import { ADMIN } from "test/utils/Constants.sol";
 
 import { PendingAction, ProtocolAction, VaultPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 /**
  * @custom:feature The withdraw function of the USDN Protocol
@@ -182,7 +183,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA);
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        VaultPendingAction memory withdrawal = protocol.i_toVaultPendingAction(pending);
+        VaultPendingAction memory withdrawal = UsdnProtocolLib.toVaultPendingAction(pending);
 
         uint256 vaultBalance = protocol.getBalanceVault(); // save for withdrawn amount calculation in case price
             // decreases

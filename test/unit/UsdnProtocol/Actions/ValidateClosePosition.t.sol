@@ -4,6 +4,9 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
+import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { USER_1 } from "test/utils/Constants.sol";
+
 import {
     LongPendingAction,
     PendingAction,
@@ -11,9 +14,7 @@ import {
     ProtocolAction,
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1 } from "test/utils/Constants.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 /**
  * @custom:feature The initiate close position functions of the USDN Protocol
@@ -170,7 +171,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action =
+            UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, positionAmount, pos.amount).toUint128();
         uint256 liqMultiplier = protocol.getLiquidationMultiplier();
         uint256 expectedAmountReceived =
@@ -211,7 +213,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         /* ------------------------- Validate Close Position ------------------------ */
         Position memory posBefore = protocol.getLongPosition(tick, tickVersion, index);
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action =
+            UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToClose, pos.amount).toUint128();
         uint256 liqMultiplier = protocol.getLiquidationMultiplier();
         uint256 expectedAmountReceived =
@@ -245,7 +248,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             tick, tickVersion, index, pos.amount - amountToClose, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
-        action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        action = UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
         expectedAmountReceived = protocol.i_assetToTransfer(
             price, tick, pos.totalExpo - totalExpoToClose, liqMultiplier, action.closeTempTransfer
         );
@@ -287,7 +290,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action =
+            UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 timestamp = uint128(block.timestamp);
         uint128 priceAfterInit = params.initialPrice - 50 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, timestamp));
@@ -343,7 +347,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action =
+            UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 price = params.initialPrice + 200 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
         uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
@@ -399,7 +404,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         Position memory remainingPos = protocol.getLongPosition(tick, tickVersion, index);
 
         /* ------------------------- Validate Close Position ------------------------ */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action =
+            UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 liquidationPrice = protocol.getEffectivePriceForTick(tick, action.closeLiqMultiplier);
         uint256 vaultBalanceBefore =
             uint256(protocol.vaultAssetAvailableWithFunding(liquidationPrice, uint128(block.timestamp)));

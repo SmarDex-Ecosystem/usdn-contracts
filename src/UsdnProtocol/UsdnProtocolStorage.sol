@@ -11,6 +11,7 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReentrancyGuard {
@@ -23,9 +24,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @inheritdoc IUsdnProtocolStorage
     uint8 public constant LEVERAGE_DECIMALS = 21;
-
-    /// @inheritdoc IUsdnProtocolStorage
-    uint8 public constant FUNDING_RATE_DECIMALS = 18;
 
     /// @inheritdoc IUsdnProtocolStorage
     uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
@@ -172,7 +170,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /* ----------------------------- Long positions ----------------------------- */
 
     /// @notice The exponential moving average of the funding (0.0003 at initialization)
-    int256 internal _EMA = int256(3 * 10 ** (FUNDING_RATE_DECIMALS - 4));
+    int256 internal _EMA = int256(3 * 10 ** (UsdnProtocolLib.FUNDING_RATE_DECIMALS - 4));
 
     /// @notice The balance of long positions (with asset decimals)
     uint256 internal _balanceLong;
@@ -449,28 +447,28 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @inheritdoc IUsdnProtocolStorage
     function getTotalExpoByTick(int24 tick) external view returns (uint256) {
-        bytes32 cachedTickHash = tickHash(tick, _tickVersion[tick]);
+        bytes32 cachedTickHash = UsdnProtocolLib.calcTickHash(tick, _tickVersion[tick]);
         return _totalExpoByTick[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory) {
         uint256 version = _tickVersion[tick];
-        bytes32 cachedTickHash = tickHash(tick, version);
+        bytes32 cachedTickHash = UsdnProtocolLib.calcTickHash(tick, version);
         return _longPositions[cachedTickHash][index];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function getCurrentTotalExpoByTick(int24 tick) external view returns (uint256) {
         uint256 version = _tickVersion[tick];
-        bytes32 cachedTickHash = tickHash(tick, version);
+        bytes32 cachedTickHash = UsdnProtocolLib.calcTickHash(tick, version);
         return _totalExpoByTick[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function getCurrentPositionsInTick(int24 tick) external view returns (uint256) {
         uint256 version = _tickVersion[tick];
-        bytes32 cachedTickHash = tickHash(tick, version);
+        bytes32 cachedTickHash = UsdnProtocolLib.calcTickHash(tick, version);
         return _positionsInTick[cachedTickHash];
     }
 
@@ -482,10 +480,5 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getTotalLongPositions() external view returns (uint256) {
         return _totalLongPositions;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(tick, version));
     }
 }

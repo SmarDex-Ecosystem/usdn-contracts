@@ -23,9 +23,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The number of decimals for leverage values
     function LEVERAGE_DECIMALS() external pure returns (uint8);
 
-    /// @notice The number of decimals for funding rate values
-    function FUNDING_RATE_DECIMALS() external pure returns (uint8);
-
     /// @notice The number of decimals for liquidation multiplier values
     function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8);
 
@@ -212,11 +209,4 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice Total long positions count
     function getTotalLongPositions() external view returns (uint256);
-
-    /**
-     * @notice The tickHash from tick and tickVersion
-     * @param tick The tick number.
-     * @param version The tick version.
-     */
-    function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
 }

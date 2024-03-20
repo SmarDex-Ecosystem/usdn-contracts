@@ -14,6 +14,7 @@ import {
     VaultPendingAction,
     LongPendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
@@ -41,10 +42,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
         }
-        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        int256 ema = UsdnProtocolLib.calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
         (int256 fund,) = _funding(timestamp, ema);
         // starting here, timestamp is strictly greater than _lastUpdateTimestamp
-        return _getLiquidationMultiplier(fund, _liquidationMultiplier);
+        return UsdnProtocolLib.calcLiquidationMultiplier(fund, _liquidationMultiplier);
     }
 
     /// @inheritdoc IUsdnProtocolCore
@@ -62,13 +63,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             revert UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        int256 ema = UsdnProtocolLib.calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
         (int256 fundAsset,) = _fundingAsset(timestamp, ema);
 
         if (fundAsset > 0) {
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
-            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
+            int256 fee = fundAsset * UsdnProtocolLib.toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
             // fee have the same sign as fundAsset (negative here), so we need to sub them
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
         }
@@ -84,13 +85,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             revert UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        int256 ema = UsdnProtocolLib.calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
         (int256 fundAsset,) = _fundingAsset(timestamp, ema);
 
         if (fundAsset < 0) {
             available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
         } else {
-            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
+            int256 fee = fundAsset * UsdnProtocolLib.toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
             available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset - fee);
         }
     }
@@ -169,19 +170,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         (action_,) = _getPendingAction(user);
     }
 
-    /// @inheritdoc IUsdnProtocolCore
-    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        public
-        pure
-        returns (int256)
-    {
-        if (secondsElapsed >= emaPeriod) {
-            return lastFunding;
-        }
-
-        return (lastFunding + previousEMA * _toInt256(emaPeriod - secondsElapsed)) / _toInt256(emaPeriod);
-    }
-
     /* --------------------------  Internal functions --------------------------- */
 
     function _funding(uint128 timestamp, int256 ema) internal view returns (int256 fund_, int256 oldLongExpo_) {
@@ -211,11 +199,17 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (oldLongExpo_ <= 0) {
             // if oldLongExpo is negative, then we cap the imbalance index to -1
             // oldVaultExpo is always positive
-            return (-int256(_fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
+            return (
+                -int256(_fundingSF * 10 ** (UsdnProtocolLib.FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema,
+                oldLongExpo_
+            );
         } else if (oldVaultExpo == 0) {
             // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
             // oldLongExpo must be positive in this case
-            return (int256(_fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
+            return (
+                int256(_fundingSF * 10 ** (UsdnProtocolLib.FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema,
+                oldLongExpo_
+            );
         }
 
         // starting here, oldLongExpo and oldVaultExpo are always strictly positive
@@ -230,7 +224,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
+                    _fundingSF * 10 ** (UsdnProtocolLib.FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
@@ -240,7 +234,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
+                    _fundingSF * 10 ** (UsdnProtocolLib.FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
@@ -259,22 +253,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     function _fundingAsset(uint128 timestamp, int256 ema) internal view returns (int256 fundingAsset_, int256 fund_) {
         int256 oldLongExpo;
         (fund_, oldLongExpo) = _funding(timestamp, ema);
-        fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** FUNDING_RATE_DECIMALS;
-    }
-
-    function _getLiquidationMultiplier(int256 fund, uint256 liquidationMultiplier)
-        internal
-        pure
-        returns (uint256 multiplier_)
-    {
-        multiplier_ = liquidationMultiplier;
-
-        // newMultiplier = oldMultiplier * (1 + funding)
-        if (fund > 0) {
-            multiplier_ += FixedPointMathLib.fullMulDiv(multiplier_, uint256(fund), 10 ** FUNDING_RATE_DECIMALS);
-        } else {
-            multiplier_ -= FixedPointMathLib.fullMulDiv(multiplier_, uint256(-fund), 10 ** FUNDING_RATE_DECIMALS);
-        }
+        fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** UsdnProtocolLib.FUNDING_RATE_DECIMALS;
     }
 
     /**
@@ -285,25 +264,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param oldPrice The old price
      */
     function _pnlLong(uint256 totalExpo, uint128 newPrice, uint128 oldPrice) internal view returns (int256 pnl_) {
-        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
+        int256 priceDiff = UsdnProtocolLib.toInt256(newPrice) - UsdnProtocolLib.toInt256(oldPrice);
         pnl_ = totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
-    }
-
-    /**
-     * @notice Calculate the PnL in asset units of the long side, considering the overall total expo and change in
-     * price.
-     * @param totalExpo The total exposure of the long side
-     * @param balanceLong The (old) balance of the long side
-     * @param newPrice The new price
-     * @param oldPrice The old price when the old balance was updated
-     */
-    function _pnlAsset(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        internal
-        pure
-        returns (int256 pnl_)
-    {
-        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
-        pnl_ = totalExpo.toInt256().safeSub(balanceLong.toInt256()).safeMul(priceDiff).safeDiv(_toInt256(newPrice));
     }
 
     /**
@@ -334,7 +296,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             return 0;
         }
 
-        available_ = balanceLong.toInt256().safeAdd(_pnlAsset(totalExpo, balanceLong, newPrice, oldPrice));
+        available_ =
+            balanceLong.toInt256().safeAdd(UsdnProtocolLib.calcPnlAsset(totalExpo, balanceLong, newPrice, oldPrice));
     }
 
     /**
@@ -430,7 +393,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fundWithFee;
-        _liquidationMultiplier = _getLiquidationMultiplier(fundWithFee, _liquidationMultiplier);
+        _liquidationMultiplier = UsdnProtocolLib.calcLiquidationMultiplier(fundWithFee, _liquidationMultiplier);
 
         priceUpdated_ = true;
     }
@@ -444,16 +407,18 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * funding value
      */
     function _updateEMA(uint128 secondsElapsed) internal returns (int256) {
-        return _EMA = calcEMA(_lastFunding, secondsElapsed, _EMAPeriod, _EMA);
+        return _EMA = UsdnProtocolLib.calcEMA(_lastFunding, secondsElapsed, _EMAPeriod, _EMA);
     }
 
-    function _toInt256(uint128 x) internal pure returns (int256) {
-        return int256(uint256(x));
-    }
-
+    /**
+     * @notice Retrieve the current tick version for a tick and calculate the corresponding tick hash
+     * @param tick The tick number
+     * @return hash_ The tick hash
+     * @return version_ The tick version
+     */
     function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = _tickVersion[tick];
-        hash_ = tickHash(tick, version_);
+        hash_ = UsdnProtocolLib.calcTickHash(tick, version_);
     }
 
     /**
@@ -469,7 +434,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         internal
         returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
     {
-        int256 protocolFeeBps = _toInt256(_protocolFeeBps);
+        int256 protocolFeeBps = UsdnProtocolLib.toInt256(_protocolFeeBps);
         fundWithFee_ = fund;
         fee_ = (fundAsset * protocolFeeBps) / int256(BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
@@ -487,66 +452,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /* -------------------------- Pending actions queue ------------------------- */
-
-    /**
-     * @notice Convert a `PendingAction` to a `VaultPendingAction`
-     * @param action An untyped pending action
-     * @return vaultAction_ The converted vault pending action
-     */
-    function _toVaultPendingAction(PendingAction memory action)
-        internal
-        pure
-        returns (VaultPendingAction memory vaultAction_)
-    {
-        assembly {
-            vaultAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `PendingAction` to a `LongPendingAction`
-     * @param action An untyped pending action
-     * @return longAction_ The converted long pending action
-     */
-    function _toLongPendingAction(PendingAction memory action)
-        internal
-        pure
-        returns (LongPendingAction memory longAction_)
-    {
-        assembly {
-            longAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `VaultPendingAction` to a `PendingAction`
-     * @param action A vault pending action
-     * @return pendingAction_ The converted untyped pending action
-     */
-    function _convertVaultPendingAction(VaultPendingAction memory action)
-        internal
-        pure
-        returns (PendingAction memory pendingAction_)
-    {
-        assembly {
-            pendingAction_ := action
-        }
-    }
-
-    /**
-     * @notice Convert a `LongPendingAction` to a `PendingAction`
-     * @param action A long pending action
-     * @return pendingAction_ The converted untyped pending action
-     */
-    function _convertLongPendingAction(LongPendingAction memory action)
-        internal
-        pure
-        returns (PendingAction memory pendingAction_)
-    {
-        assembly {
-            pendingAction_ := action
-        }
-    }
 
     /**
      * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
@@ -603,7 +508,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // the position is only at risk of being liquidated while pending if it is an open position action
         // slither-disable-next-line incorrect-equality
         if (action.action == ProtocolAction.ValidateOpenPosition) {
-            LongPendingAction memory openAction = _toLongPendingAction(action);
+            LongPendingAction memory openAction = UsdnProtocolLib.toLongPendingAction(action);
             (, uint256 version) = _tickHash(openAction.tick);
             if (version != openAction.tickVersion) {
                 // the position was liquidated while pending

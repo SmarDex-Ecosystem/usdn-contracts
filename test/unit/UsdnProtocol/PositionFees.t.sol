@@ -12,6 +12,7 @@ import {
     LongPendingAction,
     ProtocolAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 /**
  * @custom:feature The entry/exit position fees mechanism of the protocol
@@ -137,7 +138,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA);
 
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action =
+            UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
         uint256 expectedTempTransfer = protocol.i_assetToTransfer(
             uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
@@ -177,7 +179,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA);
 
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action =
+            UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
         uint256 expectedTransfer = protocol.i_assetToTransfer(
             uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
@@ -214,7 +217,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
 
-        VaultPendingAction memory action = protocol.i_toVaultPendingAction(protocol.getUserPendingAction(address(this)));
+        VaultPendingAction memory action =
+            UsdnProtocolLib.toVaultPendingAction(protocol.getUserPendingAction(address(this)));
 
         uint256 priceWithoutFees =
             2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
@@ -245,7 +249,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         _waitDelay();
 
         PendingAction memory action = protocol.getUserPendingAction(address(this));
-        VaultPendingAction memory deposit = protocol.i_toVaultPendingAction(action);
+        VaultPendingAction memory deposit = UsdnProtocolLib.toVaultPendingAction(action);
 
         // Check stored position asset price
         uint256 expectedBalanceB = protocol.i_calcMintUsdn(
@@ -300,7 +304,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.initiateWithdrawal(uint128(mintedUsdn), currentPrice, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         PendingAction memory action = protocol.getUserPendingAction(address(this));
-        VaultPendingAction memory withdraw = protocol.i_toVaultPendingAction(action);
+        VaultPendingAction memory withdraw = UsdnProtocolLib.toVaultPendingAction(action);
 
         // Check stored position asset price
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
@@ -515,7 +519,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA);
 
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action =
+            UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
         _waitDelay();
 
@@ -542,7 +547,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA);
 
-        action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        action = UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
         _waitDelay();
 
