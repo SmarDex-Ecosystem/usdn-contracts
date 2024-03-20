@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { Script } from "forge-std/Script.sol";
 
 import { WstETH } from "test/utils/WstEth.sol";
+import { SmardexToken } from "test/utils/Sdex.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
@@ -19,6 +20,7 @@ contract Deploy is Script {
         external
         returns (
             WstETH WstETH_,
+            SmardexToken Sdex_,
             WstEthOracleMiddleware WstEthOracleMiddleware_,
             LiquidationRewardsManager LiquidationRewardsManager_,
             Usdn Usdn_,
@@ -42,6 +44,15 @@ contract Deploy is Script {
         } else {
             WstETH_ = new WstETH();
             wstETHAddress = payable(address(WstETH_));
+        }
+
+        // Deploy SDEX if needed
+        address sdexAddress = payable(vm.envOr("SDEX_ADDRESS", address(0)));
+        if (sdexAddress != address(0)) {
+            Sdex_ = SmardexToken(sdexAddress);
+        } else {
+            Sdex_ = new SmardexToken();
+            sdexAddress = address(Sdex_);
         }
 
         // Deploy oracle middleware if needed
