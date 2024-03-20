@@ -46,7 +46,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _initiateDeposit(msg.sender, amount, currentPriceData);
         uint256 amountToRefund = _executePendingAction(previousActionsData);
-        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore - address(this).balance);
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
         _checkPendingFee();
     }
 
@@ -60,7 +60,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 amountToRefund = _validateDeposit(msg.sender, depositPriceData);
         amountToRefund += _executePendingAction(previousActionsData);
-        _refundExcessEther(0, amountToRefund, balanceBefore - address(this).balance);
+        _refundExcessEther(0, amountToRefund, balanceBefore);
         _checkPendingFee();
     }
 
@@ -79,7 +79,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _initiateWithdrawal(msg.sender, usdnAmount, currentPriceData);
         uint256 amountToRefund = _executePendingAction(previousActionsData);
-        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore - address(this).balance);
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
         _checkPendingFee();
     }
 
@@ -93,7 +93,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 amountToRefund = _validateWithdrawal(msg.sender, withdrawalPriceData);
         amountToRefund += _executePendingAction(previousActionsData);
-        _refundExcessEther(0, amountToRefund, balanceBefore - address(this).balance);
+        _refundExcessEther(0, amountToRefund, balanceBefore);
         _checkPendingFee();
     }
 
@@ -113,7 +113,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         (tick_, tickVersion_, index_) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
         uint256 amountToRefund = _executePendingAction(previousActionsData);
-        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore - address(this).balance);
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
         _checkPendingFee();
     }
 
@@ -127,7 +127,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 amountToRefund = _validateOpenPosition(msg.sender, openPriceData);
         amountToRefund += _executePendingAction(previousActionsData);
-        _refundExcessEther(0, amountToRefund, balanceBefore - address(this).balance);
+        _refundExcessEther(0, amountToRefund, balanceBefore);
         _checkPendingFee();
     }
 
@@ -149,7 +149,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _initiateClosePosition(msg.sender, tick, tickVersion, index, amountToClose, currentPriceData);
         uint256 amountToRefund = _executePendingAction(previousActionsData);
-        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore - address(this).balance);
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
         _checkPendingFee();
     }
 
@@ -163,7 +163,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 amountToRefund = _validateClosePosition(msg.sender, closePriceData);
         amountToRefund += _executePendingAction(previousActionsData);
-        _refundExcessEther(0, amountToRefund, balanceBefore - address(this).balance);
+        _refundExcessEther(0, amountToRefund, balanceBefore);
         _checkPendingFee();
     }
 
@@ -898,18 +898,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /// @notice Refund any excess ether to the user, making sure we don't lock ETH in the contract.
-    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 validationCost)
-        internal
-    {
-        int256 amount = int256(amountToRefund) - int256(validationCost);
-        if (securityDepositValue == 0 && amountToRefund == 0) {
-            amount = int256(validationCost);
-        } else if (securityDepositValue > 0) {
+    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) internal {
+        int256 amount = int256(amountToRefund) - int256(balanceBefore - address(this).balance);
+
+        if (securityDepositValue > 0) {
             amount += int256(msg.value) - int256(securityDepositValue);
         }
-
         console2.log("amountToRefund", amountToRefund);
-        // console2.log("balanceBefore", balanceBefore);
+        console2.log("balanceBefore", balanceBefore);
         console2.log("address(this).balance", address(this).balance);
         console2.log("msg.value", msg.value);
         console2.log("securityDepositValue", securityDepositValue);
