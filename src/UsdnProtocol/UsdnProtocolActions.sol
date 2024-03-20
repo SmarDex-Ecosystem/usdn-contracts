@@ -153,8 +153,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             maxValidations = previousActionsData.rawIndices.length;
         }
         do {
-            (bool success, bool executed) = _executePendingAction(previousActionsData);
-            if (!success || !executed) {
+            (, bool executed) = _executePendingAction(previousActionsData);
+            if (!executed) {
                 break;
             }
             unchecked {
