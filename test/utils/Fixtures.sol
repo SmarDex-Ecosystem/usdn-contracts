@@ -92,7 +92,7 @@ contract BaseFixture is Test {
      * @notice Call the test_utils rust command via vm.ffi
      * @dev You need to use `cargo build --release` in the `test_utils` directory before executing your test
      * @param commandName The name of the command to call
-     * @param parameter The name of the parameter for the command
+     * @param parameter The parameter for the command
      */
     function vmFFIRustCommand(string memory commandName, string memory parameter) internal returns (bytes memory) {
         return vmFFIRustCommand(commandName, parameter, "", "");
@@ -102,8 +102,8 @@ contract BaseFixture is Test {
      * @notice Call the test_utils rust command via vm.ffi
      * @dev You need to use `cargo build --release` in the `test_utils` directory before executing your test
      * @param commandName The name of the command to call
-     * @param parameter1 The name of the first parameter for the command
-     * @param parameter2 The name of the second parameter for the command
+     * @param parameter1 The first parameter for the command
+     * @param parameter2 The second parameter for the command
      */
     function vmFFIRustCommand(string memory commandName, string memory parameter1, string memory parameter2)
         internal
@@ -116,9 +116,9 @@ contract BaseFixture is Test {
      * @notice Call the test_utils rust command via vm.ffi
      * @dev You need to use `cargo build --release` in the `test_utils` directory before executing your test
      * @param commandName The name of the command to call
-     * @param parameter1 The name of the first parameter for the command
-     * @param parameter2 The name of the second parameter for the command
-     * @param parameter3 The name of the third parameter for the command
+     * @param parameter1 The first parameter for the command
+     * @param parameter2 The second parameter for the command
+     * @param parameter3 The third parameter for the command
      */
     function vmFFIRustCommand(
         string memory commandName,

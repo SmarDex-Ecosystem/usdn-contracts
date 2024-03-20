@@ -3,9 +3,9 @@ pragma solidity 0.8.20;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
-
 import { BaseFixture } from "test/utils/Fixtures.sol";
+
+import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
  * @custom:feature Solady math library fuzzing (diff testing)
