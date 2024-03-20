@@ -59,11 +59,11 @@ contract UsdnHandler is Usdn, Test {
     }
 
     function mintTest(uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
-        if (totalSupply() >= maxTokens() - 1) {
+        if (totalSupply() >= maxTokens() / 10) {
             return;
         }
         console2.log("bound mint value");
-        value = bound(value, 1, maxTokens() - totalSupply() - 1);
+        value = bound(value, 1, maxTokens() / 10 - totalSupply());
         uint256 valueShares = value * _divisor;
         totalSharesSum += valueShares;
         shares[_currentActor] += valueShares;

@@ -56,6 +56,7 @@ contract WusdnHandler is Wusdn, Test {
         external
         useActor(actorIndexSeed)
     {
+        console2.log("bound withdraw");
         if (balanceOf(_currentActor) == 0) {
             return;
         }

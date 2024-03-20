@@ -51,6 +51,12 @@ contract Wusdn is ERC4626, ERC20Permit {
         if (caller != owner) {
             _spendAllowance(owner, caller, shares);
         }
+        if (shares > _asset.sharesOf(address(this))) {
+            shares = _asset.sharesOf(address(this));
+        }
+        if (shares > balanceOf(owner)) {
+            shares = balanceOf(owner);
+        }
         _burn(owner, shares);
         _asset.safeTransfer(receiver, assets);
 

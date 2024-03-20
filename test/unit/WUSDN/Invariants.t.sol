@@ -40,4 +40,11 @@ contract TestWusdnInvariants is WusdnTokenFixture {
             wusdn.balanceOf(USER_1) + wusdn.balanceOf(USER_2) + wusdn.balanceOf(USER_3) + wusdn.balanceOf(USER_4);
         assertEq(wusdn.totalSupply(), sum, "total shares");
     }
+
+    /**
+     * @custom:scenario Check that the sum of the user shares is equal to the total shares
+     */
+    function invariant_usdnShareBalanceOfWusdn() public {
+        assertEq(usdn.convertToTokens(wusdn.totalSupply()), usdn.sharesOf(address(wusdn)), "total shares");
+    }
 }
