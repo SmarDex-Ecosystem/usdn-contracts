@@ -85,6 +85,12 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setPositionFeeBps(uint16 newPositionFee) external;
 
     /**
+     * @notice Update the ratio of USDN to SDEX tokens to burn on deposit.
+     * @param newBps The new ratio (in basis points).
+     */
+    function setBurnOnDepositBps(uint16 newBps) external;
+
+    /**
      * @notice Set the minimum amount of fees to be collected before they can be withdrawn
      * @param newFeeThreshold The minimum amount of fees to be collected before they can be withdrawn
      */

@@ -60,6 +60,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided position fee exceeds the maximum allowed
     error UsdnProtocolInvalidPositionFee();
 
+    /// @dev Indicates that the provided basis points exceeds the maximum allowed
+    error UsdnProtocolInvalidBurnSdexOnDepositBps();
+
     /// @dev Indicates that the new middleware address value is invalid.
     error UsdnProtocolInvalidMiddlewareAddress();
 

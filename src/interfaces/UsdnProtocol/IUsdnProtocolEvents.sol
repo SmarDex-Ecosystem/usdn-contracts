@@ -182,6 +182,12 @@ interface IUsdnProtocolEvents {
     event PositionFeeUpdated(uint256 positionFee);
 
     /**
+     * @notice Emitted when the ratio of USDN to SDEX tokens to burn on deposit is updated.
+     * @param newBps The new ratio (in basis points).
+     */
+    event BurnSdexOnDepositBpsUpdated(uint256 newBps);
+
+    /**
      * @notice Emitted when the oracle middleware is updated.
      * @param newMiddleware The new oracle middleware address.
      */

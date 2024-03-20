@@ -110,6 +110,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The position fee in bps
     function getPositionFeeBps() external view returns (uint16);
 
+    /// @notice The ratio of USDN to SDEX tokens to burn on deposit
+    function getSdexBurnOnDepositBps() external view returns (uint16);
+
     /// @notice The fee threshold before fees are sent to the fee collector
     function getFeeThreshold() external view returns (uint256);
 

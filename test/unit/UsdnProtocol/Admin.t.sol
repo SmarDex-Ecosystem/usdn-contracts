@@ -59,6 +59,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setProtocolFeeBps(0);
 
         vm.expectRevert(customError);
+        protocol.setBurnOnDepositBps(0);
+
+        vm.expectRevert(customError);
         protocol.setFeeCollector(address(this));
 
         vm.expectRevert(customError);
@@ -422,6 +425,36 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setProtocolFeeBps(expectedNewValue);
         // check new value is equal than expected
         assertEq(protocol.getProtocolFeeBps(), expectedNewValue);
+    }
+
+    /**
+     * @custom:scenario The contract owner calls "setBurnOnDepositBps".
+     * @custom:given The initial usdnProtocol state.
+     * @custom:when Owner calls setBurnOnDepositBps with a value higher than the limit.
+     * @custom:then The call reverts.
+     */
+    function test_RevertWhen_setBurnOnDepositBpsWithMax() external adminPrank {
+        uint16 aboveMax = uint16(protocol.BPS_DIVISOR()) + 1;
+
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidBurnSdexOnDepositBps.selector);
+        protocol.setBurnOnDepositBps(aboveMax);
+    }
+
+    /**
+     * @custom:scenario The contract owner calls "setBurnOnDepositBps".
+     * @custom:given The initial usdnProtocol state.
+     * @custom:when Owner calls setBurnOnDepositBps.
+     * @custom:then The value should be updated
+     * @custom:and a BurnSdexOnDepositBpsUpdated event should be emitted.
+     */
+    function test_setBurnOnDepositBps() external adminPrank {
+        uint16 expectedNewValue = 500;
+
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.BurnSdexOnDepositBpsUpdated(expectedNewValue);
+        protocol.setBurnOnDepositBps(expectedNewValue);
+
+        assertEq(protocol.getSdexBurnOnDepositBps(), expectedNewValue, "The value should have been updated");
     }
 
     /**
