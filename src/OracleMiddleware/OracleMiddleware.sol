@@ -184,6 +184,10 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         // check if the cached pyth price is more recent and return it instead
         FormattedPythPrice memory latestPythPrice = _getLatestStoredPythPrice(MIDDLEWARE_DECIMALS);
         if (chainlinkOnChainPrice.timestamp <= latestPythPrice.publishTime) {
+            // We use the same price age limit as for chainlink here
+            if (latestPythPrice.publishTime < block.timestamp - _timeElapsedLimit) {
+                revert OracleMiddlewarePriceTooOld(latestPythPrice.publishTime);
+            }
             return _adjustPythPrice(latestPythPrice, dir);
         }
 
