@@ -634,19 +634,40 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Get the pending action for a user
+     * @dev To check for the presence of a pending action, compare `action_.action` to `ProtocolAction.None`. There is
+     * a pending action only if the action is different from `ProtocolAction.None`.
      * @param user The user address
-     * @return action_ The pending action struct
+     * @return action_ The pending action struct if any, otherwise a zero-initialized struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
     function _getPendingAction(address user) internal view returns (PendingAction memory action_, uint128 rawIndex_) {
         uint256 pendingActionIndex = _pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
-            revert UsdnProtocolNoPendingAction();
+            // no pending action
+            return (action_, rawIndex_);
         }
 
         rawIndex_ = uint128(pendingActionIndex - 1);
         action_ = _pendingActionsQueue.atRaw(rawIndex_);
+    }
+
+    /**
+     * @notice Get the pending action for a user
+     * @dev This function reverts if there is no pending action for the user
+     * @param user The user address
+     * @return action_ The pending action struct
+     * @return rawIndex_ The raw index of the pending action in the queue
+     */
+    function _getPendingActionOrRevert(address user)
+        internal
+        view
+        returns (PendingAction memory action_, uint128 rawIndex_)
+    {
+        (action_, rawIndex_) = _getPendingAction(user);
+        if (action_.action == ProtocolAction.None) {
+            revert UsdnProtocolNoPendingAction();
+        }
     }
 
     /**
@@ -656,7 +677,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      */
     function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
         uint128 rawIndex;
-        (action_, rawIndex) = _getPendingAction(user);
+        (action_, rawIndex) = _getPendingActionOrRevert(user);
         _pendingActionsQueue.clearAt(rawIndex);
         delete _pendingActions[user];
     }
