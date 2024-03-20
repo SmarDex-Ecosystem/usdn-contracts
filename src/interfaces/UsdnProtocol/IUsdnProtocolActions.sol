@@ -185,6 +185,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param previousActionsData The data needed to validate actionable pending actions.
      * @param maxValidations The maximum number of actionable pending actions to validate. Even if zero, at least one
      * validation will be performed.
+     * @return validatedActions_ The number of validated actionable pending actions.
      */
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
         external
