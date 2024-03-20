@@ -28,9 +28,8 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         _addDummyPendingAction();
 
         // construct bad previous actions data
-        bytes[] memory priceData = new bytes[](2);
-        uint128[] memory rawIndices = new uint128[](1);
-        PreviousActionsData memory data = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
+        PreviousActionsData memory data =
+            PreviousActionsData({ priceData: new bytes[](2), rawIndices: new uint128[](1) });
 
         vm.expectRevert(UsdnProtocolInvalidPendingActionData.selector);
         protocol.i_executePendingActionOrRevert(data);

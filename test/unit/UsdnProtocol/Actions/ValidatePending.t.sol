@@ -11,8 +11,6 @@ import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfac
  * @custom:given A protocol with all fees, rebase and funding disabled
  */
 contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
-    uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
-
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.enableProtocolFees = false;
@@ -85,7 +83,7 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
      * @custom:then The first three actions are validated and the returned count is 3
      * @custom:and the validated pending actions are removed but one is remaining
      */
-    function test_validateActionablePendingActionsBadData() public {
+    function test_validateActionablePendingActionsBadIndex() public {
         PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
         previousActionsData.rawIndices[3] = 42; // simulate bad data for last pending action
 
@@ -103,7 +101,7 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
      * @custom:when The actions are validated manually with bad calldata (there is a mismatch in the price data length)
      * @custom:then No pending action is validated and the returned count is 0
      */
-    function test_validateActionablePendingActionsBadData2() public {
+    function test_validateActionablePendingActionsBadDataLength() public {
         PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
         previousActionsData.priceData = new bytes[](2); // simulate bad data
         previousActionsData.priceData[0] = abi.encode(params.initialPrice);
