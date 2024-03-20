@@ -47,7 +47,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
-                getMockedPythSignature();
+                getMockedPythSignatureStETH();
 
             // middleware data
             PriceInfo memory middlewarePrice;

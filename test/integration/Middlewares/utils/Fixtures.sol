@@ -14,11 +14,7 @@ import {
     WSTETH
 } from "test/utils/Constants.sol";
 import {
-    PYTH_DATA_PRICE,
-    PYTH_DATA_CONF,
-    PYTH_DATA_DECIMALS,
     PYTH_DATA_TIMESTAMP,
-    PYTH_DATA,
     PYTH_DATA_STETH_PRICE,
     PYTH_DATA_STETH_CONF,
     PYTH_DATA_STETH_DECIMALS,
@@ -119,12 +115,14 @@ contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture,
         oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), 1 hours);
     }
 
-    function getMockedPythSignature()
+    function getMockedPythSignatureStETH()
         internal
         pure
         returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
     {
-        return (PYTH_DATA_PRICE, PYTH_DATA_CONF, PYTH_DATA_DECIMALS, PYTH_DATA_TIMESTAMP, PYTH_DATA);
+        return (
+            PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_STETH_DECIMALS, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH
+        );
     }
 }
 
@@ -149,7 +147,7 @@ contract WstethIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegr
             new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH, 1 hours);
     }
 
-    function getMockedPythSignature()
+    function getMockedPythSignatureStETH()
         internal
         pure
         returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)

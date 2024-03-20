@@ -45,7 +45,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // pyth data
             (uint256 pythPrice, uint256 pythConf, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
-                getMockedPythSignature();
+                getMockedPythSignatureStETH();
             // Apply conf ratio to pyth confidence
             pythConf = (
                 pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatio()

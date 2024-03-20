@@ -131,14 +131,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         return abi.decode(result, (uint256, uint256, uint256, uint256, bytes));
     }
 
-    function getMockedPythSignature()
-        internal
-        pure
-        returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
-    {
-        return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, 8, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
-    }
-
     function _waitDelay() internal {
         skip(oracleMiddleware.getValidationDelay() + 1);
     }
