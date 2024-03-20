@@ -9,7 +9,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  * @custom:feature Fuzzing tests of the protocol expo limit for internal `imbalanceLimitOpen`
  * @custom:background Given a protocol instance in balanced state with random vault expo and long expo
  */
-contract FuzzingImbalanceLimitOpen is UsdnProtocolBaseFixture {
+contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The `imbalanceLimitOpen` should pass on still balanced state
      * or revert when amounts bring protocol out of limits
