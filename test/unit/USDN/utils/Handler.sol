@@ -54,6 +54,7 @@ contract UsdnHandler is Usdn, Test {
         }
         console2.log("bound divisor");
         newDivisor = bound(newDivisor, MIN_DIVISOR, _divisor - 1);
+        console2.log(newDivisor);
         emit Rebase(_divisor, newDivisor);
         _divisor = newDivisor;
     }

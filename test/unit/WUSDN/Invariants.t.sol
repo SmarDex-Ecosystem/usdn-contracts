@@ -32,24 +32,28 @@ contract TestWusdnInvariants is WusdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Check that the contract returns the expected total supply
+     * @custom:scenario Check that the contract returns the expected number of total shares
      */
     function invariant_supply_wusdn() public {
-        uint256 a = wusdn.totalSupply();
-        uint256 b = usdn.balanceOf(address(wusdn));
-        uint256 c = b * 10 ** usdn.decimals();
-        console2.log("total supply1", a);
-        console2.log("total supply2", b);
-        console2.log("total supply3", c);
-        // assertEq(a, b, "total supply1");
-        // assertEq(c, b, "total supply2");
-        assertEq(a, c, "total supply3");
+        assertEq(wusdn.totalSharesSum(), wusdn.totalSupply(), "total shares");
     }
 
     /**
-     * @custom:scenario Check that the contract returns the expected total assets
+     * @custom:scenario Check that the sum of the user shares is equal to the total shares
      */
-    function invariant_total_assets_wusdn() public {
-        assertEq(wusdn.totalAssets(), wusdn.convertToAssets(usdn.sharesOf(address(wusdn))), "total assets");
+    function invariant_sumOfSharesBalancesTotalSupply() public {
+        uint256 sum =
+            wusdn.balanceOf(USER_1) + wusdn.balanceOf(USER_2) + wusdn.balanceOf(USER_3) + wusdn.balanceOf(USER_4);
+        uint256 sumExpected = wusdn.shares(USER_1) + wusdn.shares(USER_2) + wusdn.shares(USER_3) + wusdn.shares(USER_4);
+        assertEq(sumExpected, sum, "total shares Expected");
+        assertEq(wusdn.totalSupply(), sum, "total shares");
+    }
+
+    /**
+     * @custom:scenario Check that the sum of the user shares, when converted to usdn, is equal to the total assets
+     */
+    function invariant_TotalAsset() public {
+        uint256 sum = wusdn.shares(USER_1) + wusdn.shares(USER_2) + wusdn.shares(USER_3) + wusdn.shares(USER_4);
+        assertEq(wusdn.totalAssets(), usdn.convertToTokens(sum), "total assets");
     }
 }
