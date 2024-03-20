@@ -598,7 +598,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (_pendingActions[user] == 0) {
             return;
         }
-        (PendingAction memory action, uint128 rawIndex) = _getPendingActionOrRevert(user);
+        (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user);
         // the position is only at risk of being liquidated while pending if it is an open position action
         // slither-disable-next-line incorrect-equality
         if (action.action == ProtocolAction.ValidateOpenPosition) {
