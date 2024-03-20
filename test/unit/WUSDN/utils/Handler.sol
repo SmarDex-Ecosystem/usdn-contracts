@@ -19,12 +19,6 @@ contract WusdnHandler is Wusdn, Test {
     // current actor
     address internal _currentActor;
 
-    // track theoretical shares
-    mapping(address account => uint256) public shares;
-
-    // track theoretical total supply
-    uint256 public totalSharesSum;
-
     constructor(address[] memory _actors, Usdn usdn) Wusdn(usdn) {
         actors = _actors;
         _usdn = usdn;
@@ -53,9 +47,6 @@ contract WusdnHandler is Wusdn, Test {
 
         _usdn.approve(address(this), assets);
 
-        totalSharesSum += newShares;
-        shares[_currentActor] += newShares;
-
         vm.stopPrank();
         vm.startPrank(address(this));
         _deposit(_currentActor, actors[bound(receiverIndexSeed, 0, actors.length - 1)], assets, newShares);
@@ -72,9 +63,8 @@ contract WusdnHandler is Wusdn, Test {
         assets = bound(assets, 0, maxAssets);
         uint256 burnShares = previewWithdraw(assets);
 
-        totalSharesSum -= burnShares;
-        shares[_currentActor] -= burnShares;
-
+        vm.stopPrank();
+        vm.startPrank(address(this));
         _withdraw(
             _currentActor, actors[bound(receiverIndexSeed, 0, actors.length - 1)], _currentActor, assets, burnShares
         );

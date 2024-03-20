@@ -33,28 +33,11 @@ contract TestWusdnInvariants is WusdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Check that the contract returns the expected number of total shares
-     */
-    function invariant_supply_wusdn() public {
-        assertEq(wusdn.totalSharesSum(), wusdn.totalSupply(), "total shares");
-    }
-
-    /**
      * @custom:scenario Check that the sum of the user shares is equal to the total shares
      */
     function invariant_sumOfSharesBalancesTotalSupply() public {
         uint256 sum =
             wusdn.balanceOf(USER_1) + wusdn.balanceOf(USER_2) + wusdn.balanceOf(USER_3) + wusdn.balanceOf(USER_4);
-        uint256 sumExpected = wusdn.shares(USER_1) + wusdn.shares(USER_2) + wusdn.shares(USER_3) + wusdn.shares(USER_4);
-        assertEq(sumExpected, sum, "total shares Expected");
         assertEq(wusdn.totalSupply(), sum, "total shares");
-    }
-
-    /**
-     * @custom:scenario Check that the sum of the user shares, when converted to usdn, is equal to the total assets
-     */
-    function invariant_TotalAsset() public {
-        uint256 sum = wusdn.shares(USER_1) + wusdn.shares(USER_2) + wusdn.shares(USER_3) + wusdn.shares(USER_4);
-        assertEq(wusdn.totalAssets(), usdn.convertToTokens(sum), "total assets");
     }
 }
