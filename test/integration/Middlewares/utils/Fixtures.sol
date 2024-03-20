@@ -5,14 +5,7 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import { BaseFixture } from "test/utils/Fixtures.sol";
-import {
-    PYTH_ORACLE,
-    CHAINLINK_ORACLE,
-    PYTH_WSTETH_USD,
-    CHAINLINK_ORACLE_STETH,
-    PYTH_STETH_USD,
-    WSTETH
-} from "test/utils/Constants.sol";
+import { PYTH_ORACLE, CHAINLINK_ORACLE, CHAINLINK_ORACLE_STETH, PYTH_STETH_USD, WSTETH } from "test/utils/Constants.sol";
 import {
     PYTH_DATA_TIMESTAMP,
     PYTH_DATA_STETH_PRICE,

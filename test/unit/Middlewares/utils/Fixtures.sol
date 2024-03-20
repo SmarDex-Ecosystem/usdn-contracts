@@ -7,7 +7,7 @@ import { WstETH } from "test/utils/WstEth.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
+import { PYTH_STETH_USD } from "test/utils/Constants.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
@@ -54,7 +54,7 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
         oracleMiddleware = new OracleMiddleware(
-            address(mockPyth), PYTH_WSTETH_USD, address(mockChainlinkOnChain), chainlinkTimeElapsedLimit
+            address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), chainlinkTimeElapsedLimit
         );
     }
 
