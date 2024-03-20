@@ -232,13 +232,15 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setBurnOnDepositBps(uint16 newBps) external onlyOwner {
-        // newPositionFee greater than max 500: 5%
-        if (newBps > 500) {
-            revert UsdnProtocolInvalidBurnSdexOnDepositBps();
+    function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {
+        // newRatio greater 5%
+        if (newRatio > SDEX_BURNED_ON_DEPOSIT_DIVISOR / 20) {
+            revert UsdnProtocolInvalidBurnSdexOnDepositRatio();
         }
-        _sdexBurnOnDepositBps = newBps;
-        emit BurnSdexOnDepositBpsUpdated(newBps);
+
+        _sdexBurnOnDepositRatio = newRatio;
+
+        emit BurnSdexOnDepositRatioUpdated(newRatio);
     }
 
     /// @inheritdoc IUsdnProtocol

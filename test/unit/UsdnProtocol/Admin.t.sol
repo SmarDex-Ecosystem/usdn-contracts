@@ -59,7 +59,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setProtocolFeeBps(0);
 
         vm.expectRevert(customError);
-        protocol.setBurnOnDepositBps(0);
+        protocol.setSdexBurnOnDepositRatio(0);
 
         vm.expectRevert(customError);
         protocol.setFeeCollector(address(this));
@@ -428,33 +428,33 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The contract owner calls "setBurnOnDepositBps".
+     * @custom:scenario The contract owner calls "setSdexBurnOnDepositRatio".
      * @custom:given The initial usdnProtocol state.
-     * @custom:when Owner calls setBurnOnDepositBps with a value higher than the limit.
+     * @custom:when Owner calls setSdexBurnOnDepositRatio with a value higher than the limit.
      * @custom:then The call reverts.
      */
-    function test_RevertWhen_setBurnOnDepositBpsWithMax() external adminPrank {
-        uint16 aboveMax = uint16(protocol.BPS_DIVISOR()) + 1;
+    function test_RevertWhen_setSdexBurnOnDepositRatioWithMax() external adminPrank {
+        uint32 aboveMax = uint32(protocol.SDEX_BURNED_ON_DEPOSIT_DIVISOR() / 20 + 1);
 
-        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidBurnSdexOnDepositBps.selector);
-        protocol.setBurnOnDepositBps(aboveMax);
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidBurnSdexOnDepositRatio.selector);
+        protocol.setSdexBurnOnDepositRatio(aboveMax);
     }
 
     /**
-     * @custom:scenario The contract owner calls "setBurnOnDepositBps".
+     * @custom:scenario The contract owner calls "setSdexBurnOnDepositRatio".
      * @custom:given The initial usdnProtocol state.
-     * @custom:when Owner calls setBurnOnDepositBps.
+     * @custom:when Owner calls setSdexBurnOnDepositRatio.
      * @custom:then The value should be updated
-     * @custom:and a BurnSdexOnDepositBpsUpdated event should be emitted.
+     * @custom:and a BurnSdexOnDepositRatioUpdated event should be emitted.
      */
-    function test_setBurnOnDepositBps() external adminPrank {
-        uint16 expectedNewValue = 500;
+    function test_setSdexBurnOnDepositRatio() external adminPrank {
+        uint16 expectedNewValue = uint16(protocol.SDEX_BURNED_ON_DEPOSIT_DIVISOR()) / 20;
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.BurnSdexOnDepositBpsUpdated(expectedNewValue);
-        protocol.setBurnOnDepositBps(expectedNewValue);
+        emit IUsdnProtocolEvents.BurnSdexOnDepositRatioUpdated(expectedNewValue);
+        protocol.setSdexBurnOnDepositRatio(expectedNewValue);
 
-        assertEq(protocol.getSdexBurnOnDepositBps(), expectedNewValue, "The value should have been updated");
+        assertEq(protocol.getSdexBurnedOnDepositRatio(), expectedNewValue, "The value should have been updated");
     }
 
     /**

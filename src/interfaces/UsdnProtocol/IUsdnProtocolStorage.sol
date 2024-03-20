@@ -32,6 +32,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The number of decimals for the scaling factor of the funding rate
     function FUNDING_SF_DECIMALS() external pure returns (uint8);
 
+    /// @notice Divisor for the ratio of USDN to SDEX to burn on deposit
+    function SDEX_BURNED_ON_DEPOSIT_DIVISOR() external pure returns (uint256);
+
     /**
      * @notice Divisor for the bps values
      * @dev Example: 200 -> 2%
@@ -110,8 +113,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The position fee in bps
     function getPositionFeeBps() external view returns (uint16);
 
-    /// @notice The ratio of USDN to SDEX tokens to burn on deposit
-    function getSdexBurnOnDepositBps() external view returns (uint16);
+    /// @notice The ratio of USDN to SDEX tokens to burn on deposit (to be divided by SDEX_BURNED_ON_DEPOSIT_DIVISOR)
+    function getSdexBurnedOnDepositRatio() external view returns (uint32);
 
     /// @notice The fee threshold before fees are sent to the fee collector
     function getFeeThreshold() external view returns (uint256);
