@@ -30,18 +30,6 @@ contract WusdnHandler is Wusdn, Test {
         _usdn = usdn;
     }
 
-    function approve(address _owner, address _spender, uint256 _value) external {
-        _approve(_owner, _spender, _value);
-    }
-
-    function transfer(address _from, address _to, uint256 _value) external {
-        _transfer(_from, _to, _value);
-    }
-
-    function burn(address _owner, uint256 _value) external {
-        _burn(_owner, _value);
-    }
-
     /* ------------------ Functions used for invariant testing ------------------ */
 
     modifier useActor(uint256 actorIndexSeed) {
@@ -63,11 +51,32 @@ contract WusdnHandler is Wusdn, Test {
         assets = bound(assets, 0, _usdn.balanceOf(_currentActor));
         uint256 newShares = previewDeposit(assets);
 
-        _usdn.approve(_currentActor, assets);
+        _usdn.approve(address(this), assets);
 
         totalSharesSum += newShares;
         shares[_currentActor] += newShares;
-        _deposit(_currentActor, actors[bound(receiverIndexSeed, 0, actors.length - 1)], assets, newShares);
+
         vm.stopPrank();
+        vm.startPrank(address(this));
+        _deposit(_currentActor, actors[bound(receiverIndexSeed, 0, actors.length - 1)], assets, newShares);
+    }
+
+    function withdrawTest(uint256 assets, uint256 receiverIndexSeed, uint256 actorIndexSeed)
+        external
+        useActor(actorIndexSeed)
+    {
+        if (balanceOf(_currentActor) == 0) {
+            return;
+        }
+        uint256 maxAssets = convertToAssets(balanceOf(_currentActor));
+        assets = bound(assets, 0, maxAssets);
+        uint256 burnShares = previewWithdraw(assets);
+
+        totalSharesSum -= burnShares;
+        shares[_currentActor] -= burnShares;
+
+        _withdraw(
+            _currentActor, actors[bound(receiverIndexSeed, 0, actors.length - 1)], _currentActor, assets, burnShares
+        );
     }
 }
