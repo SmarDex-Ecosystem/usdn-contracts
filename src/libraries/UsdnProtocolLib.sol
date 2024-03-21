@@ -4,17 +4,25 @@ pragma solidity ^0.8.20;
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-//import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import {
     PendingAction, VaultPendingAction, LongPendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 
 library UsdnProtocolLib {
     using SafeCast for uint256;
     using SignedMath for int256;
 
+    /// @notice The number of decimals for leverage values
+    uint8 public constant LEVERAGE_DECIMALS = 21;
+
+    /// @notice The number of decimals for funding rate values
     uint8 public constant FUNDING_RATE_DECIMALS = 18;
+
+    /// @notice The number of decimals for liquidation multiplier values
+    uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
 
     /* -------------------------------------------------------------------------- */
     /*                                Storage layer                               */
@@ -161,9 +169,10 @@ library UsdnProtocolLib {
      * @param balanceLong The (old) balance of the long side
      * @param newPrice The new price
      * @param oldPrice The old price when the old balance was updated
+     * @return available_ The balance of the long side
      */
     function calcLongAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        internal
+        public
         pure
         returns (int256 available_)
     {
@@ -184,6 +193,7 @@ library UsdnProtocolLib {
      * @param balanceLong the (old) balance of the long side
      * @param newPrice the new price
      * @param oldPrice the old price when the old balances were updated
+     * @return available_ The available balance in the vault side
      */
     function calcVaultAssetAvailable(
         uint256 totalExpo,
@@ -191,7 +201,7 @@ library UsdnProtocolLib {
         uint256 balanceLong,
         uint128 newPrice,
         uint128 oldPrice
-    ) internal pure returns (int256 available_) {
+    ) external pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
         int256 newLongBalance = calcLongAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
 
@@ -218,7 +228,7 @@ library UsdnProtocolLib {
         uint256 usdnTotalSupply,
         uint8 usdnDecimals,
         uint8 assetDecimals
-    ) internal pure returns (uint256 price_) {
+    ) external pure returns (uint256 price_) {
         price_ = FixedPointMathLib.fullMulDiv(
             vaultBalance, uint256(assetPrice) * 10 ** usdnDecimals, usdnTotalSupply * 10 ** assetDecimals
         );
@@ -239,10 +249,97 @@ library UsdnProtocolLib {
         uint128 targetPrice,
         uint8 usdnDecimals,
         uint8 assetDecimals
-    ) internal pure returns (uint256 totalSupply_) {
+    ) external pure returns (uint256 totalSupply_) {
         totalSupply_ = FixedPointMathLib.fullMulDiv(
             vaultBalance, uint256(assetPrice) * 10 ** usdnDecimals, uint256(targetPrice) * 10 ** assetDecimals
         );
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                 Long layer                                 */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Get the liquidation price corresponding to a given tick number
+     * @dev This takes into account the liquidation price multiplier.
+     * Note that ticks that are not a multiple of the tick spacing cannot contain a long position.
+     * @param tick The tick number
+     * @param liqMultiplier The liquidation price multiplier
+     * @return price_ The effective price corresponding to a tick, taking the multiplier into account
+     */
+    function calcEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external pure returns (uint128 price_) {
+        // adjusted price with liquidation multiplier
+        price_ = FixedPointMathLib.fullMulDiv(
+            TickMath.getPriceAtTick(tick), liqMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
+        ).toUint128();
+    }
+
+    /**
+     * @notice Calculate the theoretical liquidation price of a position knowing its start price and leverage
+     * @dev This does not take into account the liquidation penalty
+     * @param startPrice Entry price of the position
+     * @param leverage Leverage of the position
+     * @return price_ The liquidation price of the position
+     */
+    function calcLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128 price_) {
+        price_ = (startPrice - ((uint256(10) ** LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
+    }
+
+    /**
+     * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
+     * @param currentPrice The current price of the asset
+     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
+     * @param positionTotalExpo The total expo of the position
+     * @return value_ The value of the position
+     */
+    function calcPositionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
+        external
+        pure
+        returns (uint256 value_)
+    {
+        // Avoid an underflow
+        if (currentPrice < liqPriceWithoutPenalty) {
+            return 0;
+        }
+
+        value_ = FixedPointMathLib.fullMulDiv(positionTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice);
+    }
+
+    /**
+     * @notice Calculate the initial leverage, knowing the start price of the position and the liquidation price
+     * @dev This does not take into account the liquidation penalty
+     * @param startPrice Entry price
+     * @param liquidationPrice Liquidation price
+     * @return leverage_ The initial leverage of the position
+     */
+    function calcLeverage(uint128 startPrice, uint128 liquidationPrice) external pure returns (uint128 leverage_) {
+        if (startPrice <= liquidationPrice) {
+            // this situation is not allowed (newly open position must be solvent)
+            // Also, calculation below would underflow
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
+        }
+
+        leverage_ = ((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
+    }
+
+    /**
+     * @notice Calculate the total exposure of a position
+     * @dev Reverts when startPrice <= liquidationPrice
+     * @param amount The amount of asset used as collateral
+     * @param startPrice The price of the asset when the position was created
+     * @param liquidationPrice The liquidation price of the position
+     * @return totalExpo_ The total exposure of a position
+     */
+    function calcPositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+        external
+        pure
+        returns (uint128 totalExpo_)
+    {
+        if (startPrice <= liquidationPrice) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
+        }
+
+        totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
     }
 
     /* -------------------------------------------------------------------------- */

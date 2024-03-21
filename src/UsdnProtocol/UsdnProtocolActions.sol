@@ -455,11 +455,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             // remove liquidation penalty for leverage calculation
             uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - int24(_liquidationPenalty) * _tickSpacing);
-            positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
+            positionTotalExpo = UsdnProtocolLib.calcPositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
 
             // calculate position leverage
             // reverts if liquidationPrice >= entryPrice
-            leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+            leverage = UsdnProtocolLib.calcLeverage(adjustedPrice, liqPriceWithoutPenalty);
             if (leverage < _minLeverage) {
                 revert UsdnProtocolLeverageTooLow();
             }
@@ -547,7 +547,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Re-calculate leverage
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(long.tick - int24(_liquidationPenalty) * _tickSpacing);
         // reverts if liquidationPrice >= entryPrice
-        uint128 leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
+        uint128 leverage = UsdnProtocolLib.calcLeverage(startPrice, liqPriceWithoutPenalty);
         // Leverage is always greater than 1 (liquidationPrice is positive).
         // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
         // However, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
@@ -556,15 +556,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // remove the position
             _removeAmountFromPosition(long.tick, long.index, pos, pos.amount, pos.totalExpo);
             // theoretical liquidation price for _maxLeverage
-            liqPriceWithoutPenalty = _getLiquidationPrice(startPrice, _maxLeverage.toUint128());
+            liqPriceWithoutPenalty = UsdnProtocolLib.calcLiquidationPrice(startPrice, _maxLeverage.toUint128());
             // adjust to closest valid tick down
             int24 tickWithoutPenalty = getEffectiveTickForPrice(liqPriceWithoutPenalty);
             // retrieve exact liquidation price without penalty
             liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
             // recalculate the leverage with the new liquidation price
-            leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
+            leverage = UsdnProtocolLib.calcLeverage(startPrice, liqPriceWithoutPenalty);
             // update position total expo
-            pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
+            pos.totalExpo = UsdnProtocolLib.calcPositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
             // apply liquidation penalty
             int24 tick = tickWithoutPenalty + int24(_liquidationPenalty) * _tickSpacing;
             // insert position into new tick, update tickVersion and index
@@ -575,7 +575,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         } else {
             // Calculate the new total expo
             uint128 expoBefore = pos.totalExpo;
-            uint128 expoAfter = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
+            uint128 expoAfter = UsdnProtocolLib.calcPositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
 
             // Update the total expo of the position
             _longPositions[tickHash][long.index].totalExpo = expoAfter;
@@ -712,7 +712,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // get liquidation price (with liq penalty) to check if position was valid at `timestamp + validationDelay`
-        uint128 liquidationPrice = getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
+        uint128 liquidationPrice = UsdnProtocolLib.calcEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
         if (price.neutralPrice <= liquidationPrice) {
             // position should be liquidated, we don't pay out the profits but send any remaining collateral to the
             // vault
@@ -792,9 +792,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 available = _balanceLong + tempTransferred;
 
         // Calculate position value
-        uint256 value = _positionValue(
+        uint256 value = UsdnProtocolLib.calcPositionValue(
             currentPrice,
-            getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
+            UsdnProtocolLib.calcEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
             posExpo
         );
 

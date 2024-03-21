@@ -16,6 +16,7 @@ import {
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -109,7 +110,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     /// @inheritdoc IUsdnProtocol
     function setMinLeverage(uint256 newMinLeverage) external onlyOwner {
         // zero minLeverage
-        if (newMinLeverage <= 10 ** LEVERAGE_DECIMALS) {
+        if (newMinLeverage <= 10 ** UsdnProtocolLib.LEVERAGE_DECIMALS) {
             revert UsdnProtocolInvalidMinLeverage();
         }
 
@@ -130,7 +131,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
 
         // maxLeverage greater than max 100
-        if (newMaxLeverage > 100 * 10 ** LEVERAGE_DECIMALS) {
+        if (newMaxLeverage > 100 * 10 ** UsdnProtocolLib.LEVERAGE_DECIMALS) {
             revert UsdnProtocolInvalidMaxLeverage();
         }
 
@@ -313,8 +314,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
-        uint128 leverage = _getLeverage(price, liquidationPriceWithoutPenalty);
-        uint128 positionTotalExpo = _calculatePositionTotalExpo(amount, price, liquidationPriceWithoutPenalty);
+        uint128 leverage = UsdnProtocolLib.calcLeverage(price, liquidationPriceWithoutPenalty);
+        uint128 positionTotalExpo = UsdnProtocolLib.calcPositionTotalExpo(amount, price, liquidationPriceWithoutPenalty);
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
         tick = tick + int24(_liquidationPenalty) * _tickSpacing;
         Position memory long = Position({

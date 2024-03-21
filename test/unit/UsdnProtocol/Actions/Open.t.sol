@@ -39,7 +39,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
         uint128 expectedLeverage = uint128(
-            (10 ** protocol.LEVERAGE_DECIMALS() * CURRENT_PRICE)
+            (10 ** UsdnProtocolLib.LEVERAGE_DECIMALS * CURRENT_PRICE)
                 / (
                     CURRENT_PRICE
                         - protocol.getEffectivePriceForTick(
@@ -82,7 +82,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + LONG_AMOUNT, "protocol wstETH balance");
         assertEq(protocol.getTotalLongPositions(), totalPositionsBefore + 1, "total long positions");
         uint256 positionExpo =
-            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, uint128(tickLiqPrice));
+            UsdnProtocolLib.calcPositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, uint128(tickLiqPrice));
         assertEq(protocol.getTotalExpo(), totalExpoBefore + positionExpo, "protocol total expo");
         assertEq(protocol.getTotalExpoByTick(expectedTick), positionExpo, "total expo in tick");
         assertEq(protocol.getPositionsInTick(expectedTick), 1, "positions in tick");
@@ -137,7 +137,8 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_initiateOpenPositionHighLeverage() public {
         // max liquidation price without liquidation penalty
-        uint256 maxLiquidationPrice = protocol.i_getLiquidationPrice(CURRENT_PRICE, uint128(protocol.getMaxLeverage()));
+        uint256 maxLiquidationPrice =
+            UsdnProtocolLib.calcLiquidationPrice(CURRENT_PRICE, uint128(protocol.getMaxLeverage()));
         // add 3% to be above max liquidation price including penalty
         uint128 desiredLiqPrice = uint128(maxLiquidationPrice * 1.03 ether / 1 ether);
 
@@ -156,7 +157,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_initiateOpenPositionSafetyMargin() public {
         // set the max leverage very high to allow for such a case
-        uint8 leverageDecimals = protocol.LEVERAGE_DECIMALS();
+        uint8 leverageDecimals = UsdnProtocolLib.LEVERAGE_DECIMALS;
         vm.prank(ADMIN);
         protocol.setMaxLeverage(uint128(100 * 10 ** leverageDecimals));
 
@@ -165,7 +166,8 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             uint128(CURRENT_PRICE * (protocol.BPS_DIVISOR() - protocol.getSafetyMarginBps()) / protocol.BPS_DIVISOR());
 
         int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE, protocol.getLiquidationMultiplier());
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick, protocol.getLiquidationMultiplier());
+        uint128 expectedLiqPrice =
+            UsdnProtocolLib.calcEffectivePriceForTick(expectedTick, protocol.getLiquidationMultiplier());
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -234,7 +236,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         _waitDelay();
 
         uint128 newPrice = CURRENT_PRICE - 100 ether;
-        uint128 newLiqPrice = protocol.i_getLiquidationPrice(newPrice, uint128(protocol.getMaxLeverage()));
+        uint128 newLiqPrice = UsdnProtocolLib.calcLiquidationPrice(newPrice, uint128(protocol.getMaxLeverage()));
         int24 newTick = protocol.getEffectiveTickForPrice(newLiqPrice)
             + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing();
         uint256 newTickVersion = protocol.getTickVersion(newTick);

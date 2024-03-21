@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _liquidatePositions internal function of the long layer
@@ -52,14 +53,14 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         // Create a long position to liquidate
         setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
 
-        uint128 liqPriceAfterFundings =
-            protocol.getEffectivePriceForTick(desiredLiqTick, protocol.getLiquidationMultiplier());
+        uint128 liqPriceAfterFunding =
+            UsdnProtocolLib.calcEffectivePriceForTick(desiredLiqTick, protocol.getLiquidationMultiplier());
 
         // Calculate the collateral this position gives on liquidation
         int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTotalExpoByTick(desiredLiqTick));
 
         vm.expectEmit();
-        emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
+        emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFunding, tickValue);
 
         vm.recordLogs();
         (
@@ -108,7 +109,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
 
         uint128 liqPriceAfterFundings =
-            protocol.getEffectivePriceForTick(desiredLiqTick, protocol.getLiquidationMultiplier());
+            UsdnProtocolLib.calcEffectivePriceForTick(desiredLiqTick, protocol.getLiquidationMultiplier());
         assertGt(
             liqPriceAfterFundings, price, "The fundings did not push the liquidation price above the current price"
         );

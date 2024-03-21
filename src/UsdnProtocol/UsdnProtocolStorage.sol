@@ -23,12 +23,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolStorage
-    uint8 public constant LEVERAGE_DECIMALS = 21;
-
-    /// @inheritdoc IUsdnProtocolStorage
-    uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
-
-    /// @inheritdoc IUsdnProtocolStorage
     uint8 public constant FUNDING_SF_DECIMALS = 3;
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -77,10 +71,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     ILiquidationRewardsManager internal _liquidationRewardsManager;
 
     /// @notice The minimum leverage for a position (1.000000001)
-    uint256 internal _minLeverage = 10 ** LEVERAGE_DECIMALS + 10 ** 12;
+    uint256 internal _minLeverage = 10 ** UsdnProtocolLib.LEVERAGE_DECIMALS + 10 ** 12;
 
     /// @notice The maximum leverage for a position
-    uint256 internal _maxLeverage = 10 * 10 ** LEVERAGE_DECIMALS;
+    uint256 internal _maxLeverage = 10 * 10 ** UsdnProtocolLib.LEVERAGE_DECIMALS;
 
     /// @notice The deadline for a user to confirm their own action
     uint256 internal _validationDeadline = 20 minutes;

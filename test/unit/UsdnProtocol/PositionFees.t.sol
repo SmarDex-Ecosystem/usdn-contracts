@@ -41,7 +41,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether / 2;
 
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
-        uint256 expectedLeverage = protocol.i_getLeverage(
+        uint256 expectedLeverage = UsdnProtocolLib.calcLeverage(
             uint128(expectedPrice),
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(desiredLiqPrice)
@@ -90,7 +90,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.liquidate(priceData, 0);
 
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
-        uint256 expectedLeverage = protocol.i_getLeverage(
+        uint256 expectedLeverage = UsdnProtocolLib.calcLeverage(
             uint128(expectedPrice),
             protocol.getEffectivePriceForTick(
                 protocol.getEffectiveTickForPrice(desiredLiqPrice)

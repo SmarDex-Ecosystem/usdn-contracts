@@ -7,6 +7,7 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 /**
@@ -132,7 +133,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_setMinLeverage() external adminPrank {
         // allowed value
-        uint256 expectedNewValue = 10 ** protocol.LEVERAGE_DECIMALS() + 1;
+        uint256 expectedNewValue = 10 ** UsdnProtocolLib.LEVERAGE_DECIMALS + 1;
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.MinLeverageUpdated(expectedNewValue);
@@ -164,7 +165,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setMaxLeverageWithMax() external adminPrank {
         // cache limit
-        uint256 aboveLimit = 100 * 10 ** protocol.LEVERAGE_DECIMALS() + 1;
+        uint256 aboveLimit = 100 * 10 ** UsdnProtocolLib.LEVERAGE_DECIMALS + 1;
         // maxLeverage greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage.selector);
         // set maxLeverage

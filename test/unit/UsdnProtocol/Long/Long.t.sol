@@ -6,6 +6,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -57,7 +58,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         assertGt(
             protocol.getLiquidationMultiplier(),
-            10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
+            10 ** UsdnProtocolLib.LIQUIDATION_MULTIPLIER_DECIMALS,
             "liquidation multiplier <= 1"
         );
         assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_042_034_709_631, "wrong minimum liquidation price");
@@ -75,7 +76,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         assertLt(
             protocol.getLiquidationMultiplier(),
-            10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
+            10 ** UsdnProtocolLib.LIQUIDATION_MULTIPLIER_DECIMALS,
             "liquidation multiplier >= 1"
         );
         assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_045_368_555_235, "wrong minimum liquidation price");
@@ -91,7 +92,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
          * 5000 - 5000 / 1 = 0
          * => minLiquidationPrice = getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
          */
-        protocol.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS() + 1);
+        protocol.setMinLeverage(10 ** UsdnProtocolLib.LEVERAGE_DECIMALS + 1);
         assertEq(
             protocol.getMinLiquidationPrice(5000 ether),
             TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
@@ -108,7 +109,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
          * 5000 - 5000 / 1.1 = 454.545454545454545455
          * tick(454.545454545454545455) = 61_100 => + tickSpacing = 61_200
          */
-        protocol.setMinLeverage(11 * 10 ** (protocol.LEVERAGE_DECIMALS() - 1)); // = x1.1
+        protocol.setMinLeverage(11 * 10 ** (UsdnProtocolLib.LEVERAGE_DECIMALS - 1)); // = x1.1
         assertEq(protocol.getMinLiquidationPrice(5000 ether), TickMath.getPriceAtTick(61_200));
     }
 
@@ -127,26 +128,18 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:or the position value is 2.5 wstETH ($2000 at 4x)
      */
     function test_positionValue() public {
-        uint128 positionTotalExpo = uint128(
-            FixedPointMathLib.fullMulDiv(
-                1 ether, 2 * 10 ** protocol.LEVERAGE_DECIMALS(), 10 ** protocol.LEVERAGE_DECIMALS()
-            )
-        );
-        uint256 value = protocol.i_positionValue(2000 ether, 500 ether, positionTotalExpo);
+        uint128 positionTotalExpo = uint128(FixedPointMathLib.fullMulDiv(1 ether, 2, 1));
+        uint256 value = UsdnProtocolLib.calcPositionValue(2000 ether, 500 ether, positionTotalExpo);
         assertEq(value, 1.5 ether, "Position value should be 1.5 ether");
 
-        value = protocol.i_positionValue(1000 ether, 500 ether, positionTotalExpo);
+        value = UsdnProtocolLib.calcPositionValue(1000 ether, 500 ether, positionTotalExpo);
         assertEq(value, 1 ether, "Position value should be 1 ether");
 
-        value = protocol.i_positionValue(500 ether, 500 ether, positionTotalExpo);
+        value = UsdnProtocolLib.calcPositionValue(500 ether, 500 ether, positionTotalExpo);
         assertEq(value, 0 ether, "Position value should be 0");
 
-        positionTotalExpo = uint128(
-            FixedPointMathLib.fullMulDiv(
-                1 ether, 4 * 10 ** protocol.LEVERAGE_DECIMALS(), 10 ** protocol.LEVERAGE_DECIMALS()
-            )
-        );
-        value = protocol.i_positionValue(2000 ether, 750 ether, positionTotalExpo);
+        positionTotalExpo = uint128(FixedPointMathLib.fullMulDiv(1 ether, 4, 1));
+        value = UsdnProtocolLib.calcPositionValue(2000 ether, 750 ether, positionTotalExpo);
         assertEq(value, 2.5 ether, "Position with 4x leverage should have a 2.5 ether value");
     }
 
@@ -154,13 +147,13 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * @custom:scenario Check calculations of `_calculatePositionTotalExpo`
      */
     function test_calculatePositionTotalExpo() public {
-        uint256 expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1500 ether);
+        uint256 expo = UsdnProtocolLib.calcPositionTotalExpo(1 ether, 2000 ether, 1500 ether);
         assertEq(expo, 4 ether, "Position total expo should be 4 ether");
 
-        expo = protocol.i_calculatePositionTotalExpo(2 ether, 4000 ether, 1350 ether);
+        expo = UsdnProtocolLib.calcPositionTotalExpo(2 ether, 4000 ether, 1350 ether);
         assertEq(expo, 3_018_867_924_528_301_886, "Position total expo should be 3.018... ether");
 
-        expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1000 ether);
+        expo = UsdnProtocolLib.calcPositionTotalExpo(1 ether, 2000 ether, 1000 ether);
         assertEq(expo, 2 ether, "Position total expo should be 2 ether");
     }
 
@@ -177,12 +170,12 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         /* ------------------------- startPrice == liqPrice ------------------------- */
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
-        protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
+        UsdnProtocolLib.calcPositionTotalExpo(1 ether, startPrice, liqPrice);
 
         /* -------------------------- liqPrice > startPrice ------------------------- */
         liqPrice = 2000 ether + 1;
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
-        protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
+        UsdnProtocolLib.calcPositionTotalExpo(1 ether, startPrice, liqPrice);
     }
 
     /**

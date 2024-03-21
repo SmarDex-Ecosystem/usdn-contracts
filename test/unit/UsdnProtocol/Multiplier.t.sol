@@ -6,6 +6,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 /**
  * @custom:feature The `multiplier` variable of the USDN Protocol
@@ -38,7 +39,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
 
         // We need to call liquidate to trigger the refresh of the multiplier
         protocol.liquidate(priceData, 0);
-        assertGt(protocol.getLiquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
+        assertGt(protocol.getLiquidationMultiplier(), 10 ** UsdnProtocolLib.LIQUIDATION_MULTIPLIER_DECIMALS);
     }
 
     /**
@@ -59,6 +60,6 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
 
         // We need to call liquidate to trigger the refresh of the multiplier
         protocol.liquidate(priceData, 0);
-        assertLt(protocol.getLiquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
+        assertLt(protocol.getLiquidationMultiplier(), 10 ** UsdnProtocolLib.LIQUIDATION_MULTIPLIER_DECIMALS);
     }
 }

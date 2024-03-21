@@ -6,6 +6,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
@@ -35,7 +36,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
     function testFuzz_positionValue(uint128 amount, uint128 priceAtOpening, uint128 currentPrice, uint256 leverage)
         public
     {
-        uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
+        uint256 levDecimals = 10 ** UsdnProtocolLib.LEVERAGE_DECIMALS;
         uint256 maxLeverage = protocol.getMaxLeverage();
 
         // Set some boundaries for the fuzzed inputs
@@ -46,10 +47,10 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         leverage = bound(leverage, protocol.getMinLeverage(), maxLeverage);
 
         // Start checks
-        uint128 liqPrice = protocol.i_getLiquidationPrice(priceAtOpening, uint128(leverage));
+        uint128 liqPrice = UsdnProtocolLib.calcLiquidationPrice(priceAtOpening, uint128(leverage));
         uint128 positionTotalExpo = FixedPointMathLib.fullMulDiv(amount, leverage, levDecimals).toUint128();
         uint256 expectedValue = FixedPointMathLib.fullMulDiv(positionTotalExpo, (currentPrice - liqPrice), currentPrice);
-        uint256 value = protocol.i_positionValue(currentPrice, liqPrice, positionTotalExpo);
+        uint256 value = UsdnProtocolLib.calcPositionValue(currentPrice, liqPrice, positionTotalExpo);
         assertEq(expectedValue, value, "Returned value is incorrect");
     }
 
@@ -73,7 +74,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         uint128 currentPrice,
         uint256 leverage
     ) public {
-        uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
+        uint256 levDecimals = 10 ** UsdnProtocolLib.LEVERAGE_DECIMALS;
         uint256 maxLeverage = protocol.getMaxLeverage();
 
         // Set some boundaries for the fuzzed inputs
@@ -84,11 +85,11 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         leverage = bound(leverage, protocol.getMinLeverage(), maxLeverage);
 
         // Start checks
-        uint128 liqPrice = protocol.i_getLiquidationPrice(priceAtOpening, uint128(leverage));
+        uint128 liqPrice = UsdnProtocolLib.calcLiquidationPrice(priceAtOpening, uint128(leverage));
         uint128 positionTotalExpo = FixedPointMathLib.fullMulDiv(amount, leverage, levDecimals).toUint128();
 
         // Current implementation of position value's calculation
-        uint256 posValueWithExpo = protocol.i_positionValue(currentPrice, liqPrice, positionTotalExpo);
+        uint256 posValueWithExpo = UsdnProtocolLib.calcPositionValue(currentPrice, liqPrice, positionTotalExpo);
         // Previous implementation of position value's calculation
         uint256 posValueWithLeverage =
             FixedPointMathLib.fullMulDiv(amount, leverage * (currentPrice - liqPrice), currentPrice * levDecimals);

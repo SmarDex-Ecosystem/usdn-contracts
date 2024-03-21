@@ -5,6 +5,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 /**
  * @custom:feature Fuzzing tests for the core of the protocol
@@ -91,7 +92,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         // calculate the value of the deployer's long position
         uint128 liqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
-        longPosValue += protocol.i_positionValue(finalPrice - 5 ether, liqPrice, initialLongExpo);
+        longPosValue += UsdnProtocolLib.calcPositionValue(finalPrice - 5 ether, liqPrice, initialLongExpo);
 
         emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());
         emit log_named_decimal_uint(

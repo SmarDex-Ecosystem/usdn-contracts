@@ -20,12 +20,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice The number of decimals for leverage values
-    function LEVERAGE_DECIMALS() external pure returns (uint8);
-
-    /// @notice The number of decimals for liquidation multiplier values
-    function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8);
-
     /// @notice The number of decimals for the scaling factor of the funding rate
     function FUNDING_SF_DECIMALS() external pure returns (uint8);
 

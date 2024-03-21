@@ -71,22 +71,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _removeAmountFromPosition(tick, index, pos, amountToRemove, totalExpoToRemove);
     }
 
-    function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
-        external
-        pure
-        returns (uint256 value_)
-    {
-        return _positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
-    }
-
-    function i_calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
-        external
-        pure
-        returns (uint128 totalExpo_)
-    {
-        return _calculatePositionTotalExpo(amount, startPrice, liquidationPrice);
-    }
-
     function i_removePendingAction(uint128 rawIndex, address user) external {
         _pendingActionsQueue.clearAt(rawIndex);
         delete _pendingActions[user];
@@ -173,14 +157,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_longAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _longAssetAvailable(currentPrice);
-    }
-
-    function i_getLiquidationPrice(uint128 startPrice, uint128 leverage) external pure returns (uint128) {
-        return _getLiquidationPrice(startPrice, leverage);
-    }
-
-    function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
-        return _getLeverage(price, liqPrice);
     }
 
     function i_bitmapIndexToTick(uint256 index) external view returns (int24) {

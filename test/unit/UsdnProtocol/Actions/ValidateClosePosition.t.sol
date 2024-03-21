@@ -406,7 +406,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------- Validate Close Position ------------------------ */
         LongPendingAction memory action =
             UsdnProtocolLib.toLongPendingAction(protocol.getUserPendingAction(address(this)));
-        uint128 liquidationPrice = protocol.getEffectivePriceForTick(tick, action.closeLiqMultiplier);
+        uint128 liquidationPrice = UsdnProtocolLib.calcEffectivePriceForTick(tick, action.closeLiqMultiplier);
         uint256 vaultBalanceBefore =
             uint256(protocol.vaultAssetAvailableWithFunding(liquidationPrice, uint128(block.timestamp)));
         uint256 longBalanceBefore =

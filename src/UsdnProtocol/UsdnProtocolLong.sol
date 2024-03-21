@@ -8,6 +8,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 
@@ -49,7 +50,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     /// @inheritdoc IUsdnProtocolLong
     // slither-disable-next-line write-after-write
     function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
-        liquidationPrice_ = _getLiquidationPrice(price, uint128(_minLeverage));
+        liquidationPrice_ = UsdnProtocolLib.calcLiquidationPrice(price, uint128(_minLeverage));
         int24 tick = getEffectiveTickForPrice(liquidationPrice_);
         liquidationPrice_ = getEffectivePriceForTick(tick + _tickSpacing);
     }
@@ -62,9 +63,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     {
         Position memory pos = getLongPosition(tick, tickVersion, index);
         uint256 liquidationMultiplier = getLiquidationMultiplier(timestamp);
-        uint128 liqPrice =
-            getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liquidationMultiplier);
-        value_ = _positionValue(price, liqPrice, pos.totalExpo);
+        uint128 liqPrice = UsdnProtocolLib.calcEffectivePriceForTick(
+            tick - int24(_liquidationPenalty) * _tickSpacing, liquidationMultiplier
+        );
+        value_ = UsdnProtocolLib.calcPositionValue(price, liqPrice, pos.totalExpo);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -76,7 +78,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     function getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier) public view returns (int24 tick_) {
         // adjusted price with liquidation multiplier
         uint256 priceWithMultiplier =
-            FixedPointMathLib.fullMulDiv(price, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, liqMultiplier);
+            FixedPointMathLib.fullMulDiv(price, 10 ** UsdnProtocolLib.LIQUIDATION_MULTIPLIER_DECIMALS, liqMultiplier);
 
         if (priceWithMultiplier < TickMath.MIN_PRICE) {
             return minTick();
@@ -105,15 +107,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     /// @inheritdoc IUsdnProtocolLong
     function getEffectivePriceForTick(int24 tick) public view returns (uint128 price_) {
         // adjusted price with liquidation multiplier
-        price_ = getEffectivePriceForTick(tick, _liquidationMultiplier);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public pure returns (uint128 price_) {
-        // adjusted price with liquidation multiplier
-        price_ = FixedPointMathLib.fullMulDiv(
-            TickMath.getPriceAtTick(tick), liqMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
-        ).toUint128();
+        price_ = UsdnProtocolLib.calcEffectivePriceForTick(tick, _liquidationMultiplier);
     }
 
     /**
@@ -127,34 +121,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         } else {
             tick_ = _bitmapIndexToTick(index);
         }
-    }
-
-    /**
-     * @notice Calculate the theoretical liquidation price of a position knowing its start price and leverage
-     * @param startPrice Entry price of the position
-     * @param leverage Leverage of the position
-     */
-    function _getLiquidationPrice(uint128 startPrice, uint128 leverage) internal pure returns (uint128 price_) {
-        price_ = (startPrice - ((uint256(10) ** LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
-    }
-
-    /**
-     * @notice Calculate the value of a position, knowing its liquidation price and the current asset price
-     * @param currentPrice The current price of the asset
-     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
-     * @param positionTotalExpo The total expo of the position
-     */
-    function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
-        internal
-        pure
-        returns (uint256 value_)
-    {
-        // Avoid an underflow
-        if (currentPrice < liqPriceWithoutPenalty) {
-            return 0;
-        }
-
-        value_ = FixedPointMathLib.fullMulDiv(positionTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice);
     }
 
     /**
@@ -179,37 +145,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             value_ =
                 int256(FixedPointMathLib.fullMulDiv(tickTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice));
         }
-    }
-
-    /// @dev This does not take into account the liquidation penalty
-    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) internal pure returns (uint128 leverage_) {
-        if (startPrice <= liquidationPrice) {
-            // this situation is not allowed (newly open position must be solvent)
-            // Also, calculation below would underflow
-            revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
-        }
-
-        leverage_ = ((10 ** LEVERAGE_DECIMALS * uint256(startPrice)) / (startPrice - liquidationPrice)).toUint128();
-    }
-
-    /**
-     * @notice Calculate the total exposure of a position
-     * @dev Reverts when startPrice <= liquidationPrice
-     * @param amount The amount of asset used as collateral
-     * @param startPrice The price of the asset when the position was created
-     * @param liquidationPrice The liquidation price of the position
-     * @return totalExpo_ The total exposure of a position
-     */
-    function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
-        internal
-        pure
-        returns (uint128 totalExpo_)
-    {
-        if (startPrice <= liquidationPrice) {
-            revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
-        }
-
-        totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
     }
 
     function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
@@ -349,7 +284,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
 
         int24 currentTick = TickMath.getClosestTickAtPrice(
-            FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier)
+            FixedPointMathLib.fullMulDiv(
+                currentPrice, 10 ** UsdnProtocolLib.LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier
+            )
         );
         int24 tick = _maxInitializedTick;
 

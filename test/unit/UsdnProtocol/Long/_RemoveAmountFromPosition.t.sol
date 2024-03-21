@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 /**
  * @custom:feature The _removeAmountFromPosition internal function of the UsdnProtocolActions contract.
@@ -83,7 +84,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         uint256 totalExpoByTickBefore = protocol.getTotalExpoByTick(_tick);
         uint256 positionsCountBefore = protocol.getPositionsInTick(_tick);
         uint128 amountToRemove = posBefore.amount / 2;
-        uint128 totalExpoToRemove = protocol.i_calculatePositionTotalExpo(
+        uint128 totalExpoToRemove = UsdnProtocolLib.calcPositionTotalExpo(
             amountToRemove, params.initialPrice, params.initialPrice - (params.initialPrice / 5)
         );
 
