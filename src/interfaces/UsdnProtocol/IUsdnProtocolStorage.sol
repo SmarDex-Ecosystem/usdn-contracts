@@ -33,7 +33,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function FUNDING_SF_DECIMALS() external pure returns (uint8);
 
     /// @notice The number of decimals for the security deposit values
-    function SECURITY_DEPOSIT_FACTOR() external pure returns (uint8);
+    function SECURITY_DEPOSIT_FACTOR() external pure returns (uint128);
 
     /**
      * @notice Divisor for the bps values
