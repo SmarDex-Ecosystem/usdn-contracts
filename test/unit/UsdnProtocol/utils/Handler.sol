@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import {
     PendingAction,
@@ -10,7 +11,7 @@ import {
     ProtocolAction,
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocol, Position } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -23,6 +24,7 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
  */
 contract UsdnProtocolHandler is UsdnProtocol {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
+    using LibBitmap for LibBitmap.Bitmap;
 
     constructor(
         IUsdn usdn,
@@ -44,8 +46,29 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _pendingActions[action.user] = uint256(rawIndex_) + 1;
     }
 
+    function i_initiateClosePosition(
+        address user,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index,
+        uint128 amountToClose,
+        bytes calldata currentPriceData
+    ) external {
+        return _initiateClosePosition(user, tick, tickVersion, index, amountToClose, currentPriceData);
+    }
+
     function i_validateClosePosition(address user, bytes calldata priceData) external {
         _validateClosePosition(user, priceData);
+    }
+
+    function i_removeAmountFromPosition(
+        int24 tick,
+        uint256 index,
+        Position memory pos,
+        uint128 amountToRemove,
+        uint128 totalExpoToRemove
+    ) external {
+        return _removeAmountFromPosition(tick, index, pos, amountToRemove, totalExpoToRemove);
     }
 
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
@@ -59,7 +82,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
         external
         pure
-        returns (uint256 totalExpo_)
+        returns (uint128 totalExpo_)
     {
         return _calculatePositionTotalExpo(amount, startPrice, liquidationPrice);
     }
@@ -144,7 +167,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _tickValue(currentPrice, tick, tickTotalExpo);
     }
 
-    function i_getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
+    function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
         external
         payable
         returns (PriceInfo memory)
@@ -190,6 +213,18 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getLeverage(price, liqPrice);
     }
 
+    function i_bitmapIndexToTick(uint256 index) external view returns (int24) {
+        return _bitmapIndexToTick(index);
+    }
+
+    function i_tickToBitmapIndex(int24 tick) external view returns (uint256) {
+        return _tickToBitmapIndex(tick);
+    }
+
+    function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
+        return _tickBitmap.findLastSet(_tickToBitmapIndex(searchFrom));
+    }
+
     function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
         return _updateEMA(secondsElapsed);
     }
@@ -226,7 +261,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getPendingAction(user);
     }
 
-    function i_executePendingAction(PreviousActionsData calldata data) external {
-        _executePendingAction(data);
+    function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool) {
+        return _executePendingAction(data);
+    }
+
+    function i_executePendingActionOrRevert(PreviousActionsData calldata data) external {
+        _executePendingActionOrRevert(data);
     }
 }

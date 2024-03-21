@@ -37,7 +37,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
         _initiateDeposit(msg.sender, amount, currentPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -49,7 +49,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
     {
         _validateDeposit(msg.sender, depositPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -61,7 +61,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
         _initiateWithdrawal(msg.sender, usdnAmount, currentPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -73,7 +73,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
     {
         _validateWithdrawal(msg.sender, withdrawalPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -86,7 +86,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         (tick_, tickVersion_, index_) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -98,7 +98,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
     {
         _validateOpenPosition(msg.sender, openPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -125,7 +125,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
     {
         _validateClosePosition(msg.sender, closePriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -134,9 +134,33 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
+        initializedAndNonReentrant
         returns (uint256 liquidatedPositions_)
     {
         liquidatedPositions_ = _liquidate(currentPriceData, iterations);
+        _refundExcessEther();
+        _checkPendingFee();
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
+        external
+        payable
+        initializedAndNonReentrant
+        returns (uint256 validatedActions_)
+    {
+        if (maxValidations > previousActionsData.rawIndices.length) {
+            maxValidations = previousActionsData.rawIndices.length;
+        }
+        do {
+            (, bool executed) = _executePendingAction(previousActionsData);
+            if (!executed) {
+                break;
+            }
+            unchecked {
+                validatedActions_++;
+            }
+        } while (validatedActions_ < maxValidations);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -186,7 +210,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateDeposit, uint40(block.timestamp), currentPriceData);
+            _getOraclePrice(ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
@@ -253,11 +277,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 usdnToMint2 = _calcMintUsdn(
             deposit.amount,
             // Calculate the available balance in the vault side if the price moves to `priceWithFees`
-            uint256(
-                _vaultAssetAvailable(
-                    deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
-                )
-            ),
+            _vaultAssetAvailable(
+                deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
+            ).toUint256(),
             deposit.usdnTotalSupply,
             priceWithFees
         );
@@ -292,7 +314,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateWithdrawal, uint40(block.timestamp), currentPriceData);
+            _getOraclePrice(ProtocolAction.InitiateWithdrawal, block.timestamp, currentPriceData);
 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
@@ -355,15 +377,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
         // redeem the underlying asset share.
         uint256 available1 = withdrawal.balanceVault;
-        uint256 available2 = uint256(
-            _vaultAssetAvailable(
-                withdrawal.totalExpo,
-                withdrawal.balanceVault,
-                withdrawal.balanceLong,
-                withdrawalPriceWithFees, // new price
-                withdrawal.assetPrice // old price
-            )
-        );
+        uint256 available2 = _vaultAssetAvailable(
+            withdrawal.totalExpo,
+            withdrawal.balanceVault,
+            withdrawal.balanceLong,
+            withdrawalPriceWithFees,
+            withdrawal.assetPrice
+        ).toUint256();
         uint256 available;
         if (available1 <= available2) {
             available = available1;
@@ -414,7 +434,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 neutralPrice;
         {
             PriceInfo memory currentPrice =
-                _getOraclePrice(ProtocolAction.InitiateOpenPosition, uint40(block.timestamp), currentPriceData);
+                _getOraclePrice(ProtocolAction.InitiateOpenPosition, block.timestamp, currentPriceData);
 
             // Apply fees on price
             adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
@@ -609,7 +629,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 priceWithFees;
         {
             PriceInfo memory currentPrice =
-                _getOraclePrice(ProtocolAction.InitiateClosePosition, uint40(block.timestamp), currentPriceData);
+                _getOraclePrice(ProtocolAction.InitiateClosePosition, block.timestamp, currentPriceData);
 
             _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
             priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
@@ -731,8 +751,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         internal
         returns (uint256 liquidatedPositions_)
     {
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.Liquidation, uint40(block.timestamp), currentPriceData);
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, block.timestamp, currentPriceData);
 
         (, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
@@ -783,15 +802,35 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
-    function _executePendingAction(PreviousActionsData calldata data) internal {
+    /**
+     * @notice Execute the first actionable pending action or revert if the price data was not provided.
+     * @param data The price data and raw indices
+     */
+    function _executePendingActionOrRevert(PreviousActionsData calldata data) internal {
+        (bool success,) = _executePendingAction(data);
+        if (!success) {
+            revert UsdnProtocolInvalidPendingActionData();
+        }
+    }
+
+    /**
+     * @notice Execute the first actionable pending action and report success.
+     * @param data The price data and raw indices
+     * @return success_ Whether the price data is valid
+     * @return executed_ Whether the pending action was executed (false if the queue has no actionable item)
+     */
+    function _executePendingAction(PreviousActionsData calldata data)
+        internal
+        returns (bool success_, bool executed_)
+    {
         (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction();
         if (pending.action == ProtocolAction.None) {
             // no pending action
-            return;
+            return (true, false);
         }
         uint256 length = data.priceData.length;
         if (data.rawIndices.length != length || length < 1) {
-            revert UsdnProtocolInvalidPendingActionData();
+            return (false, false);
         }
         uint128 offset;
         unchecked {
@@ -799,7 +838,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             offset = rawIndex - data.rawIndices[0];
         }
         if (offset >= length || data.rawIndices[offset] != rawIndex) {
-            revert UsdnProtocolInvalidPendingActionData();
+            return (false, false);
         }
         bytes calldata priceData = data.priceData[offset];
         _clearPendingAction(pending.user);
@@ -812,9 +851,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         } else if (pending.action == ProtocolAction.ValidateClosePosition) {
             _validateClosePositionWithAction(pending, priceData);
         }
+        success_ = true;
+        executed_ = true;
     }
 
-    function _getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
+    function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
         internal
         returns (PriceInfo memory price_)
     {
@@ -822,7 +863,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (address(this).balance < validationCost) {
             revert UsdnProtocolInsufficientOracleFee();
         }
-        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(timestamp, action, priceData);
+        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(uint128(timestamp), action, priceData);
     }
 
     function _applyPnlAndFundingAndLiquidate(uint256 neutralPrice, uint256 timestamp) internal {
