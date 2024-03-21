@@ -948,8 +948,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /// @notice Refund any excess ether to the user, making sure we don't lock ETH in the contract.
     function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) internal {
-        int256 amount = int256(amountToRefund) - int256(balanceBefore - address(this).balance) + int256(msg.value)
-            - int256(securityDepositValue);
+        int256 amount = (amountToRefund).toInt256() - (balanceBefore - address(this).balance).toInt256()
+            + (msg.value).toInt256() - (securityDepositValue).toInt256();
 
         if (amount < 0) {
             revert UsdnProtocolUnexpectedBalance();
