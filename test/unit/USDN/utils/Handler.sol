@@ -13,9 +13,6 @@ contract UsdnHandler is Usdn, Test {
     // use multiple actors for invariant testing
     address[] public actors;
 
-    // current actor
-    address internal _currentActor;
-
     // track theoretical shares
     mapping(address account => uint256) public shares;
 
@@ -40,14 +37,6 @@ contract UsdnHandler is Usdn, Test {
 
     /* ------------------ Functions used for invariant testing ------------------ */
 
-    modifier useActor(uint256 actorIndexSeed) {
-        console2.log("bound actor ID");
-        _currentActor = actors[bound(actorIndexSeed, 0, actors.length - 1)];
-        vm.startPrank(_currentActor);
-        _;
-        vm.stopPrank();
-    }
-
     function rebaseTest(uint256 newDivisor) external {
         if (_divisor == MIN_DIVISOR) {
             return;
@@ -58,7 +47,7 @@ contract UsdnHandler is Usdn, Test {
         _divisor = newDivisor;
     }
 
-    function mintTest(uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
+    function mintTest(uint256 value) external {
         if (totalSupply() >= maxTokens() - 1) {
             return;
         }
@@ -66,40 +55,40 @@ contract UsdnHandler is Usdn, Test {
         value = bound(value, 1, maxTokens() - totalSupply() - 1);
         uint256 valueShares = value * _divisor;
         totalSharesSum += valueShares;
-        shares[_currentActor] += valueShares;
-        _mint(_currentActor, value);
+        shares[msg.sender] += valueShares;
+        _mint(msg.sender, value);
     }
 
-    function burnTest(uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
-        if (balanceOf(_currentActor) == 0) {
+    function burnTest(uint256 value) external {
+        if (balanceOf(msg.sender) == 0) {
             return;
         }
         console2.log("bound burn value");
-        value = bound(value, 1, balanceOf(_currentActor));
+        value = bound(value, 1, balanceOf(msg.sender));
         uint256 valueShares = value * _divisor;
-        if (valueShares > shares[_currentActor]) {
-            valueShares = shares[_currentActor];
+        if (valueShares > shares[msg.sender]) {
+            valueShares = shares[msg.sender];
         }
         totalSharesSum -= valueShares;
-        shares[_currentActor] -= valueShares;
-        _burn(_currentActor, value);
+        shares[msg.sender] -= valueShares;
+        _burn(msg.sender, value);
     }
 
-    function transferTest(uint256 actorTo, uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
+    function transferTest(uint256 actorTo, uint256 value) external {
         console2.log("bound 'to' actor ID");
         address to = actors[bound(actorTo, 0, actors.length - 1)];
-        if (balanceOf(_currentActor) == 0) {
+        if (balanceOf(msg.sender) == 0) {
             return;
         }
         console2.log("bound transfer value");
-        value = bound(value, 1, balanceOf(_currentActor));
+        value = bound(value, 1, balanceOf(msg.sender));
         uint256 valueShares = value * _divisor;
-        if (valueShares > shares[_currentActor]) {
-            valueShares = shares[_currentActor];
+        if (valueShares > shares[msg.sender]) {
+            valueShares = shares[msg.sender];
         }
 
-        shares[_currentActor] -= valueShares;
+        shares[msg.sender] -= valueShares;
         shares[to] += valueShares;
-        _transfer(_currentActor, to, value);
+        _transfer(msg.sender, to, value);
     }
 }

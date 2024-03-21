@@ -22,6 +22,10 @@ contract TestUsdnInvariants is UsdnTokenFixture {
         selectors[2] = usdn.burnTest.selector;
         selectors[3] = usdn.transferTest.selector;
         targetSelector(FuzzSelector({ addr: address(usdn), selectors: selectors }));
+        targetSender(USER_1);
+        targetSender(USER_2);
+        targetSender(USER_3);
+        targetSender(USER_4);
     }
 
     /**
