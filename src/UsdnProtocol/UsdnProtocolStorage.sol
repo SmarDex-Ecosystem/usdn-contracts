@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
@@ -67,7 +66,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     IUsdn internal immutable _usdn;
 
     /// @notice The SDEX ERC20 contract.
-    IERC20 internal immutable _sdex;
+    IERC20Metadata internal immutable _sdex;
 
     /// @notice The decimals of the USDN token.
     uint8 internal immutable _usdnDecimals;
@@ -223,7 +222,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     constructor(
         IUsdn usdn,
-        IERC20 sdex,
+        IERC20Metadata sdex,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
