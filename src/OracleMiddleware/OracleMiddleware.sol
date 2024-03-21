@@ -137,11 +137,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @dev Get the price from the low-latency oracle (at the moment only Pyth, later CL Data Streams).
+     * @dev Get the price from the low-latency oracle (at the moment only Pyth, later maybe others might be supported).
      * @param data The signed price update data.
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
      * recent prices according to `_recentPriceDelay`.
      * @param dir The direction for the confidence interval adjusted price.
+     * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction.
      */
     function _getLowLatencyPrice(bytes calldata data, uint128 actionTimestamp, ConfidenceInterval dir)
         internal

@@ -98,7 +98,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
      * @param priceUpdateData The data required to update the price feed
      * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices.
      * @param middlewareDecimals The number of decimals to format the price to
-     * @param price_ The Pyth price formatted with `middlewareDecimals`
+     * @return price_ The Pyth price formatted with `middlewareDecimals`
      */
     function _getFormattedPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp, uint256 middlewareDecimals)
         internal
