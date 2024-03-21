@@ -236,11 +236,10 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setSecurityDepositValue(uint256 securityDepositValue) external onlyOwner {
+        // we allow to set the security deposit between 10 ** 15 (0.001 ethers) and 10 ethers
         if (
-            (
-                securityDepositValue < SECURITY_DEPOSIT_FACTOR
-                    || securityDepositValue > type(uint24).max * SECURITY_DEPOSIT_FACTOR
-            ) && securityDepositValue != 0
+            (securityDepositValue < SECURITY_DEPOSIT_FACTOR || securityDepositValue > 10 ether)
+                && securityDepositValue != 0
         ) {
             revert UsdnProtocolInvalidSecurityDepositValue();
         }

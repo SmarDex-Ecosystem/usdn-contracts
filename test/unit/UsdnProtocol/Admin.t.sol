@@ -532,9 +532,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     }
 
     function test_RevertWhen_setSecurityDepositValueSup() external adminPrank {
-        uint256 securityDepositFactor = protocol.SECURITY_DEPOSIT_FACTOR();
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidSecurityDepositValue.selector);
         // set security deposit with SECURITY_DEPOSIT_FACTOR - 1
-        protocol.setSecurityDepositValue(type(uint24).max * securityDepositFactor + 1);
+        protocol.setSecurityDepositValue(10 ether + 1);
     }
 }
