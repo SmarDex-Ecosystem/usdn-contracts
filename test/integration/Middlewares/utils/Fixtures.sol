@@ -72,12 +72,10 @@ contract CommonBaseIntegrationFixture is BaseFixture {
         internal
         returns (uint256, uint256, uint256, bytes memory)
     {
-        string[] memory cmds = new string[](4);
-        cmds[0] = "./test_utils/target/release/test_utils";
-        cmds[1] = "pyth-price";
-        cmds[2] = vm.toString(feed);
-        cmds[3] = vm.toString(timestamp);
-        bytes memory result = vm.ffi(cmds);
+        bytes memory result = vmFFIRustCommand("pyth-price", vm.toString(feed), vm.toString(timestamp));
+
+        require(keccak256(result) != keccak256(""), "Rust command returned an error");
+
         return abi.decode(result, (uint256, uint256, uint256, bytes));
     }
 
