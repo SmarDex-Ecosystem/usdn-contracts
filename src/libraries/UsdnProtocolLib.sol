@@ -83,7 +83,7 @@ library UsdnProtocolLib {
      * @return pnl_ The profit or loss value in asset units
      */
     function calcPnlAsset(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        external
+        public
         pure
         returns (int256 pnl_)
     {
@@ -149,6 +149,49 @@ library UsdnProtocolLib {
         assembly {
             pendingAction_ := action
         }
+    }
+
+    /**
+     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
+     * @param totalExpo The total exposure of the long side
+     * @param balanceLong The (old) balance of the long side
+     * @param newPrice The new price
+     * @param oldPrice The old price when the old balance was updated
+     */
+    function calcLongAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
+        internal
+        pure
+        returns (int256 available_)
+    {
+        // Avoid division by zero
+        // slither-disable-next-line incorrect-equality
+        if (totalExpo == 0) {
+            return 0;
+        }
+
+        available_ = balanceLong.toInt256().safeAdd(calcPnlAsset(totalExpo, balanceLong, newPrice, oldPrice));
+    }
+
+    /**
+     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
+     * account).
+     * @param totalExpo the total expo
+     * @param balanceVault the (old) balance of the vault
+     * @param balanceLong the (old) balance of the long side
+     * @param newPrice the new price
+     * @param oldPrice the old price when the old balances were updated
+     */
+    function calcVaultAssetAvailable(
+        uint256 totalExpo,
+        uint256 balanceVault,
+        uint256 balanceLong,
+        uint128 newPrice,
+        uint128 oldPrice
+    ) internal pure returns (int256 available_) {
+        int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
+        int256 newLongBalance = calcLongAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
+
+        available_ = totalBalance.safeSub(newLongBalance);
     }
 
     // PUBLIC

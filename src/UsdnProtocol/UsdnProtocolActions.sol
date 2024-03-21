@@ -227,8 +227,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             amount: amount,
             assetPrice: pendingActionPrice,
             totalExpo: _totalExpo,
-            balanceVault: _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
-                .toUint256(),
+            balanceVault: UsdnProtocolLib.calcVaultAssetAvailable(
+                _totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice
+                ).toUint256(),
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
         });
@@ -278,7 +279,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 usdnToMint2 = _calcMintUsdn(
             deposit.amount,
             // Calculate the available balance in the vault side if the price moves to `priceWithFees`
-            _vaultAssetAvailable(
+            UsdnProtocolLib.calcVaultAssetAvailable(
                 deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
             ).toUint256(),
             deposit.usdnTotalSupply,
@@ -333,8 +334,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             amount: usdnAmount,
             assetPrice: pendingActionPrice,
             totalExpo: totalExpo,
-            balanceVault: _vaultAssetAvailable(totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
-                .toUint256(),
+            balanceVault: UsdnProtocolLib.calcVaultAssetAvailable(
+                totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice
+                ).toUint256(),
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
         });
@@ -378,7 +380,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
         // redeem the underlying asset share.
         uint256 available1 = withdrawal.balanceVault;
-        uint256 available2 = _vaultAssetAvailable(
+        uint256 available2 = UsdnProtocolLib.calcVaultAssetAvailable(
             withdrawal.totalExpo,
             withdrawal.balanceVault,
             withdrawal.balanceLong,

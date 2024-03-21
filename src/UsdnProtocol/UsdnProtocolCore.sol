@@ -275,29 +275,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * due to the price change to `currentPrice`.
      */
     function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        available_ = _longAssetAvailable(_totalExpo, _balanceLong, currentPrice, _lastPrice);
-    }
-
-    /**
-     * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
-     * @param totalExpo The total exposure of the long side
-     * @param balanceLong The (old) balance of the long side
-     * @param newPrice The new price
-     * @param oldPrice The old price when the old balance was updated
-     */
-    function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        internal
-        pure
-        returns (int256 available_)
-    {
-        // Avoid division by zero
-        // slither-disable-next-line incorrect-equality
-        if (totalExpo == 0) {
-            return 0;
-        }
-
-        available_ =
-            balanceLong.toInt256().safeAdd(UsdnProtocolLib.calcPnlAsset(totalExpo, balanceLong, newPrice, oldPrice));
+        available_ = UsdnProtocolLib.calcLongAssetAvailable(_totalExpo, _balanceLong, currentPrice, _lastPrice);
     }
 
     /**
@@ -306,29 +284,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param currentPrice Current price
      */
     function _vaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
-        available_ = _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, currentPrice, _lastPrice);
-    }
-
-    /**
-     * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
-     * account).
-     * @param totalExpo the total expo
-     * @param balanceVault the (old) balance of the vault
-     * @param balanceLong the (old) balance of the long side
-     * @param newPrice the new price
-     * @param oldPrice the old price when the old balances were updated
-     */
-    function _vaultAssetAvailable(
-        uint256 totalExpo,
-        uint256 balanceVault,
-        uint256 balanceLong,
-        uint128 newPrice,
-        uint128 oldPrice
-    ) internal pure returns (int256 available_) {
-        int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
-        int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
-
-        available_ = totalBalance.safeSub(newLongBalance);
+        available_ =
+            UsdnProtocolLib.calcVaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, currentPrice, _lastPrice);
     }
 
     /// @dev At the time of the last balance update (without taking funding into account)

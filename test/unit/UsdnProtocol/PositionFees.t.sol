@@ -255,7 +255,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 expectedBalanceB = protocol.i_calcMintUsdn(
             depositAmount,
             uint256(
-                protocol.i_vaultAssetAvailable(
+                UsdnProtocolLib.calcVaultAssetAvailable(
                     deposit.totalExpo,
                     deposit.balanceVault,
                     deposit.balanceLong,

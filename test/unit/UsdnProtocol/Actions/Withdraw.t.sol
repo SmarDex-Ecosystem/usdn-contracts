@@ -210,7 +210,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         // redeem the underlying asset share.
         uint256 available1 = withdrawal.balanceVault;
         uint256 available2 = uint256(
-            protocol.i_vaultAssetAvailable(
+            UsdnProtocolLib.calcVaultAssetAvailable(
                 withdrawal.totalExpo,
                 withdrawal.balanceVault,
                 withdrawal.balanceLong,

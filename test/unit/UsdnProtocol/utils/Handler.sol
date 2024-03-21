@@ -163,16 +163,6 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
     }
 
-    function i_vaultAssetAvailable(
-        uint256 totalExpo,
-        uint256 balanceVault,
-        uint256 balanceLong,
-        uint128 newPrice,
-        uint128 oldPrice
-    ) external pure returns (int256 available_) {
-        return _vaultAssetAvailable(totalExpo, balanceVault, balanceLong, newPrice, oldPrice);
-    }
-
     function i_vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
     }
