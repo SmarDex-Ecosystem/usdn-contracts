@@ -3,6 +3,8 @@ pragma solidity 0.8.20;
 
 import { console2, Test } from "forge-std/Test.sol";
 
+import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
+
 import { Usdn } from "src/Usdn.sol";
 
 /**
@@ -10,18 +12,15 @@ import { Usdn } from "src/Usdn.sol";
  * @dev Wrapper to test internal functions and access internal constants, as well as perform invariant testing
  */
 contract UsdnHandler is Usdn, Test {
-    // use multiple actors for invariant testing
-    address[] public actors;
+    using EnumerableMap for EnumerableMap.AddressToUintMap;
 
-    // track theoretical shares
-    mapping(address account => uint256) public shares;
+    // // track theoretical shares
+    EnumerableMap.AddressToUintMap private shares;
 
     // track theoretical total supply
     uint256 public totalSharesSum;
 
-    constructor(address[] memory _actors) Usdn(address(0), address(0)) {
-        actors = _actors;
-    }
+    constructor() Usdn(address(0), address(0)) { }
 
     function approve(address _owner, address _spender, uint256 _value) external {
         _approve(_owner, _spender, _value);
@@ -36,6 +35,19 @@ contract UsdnHandler is Usdn, Test {
     }
 
     /* ------------------ Functions used for invariant testing ------------------ */
+
+    function getSharesOfAddress(address account) external view returns (uint256) {
+        return EnumerableMap.get(shares, account);
+    }
+
+    function getLenghtOfShares() external view returns (uint256) {
+        return EnumerableMap.length(shares);
+    }
+
+    function getSharesOfIndex(uint256 index) external view returns (uint256) {
+        (, uint256 valueShares) = EnumerableMap.at(shares, index);
+        return valueShares;
+    }
 
     function rebaseTest(uint256 newDivisor) external {
         if (_divisor == MIN_DIVISOR) {
@@ -55,7 +67,13 @@ contract UsdnHandler is Usdn, Test {
         value = bound(value, 1, maxTokens() - totalSupply() - 1);
         uint256 valueShares = value * _divisor;
         totalSharesSum += valueShares;
-        shares[msg.sender] += valueShares;
+        uint256 lastShares;
+        if (EnumerableMap.contains(shares, msg.sender)) {
+            lastShares = EnumerableMap.get(shares, msg.sender);
+        } else {
+            lastShares = 0;
+        }
+        EnumerableMap.set(shares, msg.sender, lastShares + valueShares);
         _mint(msg.sender, value);
     }
 
@@ -66,29 +84,36 @@ contract UsdnHandler is Usdn, Test {
         console2.log("bound burn value");
         value = bound(value, 1, balanceOf(msg.sender));
         uint256 valueShares = value * _divisor;
-        if (valueShares > shares[msg.sender]) {
-            valueShares = shares[msg.sender];
+
+        uint256 lastShares = EnumerableMap.get(shares, msg.sender);
+        if (valueShares > lastShares) {
+            valueShares = lastShares;
         }
         totalSharesSum -= valueShares;
-        shares[msg.sender] -= valueShares;
+        EnumerableMap.set(shares, msg.sender, lastShares - valueShares);
         _burn(msg.sender, value);
     }
 
-    function transferTest(uint256 actorTo, uint256 value) external {
+    function transferTest(address to, uint256 value) external {
         console2.log("bound 'to' actor ID");
-        address to = actors[bound(actorTo, 0, actors.length - 1)];
-        if (balanceOf(msg.sender) == 0) {
+        if (balanceOf(msg.sender) == 0 || to == address(0)) {
             return;
         }
         console2.log("bound transfer value");
         value = bound(value, 1, balanceOf(msg.sender));
         uint256 valueShares = value * _divisor;
-        if (valueShares > shares[msg.sender]) {
-            valueShares = shares[msg.sender];
+        uint256 lastShares = EnumerableMap.get(shares, msg.sender);
+        if (valueShares > lastShares) {
+            valueShares = lastShares;
         }
 
-        shares[msg.sender] -= valueShares;
-        shares[to] += valueShares;
+        EnumerableMap.set(shares, msg.sender, lastShares - valueShares);
+        if (EnumerableMap.contains(shares, to)) {
+            EnumerableMap.set(shares, to, EnumerableMap.get(shares, to) + valueShares);
+        } else {
+            EnumerableMap.set(shares, to, valueShares);
+        }
+
         _transfer(msg.sender, to, value);
     }
 }

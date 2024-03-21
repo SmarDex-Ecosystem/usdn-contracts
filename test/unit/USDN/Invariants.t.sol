@@ -32,10 +32,10 @@ contract TestUsdnInvariants is UsdnTokenFixture {
      * @custom:scenario Check that the contract returns the expected number of shares for each user
      */
     function invariant_shares() public displayBalancesAndShares {
-        assertEq(usdn.sharesOf(USER_1), usdn.shares(USER_1), "shares of user 1");
-        assertEq(usdn.sharesOf(USER_2), usdn.shares(USER_2), "shares of user 2");
-        assertEq(usdn.sharesOf(USER_3), usdn.shares(USER_3), "shares of user 3");
-        assertEq(usdn.sharesOf(USER_4), usdn.shares(USER_4), "shares of user 4");
+        assertEq(usdn.sharesOf(USER_1), usdn.getSharesOfAddress(USER_1), "shares of user 1");
+        assertEq(usdn.sharesOf(USER_2), usdn.getSharesOfAddress(USER_2), "shares of user 2");
+        assertEq(usdn.sharesOf(USER_3), usdn.getSharesOfAddress(USER_3), "shares of user 3");
+        assertEq(usdn.sharesOf(USER_4), usdn.getSharesOfAddress(USER_4), "shares of user 4");
     }
 
     /**
@@ -49,7 +49,10 @@ contract TestUsdnInvariants is UsdnTokenFixture {
      * @custom:scenario Check that the sum of the user shares is equal to the total shares
      */
     function invariant_sumOfSharesBalances() public displayBalancesAndShares {
-        uint256 sum = usdn.shares(USER_1) + usdn.shares(USER_2) + usdn.shares(USER_3) + usdn.shares(USER_4);
+        uint256 sum;
+        for (uint256 i = 0; i < usdn.getLenghtOfShares(); i++) {
+            sum += usdn.getSharesOfIndex(i);
+        }
         assertEq(usdn.totalShares(), sum, "sum of user shares vs total shares");
     }
 
