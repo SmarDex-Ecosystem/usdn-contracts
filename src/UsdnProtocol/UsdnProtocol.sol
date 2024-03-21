@@ -233,7 +233,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {
-        // newRatio greater 5%
+        // If newRatio is greater than 5%
         if (newRatio > SDEX_BURNED_ON_DEPOSIT_DIVISOR / 20) {
             revert UsdnProtocolInvalidBurnSdexOnDepositRatio();
         }

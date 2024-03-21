@@ -3,8 +3,8 @@ pragma solidity 0.8.20;
 
 import { Script } from "forge-std/Script.sol";
 
-import { WstETH } from "test/utils/WstEth.sol";
 import { Sdex } from "test/utils/Sdex.sol";
+import { WstETH } from "test/utils/WstEth.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";

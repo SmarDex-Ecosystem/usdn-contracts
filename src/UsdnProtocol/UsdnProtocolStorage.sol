@@ -122,7 +122,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint16 internal _positionFeeBps = 4; // 0.04%
 
     /// @notice The ratio of USDN to SDEX tokens to burn on deposit
-    uint32 internal _sdexBurnOnDepositRatio = 100_000_000 / 100; // 1%
+    uint32 internal _sdexBurnOnDepositRatio = 1_000_000; // 1%
 
     /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
     uint128 internal _targetUsdnPrice;
