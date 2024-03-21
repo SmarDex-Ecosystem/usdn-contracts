@@ -99,10 +99,10 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided security deposit is lower than _securityDepositValue
     error UsdnProtocolSecurityDepositTooLow();
 
-    /// @dev Indicates that the provided security deposit is invalid
+    /// @dev Indicates that the wanted security deposit value cannot be set
     error UsdnProtocolInvalidSecurityDepositValue();
 
-    /// @dev Indicates that the balance at the end of the action is not the expected one
+    /// @dev Indicates that the ether balance of the contract at the end of the action is not the expected one
     error UsdnProtocolUnexpectedBalance();
 
     /**

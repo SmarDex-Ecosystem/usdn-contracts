@@ -244,6 +244,10 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidSecurityDepositValue();
         }
 
+        if (securityDepositValue / SECURITY_DEPOSIT_FACTOR * SECURITY_DEPOSIT_FACTOR != securityDepositValue) {
+            revert UsdnProtocolInvalidSecurityDepositValue();
+        }
+
         _securityDepositValue = securityDepositValue;
         emit SecurityDepositValueUpdated(securityDepositValue);
     }

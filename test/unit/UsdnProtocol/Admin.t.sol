@@ -524,16 +524,22 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         assertEq(protocol.getSecurityDepositValue(), newValue);
     }
 
-    function test_RevertWhen_setSecurityDepositValueInf() external adminPrank {
+    function test_RevertWhen_setSecurityDepositValue_Inf() external adminPrank {
         uint256 securityDepositFactor = protocol.SECURITY_DEPOSIT_FACTOR();
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidSecurityDepositValue.selector);
         // set security deposit with SECURITY_DEPOSIT_FACTOR - 1
         protocol.setSecurityDepositValue(securityDepositFactor - 1);
     }
 
-    function test_RevertWhen_setSecurityDepositValueSup() external adminPrank {
+    function test_RevertWhen_setSecurityDepositValue_Sup() external adminPrank {
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidSecurityDepositValue.selector);
         // set security deposit with SECURITY_DEPOSIT_FACTOR - 1
         protocol.setSecurityDepositValue(10 ether + 1);
+    }
+
+    function test_RevertWhen_setSecurityDepositValue_notMultiple() external adminPrank {
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidSecurityDepositValue.selector);
+        // set security deposit with 1 ether and 1 wei
+        protocol.setSecurityDepositValue(1 ether + 1);
     }
 }
