@@ -173,10 +173,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         payable
         returns (uint256 liquidatedPositions_)
     {
-        // uint256 amountToRefund = address(this).balance - msg.value;
+        uint256 balanceBefore = address(this).balance;
 
         liquidatedPositions_ = _liquidate(currentPriceData, iterations);
-        _refundExcessEther(0, address(this).balance, address(this).balance);
+        _refundExcessEther(0, 0, balanceBefore);
         _checkPendingFee();
     }
 
@@ -899,17 +899,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /// @notice Refund any excess ether to the user, making sure we don't lock ETH in the contract.
     function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) internal {
-        int256 amount = int256(amountToRefund) - int256(balanceBefore - address(this).balance);
+        int256 amount = int256(amountToRefund) - int256(balanceBefore - address(this).balance) + int256(msg.value)
+            - int256(securityDepositValue);
 
-        if (securityDepositValue > 0) {
-            amount += int256(msg.value) - int256(securityDepositValue);
-        }
-        console2.log("amountToRefund", amountToRefund);
-        console2.log("balanceBefore", balanceBefore);
-        console2.log("address(this).balance", address(this).balance);
-        console2.log("msg.value", msg.value);
-        console2.log("securityDepositValue", securityDepositValue);
-        console2.log("amount", amount);
         if (amount < 0) {
             revert UsdnProtocolUnexpectedBalance();
         }
