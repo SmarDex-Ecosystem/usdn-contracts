@@ -120,13 +120,13 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
-        returns (uint256 price_, uint256 conf_, uint256 timestamp_, bytes memory data_)
+        returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 timestamp_, bytes memory data_)
     {
         bytes memory result = vmFFIRustCommand("pyth-price", vm.toString(feed), vm.toString(timestamp));
 
         require(keccak256(result) != keccak256(""), "Rust command returned an error");
 
-        return abi.decode(result, (uint256, uint256, uint256, bytes));
+        return abi.decode(result, (uint256, uint256, uint256, uint256, bytes));
     }
 
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {

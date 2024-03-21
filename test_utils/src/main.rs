@@ -22,6 +22,7 @@ struct HermesResponse {
 struct PythPrice {
     conf: String,
     price: String,
+    expo: i64,
     publish_time: u64,
 }
 #[derive(Parser)]
@@ -144,11 +145,14 @@ fn print_u256_hex(x: Integer) -> Result<()> {
 fn print_pyth_response(response: HermesResponse) -> Result<()> {
     let price_hex = response.price.price.parse::<U256>()?;
     let conf_hex = response.price.conf.parse::<U256>()?;
+    let decimals: u64 = response.price.expo.abs().try_into()?;
+    let decimals_hex = U256::from(decimals);
     // Decode vaa from base64 to hex
     let decoded_vaa = STANDARD.decode(response.vaa)?;
     let data = (
         price_hex,
         conf_hex,
+        decimals_hex,
         U256::from(response.price.publish_time),
         &decoded_vaa,
     );

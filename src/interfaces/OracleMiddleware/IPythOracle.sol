@@ -5,12 +5,6 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 
 interface IPythOracle {
     /**
-     * @notice Get the number of decimals of the asset from Pyth network
-     * @return decimals_ The number of decimals of the asset
-     */
-    function getPythDecimals() external view returns (uint256 decimals_);
-
-    /**
      * @notice Get the Pyth contract address
      * @return pyth_ The Pyth contract address
      */

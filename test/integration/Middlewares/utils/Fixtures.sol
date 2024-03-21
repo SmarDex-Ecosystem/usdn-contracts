@@ -5,21 +5,12 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import { BaseFixture } from "test/utils/Fixtures.sol";
+import { PYTH_ORACLE, CHAINLINK_ORACLE_STETH, PYTH_STETH_USD, WSTETH } from "test/utils/Constants.sol";
 import {
-    PYTH_ORACLE,
-    CHAINLINK_ORACLE,
-    PYTH_WSTETH_USD,
-    CHAINLINK_ORACLE_STETH,
-    PYTH_STETH_USD,
-    WSTETH
-} from "test/utils/Constants.sol";
-import {
-    PYTH_DATA_PRICE,
-    PYTH_DATA_CONF,
-    PYTH_DATA_TIMESTAMP,
-    PYTH_DATA,
     PYTH_DATA_STETH_PRICE,
     PYTH_DATA_STETH_CONF,
+    PYTH_DATA_STETH_DECIMALS,
+    PYTH_DATA_TIMESTAMP,
     PYTH_DATA_STETH
 } from "test/integration/Middlewares/utils/Constants.sol";
 
@@ -70,13 +61,13 @@ contract CommonBaseIntegrationFixture is BaseFixture {
 
     function _getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
-        returns (uint256, uint256, uint256, bytes memory)
+        returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
     {
         bytes memory result = vmFFIRustCommand("pyth-price", vm.toString(feed), vm.toString(timestamp));
 
         require(keccak256(result) != keccak256(""), "Rust command returned an error");
 
-        return abi.decode(result, (uint256, uint256, uint256, bytes));
+        return abi.decode(result, (uint256, uint256, uint256, uint256, bytes));
     }
 
     function getChainlinkPrice() internal view returns (uint256, uint256) {
@@ -86,7 +77,7 @@ contract CommonBaseIntegrationFixture is BaseFixture {
 
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
-        returns (uint256, uint256, uint256, bytes memory)
+        returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
     {
         return _getHermesApiSignature(feed, timestamp);
     }
@@ -111,12 +102,18 @@ contract OracleMiddlewareBaseIntegrationFixture is CommonBaseIntegrationFixture,
 
     function setUp() public virtual {
         pyth = IPyth(PYTH_ORACLE);
-        chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE);
-        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_WSTETH_USD, address(chainlinkOnChain), 1 hours);
+        chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
+        oracleMiddleware = new OracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), 1 hours);
     }
 
-    function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
-        return (PYTH_DATA_PRICE, PYTH_DATA_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA);
+    function getMockedPythSignatureStETH()
+        internal
+        pure
+        returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
+    {
+        return (
+            PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_STETH_DECIMALS, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH
+        );
     }
 }
 
@@ -141,8 +138,14 @@ contract WstethIntegrationFixture is CommonBaseIntegrationFixture, ActionsIntegr
             new WstEthOracleMiddleware(address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), WSTETH, 1 hours);
     }
 
-    function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {
-        return (PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH);
+    function getMockedPythSignatureStETH()
+        internal
+        pure
+        returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
+    {
+        return (
+            PYTH_DATA_STETH_PRICE, PYTH_DATA_STETH_CONF, PYTH_DATA_STETH_DECIMALS, PYTH_DATA_TIMESTAMP, PYTH_DATA_STETH
+        );
     }
 
     function stethToWsteth(uint256 amount) public view returns (uint256) {
