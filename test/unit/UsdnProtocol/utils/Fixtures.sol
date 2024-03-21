@@ -174,10 +174,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     {
         sdex.mintAndApprove(
             user,
-            positionSize * price * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR() / 1e18,
+            protocol.i_calcMintUsdn(
+                positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalSupply(), price
+            ) * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR(),
             address(protocol),
             type(uint256).max
         );
+
         wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 
