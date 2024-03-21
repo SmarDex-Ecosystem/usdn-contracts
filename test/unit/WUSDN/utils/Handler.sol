@@ -13,57 +13,55 @@ import { Wusdn } from "src/Wusdn.sol";
 contract WusdnHandler is Wusdn, Test {
     Usdn public _usdn;
 
-    // use multiple actors for invariant testing
-    address[] public actors;
-
-    // current actor
-    address internal _currentActor;
-
-    constructor(address[] memory _actors, Usdn usdn) Wusdn(usdn) {
-        actors = _actors;
+    constructor(Usdn usdn) Wusdn(usdn) {
         _usdn = usdn;
     }
 
     /* ------------------ Functions used for invariant testing ------------------ */
 
-    modifier useActor(uint256 actorIndexSeed) {
-        console2.log("bound actor ID");
-        _currentActor = actors[bound(actorIndexSeed, 0, actors.length - 1)];
-        vm.startPrank(_currentActor);
-        _;
-        vm.stopPrank();
-    }
-
-    function depositTest(uint256 assets, uint256 receiverIndexSeed, uint256 actorIndexSeed)
-        external
-        useActor(actorIndexSeed)
-    {
+    function depositTest(uint256 assets) external {
         console2.log("bound deposit");
-        if (_usdn.balanceOf(_currentActor) == 0) {
+        if (_usdn.balanceOf(msg.sender) == 0) {
             return;
         }
-        assets = bound(assets, 0, _usdn.balanceOf(_currentActor));
+        assets = bound(assets, 0, _usdn.balanceOf(msg.sender));
+        vm.prank(msg.sender);
+        _usdn.approve(address(this), type(uint256).max);
 
-        _usdn.approve(address(this), assets);
-
-        vm.stopPrank();
-        vm.startPrank(address(this));
-        _deposit(_currentActor, actors[bound(receiverIndexSeed, 0, actors.length - 1)], assets, 0);
+        deposit(assets, msg.sender);
     }
 
-    function withdrawTest(uint256 assets, uint256 receiverIndexSeed, uint256 actorIndexSeed)
-        external
-        useActor(actorIndexSeed)
-    {
-        console2.log("bound withdraw");
-        if (balanceOf(_currentActor) == 0) {
+    function mintTest(uint256 shares) external {
+        console2.log("bound deposit");
+        if (_usdn.balanceOf(msg.sender) == 0) {
             return;
         }
-        uint256 maxAssets = convertToAssets(balanceOf(_currentActor));
+        uint256 maxShares = convertToShares(_usdn.balanceOf(msg.sender));
+        shares = bound(shares, 0, maxShares);
+        vm.prank(msg.sender);
+        _usdn.approve(address(this), type(uint256).max);
+
+        mint(shares, msg.sender);
+    }
+
+    function withdrawTest(uint256 assets) external {
+        console2.log("bound withdraw");
+        if (balanceOf(msg.sender) == 0) {
+            return;
+        }
+        uint256 maxAssets = convertToAssets(balanceOf(msg.sender));
         assets = bound(assets, 0, maxAssets);
 
-        vm.stopPrank();
-        vm.startPrank(address(this));
-        _withdraw(_currentActor, actors[bound(receiverIndexSeed, 0, actors.length - 1)], _currentActor, assets, 0);
+        withdraw(assets, msg.sender, msg.sender);
+    }
+
+    function redeemTest(uint256 shares) external {
+        console2.log("bound withdraw");
+        if (balanceOf(msg.sender) == 0) {
+            return;
+        }
+        shares = bound(shares, 0, balanceOf(msg.sender));
+
+        redeem(shares, msg.sender, msg.sender);
     }
 }

@@ -26,7 +26,7 @@ contract WusdnTokenFixture is UsdnTokenFixture {
         _actors[1] = USER_2;
         _actors[2] = USER_3;
         _actors[3] = USER_4;
-        wusdn = new WusdnHandler(_actors, usdn);
+        wusdn = new WusdnHandler(usdn);
         uint256 decimals = usdn.decimals();
         oneUSDN = 1 * 10 ** decimals;
 

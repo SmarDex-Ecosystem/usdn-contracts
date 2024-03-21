@@ -26,18 +26,22 @@ contract TestWusdnInvariants is WusdnTokenFixture {
         usdnSelectors[3] = usdn.transferTest.selector;
         targetSelector(FuzzSelector({ addr: address(usdn), selectors: usdnSelectors }));
         targetContract(address(wusdn));
-        bytes4[] memory wusdnSelectors = new bytes4[](2);
+        bytes4[] memory wusdnSelectors = new bytes4[](4);
         wusdnSelectors[0] = wusdn.depositTest.selector;
-        wusdnSelectors[1] = wusdn.withdrawTest.selector;
+        wusdnSelectors[1] = wusdn.mintTest.selector;
+        wusdnSelectors[2] = wusdn.withdrawTest.selector;
+        wusdnSelectors[3] = wusdn.redeemTest.selector;
         targetSelector(FuzzSelector({ addr: address(wusdn), selectors: wusdnSelectors }));
+        targetSender(USER_1);
+        targetSender(USER_2);
+        targetSender(USER_3);
+        targetSender(USER_4);
     }
 
     /**
-     * @custom:scenario Check that the sum of the user shares is equal to the total shares
+     * @custom:scenario Check that the contract have the expected number of total assets
      */
-    function invariant_sumOfSharesBalancesTotalSupply() public {
-        uint256 sum =
-            wusdn.balanceOf(USER_1) + wusdn.balanceOf(USER_2) + wusdn.balanceOf(USER_3) + wusdn.balanceOf(USER_4);
-        assertEq(wusdn.totalSupply(), sum, "total shares");
+    function invariant_totalAssetsSum() public {
+        assertGe(usdn.balanceOf(address(wusdn)), wusdn.convertToAssets(wusdn.totalSupply()), "total assets");
     }
 }
