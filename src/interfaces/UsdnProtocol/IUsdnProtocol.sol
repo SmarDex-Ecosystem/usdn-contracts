@@ -100,16 +100,16 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Set imbalance limits basis point
-     * @param newOpenLimit The new open limit
-     * @param newDepositLimit The new deposit limit
-     * @param newWithdrawalLimit The new withdrawal limit
-     * @param newCloseLimit The new close limit
+     * @param newOpenLimitBps The new open limit
+     * @param newDepositLimitBps The new deposit limit
+     * @param newWithdrawalLimitBps The new withdrawal limit
+     * @param newCloseLimitBps The new close limit
      */
-    function setExpoImbalanceLimitsBps(
-        uint256 newOpenLimit,
-        uint256 newDepositLimit,
-        uint256 newWithdrawalLimit,
-        uint256 newCloseLimit
+    function setExpoImbalanceLimits(
+        uint256 newOpenLimitBps,
+        uint256 newDepositLimitBps,
+        uint256 newWithdrawalLimitBps,
+        uint256 newCloseLimitBps
     ) external;
 
     /**

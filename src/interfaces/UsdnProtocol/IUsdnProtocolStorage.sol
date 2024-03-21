@@ -120,13 +120,13 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getMiddlewareValidationDelay() external view returns (uint256);
 
     /**
-     * @notice Get expo imbalance limits basis point
+     * @notice Get expo imbalance limits (in basis points)
      * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
      * @return depositExpoImbalanceLimitBps_ The deposit expo imbalance limit
      * @return withdrawalExpoImbalanceLimitBps_ The withdrawal expo imbalance limit
      * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
      */
-    function getExpoImbalanceLimitsBps()
+    function getExpoImbalanceLimits()
         external
         view
         returns (

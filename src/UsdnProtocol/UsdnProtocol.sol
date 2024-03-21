@@ -78,7 +78,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             _calculatePositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
 
         // verify expo is not imbalanced on long side
-        _imbalanceLimitOpen(positionTotalExpo, longAmount);
+        _checkImbalanceLimitOpen(positionTotalExpo, longAmount);
 
         // Create long position
         _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, leverage, positionTotalExpo);
@@ -245,28 +245,28 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setExpoImbalanceLimitsBps(
-        uint256 newOpenLimit,
-        uint256 newDepositLimit,
-        uint256 newWithdrawalLimit,
-        uint256 newCloseLimit
+    function setExpoImbalanceLimits(
+        uint256 newOpenLimitBps,
+        uint256 newDepositLimitBps,
+        uint256 newWithdrawalLimitBps,
+        uint256 newCloseLimitBps
     ) external onlyOwner {
-        _openExpoImbalanceLimitBps = newOpenLimit.toInt256();
-        _depositExpoImbalanceLimitBps = newDepositLimit.toInt256();
+        _openExpoImbalanceLimitBps = newOpenLimitBps.toInt256();
+        _depositExpoImbalanceLimitBps = newDepositLimitBps.toInt256();
 
-        if (newWithdrawalLimit != 0 && newWithdrawalLimit < newOpenLimit) {
+        if (newWithdrawalLimitBps != 0 && newWithdrawalLimitBps < newOpenLimitBps) {
             // withdrawal limit lower than open not permitted
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
-        _withdrawalExpoImbalanceLimitBps = newWithdrawalLimit.toInt256();
+        _withdrawalExpoImbalanceLimitBps = newWithdrawalLimitBps.toInt256();
 
-        if (newCloseLimit != 0 && newCloseLimit < newDepositLimit) {
+        if (newCloseLimitBps != 0 && newCloseLimitBps < newDepositLimitBps) {
             // close limit lower than deposit not permitted
             revert UsdnProtocolInvalidExpoImbalanceLimit();
         }
-        _closeExpoImbalanceLimitBps = newCloseLimit.toInt256();
+        _closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
 
-        emit ImbalanceLimitsUpdated(newOpenLimit, newDepositLimit, newWithdrawalLimit, newCloseLimit);
+        emit ImbalanceLimitsUpdated(newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps);
     }
 
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {

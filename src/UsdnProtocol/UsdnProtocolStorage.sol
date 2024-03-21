@@ -112,28 +112,28 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _feeThreshold = 1 ether;
 
     /**
-     * @notice The open long expo imbalance limit basis point.
+     * @notice The imbalance limit of the long expo for open actions (in basis points).
      * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long
      * the open rebalancing mechanism is triggered, preventing the opening of a new long position.
      */
     int256 internal _openExpoImbalanceLimitBps = 200;
 
     /**
-     * @notice The withdrawal long expo imbalance limit basis point.
+     * @notice The imbalance limit of the long expo for withdrawal actions (in basis points).
      * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long,
      * the withdrawal rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
      */
     int256 internal _withdrawalExpoImbalanceLimitBps = 600;
 
     /**
-     * @notice The deposit vault expo imbalance limit basis point.
+     * @notice The imbalance limit of the vault expo for deposit actions (in basis points).
      * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
      * the deposit vault rebalancing mechanism is triggered, preventing the opening of new vault position.
      */
     int256 internal _depositExpoImbalanceLimitBps = 200;
 
     /**
-     * @notice The close vault expo imbalance limit basis point.
+     * @notice The imbalance limit of the vault expo for close actions (in basis points).
      * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
      * the withdrawal vault rebalancing mechanism is triggered, preventing the close of existing long position.
      */
@@ -518,7 +518,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getExpoImbalanceLimitsBps()
+    function getExpoImbalanceLimits()
         external
         view
         returns (

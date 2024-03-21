@@ -145,14 +145,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice The deposit vault imbalance limit state verification
-     * @dev To ensure that the protocol does not imbalance more than the deposit limit on vault side
+     * @dev To ensure that the protocol does not imbalance more than
+     * the deposit limit on vault side, otherwise revert
      * @param depositValue the deposit value in asset
      */
-    function _imbalanceLimitDeposit(uint256 depositValue) internal view {
-        int256 depositExpoImbalanceLimit = _depositExpoImbalanceLimitBps;
+    function _checkImbalanceLimitDeposit(uint256 depositValue) internal view {
+        int256 depositExpoImbalanceLimitBps = _depositExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
-        if (depositExpoImbalanceLimit == 0) {
+        if (depositExpoImbalanceLimitBps == 0) {
             return;
         }
 
@@ -167,22 +168,23 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             BPS_DIVISOR.toInt256()
         ).safeDiv(currentLongExpo);
 
-        if (imbalanceBps >= depositExpoImbalanceLimit) {
+        if (imbalanceBps >= depositExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
 
     /**
      * @notice The withdrawal imbalance limit state verification
-     * @dev This is to ensure that the protocol does not imbalance more than the withdrawal limit on long side
+     * @dev This is to ensure that the protocol does not imbalance more than
+     * the withdrawal limit on long side, otherwise revert
      * @param withdrawalValue The withdrawal value in asset
      * @param totalExpo The current total expo
      */
-    function _imbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal view {
-        int256 withdrawalExpoImbalanceLimit = _withdrawalExpoImbalanceLimitBps;
+    function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal view {
+        int256 withdrawalExpoImbalanceLimitBps = _withdrawalExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
-        if (withdrawalExpoImbalanceLimit == 0) {
+        if (withdrawalExpoImbalanceLimitBps == 0) {
             return;
         }
 
@@ -199,22 +201,23 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             )
         ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentVaultExpo);
 
-        if (imbalanceBps >= withdrawalExpoImbalanceLimit) {
+        if (imbalanceBps >= withdrawalExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
 
     /**
-     * @notice The open long imbalance limit state verification
-     * @dev This is to ensure that the protocol does not imbalance more than the open limit on long side
+     * @notice The open long imbalance limit state verification. Revert
+     * @dev This is to ensure that the protocol does not imbalance more than
+     * the open limit on long side, otherwise revert
      * @param openTotalExpoValue The open position expo value
      * @param openCollatValue The open position collateral value
      */
-    function _imbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) internal view {
-        int256 openExpoImbalanceLimit = _openExpoImbalanceLimitBps;
+    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) internal view {
+        int256 openExpoImbalanceLimitBps = _openExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
-        if (openExpoImbalanceLimit == 0) {
+        if (openExpoImbalanceLimitBps == 0) {
             return;
         }
 
@@ -231,22 +234,23 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             )
         ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentVaultExpo);
 
-        if (imbalanceBps >= openExpoImbalanceLimit) {
+        if (imbalanceBps >= openExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
 
     /**
      * @notice The close vault imbalance limit state verification
-     * @dev This is to ensure that the protocol does not imbalance more than the close limit on vault side
+     * @dev This is to ensure that the protocol does not imbalance more than
+     * the close limit on vault side, otherwise revert
      * @param closeTotalExpoValue The close position total expo value
      * @param closeCollatValue The close position collateral value
      */
-    function _imbalanceLimitClose(uint256 closeTotalExpoValue, uint256 closeCollatValue) internal view {
-        int256 closeExpoImbalanceLimit = _closeExpoImbalanceLimitBps;
+    function _checkImbalanceLimitClose(uint256 closeTotalExpoValue, uint256 closeCollatValue) internal view {
+        int256 closeExpoImbalanceLimitBps = _closeExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
-        if (closeExpoImbalanceLimit == 0) {
+        if (closeExpoImbalanceLimitBps == 0) {
             return;
         }
 
@@ -268,7 +272,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             )
         ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentLongExpo);
 
-        if (imbalanceBps >= closeExpoImbalanceLimit) {
+        if (imbalanceBps >= closeExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
         }
     }
@@ -322,8 +326,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
-        // verify deposit imbalance limit
-        _imbalanceLimitDeposit(amount);
+        _checkImbalanceLimitDeposit(amount);
 
         // Apply fees on price
         uint128 pendingActionPrice =
@@ -440,8 +443,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _vaultAssetAvailable(totalExpo, _balanceVault, balanceLong, pendingActionPrice, _lastPrice).toUint256();
         uint256 usdnTotalSupply = _usdn.totalSupply();
 
-        // verify withdrawal imbalance limit
-        _imbalanceLimitWithdrawal(FixedPointMathLib.fullMulDiv(usdnAmount, balanceVault, usdnTotalSupply), totalExpo);
+        _checkImbalanceLimitWithdrawal(
+            FixedPointMathLib.fullMulDiv(usdnAmount, balanceVault, usdnTotalSupply), totalExpo
+        );
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateWithdrawal,
@@ -573,8 +577,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // remove liquidation penalty for leverage calculation
             uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - int24(_liquidationPenalty) * _tickSpacing);
             positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
-            // verify open imbalance limit
-            _imbalanceLimitOpen(positionTotalExpo, amount);
+
+            _checkImbalanceLimitOpen(positionTotalExpo, amount);
+
             // calculate position leverage
             // reverts if liquidationPrice >= entryPrice
             leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
@@ -759,8 +764,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint128 totalExpoToClose = (uint256(pos.totalExpo) * amountToClose / pos.amount).toUint128();
 
-        // verify withdrawal imbalance limit
-        _imbalanceLimitClose(totalExpoToClose, amountToClose);
+        _checkImbalanceLimitClose(totalExpoToClose, amountToClose);
 
         {
             uint256 liqMultiplier = _liquidationMultiplier;

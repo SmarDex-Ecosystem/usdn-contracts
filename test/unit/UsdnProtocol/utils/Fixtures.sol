@@ -109,7 +109,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
         // disable imbalance limits
         if (!testParams.enableLimits) {
-            protocol.setExpoImbalanceLimitsBps(0, 0, 0, 0);
+            protocol.setExpoImbalanceLimits(0, 0, 0, 0);
         }
 
         wstETH.approve(address(protocol), type(uint256).max);
@@ -264,7 +264,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         // cannot be less than 1 ether
         initialDeposit = uint128(bound(initialDeposit, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
 
-        (int256 openLimit,,,) = protocol.getExpoImbalanceLimitsBps();
+        (int256 openLimit,,,) = protocol.getExpoImbalanceLimits();
         uint128 margin = uint128(initialDeposit * uint256(openLimit) / protocol.BPS_DIVISOR());
 
         // min long expo to initiate a balanced protocol

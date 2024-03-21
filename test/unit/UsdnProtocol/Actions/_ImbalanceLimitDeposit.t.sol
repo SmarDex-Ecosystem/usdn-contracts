@@ -8,7 +8,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
 
 /**
- * @custom:feature Test of the protocol expo limit for `_imbalanceLimitDeposit` function in balanced state
+ * @custom:feature Test of the protocol expo limit for `_checkImbalanceLimitDeposit` function in balanced state
  */
 contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     function setUp() public {
@@ -20,28 +20,29 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `_imbalanceLimitDeposit` function should not revert when contract is balanced and position
+     * @custom:scenario The `_checkImbalanceLimitDeposit` function should not revert when contract is balanced and
+     * position
      * is within limit
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_imbalanceLimitDeposit` function is called with a value below the deposit limit
+     * @custom:when The `_checkImbalanceLimitDeposit` function is called with a value below the deposit limit
      * @custom:then The transaction should not revert
      */
-    function test_imbalanceLimitDeposit() public view {
+    function test_checkImbalanceLimitDeposit() public view {
         (, uint256 vaultExpoValueToLimit) = _getDepositLimitValues();
-        protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit);
+        protocol.i_checkImbalanceLimitDeposit(vaultExpoValueToLimit);
     }
 
     /**
-     * @custom:scenario The `_imbalanceLimitDeposit` function should revert when long expo equal 0
+     * @custom:scenario The `_checkImbalanceLimitDeposit` function should revert when long expo equal 0
      * @custom:given The initial long position is closed
      * @custom:and The protocol is imbalanced
-     * @custom:when The `_imbalanceLimitDeposit` function is called
+     * @custom:when The `_checkImbalanceLimitDeposit` function is called
      * @custom:then The transaction should revert
      */
-    function test_RevertWith_imbalanceLimitDepositZeroLongExpo() public {
+    function test_RevertWith_checkImbalanceLimitDepositZeroLongExpo() public {
         // disable close limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimitsBps(200, 200, 600, 0);
+        protocol.setExpoImbalanceLimits(200, 200, 600, 0);
 
         // the initial tick
         int24 tick = protocol.getMaxInitializedTick();
@@ -76,45 +77,45 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
 
         // should revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
-        protocol.i_imbalanceLimitDeposit(0);
+        protocol.i_checkImbalanceLimitDeposit(0);
     }
 
     /**
-     * @custom:scenario The `_imbalanceLimitDeposit` function should not revert when limit is disabled
+     * @custom:scenario The `_checkImbalanceLimitDeposit` function should not revert when limit is disabled
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_imbalanceLimitDeposit` function is called with a value above the deposit limit
+     * @custom:when The `_checkImbalanceLimitDeposit` function is called with a value above the deposit limit
      * @custom:then The transaction should not revert
      */
-    function test_imbalanceLimitDepositDisabled() public {
+    function test_checkImbalanceLimitDepositDisabled() public {
         (, uint256 vaultExpoValueToLimit) = _getDepositLimitValues();
 
         // disable deposit limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimitsBps(200, 0, 600, 600);
+        protocol.setExpoImbalanceLimits(200, 0, 600, 600);
 
-        protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit + 1);
+        protocol.i_checkImbalanceLimitDeposit(vaultExpoValueToLimit + 1);
     }
 
     /**
-     * @custom:scenario The `_imbalanceLimitDeposit` function should revert when contract is balanced
+     * @custom:scenario The `_checkImbalanceLimitDeposit` function should revert when contract is balanced
      * and position value imbalance it
      * @custom:given The protocol is in a balanced state
-     * @custom:when The `_imbalanceLimitDeposit` function is called with a value above the deposit limit
+     * @custom:when The `_checkImbalanceLimitDeposit` function is called with a value above the deposit limit
      * @custom:then The transaction should revert
      */
-    function test_RevertWith_imbalanceLimitDepositOutLimit() public {
+    function test_RevertWith_checkImbalanceLimitDepositOutLimit() public {
         (int256 depositLimitBps, uint256 vaultExpoValueToLimit) = _getDepositLimitValues();
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, depositLimitBps)
         );
-        protocol.i_imbalanceLimitDeposit(vaultExpoValueToLimit + 1);
+        protocol.i_checkImbalanceLimitDeposit(vaultExpoValueToLimit + 1);
     }
 
     function _getDepositLimitValues() private view returns (int256 depositLimitBps_, uint256 vaultExpoValueToLimit_) {
         // current long expo
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
         // deposit limit bps
-        (, depositLimitBps_,,) = protocol.getExpoImbalanceLimitsBps();
+        (, depositLimitBps_,,) = protocol.getExpoImbalanceLimits();
         // current vault expo value to imbalance the protocol
         vaultExpoValueToLimit_ = longExpo * uint256(depositLimitBps_) / protocol.BPS_DIVISOR();
     }
