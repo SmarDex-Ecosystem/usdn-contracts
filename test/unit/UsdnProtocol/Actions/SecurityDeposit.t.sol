@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { USER_1, ADMIN } from "test/utils/Constants.sol";
+import { USER_1, USER_2, ADMIN } from "test/utils/Constants.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
@@ -12,6 +12,7 @@ import {
     PendingAction,
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { console2 } from "forge-std/Test.sol";
 
 /**
  * @custom:feature The security deposit of the USDN Protocol
@@ -198,6 +199,74 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             address(protocol).balance,
             balanceProtocolBefore,
             "protocol balance after all actions should be the same than at the beginning"
+        );
+    }
+
+    /**
+     * @custom:scenario Two users initiate an open position and deposit actions, and a third user validates both
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from both users at their initializations
+     * @custom:then We skip validation deadline + 1
+     * @custom:and The protocol returns both security deposits to the third user when
+     * validateActionablePendingActions is called
+     */
+    function test_securityDeposit_validateActionablePendingActions() public {
+        uint256 balanceSenderBefore = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+        uint256 balanceUser1Before = USER_1.balance;
+        uint256 balanceUser2Before = USER_2.balance;
+
+        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
+        setUpUserPositionInLong(
+            USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+        );
+        skip(protocol.getValidationDeadline() + 1);
+
+        assertEq(address(this).balance, balanceSenderBefore, "the user0 should not have a change in his balance");
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore + 2 * SECURITY_DEPOSIT_VALUE,
+            "the protocol should have two security deposits"
+        );
+        assertEq(
+            USER_1.balance,
+            balanceUser1Before - SECURITY_DEPOSIT_VALUE,
+            "the user1 should have paid the security deposit"
+        );
+        assertEq(
+            USER_2.balance,
+            balanceUser1Before - SECURITY_DEPOSIT_VALUE,
+            "the user2 should have paid the security deposit"
+        );
+
+        (, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(this));
+        bytes[] memory previousPriceData = new bytes[](rawIndices.length);
+        previousPriceData[0] = priceData;
+        previousPriceData[1] = priceData;
+        PreviousActionsData memory previousActionsData =
+            PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
+
+        protocol.validateActionablePendingActions(previousActionsData, 10);
+
+        assertEq(
+            address(this).balance,
+            balanceSenderBefore + 2 * SECURITY_DEPOSIT_VALUE,
+            "the user0 should have retrieved both security deposits from the protocol"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore,
+            "protocol balance after all actions should be the same than at the beginning"
+        );
+        assertEq(
+            USER_1.balance,
+            balanceUser1Before - SECURITY_DEPOSIT_VALUE,
+            "the user1 should not have retrieved his security deposit"
+        );
+        assertEq(
+            USER_2.balance,
+            balanceUser2Before - SECURITY_DEPOSIT_VALUE,
+            "the user2 should not have retrieved his security deposit"
         );
     }
 
