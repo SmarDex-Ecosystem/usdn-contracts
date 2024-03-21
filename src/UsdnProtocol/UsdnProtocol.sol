@@ -82,7 +82,13 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             getEffectiveTickForPrice(desiredLiqPrice) // without penalty
         );
 
-        _refundExcessEther(msg.value, address(this).balance, address(this).balance);
+        uint256 balance = address(this).balance;
+        if (balance != 0) {
+            (bool success,) = payable(msg.sender).call{ value: uint256(balance) }("");
+            if (!success) {
+                revert UsdnProtocolEtherRefundFailed();
+            }
+        }
     }
 
     /// @inheritdoc IUsdnProtocol

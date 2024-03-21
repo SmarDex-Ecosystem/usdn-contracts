@@ -32,7 +32,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The number of decimals for the scaling factor of the funding rate
     function FUNDING_SF_DECIMALS() external pure returns (uint8);
 
-    /// @notice The number of decimals for the security deposit values
+    /// @notice The factor to convert the security deposit value to an uint24
     function SECURITY_DEPOSIT_FACTOR() external pure returns (uint128);
 
     /**
