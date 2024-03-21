@@ -8,6 +8,7 @@ import { DEPLOYER } from "test/utils/Constants.sol";
 
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 /**
  * @custom:feature Test the rebasing of the USDN token depending on its price
@@ -56,10 +57,10 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         assetPrice = uint128(bound(assetPrice, 0.01 ether, type(uint128).max));
         targetPrice = uint128(bound(targetPrice, 1 ether, 2 ether));
         uint256 newTotalSupply =
-            protocol.i_calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, usdnDecimals, assetDecimals);
+            UsdnProtocolLib.calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, usdnDecimals, assetDecimals);
         vm.assume(newTotalSupply > 0);
         uint256 newPrice =
-            protocol.i_calcUsdnPrice(vaultBalance, assetPrice, newTotalSupply, usdnDecimals, assetDecimals);
+            UsdnProtocolLib.calcUsdnPrice(vaultBalance, assetPrice, newTotalSupply, usdnDecimals, assetDecimals);
 
         // Here we potentially have a small error, in part due to how the price results from the total supply, which
         // itself results from the division by the divisor. We can't expect the price to be exactly the target price.
@@ -90,7 +91,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // calculate expected new USDN divisor
         uint256 expectedVaultBalance =
             uint256(protocol.vaultAssetAvailableWithFunding(newPrice, uint128(block.timestamp - 30)));
-        uint256 expectedTotalSupply = protocol.i_calcRebaseTotalSupply(
+        uint256 expectedTotalSupply = UsdnProtocolLib.calcRebaseTotalSupply(
             expectedVaultBalance,
             newPrice,
             protocol.getTargetUsdnPrice(),

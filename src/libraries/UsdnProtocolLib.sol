@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+//import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import {
     PendingAction, VaultPendingAction, LongPendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -16,7 +16,9 @@ library UsdnProtocolLib {
 
     uint8 public constant FUNDING_RATE_DECIMALS = 18;
 
-    /// STORAGE
+    /* -------------------------------------------------------------------------- */
+    /*                                Storage layer                               */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Calculate the tickHash from a tick number and tick version
@@ -28,7 +30,9 @@ library UsdnProtocolLib {
         tickHash_ = keccak256(abi.encodePacked(tick, version));
     }
 
-    /// CORE
+    /* -------------------------------------------------------------------------- */
+    /*                                 Core layer                                 */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Calculation of the EMA of the funding rate
@@ -194,7 +198,56 @@ library UsdnProtocolLib {
         available_ = totalBalance.safeSub(newLongBalance);
     }
 
-    // PUBLIC
+    /* -------------------------------------------------------------------------- */
+    /*                                 Vault layer                                */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Calculate the price of the USDN token as a function of its total supply, the vault balance and the
+     * underlying asset price.
+     * @param vaultBalance The vault balance
+     * @param assetPrice The price of the asset
+     * @param usdnTotalSupply The total supply of the USDN token
+     * @param usdnDecimals The number of decimals of the USDN token
+     * @param assetDecimals The number of decimals of the underlying asset
+     * @return price_ The price of the USDN token
+     */
+    function calcUsdnPrice(
+        uint256 vaultBalance,
+        uint128 assetPrice,
+        uint256 usdnTotalSupply,
+        uint8 usdnDecimals,
+        uint8 assetDecimals
+    ) internal pure returns (uint256 price_) {
+        price_ = FixedPointMathLib.fullMulDiv(
+            vaultBalance, uint256(assetPrice) * 10 ** usdnDecimals, usdnTotalSupply * 10 ** assetDecimals
+        );
+    }
+
+    /**
+     * @notice Calculate the required USDN total supply to reach `targetPrice`
+     * @param vaultBalance The balance of the vault
+     * @param assetPrice The price of the underlying asset
+     * @param targetPrice The target USDN price to reach
+     * @param usdnDecimals The number of decimals of the USDN token
+     * @param assetDecimals The number of decimals of the asset
+     * @return totalSupply_ The required total supply to achieve `targetPrice`
+     */
+    function calcRebaseTotalSupply(
+        uint256 vaultBalance,
+        uint128 assetPrice,
+        uint128 targetPrice,
+        uint8 usdnDecimals,
+        uint8 assetDecimals
+    ) internal pure returns (uint256 totalSupply_) {
+        totalSupply_ = FixedPointMathLib.fullMulDiv(
+            vaultBalance, uint256(assetPrice) * 10 ** usdnDecimals, uint256(targetPrice) * 10 ** assetDecimals
+        );
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Public functions                              */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Safely cast a uint128 to an int256
