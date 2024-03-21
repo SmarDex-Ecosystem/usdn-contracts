@@ -37,7 +37,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
         _initiateDeposit(msg.sender, amount, currentPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -49,7 +49,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
     {
         _validateDeposit(msg.sender, depositPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -61,7 +61,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
         _initiateWithdrawal(msg.sender, usdnAmount, currentPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -73,7 +73,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
     {
         _validateWithdrawal(msg.sender, withdrawalPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -86,7 +86,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         (tick_, tickVersion_, index_) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -98,7 +98,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
     {
         _validateOpenPosition(msg.sender, openPriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -125,7 +125,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
     {
         _validateClosePosition(msg.sender, closePriceData);
-        _executePendingAction(previousActionsData);
+        _executePendingActionOrRevert(previousActionsData);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -134,9 +134,33 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
+        initializedAndNonReentrant
         returns (uint256 liquidatedPositions_)
     {
         liquidatedPositions_ = _liquidate(currentPriceData, iterations);
+        _refundExcessEther();
+        _checkPendingFee();
+    }
+
+    /// @inheritdoc IUsdnProtocolActions
+    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
+        external
+        payable
+        initializedAndNonReentrant
+        returns (uint256 validatedActions_)
+    {
+        if (maxValidations > previousActionsData.rawIndices.length) {
+            maxValidations = previousActionsData.rawIndices.length;
+        }
+        do {
+            (, bool executed) = _executePendingAction(previousActionsData);
+            if (!executed) {
+                break;
+            }
+            unchecked {
+                validatedActions_++;
+            }
+        } while (validatedActions_ < maxValidations);
         _refundExcessEther();
         _checkPendingFee();
     }
@@ -786,15 +810,35 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
-    function _executePendingAction(PreviousActionsData calldata data) internal {
+    /**
+     * @notice Execute the first actionable pending action or revert if the price data was not provided.
+     * @param data The price data and raw indices
+     */
+    function _executePendingActionOrRevert(PreviousActionsData calldata data) internal {
+        (bool success,) = _executePendingAction(data);
+        if (!success) {
+            revert UsdnProtocolInvalidPendingActionData();
+        }
+    }
+
+    /**
+     * @notice Execute the first actionable pending action and report success.
+     * @param data The price data and raw indices
+     * @return success_ Whether the price data is valid
+     * @return executed_ Whether the pending action was executed (false if the queue has no actionable item)
+     */
+    function _executePendingAction(PreviousActionsData calldata data)
+        internal
+        returns (bool success_, bool executed_)
+    {
         (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction();
         if (pending.action == ProtocolAction.None) {
             // no pending action
-            return;
+            return (true, false);
         }
         uint256 length = data.priceData.length;
         if (data.rawIndices.length != length || length < 1) {
-            revert UsdnProtocolInvalidPendingActionData();
+            return (false, false);
         }
         uint128 offset;
         unchecked {
@@ -802,7 +846,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             offset = rawIndex - data.rawIndices[0];
         }
         if (offset >= length || data.rawIndices[offset] != rawIndex) {
-            revert UsdnProtocolInvalidPendingActionData();
+            return (false, false);
         }
         bytes calldata priceData = data.priceData[offset];
         _clearPendingAction(pending.user);
@@ -815,6 +859,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         } else if (pending.action == ProtocolAction.ValidateClosePosition) {
             _validateClosePositionWithAction(pending, priceData);
         }
+        success_ = true;
+        executed_ = true;
     }
 
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
