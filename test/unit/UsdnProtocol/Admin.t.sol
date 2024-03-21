@@ -518,9 +518,23 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.SecurityDepositValueUpdated(newValue);
-        // set security deposit
+        // setv security deposit
         protocol.setSecurityDepositValue(newValue);
         // assert new middleware equal randAddress
         assertEq(protocol.getSecurityDepositValue(), newValue);
+    }
+
+    function test_RevertWhen_setSecurityDepositValueInf() external adminPrank {
+        uint256 securityDepositFactor = protocol.SECURITY_DEPOSIT_FACTOR();
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidSecurityDepositValue.selector);
+        // set security deposit with SECURITY_DEPOSIT_FACTOR - 1
+        protocol.setSecurityDepositValue(securityDepositFactor - 1);
+    }
+
+    function test_RevertWhen_setSecurityDepositValueSup() external adminPrank {
+        uint256 securityDepositFactor = protocol.SECURITY_DEPOSIT_FACTOR();
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidSecurityDepositValue.selector);
+        // set security deposit with SECURITY_DEPOSIT_FACTOR - 1
+        protocol.setSecurityDepositValue(type(uint24).max * securityDepositFactor + 1);
     }
 }

@@ -236,6 +236,15 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setSecurityDepositValue(uint256 securityDepositValue) external onlyOwner {
+        if (
+            (
+                securityDepositValue < SECURITY_DEPOSIT_FACTOR
+                    || securityDepositValue > type(uint24).max * SECURITY_DEPOSIT_FACTOR
+            ) && securityDepositValue != 0
+        ) {
+            revert UsdnProtocolInvalidSecurityDepositValue();
+        }
+
         _securityDepositValue = securityDepositValue;
         emit SecurityDepositValueUpdated(securityDepositValue);
     }
