@@ -450,11 +450,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 leverage;
         uint128 positionTotalExpo;
         {
+            uint256 liquidationMultiplier = _liquidationMultiplier;
+            int24 tickSpacing = _tickSpacing;
             // we calculate the closest valid tick down for the desired liq price with liquidation penalty
-            tick_ = getEffectiveTickForPrice(desiredLiqPrice);
+            tick_ = UsdnProtocolLib.calcEffectiveTickForPrice(desiredLiqPrice, liquidationMultiplier, tickSpacing);
 
             // remove liquidation penalty for leverage calculation
-            uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - int24(_liquidationPenalty) * _tickSpacing);
+            uint128 liqPriceWithoutPenalty = UsdnProtocolLib.calcEffectivePriceForTick(
+                tick_ - int24(_liquidationPenalty) * tickSpacing, liquidationMultiplier
+            );
             positionTotalExpo = UsdnProtocolLib.calcPositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
 
             // calculate position leverage
@@ -466,11 +470,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             if (leverage > _maxLeverage) {
                 revert UsdnProtocolLeverageTooHigh();
             }
-        }
 
-        {
             // Calculate effective liquidation price
-            uint128 liqPrice = getEffectivePriceForTick(tick_);
+            uint128 liqPrice = UsdnProtocolLib.calcEffectivePriceForTick(tick_, liquidationMultiplier);
             // Liquidation price must be at least x% below current price
             _checkSafetyMargin(neutralPrice, liqPrice);
         }
@@ -545,7 +547,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Get the position
         Position memory pos = _longPositions[tickHash][long.index];
         // Re-calculate leverage
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(long.tick - int24(_liquidationPenalty) * _tickSpacing);
+        uint128 liqPriceWithoutPenalty = UsdnProtocolLib.calcEffectivePriceForTick(
+            long.tick - int24(_liquidationPenalty) * _tickSpacing, _liquidationMultiplier
+        );
         // reverts if liquidationPrice >= entryPrice
         uint128 leverage = UsdnProtocolLib.calcLeverage(startPrice, liqPriceWithoutPenalty);
         // Leverage is always greater than 1 (liquidationPrice is positive).
@@ -553,20 +557,24 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // However, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
         // of _maxLeverage
         if (leverage > _maxLeverage) {
+            uint256 liquidationMultiplier = _liquidationMultiplier;
+            int24 tickSpacing = _tickSpacing;
             // remove the position
             _removeAmountFromPosition(long.tick, long.index, pos, pos.amount, pos.totalExpo);
             // theoretical liquidation price for _maxLeverage
             liqPriceWithoutPenalty = UsdnProtocolLib.calcLiquidationPrice(startPrice, _maxLeverage.toUint128());
             // adjust to closest valid tick down
-            int24 tickWithoutPenalty = getEffectiveTickForPrice(liqPriceWithoutPenalty);
+            int24 tickWithoutPenalty =
+                UsdnProtocolLib.calcEffectiveTickForPrice(liqPriceWithoutPenalty, liquidationMultiplier, tickSpacing);
             // retrieve exact liquidation price without penalty
-            liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
+            liqPriceWithoutPenalty =
+                UsdnProtocolLib.calcEffectivePriceForTick(tickWithoutPenalty, liquidationMultiplier);
             // recalculate the leverage with the new liquidation price
             leverage = UsdnProtocolLib.calcLeverage(startPrice, liqPriceWithoutPenalty);
             // update position total expo
             pos.totalExpo = UsdnProtocolLib.calcPositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
             // apply liquidation penalty
-            int24 tick = tickWithoutPenalty + int24(_liquidationPenalty) * _tickSpacing;
+            int24 tick = tickWithoutPenalty + int24(_liquidationPenalty) * tickSpacing;
             // insert position into new tick, update tickVersion and index
             (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos);
             // emit LiquidationPriceUpdated

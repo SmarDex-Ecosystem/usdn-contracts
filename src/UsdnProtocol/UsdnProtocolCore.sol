@@ -21,7 +21,6 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
-    using SafeCast for int256;
     using SignedMath for int256;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 

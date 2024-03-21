@@ -260,6 +260,28 @@ library UsdnProtocolLib {
     /* -------------------------------------------------------------------------- */
 
     /**
+     * @notice Get the value of the lowest usable tick, taking into account the tick spacing
+     * @dev Note that the effective minimum tick of a newly open long position also depends on the minimum allowed
+     * leverage value and the current value of the liquidation price multiplier.
+     * @param tickSpacing The tick spacing
+     * @return tick_ The minimum tick
+     */
+    function calcMinTick(int24 tickSpacing) public pure returns (int24 tick_) {
+        tick_ = TickMath.minUsableTick(tickSpacing);
+    }
+
+    /**
+     * @notice Get the value of the highest usable tick, taking into account the tick spacing
+     * @dev Note that the effective maximum tick of a newly open long position also depends on the maximum allowed
+     * leverage value and the current value of the liquidation price multiplier.
+     * @param tickSpacing The tick spacing
+     * @return tick_ The maximum tick
+     */
+    function calcMaxTick(int24 tickSpacing) public pure returns (int24 tick_) {
+        tick_ = TickMath.maxUsableTick(tickSpacing);
+    }
+
+    /**
      * @notice Get the liquidation price corresponding to a given tick number
      * @dev This takes into account the liquidation price multiplier.
      * Note that ticks that are not a multiple of the tick spacing cannot contain a long position.
@@ -272,6 +294,60 @@ library UsdnProtocolLib {
         price_ = FixedPointMathLib.fullMulDiv(
             TickMath.getPriceAtTick(tick), liqMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
         ).toUint128();
+    }
+
+    /**
+     * @notice Get the tick number corresponding to a given price
+     * @dev This takes into account the liquidation price multiplier and the tick spacing
+     * @param price The price
+     * @param liqMultiplier The liquidation price multiplier
+     * @param tickSpacing The tick spacing
+     * @return tick_ The effective tick corresponding to a price, taking the multiplier and tick spacing into account
+     */
+    function calcEffectiveTickForPrice(uint128 price, uint256 liqMultiplier, int24 tickSpacing)
+        public
+        pure
+        returns (int24 tick_)
+    {
+        // adjusted price with liquidation multiplier
+        uint256 priceWithMultiplier =
+            FixedPointMathLib.fullMulDiv(price, 10 ** UsdnProtocolLib.LIQUIDATION_MULTIPLIER_DECIMALS, liqMultiplier);
+
+        if (priceWithMultiplier < TickMath.MIN_PRICE) {
+            return calcMinTick(tickSpacing);
+        }
+
+        tick_ = TickMath.getTickAtPrice(priceWithMultiplier);
+
+        // round down to the next valid tick according to _tickSpacing (towards negative infinity)
+        if (tick_ < 0) {
+            // we round up the inverse number (positive) then invert it -> round towards negative infinity
+            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(tickSpacing)))))
+                * tickSpacing;
+            // avoid invalid ticks
+            int24 minUsableTick = calcMinTick(tickSpacing);
+            if (tick_ < minUsableTick) {
+                tick_ = minUsableTick;
+            }
+        } else {
+            // rounding is desirable here
+            // slither-disable-next-line divide-before-multiply
+            tick_ = (tick_ / tickSpacing) * tickSpacing;
+        }
+    }
+
+    /**
+     * @notice Calculate the closest tick to a given price, taking into account the liquidation multiplier
+     * @param currentPrice The current price of the asset
+     * @param liqMultiplier The liquidation price multiplier
+     * @return tick_ The closest tick to the given price
+     */
+    function calcClosestTickForPrice(uint256 currentPrice, uint256 liqMultiplier) external pure returns (int24 tick_) {
+        tick_ = TickMath.getClosestTickAtPrice(
+            FixedPointMathLib.fullMulDiv(
+                currentPrice, 10 ** UsdnProtocolLib.LIQUIDATION_MULTIPLIER_DECIMALS, liqMultiplier
+            )
+        );
     }
 
     /**

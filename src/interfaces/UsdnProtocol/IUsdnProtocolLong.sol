@@ -65,14 +65,6 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
     function getEffectiveTickForPrice(uint128 price) external view returns (int24);
 
     /**
-     * @notice Get the tick number corresponding to a given price
-     * @dev This takes into account the liquidation price multiplier and the tick spacing
-     * @param price The price
-     * @param liqMultiplier The liquidation price multiplier
-     */
-    function getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier) external view returns (int24);
-
-    /**
      * @notice Get the liquidation price corresponding to a given tick number
      * @dev This takes into account the liquidation price multiplier.
      * Note that ticks that are not a multiple of the tick spacing cannot contain a long position.

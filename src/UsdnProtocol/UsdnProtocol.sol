@@ -80,7 +80,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _createInitialPosition(
             longAmount,
             currentPrice.price.toUint128(),
-            getEffectiveTickForPrice(desiredLiqPrice) // without penalty
+            UsdnProtocolLib.calcEffectiveTickForPrice(desiredLiqPrice, _liquidationMultiplier, _tickSpacing) // without
+                // penalty
         );
 
         _refundExcessEther();
@@ -313,7 +314,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Transfer the wstETH for the long
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
-        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
+        uint128 liquidationPriceWithoutPenalty = UsdnProtocolLib.calcEffectivePriceForTick(tick, _liquidationMultiplier);
         uint128 leverage = UsdnProtocolLib.calcLeverage(price, liquidationPriceWithoutPenalty);
         uint128 positionTotalExpo = UsdnProtocolLib.calcPositionTotalExpo(amount, price, liquidationPriceWithoutPenalty);
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty

@@ -165,9 +165,8 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         uint128 expectedMaxLiqPrice =
             uint128(CURRENT_PRICE * (protocol.BPS_DIVISOR() - protocol.getSafetyMarginBps()) / protocol.BPS_DIVISOR());
 
-        int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE, protocol.getLiquidationMultiplier());
-        uint128 expectedLiqPrice =
-            UsdnProtocolLib.calcEffectivePriceForTick(expectedTick, protocol.getLiquidationMultiplier());
+        int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE);
+        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick);
 
         vm.expectRevert(
             abi.encodeWithSelector(

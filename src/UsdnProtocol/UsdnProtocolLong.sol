@@ -9,23 +9,20 @@ import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
 
 abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
-    using SignedMath for int256;
 
     /// @inheritdoc IUsdnProtocolLong
     function minTick() public view returns (int24 tick_) {
-        tick_ = TickMath.minUsableTick(_tickSpacing);
+        tick_ = UsdnProtocolLib.calcMinTick(_tickSpacing);
     }
 
     /// @inheritdoc IUsdnProtocolLong
     function maxTick() public view returns (int24 tick_) {
-        tick_ = TickMath.maxUsableTick(_tickSpacing);
+        tick_ = UsdnProtocolLib.calcMaxTick(_tickSpacing);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -51,8 +48,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     // slither-disable-next-line write-after-write
     function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
         liquidationPrice_ = UsdnProtocolLib.calcLiquidationPrice(price, uint128(_minLeverage));
-        int24 tick = getEffectiveTickForPrice(liquidationPrice_);
-        liquidationPrice_ = getEffectivePriceForTick(tick + _tickSpacing);
+        uint256 liquidationMultiplier = _liquidationMultiplier;
+        int24 tickSpacing = _tickSpacing;
+        int24 tick = UsdnProtocolLib.calcEffectiveTickForPrice(liquidationPrice_, liquidationMultiplier, tickSpacing);
+        liquidationPrice_ = UsdnProtocolLib.calcEffectivePriceForTick(tick + tickSpacing, liquidationMultiplier);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -70,43 +69,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
-        tick_ = getEffectiveTickForPrice(price, _liquidationMultiplier);
+    function getEffectiveTickForPrice(uint128 price) external view returns (int24 tick_) {
+        tick_ = UsdnProtocolLib.calcEffectiveTickForPrice(price, _liquidationMultiplier, _tickSpacing);
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier) public view returns (int24 tick_) {
-        // adjusted price with liquidation multiplier
-        uint256 priceWithMultiplier =
-            FixedPointMathLib.fullMulDiv(price, 10 ** UsdnProtocolLib.LIQUIDATION_MULTIPLIER_DECIMALS, liqMultiplier);
-
-        if (priceWithMultiplier < TickMath.MIN_PRICE) {
-            return minTick();
-        }
-
-        int24 tickSpacing = _tickSpacing;
-        tick_ = TickMath.getTickAtPrice(priceWithMultiplier);
-
-        // round down to the next valid tick according to _tickSpacing (towards negative infinity)
-        if (tick_ < 0) {
-            // we round up the inverse number (positive) then invert it -> round towards negative infinity
-            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(tickSpacing)))))
-                * tickSpacing;
-            // avoid invalid ticks
-            int24 minUsableTick = minTick();
-            if (tick_ < minUsableTick) {
-                tick_ = minUsableTick;
-            }
-        } else {
-            // rounding is desirable here
-            // slither-disable-next-line divide-before-multiply
-            tick_ = (tick_ / tickSpacing) * tickSpacing;
-        }
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function getEffectivePriceForTick(int24 tick) public view returns (uint128 price_) {
-        // adjusted price with liquidation multiplier
+    function getEffectivePriceForTick(int24 tick) external view returns (uint128 price_) {
         price_ = UsdnProtocolLib.calcEffectivePriceForTick(tick, _liquidationMultiplier);
     }
 
@@ -135,7 +103,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         returns (int256 value_)
     {
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
+        uint128 liqPriceWithoutPenalty = UsdnProtocolLib.calcEffectivePriceForTick(
+            tick - int24(_liquidationPenalty) * _tickSpacing, _liquidationMultiplier
+        );
 
         // if the current price is lower than the liquidation price, we have effectively a negative value
         if (currentPrice <= liqPriceWithoutPenalty) {
@@ -283,11 +253,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             iteration = MAX_LIQUIDATION_ITERATION;
         }
 
-        int24 currentTick = TickMath.getClosestTickAtPrice(
-            FixedPointMathLib.fullMulDiv(
-                currentPrice, 10 ** UsdnProtocolLib.LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier
-            )
-        );
+        int24 currentTick = UsdnProtocolLib.calcClosestTickForPrice(currentPrice, _liquidationMultiplier);
         int24 tick = _maxInitializedTick;
 
         do {
@@ -328,7 +294,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 _tickBitmap.unset(_tickToBitmapIndex(tick));
 
                 emit LiquidatedTick(
-                    tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue
+                    tick,
+                    _tickVersion[tick] - 1,
+                    currentPrice,
+                    UsdnProtocolLib.calcEffectivePriceForTick(tick, _liquidationMultiplier),
+                    tickValue
                 );
             }
         } while (liquidatedTicks_ < iteration);
