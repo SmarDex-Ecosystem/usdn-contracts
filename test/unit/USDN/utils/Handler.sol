@@ -14,7 +14,7 @@ import { Usdn } from "src/Usdn.sol";
 contract UsdnHandler is Usdn, Test {
     using EnumerableMap for EnumerableMap.AddressToUintMap;
 
-    // // track theoretical shares
+    // track theoretical shares
     EnumerableMap.AddressToUintMap private shares;
 
     // track theoretical total supply
