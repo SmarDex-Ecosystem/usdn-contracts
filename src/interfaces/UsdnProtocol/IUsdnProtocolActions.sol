@@ -36,7 +36,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
-     * @dev The security will be returned to the sender.
+     * @dev The security deposit will be returned to the sender.
      * @param depositPriceData The price data corresponding to the sender's pending deposit action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
@@ -69,7 +69,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
-     * @dev The security will be returned to the sender.
+     * @dev The security deposit will be returned to the sender.
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
@@ -113,7 +113,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * This operation adjusts the entry price and initial leverage of the position.
      * It is also possible for this operation to change the tick, tickVersion and index of the position, in which case
      * we emit the `LiquidationPriceUpdated` event.
-     * @dev The security will be returned to the sender.
+     * @dev The security deposit will be returned to the sender.
      * @param openPriceData The price data corresponding to the sender's pending open position action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
@@ -159,7 +159,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * This operation calculates the final exit price and profit of the long position and performs the payout.
-     * @dev The security will be returned to the sender.
+     * @dev The security deposit will be returned to the sender.
      * @param closePriceData The price data corresponding to the sender's pending close position action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */

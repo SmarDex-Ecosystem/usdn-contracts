@@ -12,7 +12,6 @@ import {
     PendingAction,
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { console2 } from "forge-std/Test.sol";
 
 /**
  * @custom:feature The security deposit of the USDN Protocol
