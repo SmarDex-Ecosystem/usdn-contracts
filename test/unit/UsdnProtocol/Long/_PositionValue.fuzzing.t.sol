@@ -112,13 +112,8 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         uint256 maxLiqrice = startPrice - (startPrice * levDecimals / protocol.getMaxLeverage());
         liqPrice = bound(liqPrice, minLiqrice, maxLiqrice);
 
-        string[] memory cmds = new string[](5);
-        cmds[0] = "./test_utils/target/release/test_utils";
-        cmds[1] = "calc-expo";
-        cmds[2] = vm.toString(startPrice);
-        cmds[3] = vm.toString(liqPrice);
-        cmds[4] = vm.toString(amount);
-        bytes memory result = vm.ffi(cmds);
+        bytes memory result =
+            vmFFIRustCommand("calc-expo", vm.toString(startPrice), vm.toString(liqPrice), vm.toString(amount));
 
         // Sanity check
         require(keccak256(result) != keccak256(""), "Rust implementation returned an error");
