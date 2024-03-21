@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { OracleMiddlewareBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
-import { ETH_PRICE, ETH_CONF } from "test/unit/Middlewares/utils/Constants.sol";
+import { ETH_PRICE, ETH_CONF, ETH_DECIMALS } from "test/unit/Middlewares/utils/Constants.sol";
 import { IMockPythError } from "test/unit/Middlewares/utils/MockPyth.sol";
 
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -24,11 +24,9 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     constructor() {
         super.setUp();
 
-        FORMATTED_ETH_PRICE =
-            (ETH_PRICE * (10 ** oracleMiddleware.getDecimals())) / (10 ** oracleMiddleware.getPythDecimals());
-        FORMATTED_ETH_CONF = (ETH_CONF * (10 ** oracleMiddleware.getDecimals()))
-            / (10 ** oracleMiddleware.getPythDecimals()) * oracleMiddleware.getConfRatio()
-            / oracleMiddleware.getConfRatioDenom();
+        FORMATTED_ETH_PRICE = (ETH_PRICE * (10 ** oracleMiddleware.getDecimals())) / 10 ** ETH_DECIMALS;
+        FORMATTED_ETH_CONF = (ETH_CONF * (10 ** oracleMiddleware.getDecimals())) / 10 ** ETH_DECIMALS
+            * oracleMiddleware.getConfRatio() / oracleMiddleware.getConfRatioDenom();
     }
 
     function setUp() public override {

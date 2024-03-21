@@ -125,6 +125,23 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The address of the fee collector
     function getMiddlewareValidationDelay() external view returns (uint256);
 
+    /**
+     * @notice Get expo imbalance limits (in basis points)
+     * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
+     * @return depositExpoImbalanceLimitBps_ The deposit expo imbalance limit
+     * @return withdrawalExpoImbalanceLimitBps_ The withdrawal expo imbalance limit
+     * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
+     */
+    function getExpoImbalanceLimits()
+        external
+        view
+        returns (
+            int256 openExpoImbalanceLimitBps_,
+            int256 depositExpoImbalanceLimitBps_,
+            int256 withdrawalExpoImbalanceLimitBps_,
+            int256 closeExpoImbalanceLimitBps_
+        );
+
     /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
     function getTargetUsdnPrice() external view returns (uint128);
 

@@ -35,6 +35,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         bool enablePositionFees;
         bool enableProtocolFees;
         bool enableFunding;
+        bool enableLimits;
         bool enableUsdnRebase;
     }
 
@@ -48,6 +49,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         enablePositionFees: false,
         enableProtocolFees: true,
         enableFunding: true,
+        enableLimits: false,
         enableUsdnRebase: false
     });
 
@@ -59,7 +61,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
-    uint128 public initialLongExpo;
     address[] public users;
 
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
@@ -110,6 +111,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             protocol.setTargetUsdnPrice(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
         }
 
+        // disable imbalance limits
+        if (!testParams.enableLimits) {
+            protocol.setExpoImbalanceLimits(0, 0, 0, 0);
+        }
+
         wstETH.approve(address(protocol), type(uint256).max);
         sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
         // leverage approx 2x
@@ -119,18 +125,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
-        Position memory firstPos = protocol.getLongPosition(
-            protocol.getEffectiveTickForPrice(testParams.initialPrice / 2)
-                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
-            0,
-            0
-        );
+
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();
-        initialLongExpo = firstPos.totalExpo;
         params = testParams;
     }
 
@@ -264,5 +264,53 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
     function _waitDelay() internal {
         skip(oracleMiddleware.getValidationDelay() + 1);
+    }
+
+    /// @dev Calculate proper initial values from randoms to initiate a balanced protocol
+    function _randInitBalanced(uint128 initialDeposit, uint128 initialLong) internal {
+        // deploy protocol at equilibrium temporarily to get access to constants and calculations
+        // it will be re-deployed at the end of the function with new initial values
+        params = DEFAULT_PARAMS;
+        params.enableLimits = true;
+        params.initialDeposit = 5 ether;
+        params.initialLong = 5 ether;
+        _setUp(params);
+
+        // cannot be less than 1 ether
+        initialDeposit = uint128(bound(initialDeposit, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
+
+        (int256 openLimit,,,) = protocol.getExpoImbalanceLimits();
+        uint128 margin = uint128(initialDeposit * uint256(openLimit) / protocol.BPS_DIVISOR());
+
+        // min long expo to initiate a balanced protocol
+        uint256 minLongExpo = initialDeposit - margin;
+        // max long expo to initiate a balanced protocol
+        uint256 maxLongExpo = initialDeposit + margin;
+
+        uint128 liquidationPriceWithoutPenalty =
+            protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
+
+        // min long amount
+        uint128 minLongAmount = uint128(
+            minLongExpo * (params.initialPrice - liquidationPriceWithoutPenalty) / liquidationPriceWithoutPenalty
+        );
+        // bound to the minimum value
+        if (minLongAmount < protocol.MIN_INIT_DEPOSIT()) {
+            minLongAmount = uint128(protocol.MIN_INIT_DEPOSIT());
+        }
+        // max long amount
+        uint128 maxLongAmount = uint128(
+            maxLongExpo * (params.initialPrice - liquidationPriceWithoutPenalty) / liquidationPriceWithoutPenalty
+        );
+
+        // assign initial long amount in range min max
+        initialLong = uint128(bound(initialLong, minLongAmount, maxLongAmount));
+
+        // assign initial values
+        params.initialDeposit = initialDeposit;
+        params.initialLong = initialLong;
+
+        // init protocol
+        _setUp(params);
     }
 }

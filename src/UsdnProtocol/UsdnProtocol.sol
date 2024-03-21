@@ -7,12 +7,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import {
-    PendingAction,
-    VaultPendingAction,
-    ProtocolAction,
-    Position
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -77,12 +72,17 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _lastUpdateTimestamp = uint128(block.timestamp);
         _lastPrice = currentPrice.price.toUint128();
 
+        int24 tick = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
+        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
+        uint128 leverage = _getLeverage(currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
+        uint128 positionTotalExpo =
+            _calculatePositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
+
+        // verify expo is not imbalanced on long side
+        _checkImbalanceLimitOpen(positionTotalExpo, longAmount);
+
         // Create long position
-        _createInitialPosition(
-            longAmount,
-            currentPrice.price.toUint128(),
-            getEffectiveTickForPrice(desiredLiqPrice) // without penalty
-        );
+        _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, leverage, positionTotalExpo);
 
         _refundExcessEther();
     }
@@ -258,6 +258,30 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
+    function setExpoImbalanceLimits(
+        uint256 newOpenLimitBps,
+        uint256 newDepositLimitBps,
+        uint256 newWithdrawalLimitBps,
+        uint256 newCloseLimitBps
+    ) external onlyOwner {
+        _openExpoImbalanceLimitBps = newOpenLimitBps.toInt256();
+        _depositExpoImbalanceLimitBps = newDepositLimitBps.toInt256();
+
+        if (newWithdrawalLimitBps != 0 && newWithdrawalLimitBps < newOpenLimitBps) {
+            // withdrawal limit lower than open not permitted
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
+        }
+        _withdrawalExpoImbalanceLimitBps = newWithdrawalLimitBps.toInt256();
+
+        if (newCloseLimitBps != 0 && newCloseLimitBps < newDepositLimitBps) {
+            // close limit lower than deposit not permitted
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
+        }
+        _closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
+
+        emit ImbalanceLimitsUpdated(newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps);
+    }
+
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
         if (newPrice > _usdnRebaseThreshold) {
             revert UsdnProtocolInvalidTargetUsdnPrice();
@@ -320,15 +344,18 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param price The current asset price
      * @param tick The tick corresponding to the liquidation price (without penalty)
      */
-    function _createInitialPosition(uint128 amount, uint128 price, int24 tick) internal {
+    function _createInitialPosition(
+        uint128 amount,
+        uint128 price,
+        int24 tick,
+        uint128 leverage,
+        uint128 positionTotalExpo
+    ) internal {
         _checkUninitialized(); // prevent using this function after initialization
 
         // Transfer the wstETH for the long
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
-        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
-        uint128 leverage = _getLeverage(price, liquidationPriceWithoutPenalty);
-        uint128 positionTotalExpo = _calculatePositionTotalExpo(amount, price, liquidationPriceWithoutPenalty);
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
         tick = tick + int24(_liquidationPenalty) * _tickSpacing;
         Position memory long = Position({
