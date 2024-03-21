@@ -5,12 +5,12 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import { BaseFixture } from "test/utils/Fixtures.sol";
-import { PYTH_ORACLE, CHAINLINK_ORACLE, CHAINLINK_ORACLE_STETH, PYTH_STETH_USD, WSTETH } from "test/utils/Constants.sol";
+import { PYTH_ORACLE, CHAINLINK_ORACLE_STETH, PYTH_STETH_USD, WSTETH } from "test/utils/Constants.sol";
 import {
-    PYTH_DATA_TIMESTAMP,
     PYTH_DATA_STETH_PRICE,
     PYTH_DATA_STETH_CONF,
     PYTH_DATA_STETH_DECIMALS,
+    PYTH_DATA_TIMESTAMP,
     PYTH_DATA_STETH
 } from "test/integration/Middlewares/utils/Constants.sol";
 
@@ -63,12 +63,10 @@ contract CommonBaseIntegrationFixture is BaseFixture {
         internal
         returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 publishTime_, bytes memory vaa_)
     {
-        string[] memory cmds = new string[](4);
-        cmds[0] = "./test_utils/target/release/test_utils";
-        cmds[1] = "pyth-price";
-        cmds[2] = vm.toString(feed);
-        cmds[3] = vm.toString(timestamp);
-        bytes memory result = vm.ffi(cmds);
+        bytes memory result = vmFFIRustCommand("pyth-price", vm.toString(feed), vm.toString(timestamp));
+
+        require(keccak256(result) != keccak256(""), "Rust command returned an error");
+
         return abi.decode(result, (uint256, uint256, uint256, uint256, bytes));
     }
 
