@@ -434,7 +434,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then The call reverts.
      */
     function test_RevertWhen_setSdexBurnOnDepositRatioWithMax() external adminPrank {
-        uint32 aboveMax = uint32(protocol.SDEX_BURNED_ON_DEPOSIT_DIVISOR() / 20 + 1);
+        uint32 aboveMax = uint32(protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR() / 20 + 1);
 
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidBurnSdexOnDepositRatio.selector);
         protocol.setSdexBurnOnDepositRatio(aboveMax);
@@ -448,7 +448,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:and a BurnSdexOnDepositRatioUpdated event should be emitted.
      */
     function test_setSdexBurnOnDepositRatio() external adminPrank {
-        uint16 expectedNewValue = uint16(protocol.SDEX_BURNED_ON_DEPOSIT_DIVISOR()) / 20;
+        uint16 expectedNewValue = uint16(protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR()) / 20;
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.BurnSdexOnDepositRatioUpdated(expectedNewValue);

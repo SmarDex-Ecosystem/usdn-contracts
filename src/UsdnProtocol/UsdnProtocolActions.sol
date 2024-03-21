@@ -216,7 +216,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 usdnToMintEstimated = _calcMintUsdn(
             pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
         );
-        uint256 sdexToBurn = usdnToMintEstimated * _sdexBurnOnDepositRatio / SDEX_BURNED_ON_DEPOSIT_DIVISOR;
+        uint256 sdexToBurn = usdnToMintEstimated * _sdexBurnOnDepositRatio / SDEX_BURN_ON_DEPOSIT_DIVISOR;
 
         // Transfer assets
         _sdex.safeTransferFrom(user, DEAD_ADDRESS, sdexToBurn);
