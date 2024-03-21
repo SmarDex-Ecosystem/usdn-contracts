@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolCore } from "src/UsdnProtocol/UsdnProtocolCore.sol";
 import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
@@ -58,7 +57,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         uint256 targetTotalSupply = UsdnProtocolLib.calcRebaseTotalSupply(
             balanceVault, assetPrice, _targetUsdnPrice, usdnDecimals, assetDecimals
         );
-        uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
+        uint256 newDivisor = UsdnProtocolLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
         usdn.rebase(newDivisor);
         rebased_ = true;
     }
@@ -83,8 +82,8 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         if (vaultBalance == 0) {
             // initialization, we consider the USDN price to be 1 USD
             return
-                FixedPointMathLib.fullMulDiv(amount, price, 10 ** (_assetDecimals + _priceFeedDecimals - _usdnDecimals));
+                UsdnProtocolLib.fullMulDiv(amount, price, 10 ** (_assetDecimals + _priceFeedDecimals - _usdnDecimals));
         }
-        toMint_ = FixedPointMathLib.fullMulDiv(amount, usdnTotalSupply, vaultBalance);
+        toMint_ = UsdnProtocolLib.fullMulDiv(amount, usdnTotalSupply, vaultBalance);
     }
 }

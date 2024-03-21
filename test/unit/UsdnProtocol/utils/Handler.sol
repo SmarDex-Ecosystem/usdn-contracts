@@ -16,6 +16,7 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 /**
@@ -159,16 +160,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _longAssetAvailable(currentPrice);
     }
 
-    function i_bitmapIndexToTick(uint256 index) external view returns (int24) {
-        return _bitmapIndexToTick(index);
-    }
-
-    function i_tickToBitmapIndex(int24 tick) external view returns (uint256) {
-        return _tickToBitmapIndex(tick);
-    }
-
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
-        return _tickBitmap.findLastSet(_tickToBitmapIndex(searchFrom));
+        return _tickBitmap.findLastSet(UsdnProtocolLib.tickToBitmapIndex(searchFrom, _tickSpacing));
     }
 
     function i_updateEMA(uint128 secondsElapsed) external returns (int256) {

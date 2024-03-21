@@ -15,7 +15,6 @@ import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReentrancyGuard {
-    using LibBitmap for LibBitmap.Bitmap;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /* -------------------------------------------------------------------------- */

@@ -4,7 +4,6 @@ pragma solidity 0.8.20;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { IUsdnProtocolCore } from "src/interfaces/UsdnProtocol/IUsdnProtocolCore.sol";
@@ -221,7 +220,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // we have to multiply by 1 day to get the correct units
             denominator = uint256(oldVaultExpo * oldVaultExpo) * 1 days;
             fund_ = -int256(
-                FixedPointMathLib.fullMulDiv(
+                UsdnProtocolLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
                     _fundingSF * 10 ** (UsdnProtocolLib.FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
                     denominator
@@ -231,7 +230,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // we have to multiply by 1 day to get the correct units
             denominator = uint256(oldLongExpo_ * oldLongExpo_) * 1 days;
             fund_ = int256(
-                FixedPointMathLib.fullMulDiv(
+                UsdnProtocolLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
                     _fundingSF * 10 ** (UsdnProtocolLib.FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
                     denominator

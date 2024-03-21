@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -13,7 +14,9 @@ import { SignedMath } from "src/libraries/SignedMath.sol";
 
 library UsdnProtocolLib {
     using SafeCast for uint256;
+    using SafeCast for int256;
     using SignedMath for int256;
+    using LibBitmap for LibBitmap.Bitmap;
 
     /// @notice The number of decimals for leverage values
     uint8 public constant LEVERAGE_DECIMALS = 21;
@@ -418,16 +421,91 @@ library UsdnProtocolLib {
         totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
     }
 
+    /**
+     * @dev Convert a signed tick to an unsigned index into the Bitmap
+     * @param tick The tick to convert, a multiple of `tickSpacing`
+     * @param tickSpacing The tick spacing
+     * @return index_ The index into the Bitmap
+     */
+    function tickToBitmapIndex(int24 tick, int24 tickSpacing) public pure returns (uint256 index_) {
+        int24 compactTick = tick / tickSpacing;
+        // shift into positive and cast to uint256
+        index_ = uint256(int256(compactTick) - int256(type(int24).min));
+    }
+
+    /**
+     * @dev Convert a Bitmap index to a signed tick
+     * @param index The index into the Bitmap
+     * @param tickSpacing The tick spacing
+     * @return tick_ The tick corresponding to the index, a multiple of `tickSpacing`
+     */
+    function bitmapIndexToTick(uint256 index, int24 tickSpacing) public pure returns (int24 tick_) {
+        // cast to int256 and shift into negative
+        int24 compactTick = (int256(index) + int256(type(int24).min)).toInt24();
+        tick_ = compactTick * tickSpacing;
+    }
+
+    /**
+     * @notice Find the largest tick which contains at least one position
+     * @param tickBitmap The tick bitmap pointer
+     * @param searchStart The tick from which to start searching
+     */
+    function findMaxInitializedTick(LibBitmap.Bitmap storage tickBitmap, int24 searchStart, int24 tickSpacing)
+        external
+        view
+        returns (int24 tick_)
+    {
+        uint256 index = tickBitmap.findLastSet(tickToBitmapIndex(searchStart, tickSpacing));
+        if (index == LibBitmap.NOT_FOUND) {
+            tick_ = calcMinTick(tickSpacing);
+        } else {
+            tick_ = bitmapIndexToTick(index, tickSpacing);
+        }
+    }
+
+    /**
+     * @notice Find the largest tick which contains at least one position, starting from `searchFrom`
+     * @param tickBitmap The tick bitmap pointer
+     * @param searchFrom The tick from which to start searching
+     * @param tickSpacing The tick spacing
+     */
+    function findBitmapLastSet(LibBitmap.Bitmap storage tickBitmap, int24 searchFrom, int24 tickSpacing)
+        external
+        view
+        returns (uint256 index)
+    {
+        index = tickBitmap.findLastSet(tickToBitmapIndex(searchFrom, tickSpacing));
+    }
+
+    function setBitmapTick(LibBitmap.Bitmap storage tickBitmap, int24 tick, int24 tickSpacing) external {
+        tickBitmap.set(tickToBitmapIndex(tick, tickSpacing));
+    }
+
+    function unsetBitmapTick(LibBitmap.Bitmap storage tickBitmap, int24 tick, int24 tickSpacing) external {
+        tickBitmap.unset(tickToBitmapIndex(tick, tickSpacing));
+    }
+
     /* -------------------------------------------------------------------------- */
-    /*                              Public functions                              */
+    /*                              Generic utilities                             */
     /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Safely cast a uint128 to an int256
      * @param x The input unsigned integer
-     * @return The value as a signed integer
+     * @return res_ The value as a signed integer
      */
-    function toInt256(uint128 x) public pure returns (int256) {
-        return int256(uint256(x));
+    function toInt256(uint128 x) public pure returns (int256 res_) {
+        res_ = int256(uint256(x));
+    }
+
+    /**
+     * @notice Safely perform a * b / c without risking an overflow of the intermediate product
+     * @param a The first operand
+     * @param b The second operand
+     * @param c The third operand
+     * @return res_ The result of a * b / c
+     */
+    function fullMulDiv(uint256 a, uint256 b, uint256 c) external pure returns (uint256 res_) {
+        res_ = FixedPointMathLib.fullMulDiv(a, b, c);
     }
 }

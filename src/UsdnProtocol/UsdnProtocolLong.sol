@@ -3,7 +3,6 @@ pragma solidity 0.8.20;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -11,7 +10,6 @@ import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { UsdnProtocolLib } from "src/libraries/UsdnProtocolLib.sol";
 
 abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
-    using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
 
@@ -79,19 +77,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @notice Find the largest tick which contains at least one position
-     * @param searchStart The tick from which to start searching
-     */
-    function _findMaxInitializedTick(int24 searchStart) internal view returns (int24 tick_) {
-        uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(searchStart));
-        if (index == LibBitmap.NOT_FOUND) {
-            tick_ = minTick();
-        } else {
-            tick_ = _bitmapIndexToTick(index);
-        }
-    }
-
-    /**
      * @notice Calculate the value of a tick, knowing its contained total expo and the current asset price
      * @param currentPrice The current price of the asset
      * @param tick The tick number
@@ -110,10 +95,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // if the current price is lower than the liquidation price, we have effectively a negative value
         if (currentPrice <= liqPriceWithoutPenalty) {
             // we calculate the inverse and then change the sign
-            value_ = -int256(FixedPointMathLib.fullMulDiv(tickTotalExpo, liqPriceWithoutPenalty - currentPrice, currentPrice));
+            value_ =
+                -int256(UsdnProtocolLib.fullMulDiv(tickTotalExpo, liqPriceWithoutPenalty - currentPrice, currentPrice));
         } else {
             value_ =
-                int256(FixedPointMathLib.fullMulDiv(tickTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice));
+                int256(UsdnProtocolLib.fullMulDiv(tickTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice));
         }
     }
 
@@ -147,7 +133,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         index_ = tickArray.length;
         if (_positionsInTick[tickHash] == 1) {
             // first position in this tick, we need to reflect that it is populated
-            _tickBitmap.set(_tickToBitmapIndex(tick));
+            UsdnProtocolLib.setBitmapTick(_tickBitmap, tick, _tickSpacing);
         }
         if (tick > _maxInitializedTick) {
             // keep track of max initialized tick
@@ -191,34 +177,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             delete _longPositions[tickHash][index];
             if (_positionsInTick[tickHash] == 0) {
                 // we removed the last position in the tick
-                _tickBitmap.unset(_tickToBitmapIndex(tick));
+                UsdnProtocolLib.unsetBitmapTick(_tickBitmap, tick, _tickSpacing);
             }
         }
 
         _totalExpo -= totalExpoToRemove;
         _totalExpoByTick[tickHash] -= totalExpoToRemove;
-    }
-
-    /**
-     * @dev Convert a signed tick to an unsigned index into the Bitmap
-     * @param tick The tick to convert, a multiple of `tickSpacing`
-     * @return index_ The index into the Bitmap
-     */
-    function _tickToBitmapIndex(int24 tick) internal view returns (uint256 index_) {
-        int24 compactTick = tick / _tickSpacing;
-        // shift into positive and cast to uint256
-        index_ = uint256(int256(compactTick) - int256(type(int24).min));
-    }
-
-    /**
-     * @dev Convert a Bitmap index to a signed tick
-     * @param index The index into the Bitmap
-     * @return tick_ The tick corresponding to the index, a multiple of `tickSpacing`
-     */
-    function _bitmapIndexToTick(uint256 index) internal view returns (int24 tick_) {
-        // cast to int256 and shift into negative
-        int24 compactTick = (int256(index) + int256(type(int24).min)).toInt24();
-        tick_ = compactTick * _tickSpacing;
     }
 
     /**
@@ -258,13 +222,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         do {
             {
-                uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+                int24 tickSpacing = _tickSpacing;
+                uint256 index = UsdnProtocolLib.findBitmapLastSet(_tickBitmap, tick, tickSpacing);
                 if (index == LibBitmap.NOT_FOUND) {
                     // no populated ticks left
                     break;
                 }
 
-                tick = _bitmapIndexToTick(index);
+                tick = UsdnProtocolLib.bitmapIndexToTick(index, tickSpacing);
                 if (tick < currentTick) {
                     break;
                 }
@@ -291,7 +256,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
                 remainingCollateral_ += tickValue;
 
-                _tickBitmap.unset(_tickToBitmapIndex(tick));
+                UsdnProtocolLib.unsetBitmapTick(_tickBitmap, tick, _tickSpacing);
 
                 emit LiquidatedTick(
                     tick,
@@ -306,10 +271,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         if (liquidatedPositions_ != 0) {
             if (tick < currentTick) {
                 // all ticks above the current tick were liquidated
-                _maxInitializedTick = _findMaxInitializedTick(currentTick);
+                _maxInitializedTick = UsdnProtocolLib.findMaxInitializedTick(_tickBitmap, currentTick, _tickSpacing);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                _maxInitializedTick = _findMaxInitializedTick(tick);
+                _maxInitializedTick = UsdnProtocolLib.findMaxInitializedTick(_tickBitmap, tick, _tickSpacing);
             }
         }
 

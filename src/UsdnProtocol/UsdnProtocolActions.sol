@@ -4,8 +4,6 @@ pragma solidity 0.8.20;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import {
@@ -26,7 +24,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     using SafeERC20 for IUsdn;
     using SafeCast for uint256;
     using SafeCast for int256;
-    using LibBitmap for LibBitmap.Bitmap;
 
     /// @inheritdoc IUsdnProtocolActions
     uint256 public constant MIN_USDN_SUPPLY = 1000;
@@ -201,7 +198,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * the `ProtocolAction.InitiateDeposit` action.
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
-     * @param user The address of theuser initiating the deposit.
+     * @param user The address of the user initiating the deposit.
      * @param amount The amount of wstETH to deposit.
      * @param currentPriceData The current price data
      */
@@ -395,7 +392,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
-        uint256 assetToTransfer = FixedPointMathLib.fullMulDiv(withdrawal.amount, available, withdrawal.usdnTotalSupply);
+        uint256 assetToTransfer = UsdnProtocolLib.fullMulDiv(withdrawal.amount, available, withdrawal.usdnTotalSupply);
 
         // we have the USDN in the contract already
         _usdn.burn(withdrawal.amount);
