@@ -2,22 +2,13 @@
 pragma solidity 0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { IUsdnProtocolParams } from "src/interfaces/UsdnProtocol/IUsdnProtocolParams.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
-contract UsdnProtocolParams is IUsdnProtocolEvents, IUsdnProtocolErrors, Ownable {
-    using LibBitmap for LibBitmap.Bitmap;
-    using DoubleEndedQueue for DoubleEndedQueue.Deque;
-
-    error UsdnProtocolParamsAlreadyInitialized();
-
+contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
     /* -------------------------------------------------------------------------- */
     /*                          Constants and immutables                          */
     /* -------------------------------------------------------------------------- */
@@ -101,6 +92,10 @@ contract UsdnProtocolParams is IUsdnProtocolEvents, IUsdnProtocolErrors, Ownable
      * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
      */
     uint256 internal _usdnRebaseInterval = 12 hours;
+
+    /* -------------------------------------------------------------------------- */
+    /*                               Initialization                               */
+    /* -------------------------------------------------------------------------- */
 
     constructor() Ownable(msg.sender) { }
 
