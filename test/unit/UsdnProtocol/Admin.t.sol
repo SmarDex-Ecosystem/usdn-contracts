@@ -454,7 +454,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.BurnSdexOnDepositRatioUpdated(expectedNewValue);
         protocol.setSdexBurnOnDepositRatio(expectedNewValue);
 
-        assertEq(protocol.getSdexBurnedOnDepositRatio(), expectedNewValue, "The value should have been updated");
+        assertEq(protocol.getSdexBurnOnDepositRatio(), expectedNewValue, "The value should have been updated");
     }
 
     /**

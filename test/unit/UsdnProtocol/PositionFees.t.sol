@@ -22,6 +22,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         params.enablePositionFees = true;
 
         super._setUp(params);
+
+        sdex.mintAndApprove(address(this), 2_000_000 * 1e18, address(protocol), type(uint256).max);
     }
 
     /* -------------------------------------------------------------------------- */

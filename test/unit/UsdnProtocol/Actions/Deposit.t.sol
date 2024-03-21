@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN } from "test/utils/Constants.sol";
+import { IEvents } from "test/utils/IEvents.sol";
 
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -11,7 +12,7 @@ import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdn
  * @custom:background Given a protocol initialized at equilibrium.
  * @custom:and A user with 10 wstETH in their wallet
  */
-contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture, IEvents {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
 
     function setUp() public {
@@ -19,6 +20,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
         super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
+        sdex.mintAndApprove(address(this), 2_000_000 * 1e18, address(protocol), type(uint256).max);
     }
 
     /**
@@ -26,6 +28,8 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:given The price of the asset is $2000
      * @custom:when The user initiates a deposit of 1 wstETH
      * @custom:then The user's wstETH balance decreases by 1 wstETH
+     * @custom:and The user's SDEX balance decreases by 20 SDEX
+     * @custom:and The dead address's SDEX balance increases by 20 SDEX
      * @custom:and The protocol's wstETH balance increases by 1 wstETH
      * @custom:and The protocol emits an `InitiatedDeposit` event
      * @custom:and The USDN total supply does not change yet
@@ -36,12 +40,28 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function test_initiateDeposit() public {
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
+        uint256 expectedSdexBurnAmount =
+            uint256(2000 * 1e18) * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURNED_ON_DEPOSIT_DIVISOR();
+        uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
+        address deadAddress = protocol.DEAD_ADDRESS();
 
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), depositAmount, block.timestamp); // expected event
+        emit IEvents.Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
+        vm.expectEmit();
+        emit InitiatedDeposit(address(this), depositAmount, block.timestamp); // WstETH transfer
         protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
+        assertEq(
+            sdexBalanceBefore - expectedSdexBurnAmount,
+            sdex.balanceOf(address(this)),
+            "The amount of SDEX tokens to be burned should have been subtracted from the balance of the user"
+        );
+        assertEq(
+            sdex.balanceOf(deadAddress),
+            expectedSdexBurnAmount,
+            "The amount of SDEX tokens to be burned should have been sent to the dead address"
+        );
         assertEq(
             wstETH.balanceOf(address(protocol)),
             params.initialDeposit + params.initialLong + depositAmount,

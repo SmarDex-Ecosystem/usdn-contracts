@@ -10,11 +10,9 @@ import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 contract Sdex is ERC20Permit {
     constructor() ERC20("Smardex", "SDEX") ERC20Permit("Smardex") { }
 
-    /**
-     * @notice Mint tokens to the caller
-     * @param _supply How many tokens should be minted
-     */
-    function mint(uint256 _supply) external {
-        _mint(msg.sender, _supply);
+    /// @dev Mint SDEX to the specified address and approve the spender
+    function mintAndApprove(address to, uint256 amount, address spender, uint256 value) external {
+        _mint(to, amount);
+        _approve(to, spender, value);
     }
 }

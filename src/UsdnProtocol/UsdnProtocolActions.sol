@@ -2,6 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
@@ -22,6 +23,7 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IERC20;
     using SafeERC20 for IUsdn;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -210,6 +212,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _addPendingAction(user, _convertVaultPendingAction(pendingAction));
 
+        // Calculate the amount of SDEX tokens to burn
+        uint256 usdnToMintEstimated = _calcMintUsdn(
+            pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
+        );
+        uint256 sdexToBurn = usdnToMintEstimated * _sdexBurnOnDepositRatio / SDEX_BURNED_ON_DEPOSIT_DIVISOR;
+
+        // Transfer assets
+        _sdex.safeTransferFrom(user, DEAD_ADDRESS, sdexToBurn);
         _asset.safeTransferFrom(user, address(this), amount);
 
         emit InitiatedDeposit(user, amount, block.timestamp);

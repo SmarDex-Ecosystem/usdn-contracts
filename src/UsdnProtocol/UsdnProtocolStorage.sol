@@ -361,7 +361,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getSdexBurnedOnDepositRatio() external view returns (uint32) {
+    function getSdexBurnOnDepositRatio() external view returns (uint32) {
         return _sdexBurnOnDepositRatio;
     }
 
