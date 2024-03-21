@@ -12,10 +12,7 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  */
 contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.enableProtocolFees = false;
-        params.enableFunding = false;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**
