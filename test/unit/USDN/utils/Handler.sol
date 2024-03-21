@@ -63,7 +63,7 @@ contract UsdnHandler is Usdn, Test {
             return;
         }
         console2.log("bound mint value");
-        value = bound(value, 1, maxTokens() - 1 - totalSupply());
+        value = bound(value, 1, maxTokens() - totalSupply() - 1);
         uint256 valueShares = value * _divisor;
         totalSharesSum += valueShares;
         shares[_currentActor] += valueShares;
