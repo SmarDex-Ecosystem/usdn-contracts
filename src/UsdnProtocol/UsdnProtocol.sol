@@ -84,7 +84,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
         uint256 balance = address(this).balance;
         if (balance != 0) {
-            (bool success,) = payable(msg.sender).call{ value: uint256(balance) }("");
+            (bool success,) = payable(msg.sender).call{ value: balance }("");
             if (!success) {
                 revert UsdnProtocolEtherRefundFailed();
             }
