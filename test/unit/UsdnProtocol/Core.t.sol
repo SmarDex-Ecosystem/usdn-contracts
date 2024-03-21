@@ -72,7 +72,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         protocol.liquidate(priceData, 1);
 
         int256 lastFunding = protocol.getLastFunding();
-        skip(protocol.getEMAPeriod() - 1);
+        skip(protocolParams.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
         protocol.liquidate(priceData, 1);
 
@@ -91,7 +91,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         );
 
         int256 lastFunding = protocol.getLastFunding();
-        skip(protocol.getEMAPeriod() - 1);
+        skip(protocolParams.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
         protocol.liquidate(abi.encode(params.initialPrice), 1);
 
@@ -134,7 +134,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         protocol.liquidate(priceData, 1);
 
         int256 lastFunding = protocol.getLastFunding();
-        skip(protocol.getEMAPeriod() + 1);
+        skip(protocolParams.getEMAPeriod() + 1);
         // we call liquidate() to update the EMA
         protocol.liquidate(priceData, 1);
 
@@ -158,7 +158,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertEq(protocol.getBalanceVault(), 0, "vault expo should be zero");
 
         int256 EMA = protocol.getEMA();
-        uint256 fundingSF = protocol.getFundingSF();
+        uint256 fundingSF = protocolParams.getFundingSF();
         (int256 fund_,) = protocol.funding(uint128(block.timestamp));
 
         assertEq(
@@ -185,7 +185,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertEq(protocol.getBalanceVault(), 0, "vault expo should be zero");
 
         int256 EMA = protocol.getEMA();
-        uint256 fundingSF = protocol.getFundingSF();
+        uint256 fundingSF = protocolParams.getFundingSF();
         (int256 fund_,) = protocol.funding(uint128(block.timestamp));
 
         assertEq(

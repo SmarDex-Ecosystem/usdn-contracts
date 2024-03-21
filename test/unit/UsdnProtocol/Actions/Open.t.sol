@@ -42,7 +42,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
                 / (
                     CURRENT_PRICE
                         - protocol.getEffectivePriceForTick(
-                            expectedTick - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
+                            expectedTick - int24(protocolParams.getLiquidationPenalty()) * protocol.getTickSpacing()
                         )
                 )
         );
@@ -69,7 +69,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
         uint256 tickLiqPrice = protocol.getEffectivePriceForTick(
-            tick - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
+            tick - int24(protocolParams.getLiquidationPenalty()) * protocol.getTickSpacing()
         );
 
         // check state after opening the position
@@ -100,7 +100,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(action.index, 0, "action index");
 
         // the pending action should be actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        skip(protocolParams.getValidationDeadline() + 1);
         (pendingActions,) = protocol.getActionablePendingActions(address(0));
         action = protocol.i_toLongPendingAction(pendingActions[0]);
         assertEq(action.user, address(this), "pending action user");
@@ -135,7 +135,8 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_initiateOpenPositionHighLeverage() public {
         // max liquidation price without liquidation penalty
-        uint256 maxLiquidationPrice = protocol.i_getLiquidationPrice(CURRENT_PRICE, uint128(protocol.getMaxLeverage()));
+        uint256 maxLiquidationPrice =
+            protocol.i_getLiquidationPrice(CURRENT_PRICE, uint128(protocolParams.getMaxLeverage()));
         // add 3% to be above max liquidation price including penalty
         uint128 desiredLiqPrice = uint128(maxLiquidationPrice * 1.03 ether / 1 ether);
 
@@ -156,11 +157,12 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         // set the max leverage very high to allow for such a case
         uint8 leverageDecimals = protocol.LEVERAGE_DECIMALS();
         vm.prank(ADMIN);
-        protocol.setMaxLeverage(uint128(100 * 10 ** leverageDecimals));
+        protocolParams.setMaxLeverage(uint128(100 * 10 ** leverageDecimals));
 
         // calculate expected error values
-        uint128 expectedMaxLiqPrice =
-            uint128(CURRENT_PRICE * (protocol.BPS_DIVISOR() - protocol.getSafetyMarginBps()) / protocol.BPS_DIVISOR());
+        uint128 expectedMaxLiqPrice = uint128(
+            CURRENT_PRICE * (protocol.BPS_DIVISOR() - protocolParams.getSafetyMarginBps()) / protocol.BPS_DIVISOR()
+        );
 
         int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE, protocol.getLiquidationMultiplier());
         uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick, protocol.getLiquidationMultiplier());
@@ -232,9 +234,9 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         _waitDelay();
 
         uint128 newPrice = CURRENT_PRICE - 100 ether;
-        uint128 newLiqPrice = protocol.i_getLiquidationPrice(newPrice, uint128(protocol.getMaxLeverage()));
+        uint128 newLiqPrice = protocol.i_getLiquidationPrice(newPrice, uint128(protocolParams.getMaxLeverage()));
         int24 newTick = protocol.getEffectiveTickForPrice(newLiqPrice)
-            + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing();
+            + int24(protocolParams.getLiquidationPenalty()) * protocol.getTickSpacing();
         uint256 newTickVersion = protocol.getTickVersion(newTick);
         uint256 newIndex = protocol.getPositionsInTick(newTick);
 

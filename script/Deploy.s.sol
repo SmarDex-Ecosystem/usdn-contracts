@@ -8,6 +8,7 @@ import { WstETH } from "test/utils/WstEth.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { Usdn } from "src/Usdn.sol";
+import { UsdnProtocolParams } from "src/UsdnProtocol/UsdnProtocolParams.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
@@ -22,6 +23,7 @@ contract Deploy is Script {
             WstEthOracleMiddleware WstEthOracleMiddleware_,
             LiquidationRewardsManager LiquidationRewardsManager_,
             Usdn Usdn_,
+            UsdnProtocolParams UsdnProtocolParams_,
             UsdnProtocol UsdnProtocol_
         )
     {
@@ -115,9 +117,18 @@ contract Deploy is Script {
             usdnAddress = address(Usdn_);
         }
 
+        // Deploy the params contract
+        UsdnProtocolParams_ = new UsdnProtocolParams();
+
         // Deploy the protocol with tick spacing 100 = 1%
         UsdnProtocol_ = new UsdnProtocol(
-            Usdn_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_, 100, vm.envAddress("FEE_COLLECTOR")
+            UsdnProtocolParams_,
+            Usdn_,
+            WstETH_,
+            WstEthOracleMiddleware_,
+            LiquidationRewardsManager_,
+            100,
+            vm.envAddress("FEE_COLLECTOR")
         );
 
         // Grant USDN minter & rebaser roles to protocol and approve wstETH spending

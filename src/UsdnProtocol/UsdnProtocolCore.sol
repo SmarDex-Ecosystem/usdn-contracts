@@ -41,7 +41,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (timestamp < _lastUpdateTimestamp) {
             revert UsdnProtocolTimestampTooOld();
         }
-        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _params.getEMAPeriod(), _EMA);
         (int256 fund,) = _funding(timestamp, ema);
         // starting here, timestamp is strictly greater than _lastUpdateTimestamp
         return _getLiquidationMultiplier(fund, _liquidationMultiplier);
@@ -62,13 +62,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             revert UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _params.getEMAPeriod(), _EMA);
         (int256 fundAsset,) = _fundingAsset(timestamp, ema);
 
         if (fundAsset > 0) {
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
-            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
+            int256 fee = fundAsset * _toInt256(_params.getProtocolFeeBps()) / int256(BPS_DIVISOR);
             // fee have the same sign as fundAsset (negative here), so we need to sub them
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
         }
@@ -84,13 +84,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             revert UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
+        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _params.getEMAPeriod(), _EMA);
         (int256 fundAsset,) = _fundingAsset(timestamp, ema);
 
         if (fundAsset < 0) {
             available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
         } else {
-            int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
+            int256 fee = fundAsset * _toInt256(_params.getProtocolFeeBps()) / int256(BPS_DIVISOR);
             available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset - fee);
         }
     }
@@ -141,7 +141,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 unchecked {
                     i++;
                 }
-            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
+            } else if (candidate.timestamp + _params.getValidationDeadline() < block.timestamp) {
                 // we found an actionable pending action
                 actions_[i] = candidate;
                 rawIndices_[i] = rawIndex;
@@ -211,11 +211,16 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (oldLongExpo_ <= 0) {
             // if oldLongExpo is negative, then we cap the imbalance index to -1
             // oldVaultExpo is always positive
-            return (-int256(_fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
+            return (
+                -int256(_params.getFundingSF() * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema,
+                oldLongExpo_
+            );
         } else if (oldVaultExpo == 0) {
             // if oldVaultExpo is zero (can't be negative), then we cap the imbalance index to 1
             // oldLongExpo must be positive in this case
-            return (int256(_fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema, oldLongExpo_);
+            return (
+                int256(_params.getFundingSF() * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS)) + ema, oldLongExpo_
+            );
         }
 
         // starting here, oldLongExpo and oldVaultExpo are always strictly positive
@@ -230,7 +235,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             fund_ = -int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
+                    _params.getFundingSF() * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
@@ -240,7 +245,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             fund_ = int256(
                 FixedPointMathLib.fullMulDiv(
                     numerator_squared * elapsedSeconds,
-                    _fundingSF * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
+                    _params.getFundingSF() * 10 ** (FUNDING_RATE_DECIMALS - FUNDING_SF_DECIMALS),
                     denominator
                 )
             ) + ema;
@@ -444,7 +449,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * funding value
      */
     function _updateEMA(uint128 secondsElapsed) internal returns (int256) {
-        return _EMA = calcEMA(_lastFunding, secondsElapsed, _EMAPeriod, _EMA);
+        return _EMA = calcEMA(_lastFunding, secondsElapsed, _params.getEMAPeriod(), _EMA);
     }
 
     function _toInt256(uint128 x) internal pure returns (int256) {
@@ -469,7 +474,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         internal
         returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
     {
-        int256 protocolFeeBps = _toInt256(_protocolFeeBps);
+        int256 protocolFeeBps = _toInt256(_params.getProtocolFeeBps());
         fundWithFee_ = fund;
         fee_ = (fundAsset * protocolFeeBps) / int256(BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
@@ -580,7 +585,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 _pendingActionsQueue.popFront();
                 // try the next one
                 continue;
-            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
+            } else if (candidate.timestamp + _params.getValidationDeadline() < block.timestamp) {
                 // we found an actionable pending action
                 return (candidate, rawIndex);
             }

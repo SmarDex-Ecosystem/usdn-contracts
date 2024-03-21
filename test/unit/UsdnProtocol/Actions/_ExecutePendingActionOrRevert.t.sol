@@ -88,7 +88,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         PendingAction memory pending;
         pending.action = ProtocolAction.InitiateDeposit;
         pending.user = USER_1;
-        pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
+        pending.timestamp = uint40(block.timestamp - protocolParams.getValidationDeadline() - 1);
         uint128 rawIndex1 = protocol.queuePushFront(pending);
         assertEq(rawIndex1, type(uint128).max, "raw index 1");
 
@@ -113,7 +113,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         PendingAction memory pending;
         pending.action = ProtocolAction.InitiateDeposit;
         pending.user = address(this);
-        pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
+        pending.timestamp = uint40(block.timestamp - protocolParams.getValidationDeadline() - 1);
         protocol.i_addPendingAction(address(this), pending);
         (, rawIndex_) = protocol.i_getPendingAction(address(this));
     }

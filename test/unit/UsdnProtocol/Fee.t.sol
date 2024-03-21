@@ -25,7 +25,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         uint16 bpsDivisor = uint16(protocol.BPS_DIVISOR());
         vm.startPrank(ADMIN);
         vm.expectRevert(UsdnProtocolInvalidProtocolFeeBps.selector);
-        protocol.setProtocolFeeBps(bpsDivisor + 1);
+        protocolParams.setProtocolFeeBps(bpsDivisor + 1);
         vm.stopPrank();
     }
 
@@ -40,7 +40,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit FeeBpsUpdated(0);
-        protocol.setProtocolFeeBps(0);
+        protocolParams.setProtocolFeeBps(0);
 
         protocol.liquidate(abi.encode(DEFAULT_PARAMS.initialPrice), 0);
 
@@ -54,7 +54,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_setFeeCollector_addressZero() public adminPrank {
         vm.expectRevert(UsdnProtocolInvalidFeeCollector.selector);
-        protocol.setFeeCollector(address(0));
+        protocolParams.setFeeCollector(address(0));
     }
 
     /**
@@ -66,8 +66,8 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     function test_setFeeCollector() public adminPrank {
         vm.expectEmit();
         emit FeeCollectorUpdated(address(this));
-        protocol.setFeeCollector(address(this));
-        assertEq(protocol.getFeeCollector(), address(this));
+        protocolParams.setFeeCollector(address(this));
+        assertEq(protocolParams.getFeeCollector(), address(this));
     }
 
     /**
@@ -79,8 +79,8 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     function test_setFeeThreshold() public adminPrank {
         vm.expectEmit();
         emit FeeThresholdUpdated(5 ether);
-        protocol.setFeeThreshold(5 ether);
-        assertEq(protocol.getFeeThreshold(), 5 ether);
+        protocolParams.setFeeThreshold(5 ether);
+        assertEq(protocolParams.getFeeThreshold(), 5 ether);
     }
 
     /**
@@ -122,6 +122,6 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(
             address(this), ProtocolAction.InitiateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
-        assertGe(wstETH.balanceOf(ADMIN), protocol.getFeeThreshold(), "fee collector balance after collect");
+        assertGe(wstETH.balanceOf(ADMIN), protocolParams.getFeeThreshold(), "fee collector balance after collect");
     }
 }

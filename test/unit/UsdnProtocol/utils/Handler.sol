@@ -12,6 +12,7 @@ import {
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol, Position } from "src/UsdnProtocol/UsdnProtocol.sol";
+import { IUsdnProtocolParams } from "src/interfaces/UsdnProtocol/IUsdnProtocolParams.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -27,13 +28,14 @@ contract UsdnProtocolHandler is UsdnProtocol {
     using LibBitmap for LibBitmap.Bitmap;
 
     constructor(
+        IUsdnProtocolParams params,
         IUsdn usdn,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
-    ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
+    ) UsdnProtocol(params, usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
     /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
     function resetEMA() external {

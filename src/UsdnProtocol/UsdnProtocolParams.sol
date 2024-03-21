@@ -3,7 +3,6 @@ pragma solidity 0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolParams } from "src/interfaces/UsdnProtocol/IUsdnProtocolParams.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -18,8 +17,6 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
     /* -------------------------------------------------------------------------- */
     /*                              Pseudo-constants                              */
     /* -------------------------------------------------------------------------- */
-
-    IUsdnProtocol internal _protocol;
 
     uint8 internal _leverageDecimals;
 
@@ -106,7 +103,6 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
      * @param feeCollector The address of the fee collector.
      */
     function initialize(
-        IUsdnProtocol protocol,
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         address feeCollector,
@@ -124,7 +120,6 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
             revert UsdnProtocolInvalidFeeCollector();
         }
 
-        _protocol = protocol;
         _leverageDecimals = leverageDecimals;
         _fundingSfDecimals = fundingSfDecimals;
         _priceFeedDecimals = priceFeedDecimals;
@@ -145,10 +140,6 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
     /* -------------------------------------------------------------------------- */
     /*                          Pseudo-constants getters                          */
     /* -------------------------------------------------------------------------- */
-
-    function getProtocol() external view returns (IUsdnProtocol) {
-        return _protocol;
-    }
 
     function getLeverageDecimals() external view returns (uint8) {
         return _leverageDecimals;

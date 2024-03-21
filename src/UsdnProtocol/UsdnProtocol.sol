@@ -15,6 +15,7 @@ import {
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
+import { IUsdnProtocolParams } from "src/interfaces/UsdnProtocol/IUsdnProtocolParams.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -37,6 +38,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param feeCollector The address of the fee collector.
      */
     constructor(
+        IUsdnProtocolParams params,
         IUsdn usdn,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
@@ -45,7 +47,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         address feeCollector
     )
         Ownable(msg.sender)
-        UsdnProtocolStorage(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
+        UsdnProtocolStorage(params, usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
     { }
 
     /// @inheritdoc IUsdnProtocol
@@ -83,192 +85,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         );
 
         _refundExcessEther();
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external onlyOwner {
-        // check address zero middleware
-        if (address(newOracleMiddleware) == address(0)) {
-            revert UsdnProtocolInvalidMiddlewareAddress();
-        }
-        _oracleMiddleware = newOracleMiddleware;
-        emit OracleMiddlewareUpdated(address(newOracleMiddleware));
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external onlyOwner {
-        if (address(newLiquidationRewardsManager) == address(0)) {
-            revert UsdnProtocolInvalidLiquidationRewardsManagerAddress();
-        }
-
-        _liquidationRewardsManager = newLiquidationRewardsManager;
-
-        emit LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setMinLeverage(uint256 newMinLeverage) external onlyOwner {
-        // zero minLeverage
-        if (newMinLeverage <= 10 ** LEVERAGE_DECIMALS) {
-            revert UsdnProtocolInvalidMinLeverage();
-        }
-
-        // minLeverage greater or equal maxLeverage
-        if (newMinLeverage >= _maxLeverage) {
-            revert UsdnProtocolInvalidMinLeverage();
-        }
-
-        _minLeverage = newMinLeverage;
-        emit MinLeverageUpdated(newMinLeverage);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
-        // maxLeverage lower or equal minLeverage
-        if (newMaxLeverage <= _minLeverage) {
-            revert UsdnProtocolInvalidMaxLeverage();
-        }
-
-        // maxLeverage greater than max 100
-        if (newMaxLeverage > 100 * 10 ** LEVERAGE_DECIMALS) {
-            revert UsdnProtocolInvalidMaxLeverage();
-        }
-
-        _maxLeverage = newMaxLeverage;
-        emit MaxLeverageUpdated(newMaxLeverage);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setValidationDeadline(uint256 newValidationDeadline) external onlyOwner {
-        // validation deadline lower than min 1 minute
-        if (newValidationDeadline < 60) {
-            revert UsdnProtocolInvalidValidationDeadline();
-        }
-
-        // validation deadline greater than max 1 day
-        if (newValidationDeadline > 1 days) {
-            revert UsdnProtocolInvalidValidationDeadline();
-        }
-
-        _validationDeadline = newValidationDeadline;
-        emit ValidationDeadlineUpdated(newValidationDeadline);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setLiquidationPenalty(uint24 newLiquidationPenalty) external onlyOwner {
-        // liquidationPenalty greater than max 15
-        if (newLiquidationPenalty > 15) {
-            revert UsdnProtocolInvalidLiquidationPenalty();
-        }
-
-        _liquidationPenalty = newLiquidationPenalty;
-        emit LiquidationPenaltyUpdated(newLiquidationPenalty);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyOwner {
-        // safetyMarginBps greater than max 2000: 20%
-        if (newSafetyMarginBps > 2000) {
-            revert UsdnProtocolInvalidSafetyMarginBps();
-        }
-
-        _safetyMarginBps = newSafetyMarginBps;
-        emit SafetyMarginBpsUpdated(newSafetyMarginBps);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setLiquidationIteration(uint16 newLiquidationIteration) external onlyOwner {
-        // newLiquidationIteration greater than MAX_LIQUIDATION_ITERATION
-        if (newLiquidationIteration > MAX_LIQUIDATION_ITERATION) {
-            revert UsdnProtocolInvalidLiquidationIteration();
-        }
-
-        _liquidationIteration = newLiquidationIteration;
-        emit LiquidationIterationUpdated(newLiquidationIteration);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setEMAPeriod(uint128 newEMAPeriod) external onlyOwner {
-        // EMAPeriod is greater than max 3 months
-        if (newEMAPeriod > 90 days) {
-            revert UsdnProtocolInvalidEMAPeriod();
-        }
-
-        _EMAPeriod = newEMAPeriod;
-        emit EMAPeriodUpdated(newEMAPeriod);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setFundingSF(uint256 newFundingSF) external onlyOwner {
-        // newFundingSF is greater than max
-        if (newFundingSF > 10 ** FUNDING_SF_DECIMALS) {
-            revert UsdnProtocolInvalidFundingSF();
-        }
-
-        _fundingSF = newFundingSF;
-        emit FundingSFUpdated(newFundingSF);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyOwner {
-        if (newProtocolFeeBps > BPS_DIVISOR) {
-            revert UsdnProtocolInvalidProtocolFeeBps();
-        }
-        _protocolFeeBps = newProtocolFeeBps;
-        emit FeeBpsUpdated(newProtocolFeeBps);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setPositionFeeBps(uint16 newPositionFee) external onlyOwner {
-        // newPositionFee greater than max 2000: 20%
-        if (newPositionFee > 2000) {
-            revert UsdnProtocolInvalidPositionFee();
-        }
-        _positionFeeBps = newPositionFee;
-        emit PositionFeeUpdated(newPositionFee);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setFeeThreshold(uint256 newFeeThreshold) external onlyOwner {
-        _feeThreshold = newFeeThreshold;
-        emit FeeThresholdUpdated(newFeeThreshold);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setFeeCollector(address newFeeCollector) external onlyOwner {
-        if (newFeeCollector == address(0)) {
-            revert UsdnProtocolInvalidFeeCollector();
-        }
-        _feeCollector = newFeeCollector;
-        emit FeeCollectorUpdated(newFeeCollector);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
-        if (newPrice > _usdnRebaseThreshold) {
-            revert UsdnProtocolInvalidTargetUsdnPrice();
-        }
-        if (newPrice < uint128(10 ** _priceFeedDecimals)) {
-            // values smaller than $1 are not allowed
-            revert UsdnProtocolInvalidTargetUsdnPrice();
-        }
-        _targetUsdnPrice = newPrice;
-        emit TargetUsdnPriceUpdated(newPrice);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setUsdnRebaseThreshold(uint128 newThreshold) external onlyOwner {
-        if (newThreshold < _targetUsdnPrice) {
-            revert UsdnProtocolInvalidUsdnRebaseThreshold();
-        }
-        _usdnRebaseThreshold = newThreshold;
-        emit UsdnRebaseThresholdUpdated(newThreshold);
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setUsdnRebaseInterval(uint256 newInterval) external onlyOwner {
-        _usdnRebaseInterval = newInterval;
-        emit UsdnRebaseIntervalUpdated(newInterval);
     }
 
     /**
@@ -316,7 +132,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         uint128 leverage = _getLeverage(price, liquidationPriceWithoutPenalty);
         uint128 positionTotalExpo = _calculatePositionTotalExpo(amount, price, liquidationPriceWithoutPenalty);
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
-        tick = tick + int24(_liquidationPenalty) * _tickSpacing;
+        tick = tick + int24(_params.getLiquidationPenalty()) * _tickSpacing;
         Position memory long = Position({
             user: msg.sender,
             amount: amount,

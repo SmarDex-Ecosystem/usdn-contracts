@@ -155,7 +155,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             params.initialPrice
         );
 
-        skip(protocol.getValidationDeadline());
+        skip(protocolParams.getValidationDeadline());
 
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = priceData;

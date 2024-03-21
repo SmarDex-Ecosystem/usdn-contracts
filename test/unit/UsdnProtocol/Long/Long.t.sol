@@ -91,7 +91,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
          * 5000 - 5000 / 1 = 0
          * => minLiquidationPrice = getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
          */
-        protocol.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS() + 1);
+        protocolParams.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS() + 1);
         assertEq(
             protocol.getMinLiquidationPrice(5000 ether),
             TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
@@ -108,7 +108,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
          * 5000 - 5000 / 1.1 = 454.545454545454545455
          * tick(454.545454545454545455) = 61_100 => + tickSpacing = 61_200
          */
-        protocol.setMinLeverage(11 * 10 ** (protocol.LEVERAGE_DECIMALS() - 1)); // = x1.1
+        protocolParams.setMinLeverage(11 * 10 ** (protocol.LEVERAGE_DECIMALS() - 1)); // = x1.1
         assertEq(protocol.getMinLiquidationPrice(5000 ether), TickMath.getPriceAtTick(61_200));
     }
 
@@ -201,7 +201,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_tickValue() public {
         int24 tick = protocol.getEffectiveTickForPrice(500 ether);
         uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            tick - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
+            tick - int24(protocolParams.getLiquidationPenalty()) * protocol.getTickSpacing()
         );
 
         int256 value = protocol.i_tickValue(liqPriceWithoutPenalty, tick, 10 ether);

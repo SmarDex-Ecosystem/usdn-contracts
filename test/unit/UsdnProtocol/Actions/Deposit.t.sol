@@ -60,7 +60,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(action.amount, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        skip(protocolParams.getValidationDeadline() + 1);
         (actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions[0].user, address(this), "pending action user");
     }
@@ -153,7 +153,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         internal
     {
         vm.prank(ADMIN);
-        protocol.setPositionFeeBps(0); // 0% fees
+        protocolParams.setPositionFeeBps(0); // 0% fees
 
         uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding

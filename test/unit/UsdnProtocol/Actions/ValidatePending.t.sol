@@ -179,7 +179,7 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(USER_3, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
         setUpUserPositionInVault(USER_4, ProtocolAction.InitiateWithdrawal, 1 ether, params.initialPrice);
         // make actionable
-        skip(protocol.getValidationDeadline() + 1);
+        skip(protocolParams.getValidationDeadline() + 1);
 
         (PendingAction[] memory actions, uint128[] memory rawIndices) =
             protocol.getActionablePendingActions(address(this));

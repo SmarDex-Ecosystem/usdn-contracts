@@ -82,7 +82,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertEq(action.amount, USDN_AMOUNT, "action amount");
 
         // the pending action should be actionable after the validation deadline
-        skip(protocol.getValidationDeadline() + 1);
+        skip(protocolParams.getValidationDeadline() + 1);
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions[0].user, address(this), "pending action user");
         assertEq(rawIndices[0], 1, "raw index");
@@ -176,7 +176,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         public
     {
         vm.prank(ADMIN);
-        protocol.setPositionFeeBps(0); // 0% fees
+        protocolParams.setPositionFeeBps(0); // 0% fees
 
         bytes memory currentPrice = abi.encode(initialPrice);
         protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA);
@@ -201,8 +201,8 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             protocol.i_getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, abi.encode(assetPrice));
 
         // Apply fees on price
-        uint256 withdrawalPriceWithFees =
-            withdrawalPrice.price - (withdrawalPrice.price * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
+        uint256 withdrawalPriceWithFees = withdrawalPrice.price
+            - (withdrawalPrice.price * protocolParams.getPositionFeeBps()) / protocol.BPS_DIVISOR();
 
         // We calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to

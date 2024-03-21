@@ -71,64 +71,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getUsdnMinDivisor() external view returns (uint256);
 
     /* -------------------------------------------------------------------------- */
-    /*                                 Parameters getters                         */
-    /* -------------------------------------------------------------------------- */
-
-    /// @notice The oracle middleware contract.
-    function getOracleMiddleware() external view returns (IOracleMiddleware);
-
-    /// @notice The liquidation rewards manager contract
-    function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager);
-
-    /// @notice The minimum leverage for a position
-    function getMinLeverage() external view returns (uint256);
-
-    /// @notice The maximum leverage value
-    function getMaxLeverage() external view returns (uint256);
-
-    /// @notice The deadline for a user to confirm their own action
-    function getValidationDeadline() external view returns (uint256);
-
-    /// @notice The liquidation penalty (in tick spacing units)
-    function getLiquidationPenalty() external view returns (uint24);
-
-    /// @notice Safety margin for the liquidation price of newly open positions
-    function getSafetyMarginBps() external view returns (uint256);
-
-    /// @notice User current liquidation iteration in tick.
-    function getLiquidationIteration() external view returns (uint16);
-
-    /// @notice The moving average period of the funding rate
-    function getEMAPeriod() external view returns (uint128);
-
-    /// @notice The scaling factor (SF) of the funding rate
-    function getFundingSF() external view returns (uint256);
-
-    /// @notice The protocol fee in bps
-    function getProtocolFeeBps() external view returns (uint16);
-
-    /// @notice The position fee in bps
-    function getPositionFeeBps() external view returns (uint16);
-
-    /// @notice The fee threshold before fees are sent to the fee collector
-    function getFeeThreshold() external view returns (uint256);
-
-    /// @notice The address of the fee collector
-    function getFeeCollector() external view returns (address);
-
-    /// @notice The address of the fee collector
-    function getMiddlewareValidationDelay() external view returns (uint256);
-
-    /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
-    function getTargetUsdnPrice() external view returns (uint128);
-
-    /// @notice The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
-    function getUsdnRebaseThreshold() external view returns (uint128);
-
-    /// @notice The interval between two automatic rebase checks
-    function getUsdnRebaseInterval() external view returns (uint256);
-
-    /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
 

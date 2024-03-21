@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
@@ -16,7 +15,6 @@ interface IUsdnProtocolParams is IUsdnProtocolEvents, IUsdnProtocolErrors {
     error UsdnProtocolParamsAlreadyInitialized();
 
     function initialize(
-        IUsdnProtocol protocol,
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         address feeCollector,
@@ -35,8 +33,6 @@ interface IUsdnProtocolParams is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @dev Example: 200 -> 2%
      */
     function BPS_DIVISOR() external pure returns (uint256);
-
-    function getProtocol() external view returns (IUsdnProtocol);
 
     function getLeverageDecimals() external view returns (uint8);
 

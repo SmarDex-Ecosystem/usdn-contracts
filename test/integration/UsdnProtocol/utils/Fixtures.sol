@@ -30,6 +30,7 @@ import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEv
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
+import { UsdnProtocolParams } from "src/UsdnProtocol/UsdnProtocolParams.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
@@ -61,6 +62,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     MockChainlinkOnChain public mockChainlinkOnChain;
     WstEthOracleMiddleware public oracleMiddleware;
     LiquidationRewardsManager public liquidationRewardsManager;
+    UsdnProtocolParams public protocolParams;
 
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
@@ -98,7 +100,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn = new Usdn(address(0), address(0));
         AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
+        protocolParams = new UsdnProtocolParams();
         protocol = new UsdnProtocolHandler(
+            protocolParams,
             usdn,
             wstETH,
             oracleMiddleware,

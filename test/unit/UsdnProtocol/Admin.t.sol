@@ -29,43 +29,43 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         bytes memory customError = abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this));
 
         vm.expectRevert(customError);
-        protocol.setOracleMiddleware(IOracleMiddleware(address(1)));
+        protocolParams.setOracleMiddleware(IOracleMiddleware(address(1)));
 
         vm.expectRevert(customError);
-        protocol.setMinLeverage(0);
+        protocolParams.setMinLeverage(0);
 
         vm.expectRevert(customError);
-        protocol.setMaxLeverage(0);
+        protocolParams.setMaxLeverage(0);
 
         vm.expectRevert(customError);
-        protocol.setValidationDeadline(0);
+        protocolParams.setValidationDeadline(0);
 
         vm.expectRevert(customError);
-        protocol.setLiquidationPenalty(0);
+        protocolParams.setLiquidationPenalty(0);
 
         vm.expectRevert(customError);
-        protocol.setSafetyMarginBps(0);
+        protocolParams.setSafetyMarginBps(0);
 
         vm.expectRevert(customError);
-        protocol.setLiquidationIteration(0);
+        protocolParams.setLiquidationIteration(0);
 
         vm.expectRevert(customError);
-        protocol.setEMAPeriod(0);
+        protocolParams.setEMAPeriod(0);
 
         vm.expectRevert(customError);
-        protocol.setFundingSF(0);
+        protocolParams.setFundingSF(0);
 
         vm.expectRevert(customError);
-        protocol.setProtocolFeeBps(0);
+        protocolParams.setProtocolFeeBps(0);
 
         vm.expectRevert(customError);
-        protocol.setFeeCollector(address(this));
+        protocolParams.setFeeCollector(address(this));
 
         vm.expectRevert(customError);
-        protocol.setFeeThreshold(0);
+        protocolParams.setFeeThreshold(0);
 
         vm.expectRevert(customError);
-        protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(this)));
+        protocolParams.setLiquidationRewardsManager(ILiquidationRewardsManager(address(this)));
     }
 
     /**
@@ -78,7 +78,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // zero address disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidMiddlewareAddress.selector);
         // set middleware
-        protocol.setOracleMiddleware(IOracleMiddleware(address(0)));
+        protocolParams.setOracleMiddleware(IOracleMiddleware(address(0)));
     }
 
     /**
@@ -92,9 +92,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.OracleMiddlewareUpdated(address(this));
         // set middleware
-        protocol.setOracleMiddleware(IOracleMiddleware(address(this)));
+        protocolParams.setOracleMiddleware(IOracleMiddleware(address(this)));
         // assert new middleware equal randAddress
-        assertEq(address(protocol.getOracleMiddleware()), address(this));
+        assertEq(address(protocolParams.getOracleMiddleware()), address(this));
     }
 
     /**
@@ -107,7 +107,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // minLeverage zero disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage.selector);
         // set minLeverage
-        protocol.setMinLeverage(0);
+        protocolParams.setMinLeverage(0);
     }
 
     /**
@@ -117,11 +117,11 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because greater than max.
      */
     function test_RevertWhen_setMinLeverageWithMax() external adminPrank {
-        uint256 maxLeverage = protocol.getMaxLeverage();
+        uint256 maxLeverage = protocolParams.getMaxLeverage();
         // minLeverage higher than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidMinLeverage.selector);
         // set minLeverage
-        protocol.setMinLeverage(maxLeverage);
+        protocolParams.setMinLeverage(maxLeverage);
     }
 
     /**
@@ -137,9 +137,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.MinLeverageUpdated(expectedNewValue);
         // assign new minLeverage value
-        protocol.setMinLeverage(expectedNewValue);
+        protocolParams.setMinLeverage(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.getMinLeverage(), expectedNewValue);
+        assertEq(protocolParams.getMinLeverage(), expectedNewValue);
     }
 
     /**
@@ -149,11 +149,11 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then Revert because lower than min.
      */
     function test_RevertWhen_setMaxLeverageWithMin() external adminPrank {
-        uint256 minLeverage = protocol.getMinLeverage();
+        uint256 minLeverage = protocolParams.getMinLeverage();
         // maxLeverage lower than min disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage.selector);
         // set maxLeverage
-        protocol.setMaxLeverage(minLeverage);
+        protocolParams.setMaxLeverage(minLeverage);
     }
 
     /**
@@ -168,7 +168,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // maxLeverage greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidMaxLeverage.selector);
         // set maxLeverage
-        protocol.setMaxLeverage(aboveLimit);
+        protocolParams.setMaxLeverage(aboveLimit);
     }
 
     /**
@@ -179,14 +179,14 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_setMaxLeverage() external adminPrank {
         // cache the new maxLeverage value to assign
-        uint256 expectedNewValue = protocol.getMinLeverage() + 1;
+        uint256 expectedNewValue = protocolParams.getMinLeverage() + 1;
         // expected event
         vm.expectEmit();
         emit IUsdnProtocolEvents.MaxLeverageUpdated(expectedNewValue);
         // assign new maxLeverage value
-        protocol.setMaxLeverage(expectedNewValue);
+        protocolParams.setMaxLeverage(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.getMaxLeverage(), expectedNewValue);
+        assertEq(protocolParams.getMaxLeverage(), expectedNewValue);
     }
 
     /**
@@ -199,7 +199,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // validationDeadline lower than min disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline.selector);
         // set validationDeadline
-        protocol.setValidationDeadline(59);
+        protocolParams.setValidationDeadline(59);
     }
 
     /**
@@ -212,7 +212,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // validationDeadline greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidValidationDeadline.selector);
         // set validationDeadline
-        protocol.setValidationDeadline(365 days + 1);
+        protocolParams.setValidationDeadline(365 days + 1);
     }
 
     /**
@@ -228,9 +228,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.ValidationDeadlineUpdated(expectedNewValue);
         // assign new validationDeadline value
-        protocol.setValidationDeadline(expectedNewValue);
+        protocolParams.setValidationDeadline(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.getValidationDeadline(), expectedNewValue);
+        assertEq(protocolParams.getValidationDeadline(), expectedNewValue);
     }
 
     /**
@@ -243,7 +243,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // liquidationPenalty greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationPenalty.selector);
         // set liquidationPenalty
-        protocol.setLiquidationPenalty(16);
+        protocolParams.setLiquidationPenalty(16);
     }
 
     /**
@@ -259,9 +259,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidationPenaltyUpdated(expectedNewValue);
         // assign new liquidationPenalty value
-        protocol.setLiquidationPenalty(expectedNewValue);
+        protocolParams.setLiquidationPenalty(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.getLiquidationPenalty(), expectedNewValue);
+        assertEq(protocolParams.getLiquidationPenalty(), expectedNewValue);
     }
 
     /**
@@ -274,7 +274,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // safetyMargin greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidSafetyMarginBps.selector);
         // set safetyMargin
-        protocol.setSafetyMarginBps(2001);
+        protocolParams.setSafetyMarginBps(2001);
     }
 
     /**
@@ -290,9 +290,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.SafetyMarginBpsUpdated(expectedNewValue);
         // assign new safetyMargin value
-        protocol.setSafetyMarginBps(expectedNewValue);
+        protocolParams.setSafetyMarginBps(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.getSafetyMarginBps(), expectedNewValue);
+        assertEq(protocolParams.getSafetyMarginBps(), expectedNewValue);
     }
 
     /**
@@ -306,7 +306,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // liquidationIteration greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationIteration.selector);
         // set liquidationIteration
-        protocol.setLiquidationIteration(aboveMax);
+        protocolParams.setLiquidationIteration(aboveMax);
     }
 
     /**
@@ -322,9 +322,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidationIterationUpdated(expectedNewValue);
         // assign new liquidationIteration value
-        protocol.setLiquidationIteration(expectedNewValue);
+        protocolParams.setLiquidationIteration(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.getLiquidationIteration(), expectedNewValue);
+        assertEq(protocolParams.getLiquidationIteration(), expectedNewValue);
     }
 
     /**
@@ -337,7 +337,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // EMAPeriod greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidEMAPeriod.selector);
         // set EMAPeriod
-        protocol.setEMAPeriod(90 days + 1);
+        protocolParams.setEMAPeriod(90 days + 1);
     }
 
     /**
@@ -353,9 +353,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.EMAPeriodUpdated(expectedNewValue);
         // assign new EMAPeriod value
-        protocol.setEMAPeriod(expectedNewValue);
+        protocolParams.setEMAPeriod(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.getEMAPeriod(), expectedNewValue);
+        assertEq(protocolParams.getEMAPeriod(), expectedNewValue);
     }
 
     /**
@@ -370,7 +370,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // fundingSF greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidFundingSF.selector);
         // set fundingSF
-        protocol.setFundingSF(aboveLimit);
+        protocolParams.setFundingSF(aboveLimit);
     }
 
     /**
@@ -386,9 +386,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.FundingSFUpdated(expectedNewValue);
         // assign new fundingSF value
-        protocol.setFundingSF(expectedNewValue);
+        protocolParams.setFundingSF(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.getFundingSF(), expectedNewValue);
+        assertEq(protocolParams.getFundingSF(), expectedNewValue);
     }
 
     /**
@@ -403,7 +403,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // feeBps greater than max disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidProtocolFeeBps.selector);
         // set feeBps
-        protocol.setProtocolFeeBps(aboveMax);
+        protocolParams.setProtocolFeeBps(aboveMax);
     }
 
     /**
@@ -419,9 +419,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.FeeBpsUpdated(expectedNewValue);
         // assign new feeBps value
-        protocol.setProtocolFeeBps(expectedNewValue);
+        protocolParams.setProtocolFeeBps(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.getProtocolFeeBps(), expectedNewValue);
+        assertEq(protocolParams.getProtocolFeeBps(), expectedNewValue);
     }
 
     /**
@@ -434,7 +434,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // feeCollector address zero disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidFeeCollector.selector);
         // set feeBps
-        protocol.setFeeCollector(address(0));
+        protocolParams.setFeeCollector(address(0));
     }
 
     /**
@@ -450,9 +450,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.FeeCollectorUpdated(expectedNewValue);
         // assign new feeCollector address
-        protocol.setFeeCollector(expectedNewValue);
+        protocolParams.setFeeCollector(expectedNewValue);
         // check new address is equal than expected
-        assertEq(protocol.getFeeCollector(), expectedNewValue);
+        assertEq(protocolParams.getFeeCollector(), expectedNewValue);
     }
 
     /**
@@ -468,9 +468,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.FeeThresholdUpdated(expectedNewValue);
         // assign new feeThreshold value
-        protocol.setFeeThreshold(expectedNewValue);
+        protocolParams.setFeeThreshold(expectedNewValue);
         // check new value is equal than expected
-        assertEq(protocol.getFeeThreshold(), expectedNewValue);
+        assertEq(protocolParams.getFeeThreshold(), expectedNewValue);
     }
 
     /**
@@ -483,7 +483,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // zero address disallowed
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLiquidationRewardsManagerAddress.selector);
         // set liquidation reward manager
-        protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(0)));
+        protocolParams.setLiquidationRewardsManager(ILiquidationRewardsManager(address(0)));
     }
 
     /**
@@ -499,8 +499,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidationRewardsManagerUpdated(address(expectedNewValue));
         // set liquidation reward manager
-        protocol.setLiquidationRewardsManager(expectedNewValue);
+        protocolParams.setLiquidationRewardsManager(expectedNewValue);
         // assert new liquidation reward manager equal expectedNewValue
-        assertEq(address(protocol.getLiquidationRewardsManager()), address(expectedNewValue));
+        assertEq(address(protocolParams.getLiquidationRewardsManager()), address(expectedNewValue));
     }
 }

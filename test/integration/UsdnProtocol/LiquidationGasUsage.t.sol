@@ -76,7 +76,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
             address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), address(wstETH), 1 hours
         );
         vm.prank(DEPLOYER);
-        protocol.setOracleMiddleware(mockOracle);
+        protocolParams.setOracleMiddleware(mockOracle);
         mockOracle.setWstethMockedPrice(pythPriceNormalized + 1000 ether);
         // Turn off pyth signature verification to avoid updating the price feed
         // This allows us to be in the worst case scenario gas wise later
@@ -84,8 +84,8 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
 
         // Disable rebase for setup
         vm.startPrank(DEPLOYER);
-        protocol.setUsdnRebaseThreshold(1000 ether);
-        protocol.setTargetUsdnPrice(1000 ether);
+        protocolParams.setUsdnRebaseThreshold(1000 ether);
+        protocolParams.setTargetUsdnPrice(1000 ether);
         vm.stopPrank();
 
         /* ---------------------------- Set up positions ---------------------------- */
@@ -107,7 +107,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         /* ---------------------------- Start the checks ---------------------------- */
         // Put the original oracle back
         vm.prank(DEPLOYER);
-        protocol.setOracleMiddleware(oracleMiddleware);
+        protocolParams.setOracleMiddleware(oracleMiddleware);
 
         uint256[] memory gasUsedArray = new uint256[](3);
         ILiquidationRewardsManagerErrorsEventsTypes.RewardsParameters memory rewardsParameters =
@@ -120,8 +120,8 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         // If required, enable rebase
         if (withRebase) {
             vm.startPrank(DEPLOYER);
-            protocol.setTargetUsdnPrice(1 ether);
-            protocol.setUsdnRebaseThreshold(1 ether);
+            protocolParams.setTargetUsdnPrice(1 ether);
+            protocolParams.setUsdnRebaseThreshold(1 ether);
             vm.stopPrank();
         }
 

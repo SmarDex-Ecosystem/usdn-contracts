@@ -49,7 +49,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     /// @inheritdoc IUsdnProtocolLong
     // slither-disable-next-line write-after-write
     function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
-        liquidationPrice_ = _getLiquidationPrice(price, uint128(_minLeverage));
+        liquidationPrice_ = _getLiquidationPrice(price, uint128(_params.getMinLeverage()));
         int24 tick = getEffectiveTickForPrice(liquidationPrice_);
         liquidationPrice_ = getEffectivePriceForTick(tick + _tickSpacing);
     }
@@ -62,8 +62,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     {
         Position memory pos = getLongPosition(tick, tickVersion, index);
         uint256 liquidationMultiplier = getLiquidationMultiplier(timestamp);
-        uint128 liqPrice =
-            getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liquidationMultiplier);
+        uint128 liqPrice = getEffectivePriceForTick(
+            tick - int24(_params.getLiquidationPenalty()) * _tickSpacing, liquidationMultiplier
+        );
         value_ = _positionValue(price, liqPrice, pos.totalExpo);
     }
 
@@ -169,7 +170,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         returns (int256 value_)
     {
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
+        uint128 liqPriceWithoutPenalty =
+            getEffectivePriceForTick(tick - int24(_params.getLiquidationPenalty()) * _tickSpacing);
 
         // if the current price is lower than the liquidation price, we have effectively a negative value
         if (currentPrice <= liqPriceWithoutPenalty) {
@@ -213,7 +215,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
-        maxLiquidationPrice_ = (price * (BPS_DIVISOR - _safetyMarginBps) / BPS_DIVISOR).toUint128();
+        maxLiquidationPrice_ = (price * (BPS_DIVISOR - _params.getSafetyMarginBps()) / BPS_DIVISOR).toUint128();
     }
 
     function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {

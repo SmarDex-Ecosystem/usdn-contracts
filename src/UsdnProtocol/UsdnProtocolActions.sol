@@ -8,6 +8,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import {
     Position,
     ProtocolAction,
@@ -176,7 +177,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 liquidatedCollateral, bool rebased) internal {
         // Get how much we should give to the liquidator as rewards
         uint256 liquidationRewards =
-            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, liquidatedCollateral, rebased);
+            _params.getLiquidationRewardsManager().getLiquidationRewards(liquidatedTicks, liquidatedCollateral, rebased);
 
         // Avoid underflows in situation of extreme bad debt
         if (_balanceVault < liquidationRewards) {
@@ -200,7 +201,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * the `ProtocolAction.InitiateDeposit` action.
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
-     * @param user The address of theuser initiating the deposit.
+     * @param user The address of the user initiating the deposit.
      * @param amount The amount of wstETH to deposit.
      * @param currentPriceData The current price data
      */
@@ -216,7 +217,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Apply fees on price
         uint128 pendingActionPrice =
-            (currentPrice.price - currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
+            (currentPrice.price - currentPrice.price * _params.getPositionFeeBps() / BPS_DIVISOR).toUint128();
 
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateDeposit,
@@ -269,7 +270,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // action, or the current price provided for validation. We will use the lower of the two amounts to mint.
         // Apply fees on price
         uint128 priceWithFees =
-            (depositPrice_.price - (depositPrice_.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+            (depositPrice_.price - (depositPrice_.price * _params.getPositionFeeBps()) / BPS_DIVISOR).toUint128();
 
         uint256 usdnToMint1 =
             _calcMintUsdn(deposit.amount, deposit.balanceVault, deposit.usdnTotalSupply, deposit.assetPrice);
@@ -320,7 +321,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Apply fees on price
         uint128 pendingActionPrice =
-            (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
+            (currentPrice.price + currentPrice.price * _params.getPositionFeeBps() / BPS_DIVISOR).toUint128();
 
         uint256 totalExpo = _totalExpo;
 
@@ -371,7 +372,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Apply fees on price
         uint128 withdrawalPriceWithFees =
-            (withdrawalPrice.price + (withdrawalPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+            (withdrawalPrice.price + (withdrawalPrice.price * _params.getPositionFeeBps()) / BPS_DIVISOR).toUint128();
 
         // We calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
@@ -437,7 +438,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _getOraclePrice(ProtocolAction.InitiateOpenPosition, block.timestamp, currentPriceData);
 
             // Apply fees on price
-            adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+            adjustedPrice =
+                (currentPrice.price + (currentPrice.price * _params.getPositionFeeBps()) / BPS_DIVISOR).toUint128();
 
             neutralPrice = currentPrice.neutralPrice.toUint128();
 
@@ -451,16 +453,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             tick_ = getEffectiveTickForPrice(desiredLiqPrice);
 
             // remove liquidation penalty for leverage calculation
-            uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - int24(_liquidationPenalty) * _tickSpacing);
+            uint128 liqPriceWithoutPenalty =
+                getEffectivePriceForTick(tick_ - int24(_params.getLiquidationPenalty()) * _tickSpacing);
             positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
 
             // calculate position leverage
             // reverts if liquidationPrice >= entryPrice
             leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
-            if (leverage < _minLeverage) {
+            if (leverage < _params.getMinLeverage()) {
                 revert UsdnProtocolLeverageTooLow();
             }
-            if (leverage > _maxLeverage) {
+            if (leverage > _params.getMaxLeverage()) {
                 revert UsdnProtocolLeverageTooHigh();
             }
         }
@@ -526,7 +529,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             PriceInfo memory price = _getOraclePrice(ProtocolAction.ValidateOpenPosition, long.timestamp, priceData);
 
             // Apply fees on price
-            startPrice = (price.price + (price.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+            startPrice = (price.price + (price.price * _params.getPositionFeeBps()) / BPS_DIVISOR).toUint128();
 
             _applyPnlAndFundingAndLiquidate(price.neutralPrice, price.timestamp);
         }
@@ -542,18 +545,19 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Get the position
         Position memory pos = _longPositions[tickHash][long.index];
         // Re-calculate leverage
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(long.tick - int24(_liquidationPenalty) * _tickSpacing);
+        uint128 liqPriceWithoutPenalty =
+            getEffectivePriceForTick(long.tick - int24(_params.getLiquidationPenalty()) * _tickSpacing);
         // reverts if liquidationPrice >= entryPrice
         uint128 leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
         // Leverage is always greater than 1 (liquidationPrice is positive).
-        // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it.
+        // Even if it drops below _params.getMinLeverage() between the initiate and validate actions, we still allow it.
         // However, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
-        // of _maxLeverage
-        if (leverage > _maxLeverage) {
+        // of _params.getMaxLeverage()
+        if (leverage > _params.getMaxLeverage()) {
             // remove the position
             _removeAmountFromPosition(long.tick, long.index, pos, pos.amount, pos.totalExpo);
-            // theoretical liquidation price for _maxLeverage
-            liqPriceWithoutPenalty = _getLiquidationPrice(startPrice, _maxLeverage.toUint128());
+            // theoretical liquidation price for _params.getMaxLeverage()
+            liqPriceWithoutPenalty = _getLiquidationPrice(startPrice, _params.getMaxLeverage().toUint128());
             // adjust to closest valid tick down
             int24 tickWithoutPenalty = getEffectiveTickForPrice(liqPriceWithoutPenalty);
             // retrieve exact liquidation price without penalty
@@ -563,7 +567,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // update position total expo
             pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
             // apply liquidation penalty
-            int24 tick = tickWithoutPenalty + int24(_liquidationPenalty) * _tickSpacing;
+            int24 tick = tickWithoutPenalty + int24(_params.getLiquidationPenalty()) * _tickSpacing;
             // insert position into new tick, update tickVersion and index
             (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos);
             // emit LiquidationPriceUpdated
@@ -632,7 +636,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 _getOraclePrice(ProtocolAction.InitiateClosePosition, block.timestamp, currentPriceData);
 
             _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
-            priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+            priceWithFees =
+                (currentPrice.price - (currentPrice.price * _params.getPositionFeeBps()) / BPS_DIVISOR).toUint128();
         }
 
         uint128 totalExpoToClose = (uint256(pos.totalExpo) * amountToClose / pos.amount).toUint128();
@@ -691,7 +696,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _applyPnlAndFundingAndLiquidate(price.neutralPrice, price.timestamp);
 
         // Apply fees on price
-        uint128 priceWithFees = (price.price - (price.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+        uint128 priceWithFees = (price.price - (price.price * _params.getPositionFeeBps()) / BPS_DIVISOR).toUint128();
 
         uint256 assetToTransfer = _assetToTransfer(
             priceWithFees, long.tick, long.closeTotalExpo, long.closeLiqMultiplier, long.closeTempTransfer
@@ -791,7 +796,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Calculate position value
         uint256 value = _positionValue(
             currentPrice,
-            getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
+            getEffectivePriceForTick(tick - int24(_params.getLiquidationPenalty()) * _tickSpacing, liqMultiplier),
             posExpo
         );
 
@@ -859,11 +864,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         internal
         returns (PriceInfo memory price_)
     {
-        uint256 validationCost = _oracleMiddleware.validationCost(priceData, action);
+        IOracleMiddleware oracleMiddleware = _params.getOracleMiddleware();
+        uint256 validationCost = oracleMiddleware.validationCost(priceData, action);
         if (address(this).balance < validationCost) {
             revert UsdnProtocolInsufficientOracleFee();
         }
-        price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(uint128(timestamp), action, priceData);
+        price_ = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(uint128(timestamp), action, priceData);
     }
 
     function _applyPnlAndFundingAndLiquidate(uint256 neutralPrice, uint256 timestamp) internal {
@@ -873,7 +879,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // liquidate if price is more recent than _lastPrice
         if (priceUpdated) {
             (,,, _balanceLong, _balanceVault) =
-                _liquidatePositions(neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
+                _liquidatePositions(neutralPrice, _params.getLiquidationIteration(), tempLongBalance, tempVaultBalance);
             // rebase USDN if needed (interval has elapsed and price threshold was reached)
             _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
         }
@@ -891,9 +897,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     function _checkPendingFee() internal {
         // if pending protocol fee is above threshold, send it to the fee collector
-        if (_pendingProtocolFee >= _feeThreshold) {
-            _asset.safeTransfer(_feeCollector, _pendingProtocolFee);
-            emit ProtocolFeeDistributed(_feeCollector, _pendingProtocolFee);
+        if (_pendingProtocolFee >= _params.getFeeThreshold()) {
+            address feeCollector = _params.getFeeCollector();
+            _asset.safeTransfer(feeCollector, _pendingProtocolFee);
+            emit ProtocolFeeDistributed(feeCollector, _pendingProtocolFee);
             _pendingProtocolFee = 0;
         }
     }

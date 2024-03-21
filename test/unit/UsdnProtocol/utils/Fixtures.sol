@@ -19,6 +19,7 @@ import {
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
+import { UsdnProtocolParams } from "src/UsdnProtocol/UsdnProtocolParams.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -55,6 +56,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     MockOracleMiddleware public oracleMiddleware;
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
+    UsdnProtocolParams public protocolParams;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
     uint128 public initialLongExpo;
@@ -78,8 +80,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager =
             new LiquidationRewardsManager(address(chainlinkGasPriceFeed), IWstETH(address(wstETH)), 2 days);
-
+        protocolParams = new UsdnProtocolParams();
         protocol = new UsdnProtocolHandler(
+            protocolParams,
             usdn,
             wstETH,
             oracleMiddleware,
@@ -91,19 +94,19 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 
         if (!testParams.enablePositionFees) {
-            protocol.setPositionFeeBps(0);
+            protocolParams.setPositionFeeBps(0);
         }
         if (!testParams.enableProtocolFees) {
-            protocol.setProtocolFeeBps(0);
+            protocolParams.setProtocolFeeBps(0);
         }
         if (!testParams.enableFunding) {
-            protocol.setFundingSF(0);
+            protocolParams.setFundingSF(0);
             protocol.resetEMA();
         }
         if (!params.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
-            protocol.setUsdnRebaseThreshold(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
-            protocol.setTargetUsdnPrice(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
+            protocolParams.setUsdnRebaseThreshold(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
+            protocolParams.setTargetUsdnPrice(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
         }
 
         wstETH.approve(address(protocol), type(uint256).max);
@@ -116,12 +119,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         );
         Position memory firstPos = protocol.getLongPosition(
             protocol.getEffectiveTickForPrice(testParams.initialPrice / 2)
-                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
+                + int24(protocolParams.getLiquidationPenalty()) * protocol.getTickSpacing(),
             0,
             0
         );
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
+        protocolParams.transferOwnership(ADMIN);
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();
@@ -137,12 +141,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         );
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "usdn dead address balance");
         uint256 usdnTotalSupply = uint256(params.initialDeposit) * params.initialPrice / 10 ** 18;
-        usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
+        usdnTotalSupply -= usdnTotalSupply * protocolParams.getPositionFeeBps() / protocol.BPS_DIVISOR();
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         int24 firstPosTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
         Position memory firstPos = protocol.getLongPosition(
-            firstPosTick + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(), 0, 0
+            firstPosTick + int24(protocolParams.getLiquidationPenalty()) * protocol.getTickSpacing(), 0, 0
         );
 
         assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");
@@ -150,7 +154,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         assertEq(firstPos.user, DEPLOYER, "first pos user");
         assertEq(firstPos.amount, params.initialLong, "first pos amount");
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
-        assertEq(protocol.getFeeCollector(), ADMIN, "fee collector");
+        assertEq(protocolParams.getFeeCollector(), ADMIN, "fee collector");
         assertEq(protocol.owner(), ADMIN, "protocol owner");
     }
 

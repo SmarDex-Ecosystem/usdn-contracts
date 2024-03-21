@@ -5,6 +5,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { IUsdnProtocolStorage } from "src/interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
+import { IUsdnProtocolParams } from "src/interfaces/UsdnProtocol/IUsdnProtocolParams.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
@@ -43,6 +44,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /*                                 Immutables                                 */
     /* -------------------------------------------------------------------------- */
 
+    IUsdnProtocolParams internal _params;
+
     /**
      * @notice The liquidation tick spacing for storing long positions.
      * @dev A tick spacing of 1 is equivalent to a 0.1% increase in liquidation price between ticks. A tick spacing of
@@ -67,64 +70,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The MIN_DIVISOR constant of the USDN token.
     uint256 internal immutable _usdnMinDivisor;
-
-    /* -------------------------------------------------------------------------- */
-    /*                                 Parameters                                 */
-    /* -------------------------------------------------------------------------- */
-
-    /// @notice The oracle middleware contract.
-    IOracleMiddleware internal _oracleMiddleware;
-
-    /// @notice The liquidation rewards manager contract.
-    ILiquidationRewardsManager internal _liquidationRewardsManager;
-
-    /// @notice The minimum leverage for a position (1.000000001)
-    uint256 internal _minLeverage = 10 ** LEVERAGE_DECIMALS + 10 ** 12;
-
-    /// @notice The maximum leverage for a position
-    uint256 internal _maxLeverage = 10 * 10 ** LEVERAGE_DECIMALS;
-
-    /// @notice The deadline for a user to confirm their own action
-    uint256 internal _validationDeadline = 20 minutes;
-
-    /// @notice The liquidation penalty (in tick spacing units)
-    uint24 internal _liquidationPenalty = 2; // 200 ticks -> ~2.02%
-
-    /// @notice Safety margin for the liquidation price of newly open positions, in basis points
-    uint256 internal _safetyMarginBps = 200; // 2%
-
-    /// @notice User current liquidation iteration in tick.
-    uint16 internal _liquidationIteration = 3;
-
-    /// @notice The moving average period of the funding rate
-    uint128 internal _EMAPeriod = 5 days;
-
-    /// @notice The scaling factor (SF) of the funding rate (0.12)
-    uint256 internal _fundingSF = 12 * 10 ** (FUNDING_SF_DECIMALS - 2);
-
-    /// @notice The protocol fee percentage (in bps)
-    uint16 internal _protocolFeeBps = 10;
-
-    /// @notice The fee collector's address
-    address internal _feeCollector;
-
-    /// @notice The fee threshold above which fee will be sent
-    uint256 internal _feeThreshold = 1 ether;
-
-    /// @notice The position fee in basis point
-    uint16 internal _positionFeeBps = 4; // 0.04%
-
-    /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
-    uint128 internal _targetUsdnPrice;
-
-    /// @notice The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
-    uint128 internal _usdnRebaseThreshold;
-
-    /**
-     * @notice The interval between two automatic rebase checks
-     * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
-     */
-    uint256 internal _usdnRebaseInterval = 12 hours;
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
@@ -211,6 +156,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * @param feeCollector The address of the fee collector.
      */
     constructor(
+        IUsdnProtocolParams params,
         IUsdn usdn,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
@@ -234,14 +180,21 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         if (_assetDecimals < FUNDING_SF_DECIMALS) {
             revert UsdnProtocolInvalidAssetDecimals(_assetDecimals);
         }
-        _oracleMiddleware = oracleMiddleware;
-        _priceFeedDecimals = oracleMiddleware.getDecimals();
-        _liquidationRewardsManager = liquidationRewardsManager;
-        _tickSpacing = tickSpacing;
-        _feeCollector = feeCollector;
 
-        _targetUsdnPrice = uint128(102 * 10 ** (_priceFeedDecimals - 2)); // $1.02
-        _usdnRebaseThreshold = uint128(1021 * 10 ** (_priceFeedDecimals - 3)); // $1.021
+        _priceFeedDecimals = oracleMiddleware.getDecimals();
+        _tickSpacing = tickSpacing;
+
+        _params = params;
+
+        params.initialize(
+            oracleMiddleware,
+            liquidationRewardsManager,
+            feeCollector,
+            LEVERAGE_DECIMALS,
+            FUNDING_SF_DECIMALS,
+            _priceFeedDecimals,
+            MAX_LIQUIDATION_ITERATION
+        );
     }
 
     /* -------------------------------------------------------------------------- */
@@ -281,100 +234,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getUsdnMinDivisor() external view returns (uint256) {
         return _usdnMinDivisor;
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                                 Parameters getters                         */
-    /* -------------------------------------------------------------------------- */
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getOracleMiddleware() external view returns (IOracleMiddleware) {
-        return _oracleMiddleware;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager) {
-        return _liquidationRewardsManager;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getMinLeverage() external view returns (uint256) {
-        return _minLeverage;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getMaxLeverage() external view returns (uint256) {
-        return _maxLeverage;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getValidationDeadline() external view returns (uint256) {
-        return _validationDeadline;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getLiquidationPenalty() external view returns (uint24) {
-        return _liquidationPenalty;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getSafetyMarginBps() external view returns (uint256) {
-        return _safetyMarginBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getLiquidationIteration() external view returns (uint16) {
-        return _liquidationIteration;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getEMAPeriod() external view returns (uint128) {
-        return _EMAPeriod;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getFundingSF() external view returns (uint256) {
-        return _fundingSF;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getProtocolFeeBps() external view returns (uint16) {
-        return _protocolFeeBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getPositionFeeBps() external view returns (uint16) {
-        return _positionFeeBps;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getFeeThreshold() external view returns (uint256) {
-        return _feeThreshold;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getFeeCollector() external view returns (address) {
-        return _feeCollector;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getMiddlewareValidationDelay() external view returns (uint256) {
-        return _oracleMiddleware.getValidationDelay();
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getTargetUsdnPrice() external view returns (uint128) {
-        return _targetUsdnPrice;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getUsdnRebaseThreshold() external view returns (uint128) {
-        return _usdnRebaseThreshold;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getUsdnRebaseInterval() external view returns (uint256) {
-        return _usdnRebaseInterval;
     }
 
     /* -------------------------------------------------------------------------- */

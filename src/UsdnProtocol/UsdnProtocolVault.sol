@@ -78,7 +78,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @return rebased_ Whether a rebase was performed
      */
     function _usdnRebase(uint128 assetPrice, bool ignoreInterval) internal returns (bool rebased_) {
-        if (!ignoreInterval && block.timestamp - _lastRebaseCheck < _usdnRebaseInterval) {
+        if (!ignoreInterval && block.timestamp - _lastRebaseCheck < _params.getUsdnRebaseInterval()) {
             return false;
         }
         _lastRebaseCheck = block.timestamp;
@@ -93,11 +93,11 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         uint8 assetDecimals = _assetDecimals;
         uint256 usdnTotalSupply = usdn.totalSupply();
         uint256 uPrice = _calcUsdnPrice(balanceVault, assetPrice, usdnTotalSupply, usdnDecimals, assetDecimals);
-        if (uPrice <= _usdnRebaseThreshold) {
+        if (uPrice <= _params.getUsdnRebaseThreshold()) {
             return false;
         }
         uint256 targetTotalSupply =
-            _calcRebaseTotalSupply(balanceVault, assetPrice, _targetUsdnPrice, usdnDecimals, assetDecimals);
+            _calcRebaseTotalSupply(balanceVault, assetPrice, _params.getTargetUsdnPrice(), usdnDecimals, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
         usdn.rebase(newDivisor);
         rebased_ = true;
