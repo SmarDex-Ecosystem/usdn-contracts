@@ -229,6 +229,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // Two other users want to now enter the protocol
         wstETH.mintAndApprove(USER_3, 100_000 ether, address(protocol), type(uint256).max);
         wstETH.mintAndApprove(USER_4, 100_000 ether, address(protocol), type(uint256).max);
+        sdex.mintAndApprove(USER_3, 100_000 ether, address(protocol), type(uint256).max);
+        sdex.mintAndApprove(USER_4, 100_000 ether, address(protocol), type(uint256).max);
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 2, "actions length");
         bytes[] memory previousPriceData = new bytes[](actions.length);

@@ -111,6 +111,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         }
 
         wstETH.approve(address(protocol), type(uint256).max);
+        sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
         // leverage approx 2x
         protocol.initialize(
             testParams.initialDeposit,
@@ -171,6 +172,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         public
         prankUser(user)
     {
+        sdex.mintAndApprove(
+            user,
+            positionSize * price * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR() / 1e18,
+            address(protocol),
+            type(uint256).max
+        );
         wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 

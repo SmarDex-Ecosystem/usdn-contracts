@@ -20,7 +20,6 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture, IEvents {
         params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
         super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
-        sdex.mintAndApprove(address(this), 2_000_000 * 1e18, address(protocol), type(uint256).max);
     }
 
     /**
@@ -39,9 +38,10 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture, IEvents {
      */
     function test_initiateDeposit() public {
         uint128 depositAmount = 1 ether;
-        bytes memory currentPrice = abi.encode(uint128(2000 ether)); // only used to apply PnL + funding
-        uint256 expectedSdexBurnAmount =
-            uint256(2000 ether) * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR();
+        uint128 price = 2000 ether;
+        bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
+        uint256 expectedSdexBurnAmount = uint256(depositAmount) * price * protocol.getSdexBurnOnDepositRatio()
+            / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR() / 1e18;
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
         address deadAddress = protocol.DEAD_ADDRESS();
 
