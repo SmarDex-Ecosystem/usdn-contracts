@@ -43,13 +43,12 @@ contract WusdnHandler is Wusdn, Test {
             return;
         }
         assets = bound(assets, 0, _usdn.balanceOf(_currentActor));
-        uint256 newShares = previewDeposit(assets);
 
         _usdn.approve(address(this), assets);
 
         vm.stopPrank();
         vm.startPrank(address(this));
-        _deposit(_currentActor, actors[bound(receiverIndexSeed, 0, actors.length - 1)], assets, newShares);
+        _deposit(_currentActor, actors[bound(receiverIndexSeed, 0, actors.length - 1)], assets, 0);
     }
 
     function withdrawTest(uint256 assets, uint256 receiverIndexSeed, uint256 actorIndexSeed)
@@ -62,12 +61,9 @@ contract WusdnHandler is Wusdn, Test {
         }
         uint256 maxAssets = convertToAssets(balanceOf(_currentActor));
         assets = bound(assets, 0, maxAssets);
-        uint256 burnShares = previewWithdraw(assets);
 
         vm.stopPrank();
         vm.startPrank(address(this));
-        _withdraw(
-            _currentActor, actors[bound(receiverIndexSeed, 0, actors.length - 1)], _currentActor, assets, burnShares
-        );
+        _withdraw(_currentActor, actors[bound(receiverIndexSeed, 0, actors.length - 1)], _currentActor, assets, 0);
     }
 }

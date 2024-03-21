@@ -6,6 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { ERC4626 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { console2, Test } from "forge-std/Test.sol";
 
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 
@@ -38,28 +39,27 @@ contract Wusdn is ERC4626, ERC20Permit {
         return _asset.convertToTokens(shares);
     }
 
-    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal override {
+    function _deposit(address caller, address receiver, uint256 assets, uint256) internal override {
+        uint256 sharesBefore = _asset.sharesOf(address(this));
         _asset.safeTransferFrom(caller, address(this), assets);
-        _mint(receiver, shares);
-        emit Deposit(caller, receiver, assets, shares);
+        uint256 mintShares = _asset.sharesOf(address(this)) - sharesBefore;
+        _mint(receiver, mintShares);
+        emit Deposit(caller, receiver, assets, mintShares);
     }
 
-    function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
-        internal
-        override
-    {
-        if (caller != owner) {
-            _spendAllowance(owner, caller, shares);
-        }
-        if (shares > _asset.sharesOf(address(this))) {
-            shares = _asset.sharesOf(address(this));
-        }
-        if (shares > balanceOf(owner)) {
-            shares = balanceOf(owner);
-        }
-        _burn(owner, shares);
+    function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256) internal override {
+        uint256 sharesBefore = _asset.sharesOf(address(this));
         _asset.safeTransfer(receiver, assets);
-
-        emit Withdraw(caller, receiver, owner, assets, shares);
+        uint256 burnShares = sharesBefore - _asset.sharesOf(address(this));
+        if (caller != owner) {
+            _spendAllowance(owner, caller, burnShares);
+        }
+        console2.log("assets", assets);
+        console2.log("convertToShares", _asset.convertToShares(assets));
+        console2.log("burnShares", burnShares);
+        console2.log("owner", owner);
+        console2.log("balanceOf(owner)", balanceOf(owner));
+        _burn(owner, burnShares);
+        emit Withdraw(caller, receiver, owner, assets, burnShares);
     }
 }
