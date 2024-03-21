@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol
@@ -51,7 +51,15 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // calculate the value of the deployer's long position
         uint128 longLiqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
-        uint256 longPosValue = protocol.i_positionValue(params.initialPrice, longLiqPrice, initialLongExpo);
+
+        Position memory firstPos = protocol.getLongPosition(
+            protocol.getEffectiveTickForPrice(longLiqPrice)
+                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
+            0,
+            0
+        );
+
+        uint256 longPosValue = protocol.i_positionValue(params.initialPrice, longLiqPrice, firstPos.totalExpo);
 
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.

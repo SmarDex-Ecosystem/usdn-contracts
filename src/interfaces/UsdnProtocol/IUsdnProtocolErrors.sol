@@ -90,11 +90,23 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided address for the LiquidationRewardsManager contract address is invalid.
     error UsdnProtocolInvalidLiquidationRewardsManagerAddress();
 
-    /// @dev Indicates that the provided fee percentage value is invalid.
+    /// @dev Indicates that the provided fee basis point value is invalid.
     error UsdnProtocolInvalidProtocolFeeBps();
 
     /// @dev Indicates that the provided fee collector address is invalid
     error UsdnProtocolInvalidFeeCollector();
+
+    /// @dev Indicates that the soft longExpo imbalance limit provided is invalid
+    error UsdnProtocolInvalidExpoImbalanceLimit();
+
+    /// @dev Indicates that the protocol imbalance limit is reached
+    error UsdnProtocolImbalanceLimitReached(int256 imbalanceBps);
+
+    /// @dev Indicates that the protocol vault expo is invalid
+    error UsdnProtocolInvalidVaultExpo();
+
+    /// @dev Indicates that the protocol long expo is invalid
+    error UsdnProtocolInvalidLongExpo();
 
     /**
      * @dev Indicates that the data provided to validate an actionable pending action is invalid (zero length or length

@@ -111,6 +111,34 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The fee threshold above which fee will be sent
     uint256 internal _feeThreshold = 1 ether;
 
+    /**
+     * @notice The imbalance limit of the long expo for open actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long
+     * the open rebalancing mechanism is triggered, preventing the opening of a new long position.
+     */
+    int256 internal _openExpoImbalanceLimitBps = 200;
+
+    /**
+     * @notice The imbalance limit of the long expo for withdrawal actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long,
+     * the withdrawal rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
+     */
+    int256 internal _withdrawalExpoImbalanceLimitBps = 600;
+
+    /**
+     * @notice The imbalance limit of the vault expo for deposit actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the deposit vault rebalancing mechanism is triggered, preventing the opening of new vault position.
+     */
+    int256 internal _depositExpoImbalanceLimitBps = 200;
+
+    /**
+     * @notice The imbalance limit of the vault expo for close actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the withdrawal vault rebalancing mechanism is triggered, preventing the close of existing long position.
+     */
+    int256 internal _closeExpoImbalanceLimitBps = 600;
+
     /// @notice The position fee in basis point
     uint16 internal _positionFeeBps = 4; // 0.04%
 
@@ -487,5 +515,24 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(tick, version));
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getExpoImbalanceLimits()
+        external
+        view
+        returns (
+            int256 openExpoImbalanceLimitBps_,
+            int256 depositExpoImbalanceLimitBps_,
+            int256 withdrawalExpoImbalanceLimitBps_,
+            int256 closeExpoImbalanceLimitBps_
+        )
+    {
+        return (
+            _openExpoImbalanceLimitBps,
+            _depositExpoImbalanceLimitBps,
+            _withdrawalExpoImbalanceLimitBps,
+            _closeExpoImbalanceLimitBps
+        );
     }
 }
