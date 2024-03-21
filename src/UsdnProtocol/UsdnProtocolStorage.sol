@@ -126,6 +126,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     uint256 internal _usdnRebaseInterval = 12 hours;
 
+    /// @notice The minimum long position size
+    uint256 internal _minLongPositioon = 5000 * 10 ** 18;
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
@@ -375,6 +378,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getUsdnRebaseInterval() external view returns (uint256) {
         return _usdnRebaseInterval;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getMinLongPosition() external view returns (uint256) {
+        return _minLongPositioon;
     }
 
     /* -------------------------------------------------------------------------- */

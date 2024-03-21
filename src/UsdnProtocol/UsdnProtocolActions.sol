@@ -453,6 +453,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // remove liquidation penalty for leverage calculation
             uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - int24(_liquidationPenalty) * _tickSpacing);
             positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
+            if (positionTotalExpo < _minLongPositioon) {
+                revert UsdnProtocolLeverageTooLow();
+            }
 
             // calculate position leverage
             // reverts if liquidationPrice >= entryPrice

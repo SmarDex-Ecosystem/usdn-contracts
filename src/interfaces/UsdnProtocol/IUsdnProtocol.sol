@@ -121,4 +121,11 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * When calling `liquidate`, this limit is ignored and the check is always performed.
      */
     function setUsdnRebaseInterval(uint256 newInterval) external;
+
+    /**
+     * @notice Set the USDN minimum long position
+     * @param newMinLongPositioon The new minimum long position
+     * @dev This value is used to prevent users from opening positions that are too small
+     */
+    function setMinLongPosition(uint256 newMinLongPositioon) external;
 }

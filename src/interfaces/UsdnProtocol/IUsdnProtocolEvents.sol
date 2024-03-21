@@ -290,4 +290,10 @@ interface IUsdnProtocolEvents {
      * @param interval The new interval.
      */
     event UsdnRebaseIntervalUpdated(uint256 interval);
+
+    /**
+     * @notice Emitted when the minimum long position is updated.
+     * @param minLongPositioon The new minLongPositioon.
+     */
+    event NewMinLongPosition(uint256 minLongPositioon);
 }

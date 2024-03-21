@@ -128,6 +128,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The interval between two automatic rebase checks
     function getUsdnRebaseInterval() external view returns (uint256);
 
+    /// @notice The minimum long position size
+    function getMinLongPosition() external view returns (uint256);
+
     /* -------------------------------------------------------------------------- */
     /*                                    State getters                           */
     /* -------------------------------------------------------------------------- */
