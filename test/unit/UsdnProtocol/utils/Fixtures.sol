@@ -242,6 +242,28 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
     }
 
     /**
+     * @dev Helper function to initiate a new position and liquidate it before it gets validated
+     * @return tick_ The tick of the new position
+     * @return tickVersion_ The tick version of the new position
+     * @return index_ The index of the new position
+     */
+    function _createStalePendingActionHelper() internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+        // create a pending action with a liquidation price around $1700
+        (tick_, tickVersion_, index_) =
+            setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1700 ether, 2000 ether);
+
+        // the price drops to $1500 and the position gets liquidated
+        skip(30);
+        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
+
+        // the pending action is stale
+        uint256 currentTickVersion = protocol.getTickVersion(tick_);
+        PendingAction memory action = protocol.getUserPendingAction(address(this));
+        assertEq(action.var3, tickVersion_, "tick version");
+        assertTrue(action.var3 != currentTickVersion, "current tick version");
+    }
+
+    /**
      * @dev Helper function to assert two `PendingAction` are equal.
      * Reverts if not equal.
      * @param a First `PendingAction`

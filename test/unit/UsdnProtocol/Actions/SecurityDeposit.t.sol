@@ -1253,5 +1253,51 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertGt(usdn.balanceOf(USER_1), usdnBalanceUser1Before, "user1 should have received usdn");
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                         stale pending actions tests                        */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario The user initiates and validates a deposit action
+     * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
+     * @custom:then The protocol takes the security deposit from the user at the initialization of the deposit
+     * @custom:and The protocol returns the security deposit to the user at the validation of the deposit
+     */
+    function test_securityDeposit_refundStaleTransaction() public {
+        uint256 balanceSenderBefore = address(this).balance;
+        uint256 balanceProtocolBefore = address(protocol).balance;
+
+        (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
+
+        assertEq(
+            address(this).balance,
+            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
+            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
+            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
+        );
+
+        wstETH.approve(address(protocol), 1 ether);
+        vm.expectEmit();
+        emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
+        protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
+        _waitDelay();
+        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
+
+        assertEq(
+            address(this).balance,
+            balanceSenderBefore,
+            "balance of the user after validation should be the same than before all actions"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore,
+            "balance of the protocol after validation should be the same than before all actions"
+        );
+    }
+
     receive() external payable { }
 }
