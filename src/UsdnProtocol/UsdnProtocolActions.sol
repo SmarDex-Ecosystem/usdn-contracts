@@ -492,7 +492,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         uint128 adjustedPrice; // the price returned by the oracle middleware, to be used for the user action
-        uint128 neutralPrice;
+        uint128 leverage;
+        uint128 positionTotalExpo;
         {
             PriceInfo memory currentPrice =
                 _getOraclePrice(ProtocolAction.InitiateOpenPosition, block.timestamp, currentPriceData);
@@ -500,14 +501,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // Apply fees on price
             adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
-            neutralPrice = currentPrice.neutralPrice.toUint128();
+            uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
 
             _applyPnlAndFundingAndLiquidate(neutralPrice, currentPrice.timestamp);
-        }
 
-        uint128 leverage;
-        uint128 positionTotalExpo;
-        {
             // we calculate the closest valid tick down for the desired liq price with liquidation penalty
             tick_ = getEffectiveTickForPrice(desiredLiqPrice);
 
@@ -524,9 +521,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             if (leverage > _maxLeverage) {
                 revert UsdnProtocolLeverageTooHigh();
             }
-        }
 
-        {
             // Calculate effective liquidation price
             uint128 liqPrice = getEffectivePriceForTick(tick_);
             // Liquidation price must be at least x% below current price
