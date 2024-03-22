@@ -61,7 +61,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockChainlinkOnChain.setLastPrice(3290e8);
 
         protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA
+            3 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA
         );
 
         vm.warp(1_708_090_438);

@@ -171,13 +171,13 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
      */
     function _setUpFourPendingActions() internal returns (PreviousActionsData memory previousActionsData_) {
         setUpUserPositionInLong(
-            USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            USER_1, ProtocolAction.InitiateOpenPosition, 3 ether, params.initialPrice / 2, params.initialPrice
         );
         setUpUserPositionInLong(
-            USER_2, ProtocolAction.InitiateClosePosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            USER_2, ProtocolAction.InitiateClosePosition, 3 ether, params.initialPrice / 2, params.initialPrice
         );
-        setUpUserPositionInVault(USER_3, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
-        setUpUserPositionInVault(USER_4, ProtocolAction.InitiateWithdrawal, 1 ether, params.initialPrice);
+        setUpUserPositionInVault(USER_3, ProtocolAction.InitiateDeposit, 3 ether, params.initialPrice);
+        setUpUserPositionInVault(USER_4, ProtocolAction.InitiateWithdrawal, 3 ether, params.initialPrice);
         // make actionable
         skip(protocol.getValidationDeadline() + 1);
 

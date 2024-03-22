@@ -458,7 +458,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             console2.log("adjustedPrice", adjustedPrice);
             console2.log("liqPriceWithoutPenalty", liqPriceWithoutPenalty);
             console2.log("positionTotalExpo", positionTotalExpo);
-            if (FixedPointMathLib.fullMulDiv(amount, liqPriceWithoutPenalty, 10e18) < _minLongPositioon) {
+            console2.log("result:", FixedPointMathLib.fullMulDiv(amount, adjustedPrice, 10 ** 18));
+            if (FixedPointMathLib.fullMulDiv(amount, adjustedPrice, 10 ** 18) < _minLongPositioon) {
                 revert UsdnProtocolLongPositionTooLow();
             }
 
@@ -552,7 +553,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Re-calculate leverage
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(long.tick - int24(_liquidationPenalty) * _tickSpacing);
 
-        if (FixedPointMathLib.fullMulDiv(pos.amount, liqPriceWithoutPenalty, 10e18) < _minLongPositioon) {
+        if (FixedPointMathLib.fullMulDiv(pos.amount, startPrice, 10 ** 18) < _minLongPositioon) {
             revert UsdnProtocolLongPositionTooLow();
         }
         // reverts if liquidationPrice >= entryPrice

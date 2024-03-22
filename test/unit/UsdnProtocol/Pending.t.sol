@@ -37,7 +37,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "pending action before initiate");
         // initiate deposit
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 3 ether, 2000 ether);
         // the pending action is not yet actionable
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "pending action after initiate");
@@ -61,7 +61,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.action == ProtocolAction.None, "pending action before initiate");
         // initiate long
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 3 ether, 2000 ether);
         // the pending action is not yet actionable
         (action, rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.action == ProtocolAction.None, "pending action after initiate");
@@ -78,9 +78,9 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function _setupSparsePendingActionsQueue() internal {
         // Setup 3 pending actions
-        setUpUserPositionInLong(USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
-        setUpUserPositionInLong(USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
-        setUpUserPositionInLong(USER_3, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
+        setUpUserPositionInLong(USER_1, ProtocolAction.InitiateOpenPosition, 3 ether, 1000 ether, 2000 ether);
+        setUpUserPositionInLong(USER_2, ProtocolAction.InitiateOpenPosition, 3 ether, 1000 ether, 2000 ether);
+        setUpUserPositionInLong(USER_3, ProtocolAction.InitiateOpenPosition, 3 ether, 1000 ether, 2000 ether);
 
         // Simulate the second item in the queue being empty (sets it to zero values)
         protocol.i_removePendingAction(1, USER_2);
@@ -162,7 +162,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_getActionablePendingActionSameUser() public {
         // initiate long
-        setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
+        setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 3 ether, 1000 ether, 2000 ether);
         // the pending action is actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
@@ -186,8 +186,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         uint128 price1 = 2000 ether;
         uint128 price2 = 2100 ether;
         // Setup 2 pending actions
-        setUpUserPositionInLong(USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, price1);
-        setUpUserPositionInLong(USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, price2);
+        setUpUserPositionInLong(USER_1, ProtocolAction.InitiateOpenPosition, 3 ether, 1000 ether, price1);
+        setUpUserPositionInLong(USER_2, ProtocolAction.InitiateOpenPosition, 3 ether, 1000 ether, price2);
 
         // Wait
         skip(protocol.getValidationDeadline() + 1);
@@ -220,8 +220,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         uint256 user2BalanceBefore = usdn.balanceOf(USER_2);
 
         // Setup 2 pending actions
-        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 1 ether, price1);
-        setUpUserPositionInVault(USER_2, ProtocolAction.InitiateDeposit, 1 ether, price2);
+        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 3 ether, price1);
+        setUpUserPositionInVault(USER_2, ProtocolAction.InitiateDeposit, 3 ether, price2);
 
         // Wait
         skip(protocol.getValidationDeadline() + 1);
@@ -237,9 +237,9 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
         vm.prank(USER_3);
-        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData);
+        protocol.initiateDeposit(3 ether, abi.encode(2200 ether), previousActionsData);
         vm.prank(USER_4);
-        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData);
+        protocol.initiateDeposit(3 ether, abi.encode(2200 ether), previousActionsData);
 
         // They should have validated both pending actions
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));

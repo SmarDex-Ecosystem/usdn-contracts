@@ -205,7 +205,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, price * 90 / 100, price);
+        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 3 ether, price * 90 / 100, price);
         skip(30);
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp));
@@ -281,7 +281,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
 
-        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, price * 90 / 100, price);
+        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 3 ether, price * 90 / 100, price);
         skip(30);
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp));
