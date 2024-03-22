@@ -39,27 +39,22 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @param vaultBalance The balance of the vault
      * @param assetPrice The price of the asset
      * @param targetPrice The target price for the USDN token
-     * @param usdnDecimals The number of decimals for the USDN token
      * @param assetDecimals The number of decimals for the asset token
      */
     function testFuzz_calcRebaseTotalSupply(
         uint128 vaultBalance,
         uint128 assetPrice,
         uint128 targetPrice,
-        uint8 usdnDecimals,
         uint8 assetDecimals
     ) public {
-        usdnDecimals = uint8(bound(usdnDecimals, 6, 18));
         assetDecimals = uint8(bound(assetDecimals, 6, 18));
         // when the balance becomes really small, the error on the final price becomes larger
         vaultBalance = uint128(bound(vaultBalance, 10 ** assetDecimals, type(uint128).max));
         assetPrice = uint128(bound(assetPrice, 0.01 ether, type(uint128).max));
         targetPrice = uint128(bound(targetPrice, 1 ether, 2 ether));
-        uint256 newTotalSupply =
-            protocol.i_calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, usdnDecimals, assetDecimals);
+        uint256 newTotalSupply = protocol.i_calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
         vm.assume(newTotalSupply > 0);
-        uint256 newPrice =
-            protocol.i_calcUsdnPrice(vaultBalance, assetPrice, newTotalSupply, usdnDecimals, assetDecimals);
+        uint256 newPrice = protocol.i_calcUsdnPrice(vaultBalance, assetPrice, newTotalSupply, assetDecimals);
 
         // Here we potentially have a small error, in part due to how the price results from the total supply, which
         // itself results from the division by the divisor. We can't expect the price to be exactly the target price.
@@ -91,11 +86,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         uint256 expectedVaultBalance =
             uint256(protocol.vaultAssetAvailableWithFunding(newPrice, uint128(block.timestamp - 30)));
         uint256 expectedTotalSupply = protocol.i_calcRebaseTotalSupply(
-            expectedVaultBalance,
-            newPrice,
-            protocol.getTargetUsdnPrice(),
-            protocol.getUsdnDecimals(),
-            protocol.getAssetDecimals()
+            expectedVaultBalance, newPrice, protocol.getTargetUsdnPrice(), protocol.getAssetDecimals()
         );
         uint256 expectedDivisor = usdn.totalSupply() * usdn.divisor() / expectedTotalSupply;
 

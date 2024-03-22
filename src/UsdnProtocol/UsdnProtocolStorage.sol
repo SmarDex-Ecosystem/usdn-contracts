@@ -28,6 +28,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant FUNDING_RATE_DECIMALS = 18;
 
     /// @inheritdoc IUsdnProtocolStorage
+    uint8 public constant TOKENS_DECIMALS = 18;
+
+    /// @inheritdoc IUsdnProtocolStorage
     uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -62,17 +65,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The price feed decimals (middleware => 18).
     uint8 internal immutable _priceFeedDecimals;
 
-    /// @notice The SDEX token's decimals (18).
-    uint8 internal immutable _sdexDecimals;
-
     /// @notice The USDN ERC20 contract.
     IUsdn internal immutable _usdn;
 
     /// @notice The SDEX ERC20 contract.
     IERC20Metadata internal immutable _sdex;
-
-    /// @notice The decimals of the USDN token.
-    uint8 internal immutable _usdnDecimals;
 
     /// @notice The MIN_DIVISOR constant of the USDN token.
     uint256 internal immutable _usdnMinDivisor;
@@ -270,11 +267,14 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
         _usdn = usdn;
         _sdex = sdex;
-        _usdnDecimals = usdn.decimals();
+        // Those tokens should have 18 decimals
+        if (usdn.decimals() != TOKENS_DECIMALS || sdex.decimals() != TOKENS_DECIMALS) {
+            revert UsdnProtocolInvalidTokenDecimals();
+        }
+
         _usdnMinDivisor = usdn.MIN_DIVISOR();
         _asset = asset;
         _assetDecimals = asset.decimals();
-        _sdexDecimals = sdex.decimals();
         if (_assetDecimals < FUNDING_SF_DECIMALS) {
             revert UsdnProtocolInvalidAssetDecimals(_assetDecimals);
         }
@@ -318,18 +318,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getSdexDecimals() external view returns (uint8) {
-        return _sdexDecimals;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
     function getUsdn() external view returns (IUsdn) {
         return _usdn;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getUsdnDecimals() external view returns (uint8) {
-        return _usdnDecimals;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

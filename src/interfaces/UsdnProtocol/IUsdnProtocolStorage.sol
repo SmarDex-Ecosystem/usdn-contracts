@@ -26,6 +26,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The number of decimals for funding rate values
     function FUNDING_RATE_DECIMALS() external pure returns (uint8);
 
+    /// @notice The number of decimals for tokens used in the protocol (except the asset)
+    function TOKENS_DECIMALS() external pure returns (uint8);
+
     /// @notice The number of decimals for liquidation multiplier values
     function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8);
 
@@ -67,14 +70,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The asset decimals.
     function getAssetDecimals() external view returns (uint8);
 
-    /// @notice The SDEX decimals.
-    function getSdexDecimals() external view returns (uint8);
-
     /// @notice The USDN ERC20 contract.
     function getUsdn() external view returns (IUsdn);
-
-    /// @notice The decimals of the USDN token.
-    function getUsdnDecimals() external view returns (uint8);
 
     /// @notice The MIN_DIVISOR constant of the USDN token.
     function getUsdnMinDivisor() external view returns (uint256);

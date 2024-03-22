@@ -24,6 +24,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the asset decimals are invalid
     error UsdnProtocolInvalidAssetDecimals(uint8 assetDecimals);
 
+    /// @dev Indicates that the token decimals are not equal to TOKENS_DECIMALS
+    error UsdnProtocolInvalidTokenDecimals();
+
     /// @dev Indicates that the user is not allowed to perform an action
     error UsdnProtocolUnauthorized();
 
