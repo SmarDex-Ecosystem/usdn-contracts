@@ -37,7 +37,8 @@ contract UsdnHandler is Usdn, Test {
     /* ------------------ Functions used for invariant testing ------------------ */
 
     function getSharesOfAddress(address account) external view returns (uint256) {
-        return EnumerableMap.get(shares, account);
+        (bool success, uint256 valueShares) = EnumerableMap.tryGet(shares, account);
+        return success ? valueShares : 0;
     }
 
     function getLenghtOfShares() external view returns (uint256) {
