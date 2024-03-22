@@ -19,6 +19,7 @@ import {
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { console2 } from "forge-std/Test.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -453,8 +454,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // remove liquidation penalty for leverage calculation
             uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - int24(_liquidationPenalty) * _tickSpacing);
             positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
-            if (positionTotalExpo < _minLongPositioon) {
-                revert UsdnProtocolLeverageTooLow();
+            console2.log("amount", amount);
+            console2.log("adjustedPrice", adjustedPrice);
+            console2.log("liqPriceWithoutPenalty", liqPriceWithoutPenalty);
+            console2.log("positionTotalExpo", positionTotalExpo);
+            if (FixedPointMathLib.fullMulDiv(amount, liqPriceWithoutPenalty, 10e18) < _minLongPositioon) {
+                revert UsdnProtocolLongPositionTooLow();
             }
 
             // calculate position leverage
@@ -546,6 +551,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         Position memory pos = _longPositions[tickHash][long.index];
         // Re-calculate leverage
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(long.tick - int24(_liquidationPenalty) * _tickSpacing);
+
+        if (FixedPointMathLib.fullMulDiv(pos.amount, liqPriceWithoutPenalty, 10e18) < _minLongPositioon) {
+            revert UsdnProtocolLongPositionTooLow();
+        }
         // reverts if liquidationPrice >= entryPrice
         uint128 leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
         // Leverage is always greater than 1 (liquidationPrice is positive).
