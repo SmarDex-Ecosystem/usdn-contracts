@@ -10,6 +10,7 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 
 abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     using SafeCast for int256;
+    using SafeCast for int8;
 
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
@@ -47,6 +48,15 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         price_ = FixedPointMathLib.fullMulDiv(
             vaultBalance, uint256(assetPrice) * 10 ** usdnDecimals, usdnTotalSupply * 10 ** assetDecimals
         );
+    }
+
+    /**
+     * @notice Calculate the amount of sdex to burn when minting USDN tokens
+     * @param usdnAmount The amount of usdn to be minted
+     * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
+     */
+    function _calcSdexToBurn(uint256 usdnAmount) internal view returns (uint256 sdexToBurn_) {
+        sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, _sdexBurnOnDepositRatio, SDEX_BURN_ON_DEPOSIT_DIVISOR);
     }
 
     /**

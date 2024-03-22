@@ -65,4 +65,24 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
         price = protocol.i_calcUsdnPrice(vaultBalance, assetPrice, usdnTotalSupply, usdnDecimals, assetDecimals);
         assertEq(price, 2 ether, "price at total supply of 1M");
     }
+
+    function test_calcSdexToBurn() external {
+        uint256 burnRatio = protocol.getSdexBurnOnDepositRatio();
+        uint256 burnRatioDivisor = protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR();
+        uint8 usdnDecimals = protocol.getUsdnDecimals();
+        uint256 usdnToMint = 100 * 10 ** usdnDecimals;
+
+        uint256 expectedSdexToBurn = usdnToMint * burnRatio / burnRatioDivisor;
+        uint256 sdexToBurn = protocol.i_calcSdexToBurn(usdnToMint);
+        assertEq(sdexToBurn, expectedSdexToBurn, "Result does not match the expected value");
+
+        usdnToMint = 1_582_309 * 10 ** (usdnDecimals - 2);
+        expectedSdexToBurn = usdnToMint * burnRatio / burnRatioDivisor;
+        sdexToBurn = protocol.i_calcSdexToBurn(usdnToMint);
+        assertEq(
+            sdexToBurn,
+            expectedSdexToBurn,
+            "Result does not match expected value when the usdn to mint value is less round"
+        );
+    }
 }

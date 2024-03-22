@@ -58,11 +58,17 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The asset ERC20 contract (wstETH).
     function getAsset() external view returns (IERC20Metadata);
 
+    /// @notice The SDEX ERC20 contract.
+    function getSdex() external view returns (IERC20Metadata);
+
     /// @notice The price feed decimals.
     function getPriceFeedDecimals() external view returns (uint8);
 
     /// @notice The asset decimals.
     function getAssetDecimals() external view returns (uint8);
+
+    /// @notice The SDEX decimals.
+    function getSdexDecimals() external view returns (uint8);
 
     /// @notice The USDN ERC20 contract.
     function getUsdn() external view returns (IUsdn);

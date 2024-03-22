@@ -62,6 +62,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The price feed decimals (middleware => 18).
     uint8 internal immutable _priceFeedDecimals;
 
+    /// @notice The SDEX token's decimals (18).
+    uint8 internal immutable _sdexDecimals;
+
     /// @notice The USDN ERC20 contract.
     IUsdn internal immutable _usdn;
 
@@ -271,6 +274,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _usdnMinDivisor = usdn.MIN_DIVISOR();
         _asset = asset;
         _assetDecimals = asset.decimals();
+        _sdexDecimals = sdex.decimals();
         if (_assetDecimals < FUNDING_SF_DECIMALS) {
             revert UsdnProtocolInvalidAssetDecimals(_assetDecimals);
         }
@@ -299,6 +303,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
+    function getSdex() external view returns (IERC20Metadata) {
+        return _sdex;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
     function getPriceFeedDecimals() external view returns (uint8) {
         return _priceFeedDecimals;
     }
@@ -306,6 +315,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getAssetDecimals() external view returns (uint8) {
         return _assetDecimals;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getSdexDecimals() external view returns (uint8) {
+        return _sdexDecimals;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
