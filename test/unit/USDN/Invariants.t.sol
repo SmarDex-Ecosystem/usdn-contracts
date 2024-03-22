@@ -51,7 +51,8 @@ contract TestUsdnInvariants is UsdnTokenFixture {
     function invariant_sumOfSharesBalances() public displayBalancesAndShares {
         uint256 sum;
         for (uint256 i = 0; i < usdn.getLenghtOfShares(); i++) {
-            sum += usdn.getSharesOfIndex(i);
+            (, uint256 value) = usdn.getElementOfIndex(i);
+            sum += value;
         }
         assertEq(usdn.totalShares(), sum, "sum of user shares vs total shares");
     }
@@ -62,7 +63,11 @@ contract TestUsdnInvariants is UsdnTokenFixture {
      * can stack up.
      */
     function invariant_totalSupply() public displayBalancesAndShares {
-        uint256 sum = usdn.balanceOf(USER_1) + usdn.balanceOf(USER_2) + usdn.balanceOf(USER_3) + usdn.balanceOf(USER_4);
+        uint256 sum;
+        for (uint256 i = 0; i < usdn.getLenghtOfShares(); i++) {
+            (address user,) = usdn.getElementOfIndex(i);
+            sum += usdn.balanceOf(user);
+        }
         assertApproxEqAbs(sum, usdn.totalSupply(), 2, "sum of user balances vs total supply");
     }
 

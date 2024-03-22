@@ -41,13 +41,12 @@ contract UsdnHandler is Usdn, Test {
         return success ? valueShares : 0;
     }
 
-    function getLenghtOfShares() external view returns (uint256) {
-        return EnumerableMap.length(shares);
+    function getElementOfIndex(uint256 index) external view returns (address, uint256) {
+        return EnumerableMap.at(shares, index);
     }
 
-    function getSharesOfIndex(uint256 index) external view returns (uint256) {
-        (, uint256 valueShares) = EnumerableMap.at(shares, index);
-        return valueShares;
+    function getLenghtOfShares() external view returns (uint256) {
+        return EnumerableMap.length(shares);
     }
 
     function rebaseTest(uint256 newDivisor) external {
@@ -68,12 +67,7 @@ contract UsdnHandler is Usdn, Test {
         value = bound(value, 1, maxTokens() - totalSupply() - 1);
         uint256 valueShares = value * _divisor;
         totalSharesSum += valueShares;
-        uint256 lastShares;
-        if (EnumerableMap.contains(shares, msg.sender)) {
-            lastShares = EnumerableMap.get(shares, msg.sender);
-        } else {
-            lastShares = 0;
-        }
+        uint256 lastShares = EnumerableMap.contains(shares, msg.sender) ? EnumerableMap.get(shares, msg.sender) : 0;
         EnumerableMap.set(shares, msg.sender, lastShares + valueShares);
         _mint(msg.sender, value);
     }
