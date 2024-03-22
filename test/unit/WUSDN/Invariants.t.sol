@@ -8,8 +8,8 @@ import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
 
 /**
  * @custom:feature Invariants of `WUSDN`
- * @custom:background Given four users that can mint tokens to themselves, burn their balance of tokens, and transfer
- *  to other users. Fallow invariants in Wusdn
+ * @custom:background Given four users that can mint tokens to themselves, burn their balance of tokens,
+ * and transfer to other users. Follow invariants in Wusdn
  */
 contract TestWusdnInvariants is WusdnTokenFixture {
     uint256 internal constant INITIAL_WUSDN_DEPOSIT = 1 ether;
