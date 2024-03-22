@@ -46,7 +46,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture, IEvents {
         address deadAddress = protocol.DEAD_ADDRESS();
 
         vm.expectEmit();
-        emit IEvents.Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
+        emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
         vm.expectEmit();
         emit InitiatedDeposit(address(this), depositAmount, block.timestamp); // WstETH transfer
         protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA);
