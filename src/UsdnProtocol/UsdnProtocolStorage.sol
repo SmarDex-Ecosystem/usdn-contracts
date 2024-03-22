@@ -44,7 +44,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /*                                 Immutables                                 */
     /* -------------------------------------------------------------------------- */
 
-    IUsdnProtocolParams internal _params;
+    IUsdnProtocolParams internal immutable _params;
 
     /**
      * @notice The liquidation tick spacing for storing long positions.
