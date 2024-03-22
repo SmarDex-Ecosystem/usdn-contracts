@@ -2,12 +2,15 @@
 pragma solidity 0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IUsdnProtocolParams } from "src/interfaces/UsdnProtocol/IUsdnProtocolParams.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
 contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
+    using SafeCast for uint256;
+
     /* -------------------------------------------------------------------------- */
     /*                          Constants and immutables                          */
     /* -------------------------------------------------------------------------- */
@@ -74,6 +77,34 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
 
     /// @notice The fee threshold above which fee will be sent
     uint256 internal _feeThreshold = 1 ether;
+
+    /**
+     * @notice The imbalance limit of the long expo for open actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long
+     * the open rebalancing mechanism is triggered, preventing the opening of a new long position.
+     */
+    int256 internal _openExpoImbalanceLimitBps = 200;
+
+    /**
+     * @notice The imbalance limit of the long expo for withdrawal actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long,
+     * the withdrawal rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
+     */
+    int256 internal _withdrawalExpoImbalanceLimitBps = 600;
+
+    /**
+     * @notice The imbalance limit of the vault expo for deposit actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the deposit vault rebalancing mechanism is triggered, preventing the opening of new vault position.
+     */
+    int256 internal _depositExpoImbalanceLimitBps = 200;
+
+    /**
+     * @notice The imbalance limit of the vault expo for close actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the withdrawal vault rebalancing mechanism is triggered, preventing the close of existing long position.
+     */
+    int256 internal _closeExpoImbalanceLimitBps = 600;
 
     /// @notice The position fee in basis point
     uint16 internal _positionFeeBps = 4; // 0.04%
@@ -231,6 +262,24 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
 
     function getUsdnRebaseInterval() external view returns (uint256) {
         return _usdnRebaseInterval;
+    }
+
+    function getExpoImbalanceLimits()
+        external
+        view
+        returns (
+            int256 openExpoImbalanceLimitBps_,
+            int256 depositExpoImbalanceLimitBps_,
+            int256 withdrawalExpoImbalanceLimitBps_,
+            int256 closeExpoImbalanceLimitBps_
+        )
+    {
+        return (
+            _openExpoImbalanceLimitBps,
+            _depositExpoImbalanceLimitBps,
+            _withdrawalExpoImbalanceLimitBps,
+            _closeExpoImbalanceLimitBps
+        );
     }
 
     /* -------------------------------------------------------------------------- */
@@ -404,5 +453,29 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
     function setUsdnRebaseInterval(uint256 newInterval) external onlyOwner {
         _usdnRebaseInterval = newInterval;
         emit UsdnRebaseIntervalUpdated(newInterval);
+    }
+
+    function setExpoImbalanceLimits(
+        uint256 newOpenLimitBps,
+        uint256 newDepositLimitBps,
+        uint256 newWithdrawalLimitBps,
+        uint256 newCloseLimitBps
+    ) external onlyOwner {
+        _openExpoImbalanceLimitBps = newOpenLimitBps.toInt256();
+        _depositExpoImbalanceLimitBps = newDepositLimitBps.toInt256();
+
+        if (newWithdrawalLimitBps != 0 && newWithdrawalLimitBps < newOpenLimitBps) {
+            // withdrawal limit lower than open not permitted
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
+        }
+        _withdrawalExpoImbalanceLimitBps = newWithdrawalLimitBps.toInt256();
+
+        if (newCloseLimitBps != 0 && newCloseLimitBps < newDepositLimitBps) {
+            // close limit lower than deposit not permitted
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
+        }
+        _closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
+
+        emit ImbalanceLimitsUpdated(newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps);
     }
 }

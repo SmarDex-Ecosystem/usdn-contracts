@@ -50,9 +50,9 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         skip(2 hours);
 
         // Second user tries to validate their action
-        (,,, bytes memory data1) = getHermesApiSignature(PYTH_STETH_USD, ts1 + oracleMiddleware.getValidationDelay());
+        (,,,, bytes memory data1) = getHermesApiSignature(PYTH_STETH_USD, ts1 + oracleMiddleware.getValidationDelay());
         uint256 data1Fee = oracleMiddleware.validationCost(data1, ProtocolAction.ValidateOpenPosition);
-        (,,, bytes memory data2) = getHermesApiSignature(PYTH_STETH_USD, ts2 + oracleMiddleware.getValidationDelay());
+        (,,,, bytes memory data2) = getHermesApiSignature(PYTH_STETH_USD, ts2 + oracleMiddleware.getValidationDelay());
         uint256 data2Fee = oracleMiddleware.validationCost(data2, ProtocolAction.ValidateOpenPosition);
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = data1;

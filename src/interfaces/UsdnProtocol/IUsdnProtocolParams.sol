@@ -100,6 +100,23 @@ interface IUsdnProtocolParams is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The interval between two automatic rebase checks
     function getUsdnRebaseInterval() external view returns (uint256);
 
+    /**
+     * @notice Get expo imbalance limits (in basis points)
+     * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
+     * @return depositExpoImbalanceLimitBps_ The deposit expo imbalance limit
+     * @return withdrawalExpoImbalanceLimitBps_ The withdrawal expo imbalance limit
+     * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
+     */
+    function getExpoImbalanceLimits()
+        external
+        view
+        returns (
+            int256 openExpoImbalanceLimitBps_,
+            int256 depositExpoImbalanceLimitBps_,
+            int256 withdrawalExpoImbalanceLimitBps_,
+            int256 closeExpoImbalanceLimitBps_
+        );
+
     /* -------------------------------------------------------------------------- */
     /*                            Privileged functions                            */
     /* -------------------------------------------------------------------------- */
@@ -193,4 +210,18 @@ interface IUsdnProtocolParams is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * When calling `liquidate`, this limit is ignored and the check is always performed.
      */
     function setUsdnRebaseInterval(uint256 newInterval) external;
+
+    /**
+     * @notice Set imbalance limits basis point
+     * @param newOpenLimitBps The new open limit
+     * @param newDepositLimitBps The new deposit limit
+     * @param newWithdrawalLimitBps The new withdrawal limit
+     * @param newCloseLimitBps The new close limit
+     */
+    function setExpoImbalanceLimits(
+        uint256 newOpenLimitBps,
+        uint256 newDepositLimitBps,
+        uint256 newWithdrawalLimitBps,
+        uint256 newCloseLimitBps
+    ) external;
 }

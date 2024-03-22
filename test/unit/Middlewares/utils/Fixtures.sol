@@ -7,7 +7,7 @@ import { WstETH } from "test/utils/WstEth.sol";
 import { BaseFixture } from "test/utils/Fixtures.sol";
 import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { PYTH_WSTETH_USD } from "test/utils/Constants.sol";
+import { PYTH_STETH_USD } from "test/utils/Constants.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { OracleMiddleware } from "src/OracleMiddleware/OracleMiddleware.sol";
@@ -54,7 +54,7 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
         mockPyth = new MockPyth();
         mockChainlinkOnChain = new MockChainlinkOnChain();
         oracleMiddleware = new OracleMiddleware(
-            address(mockPyth), PYTH_WSTETH_USD, address(mockChainlinkOnChain), chainlinkTimeElapsedLimit
+            address(mockPyth), PYTH_STETH_USD, address(mockChainlinkOnChain), chainlinkTimeElapsedLimit
         );
     }
 
@@ -73,14 +73,14 @@ contract OracleMiddlewareBaseFixture is BaseFixture, ActionsFixture {
         }(updateData, priceIds, 1000, 0);
 
         assertEq(priceFeeds.length, 1);
-        assertEq(priceFeeds[0].price.price, 2000 * 1e8);
-        assertEq(priceFeeds[0].price.conf, 20 * 1e8);
+        assertEq(priceFeeds[0].price.price, 2000e8);
+        assertEq(priceFeeds[0].price.conf, 20e8);
         assertEq(priceFeeds[0].price.expo, -8);
         assertEq(priceFeeds[0].price.publishTime, 1000);
 
         /* ---------------------- Test chainlink on chain mock ---------------------- */
         (, int256 price,, uint256 updatedAt,) = mockChainlinkOnChain.latestRoundData();
-        assertEq(price, 2000 * 1e8);
+        assertEq(price, 2000e8);
         assertEq(updatedAt, block.timestamp);
     }
 }
@@ -139,14 +139,14 @@ contract WstethBaseFixture is BaseFixture, ActionsFixture {
         }(updateData, priceIds, 1000, 0);
 
         assertEq(priceFeeds.length, 1);
-        assertEq(priceFeeds[0].price.price, 2000 * 1e8);
-        assertEq(priceFeeds[0].price.conf, 20 * 1e8);
+        assertEq(priceFeeds[0].price.price, 2000e8);
+        assertEq(priceFeeds[0].price.conf, 20e8);
         assertEq(priceFeeds[0].price.expo, -8);
         assertEq(priceFeeds[0].price.publishTime, 1000);
 
         /* ---------------------- Test chainlink on chain mock ---------------------- */
         (, int256 price,, uint256 updatedAt,) = mockChainlinkOnChain.latestRoundData();
-        assertEq(price, 2000 * 1e8);
+        assertEq(price, 2000e8);
         assertEq(updatedAt, block.timestamp);
     }
 
