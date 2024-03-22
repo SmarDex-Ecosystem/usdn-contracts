@@ -16,7 +16,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Try to instantiate the protocol with the USDN tokens having a non-zero total supply.
+     * @custom:scenario Try to instantiate the protocol with the USDN token having a non-zero total supply.
      * @custom:given Deployed external contracts.
      * @custom:when The protocol is instantiated with the USDN token already having some supply created
      * @custom:then The instantiation should revert.
@@ -56,7 +56,7 @@ contract TestUsdnProtocolStorageConstructor is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Try to instantiate the protocol with tokens without 18 decimals.
+     * @custom:scenario Try to instantiate the protocol with the SDEX tokens decimals not equal to TOKENS_DECIMALS.
      * @custom:given Deployed external contracts.
      * @custom:when The protocol is instantiated with tokens that do not have a number of decimals equal to
      * TOKENS_DECIMALS.

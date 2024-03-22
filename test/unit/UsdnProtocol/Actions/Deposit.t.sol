@@ -40,8 +40,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture, IEvents {
         uint128 depositAmount = 1 ether;
         uint128 price = 2000 ether;
         bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
-        uint256 expectedSdexBurnAmount = uint256(depositAmount) * price * protocol.getSdexBurnOnDepositRatio()
-            / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR() / 1e18;
+        uint256 expectedSdexBurnAmount = protocol.i_calcSdexToBurn(uint256(depositAmount) * price / 1e18);
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
         address deadAddress = protocol.DEAD_ADDRESS();
 
