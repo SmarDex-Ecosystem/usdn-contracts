@@ -44,6 +44,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /*                                 Immutables                                 */
     /* -------------------------------------------------------------------------- */
 
+    /// @notice The protocol parameters contract address
     IUsdnProtocolParams internal immutable _params;
 
     /**
