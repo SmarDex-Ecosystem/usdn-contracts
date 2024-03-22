@@ -50,29 +50,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
-        assertEq(
-            address(this).balance,
-            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
-        );
-        assertEq(
-            address(protocol).balance,
-            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
-        );
+        assertBalanceBefore(balanceSenderBefore, balanceProtocolBefore);
 
         protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
 
-        assertEq(
-            address(this).balance,
-            balanceSenderBefore,
-            "balance of the user after validation should be the same than before all actions"
-        );
-        assertEq(
-            address(protocol).balance,
-            balanceProtocolBefore,
-            "balance of the protocol after validation should be the same than before all actions"
-        );
+        assertBalanceAfter(balanceSenderBefore, balanceProtocolBefore);
     }
 
     /**
@@ -92,29 +74,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
-        assertEq(
-            address(this).balance,
-            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "the user should have paid the security deposit"
-        );
-        assertEq(
-            address(protocol).balance,
-            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "the protocol should have user deposit"
-        );
+        assertBalanceBefore(balanceSenderBefore, balanceProtocolBefore);
 
         protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
 
-        assertEq(
-            address(this).balance,
-            balanceSenderBefore,
-            "the user should have retrieved his deposit from the protocol at the end"
-        );
-        assertEq(
-            address(protocol).balance,
-            balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the beginning"
-        );
+        assertBalanceAfter(balanceSenderBefore, balanceProtocolBefore);
     }
 
     /**
@@ -136,29 +100,11 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         _waitDelay();
 
-        assertEq(
-            address(this).balance,
-            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "the user should have paid the security deposit"
-        );
-        assertEq(
-            address(protocol).balance,
-            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "the protocol should have user deposit"
-        );
+        assertBalanceBefore(balanceSenderBefore, balanceProtocolBefore);
 
         protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
 
-        assertEq(
-            address(this).balance,
-            balanceSenderBefore,
-            "the user should have retrieved his deposit from the protocol at the end"
-        );
-        assertEq(
-            address(protocol).balance,
-            balanceProtocolBefore,
-            "protocol balance after all actions should be the same than a the beginning"
-        );
+        assertBalanceAfter(balanceSenderBefore, balanceProtocolBefore);
     }
 
     /**
@@ -176,28 +122,38 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         _waitDelay();
 
+        assertBalanceBefore(balanceSenderBefore, balanceProtocolBefore);
+
+        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
+
+        assertBalanceAfter(balanceSenderBefore, balanceProtocolBefore);
+    }
+
+    /// @dev test helper
+    function assertBalanceBefore(uint256 balanceSenderBefore, uint256 balanceProtocolBefore) public {
         assertEq(
             address(this).balance,
             balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "the user should have paid the security deposit"
+            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
         );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "the protocol should have user deposit"
+            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
         );
+    }
 
-        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
-
+    /// @dev test helper
+    function assertBalanceAfter(uint256 balanceSenderBefore, uint256 balanceProtocolBefore) public {
         assertEq(
             address(this).balance,
             balanceSenderBefore,
-            "the user should have retrieved his security deposit from the protocol"
+            "balance of the user after validation should be the same than before all actions"
         );
         assertEq(
             address(protocol).balance,
             balanceProtocolBefore,
-            "protocol balance after all actions should be the same than at the beginning"
+            "balance of the protocol after validation should be the same than before all actions"
         );
     }
 
@@ -339,16 +295,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE + 100 }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
-        assertEq(
-            address(this).balance,
-            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
-        );
-        assertEq(
-            address(protocol).balance,
-            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
-        );
+        assertBalanceBefore(balanceSenderBefore, balanceProtocolBefore);
     }
 
     /**
@@ -365,16 +312,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE + 100 }(1, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
-        assertEq(
-            address(this).balance,
-            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
-        );
-        assertEq(
-            address(protocol).balance,
-            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
-        );
+        assertBalanceBefore(balanceSenderBefore, balanceProtocolBefore);
     }
 
     /**
@@ -390,16 +328,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             1 ether, params.initialPrice / 2, priceData, EMPTY_PREVIOUS_DATA
         );
 
-        assertEq(
-            address(this).balance,
-            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
-        );
-        assertEq(
-            address(protocol).balance,
-            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
-        );
+        assertBalanceBefore(balanceSenderBefore, balanceProtocolBefore);
     }
 
     /**
@@ -419,16 +348,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
         _waitDelay();
 
-        assertEq(
-            address(this).balance,
-            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
-            "balance of the user after initialization should have SECURITY_DEPOSIT_VALUE less"
-        );
-        assertEq(
-            address(protocol).balance,
-            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
-            "balance of the protocol after initialization should have SECURITY_DEPOSIT_VALUE more"
-        );
+        assertBalanceBefore(balanceSenderBefore, balanceProtocolBefore);
     }
 
     /* -------------------------------------------------------------------------- */
