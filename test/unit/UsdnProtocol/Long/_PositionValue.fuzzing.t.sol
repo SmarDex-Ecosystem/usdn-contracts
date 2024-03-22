@@ -104,9 +104,9 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Compare calculations of `_calculatePositionTotalExpo` with more precise values
      */
-    function testFuzzFFI_calculatePositionTotalExpo(uint256 amount, uint256 startPrice, uint256 liqPrice) public {
+    function testFuzzFFI_calculatePositionTotalExpo(uint128 amount, uint256 startPrice, uint256 liqPrice) public {
         uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
-        amount = bound(amount, 1, (type(uint128).max * levDecimals / protocol.getMaxLeverage()) / 2);
+        amount = bound(amount, 1, type(uint128).max * levDecimals / protocol.getMaxLeverage()).toUint128();
         startPrice = bound(startPrice, TickMath.MIN_PRICE, type(uint128).max);
         uint256 minLiqrice = startPrice - (startPrice * levDecimals / protocol.getMinLeverage());
         uint256 maxLiqrice = startPrice - (startPrice * levDecimals / protocol.getMaxLeverage());
@@ -120,7 +120,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
 
         uint256 positionTotalExpoRust = abi.decode(result, (uint256));
         uint256 positionTotalExpoSol =
-            protocol.i_calculatePositionTotalExpo(uint128(amount), uint128(startPrice), uint128(liqPrice));
+            protocol.i_calculatePositionTotalExpo(amount, uint128(startPrice), uint128(liqPrice));
         assertEq(
             positionTotalExpoSol,
             positionTotalExpoRust,
