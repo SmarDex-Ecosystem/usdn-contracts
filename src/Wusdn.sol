@@ -9,7 +9,7 @@ import { IERC20 } from "src/interfaces/Usdn/IUsdn.sol";
 
 /**
  * @title WUSDN token contract
- * @notice The USDN token is a delta neutral token that is inflating all users wallet. In order ton increase its
+ * @notice The USDN token is a delta neutral token that is inflating all users wallet. In order to increase its
  * value instead of getting inflated, the WUSDN token was created, a wrapped token of the USDN that is not
  * inflating, but increasing in value
  */
