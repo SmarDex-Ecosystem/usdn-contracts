@@ -53,7 +53,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint256 index,
         uint128 amountToClose,
         bytes calldata currentPriceData
-    ) external {
+    ) external returns (uint256 securityDepositValue_) {
         return _initiateClosePosition(user, tick, tickVersion, index, amountToClose, currentPriceData);
     }
 

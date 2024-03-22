@@ -85,8 +85,9 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setPositionFeeBps(uint16 newPositionFee) external;
 
     /**
-     * @notice Set the deposit value.
-     * @param securityDepositValue The deposit value.
+     * @notice Set the security deposit value.
+     * @dev The value must be a multiple of SECURITY_DEPOSIT_FACTOR to avoid loosing eth du to rounding errors.
+     * @param securityDepositValue The security deposit value.
      */
     function setSecurityDepositValue(uint256 securityDepositValue) external;
 
