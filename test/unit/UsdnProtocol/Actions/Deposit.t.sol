@@ -3,7 +3,6 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN } from "test/utils/Constants.sol";
-import { IEvents } from "test/utils/IEvents.sol";
 
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -12,7 +11,7 @@ import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdn
  * @custom:background Given a protocol initialized at equilibrium.
  * @custom:and A user with 10 wstETH in their wallet
  */
-contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture, IEvents {
+contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
 
     function setUp() public {

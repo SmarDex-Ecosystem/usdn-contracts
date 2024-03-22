@@ -6,6 +6,7 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
+import { IEvents } from "test/utils/IEvents.sol";
 import { Sdex } from "test/utils/Sdex.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
@@ -25,7 +26,7 @@ import { Usdn } from "src/Usdn.sol";
  * @title UsdnProtocolBaseFixture
  * @dev Utils for testing the USDN Protocol
  */
-contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
+contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, IUsdnProtocolEvents {
     struct SetUpParams {
         uint128 initialDeposit;
         uint128 initialLong;
