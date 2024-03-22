@@ -15,7 +15,7 @@ contract UsdnHandler is Usdn, Test {
     using EnumerableMap for EnumerableMap.AddressToUintMap;
 
     // track theoretical shares
-    EnumerableMap.AddressToUintMap private shares;
+    EnumerableMap.AddressToUintMap private _sharesHandle;
 
     // track theoretical total supply
     uint256 public totalSharesSum;
@@ -37,16 +37,16 @@ contract UsdnHandler is Usdn, Test {
     /* ------------------ Functions used for invariant testing ------------------ */
 
     function getSharesOfAddress(address account) external view returns (uint256) {
-        (bool success, uint256 valueShares) = EnumerableMap.tryGet(shares, account);
-        return success ? valueShares : 0;
+        (, uint256 valueShares) = _sharesHandle.tryGet(account);
+        return valueShares;
     }
 
     function getElementOfIndex(uint256 index) external view returns (address, uint256) {
-        return EnumerableMap.at(shares, index);
+        return _sharesHandle.at(index);
     }
 
-    function getLenghtOfShares() external view returns (uint256) {
-        return EnumerableMap.length(shares);
+    function getLengthOfShares() external view returns (uint256) {
+        return _sharesHandle.length();
     }
 
     function rebaseTest(uint256 newDivisor) external {
@@ -67,8 +67,8 @@ contract UsdnHandler is Usdn, Test {
         value = bound(value, 1, maxTokens() - totalSupply() - 1);
         uint256 valueShares = value * _divisor;
         totalSharesSum += valueShares;
-        uint256 lastShares = EnumerableMap.contains(shares, msg.sender) ? EnumerableMap.get(shares, msg.sender) : 0;
-        EnumerableMap.set(shares, msg.sender, lastShares + valueShares);
+        (, uint256 lastShares) = _sharesHandle.tryGet(msg.sender);
+        _sharesHandle.set(msg.sender, lastShares + valueShares);
         _mint(msg.sender, value);
     }
 
@@ -80,12 +80,12 @@ contract UsdnHandler is Usdn, Test {
         value = bound(value, 1, balanceOf(msg.sender));
         uint256 valueShares = value * _divisor;
 
-        uint256 lastShares = EnumerableMap.get(shares, msg.sender);
+        uint256 lastShares = _sharesHandle.get(msg.sender);
         if (valueShares > lastShares) {
             valueShares = lastShares;
         }
         totalSharesSum -= valueShares;
-        EnumerableMap.set(shares, msg.sender, lastShares - valueShares);
+        _sharesHandle.set(msg.sender, lastShares - valueShares);
         _burn(msg.sender, value);
     }
 
@@ -97,17 +97,13 @@ contract UsdnHandler is Usdn, Test {
         console2.log("bound transfer value");
         value = bound(value, 1, balanceOf(msg.sender));
         uint256 valueShares = value * _divisor;
-        uint256 lastShares = EnumerableMap.get(shares, msg.sender);
+        uint256 lastShares = _sharesHandle.get(msg.sender);
         if (valueShares > lastShares) {
             valueShares = lastShares;
         }
-
-        EnumerableMap.set(shares, msg.sender, lastShares - valueShares);
-        if (EnumerableMap.contains(shares, to)) {
-            EnumerableMap.set(shares, to, EnumerableMap.get(shares, to) + valueShares);
-        } else {
-            EnumerableMap.set(shares, to, valueShares);
-        }
+        _sharesHandle.set(msg.sender, lastShares - valueShares);
+        (, uint256 toShares) = _sharesHandle.tryGet(to);
+        _sharesHandle.set(to, toShares + valueShares);
 
         _transfer(msg.sender, to, value);
     }
