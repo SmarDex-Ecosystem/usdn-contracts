@@ -30,5 +30,12 @@ jobs:
       - name: Install deps
         run: npm ci && forge install
 
-      - name: Generate natspec smells report
+      - name: Generate natspec smells report file
         run: npm run natspec
+
+      - name: Report natspec smells findings
+        uses: Yashiru/natspec-smells-ci@v0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: ./
+          update-comment: true
