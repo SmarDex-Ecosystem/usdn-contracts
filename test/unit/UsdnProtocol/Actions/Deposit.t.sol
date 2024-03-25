@@ -39,14 +39,16 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         uint128 price = 2000 ether;
         bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
-        uint256 expectedSdexBurnAmount = protocol.i_calcSdexToBurn(uint256(depositAmount) * price / 1e18);
+        uint256 usdnToMint =
+            protocol.i_calcMintUsdn(depositAmount, protocol.getBalanceVault(), protocol.getUsdn().totalSupply(), price);
+        uint256 expectedSdexBurnAmount = protocol.i_calcSdexToBurn(usdnToMint);
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
         address deadAddress = protocol.DEAD_ADDRESS();
 
         vm.expectEmit(address(sdex));
         emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), depositAmount, block.timestamp); // WstETH transfer
+        emit InitiatedDeposit(address(this), depositAmount, block.timestamp);
         protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
