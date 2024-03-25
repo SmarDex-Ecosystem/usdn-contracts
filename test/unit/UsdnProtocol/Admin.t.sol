@@ -548,6 +548,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setSecurityDepositValue(1 ether + 1);
     }
 
+    function test_setSecurityDepositValue_zero() external adminPrank {
+        // set security deposit to 0
+        protocol.setSecurityDepositValue(0);
+        assertEq(protocol.getSecurityDepositValue(), 0);
+    }
+
     /**
      * @custom:scenario Call "setExpoImbalanceLimits" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
