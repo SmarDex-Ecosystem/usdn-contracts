@@ -12,8 +12,9 @@ contract WstETH is ERC20, ERC20Permit, IWstETH {
     uint8 private testDecimals;
 
     constructor() ERC20("Wrapped liquid staked Ether 2.0", "wstETH") ERC20Permit("Wrapped liquid staked Ether 2.0") {
-        _mint(msg.sender, 4_000_000 * 10 ** super.decimals());
-        testDecimals = super.decimals();
+        uint8 tokenDecimals = super.decimals();
+        _mint(msg.sender, 4_000_000 * 10 ** tokenDecimals);
+        testDecimals = tokenDecimals;
     }
 
     /// @dev Mint wstETH to the specified address
