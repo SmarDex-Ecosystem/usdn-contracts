@@ -10,7 +10,7 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 
 /**
  * @title LiquidationRewardsManager contract
- * @notice This contract is used by the USDN protocol to calculate the rewards that need to be payed out to the
+ * @notice This contract is used by the USDN protocol to calculate the rewards that need to be paid out to the
  * liquidators.
  * @dev This contract is a middleware between the USDN protocol and the gas price oracle.
  */
@@ -45,7 +45,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
             gasUsedPerTick: 31_971,
-            otherGasUsed: 396_653,
+            otherGasUsed: 394_641,
             rebaseGasUsed: 8966,
             gasPriceLimit: 1000 gwei,
             multiplierBps: 20_000

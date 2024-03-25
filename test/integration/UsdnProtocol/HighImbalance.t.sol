@@ -29,10 +29,10 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
     }
 
     /**
-     * @custom:scenario A very large long position is in large bad debt and gets liquidated
+     * @custom:scenario A long position is in large bad debt and gets liquidated
      * @custom:given An initial position of 1 ether with leverage ~1x
-     * @custom:and A user position of 132 ether with leverage ~4.5x
-     * @custom:and A user position of 1 ether with leverage ~5.3x
+     * @custom:and A user position of 0.5 ether with leverage ~4.5x
+     * @custom:and A user position of 0.01 ether with leverage ~5.3x
      * @custom:when The funding rates make the liquidation prices of both positions go up
      * @custom:and The positions get liquidated by a new user action, way too late
      * @custom:then The bad debt should be paid by the vault side and the long trading expo should be positive
@@ -47,9 +47,10 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         require(success, "USER_1 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
 
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) + securityDeposit
-        }(132 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA);
+        uint256 messageValue =
+            oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) + securityDeposit;
+
+        protocol.initiateOpenPosition{ value: messageValue }(0.5 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA);
 
         vm.warp(1_708_090_246);
         mockPyth.setPrice(3290e8);
@@ -63,9 +64,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockChainlinkOnChain.setLastPublishTime(1_708_090_342 - 10 minutes);
         mockChainlinkOnChain.setLastPrice(3290e8);
 
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) + securityDeposit
-        }(1 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition{ value: messageValue }(0.01 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA);
 
         vm.warp(1_708_090_438);
         mockPyth.setPrice(3281e8);
@@ -86,9 +85,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         require(success, "USER_2 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
 
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) + securityDeposit
-        }(1 ether, 1684 ether, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition{ value: messageValue }(0.0001 ether, 1684 ether, "", EMPTY_PREVIOUS_DATA);
         vm.stopPrank();
 
         assertGe(protocol.longTradingExpoWithFunding(3381 ether, uint128(block.timestamp)), 0, "long expo");

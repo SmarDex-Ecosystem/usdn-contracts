@@ -106,6 +106,20 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setFeeCollector(address newFeeCollector) external;
 
     /**
+     * @notice Set imbalance limits basis point
+     * @param newOpenLimitBps The new open limit
+     * @param newDepositLimitBps The new deposit limit
+     * @param newWithdrawalLimitBps The new withdrawal limit
+     * @param newCloseLimitBps The new close limit
+     */
+    function setExpoImbalanceLimits(
+        uint256 newOpenLimitBps,
+        uint256 newDepositLimitBps,
+        uint256 newWithdrawalLimitBps,
+        uint256 newCloseLimitBps
+    ) external;
+
+    /**
      * @notice Set the target USDN price
      * @param newPrice The new target price (with _priceFeedDecimals)
      * @dev When a rebase of USDN occurs, it will bring the price back down to this value.
