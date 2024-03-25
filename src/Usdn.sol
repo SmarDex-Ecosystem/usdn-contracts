@@ -160,6 +160,34 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
         return type(uint256).max / _divisor;
     }
 
+    /// @inheritdoc IUsdn
+    function transferShares(address to, uint256 value) external returns (bool) {
+        address owner = _msgSender();
+        _transferShares(owner, to, value, convertToTokens(value));
+        return true;
+    }
+
+    /// @inheritdoc IUsdn
+    function transferSharesFrom(address from, address to, uint256 value) external returns (bool) {
+        address spender = _msgSender();
+        uint256 tokenValue = convertToTokens(value);
+        _spendAllowance(from, spender, tokenValue);
+        _transferShares(from, to, value, tokenValue);
+        return true;
+    }
+
+    /// @inheritdoc IUsdn
+    function burnShares(uint256 value) external virtual {
+        _burnShares(_msgSender(), value, convertToTokens(value));
+    }
+
+    /// @inheritdoc IUsdn
+    function burnSharesFrom(address account, uint256 value) public virtual {
+        uint256 tokenValue = convertToTokens(value);
+        _spendAllowance(account, _msgSender(), tokenValue);
+        _burnShares(account, value, tokenValue);
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                            Privileged functions                            */
     /* -------------------------------------------------------------------------- */
@@ -167,6 +195,14 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @inheritdoc IUsdn
     function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
         _mint(to, amount);
+    }
+
+    /// @inheritdoc IUsdn
+    function mintShares(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
+        if (to == address(0)) {
+            revert ERC20InvalidReceiver(address(0));
+        }
+        _updateShares(address(0), to, amount, convertToTokens(amount));
     }
 
     /// @inheritdoc IUsdn
@@ -187,6 +223,77 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
+
+    /**
+     * @dev Transfer a number of shares from `from` to `to`
+     * Reverts if `from` or `to` is the zero address.
+     * @param from The source address
+     * @param to The destination address
+     * @param value The amount of shares to transfer
+     * @param tokenValue The converted amount in tokens, for inclusion in the `Transfer` event
+     */
+    function _transferShares(address from, address to, uint256 value, uint256 tokenValue) internal {
+        if (from == address(0)) {
+            revert ERC20InvalidSender(address(0));
+        }
+        if (to == address(0)) {
+            revert ERC20InvalidReceiver(address(0));
+        }
+        _updateShares(from, to, value, tokenValue);
+    }
+
+    /**
+     * @dev Burn shares from `account`
+     * Reverts if the account is the zero address
+     * @param account The owner of the shares
+     * @param value The number of shares to burn
+     * @param tokenValue The converted value in tokens, for emitting the `Transfer` event
+     */
+    function _burnShares(address account, uint256 value, uint256 tokenValue) internal {
+        if (account == address(0)) {
+            revert ERC20InvalidSender(address(0));
+        }
+        _updateShares(account, address(0), value, tokenValue);
+    }
+
+    /**
+     * @dev Transfer a `value` amount of shares from `from` to `to`, or alternatively mint (or burn) if `from` or `to`
+     * is the zero address.
+     * Emits a {Transfer} event.
+     * @param from the source address
+     * @param to the destination address
+     * @param value the amount of shares to transfer
+     * @param tokenValue the value converted to tokens, for inclusion in the `Transfer` event
+     */
+    function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal virtual {
+        if (from == address(0)) {
+            // Overflow check required: The rest of the code assumes that totalShares never overflows
+            _totalShares += value;
+        } else {
+            uint256 fromBalance = _shares[from];
+            if (fromBalance < value) {
+                revert UsdnInsufficientSharesBalance(from, fromBalance, value);
+            }
+            unchecked {
+                // Overflow not possible: value <= fromBalance <= totalShares.
+                _shares[from] = fromBalance - value;
+            }
+        }
+
+        if (to == address(0)) {
+            unchecked {
+                // Overflow not possible: value <= totalShares or value <= fromBalance <= totalShares.
+                _totalShares -= value;
+            }
+        } else {
+            unchecked {
+                // Overflow not possible: balance + value is at most totalShares, which we know fits into a uint256.
+                _shares[to] += value;
+            }
+        }
+
+        emit Transfer(from, to, tokenValue);
+    }
 
     /**
      * @dev Transfer a `value` amount of tokens from `from` to `to`, or alternatively mint (or burn) if `from` or `to`
