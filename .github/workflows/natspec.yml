@@ -37,7 +37,7 @@ jobs:
         run: npm run natspec
 
       - name: Report natspec smells findings
-        uses: Yashiru/natspec-smells-ci@v0.2.5
+        uses: Yashiru/natspec-smells-ci@v0.2.6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           working-directory: ./
