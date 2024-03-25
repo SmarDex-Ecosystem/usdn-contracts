@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { console2 } from "forge-std/Test.sol";
-import { USER_1, USER_2 } from "test/utils/Constants.sol";
+import { USER_1 } from "test/utils/Constants.sol";
 import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
 
 /**
@@ -31,9 +30,8 @@ contract TestWusdnWithdraw is WusdnTokenFixture {
 
         wusdn.deposit(30 * 10 ** usdnDecimals, USER_1);
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
-
         vm.prank(USER_1);
-        wusdn.withdraw(14 * 10 ** usdnDecimals, USER_2, USER_1);
+        wusdn.withdraw(14 * 10 ** usdnDecimals, USER_1, USER_1);
 
         assertEq(wusdn.totalAssets(), 30 * 10 ** usdnDecimals * 2 - 14 * 10 ** usdnDecimals, "total assets");
         assertApproxEqAbs(wusdn.totalSupply(), 23 * 10 ** usdnDecimals, 1, "total supply");
