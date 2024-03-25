@@ -35,4 +35,3 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           working-directory: ./
           update-comment: true
-          
