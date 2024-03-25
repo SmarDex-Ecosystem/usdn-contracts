@@ -1140,6 +1140,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         if (amount != 0) {
+            // slither-disable-next-line arbitrary-send-eth
             (bool success,) = payable(msg.sender).call{ value: amount }("");
             if (!success) {
                 revert UsdnProtocolEtherRefundFailed();
