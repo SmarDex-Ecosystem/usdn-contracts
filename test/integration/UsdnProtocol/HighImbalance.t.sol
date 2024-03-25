@@ -15,8 +15,6 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * The fix is now to allow balances to become negative temporarily during calculations.
  */
 contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
-    uint256 securityDeposit;
-
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 1 ether;
@@ -25,7 +23,6 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         params.initialPrice = 3290 ether;
         params.initialTimestamp = 1_708_088_866; // 16 February 2024 at 14:07 CET
         _setUp(params);
-        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -47,8 +44,8 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         require(success, "USER_1 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
 
-        uint256 messageValue =
-            oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) + securityDeposit;
+        uint256 messageValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
+            + protocol.getSecurityDepositValue();
 
         protocol.initiateOpenPosition{ value: messageValue }(0.5 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA);
 

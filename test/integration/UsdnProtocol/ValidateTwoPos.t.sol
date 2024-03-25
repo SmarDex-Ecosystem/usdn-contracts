@@ -11,13 +11,10 @@ import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfac
  * @custom:background Given a forked ethereum mainnet chain
  */
 contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixture {
-    uint256 securityDepositValue;
-
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.fork = true; // all tests in this contract must be labelled `Fork`
         _setUp(params);
-        securityDepositValue = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -33,8 +30,8 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         (bool success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_1 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
-        uint256 ethValue =
-            oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) + securityDepositValue;
+        uint256 ethValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
+            + protocol.getSecurityDepositValue();
 
         protocol.initiateOpenPosition{ value: ethValue }(1 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA);
         uint256 ts1 = block.timestamp;

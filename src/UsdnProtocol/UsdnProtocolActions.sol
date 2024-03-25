@@ -1042,12 +1042,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         internal
         returns (uint256 securityDepositValue_)
     {
-        (bool success,, uint256 securityDepositValue) = _executePendingAction(data);
+        bool success;
+        (success,, securityDepositValue_) = _executePendingAction(data);
         if (!success) {
             revert UsdnProtocolInvalidPendingActionData();
         }
-
-        return securityDepositValue;
     }
 
     /**
@@ -1055,6 +1054,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param data The price data and raw indices
      * @return success_ Whether the price data is valid
      * @return executed_ Whether the pending action was executed (false if the queue has no actionable item)
+     * @return securityDepositValue_ The security deposit value of the executed action
      */
     function _executePendingAction(PreviousActionsData calldata data)
         internal
@@ -1133,10 +1133,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolUnexpectedBalance();
         }
 
-        int256 amount = (positive - negative).toInt256();
+        uint256 amount;
+        unchecked {
+            // we know that positive >= negative, so this subtraction is safe
+            amount = positive - negative;
+        }
 
         if (amount != 0) {
-            (bool success,) = payable(msg.sender).call{ value: uint256(amount) }("");
+            (bool success,) = payable(msg.sender).call{ value: amount }("");
             if (!success) {
                 revert UsdnProtocolEtherRefundFailed();
             }
