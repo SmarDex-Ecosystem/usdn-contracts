@@ -16,11 +16,13 @@ contract WusdnTokenFixture is UsdnTokenFixture {
     error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
 
     WusdnHandler public wusdn;
+    uint256 public usdnDecimals;
 
     function setUp() public virtual override {
         super.setUp();
 
         wusdn = new WusdnHandler(usdn);
+        usdnDecimals = usdn.decimals();
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         usdn.grantRole(usdn.MINTER_ROLE(), address(wusdn));
