@@ -30,7 +30,7 @@ jobs:
         run: npm ci && forge install
 
       - name: Report natspec smells findings
-        uses: Yashiru/natspec-smells-ci@v0.2.9
+        uses: Blockchain-RA2-Tech/natspec-smells-ci@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           working-directory: ./
