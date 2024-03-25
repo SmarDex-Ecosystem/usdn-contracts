@@ -173,7 +173,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, positionAmount, pos.amount).toUint128();
         uint256 liqMultiplier = protocol.getLiquidationMultiplier();
-        uint256 expectedAmountReceived =
+        (uint256 expectedAmountReceived,) =
             protocol.i_assetToTransfer(price, tick, totalExpoToClose, liqMultiplier, action.closeTempTransfer);
 
         vm.expectEmit();
@@ -214,7 +214,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToClose, pos.amount).toUint128();
         uint256 liqMultiplier = protocol.getLiquidationMultiplier();
-        uint256 expectedAmountReceived =
+        (uint256 expectedAmountReceived,) =
             protocol.i_assetToTransfer(price, tick, totalExpoToClose, liqMultiplier, action.closeTempTransfer);
 
         // Sanity Check
@@ -246,7 +246,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
         _waitDelay();
         action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
-        expectedAmountReceived = protocol.i_assetToTransfer(
+        (expectedAmountReceived,) = protocol.i_assetToTransfer(
             price, tick, pos.totalExpo - totalExpoToClose, liqMultiplier, action.closeTempTransfer
         );
 
@@ -292,7 +292,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint128 priceAfterInit = params.initialPrice - 50 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, timestamp));
         uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(priceAfterInit, timestamp));
-        uint256 assetToTransfer = protocol.i_assetToTransfer(
+        (uint256 assetToTransfer,) = protocol.i_assetToTransfer(
             priceAfterInit, action.tick, action.closeTotalExpo, action.closeLiqMultiplier, action.closeTempTransfer
         );
         priceData = abi.encode(priceAfterInit);
@@ -347,7 +347,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint128 price = params.initialPrice + 200 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
         uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
-        uint256 assetToTransfer = protocol.i_assetToTransfer(
+        (uint256 assetToTransfer,) = protocol.i_assetToTransfer(
             price, action.tick, action.closeTotalExpo, action.closeLiqMultiplier, action.closeTempTransfer
         );
         priceData = abi.encode(price);
@@ -396,8 +396,6 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         protocol.initiateClosePosition(tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
-        Position memory remainingPos = protocol.getLongPosition(tick, tickVersion, index);
-
         /* ------------------------- Validate Close Position ------------------------ */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 liquidationPrice = protocol.getEffectivePriceForTick(tick, action.closeLiqMultiplier);
@@ -405,11 +403,12 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             uint256(protocol.vaultAssetAvailableWithFunding(liquidationPrice, uint128(block.timestamp)));
         uint256 longBalanceBefore =
             uint256(protocol.longAssetAvailableWithFunding(liquidationPrice, uint128(block.timestamp)));
-        uint256 remainingPosTickValue = uint256(protocol.i_tickValue(liquidationPrice, tick, remainingPos.totalExpo));
-        uint256 assetToTransfer = protocol.i_assetToTransfer(
+        (uint256 assetToTransfer, int256 positionValue) = protocol.i_assetToTransfer(
             liquidationPrice, action.tick, action.closeTotalExpo, action.closeLiqMultiplier, action.closeTempTransfer
         );
-        uint256 longPositionsAmountBefore = protocol.getTotalLongPositions();
+        assertGt(positionValue, 0, "position value should be positive");
+        assertEq(assetToTransfer, uint256(positionValue), "asset to transfer vs position value");
+        uint256 totalPositionsBefore = protocol.getTotalLongPositions();
         priceData = abi.encode(liquidationPrice);
 
         // Make sure we liquidate the tick and the position at once
@@ -425,18 +424,16 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         /* -------------------------- Balance Vault & Long -------------------------- */
         assertEq(
-            vaultBalanceBefore + remainingPosTickValue + assetToTransfer,
+            vaultBalanceBefore + uint256(positionValue) + assetToTransfer,
             protocol.getBalanceVault(),
             "Collateral of the position should have been transferred to the vault"
         );
         assertEq(
-            longBalanceBefore - remainingPosTickValue + action.closeTempTransfer - assetToTransfer,
+            longBalanceBefore - uint256(positionValue) + action.closeTempTransfer - assetToTransfer,
             protocol.getBalanceLong(),
             "Collateral of the position should have been removed from the long side"
         );
-        assertEq(
-            protocol.getTotalLongPositions(), longPositionsAmountBefore - 1, "The position should have been removed"
-        );
+        assertEq(protocol.getTotalLongPositions(), totalPositionsBefore - 1, "The position should have been removed");
     }
 
     /// @dev Allow refund tests
