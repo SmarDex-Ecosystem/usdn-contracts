@@ -515,6 +515,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param user The address of the user initiating the withdrawal.
      * @param usdnAmount The amount of USDN to burn.
      * @param currentPriceData The current price data
+     * @return securityDepositValue_ The security deposit value
      */
     function _initiateWithdrawal(address user, uint128 usdnAmount, bytes calldata currentPriceData)
         internal
@@ -641,6 +642,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty.
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
+     * @return tick_ The tick of the position
+     * @return tickVersion_ The tick version of the position
+     * @return index_ The index of the position inside the tick array
+     * @return securityDepositValue_ The security deposit value
      */
     function _initiateOpenPosition(
         address user,
@@ -826,6 +831,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param index The index of the position inside the tick array
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
+     * @return securityDepositValue_ The security deposit value
      */
     function _initiateClosePosition(
         address user,
@@ -1010,6 +1016,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param posExpo The total expo of the position
      * @param liqMultiplier The liquidation multiplier at the moment of closing the position
      * @param tempTransferred An amount that was already subtracted from the long balance
+     * @return assetToTransfer_ The amount of wstETH to transfer
      */
     function _assetToTransfer(
         uint128 currentPrice,
@@ -1038,6 +1045,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     /**
      * @notice Execute the first actionable pending action or revert if the price data was not provided.
      * @param data The price data and raw indices
+     * @return securityDepositValue_ The security deposit value of the executed action
      */
     function _executePendingActionOrRevert(PreviousActionsData calldata data)
         internal
@@ -1123,7 +1131,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param securityDepositValue The security deposit value of the action (zero for a validation action).
      * @param amountToRefund The amount to refund to the user:
      *      - the security deposit if executing an action for another user,
-     *      - or the initialization deposit in case of a validation action.
+     *      - the initialization security deposit in case of a validation action.
      * @param balanceBefore The balance of the contract before the action.
      */
     function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) internal {

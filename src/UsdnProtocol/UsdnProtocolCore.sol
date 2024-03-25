@@ -593,6 +593,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
      * @dev This is only applicable to `ValidateOpenPosition` pending actions
      * @param user The user address
+     * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
     function _removeStalePendingAction(address user) internal returns (uint256 securityDepositValue_) {
         // slither-disable-next-line incorrect-equality
@@ -621,6 +622,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @dev This reverts if there is already a pending action for this user
      * @param user The user address
      * @param action The pending action struct
+     * @return securityDepositValue_ The security deposit value of the stale pending action
      */
     function _addPendingAction(address user, PendingAction memory action)
         internal
