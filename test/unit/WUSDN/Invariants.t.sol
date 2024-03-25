@@ -26,11 +26,12 @@ contract TestWusdnInvariants is WusdnTokenFixture {
         usdnSelectors[3] = usdn.transferTest.selector;
         targetSelector(FuzzSelector({ addr: address(usdn), selectors: usdnSelectors }));
         targetContract(address(wusdn));
-        bytes4[] memory wusdnSelectors = new bytes4[](4);
+        bytes4[] memory wusdnSelectors = new bytes4[](5);
         wusdnSelectors[0] = wusdn.depositTest.selector;
         wusdnSelectors[1] = wusdn.mintTest.selector;
         wusdnSelectors[2] = wusdn.withdrawTest.selector;
         wusdnSelectors[3] = wusdn.redeemTest.selector;
+        wusdnSelectors[4] = wusdn.transferTest.selector;
         targetSelector(FuzzSelector({ addr: address(wusdn), selectors: wusdnSelectors }));
         targetSender(USER_1);
         targetSender(USER_2);

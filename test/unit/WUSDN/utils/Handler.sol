@@ -64,4 +64,14 @@ contract WusdnHandler is Wusdn, Test {
 
         redeem(shares, msg.sender, msg.sender);
     }
+
+    function transferTest(address to, uint256 shares) external {
+        console2.log("bound transfer");
+        if (balanceOf(msg.sender) == 0 || to == address(0)) {
+            return;
+        }
+        shares = bound(shares, 1, balanceOf(msg.sender));
+
+        _transfer(msg.sender, to, shares);
+    }
 }
