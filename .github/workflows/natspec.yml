@@ -11,10 +11,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    # /* --------------------- TODO: write a report in the PR --------------------- */
-    # permissions:
-    #   contents: read
-    #   pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,9 +28,6 @@ jobs:
 
       - name: Install deps
         run: npm ci && forge install
-
-      - name: Generate natspec smells report file
-        run: npm run natspec
 
       - name: Report natspec smells findings
         uses: Yashiru/natspec-smells-ci@v0.2.9
