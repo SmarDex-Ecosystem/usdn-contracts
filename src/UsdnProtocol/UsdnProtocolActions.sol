@@ -400,6 +400,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param user The address of the user initiating the deposit.
      * @param amount The amount of wstETH to deposit.
      * @param currentPriceData The current price data
+     * @return securityDepositValue_ The security deposit value
      */
     function _initiateDeposit(address user, uint128 amount, bytes calldata currentPriceData)
         internal

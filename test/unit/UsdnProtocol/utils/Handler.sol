@@ -284,4 +284,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_executePendingActionOrRevert(PreviousActionsData calldata data) external {
         _executePendingActionOrRevert(data);
     }
+
+    function i_refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore)
+        external
+    {
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+    }
 }
