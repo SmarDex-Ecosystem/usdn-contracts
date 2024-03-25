@@ -18,7 +18,7 @@ import {
  */
 contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
-    uint256 internal constant LONG_AMOUNT = 1 ether;
+    uint256 internal constant LONG_AMOUNT = 3 ether;
     uint128 internal constant CURRENT_PRICE = 2000 ether;
 
     function setUp() public {

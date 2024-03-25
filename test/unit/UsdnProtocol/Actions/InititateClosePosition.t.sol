@@ -23,7 +23,7 @@ import { USER_1 } from "test/utils/Constants.sol";
 contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
 
-    uint128 private positionAmount = 1 ether;
+    uint128 private positionAmount = 3 ether;
     int24 private tick;
     uint256 private tickVersion;
     uint256 private index;

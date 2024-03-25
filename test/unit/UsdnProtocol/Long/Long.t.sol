@@ -238,7 +238,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether
+            address(this), ProtocolAction.InitiateOpenPosition, 3 ether, desiredLiqPrice, 2000 ether
         );
 
         totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);

@@ -15,7 +15,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
     int24 private _tick;
     uint256 private _tickVersion;
     uint256 private _index;
-    uint128 private _positionAmount = 1 ether;
+    uint128 private _positionAmount = 3 ether;
 
     function setUp() external {
         _setUp(DEFAULT_PARAMS);
