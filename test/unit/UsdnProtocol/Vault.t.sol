@@ -65,6 +65,12 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
         assertEq(price, 2 ether, "price at total supply of 1M");
     }
 
+    /**
+     * @custom:scenario Check the calculation the amount of SDEX tokens to burn depending on the amount of USDN
+     * @custom:given An amount of USDN to be minted
+     * @custom:when The function is called with this amount
+     * @custom:then The correct amount of SDEX to burn is returned
+     */
     function test_calcSdexToBurn() external {
         uint256 burnRatio = protocol.getSdexBurnOnDepositRatio();
         uint256 burnRatioDivisor = protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR();

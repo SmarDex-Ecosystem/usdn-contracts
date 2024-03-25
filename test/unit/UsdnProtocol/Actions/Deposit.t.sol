@@ -43,7 +43,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
         address deadAddress = protocol.DEAD_ADDRESS();
 
-        vm.expectEmit();
+        vm.expectEmit(address(sdex));
         emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
         vm.expectEmit();
         emit InitiatedDeposit(address(this), depositAmount, block.timestamp); // WstETH transfer
