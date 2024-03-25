@@ -14,10 +14,6 @@ import { IUsdnErrors } from "src/interfaces/Usdn/IUsdnErrors.sol";
  * @dev Utils for testing Usdn.sol
  */
 contract UsdnTokenFixture is BaseFixture, IEvents, IUsdnEvents, IUsdnErrors {
-    /// Events coming from the ERC20Permit extension
-    error ERC2612ExpiredSignature(uint256 deadline);
-    error ERC2612InvalidSigner(address signer, address owner);
-
     UsdnHandler public usdn;
 
     function setUp() public virtual {
