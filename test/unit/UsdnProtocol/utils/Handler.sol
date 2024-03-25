@@ -287,6 +287,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore)
         external
+        payable
     {
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }

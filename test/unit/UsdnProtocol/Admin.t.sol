@@ -529,6 +529,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         assertEq(protocol.getSecurityDepositValue(), newValue);
     }
 
+    /**
+     * @custom:scenario Call "setSecurityDepositValue" from admin.
+     * @custom:given The initial usdnProtocol state.
+     * @custom:when Admin wallet call function with a value inferior to SECURITY_DEPOSIT_FACTOR.
+     * @custom:then The transaction should revert.
+     */
     function test_RevertWhen_setSecurityDepositValue_Inf() external adminPrank {
         uint256 securityDepositFactor = protocol.SECURITY_DEPOSIT_FACTOR();
         vm.expectRevert(UsdnProtocolInvalidSecurityDepositValue.selector);
@@ -536,18 +542,36 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setSecurityDepositValue(securityDepositFactor - 1);
     }
 
+    /**
+     * @custom:scenario Call "setSecurityDepositValue" from admin.
+     * @custom:given The initial usdnProtocol state.
+     * @custom:when Admin wallet call function with a value superior to SECURITY_DEPOSIT_FACTOR.
+     * @custom:then The transaction should revert.
+     */
     function test_RevertWhen_setSecurityDepositValue_Sup() external adminPrank {
         vm.expectRevert(UsdnProtocolInvalidSecurityDepositValue.selector);
         // set security deposit with SECURITY_DEPOSIT_FACTOR - 1
         protocol.setSecurityDepositValue(10 ether + 1);
     }
 
+    /**
+     * @custom:scenario Call "setSecurityDepositValue" from admin.
+     * @custom:given The initial usdnProtocol state.
+     * @custom:when Admin wallet call function with a value not multiple to SECURITY_DEPOSIT_FACTOR.
+     * @custom:then The transaction should revert.
+     */
     function test_RevertWhen_setSecurityDepositValue_notMultiple() external adminPrank {
         vm.expectRevert(UsdnProtocolInvalidSecurityDepositValue.selector);
         // set security deposit with 1 ether and 1 wei
         protocol.setSecurityDepositValue(1 ether + 1);
     }
 
+    /**
+     * @custom:scenario Call "setSecurityDepositValue" from admin.
+     * @custom:given The initial usdnProtocol state.
+     * @custom:when Admin wallet call function with zero.
+     * @custom:then The security deposit value should be updated to zero.
+     */
     function test_setSecurityDepositValue_zero() external adminPrank {
         // set security deposit to 0
         protocol.setSecurityDepositValue(0);
