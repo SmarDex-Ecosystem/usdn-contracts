@@ -8,6 +8,9 @@ env:
 jobs:
   natspec-smells:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     # /* --------------------- TODO: write a report in the PR --------------------- */
     # permissions:
     #   contents: read
