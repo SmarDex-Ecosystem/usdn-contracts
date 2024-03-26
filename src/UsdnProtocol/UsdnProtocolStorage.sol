@@ -274,7 +274,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _tickSpacing = tickSpacing;
         _feeCollector = feeCollector;
 
-        _targetUsdnPrice = uint128(1005 * 10 ** (_priceFeedDecimals - 3)); // $1.005
+        _targetUsdnPrice = uint128(10_087 * 10 ** (_priceFeedDecimals - 4)); // $1.0087
         _usdnRebaseThreshold = uint128(1009 * 10 ** (_priceFeedDecimals - 3)); // $1.009
     }
 
