@@ -30,9 +30,10 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         (bool success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_1 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA
-        );
+        uint256 ethValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
+            + protocol.getSecurityDepositValue();
+
+        protocol.initiateOpenPosition{ value: ethValue }(1 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA);
         uint256 ts1 = block.timestamp;
         vm.stopPrank();
         skip(30);
@@ -40,9 +41,7 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         (success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_2 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA
-        );
+        protocol.initiateOpenPosition{ value: ethValue }(1 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA);
         uint256 ts2 = block.timestamp;
         vm.stopPrank();
 
@@ -50,9 +49,9 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         skip(2 hours);
 
         // Second user tries to validate their action
-        (,,, bytes memory data1) = getHermesApiSignature(PYTH_STETH_USD, ts1 + oracleMiddleware.getValidationDelay());
+        (,,,, bytes memory data1) = getHermesApiSignature(PYTH_STETH_USD, ts1 + oracleMiddleware.getValidationDelay());
         uint256 data1Fee = oracleMiddleware.validationCost(data1, ProtocolAction.ValidateOpenPosition);
-        (,,, bytes memory data2) = getHermesApiSignature(PYTH_STETH_USD, ts2 + oracleMiddleware.getValidationDelay());
+        (,,,, bytes memory data2) = getHermesApiSignature(PYTH_STETH_USD, ts2 + oracleMiddleware.getValidationDelay());
         uint256 data2Fee = oracleMiddleware.validationCost(data2, ProtocolAction.ValidateOpenPosition);
         bytes[] memory previousData = new bytes[](1);
         previousData[0] = data1;

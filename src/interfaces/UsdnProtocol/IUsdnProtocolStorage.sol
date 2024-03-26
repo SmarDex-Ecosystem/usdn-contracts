@@ -32,6 +32,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The number of decimals for the scaling factor of the funding rate
     function FUNDING_SF_DECIMALS() external pure returns (uint8);
 
+    /// @notice The factor to convert the security deposit value to an uint24
+    function SECURITY_DEPOSIT_FACTOR() external pure returns (uint128);
+
     /**
      * @notice Divisor for the bps values
      * @dev Example: 200 -> 2%
@@ -110,6 +113,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The position fee in bps
     function getPositionFeeBps() external view returns (uint16);
 
+    /// @notice The security deposit required for a new position
+    function getSecurityDepositValue() external view returns (uint256);
+
     /// @notice The fee threshold before fees are sent to the fee collector
     function getFeeThreshold() external view returns (uint256);
 
@@ -118,6 +124,23 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The address of the fee collector
     function getMiddlewareValidationDelay() external view returns (uint256);
+
+    /**
+     * @notice Get expo imbalance limits (in basis points)
+     * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
+     * @return depositExpoImbalanceLimitBps_ The deposit expo imbalance limit
+     * @return withdrawalExpoImbalanceLimitBps_ The withdrawal expo imbalance limit
+     * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
+     */
+    function getExpoImbalanceLimits()
+        external
+        view
+        returns (
+            int256 openExpoImbalanceLimitBps_,
+            int256 depositExpoImbalanceLimitBps_,
+            int256 withdrawalExpoImbalanceLimitBps_,
+            int256 closeExpoImbalanceLimitBps_
+        );
 
     /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
     function getTargetUsdnPrice() external view returns (uint128);

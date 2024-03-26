@@ -46,6 +46,8 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
 
     /**
      * @notice Get the value of a long position when the asset price is equal to the given price, at the given timestamp
+     * @dev If the current price is smaller than the liquidation price of the position without liquidation penalty,
+     * then the value of the position is negative.
      * @param tick The tick containing the long position
      * @param tickVersion The tick version
      * @param index The index of the long position inside the tick array
@@ -55,7 +57,7 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
     function getPositionValue(int24 tick, uint256 tickVersion, uint256 index, uint128 price, uint128 timestamp)
         external
         view
-        returns (uint256);
+        returns (int256);
 
     /**
      * @notice Get the tick number corresponding to a given price

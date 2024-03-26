@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { Test } from "forge-std/Test.sol";
-
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
+import { BaseFixture } from "test/utils/Fixtures.sol";
 
 import { TickMath } from "src/libraries/TickMath.sol";
 
@@ -23,7 +23,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
  * acceptable range (see comments in the tests below).
  *
  */
-contract TestSoladyMath is Test {
+contract TestSoladyMath is BaseFixture {
     /**
      * @custom:scenario Fuzzing the `expWad` function
      * @custom:given A value between -42_139_678_854_452_767_552 and 135_305_999_368_893_231_588
@@ -33,11 +33,7 @@ contract TestSoladyMath is Test {
      */
     function testFuzzFFIExpWad(int256 value) public {
         value = bound(value, -42_139_678_854_452_767_552, 135_305_999_368_893_231_588); // acceptable values for solady
-        string[] memory cmds = new string[](3);
-        cmds[0] = "./test_utils/target/release/test_utils";
-        cmds[1] = "exp-wad";
-        cmds[2] = vm.toString(value);
-        bytes memory result = vm.ffi(cmds);
+        bytes memory result = vmFFIRustCommand("exp-wad", vm.toString(value));
         int256 ref = abi.decode(result, (int256));
         int256 test = int256(FixedPointMathLib.expWad(value));
         assertApproxEqRel(test, ref, 70); // 0.000000000000007%
@@ -52,11 +48,7 @@ contract TestSoladyMath is Test {
      */
     function testFuzzFFILnWad(uint256 value) public {
         value = bound(value, TickMath.MIN_PRICE, TickMath.MAX_PRICE);
-        string[] memory cmds = new string[](3);
-        cmds[0] = "./test_utils/target/release/test_utils";
-        cmds[1] = "ln-wad";
-        cmds[2] = vm.toString(value);
-        bytes memory result = vm.ffi(cmds);
+        bytes memory result = vmFFIRustCommand("ln-wad", vm.toString(value));
         int256 ref = abi.decode(result, (int256));
         int256 test = int256(FixedPointMathLib.lnWad(int256(value)));
         assertApproxEqRel(test, ref, 3100); // 0.00000000000031%
@@ -73,12 +65,7 @@ contract TestSoladyMath is Test {
     function testFuzzFFIPowWad(int256 exp) public {
         int256 base = 1.0001 ether;
         exp = bound(exp, 500_000 ether, 900_000 ether);
-        string[] memory cmds = new string[](4);
-        cmds[0] = "./test_utils/target/release/test_utils";
-        cmds[1] = "pow-wad";
-        cmds[2] = vm.toString(base);
-        cmds[3] = vm.toString(exp);
-        bytes memory result = vm.ffi(cmds);
+        bytes memory result = vmFFIRustCommand("pow-wad", vm.toString(base), vm.toString(exp));
         int256 ref = abi.decode(result, (int256));
         int256 test = int256(FixedPointMathLib.powWad(base, exp));
         assertApproxEqRel(test, ref, 1_000_000); // 0.0000000001%
@@ -95,12 +82,7 @@ contract TestSoladyMath is Test {
      */
     function testFuzzFFIDivUp(uint256 lhs, uint256 rhs) public {
         vm.assume(rhs != 0);
-        string[] memory cmds = new string[](4);
-        cmds[0] = "./test_utils/target/release/test_utils";
-        cmds[1] = "div-up";
-        cmds[2] = vm.toString(lhs);
-        cmds[3] = vm.toString(rhs);
-        bytes memory result = vm.ffi(cmds);
+        bytes memory result = vmFFIRustCommand("div-up", vm.toString(lhs), vm.toString(rhs));
         uint256 ref = abi.decode(result, (uint256));
         uint256 test = FixedPointMathLib.divUp(lhs, rhs);
         assertEq(test, ref);

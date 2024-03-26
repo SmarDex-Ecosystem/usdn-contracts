@@ -18,7 +18,7 @@ import {
  */
 contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
-    uint256 internal constant LONG_AMOUNT = 3 ether;
+    uint256 internal constant LONG_AMOUNT = 1 ether;
     uint128 internal constant CURRENT_PRICE = 2000 ether;
 
     function setUp() public {
@@ -263,12 +263,12 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     function test_stalePendingActionReInit() public {
         (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
 
-        wstETH.approve(address(protocol), 4 ether);
+        wstETH.approve(address(protocol), 1 ether);
         bytes memory priceData = abi.encode(uint128(1500 ether));
         // we should be able to open a new position
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.initiateOpenPosition(4 ether, 1000 ether, priceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -326,28 +326,6 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         protocol.validateOpenPosition{ value: 0.5 ether }(priceData, EMPTY_PREVIOUS_DATA);
 
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
-    }
-
-    /**
-     * @dev Helper function to initiate a new position and liquidate it before it gets validated
-     * @return tick_ The tick of the new position
-     * @return tickVersion_ The tick version of the new position
-     * @return index_ The index of the new position
-     */
-    function _createStalePendingActionHelper() internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
-        // create a pending action with a liquidation price around $1700
-        (tick_, tickVersion_, index_) =
-            setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 5 ether, 1700 ether, 2000 ether);
-
-        // the price drops to $1500 and the position gets liquidated
-        skip(30);
-        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
-
-        // the pending action is stale
-        uint256 currentTickVersion = protocol.getTickVersion(tick_);
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
-        assertEq(action.var3, tickVersion_, "tick version");
-        assertTrue(action.var3 != currentTickVersion, "current tick version");
     }
 
     // test refunds

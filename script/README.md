@@ -55,7 +55,7 @@ If `WSTETH_ADDRESS` is defined and `GET_WSTETH=true`, then the script will wrap 
 contract so that there is enough balance.
 
 ```
-forge script --non-interactive --private-key 0xac... -f http://localhost:8545 script/Deploy.s.sol --broadcast
+forge script --non-interactive --private-key 0xac... -f http://localhost:8545 script/Deploy.s.sol:Deploy --broadcast
 ```
 
 ## Anvil fork configuration

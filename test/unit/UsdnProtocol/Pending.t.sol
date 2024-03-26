@@ -264,6 +264,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             timestamp: uint40(block.timestamp),
             user: address(this),
             var1: 0, // must be zero because unused
+            securityDepositValue: 2424,
             amount: 42,
             var2: 69,
             var3: 420,
@@ -275,6 +276,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertTrue(vaultAction.action == action.action, "action action");
         assertEq(vaultAction.timestamp, action.timestamp, "action timestamp");
         assertEq(vaultAction.user, action.user, "action user");
+        assertEq(vaultAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
         assertEq(vaultAction.amount, action.amount, "action amount");
         assertEq(vaultAction.assetPrice, action.var2, "action price");
         assertEq(vaultAction.totalExpo, action.var3, "action expo");
@@ -298,6 +300,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             user: address(this),
             var1: 2398,
             amount: 42,
+            securityDepositValue: 2424,
             var2: 69,
             var3: 420,
             var4: 1337,
@@ -309,6 +312,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(longAction.timestamp, action.timestamp, "action timestamp");
         assertEq(longAction.user, action.user, "action user");
         assertEq(longAction.tick, action.var1, "action tick");
+        assertEq(longAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
         assertEq(longAction.closeAmount, action.amount, "action amount");
         assertEq(longAction.closeTotalExpo, action.var2, "action total expo");
         assertEq(longAction.tickVersion, action.var3, "action version");

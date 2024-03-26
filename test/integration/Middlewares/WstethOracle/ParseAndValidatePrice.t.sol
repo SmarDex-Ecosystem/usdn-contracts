@@ -46,12 +46,18 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
 
             // pyth data
-            (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) = getMockedPythSignature();
+            (uint256 pythPrice, uint256 pythConf, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
+                getMockedPythSignatureStETH();
 
             // middleware data
             PriceInfo memory middlewarePrice;
-            if (action == ProtocolAction.Liquidation) {
-                // Pyth requires that the price data timestamp is recent compared to block.timestamp
+            if (
+                action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
+                    || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
+                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+            ) {
+                // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
+                // is recent compared to block.timestamp
                 vm.warp(pythTimestamp);
                 middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
             } else {
@@ -64,13 +70,11 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             assertEq(middlewarePrice.timestamp, pythTimestamp);
 
             // formatted pyth price
-            uint256 formattedPythPrice =
-                pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
+            uint256 formattedPythPrice = pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** pythDecimals;
 
             // Apply conf ratio to pyth confidence
             uint256 formattedPythConf = (
-                pythConf * 10 ** (wstethMiddleware.getDecimals() - wstethMiddleware.getPythDecimals())
-                    * wstethMiddleware.getConfRatio()
+                pythConf * 10 ** (wstethMiddleware.getDecimals() - pythDecimals) * wstethMiddleware.getConfRatio()
             ) / wstethMiddleware.getConfRatioDenom();
 
             // Price + conf
@@ -169,13 +173,18 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 string.concat("Wrong oracle middleware price for action: ", uint256(action).toString());
 
             // pyth data
-            (uint256 pythPrice, uint256 pythConf, uint256 pythTimestamp, bytes memory data) =
+            (uint256 pythPrice, uint256 pythConf, uint256 pythDecimals, uint256 pythTimestamp, bytes memory data) =
                 getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
 
             // middleware data
             PriceInfo memory middlewarePrice;
-            if (action == ProtocolAction.Liquidation) {
-                // Pyth requires that the price data timestamp is recent compared to block.timestamp
+            if (
+                action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
+                    || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
+                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+            ) {
+                // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
+                // is recent compared to block.timestamp
                 vm.warp(pythTimestamp);
                 middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
             } else {
@@ -188,13 +197,11 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             assertEq(middlewarePrice.timestamp, pythTimestamp);
 
             // formatted pyth price
-            uint256 formattedPythPrice =
-                pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals();
+            uint256 formattedPythPrice = pythPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** pythDecimals;
 
             // Apply conf ratio to pyth confidence
             uint256 formattedPythConf = (
-                pythConf * 10 ** (wstethMiddleware.getDecimals() - wstethMiddleware.getPythDecimals())
-                    * wstethMiddleware.getConfRatio()
+                pythConf * 10 ** (wstethMiddleware.getDecimals() - pythDecimals) * wstethMiddleware.getConfRatio()
             ) / wstethMiddleware.getConfRatioDenom();
 
             // Price + conf
@@ -220,6 +227,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 (
                     uint256 pythWstethPrice,
                     uint256 pythWstethConf, // price difference should be less than conf
+                    ,
                     uint256 pythWstethTimestamp,
                 ) = getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp);
 
@@ -230,8 +238,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 // We are ok with a delta below pyth wsteth confidence.
                 assertApproxEqAbs(
                     middlewarePrice.price,
-                    pythWstethPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals(),
-                    pythWstethConf * 10 ** wstethMiddleware.getDecimals() / 10 ** wstethMiddleware.getPythDecimals(),
+                    pythWstethPrice * 10 ** wstethMiddleware.getDecimals() / 10 ** pythDecimals,
+                    pythWstethConf * 10 ** wstethMiddleware.getDecimals() / 10 ** pythDecimals,
                     priceError
                 );
             }
