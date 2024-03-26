@@ -229,7 +229,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateDeposit(3 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit(1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -239,7 +239,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @custom:then The USDN token is rebased
      */
     function test_usdnRebaseWhenValidateDeposit() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 3 ether, params.initialPrice);
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
 
         // initial price is $1
         assertEq(protocol.usdnPrice(params.initialPrice), 10 ** protocol.getPriceFeedDecimals(), "initial price");
@@ -320,7 +320,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateOpenPosition(3 ether, params.initialPrice / 2, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition(1 ether, params.initialPrice / 2, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -331,7 +331,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenValidateOpenPosition() public {
         setUpUserPositionInLong(
-            address(this), ProtocolAction.InitiateOpenPosition, 3 ether, params.initialPrice / 2, params.initialPrice
+            address(this), ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
         );
 
         // initial price is $1
@@ -356,7 +356,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenInitiateClosePosition() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 3 ether, params.initialPrice / 2, params.initialPrice
+            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
         );
 
         // initial price is $1
@@ -381,7 +381,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenValidateClosePosition() public {
         setUpUserPositionInLong(
-            address(this), ProtocolAction.InitiateClosePosition, 3 ether, params.initialPrice / 2, params.initialPrice
+            address(this), ProtocolAction.InitiateClosePosition, 1 ether, params.initialPrice / 2, params.initialPrice
         );
 
         // initial price is $1
