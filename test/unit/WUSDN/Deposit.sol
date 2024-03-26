@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { USER_1 } from "test/utils/Constants.sol";
 import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
 
 /**
@@ -28,9 +27,9 @@ contract TestWusdnDeposit is WusdnTokenFixture {
     function test_deposit() public {
         usdn.approve(address(wusdn), type(uint256).max);
 
-        wusdn.deposit(30 * 10 ** usdnDecimals, USER_1);
+        wusdn.deposit(30 * 10 ** usdnDecimals, address(this));
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
-        wusdn.deposit(70 * 10 ** usdnDecimals, USER_1);
+        wusdn.deposit(70 * 10 ** usdnDecimals, address(this));
 
         assertEq(wusdn.totalAssets(), 130 * 10 ** usdnDecimals, "total assets");
         assertEq(wusdn.totalSupply(), 65 * 10 ** usdnDecimals, "total supply");

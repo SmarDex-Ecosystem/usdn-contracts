@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { USER_1 } from "test/utils/Constants.sol";
 import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
 
 /**
@@ -22,18 +21,17 @@ contract TestWusdnWithdraw is WusdnTokenFixture {
      * @custom:and 30 usdn is deposited to wusdn
      * @custom:and rebased to 0.5x MAX_DIVISOR
      * @custom:when 14 usdn are withdrawn from wusdn
-     * @custom:and The total assets of wusdn are 46
+     * @custom:and The total assets of usdn are 46
      * @custom:and The total supply of wusdn is 23
      */
     function test_withdraw() public {
         usdn.approve(address(wusdn), type(uint256).max);
 
-        wusdn.deposit(30 * 10 ** usdnDecimals, USER_1);
+        wusdn.deposit(30 * 10 ** usdnDecimals, address(this));
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
-        vm.prank(USER_1);
-        wusdn.withdraw(14 * 10 ** usdnDecimals, USER_1, USER_1);
+        wusdn.withdraw(14 * 10 ** usdnDecimals, address(this), address(this));
 
-        assertEq(wusdn.totalAssets(), 30 * 10 ** usdnDecimals * 2 - 14 * 10 ** usdnDecimals, "total assets");
+        assertEq(wusdn.totalAssets(), (30 * 2 - 14) * 10 ** usdnDecimals, "total assets");
         assertApproxEqAbs(wusdn.totalSupply(), 23 * 10 ** usdnDecimals, 1, "total supply");
     }
 }
