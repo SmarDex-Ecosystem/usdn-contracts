@@ -30,7 +30,6 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         priceData = abi.encode(params.initialPrice);
 
         SECURITY_DEPOSIT_VALUE = protocol.getSecurityDepositValue();
-        assertGt(SECURITY_DEPOSIT_VALUE, 0);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -329,7 +328,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user0 initiates a deposit action and user1 validates user0 action with a initiateDeposit
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the deposit
+     * @custom:when The protocol takes the security deposit from the user0 at the initialization of the deposit
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his deposit
      */
@@ -371,7 +370,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user0 initiates a deposit action and user1 validates user0 action with a validateDeposit
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the deposit
+     * @custom:when The protocol takes the security deposit from the user0 at the initialization of the deposit
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his deposit
      */
@@ -413,7 +412,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario The user0 initiates a withdrawal action and user1 validates user0 action with a
      * initiateWithdrawal
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the withdrawal
+     * @custom:when The protocol takes the security deposit from the user0 at the initialization of the withdrawal
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his withdrawal
      */
@@ -462,7 +461,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario The user0 initiates a withdrawal action and user1 validates user0 action with a
      * validateWithdrawal
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the withdrawal
+     * @custom:when The protocol takes the security deposit from the user0 at the initialization of the withdrawal
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his withdrawal
      */
@@ -511,7 +510,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario The user0 initiates a open position action and user1 validates user0 action with a
      * initiateOpenPosition
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the open position
+     * @custom:when The protocol takes the security deposit from the user0 at the initialization of the open position
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his open position
      */
@@ -552,7 +551,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario The user0 initiates an open position action and user1 validates user0 action with a
      * validateOpenPosition
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the open position
+     * @custom:when The protocol takes the security deposit from the user0 at the initialization of the open position
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his open position
      */
@@ -591,7 +590,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user0 initiates a close position action and user1 validates user0 action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the close position
+     * @custom:when The protocol takes the security deposit from the user0 at the initialization of the close position
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the initialization of his close position
      */
@@ -638,7 +637,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user0 initiates a close position action and user1 validates user0 action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the close position
+     * @custom:when The protocol takes the security deposit from the user0 at the initialization of the close position
      * @custom:then We skip validation deadline + 1
      * @custom:and The protocol returns the security deposit to the user1 at the validation of his close position
      */
@@ -689,7 +688,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user initiates and validates a deposit action with a change in the security deposit value
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user at the initialization of the deposit
+     * @custom:when The protocol takes the security deposit from the user at the initialization of the deposit
      * @custom:then We change the value of the security deposit to SECURITY_DEPOSIT_VALUE / 2
      * @custom:and The protocol returns the security deposit to the user at the validation of the deposit
      * @custom:and The user initiates a withdrawal action with the new security deposit value
@@ -758,7 +757,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:scenario The user0 initiates a deposit action and user1 validates user0 action after a change of
      * the security deposit value
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user0 at the initialization of the deposit
+     * @custom:when The protocol takes the security deposit from the user0 at the initialization of the deposit
      * @custom:then We skip validation deadline + 1
      * @custom:and We change the value of the security deposit to SECURITY_DEPOSIT_VALUE / 2
      * @custom:and The protocol returns SECURITY_DEPOSIT_VALUE the user1 at the initialization of his deposit
@@ -828,8 +827,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user initiates and validates a deposit action
      * @custom:given The value of the security deposit is SECURITY_DEPOSIT_VALUE
-     * @custom:then The protocol takes the security deposit from the user at the initialization of the deposit
-     * @custom:and The protocol returns the security deposit to the user at the validation of the deposit
+     * @custom:when The protocol takes the security deposit from the user at the initialization of the deposit
+     * @custom:then The protocol returns the security deposit to the user at the validation of the deposit
      */
     function test_securityDeposit_refundStaleTransaction() public {
         uint256 balanceSenderBefore = address(this).balance;
@@ -844,6 +843,18 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(1 ether, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
+
+        assertEq(
+            address(this).balance,
+            balanceSenderBefore - SECURITY_DEPOSIT_VALUE,
+            "the user should have retrieved his first security deposit from the stale pending action"
+        );
+        assertEq(
+            address(protocol).balance,
+            balanceProtocolBefore + SECURITY_DEPOSIT_VALUE,
+            "the balance of the protocol after the second initialization should have only one security deposit"
+        );
+
         protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
 
         assertBalancesEnd(balanceSenderBefore, balanceProtocolBefore);
