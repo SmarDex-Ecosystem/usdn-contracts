@@ -22,16 +22,20 @@ contract UsdnHandler is Usdn, Test {
 
     constructor() Usdn(address(0), address(0)) { }
 
-    function approve(address _owner, address _spender, uint256 _value) external {
-        _approve(_owner, _spender, _value);
+    function i_approve(address owner, address spender, uint256 value) external {
+        _approve(owner, spender, value);
     }
 
-    function transfer(address _from, address _to, uint256 _value) external {
-        _transfer(_from, _to, _value);
+    function i_transfer(address from, address to, uint256 value) external {
+        _transfer(from, to, value);
     }
 
-    function burn(address _owner, uint256 _value) external {
-        _burn(_owner, _value);
+    function i_burn(address owner, uint256 value) external {
+        _burn(owner, value);
+    }
+
+    function i_transferShares(address from, address to, uint256 value, uint256 tokenValue) external {
+        _transferShares(from, to, value, tokenValue);
     }
 
     /* ------------------ Functions used for invariant testing ------------------ */
