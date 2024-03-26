@@ -10,7 +10,7 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 /**
- * @custom:feature The admin functions of the protocol
+ * @custom:feature The admin functions of the protocol params
  * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
