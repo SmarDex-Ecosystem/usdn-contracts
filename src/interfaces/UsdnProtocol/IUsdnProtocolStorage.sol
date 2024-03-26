@@ -38,6 +38,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice Divisor for the ratio of USDN to SDEX to burn on deposit
     function SDEX_BURN_ON_DEPOSIT_DIVISOR() external pure returns (uint256);
 
+    /// @notice The factor to convert the security deposit value to an uint24
+    function SECURITY_DEPOSIT_FACTOR() external pure returns (uint128);
+
     /**
      * @notice Divisor for the bps values
      * @dev Example: 200 -> 2%
@@ -118,6 +121,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The ratio of USDN to SDEX tokens to burn on deposit (to be divided by SDEX_BURN_ON_DEPOSIT_DIVISOR)
     function getSdexBurnOnDepositRatio() external view returns (uint32);
+
+    /// @notice The security deposit required for a new position
+    function getSecurityDepositValue() external view returns (uint256);
 
     /// @notice The fee threshold before fees are sent to the fee collector
     function getFeeThreshold() external view returns (uint256);

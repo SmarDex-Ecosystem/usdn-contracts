@@ -54,7 +54,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint256 index,
         uint128 amountToClose,
         bytes calldata currentPriceData
-    ) external {
+    ) external returns (uint256 securityDepositValue_) {
         return _initiateClosePosition(user, tick, tickVersion, index, amountToClose, currentPriceData);
     }
 
@@ -75,7 +75,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         external
         pure
-        returns (uint256 value_)
+        returns (int256 value_)
     {
         return _positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
     }
@@ -160,7 +160,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint128 expo,
         uint256 liqMultiplier,
         uint256 tempTransferred
-    ) external view returns (uint256) {
+    ) external view returns (uint256, int256) {
         return _assetToTransfer(currentPrice, tick, expo, liqMultiplier, tempTransferred);
     }
 
@@ -278,11 +278,18 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getPendingAction(user);
     }
 
-    function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool) {
+    function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool, uint256) {
         return _executePendingAction(data);
     }
 
     function i_executePendingActionOrRevert(PreviousActionsData calldata data) external {
         _executePendingActionOrRevert(data);
+    }
+
+    function i_refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore)
+        external
+        payable
+    {
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
 }

@@ -22,7 +22,7 @@ contract UsdnTokenFixture is BaseFixture, IEvents, IUsdnEvents, IUsdnErrors {
         _actors[1] = USER_2;
         _actors[2] = USER_3;
         _actors[3] = USER_4;
-        usdn = new UsdnHandler(_actors);
+        usdn = new UsdnHandler();
     }
 
     // force ignore from coverage report

@@ -13,13 +13,14 @@ import { DoubleEndedQueue, PendingAction } from "src/libraries/DoubleEndedQueue.
  */
 contract TestDequePopulated is DequeFixture {
     PendingAction public action1 = PendingAction(
-        ProtocolAction.ValidateWithdrawal, 69, USER_1, 0, 1 ether, 2 ether, 12 ether, 3 ether, 4 ether, 42_000 ether
+        ProtocolAction.ValidateWithdrawal, 69, USER_1, 0, 1, 1 ether, 2 ether, 12 ether, 3 ether, 4 ether, 42_000 ether
     );
     PendingAction public action2 = PendingAction(
         ProtocolAction.ValidateDeposit,
         420,
         USER_1,
         -42,
+        1,
         1000 ether,
         2000 ether,
         120 ether,
@@ -27,7 +28,8 @@ contract TestDequePopulated is DequeFixture {
         40 ether,
         420_000 ether
     );
-    PendingAction public action3 = PendingAction(ProtocolAction.ValidateOpenPosition, 42, USER_1, 0, 10, 0, 0, 0, 0, 0);
+    PendingAction public action3 =
+        PendingAction(ProtocolAction.ValidateOpenPosition, 42, USER_1, 0, 1, 10, 0, 0, 0, 0, 0);
     uint128 public rawIndex1;
     uint128 public rawIndex2;
     uint128 public rawIndex3;
@@ -123,7 +125,7 @@ contract TestDequePopulated is DequeFixture {
      */
     function test_pushFront() public {
         PendingAction memory action =
-            PendingAction(ProtocolAction.ValidateClosePosition, 1, USER_1, 1, 1, 1, 1, 1, 1, 1);
+            PendingAction(ProtocolAction.ValidateClosePosition, 1, USER_1, 1, 1, 1, 1, 1, 1, 1, 1);
         uint128 rawIndex = handler.pushFront(action);
         uint128 expectedRawIndex;
         unchecked {
@@ -157,7 +159,7 @@ contract TestDequePopulated is DequeFixture {
      */
     function test_pushBack() public {
         PendingAction memory action =
-            PendingAction(ProtocolAction.ValidateClosePosition, 1, USER_1, 1, 1, 1, 1, 1, 1, 1);
+            PendingAction(ProtocolAction.ValidateClosePosition, 1, USER_1, 1, 1, 1, 1, 1, 1, 1, 1);
         uint128 rawIndex = handler.pushBack(action);
         uint128 expectedRawIndex;
         unchecked {
