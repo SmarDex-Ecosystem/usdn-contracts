@@ -37,7 +37,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         bool enableLimits;
         bool enableUsdnRebase;
         bool enableSecurityDeposit;
-        bool enableLimitLong;
+        bool enableLongLimit;
     }
 
     SetUpParams public params;
@@ -53,7 +53,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         enableSecurityDeposit: false,
         enableLimits: false,
         enableUsdnRebase: false,
-        enableLimitLong: false
+        enableLongLimit: false
     });
 
     Usdn public usdn;
@@ -120,7 +120,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         }
 
         // disable open position limit
-        if (!testParams.enableLimitLong) {
+        if (!testParams.enableLongLimit) {
             protocol.setMinLongPosition(0);
         }
 

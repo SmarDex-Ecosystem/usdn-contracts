@@ -22,6 +22,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         params.initialLiqPrice = 1 ether;
         params.initialPrice = 3290 ether;
         params.initialTimestamp = 1_708_088_866; // 16 February 2024 at 14:07 CET
+        params.enableLongLimit = false;
         _setUp(params);
     }
 
