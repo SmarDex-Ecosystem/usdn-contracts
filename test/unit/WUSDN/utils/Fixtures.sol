@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 import { WusdnHandler } from "test/unit/WUSDN/utils/Handler.sol";
 

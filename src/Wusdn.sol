@@ -9,9 +9,9 @@ import { IERC20 } from "src/interfaces/Usdn/IUsdn.sol";
 
 /**
  * @title WUSDN token contract
- * @notice The USDN token is a delta neutral token that is inflating all users wallet. In order to increase its
- * value instead of getting inflated, the WUSDN token was created, a wrapped token of the USDN that is not
- * inflating, but increasing in value
+ * @notice The USDN token is a rebasing token that is inflating its users' balances periodically. In order to allow for
+ * stable balances, the WUSDN token was created, a wrapped token of the USDN that is not inflating, but increasing in
+ * value instead.
  */
 contract Wusdn is ERC4626, ERC20Permit {
     string internal constant NAME = "Wrapped Ultimate Synthetic Delta Neutral";

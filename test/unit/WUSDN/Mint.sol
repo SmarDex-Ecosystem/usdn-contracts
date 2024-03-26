@@ -27,11 +27,12 @@ contract TestWusdnMint is WusdnTokenFixture {
     function test_mint() public {
         usdn.approve(address(wusdn), type(uint256).max);
 
-        wusdn.mint(30 * 10 ** usdnDecimals, address(this));
+        uint256 shares1 = 30 ether;
+        wusdn.mint(shares1, address(this));
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
-        wusdn.mint(60 * 10 ** usdnDecimals, address(this));
-
-        assertApproxEqAbs(wusdn.totalAssets(), wusdn.convertToAssets(90 * 10 ** usdnDecimals), 1, "total assets");
-        assertEq(wusdn.totalSupply(), 90 * 10 ** usdnDecimals, "total supply");
+        uint256 shares2 = 60 ether;
+        wusdn.mint(shares2, address(this));
+        assertApproxEqAbs(wusdn.totalAssets(), wusdn.convertToAssets(shares1 + shares2), 1, "total assets");
+        assertEq(wusdn.totalSupply(), shares1 + shares2, "total supply");
     }
 }
