@@ -35,6 +35,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
 
+    /// @dev Whether the contract was already initialized
     bool internal _initialized;
 
     /* -------------------------------------------------------------------------- */
@@ -173,70 +174,91 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
     /*                          Pseudo-constants getters                          */
     /* -------------------------------------------------------------------------- */
 
+    /// @inheritdoc IUsdnProtocolParams
     function getLeverageDecimals() external view returns (uint8) {
         return _leverageDecimals;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getFundingSfDecimals() external view returns (uint8) {
         return _fundingSfDecimals;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getPriceFeedDecimals() external view returns (uint8) {
         return _priceFeedDecimals;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getMaxLiquidationIteration() external view returns (uint16) {
         return _maxLiquidationIteration;
+    }
+
+    /// @inheritdoc IUsdnProtocolParams
+    function getSecurityDepositFactor() external view returns (uint128) {
+        return _securityDepositFactor;
     }
 
     /* -------------------------------------------------------------------------- */
     /*                                 Parameters getters                         */
     /* -------------------------------------------------------------------------- */
 
+    /// @inheritdoc IUsdnProtocolParams
     function getOracleMiddleware() external view returns (IOracleMiddleware) {
         return _oracleMiddleware;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager) {
         return _liquidationRewardsManager;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getMinLeverage() external view returns (uint256) {
         return _minLeverage;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getMaxLeverage() external view returns (uint256) {
         return _maxLeverage;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getValidationDeadline() external view returns (uint256) {
         return _validationDeadline;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getLiquidationPenalty() external view returns (uint24) {
         return _liquidationPenalty;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getSafetyMarginBps() external view returns (uint256) {
         return _safetyMarginBps;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getLiquidationIteration() external view returns (uint16) {
         return _liquidationIteration;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getEMAPeriod() external view returns (uint128) {
         return _EMAPeriod;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getFundingSF() external view returns (uint256) {
         return _fundingSF;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getProtocolFeeBps() external view returns (uint16) {
         return _protocolFeeBps;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getPositionFeeBps() external view returns (uint16) {
         return _positionFeeBps;
     }
@@ -246,30 +268,37 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         return _securityDepositValue;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getFeeThreshold() external view returns (uint256) {
         return _feeThreshold;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getFeeCollector() external view returns (address) {
         return _feeCollector;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getMiddlewareValidationDelay() external view returns (uint256) {
         return _oracleMiddleware.getValidationDelay();
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getTargetUsdnPrice() external view returns (uint128) {
         return _targetUsdnPrice;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getUsdnRebaseThreshold() external view returns (uint128) {
         return _usdnRebaseThreshold;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getUsdnRebaseInterval() external view returns (uint256) {
         return _usdnRebaseInterval;
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function getExpoImbalanceLimits()
         external
         view
@@ -292,6 +321,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
     /*                            Privileged functions                            */
     /* -------------------------------------------------------------------------- */
 
+    /// @inheritdoc IUsdnProtocolParams
     function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external onlyOwner {
         // check address zero middleware
         if (address(newOracleMiddleware) == address(0)) {
@@ -301,6 +331,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit OracleMiddlewareUpdated(address(newOracleMiddleware));
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external onlyOwner {
         if (address(newLiquidationRewardsManager) == address(0)) {
             revert UsdnProtocolInvalidLiquidationRewardsManagerAddress();
@@ -311,6 +342,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setMinLeverage(uint256 newMinLeverage) external onlyOwner {
         // zero minLeverage
         if (newMinLeverage <= 10 ** _leverageDecimals) {
@@ -326,6 +358,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit MinLeverageUpdated(newMinLeverage);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
         // maxLeverage lower or equal minLeverage
         if (newMaxLeverage <= _minLeverage) {
@@ -341,6 +374,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit MaxLeverageUpdated(newMaxLeverage);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setValidationDeadline(uint256 newValidationDeadline) external onlyOwner {
         // validation deadline lower than min 1 minute
         if (newValidationDeadline < 60) {
@@ -356,6 +390,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit ValidationDeadlineUpdated(newValidationDeadline);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setLiquidationPenalty(uint24 newLiquidationPenalty) external onlyOwner {
         // liquidationPenalty greater than max 15
         if (newLiquidationPenalty > 15) {
@@ -366,6 +401,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit LiquidationPenaltyUpdated(newLiquidationPenalty);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyOwner {
         // safetyMarginBps greater than max 2000: 20%
         if (newSafetyMarginBps > 2000) {
@@ -376,6 +412,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit SafetyMarginBpsUpdated(newSafetyMarginBps);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setLiquidationIteration(uint16 newLiquidationIteration) external onlyOwner {
         // newLiquidationIteration greater than _maxLiquidationIteration
         if (newLiquidationIteration > _maxLiquidationIteration) {
@@ -386,6 +423,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit LiquidationIterationUpdated(newLiquidationIteration);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setEMAPeriod(uint128 newEMAPeriod) external onlyOwner {
         // EMAPeriod is greater than max 3 months
         if (newEMAPeriod > 90 days) {
@@ -396,6 +434,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit EMAPeriodUpdated(newEMAPeriod);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setFundingSF(uint256 newFundingSF) external onlyOwner {
         // newFundingSF is greater than max
         if (newFundingSF > 10 ** _fundingSfDecimals) {
@@ -406,6 +445,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit FundingSFUpdated(newFundingSF);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyOwner {
         if (newProtocolFeeBps > BPS_DIVISOR) {
             revert UsdnProtocolInvalidProtocolFeeBps();
@@ -414,6 +454,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit FeeBpsUpdated(newProtocolFeeBps);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setPositionFeeBps(uint16 newPositionFee) external onlyOwner {
         // newPositionFee greater than max 2000: 20%
         if (newPositionFee > 2000) {
@@ -435,11 +476,13 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit SecurityDepositValueUpdated(securityDepositValue);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setFeeThreshold(uint256 newFeeThreshold) external onlyOwner {
         _feeThreshold = newFeeThreshold;
         emit FeeThresholdUpdated(newFeeThreshold);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setFeeCollector(address newFeeCollector) external onlyOwner {
         if (newFeeCollector == address(0)) {
             revert UsdnProtocolInvalidFeeCollector();
@@ -448,6 +491,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit FeeCollectorUpdated(newFeeCollector);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
         if (newPrice > _usdnRebaseThreshold) {
             revert UsdnProtocolInvalidTargetUsdnPrice();
@@ -460,6 +504,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit TargetUsdnPriceUpdated(newPrice);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setUsdnRebaseThreshold(uint128 newThreshold) external onlyOwner {
         if (newThreshold < _targetUsdnPrice) {
             revert UsdnProtocolInvalidUsdnRebaseThreshold();
@@ -468,11 +513,13 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         emit UsdnRebaseThresholdUpdated(newThreshold);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setUsdnRebaseInterval(uint256 newInterval) external onlyOwner {
         _usdnRebaseInterval = newInterval;
         emit UsdnRebaseIntervalUpdated(newInterval);
     }
 
+    /// @inheritdoc IUsdnProtocolParams
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,
         uint256 newDepositLimitBps,

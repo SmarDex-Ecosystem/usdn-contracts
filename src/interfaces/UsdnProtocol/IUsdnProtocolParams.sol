@@ -43,6 +43,8 @@ interface IUsdnProtocolParams is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     function getMaxLiquidationIteration() external view returns (uint16);
 
+    function getSecurityDepositFactor() external view returns (uint128);
+
     /* -------------------------------------------------------------------------- */
     /*                                 Parameters getters                         */
     /* -------------------------------------------------------------------------- */
