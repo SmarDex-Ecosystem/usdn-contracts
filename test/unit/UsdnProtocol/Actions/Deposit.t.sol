@@ -17,8 +17,14 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
+        params.enableSdexBurnOnDeposit = true;
         super._setUp(params);
+
+        // Sanity check
+        assertGt(protocol.getSdexBurnOnDepositRatio(), 0, "USDN to SDEX burn ratio should not be 0");
+
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
+        sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
     }
 
     /**

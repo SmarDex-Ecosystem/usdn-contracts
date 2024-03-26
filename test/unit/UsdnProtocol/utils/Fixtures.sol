@@ -39,6 +39,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         bool enableLimits;
         bool enableUsdnRebase;
         bool enableSecurityDeposit;
+        bool enableSdexBurnOnDeposit;
     }
 
     SetUpParams public params;
@@ -53,7 +54,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         enableFunding: true,
         enableSecurityDeposit: false,
         enableLimits: false,
-        enableUsdnRebase: false
+        enableUsdnRebase: false,
+        enableSdexBurnOnDeposit: false
     });
 
     Usdn public usdn;
@@ -122,8 +124,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
             protocol.setExpoImbalanceLimits(0, 0, 0, 0);
         }
 
+        // disable burn sdex on deposit
+        if (!testParams.enableSdexBurnOnDeposit) {
+            protocol.setSdexBurnOnDepositRatio(0);
+        }
+
         wstETH.approve(address(protocol), type(uint256).max);
-        sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
+
         // leverage approx 2x
         protocol.initialize(
             testParams.initialDeposit,
