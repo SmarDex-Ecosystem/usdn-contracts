@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.11.0...v0.11.1) (2024-03-25)
+
+
+### Bug Fixes
+
+* **middleware:** infinite loop in mock contract ([#164](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/164)) ([64ef1a0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/64ef1a0b5c616d112c6c02b2df0b81fe25b29227))
+
 ## [0.11.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.10.0...v0.11.0) (2024-03-21)
 
 

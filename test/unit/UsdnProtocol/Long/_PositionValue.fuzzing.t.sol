@@ -23,7 +23,7 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
      * @custom:scenario Check calculations of `_positionValue`
      * @custom:given An amount between 1 wei and type(uint128).max ether
      * @custom:and an opening price between the protocol's min price and type(uint128).max
-     * @custom:and a current price between the opening price and type(uint128).max
+     * @custom:and a current price between the protocol's min price and type(uint128).max
      * @custom:and a leverage between the protocol's min and max values
      * @custom:when _positionValue is called
      * @custom:then The returned value is equal to the expected value.
@@ -42,14 +42,21 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         amount = bound(amount, 1, type(uint128).max * levDecimals / maxLeverage).toUint128();
         // Take uint128 max value as the upper limit because TickMath.MAX_PRICE is above it
         priceAtOpening = bound(priceAtOpening, TickMath.MIN_PRICE, type(uint128).max).toUint128();
-        currentPrice = bound(currentPrice, priceAtOpening, type(uint128).max).toUint128();
+        currentPrice = bound(currentPrice, TickMath.MIN_PRICE, type(uint128).max).toUint128();
         leverage = bound(leverage, protocol.getMinLeverage(), maxLeverage);
 
         // Start checks
         uint128 liqPrice = protocol.i_getLiquidationPrice(priceAtOpening, uint128(leverage));
         uint128 positionTotalExpo = FixedPointMathLib.fullMulDiv(amount, leverage, levDecimals).toUint128();
-        uint256 expectedValue = FixedPointMathLib.fullMulDiv(positionTotalExpo, (currentPrice - liqPrice), currentPrice);
-        uint256 value = protocol.i_positionValue(currentPrice, liqPrice, positionTotalExpo);
+        int256 expectedValue;
+        if (currentPrice >= liqPrice) {
+            expectedValue =
+                FixedPointMathLib.fullMulDiv(positionTotalExpo, currentPrice - liqPrice, currentPrice).toInt256();
+        } else {
+            expectedValue =
+                -FixedPointMathLib.fullMulDiv(positionTotalExpo, liqPrice - currentPrice, currentPrice).toInt256();
+        }
+        int256 value = protocol.i_positionValue(currentPrice, liqPrice, positionTotalExpo);
         assertEq(expectedValue, value, "Returned value is incorrect");
     }
 
@@ -88,13 +95,13 @@ contract TestUsdnProtocolFuzzingLong is UsdnProtocolBaseFixture {
         uint128 positionTotalExpo = FixedPointMathLib.fullMulDiv(amount, leverage, levDecimals).toUint128();
 
         // Current implementation of position value's calculation
-        uint256 posValueWithExpo = protocol.i_positionValue(currentPrice, liqPrice, positionTotalExpo);
+        int256 posValueWithExpo = protocol.i_positionValue(currentPrice, liqPrice, positionTotalExpo);
         // Previous implementation of position value's calculation
         uint256 posValueWithLeverage =
             FixedPointMathLib.fullMulDiv(amount, leverage * (currentPrice - liqPrice), currentPrice * levDecimals);
 
         assertApproxEqAbs(
-            posValueWithExpo,
+            uint256(posValueWithExpo),
             posValueWithLeverage,
             1,
             "Difference between current and former implementations is above tolerance"

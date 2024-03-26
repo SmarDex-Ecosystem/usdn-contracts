@@ -872,7 +872,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         {
             uint256 liqMultiplier = _liquidationMultiplier;
-            uint256 tempTransfer = _assetToTransfer(priceWithFees, tick, totalExpoToClose, liqMultiplier, 0);
+            (uint256 tempTransfer,) = _assetToTransfer(priceWithFees, tick, totalExpoToClose, liqMultiplier, 0);
 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
@@ -932,9 +932,36 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Apply fees on price
         uint128 priceWithFees = (price.price - (price.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
-        uint256 assetToTransfer = _assetToTransfer(
+        (uint256 assetToTransfer, int256 positionValue) = _assetToTransfer(
             priceWithFees, long.tick, long.closeTotalExpo, long.closeLiqMultiplier, long.closeTempTransfer
         );
+
+        // get liquidation price (with liq penalty) to check if position was valid at `timestamp + validationDelay`
+        uint128 liquidationPrice = getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
+        if (price.neutralPrice <= liquidationPrice) {
+            // position should be liquidated, we don't transfer assets to the user.
+            // position was already removed from tick so no additional bookkeeping is necessary.
+            // restore amount that was optimistically removed.
+            int256 tempLongBalance = (_balanceLong + long.closeTempTransfer).toInt256();
+            int256 tempVaultBalance = _balanceVault.toInt256();
+            // handle any remaining collateral or bad debt.
+            tempLongBalance -= positionValue;
+            tempVaultBalance += positionValue;
+            if (tempLongBalance < 0) {
+                tempVaultBalance += tempLongBalance;
+                tempLongBalance = 0;
+            }
+            if (tempVaultBalance < 0) {
+                tempLongBalance += tempVaultBalance;
+                tempVaultBalance = 0;
+            }
+            _balanceLong = tempLongBalance.toUint256();
+            _balanceVault = tempVaultBalance.toUint256();
+            emit LiquidatedPosition(
+                long.user, long.tick, long.tickVersion, long.index, price.neutralPrice, liquidationPrice
+            );
+            return;
+        }
 
         // adjust long balance that was previously optimistically decreased
         if (assetToTransfer > long.closeTempTransfer) {
@@ -945,18 +972,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         } else if (assetToTransfer < long.closeTempTransfer) {
             // we removed too much
             _balanceLong += long.closeTempTransfer - assetToTransfer;
-        }
-
-        // get liquidation price (with liq penalty) to check if position was valid at `timestamp + validationDelay`
-        uint128 liquidationPrice = getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
-        if (price.neutralPrice <= liquidationPrice) {
-            // position should be liquidated, we don't pay out the profits but send any remaining collateral to the
-            // vault
-            _balanceVault += assetToTransfer;
-            emit LiquidatedPosition(
-                long.user, long.tick, long.tickVersion, long.index, price.neutralPrice, liquidationPrice
-            );
-            return;
         }
 
         // send the asset to the user
@@ -1016,7 +1031,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param posExpo The total expo of the position
      * @param liqMultiplier The liquidation multiplier at the moment of closing the position
      * @param tempTransferred An amount that was already subtracted from the long balance
-     * @return assetToTransfer_ The amount of wstETH to transfer
+     * @return assetToTransfer_ The amount of assets to transfer to the user, bound by zero and the available balance
+     * @return positionValue_ The position value, which can be negative in case of bad debt
      */
     function _assetToTransfer(
         uint128 currentPrice,
@@ -1024,21 +1040,23 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 posExpo,
         uint256 liqMultiplier,
         uint256 tempTransferred
-    ) internal view returns (uint256 assetToTransfer_) {
+    ) internal view returns (uint256 assetToTransfer_, int256 positionValue_) {
         // The available amount of asset on the long side
         uint256 available = _balanceLong + tempTransferred;
 
         // Calculate position value
-        uint256 value = _positionValue(
+        positionValue_ = _positionValue(
             currentPrice,
             getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
             posExpo
         );
 
-        if (value > available) {
+        if (positionValue_ <= 0) {
+            assetToTransfer_ = 0;
+        } else if (positionValue_ > available.toInt256()) {
             assetToTransfer_ = available;
         } else {
-            assetToTransfer_ = value;
+            assetToTransfer_ = uint256(positionValue_);
         }
     }
 

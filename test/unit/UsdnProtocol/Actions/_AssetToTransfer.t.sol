@@ -25,13 +25,15 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
      * (starting price slightly below $1000)
      * @custom:and The current price is $2000
      * @custom:when the asset to transfer is calculated
-     * @custom:then The asset to transfer is slightly above 1.5 wstETH
+     * @custom:then Asset to transfer and position value are equal
+     * @custom:and The asset to transfer is slightly above 1.5 wstETH
      */
     function test_assetToTransfer() public {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
-        uint256 res =
+        (uint256 toTransfer, int256 value) =
             protocol.i_assetToTransfer(params.initialPrice, tick, 2 ether, protocol.getLiquidationMultiplier(), 0);
-        assertEq(res, 1.512304848730381401 ether);
+        assertEq(toTransfer, uint256(value), "to transfer vs pos value");
+        assertEq(toTransfer, 1.512304848730381401 ether, "to transfer");
     }
 
     /**
@@ -41,14 +43,16 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
      * (starting price slightly below $1000)
      * @custom:and The current price is $2000
      * @custom:when the asset to transfer is calculated
-     * @custom:then The asset to transfer is equal to the long available balance (because we don't have 150 wstETH)
+     * @custom:then Position value is greater than asset to transfer
+     * @custom:and The asset to transfer is equal to the long available balance (because we don't have 150 wstETH)
      */
     function test_assetToTransferNotEnoughBalance() public {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
         uint256 longAvailable = uint256(protocol.i_longAssetAvailable(params.initialPrice)); // 5 ether
-        uint256 res =
+        (uint256 toTransfer, int256 value) =
             protocol.i_assetToTransfer(params.initialPrice, tick, 200 ether, protocol.getLiquidationMultiplier(), 0);
-        assertEq(res, longAvailable);
+        assertGt(uint256(value), toTransfer, "value vs asset to transfer");
+        assertEq(toTransfer, longAvailable, "asset to transfer vs long asset available");
     }
 
     /**
@@ -69,8 +73,8 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
         assertEq(protocol.i_longAssetAvailable(price), 0, "long asset available");
 
         int24 tick = protocol.getEffectiveTickForPrice(price);
-        uint256 res =
+        (uint256 toTransfer,) =
             protocol.i_assetToTransfer(params.initialPrice, tick, 100 ether, protocol.getLiquidationMultiplier(), 0);
-        assertEq(res, 0, "asset to transfer");
+        assertEq(toTransfer, 0, "asset to transfer");
     }
 }

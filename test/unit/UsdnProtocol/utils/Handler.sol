@@ -74,7 +74,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         external
         pure
-        returns (uint256 value_)
+        returns (int256 value_)
     {
         return _positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
     }
@@ -159,7 +159,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint128 expo,
         uint256 liqMultiplier,
         uint256 tempTransferred
-    ) external view returns (uint256) {
+    ) external view returns (uint256, int256) {
         return _assetToTransfer(currentPrice, tick, expo, liqMultiplier, tempTransferred);
     }
 
