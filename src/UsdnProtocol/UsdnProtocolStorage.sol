@@ -155,10 +155,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint128 internal _usdnRebaseThreshold;
 
     /**
-     * @notice The interval between two automatic rebase checks
+     * @notice The interval between two automatic rebase checks. Disabled by default.
      * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
      */
-    uint256 internal _usdnRebaseInterval = 12 hours;
+    uint256 internal _usdnRebaseInterval = 0;
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
@@ -274,8 +274,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _tickSpacing = tickSpacing;
         _feeCollector = feeCollector;
 
-        _targetUsdnPrice = uint128(102 * 10 ** (_priceFeedDecimals - 2)); // $1.02
-        _usdnRebaseThreshold = uint128(1021 * 10 ** (_priceFeedDecimals - 3)); // $1.021
+        _targetUsdnPrice = uint128(1005 * 10 ** (_priceFeedDecimals - 3)); // $1.005
+        _usdnRebaseThreshold = uint128(1009 * 10 ** (_priceFeedDecimals - 3)); // $1.009
     }
 
     /* -------------------------------------------------------------------------- */
