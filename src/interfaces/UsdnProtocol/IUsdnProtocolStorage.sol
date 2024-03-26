@@ -32,6 +32,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The number of decimals for the scaling factor of the funding rate
     function FUNDING_SF_DECIMALS() external pure returns (uint8);
 
+    /// @notice The factor to convert the security deposit value to an uint24
+    function SECURITY_DEPOSIT_FACTOR() external pure returns (uint128);
+
     /**
      * @notice Divisor for the bps values
      * @dev Example: 200 -> 2%
@@ -109,6 +112,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The position fee in bps
     function getPositionFeeBps() external view returns (uint16);
+
+    /// @notice The security deposit required for a new position
+    function getSecurityDepositValue() external view returns (uint256);
 
     /// @notice The fee threshold before fees are sent to the fee collector
     function getFeeThreshold() external view returns (uint256);

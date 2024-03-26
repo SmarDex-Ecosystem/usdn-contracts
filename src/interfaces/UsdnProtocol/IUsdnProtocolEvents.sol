@@ -182,6 +182,12 @@ interface IUsdnProtocolEvents {
     event PositionFeeUpdated(uint256 positionFee);
 
     /**
+     * @notice Emitted when the deposit value is updated.
+     * @param securityDepositValue The new deposit value.
+     */
+    event SecurityDepositValueUpdated(uint256 securityDepositValue);
+
+    /**
      * @notice Emitted when the oracle middleware is updated.
      * @param newMiddleware The new oracle middleware address.
      */

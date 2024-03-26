@@ -593,11 +593,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
      * @dev This is only applicable to `ValidateOpenPosition` pending actions
      * @param user The user address
+     * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
-    function _removeStalePendingAction(address user) internal {
+    function _removeStalePendingAction(address user) internal returns (uint256 securityDepositValue_) {
         // slither-disable-next-line incorrect-equality
         if (_pendingActions[user] == 0) {
-            return;
+            return 0;
         }
         (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user);
         // the position is only at risk of being liquidated while pending if it is an open position action
@@ -606,6 +607,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             LongPendingAction memory openAction = _toLongPendingAction(action);
             (, uint256 version) = _tickHash(openAction.tick);
             if (version != openAction.tickVersion) {
+                securityDepositValue_ = openAction.securityDepositValue * SECURITY_DEPOSIT_FACTOR;
                 // the position was liquidated while pending
                 // remove the stale pending action
                 _pendingActionsQueue.clearAt(rawIndex);
@@ -620,9 +622,14 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @dev This reverts if there is already a pending action for this user
      * @param user The user address
      * @param action The pending action struct
+     * @return securityDepositValue_ The security deposit value of the stale pending action
      */
-    function _addPendingAction(address user, PendingAction memory action) internal {
-        _removeStalePendingAction(user); // check if there is a pending action that was liquidated and remove it
+    function _addPendingAction(address user, PendingAction memory action)
+        internal
+        returns (uint256 securityDepositValue_)
+    {
+        securityDepositValue_ = _removeStalePendingAction(user); // check if there is a pending action that was
+            // liquidated and remove it
         if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
         }
