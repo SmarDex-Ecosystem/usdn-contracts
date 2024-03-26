@@ -85,6 +85,13 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setPositionFeeBps(uint16 newPositionFee) external;
 
     /**
+     * @notice Set the security deposit value.
+     * @dev The value must be a multiple of SECURITY_DEPOSIT_FACTOR to avoid loosing eth du to rounding errors.
+     * @param securityDepositValue The security deposit value.
+     */
+    function setSecurityDepositValue(uint256 securityDepositValue) external;
+
+    /**
      * @notice Set the minimum amount of fees to be collected before they can be withdrawn
      * @param newFeeThreshold The minimum amount of fees to be collected before they can be withdrawn
      */
@@ -97,6 +104,20 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * The fee collector must be different from the zero address
      */
     function setFeeCollector(address newFeeCollector) external;
+
+    /**
+     * @notice Set imbalance limits basis point
+     * @param newOpenLimitBps The new open limit
+     * @param newDepositLimitBps The new deposit limit
+     * @param newWithdrawalLimitBps The new withdrawal limit
+     * @param newCloseLimitBps The new close limit
+     */
+    function setExpoImbalanceLimits(
+        uint256 newOpenLimitBps,
+        uint256 newDepositLimitBps,
+        uint256 newWithdrawalLimitBps,
+        uint256 newCloseLimitBps
+    ) external;
 
     /**
      * @notice Set the target USDN price

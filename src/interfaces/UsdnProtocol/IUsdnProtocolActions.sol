@@ -17,6 +17,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * the `ProtocolAction.InitiateDeposit` action.
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
+     * The transaction must have _securityDepositValue in value.
      * @param amount The amount of wstETH to deposit.
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
@@ -35,6 +36,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
+     * The security deposit will be returned to the sender.
      * @param depositPriceData The price data corresponding to the sender's pending deposit action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
@@ -48,6 +50,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * the `ProtocolAction.InitiateWithdrawal` action.
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
+     * The transaction must have _securityDepositValue in value.
      * @param usdnAmount The amount of USDN to burn.
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
@@ -66,6 +69,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
+     * The security deposit will be returned to the sender.
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
@@ -81,6 +85,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data.
+     * The transaction must have _securityDepositValue in value.
      * @param amount The amount of wstETH to deposit.
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty.
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
@@ -108,6 +113,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * This operation adjusts the entry price and initial leverage of the position.
      * It is also possible for this operation to change the tick, tickVersion and index of the position, in which case
      * we emit the `LiquidationPriceUpdated` event.
+     * The security deposit will be returned to the sender.
      * @param openPriceData The price data corresponding to the sender's pending open position action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
@@ -127,6 +133,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The appropriate amount and total expo are taken out of the tick and put in a pending state during this operation.
      * Thus, calculations don't consider those anymore. The exit price (and thus profit) is not yet set definitively,
      * and will be done during the validate action.
+     * The transaction must have _securityDepositValue in value.
      * @param tick The tick containing the position to close
      * @param tickVersion The tick version of the position to close
      * @param index The index of the position inside the tick array
@@ -152,6 +159,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * This operation calculates the final exit price and profit of the long position and performs the payout.
+     * The security deposit will be returned to the sender.
      * @param closePriceData The price data corresponding to the sender's pending close position action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */

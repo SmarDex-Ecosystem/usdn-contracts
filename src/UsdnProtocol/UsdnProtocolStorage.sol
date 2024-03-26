@@ -34,6 +34,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant FUNDING_SF_DECIMALS = 3;
 
     /// @inheritdoc IUsdnProtocolStorage
+    uint128 public constant SECURITY_DEPOSIT_FACTOR = 1e15;
+
+    /// @inheritdoc IUsdnProtocolStorage
     uint256 public constant BPS_DIVISOR = 10_000;
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -111,8 +114,39 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The fee threshold above which fee will be sent
     uint256 internal _feeThreshold = 1 ether;
 
+    /**
+     * @notice The imbalance limit of the long expo for open actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long
+     * the open rebalancing mechanism is triggered, preventing the opening of a new long position.
+     */
+    int256 internal _openExpoImbalanceLimitBps = 200;
+
+    /**
+     * @notice The imbalance limit of the long expo for withdrawal actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long,
+     * the withdrawal rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
+     */
+    int256 internal _withdrawalExpoImbalanceLimitBps = 600;
+
+    /**
+     * @notice The imbalance limit of the vault expo for deposit actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the deposit vault rebalancing mechanism is triggered, preventing the opening of new vault position.
+     */
+    int256 internal _depositExpoImbalanceLimitBps = 200;
+
+    /**
+     * @notice The imbalance limit of the vault expo for close actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the withdrawal vault rebalancing mechanism is triggered, preventing the close of existing long position.
+     */
+    int256 internal _closeExpoImbalanceLimitBps = 600;
+
     /// @notice The position fee in basis point
     uint16 internal _positionFeeBps = 4; // 0.04%
+
+    /// @notice The deposit required for a new position (0.5 ether)
+    uint256 internal _securityDepositValue = 0.5 ether;
 
     /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
     uint128 internal _targetUsdnPrice;
@@ -121,10 +155,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint128 internal _usdnRebaseThreshold;
 
     /**
-     * @notice The interval between two automatic rebase checks
+     * @notice The interval between two automatic rebase checks. Disabled by default.
      * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
      */
-    uint256 internal _usdnRebaseInterval = 12 hours;
+    uint256 internal _usdnRebaseInterval = 0;
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
@@ -240,8 +274,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _tickSpacing = tickSpacing;
         _feeCollector = feeCollector;
 
-        _targetUsdnPrice = uint128(102 * 10 ** (_priceFeedDecimals - 2)); // $1.02
-        _usdnRebaseThreshold = uint128(1021 * 10 ** (_priceFeedDecimals - 3)); // $1.021
+        _targetUsdnPrice = uint128(10_087 * 10 ** (_priceFeedDecimals - 4)); // $1.0087
+        _usdnRebaseThreshold = uint128(1009 * 10 ** (_priceFeedDecimals - 3)); // $1.009
     }
 
     /* -------------------------------------------------------------------------- */
@@ -345,6 +379,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getPositionFeeBps() external view returns (uint16) {
         return _positionFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getSecurityDepositValue() external view returns (uint256) {
+        return _securityDepositValue;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -487,5 +526,24 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(tick, version));
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getExpoImbalanceLimits()
+        external
+        view
+        returns (
+            int256 openExpoImbalanceLimitBps_,
+            int256 depositExpoImbalanceLimitBps_,
+            int256 withdrawalExpoImbalanceLimitBps_,
+            int256 closeExpoImbalanceLimitBps_
+        )
+    {
+        return (
+            _openExpoImbalanceLimitBps,
+            _depositExpoImbalanceLimitBps,
+            _withdrawalExpoImbalanceLimitBps,
+            _closeExpoImbalanceLimitBps
+        );
     }
 }

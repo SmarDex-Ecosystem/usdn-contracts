@@ -18,6 +18,7 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
 
     /// @notice Chainlink price feed aggregator contract
     AggregatorV3Interface internal immutable _priceFeed;
+
     /// @notice Tolerated elapsed time until we consider the data too old
     uint256 internal _timeElapsedLimit;
 
