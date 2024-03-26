@@ -28,10 +28,16 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant FUNDING_RATE_DECIMALS = 18;
 
     /// @inheritdoc IUsdnProtocolStorage
+    uint8 public constant TOKENS_DECIMALS = 18;
+
+    /// @inheritdoc IUsdnProtocolStorage
     uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
 
     /// @inheritdoc IUsdnProtocolStorage
     uint8 public constant FUNDING_SF_DECIMALS = 3;
+
+    /// @inheritdoc IUsdnProtocolStorage
+    uint256 public constant SDEX_BURN_ON_DEPOSIT_DIVISOR = 1e8;
 
     /// @inheritdoc IUsdnProtocolStorage
     uint128 public constant SECURITY_DEPOSIT_FACTOR = 1e15;
@@ -65,8 +71,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The USDN ERC20 contract.
     IUsdn internal immutable _usdn;
 
-    /// @notice The decimals of the USDN token.
-    uint8 internal immutable _usdnDecimals;
+    /// @notice The SDEX ERC20 contract.
+    IERC20Metadata internal immutable _sdex;
 
     /// @notice The MIN_DIVISOR constant of the USDN token.
     uint256 internal immutable _usdnMinDivisor;
@@ -144,6 +150,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The position fee in basis point
     uint16 internal _positionFeeBps = 4; // 0.04%
+
+    /// @notice The ratio of USDN to SDEX tokens to burn on deposit
+    uint32 internal _sdexBurnOnDepositRatio = 1e6; // 1%
 
     /// @notice The deposit required for a new position (0.5 ether)
     uint256 internal _securityDepositValue = 0.5 ether;
@@ -238,6 +247,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /**
      * @notice Constructor.
      * @param usdn The USDN ERC20 contract.
+     * @param sdex The SDEX ERC20 contract.
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
      * @param liquidationRewardsManager The liquidation rewards manager contract.
@@ -246,6 +256,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     constructor(
         IUsdn usdn,
+        IERC20Metadata sdex,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
@@ -261,7 +272,12 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         }
 
         _usdn = usdn;
-        _usdnDecimals = usdn.decimals();
+        _sdex = sdex;
+        // Those tokens should have 18 decimals
+        if (usdn.decimals() != TOKENS_DECIMALS || sdex.decimals() != TOKENS_DECIMALS) {
+            revert UsdnProtocolInvalidTokenDecimals();
+        }
+
         _usdnMinDivisor = usdn.MIN_DIVISOR();
         _asset = asset;
         _assetDecimals = asset.decimals();
@@ -293,6 +309,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
+    function getSdex() external view returns (IERC20Metadata) {
+        return _sdex;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
     function getPriceFeedDecimals() external view returns (uint8) {
         return _priceFeedDecimals;
     }
@@ -305,11 +326,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getUsdn() external view returns (IUsdn) {
         return _usdn;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getUsdnDecimals() external view returns (uint8) {
-        return _usdnDecimals;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -379,6 +395,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getPositionFeeBps() external view returns (uint16) {
         return _positionFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getSdexBurnOnDepositRatio() external view returns (uint32) {
+        return _sdexBurnOnDepositRatio;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

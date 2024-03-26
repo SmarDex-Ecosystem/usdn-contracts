@@ -25,6 +25,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     /**
      * @notice Constructor.
      * @param usdn The USDN ERC20 contract.
+     * @param sdex The SDEX ERC20 contract.
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
      * @param liquidationRewardsManager The liquidation rewards manager contract.
@@ -33,6 +34,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      */
     constructor(
         IUsdn usdn,
+        IERC20Metadata sdex,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
@@ -40,7 +42,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         address feeCollector
     )
         Ownable(msg.sender)
-        UsdnProtocolStorage(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
+        UsdnProtocolStorage(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
     { }
 
     /// @inheritdoc IUsdnProtocol
@@ -233,6 +235,18 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _positionFeeBps = newPositionFee;
         emit PositionFeeUpdated(newPositionFee);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {
+        // If newRatio is greater than 5%
+        if (newRatio > SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
+            revert UsdnProtocolInvalidBurnSdexOnDepositRatio();
+        }
+
+        _sdexBurnOnDepositRatio = newRatio;
+
+        emit BurnSdexOnDepositRatioUpdated(newRatio);
     }
 
     /// @inheritdoc IUsdnProtocol

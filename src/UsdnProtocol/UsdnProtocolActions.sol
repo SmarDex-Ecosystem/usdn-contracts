@@ -438,6 +438,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         securityDepositValue_ = _addPendingAction(user, _convertVaultPendingAction(pendingAction));
 
+        // Calculate the amount of SDEX tokens to burn
+        uint256 usdnToMintEstimated = _calcMintUsdn(
+            pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
+        );
+        uint256 sdexToBurn = _calcSdexToBurn(usdnToMintEstimated);
+
+        // Transfer assets
+        _sdex.safeTransferFrom(user, DEAD_ADDRESS, sdexToBurn);
         _asset.safeTransferFrom(user, address(this), amount);
 
         emit InitiatedDeposit(user, amount, block.timestamp);

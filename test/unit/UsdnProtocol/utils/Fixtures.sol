@@ -6,6 +6,8 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
+import { IEvents } from "test/utils/IEvents.sol";
+import { Sdex } from "test/utils/Sdex.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
@@ -24,7 +26,7 @@ import { Usdn } from "src/Usdn.sol";
  * @title UsdnProtocolBaseFixture
  * @dev Utils for testing the USDN Protocol
  */
-contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
+contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, IUsdnProtocolEvents {
     struct SetUpParams {
         uint128 initialDeposit;
         uint128 initialLong;
@@ -37,6 +39,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         bool enableLimits;
         bool enableUsdnRebase;
         bool enableSecurityDeposit;
+        bool enableSdexBurnOnDeposit;
     }
 
     SetUpParams public params;
@@ -51,10 +54,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         enableFunding: true,
         enableSecurityDeposit: false,
         enableLimits: false,
-        enableUsdnRebase: false
+        enableUsdnRebase: false,
+        enableSdexBurnOnDeposit: false
     });
 
     Usdn public usdn;
+    Sdex public sdex;
     WstETH public wstETH;
     MockOracleMiddleware public oracleMiddleware;
     MockChainlinkOnChain public chainlinkGasPriceFeed;
@@ -77,6 +82,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         vm.startPrank(DEPLOYER);
         usdn = new Usdn(address(0), address(0));
         wstETH = new WstETH();
+        sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware();
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager =
@@ -84,6 +90,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
 
         protocol = new UsdnProtocolHandler(
             usdn,
+            sdex,
             wstETH,
             oracleMiddleware,
             liquidationRewardsManager,
@@ -117,7 +124,13 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
             protocol.setExpoImbalanceLimits(0, 0, 0, 0);
         }
 
+        // disable burn sdex on deposit
+        if (!testParams.enableSdexBurnOnDeposit) {
+            protocol.setSdexBurnOnDepositRatio(0);
+        }
+
         wstETH.approve(address(protocol), type(uint256).max);
+
         // leverage approx 2x
         protocol.initialize(
             testParams.initialDeposit,
@@ -172,6 +185,15 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         public
         prankUser(user)
     {
+        sdex.mintAndApprove(
+            user,
+            protocol.i_calcMintUsdn(
+                positionSize, uint256(protocol.i_vaultAssetAvailable(uint128(price))), usdn.totalSupply(), price
+            ) * protocol.getSdexBurnOnDepositRatio() / protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR(),
+            address(protocol),
+            type(uint256).max
+        );
+
         uint256 securityDepositValue = protocol.getSecurityDepositValue();
         wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
