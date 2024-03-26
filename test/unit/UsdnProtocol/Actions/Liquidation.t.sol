@@ -168,7 +168,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
 
-        wstETH.mintAndApprove(address(this), 3 ether, address(protocol), 1 ether);
+        wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
@@ -244,7 +244,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             tickToClose,
             tickVersionToClose,
             indexToClose,
-            3 ether,
+            1 ether,
             abi.encode(effectivePriceForTick),
             EMPTY_PREVIOUS_DATA
         );

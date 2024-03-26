@@ -61,7 +61,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.action == ProtocolAction.None, "pending action before initiate");
         // initiate long
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 3 ether, 2000 ether);
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
         // the pending action is not yet actionable
         (action, rawIndex) = protocol.i_getActionablePendingAction();
         assertTrue(action.action == ProtocolAction.None, "pending action after initiate");

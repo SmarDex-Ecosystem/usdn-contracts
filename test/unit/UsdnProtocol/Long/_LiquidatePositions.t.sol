@@ -104,7 +104,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         // Create a long position to liquidate
         setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
 
-        skip(2 days);
+        skip(34 days);
         protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
 
         uint128 liqPriceAfterFundings =
