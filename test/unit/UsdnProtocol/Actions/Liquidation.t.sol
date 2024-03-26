@@ -43,11 +43,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
 
-        wstETH.mintAndApprove(address(this), 3 ether, address(protocol), 3 ether);
+        wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
-        protocol.initiateDeposit(3 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit(1 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -67,7 +67,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
 
         // Initiates the deposit for the other user
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 3 ether, price);
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, price);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
@@ -96,7 +96,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
 
         // Initiate and validate the deposit for the other user
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 3 ether, price);
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, price);
 
         // TODO remove when the MockOracleMiddleware is fixed
         skip(31 minutes);
@@ -130,7 +130,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
 
         // Initiate and validate the deposit, then initiate the withdrawal for the other user
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 3 ether, price);
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 1 ether, price);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
@@ -168,12 +168,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
 
-        wstETH.mintAndApprove(address(this), 3 ether, address(protocol), 3 ether);
+        wstETH.mintAndApprove(address(this), 3 ether, address(protocol), 1 ether);
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
         protocol.initiateOpenPosition(
-            3 ether, desiredLiqPrice - 200 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA
+            1 ether, desiredLiqPrice - 200 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -197,7 +197,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Initiates the position for the other user
         price -= 200 ether;
         desiredLiqPrice -= 200 ether;
-        setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 3 ether, desiredLiqPrice, price);
+        setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, price);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
@@ -228,7 +228,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Initiates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
         (int24 tickToClose, uint256 tickVersionToClose, uint256 indexToClose) =
-            setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 3 ether, desiredLiqPrice, price);
+            setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, price);
 
         // TODO remove when the MockOracleMiddleware is fixed
         skip(31 minutes);
@@ -270,7 +270,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Initiates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
-        setUpUserPositionInLong(address(this), ProtocolAction.InitiateClosePosition, 3 ether, desiredLiqPrice, price);
+        setUpUserPositionInLong(address(this), ProtocolAction.InitiateClosePosition, 1 ether, desiredLiqPrice, price);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tickToLiquidate);
