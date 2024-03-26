@@ -29,6 +29,8 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
 
     uint16 internal _maxLiquidationIteration;
 
+    uint128 internal _securityDepositFactor;
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
@@ -109,6 +111,9 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
     /// @notice The position fee in basis point
     uint16 internal _positionFeeBps = 4; // 0.04%
 
+    /// @notice The deposit required for a new position (0.5 ether)
+    uint256 internal _securityDepositValue = 0.5 ether;
+
     /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
     uint128 internal _targetUsdnPrice;
 
@@ -116,10 +121,10 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
     uint128 internal _usdnRebaseThreshold;
 
     /**
-     * @notice The interval between two automatic rebase checks
+     * @notice The interval between two automatic rebase checks. Disabled by default
      * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
      */
-    uint256 internal _usdnRebaseInterval = 12 hours;
+    uint256 internal _usdnRebaseInterval = 0;
 
     /* -------------------------------------------------------------------------- */
     /*                               Initialization                               */
@@ -127,12 +132,6 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
 
     constructor() Ownable(msg.sender) { }
 
-    /**
-     * @notice Constructor.
-     * @param oracleMiddleware The oracle middleware contract.
-     * @param liquidationRewardsManager The liquidation rewards manager contract.
-     * @param feeCollector The address of the fee collector.
-     */
     function initialize(
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
@@ -140,7 +139,8 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         uint8 leverageDecimals,
         uint8 fundingSfDecimals,
         uint8 priceFeedDecimals,
-        uint16 maxLiquidationIteration
+        uint16 maxLiquidationIteration,
+        uint128 securityDepositFactor
     ) external {
         if (_initialized) {
             revert UsdnProtocolParamsAlreadyInitialized();
@@ -155,6 +155,7 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         _fundingSfDecimals = fundingSfDecimals;
         _priceFeedDecimals = priceFeedDecimals;
         _maxLiquidationIteration = maxLiquidationIteration;
+        _securityDepositFactor = securityDepositFactor;
 
         _oracleMiddleware = oracleMiddleware;
         _liquidationRewardsManager = liquidationRewardsManager;
@@ -164,8 +165,8 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         _maxLeverage = 10 * 10 ** leverageDecimals; // 10x
         _fundingSF = 12 * 10 ** (fundingSfDecimals - 2); // 0.12
 
-        _targetUsdnPrice = uint128(102 * 10 ** (priceFeedDecimals - 2)); // $1.02
-        _usdnRebaseThreshold = uint128(1021 * 10 ** (priceFeedDecimals - 3)); // $1.021
+        _targetUsdnPrice = uint128(1005 * 10 ** (_priceFeedDecimals - 3)); // $1.005
+        _usdnRebaseThreshold = uint128(1009 * 10 ** (_priceFeedDecimals - 3)); // $1.009
     }
 
     /* -------------------------------------------------------------------------- */
@@ -238,6 +239,11 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
 
     function getPositionFeeBps() external view returns (uint16) {
         return _positionFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolParams
+    function getSecurityDepositValue() external view returns (uint256) {
+        return _securityDepositValue;
     }
 
     function getFeeThreshold() external view returns (uint256) {
@@ -415,6 +421,18 @@ contract UsdnProtocolParams is IUsdnProtocolParams, Ownable {
         }
         _positionFeeBps = newPositionFee;
         emit PositionFeeUpdated(newPositionFee);
+    }
+
+    /// @inheritdoc IUsdnProtocolParams
+    function setSecurityDepositValue(uint256 securityDepositValue) external onlyOwner {
+        // we allow to set the security deposit between 10 ** 15 (0.001 ether) and 10 ethers
+        // the value must be a multiple of the SECURITY_DEPOSIT_FACTOR
+        if (securityDepositValue > 10 ether || securityDepositValue % _securityDepositFactor != 0) {
+            revert UsdnProtocolInvalidSecurityDepositValue();
+        }
+
+        _securityDepositValue = securityDepositValue;
+        emit SecurityDepositValueUpdated(securityDepositValue);
     }
 
     function setFeeThreshold(uint256 newFeeThreshold) external onlyOwner {

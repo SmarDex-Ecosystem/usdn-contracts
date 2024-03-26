@@ -58,7 +58,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     function getPositionValue(int24 tick, uint256 tickVersion, uint256 index, uint128 price, uint128 timestamp)
         external
         view
-        returns (uint256 value_)
+        returns (int256 value_)
     {
         Position memory pos = getLongPosition(tick, tickVersion, index);
         uint256 liquidationMultiplier = getLiquidationMultiplier(timestamp);
@@ -144,18 +144,22 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param currentPrice The current price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
      * @param positionTotalExpo The total expo of the position
+     * @return value_ The value of the position. If the current price is smaller than the liquidation price without
+     * penalty, then the position value is negative (bad debt)
      */
     function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         internal
         pure
-        returns (uint256 value_)
+        returns (int256 value_)
     {
-        // Avoid an underflow
         if (currentPrice < liqPriceWithoutPenalty) {
-            return 0;
+            value_ = -FixedPointMathLib.fullMulDiv(positionTotalExpo, liqPriceWithoutPenalty - currentPrice, currentPrice)
+                .toInt256();
+        } else {
+            value_ = FixedPointMathLib.fullMulDiv(
+                positionTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice
+            ).toInt256();
         }
-
-        value_ = FixedPointMathLib.fullMulDiv(positionTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice);
     }
 
     /**

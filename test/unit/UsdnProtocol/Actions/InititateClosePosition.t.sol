@@ -275,7 +275,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         Position memory posBefore = protocol.getLongPosition(tick, tickVersion, index);
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
-        uint256 assetToTransfer =
+        (uint256 assetToTransfer,) =
             protocol.i_assetToTransfer(params.initialPrice, tick, totalExpoToClose, liquidationMultiplier, 0);
 
         uint256 totalExpoBefore = protocol.getTotalExpo();

@@ -21,7 +21,8 @@ interface IUsdnProtocolParams is IUsdnProtocolEvents, IUsdnProtocolErrors {
         uint8 leverageDecimals,
         uint8 fundingSfDecimals,
         uint8 priceFeedDecimals,
-        uint16 maxLiquidationIteration
+        uint16 maxLiquidationIteration,
+        uint128 securityDepositFactor
     ) external;
 
     /* -------------------------------------------------------------------------- */
@@ -81,6 +82,9 @@ interface IUsdnProtocolParams is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The position fee in bps
     function getPositionFeeBps() external view returns (uint16);
+
+    /// @notice The security deposit required for a new position
+    function getSecurityDepositValue() external view returns (uint256);
 
     /// @notice The fee threshold before fees are sent to the fee collector
     function getFeeThreshold() external view returns (uint256);
@@ -172,6 +176,13 @@ interface IUsdnProtocolParams is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @param newPositionFee The new position fee (in basis points).
      */
     function setPositionFeeBps(uint16 newPositionFee) external;
+
+    /**
+     * @notice Set the security deposit value.
+     * @dev The value must be a multiple of SECURITY_DEPOSIT_FACTOR to avoid loosing eth du to rounding errors.
+     * @param securityDepositValue The security deposit value.
+     */
+    function setSecurityDepositValue(uint256 securityDepositValue) external;
 
     /**
      * @notice Set the minimum amount of fees to be collected before they can be withdrawn

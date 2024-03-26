@@ -84,7 +84,14 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Create long position
         _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, leverage, positionTotalExpo);
 
-        _refundExcessEther();
+        uint256 balance = address(this).balance;
+        if (balance != 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = payable(msg.sender).call{ value: balance }("");
+            if (!success) {
+                revert UsdnProtocolEtherRefundFailed();
+            }
+        }
     }
 
     /**

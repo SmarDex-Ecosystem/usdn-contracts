@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { Vm } from "forge-std/Vm.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { DEPLOYER } from "test/utils/Constants.sol";
+import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
 
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -12,6 +12,7 @@ import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProto
 /**
  * @custom:feature Test the rebasing of the USDN token depending on its price
  * @custom:background Given a protocol instance that was initialized with more expo in the long side and rebase enabled
+ * @custom:and A USDN rebase interval of 12 hours
  */
 contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
     function setUp() public {
@@ -23,6 +24,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         params.enableFunding = false;
         params.enableUsdnRebase = true;
         super._setUp(params);
+
+        vm.prank(ADMIN);
+        protocolParams.setUsdnRebaseInterval(12 hours);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         usdn.approve(address(protocol), type(uint256).max);

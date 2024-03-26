@@ -35,6 +35,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant FUNDING_SF_DECIMALS = 3;
 
     /// @inheritdoc IUsdnProtocolStorage
+    uint128 public constant SECURITY_DEPOSIT_FACTOR = 1e15;
+
+    /// @inheritdoc IUsdnProtocolStorage
     uint256 public constant BPS_DIVISOR = 10_000;
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -194,7 +197,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
             LEVERAGE_DECIMALS,
             FUNDING_SF_DECIMALS,
             _priceFeedDecimals,
-            MAX_LIQUIDATION_ITERATION
+            MAX_LIQUIDATION_ITERATION,
+            SECURITY_DEPOSIT_FACTOR
         );
     }
 

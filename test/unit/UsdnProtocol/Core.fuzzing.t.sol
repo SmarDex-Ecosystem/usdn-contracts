@@ -85,8 +85,9 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         // calculate the value of all new long positions (simulating taking the low bound of the confidence interval)
         uint256 longPosValue;
         for (uint256 i = 0; i < 10; i++) {
-            longPosValue +=
-                protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice - 5 ether, uint128(block.timestamp));
+            longPosValue += uint256(
+                protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice - 5 ether, uint128(block.timestamp))
+            );
         }
 
         Position memory firstPos = protocol.getLongPosition(
@@ -100,7 +101,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         uint128 liqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
 
-        longPosValue += protocol.i_positionValue(finalPrice - 5 ether, liqPrice, firstPos.totalExpo);
+        longPosValue += uint256(protocol.i_positionValue(finalPrice - 5 ether, liqPrice, firstPos.totalExpo));
 
         emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());
         emit log_named_decimal_uint(

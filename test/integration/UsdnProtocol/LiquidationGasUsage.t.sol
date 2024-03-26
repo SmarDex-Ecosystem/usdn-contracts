@@ -15,6 +15,8 @@ import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEth
  * @custom:background Given a forked ethereum mainnet chain
  */
 contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationFixture, IUsdnEvents {
+    uint256 securityDepositValue;
+
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.initialLong = 10 ether;
@@ -40,6 +42,8 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         require(success, "Could not mint wstETH to USER_3");
         wstETH.approve(address(protocol), type(uint256).max);
         vm.stopPrank();
+
+        securityDepositValue = protocolParams.getSecurityDepositValue();
     }
 
     /**
@@ -91,11 +95,17 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         /* ---------------------------- Set up positions ---------------------------- */
 
         vm.prank(USER_1);
-        protocol.initiateOpenPosition(1 ether, pythPriceNormalized + 150e18, hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition{ value: securityDepositValue }(
+            1 ether, pythPriceNormalized + 150e18, hex"beef", EMPTY_PREVIOUS_DATA
+        );
         vm.prank(USER_2);
-        protocol.initiateOpenPosition(1 ether, pythPriceNormalized + 100e18, hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition{ value: securityDepositValue }(
+            1 ether, pythPriceNormalized + 100e18, hex"beef", EMPTY_PREVIOUS_DATA
+        );
         vm.prank(USER_3);
-        protocol.initiateOpenPosition(1 ether, pythPriceNormalized + 50e18, hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition{ value: securityDepositValue }(
+            1 ether, pythPriceNormalized + 50e18, hex"beef", EMPTY_PREVIOUS_DATA
+        );
         _waitDelay();
         vm.prank(USER_1);
         protocol.validateOpenPosition(hex"beef", EMPTY_PREVIOUS_DATA);
