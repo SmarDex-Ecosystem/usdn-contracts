@@ -37,6 +37,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         bool enableLimits;
         bool enableUsdnRebase;
         bool enableSecurityDeposit;
+        bool enableLimitLong;
     }
 
     SetUpParams public params;
@@ -51,7 +52,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         enableFunding: true,
         enableSecurityDeposit: false,
         enableLimits: false,
-        enableUsdnRebase: false
+        enableUsdnRebase: false,
+        enableLimitLong: false
     });
 
     Usdn public usdn;
@@ -115,6 +117,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProto
         // disable imbalance limits
         if (!testParams.enableLimits) {
             protocol.setExpoImbalanceLimits(0, 0, 0, 0);
+        }
+
+        // disable open position limit
+        if (!testParams.enableLimitLong) {
+            protocol.setMinLongPosition(0);
         }
 
         wstETH.approve(address(protocol), type(uint256).max);
