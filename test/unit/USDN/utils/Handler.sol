@@ -38,6 +38,10 @@ contract UsdnHandler is Usdn, Test {
         _transferShares(from, to, value, tokenValue);
     }
 
+    function i_burnShares(address owner, uint256 value, uint256 tokenValue) external {
+        _burnShares(owner, value, tokenValue);
+    }
+
     /* ------------------ Functions used for invariant testing ------------------ */
 
     function getSharesOfAddress(address account) external view returns (uint256) {
