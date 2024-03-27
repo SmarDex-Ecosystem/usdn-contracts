@@ -81,13 +81,15 @@ contract OrderManager is Ownable, IOrderManager {
         _usdnProtocol = usdnProtocol;
         // Unsafe ? Transfer assets on position creation instead ?
         // Depends on how the position is created on the protocol side.
-        _usdnProtocol.getAsset().approve(address(usdnProtocol), type(uint256).max);
+        usdnProtocol.getAsset().approve(address(usdnProtocol), type(uint256).max);
         _isInitialized = true;
     }
 
     /// @notice Set the maximum approval for the USDN protocol to take assets from this contract.
     function approveAssetsForSpending() external initialized onlyOwner {
-        _usdnProtocol.getAsset().approve(address(_usdnProtocol), type(uint256).max);
+        IUsdnProtocol usdnProtocol = _usdnProtocol;
+
+        usdnProtocol.getAsset().approve(address(usdnProtocol), type(uint256).max);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -96,12 +98,14 @@ contract OrderManager is Ownable, IOrderManager {
 
     /// @inheritdoc IOrderManager
     function addOrderInTick(int24 tick, uint96 amount) external initialized {
+        IUsdnProtocol usdnProtocol = _usdnProtocol;
+
         // Check if the provided tick is valid and inside limits
         if (tick < TickMath.MIN_TICK || tick > TickMath.MAX_TICK) revert OrderManagerInvalidTick(tick);
-        if (tick % _usdnProtocol.getTickSpacing() != 0) revert OrderManagerInvalidTick(tick);
+        if (tick % usdnProtocol.getTickSpacing() != 0) revert OrderManagerInvalidTick(tick);
 
-        uint256 tickVersion = _usdnProtocol.getTickVersion(tick);
-        bytes32 tickHash = _usdnProtocol.tickHash(tick, tickVersion);
+        uint256 tickVersion = usdnProtocol.getTickVersion(tick);
+        bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
         uint256 orderIndex = _ordersInTick[tickHash].length;
 
         // If the array is not empty, check if the user already has an order in this tick
@@ -114,15 +118,16 @@ contract OrderManager is Ownable, IOrderManager {
         _ordersInTick[tickHash].push(Order({ amountOfAssets: amount, user: msg.sender }));
 
         // Transfer the user assets to this contract
-        _usdnProtocol.getAsset().safeTransferFrom(msg.sender, address(this), amount);
+        usdnProtocol.getAsset().safeTransferFrom(msg.sender, address(this), amount);
 
         emit OrderCreated(msg.sender, amount, tick, tickVersion, orderIndex);
     }
 
     /// @inheritdoc IOrderManager
     function removeOrderFromTick(int24 tick) external initialized {
-        uint256 tickVersion = _usdnProtocol.getTickVersion(tick);
-        bytes32 tickHash = _usdnProtocol.tickHash(tick, tickVersion);
+        IUsdnProtocol usdnProtocol = _usdnProtocol;
+        uint256 tickVersion = usdnProtocol.getTickVersion(tick);
+        bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
 
         // Cache orders for the tick in memory
         Order[] memory orders = _ordersInTick[tickHash];
@@ -155,7 +160,7 @@ contract OrderManager is Ownable, IOrderManager {
         _ordersDataInTick[tickHash].amountOfAssets -= userOrder.amountOfAssets;
 
         // Transfer the assets back to the user
-        _usdnProtocol.getAsset().safeTransfer(msg.sender, userOrder.amountOfAssets);
+        usdnProtocol.getAsset().safeTransfer(msg.sender, userOrder.amountOfAssets);
 
         emit OrderRemoved(msg.sender, tick, tickVersion, userOrderIndex);
     }
