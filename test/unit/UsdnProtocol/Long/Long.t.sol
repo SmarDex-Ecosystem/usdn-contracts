@@ -277,8 +277,8 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `initiateOpenPosition` reverts when the liquidation price is lower than the minimum long
-     * price
+     * @custom:scenario Call `initiateOpenPosition` reverts when the liquidation price
+     * is lower than the minimum long price
      * @custom:given A liquidation price lower than the minimum long price
      * @custom:when initiateOpenPosition is called
      * @custom:then The transaction reverts with a UsdnProtocolLongPositionTooLow error

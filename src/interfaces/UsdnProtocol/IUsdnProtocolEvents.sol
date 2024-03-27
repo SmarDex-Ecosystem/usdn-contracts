@@ -302,6 +302,7 @@ interface IUsdnProtocolEvents {
      * @param interval The new interval.
      */
     event UsdnRebaseIntervalUpdated(uint256 interval);
+
     /**
      * @notice Emitted when imbalance limits are updated.
      * @param newOpenLimitBps The new open limit.

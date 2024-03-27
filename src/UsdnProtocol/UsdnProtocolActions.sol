@@ -690,6 +690,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             if (FixedPointMathLib.fullMulDiv(amount, adjustedPrice, 10 ** 18) < _minLongPositioon) {
                 revert UsdnProtocolLongPositionTooLow();
             }
+
             // calculate position leverage
             // reverts if liquidationPrice >= entryPrice
             leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
