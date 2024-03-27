@@ -9,6 +9,11 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
+/**
+ * @title OrderManager contract
+ * @notice This contract stores and manage orders that should serve to open a long position when a liquidation happen in
+ * the same tick in the USDN protocol.
+ */
 contract OrderManager is Ownable, IOrderManager {
     using SafeERC20 for IERC20Metadata;
 
