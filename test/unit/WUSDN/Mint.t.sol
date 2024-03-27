@@ -16,7 +16,7 @@ contract TestWusdnMint is WusdnTokenFixture {
      * @custom:and rebased to 0.5x MAX_DIVISOR
      * @custom:when 60 shares is minted in wusdn to a user
      * @custom:and The total assets of wusdn are 18 assets
-     * @custom:and The total supply of wusdn is 90
+     * @custom:and The total supply of wusdn is the sum of minted shares
      */
     function test_mint() public {
         usdn.approve(address(wusdn), type(uint256).max);
