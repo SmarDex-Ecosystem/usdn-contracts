@@ -81,7 +81,7 @@ contract OrderManager is Ownable, IOrderManager {
         _usdnProtocol = usdnProtocol;
         // Unsafe ? Transfer assets on position creation instead ?
         // Depends on how the position is created on the protocol side.
-        usdnProtocol.getAsset().approve(address(usdnProtocol), type(uint256).max);
+        usdnProtocol.getAsset().safeIncreaseAllowance(address(usdnProtocol), type(uint256).max);
         _isInitialized = true;
     }
 
@@ -89,7 +89,7 @@ contract OrderManager is Ownable, IOrderManager {
     function approveAssetsForSpending() external initialized onlyOwner {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
 
-        usdnProtocol.getAsset().approve(address(usdnProtocol), type(uint256).max);
+        usdnProtocol.getAsset().safeIncreaseAllowance(address(usdnProtocol), type(uint256).max);
     }
 
     /* -------------------------------------------------------------------------- */
