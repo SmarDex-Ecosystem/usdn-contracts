@@ -52,7 +52,7 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture {
      * @custom:given A non-initialized order manager contract
      * @custom:when initialize is called
      * @custom:then the contract is initialized with the usdn protocol address
-     * @custom:then the asset allowance of the usdn protocol on this contract should the max value
+     * @custom:and the asset allowance of the usdn protocol on this contract should the max value
      */
     function test_initialize() public adminPrank {
         OrderManager orderManager = new OrderManager();
