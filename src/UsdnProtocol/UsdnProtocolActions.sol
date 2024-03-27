@@ -212,18 +212,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 currentVaultExpo = _balanceVault.toInt256();
+        int256 newVaultExpo = _balanceVault.toInt256().safeSub(withdrawalValue.toInt256());
 
         // cannot be calculated
-        if (currentVaultExpo == 0) {
+        if (newVaultExpo == 0) {
             revert UsdnProtocolInvalidVaultExpo();
         }
 
-        int256 imbalanceBps = (
-            (totalExpo.toInt256().safeSub(_balanceLong.toInt256())).safeSub(
-                currentVaultExpo.safeSub(withdrawalValue.toInt256())
-            )
-        ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentVaultExpo);
+        int256 imbalanceBps = ((totalExpo.toInt256().safeSub(_balanceLong.toInt256())).safeSub(newVaultExpo)).safeMul(
+            BPS_DIVISOR.toInt256()
+        ).safeDiv(newVaultExpo);
 
         if (imbalanceBps >= withdrawalExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -278,23 +276,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 totalExpo = _totalExpo.toInt256();
-        int256 balanceLong = _balanceLong.toInt256();
-
-        int256 currentLongExpo = totalExpo.safeSub(balanceLong);
+        int256 newLongExpo = (_totalExpo.toInt256().safeSub(closeTotalExpoValue.toInt256())).safeSub(
+            _balanceLong.toInt256().safeSub(closeCollatValue.toInt256())
+        );
 
         // cannot be calculated
-        if (currentLongExpo == 0) {
+        if (newLongExpo == 0) {
             revert UsdnProtocolInvalidLongExpo();
         }
 
-        int256 imbalanceBps = (
-            _balanceVault.toInt256().safeSub(
-                totalExpo.safeSub(closeTotalExpoValue.toInt256()).safeSub(
-                    balanceLong.safeSub(closeCollatValue.toInt256())
-                )
-            )
-        ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentLongExpo);
+        int256 imbalanceBps =
+            (_balanceVault.toInt256().safeSub(newLongExpo)).safeMul(BPS_DIVISOR.toInt256()).safeDiv(newLongExpo);
 
         if (imbalanceBps >= closeExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
