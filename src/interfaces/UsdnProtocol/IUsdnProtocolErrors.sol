@@ -24,6 +24,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the asset decimals are invalid
     error UsdnProtocolInvalidAssetDecimals(uint8 assetDecimals);
 
+    /// @dev Indicates that the token decimals are not equal to TOKENS_DECIMALS
+    error UsdnProtocolInvalidTokenDecimals();
+
     /// @dev Indicates that the user is not allowed to perform an action
     error UsdnProtocolUnauthorized();
 
@@ -62,6 +65,9 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided position fee exceeds the maximum allowed
     error UsdnProtocolInvalidPositionFee();
+
+    /// @dev Indicates that the provided ratio exceeds the maximum allowed
+    error UsdnProtocolInvalidBurnSdexOnDepositRatio();
 
     /// @dev Indicates that the new middleware address value is invalid.
     error UsdnProtocolInvalidMiddlewareAddress();

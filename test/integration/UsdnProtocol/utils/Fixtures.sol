@@ -8,6 +8,7 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import {
     DEPLOYER,
     ADMIN,
+    SDEX,
     WSTETH,
     PYTH_STETH_USD,
     PYTH_ORACLE,
@@ -21,6 +22,7 @@ import {
     PYTH_DATA_STETH
 } from "test/integration/Middlewares/utils/Constants.sol";
 import { WstETH } from "test/utils/WstEth.sol";
+import { Sdex } from "test/utils/Sdex.sol";
 import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
@@ -57,6 +59,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     });
 
     Usdn public usdn;
+    Sdex public sdex;
     UsdnProtocolHandler public protocol;
     WstETH public wstETH;
     MockPyth public mockPyth;
@@ -78,6 +81,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             }
             dealAccounts(); // provide test accounts with ETH again
             wstETH = WstETH(payable(WSTETH));
+            sdex = Sdex(SDEX);
             IPyth pyth = IPyth(PYTH_ORACLE);
             AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
             oracleMiddleware = new WstEthOracleMiddleware(
@@ -85,6 +89,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             );
         } else {
             wstETH = new WstETH();
+            sdex = new Sdex();
             mockPyth = new MockPyth();
             mockChainlinkOnChain = new MockChainlinkOnChain();
             mockChainlinkOnChain.setLastPublishTime(testParams.initialTimestamp - 10 minutes);
@@ -102,6 +107,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
         protocol = new UsdnProtocolHandler(
             usdn,
+            sdex,
             wstETH,
             oracleMiddleware,
             liquidationRewardsManager,
