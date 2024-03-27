@@ -183,8 +183,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         int256 currentLongExpo = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
 
-        // cannot be calculated
-        if (currentLongExpo == 0) {
+        // By increasing vault expo, deposit will inevitably increase the gap between vault and long expo
+        // As it is not possible to calculate imbalance correctly in cases negative long expo or null,
+        // deposit will be rejected
+        if (currentLongExpo <= 0) {
             revert UsdnProtocolInvalidLongExpo();
         }
 
@@ -214,8 +216,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         int256 newVaultExpo = _balanceVault.toInt256().safeSub(withdrawalValue.toInt256());
 
-        // cannot be calculated
-        if (newVaultExpo == 0) {
+        // cannot be calculated if equal zero and must also be
+        // rejected if withdrawal amount higher than balance vault
+        if (newVaultExpo <= 0) {
             revert UsdnProtocolInvalidVaultExpo();
         }
 
@@ -276,13 +279,31 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 newLongExpo = (_totalExpo.toInt256().safeSub(closeTotalExpoValue.toInt256())).safeSub(
-            _balanceLong.toInt256().safeSub(closeCollatValue.toInt256())
+        int256 totalExpo = _totalExpo.toInt256();
+        int256 balanceLong = _balanceLong.toInt256();
+
+        int256 newLongExpo = (totalExpo.safeSub(closeTotalExpoValue.toInt256())).safeSub(
+            balanceLong.safeSub(closeCollatValue.toInt256())
         );
 
         // cannot be calculated
         if (newLongExpo == 0) {
             revert UsdnProtocolInvalidLongExpo();
+        }
+
+        // In some cases close a position will increase the long expo, in others decrease it
+        // As it is not possible to calculate imbalance correctly when long expo remain or become negative
+        // these cases will be dealt in a specific way
+        if (newLongExpo < 0) {
+            // the current long expo
+            int256 currentLongExpo = totalExpo.safeSub(balanceLong);
+            // In the case close position will increase or maintain the long expo it will be automatically accepted
+            if (newLongExpo >= currentLongExpo) {
+                return;
+                // In the case close position will decrease the long expo it will be rejected
+            } else {
+                revert UsdnProtocolInvalidLongExpo();
+            }
         }
 
         int256 imbalanceBps =
