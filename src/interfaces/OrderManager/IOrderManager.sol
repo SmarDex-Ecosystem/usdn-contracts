@@ -26,7 +26,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
     }
 
     /**
-     * @notice Returns The order at the index in the array of the provided tick.
+     * @notice Returns The order at the index of the array of orders in the provided tick.
      * @param tick The tick the order is in.
      * @param tickVersion The tick version.
      * @param index The index in the order array.
@@ -58,7 +58,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
     function addOrderInTick(int24 tick, uint96 amount) external;
 
     /**
-     * @notice Remove the order from the provided tick and send back the funds to the user.
+     * @notice Remove the order of the user from the provided tick and send back the funds to him.
      * @dev This function will always use the latest version of the provided tick.
      * @param tick The tick to remove the order from.
      */
