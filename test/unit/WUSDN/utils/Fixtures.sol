@@ -25,6 +25,7 @@ contract WusdnTokenFixture is UsdnTokenFixture {
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
         usdn.grantRole(usdn.MINTER_ROLE(), address(wusdn));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
         usdn.mint(address(this), 100 ether);
     }
 

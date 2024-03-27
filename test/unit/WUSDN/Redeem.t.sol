@@ -9,12 +9,6 @@ import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
  * @custom:and The divisor is MAX_DIVISOR
  */
 contract TestWusdnRedeem is WusdnTokenFixture {
-    function setUp() public override {
-        super.setUp();
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
-    }
-
     /**
      * @custom:scenario redeem usdn to wusdn contract
      * @custom:given 100 usdn are minted to a user

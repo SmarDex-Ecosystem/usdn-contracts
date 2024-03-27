@@ -9,18 +9,12 @@ import { WusdnTokenFixture } from "test/unit/WUSDN/utils/Fixtures.sol";
  * @custom:and The divisor is MAX_DIVISOR
  */
 contract TestWusdnMint is WusdnTokenFixture {
-    function setUp() public override {
-        super.setUp();
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
-    }
-
     /**
      * @custom:scenario Deposit usdn to wusdn contract
      * @custom:given 100 usdn are minted to a user
      * @custom:and 30 shares is minted in wusdn to a user
      * @custom:and rebased to 0.5x MAX_DIVISOR
-     * @custom:when 70 shares is minted in wusdn to a user
+     * @custom:when 60 shares is minted in wusdn to a user
      * @custom:and The total assets of wusdn are 18 assets
      * @custom:and The total supply of wusdn is 90
      */
