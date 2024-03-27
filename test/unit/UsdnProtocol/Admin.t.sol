@@ -16,7 +16,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.enableLimits = true;
+        params.flags.enableLimits = true;
         super._setUp(params);
     }
 
