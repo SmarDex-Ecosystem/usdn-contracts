@@ -287,6 +287,9 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolLongPositionTooSmall.selector));
         protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), EMPTY_PREVIOUS_DATA);
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolLongPositionTooSmall.selector));
+        protocol.initiateOpenPosition(2.0001 ether, 500 ether, abi.encode(1000 ether), EMPTY_PREVIOUS_DATA);
     }
 
     /**
