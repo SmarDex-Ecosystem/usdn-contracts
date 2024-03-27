@@ -13,7 +13,7 @@ import {
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1, DEPLOYER, ADMIN } from "test/utils/Constants.sol";
+import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature The initiate close position functions of the USDN Protocol

@@ -169,7 +169,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     uint256 internal _usdnRebaseInterval = 0;
 
-    /// @notice The minimum long position size
+    /// @notice The minimum long position size (with _priceFeedDecimals)
     uint256 internal _minLongPosition = 5000 * 1e18;
 
     /* -------------------------------------------------------------------------- */
@@ -442,7 +442,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @inheritdoc IUsdnProtocolStorage
     function getMinLongPosition() external view returns (uint256) {
-        return _minLongPositioon;
+        return _minLongPosition;
     }
 
     /* -------------------------------------------------------------------------- */
