@@ -76,7 +76,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitWithdrawal` function is called
      * @custom:then The transaction should not revert
      */
-    function test_RevertWith_checkImbalanceLimitWithdrawalNegativeLongExpo() public {
+    function test_checkImbalanceLimitWithdrawalNegativeLongExpo() public {
         setUpUserPositionInLong(
             address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
         );
@@ -153,8 +153,8 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         uint256 scaledWithdrawalImbalanceRatio =
             FixedPointMathLib.divWad(uint256(withdrawalLimitBps_), protocol.BPS_DIVISOR());
 
-        // vault expo value limit from current long expo: numerator and denominator are at the same scale and result is
-        // rounded up
+        // vault expo value limit from current long expo: numerator and denominator
+        // are at the same scale and result is rounded up
         uint256 vaultExpoValueLimit =
             FixedPointMathLib.divWadUp(longExpo, FixedPointMathLib.WAD + scaledWithdrawalImbalanceRatio);
 

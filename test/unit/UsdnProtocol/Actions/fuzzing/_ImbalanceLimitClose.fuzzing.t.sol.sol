@@ -36,7 +36,7 @@ contract TestImbalanceLimitCloseFuzzing is UsdnProtocolBaseFixture {
 
         // expected imbalance bps
         int256 imbalanceBps;
-        if (newLongExpo != 0) {
+        if (newLongExpo > 0) {
             imbalanceBps =
                 (int256(int128(params.initialDeposit)) - newLongExpo) * int256(protocol.BPS_DIVISOR()) / newLongExpo;
         }

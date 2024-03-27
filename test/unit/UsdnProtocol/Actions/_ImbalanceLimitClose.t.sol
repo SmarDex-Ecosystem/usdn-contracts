@@ -220,8 +220,8 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         // the imbalance ratio: must be scaled for calculation
         uint256 scaledImbalanceRatio = FixedPointMathLib.divWad(uint256(closeLimitBps_), protocol.BPS_DIVISOR());
 
-        // long expo value limit from current vault expo: numerator and denominator are at the same scale and result is
-        // rounded up
+        // long expo value limit from current vault expo: numerator and denominator
+        // are at the same scale and result is rounded up
         uint256 longExpoLimit =
             FixedPointMathLib.divWadUp(protocol.getBalanceVault(), FixedPointMathLib.WAD + scaledImbalanceRatio);
 
