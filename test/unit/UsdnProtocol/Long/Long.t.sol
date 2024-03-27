@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN } from "test/utils/Constants.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
@@ -273,5 +274,20 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
         assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
+    }
+
+    /**
+     * @custom:scenario Call `initiateOpenPosition` reverts when the liquidation price is lower than the minimum long
+     * price
+     * @custom:given A liquidation price lower than the minimum long price
+     * @custom:when initiateOpenPosition is called
+     * @custom:then The transaction reverts with a UsdnProtocolLongPositionTooLow error
+     */
+    function test_RevertWhen_openNewPositionTooLow() public {
+        vm.prank(ADMIN);
+        protocol.setMinLongPosition(5000 * 10 ** 18);
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolLongPositionTooLow.selector));
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), EMPTY_PREVIOUS_DATA);
     }
 }
