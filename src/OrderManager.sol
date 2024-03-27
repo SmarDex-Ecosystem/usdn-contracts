@@ -61,26 +61,28 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
         ordersData_ = _ordersDataInTick[tickHash];
     }
 
+    /// @inheritdoc IOrderManager
+    function getUsdnProtocol() external view returns (address) {
+        return address(_usdnProtocol);
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                    Admin                                   */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice Initialize the contract with all the needed variables.
-     * @param usdnProtocol The address of the USDN protocol
-     */
-    function initialize(IUsdnProtocol usdnProtocol) external onlyOwner initializer {
-        _usdnProtocol = usdnProtocol;
+    /// @inheritdoc IOrderManager
+    function initialize(address usdnProtocol) external onlyOwner initializer {
+        _usdnProtocol = IUsdnProtocol(usdnProtocol);
         // Unsafe ? Transfer assets on position creation instead ?
         // Depends on how the position is created on the protocol side.
-        usdnProtocol.getAsset().safeIncreaseAllowance(address(usdnProtocol), type(uint256).max);
+        IUsdnProtocol(usdnProtocol).getAsset().safeIncreaseAllowance(usdnProtocol, type(uint256).max);
     }
 
-    /// @notice Set the maximum approval for the USDN protocol to take assets from this contract.
-    function approveAssetsForSpending() external onlyOwner {
+    /// @inheritdoc IOrderManager
+    function approveAssetsForSpending(uint256 allowance) external onlyOwner {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
 
-        usdnProtocol.getAsset().safeIncreaseAllowance(address(usdnProtocol), type(uint256).max);
+        usdnProtocol.getAsset().forceApprove(address(usdnProtocol), allowance);
     }
 
     /* -------------------------------------------------------------------------- */

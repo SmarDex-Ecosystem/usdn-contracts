@@ -48,6 +48,18 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
         view
         returns (OrdersDataInTick memory ordersData_);
 
+    /// @notice Returns the address of the USDN protocol.
+    function getUsdnProtocol() external view returns (address);
+
+    /**
+     * @notice Initialize the contract with all the needed variables.
+     * @param usdnProtocol The address of the USDN protocol
+     */
+    function initialize(address usdnProtocol) external;
+
+    /// @notice Set the maximum approval for the USDN protocol to take assets from this contract.
+    function approveAssetsForSpending(uint256 allowance) external;
+
     /**
      * @notice Add an order with the provided amount to the provided tick
      * and pull the amount of funds from the user to this contract.

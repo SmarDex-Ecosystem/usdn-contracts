@@ -32,7 +32,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
      * @custom:scenario addOrderInTick is called although the order manager contract hasn't been initialized
      * @custom:given A non-initialized order manager contract
      * @custom:when addOrderInTick is called
-     * @custom:then the call reverts with a OrderManagerNotInitialized error
+     * @custom:then the call reverts with a InitializableReentrancyGuardUninitialized error
      */
     function test_RervertsWhen_orderManagerNotInitialized() external {
         // Create a new instance of the protocol that is not initialized
