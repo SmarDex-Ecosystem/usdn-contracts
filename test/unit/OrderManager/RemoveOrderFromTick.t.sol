@@ -5,6 +5,7 @@ import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { IOrderManagerErrors } from "src/interfaces/OrderManager/IOrderManagerErrors.sol";
 import { IOrderManagerEvents } from "src/interfaces/OrderManager/IOrderManagerEvents.sol";
 import { OrderManager } from "src/OrderManager.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -44,7 +45,9 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
         // Create a new instance of the protocol that is not initialized
         orderManager = new OrderManager();
 
-        vm.expectRevert(abi.encodeWithSelector(OrderManagerNotInitialized.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
+        );
         orderManager.removeOrderFromTick(_tick);
     }
 

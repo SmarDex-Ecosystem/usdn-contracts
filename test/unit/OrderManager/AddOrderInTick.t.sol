@@ -6,6 +6,7 @@ import { IOrderManagerErrors } from "src/interfaces/OrderManager/IOrderManagerEr
 import { IOrderManagerEvents } from "src/interfaces/OrderManager/IOrderManagerEvents.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { OrderManager } from "src/OrderManager.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -38,7 +39,9 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         orderManager = new OrderManager();
         int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
 
-        vm.expectRevert(abi.encodeWithSelector(OrderManagerNotInitialized.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
+        );
         orderManager.addOrderInTick(tick, 1 ether);
     }
 

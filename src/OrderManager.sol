@@ -8,20 +8,18 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @title OrderManager contract
  * @notice This contract stores and manage orders that should serve to open a long position when a liquidation happen in
  * the same tick in the USDN protocol.
  */
-contract OrderManager is Ownable, IOrderManager {
+contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
     using SafeERC20 for IERC20Metadata;
 
     /// @notice The divisor for the ratio of assets used in _ordersDataInTick
     uint128 constant RATIO_OF_ASSETS_USED_DIVISOR = 1e32;
-
-    /// @notice Is the contract initialized
-    bool private _isInitialized;
 
     /// @notice The USDN protocol
     IUsdnProtocol private _usdnProtocol;
@@ -36,12 +34,6 @@ contract OrderManager is Ownable, IOrderManager {
     mapping(bytes32 => OrdersDataInTick) private _ordersDataInTick;
 
     constructor() Ownable(msg.sender) { }
-
-    /// @dev Prevent some functions to be used if the initialize function hasn't been called yet.
-    modifier initialized() {
-        if (!_isInitialized) revert OrderManagerNotInitialized();
-        _;
-    }
 
     /* -------------------------------------------------------------------------- */
     /*                                   Getters                                  */
@@ -77,16 +69,15 @@ contract OrderManager is Ownable, IOrderManager {
      * @notice Initialize the contract with all the needed variables.
      * @param usdnProtocol The address of the USDN protocol
      */
-    function initialize(IUsdnProtocol usdnProtocol) external onlyOwner {
+    function initialize(IUsdnProtocol usdnProtocol) external onlyOwner initializer {
         _usdnProtocol = usdnProtocol;
         // Unsafe ? Transfer assets on position creation instead ?
         // Depends on how the position is created on the protocol side.
         usdnProtocol.getAsset().safeIncreaseAllowance(address(usdnProtocol), type(uint256).max);
-        _isInitialized = true;
     }
 
     /// @notice Set the maximum approval for the USDN protocol to take assets from this contract.
-    function approveAssetsForSpending() external initialized onlyOwner {
+    function approveAssetsForSpending() external onlyOwner {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
 
         usdnProtocol.getAsset().safeIncreaseAllowance(address(usdnProtocol), type(uint256).max);
@@ -97,7 +88,7 @@ contract OrderManager is Ownable, IOrderManager {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOrderManager
-    function addOrderInTick(int24 tick, uint96 amount) external initialized {
+    function addOrderInTick(int24 tick, uint96 amount) external initializedAndNonReentrant {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
 
         // Check if the provided tick is valid and inside limits
@@ -124,7 +115,7 @@ contract OrderManager is Ownable, IOrderManager {
     }
 
     /// @inheritdoc IOrderManager
-    function removeOrderFromTick(int24 tick) external initialized {
+    function removeOrderFromTick(int24 tick) external initializedAndNonReentrant {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
         uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
