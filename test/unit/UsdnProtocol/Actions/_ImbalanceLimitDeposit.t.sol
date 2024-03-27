@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PreviousActionsData, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
@@ -74,6 +74,34 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
 
         // long expo should be equal 0
         assertEq(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo isn't 0");
+
+        // should revert
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
+        protocol.i_checkImbalanceLimitDeposit(0);
+    }
+
+    /**
+     * @custom:scenario The `_checkImbalanceLimitDeposit` function should revert when long expo is negative
+     * @custom:given The initial long position
+     * @custom:and The asset price is below the liquidation price
+     * @custom:and The initial position is not liquidated during a day
+     * @custom:and The current long expo is negative
+     * @custom:when The `_checkImbalanceLimitDeposit` function is called
+     * @custom:then The transaction should revert
+     */
+    function test_RevertWith_checkImbalanceLimitDepositNegativeLongExpo() public {
+        setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
+        );
+
+        // new price below any position but only one will be liquidated
+        protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
+
+        // wait a day without liquidation
+        skip(1 days);
+
+        int256 currentLongExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
+        assertLt(currentLongExpo, 0);
 
         // should revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);

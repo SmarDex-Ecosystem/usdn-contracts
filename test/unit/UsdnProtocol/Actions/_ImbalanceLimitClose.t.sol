@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PreviousActionsData, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -116,6 +116,94 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         // should revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
         protocol.i_checkImbalanceLimitClose(0, 0);
+    }
+
+    /**
+     * @custom:scenario The `_checkImbalanceLimitClose` function should not revert when long expo is negative
+     * and close position maintain the long expo value
+     * @custom:given The initial long position
+     * @custom:and The asset price is below the liquidation price
+     * @custom:and The initial position is not liquidated during a day
+     * @custom:and The current long expo is negative
+     * @custom:when The `_checkImbalanceLimitClose` function is called
+     * @custom:then The transaction should not revert
+     */
+    function test_checkImbalanceLimitCloseNegativeLongExpoEqual() public {
+        setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
+        );
+
+        // new price below any position but only one will be liquidated
+        protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
+
+        // wait a day without liquidation
+        skip(1 days);
+
+        int256 currentLongExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
+        // current long expo should be negative
+        assertLt(currentLongExpo, 0);
+
+        // should not revert
+        protocol.i_checkImbalanceLimitClose(0, 0);
+    }
+
+    /**
+     * @custom:scenario The `_checkImbalanceLimitClose` function should not revert when long expo is negative
+     * and close position increase the long expo value
+     * @custom:given The initial long position
+     * @custom:and The asset price is below the liquidation price
+     * @custom:and The initial position is not liquidated during a day
+     * @custom:and The current long expo is negative
+     * @custom:when The `_checkImbalanceLimitClose` function is called
+     * @custom:then The transaction should not revert
+     */
+    function test_checkImbalanceLimitCloseNegativeLongExpoUp() public {
+        setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
+        );
+
+        // new price below any position but only one will be liquidated
+        protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
+
+        // wait a day without liquidation
+        skip(1 days);
+
+        int256 currentLongExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
+        // current long expo should be negative
+        assertLt(currentLongExpo, 0);
+
+        // should not revert
+        protocol.i_checkImbalanceLimitClose(0, 1);
+    }
+
+    /**
+     * @custom:scenario The `_checkImbalanceLimitClose` function should revert when long expo is negative
+     * and close position decrease the long expo value
+     * @custom:given The initial long position
+     * @custom:and The asset price is below the liquidation price
+     * @custom:and The initial position is not liquidated during a day
+     * @custom:and The current long expo is negative
+     * @custom:when The `_checkImbalanceLimitClose` function is called
+     * @custom:then The transaction should revert
+     */
+    function test_RevertWith_checkImbalanceLimitCloseNegativeLongExpoDown() public {
+        setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
+        );
+
+        // new price below any position but only one will be liquidated
+        protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
+
+        // wait a day without liquidation
+        skip(1 days);
+
+        int256 currentLongExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
+        // current long expo should be negative
+        assertLt(currentLongExpo, 0);
+
+        // should revert
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
+        protocol.i_checkImbalanceLimitClose(1, 0);
     }
 
     function _getCloseLimitValues()

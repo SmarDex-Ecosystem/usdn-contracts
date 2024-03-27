@@ -59,8 +59,50 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         // vault expo should be zero
         assertEq(protocol.getBalanceVault(), 0, "vault expo isn't 0");
         uint256 totalExpo = protocol.getTotalExpo();
+
         // should revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidVaultExpo.selector);
+        protocol.i_checkImbalanceLimitWithdrawal(0, totalExpo);
+    }
+
+    /**
+     * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should not revert when vault expo is positive
+     * and long expo is negative
+     * @custom:given The protocol is balanced
+     * @custom:and A long position is opened
+     * @custom:and Price crash below any liquidation prices
+     * @custom:and The first position is liquidated
+     * @custom:and The last liquidation isn't involved during 3 seconds which leads to a bad debt
+     * @custom:when The `_checkImbalanceLimitWithdrawal` function is called
+     * @custom:then The transaction should not revert
+     */
+    function test_RevertWith_checkImbalanceLimitWithdrawalNegativeLongExpo() public {
+        setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
+        );
+
+        // new price below any position but only one will be liquidated
+        protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
+
+        // wait 3 seconds without liquidation
+        skip(3);
+
+        // liquidate the last position but leads bad debt
+        protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
+
+        // vault expo should be positive
+        assertGt(protocol.getBalanceVault(), 0, "vault is equal 0");
+
+        // total expo
+        uint256 totalExpo = protocol.getTotalExpo();
+
+        // long expo
+        int256 longExpo = int256(totalExpo) - int256(protocol.getBalanceLong());
+
+        // should be negative
+        assertLt(longExpo, 0, "long expo is positive");
+
+        // should not revert
         protocol.i_checkImbalanceLimitWithdrawal(0, totalExpo);
     }
 

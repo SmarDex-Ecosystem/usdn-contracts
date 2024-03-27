@@ -185,7 +185,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // By increasing vault expo, deposit will inevitably increase the gap between vault and long expo
         // As it is not possible to calculate imbalance correctly in cases negative long expo or null,
-        // deposit will be rejected
+        // deposit will be reverted
         if (currentLongExpo <= 0) {
             revert UsdnProtocolInvalidLongExpo();
         }
@@ -201,7 +201,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice The withdrawal imbalance limit state verification
-     * @dev This is to ensure that the protocol does not imbalance more than
+     * @dev To ensure that the protocol does not imbalance more than
      * the withdrawal limit on long side, otherwise revert
      * @param withdrawalValue The withdrawal value in asset
      * @param totalExpo The current total expo
@@ -217,7 +217,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         int256 newVaultExpo = _balanceVault.toInt256().safeSub(withdrawalValue.toInt256());
 
         // cannot be calculated if equal zero and must also be
-        // rejected if withdrawal amount higher than balance vault
+        // reverted if withdrawal amount is higher than balance vault
         if (newVaultExpo <= 0) {
             revert UsdnProtocolInvalidVaultExpo();
         }
@@ -233,7 +233,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice The open long imbalance limit state verification. Revert
-     * @dev This is to ensure that the protocol does not imbalance more than
+     * @dev To ensure that the protocol does not imbalance more than
      * the open limit on long side, otherwise revert
      * @param openTotalExpoValue The open position expo value
      * @param openCollatValue The open position collateral value
@@ -266,7 +266,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice The close vault imbalance limit state verification
-     * @dev This is to ensure that the protocol does not imbalance more than
+     * @dev To ensure that the protocol does not imbalance more than
      * the close limit on vault side, otherwise revert
      * @param closeTotalExpoValue The close position total expo value
      * @param closeCollatValue The close position collateral value
@@ -291,7 +291,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidLongExpo();
         }
 
-        // In some cases close a position will increase the long expo, in others decrease it
+        // In rare cases close a position will increase the long expo, in most others decrease it
         // As it is not possible to calculate imbalance correctly when long expo remain or become negative
         // these cases will be dealt in a specific way
         if (newLongExpo < 0) {
@@ -300,7 +300,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // In the case close position will increase or maintain the long expo it will be automatically accepted
             if (newLongExpo >= currentLongExpo) {
                 return;
-                // In the case close position will decrease the long expo it will be rejected
+                // In the case close position will decrease the long expo it will be reverted
             } else {
                 revert UsdnProtocolInvalidLongExpo();
             }

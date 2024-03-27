@@ -94,6 +94,33 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         protocol.i_checkImbalanceLimitOpen(0, 0);
     }
 
+    /**
+     * @custom:scenario The `_checkImbalanceLimitOpen` function should pass when long expo
+     * is negative and by adding open position remain negative
+     * @custom:given The initial long position
+     * @custom:and The asset price is below the liquidation price
+     * @custom:and The initial position is not liquidated
+     * @custom:and The current long expo is negative
+     * @custom:when The `_checkImbalanceLimitOpen` function is called
+     * @custom:then The transaction should not revert
+     */
+    function test_checkImbalanceLimitOpenNegativeLongExpo() public {
+        setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
+        );
+
+        // new price below any position but only one will be liquidated
+        protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
+
+        // wait a day without liquidation
+        skip(1 days);
+
+        int256 currentLongExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
+        assertLt(currentLongExpo, 0);
+
+        protocol.i_checkImbalanceLimitOpen(0, 0);
+    }
+
     function _getOpenLimitValues()
         private
         view
