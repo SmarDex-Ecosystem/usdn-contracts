@@ -329,9 +329,9 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setMinLongPosition(uint256 newMinLongPositioon) external onlyOwner {
-        _minLongPositioon = newMinLongPositioon;
-        emit NewMinLongPosition(newMinLongPositioon);
+    function setMinLongPosition(uint256 newMinLongPosition) external onlyOwner {
+        _minLongPosition = newMinLongPosition;
+        emit MinLongPositionUpdated(newMinLongPosition);
     }
 
     /**

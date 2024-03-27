@@ -170,7 +170,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _usdnRebaseInterval = 0;
 
     /// @notice The minimum long position size
-    uint256 internal _minLongPositioon = 5000 * 10 ** 18;
+    uint256 internal _minLongPosition = 5000 * 1e18;
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */

@@ -150,9 +150,9 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setUsdnRebaseInterval(uint256 newInterval) external;
 
     /**
-     * @notice Set the USDN minimum long position
-     * @param newMinLongPositioon The new minimum long position
+     * @notice Set the minimum long position size in USD
+     * @param newMinLongPosition The new minimum long position
      * @dev This value is used to prevent users from opening positions that are too small
      */
-    function setMinLongPosition(uint256 newMinLongPositioon) external;
+    function setMinLongPosition(uint256 newMinLongPosition) external;
 }

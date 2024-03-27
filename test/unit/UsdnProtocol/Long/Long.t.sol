@@ -281,13 +281,13 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      * is lower than the minimum long price
      * @custom:given A liquidation price lower than the minimum long price
      * @custom:when initiateOpenPosition is called
-     * @custom:then The transaction reverts with a UsdnProtocolLongPositionTooLow error
+     * @custom:then The transaction reverts with a UsdnProtocolLongPositionTooSmall error
      */
     function test_RevertWhen_openNewPositionTooLow() public {
         vm.prank(ADMIN);
-        protocol.setMinLongPosition(5000 * 10 ** 18);
+        protocol.setMinLongPosition(5000 ether);
 
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolLongPositionTooLow.selector));
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolLongPositionTooSmall.selector));
         protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), EMPTY_PREVIOUS_DATA);
     }
 }

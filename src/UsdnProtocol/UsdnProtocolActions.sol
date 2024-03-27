@@ -687,8 +687,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
 
             _checkImbalanceLimitOpen(positionTotalExpo, amount);
-            if (FixedPointMathLib.fullMulDiv(amount, adjustedPrice, 10 ** 18) < _minLongPositioon) {
-                revert UsdnProtocolLongPositionTooLow();
+            if (FixedPointMathLib.fullMulDiv(amount, adjustedPrice, _assetDecimals) < _minLongPositioon) {
+                revert UsdnProtocolLongPositionTooSmall();
             }
 
             // calculate position leverage

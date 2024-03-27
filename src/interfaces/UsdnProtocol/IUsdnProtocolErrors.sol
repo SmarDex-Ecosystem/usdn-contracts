@@ -51,8 +51,8 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided collateral and liquidation price result in a leverage that is too high
     error UsdnProtocolLeverageTooHigh();
 
-    /// @dev Indicates that the long position is too low
-    error UsdnProtocolLongPositionTooLow();
+    /// @dev Indicates that the long position is too small
+    error UsdnProtocolLongPositionTooSmall();
 
     /// @dev Indicates that the liquidation price is higher than or equal to the start price
     error UsdnProtocolInvalidLiquidationPrice(uint128 liquidationPrice, uint128 startPrice);
