@@ -119,18 +119,15 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
         uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
-
-        // Cache orders for the tick in memory
-        Order[] memory orders = _ordersInTick[tickHash];
-        uint256 ordersLength = orders.length;
+        uint256 ordersCountInTick = _ordersInTick[tickHash].length;
 
         // Check that the order array is not empty
-        if (ordersLength == 0) {
+        if (ordersCountInTick == 0) {
             revert OrderManagerEmptyTick(tick);
         }
 
         uint256 userOrderIndex = _userOrderIndexInTick[msg.sender][tickHash];
-        Order memory userOrder = orders[userOrderIndex];
+        Order memory userOrder = _ordersInTick[tickHash][userOrderIndex];
 
         // By default, userOrderIndex will be 0
         // So check that the order at that index matches the current user
@@ -139,9 +136,9 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
         }
 
         // If there are multiple orders in the tick
-        if (orders.length > 1) {
+        if (ordersCountInTick > 1) {
             // Replace the user order with the last order in the array
-            _ordersInTick[tickHash][userOrderIndex] = orders[orders.length - 1];
+            _ordersInTick[tickHash][userOrderIndex] = _ordersInTick[tickHash][ordersCountInTick - 1];
         }
 
         // Remove the last order (which should either be a duplicate, or the order to remove) from the array
