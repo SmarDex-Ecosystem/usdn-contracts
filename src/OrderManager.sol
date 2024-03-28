@@ -108,7 +108,7 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
         // Save the order's data
         _ordersDataInTick[tickHash].amountOfAssets += amount;
         if (orderIndex == 0) {
-            _ordersDataInTick[tickHash].tick = PENDING_ORDERS_TICK;
+            _ordersDataInTick[tickHash].longPositionTick = PENDING_ORDERS_TICK;
         }
 
         _ordersInTick[tickHash].push(Order({ amountOfAssets: amount, user: msg.sender }));

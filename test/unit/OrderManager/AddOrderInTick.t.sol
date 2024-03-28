@@ -140,12 +140,12 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
         assertEq(ordersData.amountOfAssets, amount, "The accumulated amount should be equal to the amount of the order");
         assertEq(
-            ordersData.tick,
+            ordersData.longPositionTick,
             orderManager.PENDING_ORDERS_TICK(),
             "The tick should be equal to the PENDING_ORDERS_TICK constant"
         );
-        assertEq(ordersData.tickVersion, 0, "The tick version shoudl be 0");
-        assertEq(ordersData.index, 0, "Index of the position should be 0");
+        assertEq(ordersData.longPositionTickVersion, 0, "The tick version shoudl be 0");
+        assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
     }
 
     /**
@@ -185,12 +185,12 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
             ordersData.amountOfAssets, amount, "The accumulated amount should be equal to the amount of the only order"
         );
         assertEq(
-            ordersData.tick,
+            ordersData.longPositionTick,
             orderManager.PENDING_ORDERS_TICK(),
             "The tick should be equal to the PENDING_ORDERS_TICK constant"
         );
-        assertEq(ordersData.tickVersion, 0, "The tick version shoudl be 0");
-        assertEq(ordersData.index, 0, "Index of the position should be 0");
+        assertEq(ordersData.longPositionTickVersion, 0, "The tick version shoudl be 0");
+        assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
 
         /* -------------- Add one more order to check the accumulation -------------- */
         uint256 accumulatedAmountBefore = ordersData.amountOfAssets;

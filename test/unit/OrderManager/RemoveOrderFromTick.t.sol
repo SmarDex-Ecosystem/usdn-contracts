@@ -110,12 +110,12 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_tick, 0);
         assertEq(ordersData.amountOfAssets, 0, "The accumulated amount should be equal to 0");
         assertEq(
-            ordersData.tick,
+            ordersData.longPositionTick,
             orderManager.PENDING_ORDERS_TICK(),
             "The tick should be equal to the PENDING_ORDERS_TICK constant"
         );
-        assertEq(ordersData.tickVersion, 0, "The tick version shoudl be 0");
-        assertEq(ordersData.index, 0, "Index of the position should be 0");
+        assertEq(ordersData.longPositionTickVersion, 0, "The tick version shoudl be 0");
+        assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
 
         // This call should fail with an array out-of-bound error
         vm.expectRevert();
