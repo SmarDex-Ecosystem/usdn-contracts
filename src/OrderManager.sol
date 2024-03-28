@@ -71,11 +71,11 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOrderManager
-    function initialize(address usdnProtocol) external onlyOwner initializer {
-        _usdnProtocol = IUsdnProtocol(usdnProtocol);
-        // Unsafe ? Transfer assets on position creation instead ?
-        // Depends on how the position is created on the protocol side.
-        IUsdnProtocol(usdnProtocol).getAsset().safeIncreaseAllowance(usdnProtocol, type(uint256).max);
+    function initialize(IUsdnProtocol usdnProtocol) external onlyOwner initializer {
+        _usdnProtocol = usdnProtocol;
+
+        // Set allowance to allow the USDN protocol to pull assets from this contract
+        usdnProtocol.getAsset().safeIncreaseAllowance(address(usdnProtocol), type(uint256).max);
     }
 
     /// @inheritdoc IOrderManager

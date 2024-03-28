@@ -29,7 +29,7 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_initializeCalledByNonOwner() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        orderManager.initialize(address(protocol));
+        orderManager.initialize(protocol);
     }
 
     /**
@@ -44,7 +44,7 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture {
                 InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector
             )
         );
-        orderManager.initialize(address(protocol));
+        orderManager.initialize(protocol);
     }
 
     /**
@@ -64,7 +64,7 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture {
             "The USDN protocol address should not be set in order for this test to work"
         );
 
-        orderManager.initialize(address(protocol));
+        orderManager.initialize(protocol);
 
         assertEq(orderManager.getUsdnProtocol(), address(protocol), "The USDN protocol address was not set");
         assertEq(

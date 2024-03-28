@@ -134,7 +134,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         wstETH.approve(address(protocol), type(uint256).max);
 
-        orderManager.initialize(address(protocol));
+        orderManager.initialize(protocol);
         // leverage approx 2x
         protocol.initialize(
             testParams.initialDeposit,

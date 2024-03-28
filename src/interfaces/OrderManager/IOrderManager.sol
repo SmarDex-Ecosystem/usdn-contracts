@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import { IOrderManagerErrors } from "src/interfaces/OrderManager/IOrderManagerErrors.sol";
 import { IOrderManagerEvents } from "src/interfaces/OrderManager/IOrderManagerEvents.sol";
+import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
     /**
@@ -55,7 +56,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
      * @notice Initialize the contract with all the needed variables.
      * @param usdnProtocol The address of the USDN protocol
      */
-    function initialize(address usdnProtocol) external;
+    function initialize(IUsdnProtocol usdnProtocol) external;
 
     /// @notice Set the maximum approval for the USDN protocol to take assets from this contract.
     function approveAssetsForSpending(uint256 allowance) external;
