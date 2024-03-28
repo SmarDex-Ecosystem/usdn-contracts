@@ -293,9 +293,9 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check that the position is correctly validated when the assets
-     * price is greater than the minimum long position price
-     * @custom:given A assets price greater than the minimum long price
+     * @custom:scenario Check that the position is correctly validated when its value
+     * is greater than the minimum long position value
+     * @custom:given A position value greater than the minimum long position value
      * @custom:when initiateOpenPosition is called
      * @custom:then The transaction was accepted with a expected position
      */
