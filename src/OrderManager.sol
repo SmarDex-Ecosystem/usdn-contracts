@@ -18,6 +18,8 @@ import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyG
 contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
     using SafeERC20 for IERC20Metadata;
 
+    int24 public constant PENDING_ORDERS_TICK = type(int24).min;
+
     /// @notice The USDN protocol
     IUsdnProtocol internal _usdnProtocol;
 
@@ -105,6 +107,10 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
 
         // Save the order's data
         _ordersDataInTick[tickHash].amountOfAssets += amount;
+        if (orderIndex == 0) {
+            _ordersDataInTick[tickHash].tick = PENDING_ORDERS_TICK;
+        }
+
         _ordersInTick[tickHash].push(Order({ amountOfAssets: amount, user: msg.sender }));
 
         // Transfer the user assets to this contract

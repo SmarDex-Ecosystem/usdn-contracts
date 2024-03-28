@@ -9,11 +9,15 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
     /**
      * @notice The accumulated data of all the orders in a tick.
      * @param amountOfAssets The amount of assets in the tick.
-     * @param usedAmountOfAssetsRatio The ratio of assets used in the tick (0 if tick is still available).
+     * @param longPositionTick The tick of the long position if created, otherwise equal to PENDING_ORDERS_TICK.
+     * @param longPositionTickVersion The tick version of the long position.
+     * @param longPositionIndex The index of the long position in the USDN protocol tick array.
      */
     struct OrdersDataInTick {
-        uint96 amountOfAssets;
-        uint128 usedAmountOfAssetsRatio;
+        uint232 amountOfAssets;
+        int24 longPositionTick;
+        uint256 longPositionTickVersion;
+        uint256 longPositionIndex;
     }
 
     /**
@@ -25,6 +29,9 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
         address user;
         uint96 amountOfAssets;
     }
+
+    /// @notice Tick indicating the orders are still pending
+    function PENDING_ORDERS_TICK() external pure returns (int24);
 
     /**
      * @notice Returns The order at the index of the array of orders in the provided tick.

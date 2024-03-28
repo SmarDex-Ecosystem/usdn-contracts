@@ -139,7 +139,13 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
 
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
         assertEq(ordersData.amountOfAssets, amount, "The accumulated amount should be equal to the amount of the order");
-        assertEq(ordersData.usedAmountOfAssetsRatio, 0, "The ratio of assets used should be 0");
+        assertEq(
+            ordersData.tick,
+            orderManager.PENDING_ORDERS_TICK(),
+            "The tick should be equal to the PENDING_ORDERS_TICK constant"
+        );
+        assertEq(ordersData.tickVersion, 0, "The tick version shoudl be 0");
+        assertEq(ordersData.index, 0, "Index of the position should be 0");
     }
 
     /**
@@ -151,7 +157,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
      * @custom:and the funds are transferred from the user to the contract
      * @custom:and the state of the contract is updated
      */
-    function testFuzz_addMultipleOrdersInTheSameTick() external {
+    function test_addMultipleOrdersInTheSameTick() external {
         int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
         uint256 tickVersion = 0;
         uint256 expectedOrderIndex = 0;
@@ -178,7 +184,13 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         assertEq(
             ordersData.amountOfAssets, amount, "The accumulated amount should be equal to the amount of the only order"
         );
-        assertEq(ordersData.usedAmountOfAssetsRatio, 0, "The ratio of assets used should be 0");
+        assertEq(
+            ordersData.tick,
+            orderManager.PENDING_ORDERS_TICK(),
+            "The tick should be equal to the PENDING_ORDERS_TICK constant"
+        );
+        assertEq(ordersData.tickVersion, 0, "The tick version shoudl be 0");
+        assertEq(ordersData.index, 0, "Index of the position should be 0");
 
         /* -------------- Add one more order to check the accumulation -------------- */
         uint256 accumulatedAmountBefore = ordersData.amountOfAssets;
@@ -196,8 +208,9 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
 
         ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
         assertEq(
-            ordersData.amountOfAssets, amount + accumulatedAmountBefore, "The accumulated amount of assets is wrong"
+            ordersData.amountOfAssets,
+            amount + accumulatedAmountBefore,
+            "The accumulated amount of assets should be the sum of all the added positions"
         );
-        assertEq(ordersData.usedAmountOfAssetsRatio, 0, "The ratio of assets used should still be 0");
     }
 }

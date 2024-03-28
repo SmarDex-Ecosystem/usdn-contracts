@@ -109,7 +109,13 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
 
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_tick, 0);
         assertEq(ordersData.amountOfAssets, 0, "The accumulated amount should be equal to 0");
-        assertEq(ordersData.usedAmountOfAssetsRatio, 0, "The ratio of assets used should be 0");
+        assertEq(
+            ordersData.tick,
+            orderManager.PENDING_ORDERS_TICK(),
+            "The tick should be equal to the PENDING_ORDERS_TICK constant"
+        );
+        assertEq(ordersData.tickVersion, 0, "The tick version shoudl be 0");
+        assertEq(ordersData.index, 0, "Index of the position should be 0");
 
         // This call should fail with an array out-of-bound error
         vm.expectRevert();
@@ -145,7 +151,11 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
         );
 
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_tick, 0);
-        assertEq(ordersData.amountOfAssets, orderManagerBalanceBefore - _amount, "The accumulated amount should be 0");
+        assertEq(
+            ordersData.amountOfAssets,
+            orderManagerBalanceBefore - _amount,
+            "The amount of the removed position should have been subtracted from the accumulated amount of assets"
+        );
 
         IOrderManager.Order memory userOrder = orderManager.getOrderInTickAtIndex(_tick, 0, 0);
         assertEq(userOrder.user, USER_1, "Order of USER_1 should have taken the index 0");
