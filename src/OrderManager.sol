@@ -19,16 +19,16 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
     using SafeERC20 for IERC20Metadata;
 
     /// @notice The USDN protocol
-    IUsdnProtocol private _usdnProtocol;
+    IUsdnProtocol internal _usdnProtocol;
 
     /// @notice The index of the order of a user in an order array
-    mapping(address => mapping(bytes32 => uint256)) private _userOrderIndexInTick;
+    mapping(address => mapping(bytes32 => uint256)) internal _userOrderIndexInTick;
 
     /// @notice The orders for a tick hash
-    mapping(bytes32 => Order[]) private _ordersInTick;
+    mapping(bytes32 => Order[]) internal _ordersInTick;
 
     /// @notice The accumulated data of all the orders for a tick hash
-    mapping(bytes32 => OrdersDataInTick) private _ordersDataInTick;
+    mapping(bytes32 => OrdersDataInTick) internal _ordersDataInTick;
 
     constructor() Ownable(msg.sender) { }
 
