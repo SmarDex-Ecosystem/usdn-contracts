@@ -18,9 +18,6 @@ import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyG
 contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
     using SafeERC20 for IERC20Metadata;
 
-    /// @notice The divisor for the ratio of assets used in _ordersDataInTick
-    uint128 constant RATIO_OF_ASSETS_USED_DIVISOR = 1e32;
-
     /// @notice The USDN protocol
     IUsdnProtocol private _usdnProtocol;
 
