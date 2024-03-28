@@ -43,7 +43,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint256 initialTimestamp; // ignored if fork is true
         bool fork;
         uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
-        bool enableLongLimit;
     }
 
     SetUpParams public params;
@@ -54,8 +53,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
         fork: false,
-        forkWarp: 0,
-        enableLongLimit: false
+        forkWarp: 0
     });
 
     Usdn public usdn;
@@ -114,11 +112,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             100, // tick spacing 100 = 1%
             ADMIN
         );
-
-        // disable open position limit
-        if (!testParams.enableLongLimit) {
-            protocol.setMinLongPosition(0);
-        }
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
