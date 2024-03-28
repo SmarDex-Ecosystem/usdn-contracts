@@ -11,9 +11,6 @@ import { Wusdn } from "src/Wusdn.sol";
  * @dev Utils for testing Wusdn.sol
  */
 contract WusdnTokenFixture is UsdnTokenFixture {
-    /// Events coming from the OpenZeppelin ERC4626
-    error ERC4626ExceededMaxWithdraw(address owner, uint256 assets, uint256 max);
-
     WusdnHandler public wusdn;
     uint256 public usdnDecimals;
 
