@@ -21,7 +21,7 @@ import {
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
-import { OrderManager } from "src/OrderManager.sol";
+import { OrderManagerHandler } from "test/unit/OrderManager/utils/Handler.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -66,7 +66,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
-    OrderManager public orderManager;
+    OrderManagerHandler public orderManager;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
 
@@ -85,7 +85,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         usdn = new Usdn(address(0), address(0));
         wstETH = new WstETH();
         sdex = new Sdex();
-        orderManager = new OrderManager();
+        orderManager = new OrderManagerHandler();
         oracleMiddleware = new MockOracleMiddleware();
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager =
