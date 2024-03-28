@@ -696,4 +696,49 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // set expo imbalance limits basis point
         protocol.setExpoImbalanceLimits(uint256(openLimitBps), uint256(depositLimitBps), 0, closeLimitBpsBelowDeposit);
     }
+
+    /**
+     * @custom:scenario Call "setMinLongPosition" from admin.
+     * @custom:given The initial usdnProtocol state.
+     * @custom:when Admin wallet trigger the function.
+     * @custom:then The value should be updated.
+     */
+    function test_setMinLongPosition() external adminPrank {
+        uint256 newValue = 1 ether;
+        // expected event
+        vm.expectEmit();
+        emit MinLongPositionUpdated(newValue);
+        // set minimum long position
+        protocol.setMinLongPosition(newValue);
+        // assert that the new value is equal to the expected value
+        assertEq(protocol.getMinLongPosition(), newValue);
+    }
+
+    /**
+     * @custom:scenario Call "setMinLongPosition" from admin.
+     * @custom:given The initial usdnProtocol state.
+     * @custom:when Admin wallet call function with a value superior to 50_000 * 10 ** _priceFeedDecimals.
+     * @custom:then The transaction should revert.
+     */
+    function test_RevertWhen_setMinLongPosition_Sup() external adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidMinLongPosition.selector);
+        // set minimum long position
+        protocol.setMinLongPosition(50_000 * 1e18 + 1);
+    }
+
+    /**
+     * @custom:scenario Call "setMinLongPosition" from admin.
+     * @custom:given The initial usdnProtocol state.
+     * @custom:when Admin wallet call function with zero.
+     * @custom:then The value should be updated to zero.
+     */
+    function test_setMinLongPosition_zero() external adminPrank {
+        // expected event
+        vm.expectEmit();
+        emit MinLongPositionUpdated(0);
+        // set minimum long position
+        protocol.setMinLongPosition(0);
+        // assert that the new value is equal to the expected value
+        assertEq(protocol.getMinLongPosition(), 0);
+    }
 }
