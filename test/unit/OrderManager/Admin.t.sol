@@ -7,6 +7,7 @@ import { OrderManager } from "src/OrderManager.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature Test the admin functions of the OrderManager contract
@@ -95,7 +96,12 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture {
      * @custom:when approveAssetsForSpending is called
      * @custom:then The asset allowance of the usdn protocol on this contract should the max value
      */
-    function test_approveAssetsForSpendingSetAllowanceToMax() public adminPrank {
+    function test_approveAssetsForSpendingSetAllowanceToMax() public {
+        // Reset the allowance of the USDN protocol
+        vm.prank(address(orderManager));
+        wstETH.approve(address(protocol), 0);
+
+        vm.prank(ADMIN);
         orderManager.approveAssetsForSpending(420);
 
         assertEq(

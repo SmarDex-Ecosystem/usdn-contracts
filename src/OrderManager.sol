@@ -75,14 +75,14 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
         _usdnProtocol = usdnProtocol;
 
         // Set allowance to allow the USDN protocol to pull assets from this contract
-        usdnProtocol.getAsset().safeIncreaseAllowance(address(usdnProtocol), type(uint256).max);
+        usdnProtocol.getAsset().forceApprove(address(usdnProtocol), type(uint256).max);
     }
 
     /// @inheritdoc IOrderManager
     function approveAssetsForSpending(uint256 allowance) external onlyOwner {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
 
-        usdnProtocol.getAsset().forceApprove(address(usdnProtocol), allowance);
+        usdnProtocol.getAsset().safeIncreaseAllowance(address(usdnProtocol), allowance);
     }
 
     /* -------------------------------------------------------------------------- */
