@@ -140,7 +140,9 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
         // If there are multiple orders in the tick
         if (ordersCountInTick > 1) {
             // Replace the user order with the last order in the array
-            _ordersInTick[tickHash][userOrderIndex] = _ordersInTick[tickHash][ordersCountInTick - 1];
+            Order memory lastOrderInTick = _ordersInTick[tickHash][ordersCountInTick - 1];
+            _ordersInTick[tickHash][userOrderIndex] = lastOrderInTick;
+            _userOrderIndexInTick[lastOrderInTick.user][tickHash] = userOrderIndex;
         }
 
         // Remove the last order (which should either be a duplicate, or the order to remove) from the array
