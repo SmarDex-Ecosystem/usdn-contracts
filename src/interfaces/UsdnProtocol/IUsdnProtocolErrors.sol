@@ -135,6 +135,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided target USDN price is invalid
     error UsdnProtocolInvalidTargetUsdnPrice();
 
+    /// @dev Indicates that the provided min long position is invalid
+    error UsdnProtocolInvalidMinLongPosition();
+
     /// @dev Indicates that the provided USDN rebase threshold is invalid
     error UsdnProtocolInvalidUsdnRebaseThreshold();
 
