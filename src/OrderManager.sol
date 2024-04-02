@@ -65,6 +65,11 @@ contract OrderManager is Ownable, IOrderManager {
         ordersData_ = _ordersDataInTick[tickHash];
     }
 
+    /// @inheritdoc IOrderManager
+    function getUsdnProtocol() external view returns (IUsdnProtocol) {
+        return _usdnProtocol;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                    Admin                                   */
     /* -------------------------------------------------------------------------- */
