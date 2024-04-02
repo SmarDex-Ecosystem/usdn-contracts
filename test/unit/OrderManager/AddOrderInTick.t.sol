@@ -10,11 +10,11 @@ import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 /**
- * @custom:feature Test the addOrderInTick function of the OrderManager contract
+ * @custom:feature Test the depositAssetsInTick function of the OrderManager contract
  * @custom:background Given a protocol initialized with default params
  * @custom:and 100 wstETH in the test contract
  */
-contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManagerErrors, IOrderManagerEvents {
+contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderManagerErrors, IOrderManagerEvents {
     function setUp() public {
         _setUp(DEFAULT_PARAMS);
 
@@ -27,22 +27,22 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario addOrderInTick is called with a tick not respecting the tick spacing
+     * @custom:scenario depositAssetsInTick is called with a tick not respecting the tick spacing
      * @custom:given A tick that is not a multiple of the tick spacing
-     * @custom:when addOrderInTick is called
+     * @custom:when depositAssetsInTick is called
      * @custom:then the call reverts with a OrderManagerInvalidTick error
      */
     function test_RervertsWhen_tickDoesNotMatchTickSpacing() external {
         int24 tick = protocol.getEffectiveTickForPrice(2000 ether) + 1;
 
         vm.expectRevert(abi.encodeWithSelector(OrderManagerInvalidTick.selector, tick));
-        orderManager.addOrderInTick(tick, 1 ether);
+        orderManager.depositAssetsInTick(tick, 1 ether);
     }
 
     /**
-     * @custom:scenario addOrderInTick is called with a tick lower than the min usable tick
+     * @custom:scenario depositAssetsInTick is called with a tick lower than the min usable tick
      * @custom:given A tick lower than the min usable tick
-     * @custom:when addOrderInTick is called
+     * @custom:when depositAssetsInTick is called
      * @custom:then the call reverts with a OrderManagerInvalidTick error
      */
     function test_RervertsWhen_tickIsLowerThanMinTick() external {
@@ -50,13 +50,13 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         int24 tick = TickMath.minUsableTick(tickSpacing) - tickSpacing;
 
         vm.expectRevert(abi.encodeWithSelector(OrderManagerInvalidTick.selector, tick));
-        orderManager.addOrderInTick(tick, 1 ether);
+        orderManager.depositAssetsInTick(tick, 1 ether);
     }
 
     /**
-     * @custom:scenario addOrderInTick is called with a tick higher than the max usable tick
+     * @custom:scenario depositAssetsInTick is called with a tick higher than the max usable tick
      * @custom:given A tick higher than the max usable tick
-     * @custom:when addOrderInTick is called
+     * @custom:when depositAssetsInTick is called
      * @custom:then the call reverts with a OrderManagerInvalidTick error
      */
     function test_RervertsWhen_tickIsHigherThanMaxTick() external {
@@ -64,23 +64,23 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         int24 tick = TickMath.maxUsableTick(tickSpacing) + tickSpacing;
 
         vm.expectRevert(abi.encodeWithSelector(OrderManagerInvalidTick.selector, tick));
-        orderManager.addOrderInTick(tick, 1 ether);
+        orderManager.depositAssetsInTick(tick, 1 ether);
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                               addOrderInTick                               */
+    /*                             depositAssetsInTick                            */
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario A user adds an order in a tick
+     * @custom:scenario A user deposits assets in a tick
      * @custom:given A user with a 1 ether balance
-     * @custom:when That user calls addOrderInTick
+     * @custom:when That user calls depositAssetsInTick
      * @custom:then The order is created
      * @custom:and an UserDepositedAssetsInTick event is emitted
      * @custom:and the funds are transferred from the user to the contract
      * @custom:and the state of the contract is updated
      */
-    function test_addOrderInTick() external {
+    function test_depositAssetsInTick() external {
         int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
         uint256 tickVersion = 0;
         uint96 amount = 1 ether;
@@ -89,7 +89,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
 
         vm.expectEmit();
         emit UserDepositedAssetsInTick(address(this), amount, tick, tickVersion);
-        orderManager.addOrderInTick(tick, amount);
+        orderManager.depositAssetsInTick(tick, amount);
 
         assertEq(
             orderManagerBalanceBefore + amount,
@@ -113,15 +113,15 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
     }
 
     /**
-     * @custom:scenario A user adds 2 orders in a tick
+     * @custom:scenario A user deposits assets 2 times in the same tick
      * @custom:given A user with a 1 ether balance
-     * @custom:when That user calls addOrderInTick 2 times on the same tick
+     * @custom:when That user calls depositAssetsInTick 2 times on the same tick
      * @custom:then The amount of funds in the tick is equal to the sum of amounts in both calls
      * @custom:and 2 UserDepositedAssetsInTick events are emitted
      * @custom:and the funds are transferred from the user to the contract
      * @custom:and the state of the contract is updated
      */
-    function test_addMultipleOrdersInTheSameTick() external {
+    function test_depositAssetsMultipleTimesInTheSameTick() external {
         int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
         uint256 tickVersion = 0;
         uint96 amount = 0.5 ether;
@@ -132,7 +132,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
 
         vm.expectEmit();
         emit UserDepositedAssetsInTick(address(this), amount, tick, tickVersion);
-        orderManager.addOrderInTick(tick, amount);
+        orderManager.depositAssetsInTick(tick, amount);
 
         uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
         assertEq(userOrderAmount, amount, "Wrong amount of assets saved for the user");
@@ -152,7 +152,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
 
         vm.expectEmit();
         emit UserDepositedAssetsInTick(address(this), amount * 2, tick, tickVersion);
-        orderManager.addOrderInTick(tick, amount);
+        orderManager.depositAssetsInTick(tick, amount);
 
         userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
         assertEq(
@@ -176,15 +176,15 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
     }
 
     /**
-     * @custom:scenario 2 users add an order in the same tick
+     * @custom:scenario 2 users deposit assets in the same tick
      * @custom:given 2 users with a balance of at least 1 ether
-     * @custom:when Those users call addOrderInTick wit te same tick
+     * @custom:when Those users call depositAssetsInTick wit te same tick
      * @custom:then The orders are created
      * @custom:and UserDepositedAssetsInTick events are emitted
      * @custom:and the funds are transferred from the users to the contract
      * @custom:and the state of the contract is updated
      */
-    function test_addMultipleOrdersInTheSameTickFromDifferentUsers() external {
+    function test_depositAssetsInTheSameTickFromDifferentUsers() external {
         int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
         uint256 tickVersion = 0;
         uint96 amountUser1 = 1 ether;
@@ -194,7 +194,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
 
         vm.expectEmit();
         emit UserDepositedAssetsInTick(address(this), amountUser1, tick, tickVersion);
-        orderManager.addOrderInTick(tick, amountUser1);
+        orderManager.depositAssetsInTick(tick, amountUser1);
 
         assertEq(
             orderManagerBalanceBefore + amountUser1,
@@ -226,7 +226,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         vm.prank(USER_1);
         vm.expectEmit();
         emit UserDepositedAssetsInTick(USER_1, amountUser2, tick, tickVersion);
-        orderManager.addOrderInTick(tick, amountUser2);
+        orderManager.depositAssetsInTick(tick, amountUser2);
 
         userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
         assertEq(userOrderAmount, amountUser1, "The amount of assets for the first user should not have changed");

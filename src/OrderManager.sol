@@ -120,7 +120,7 @@ contract OrderManager is Ownable, IOrderManager {
 
         // Check that the current user has assets in this tick
         if (userAmount < amountToWithdraw) {
-            revert OrderManagerNoOrderForUserInTick(tick, msg.sender);
+            revert OrderManagerInsufficientFunds(tick, msg.sender, userAmount, amountToWithdraw);
         }
 
         // Remove the amount from the storage

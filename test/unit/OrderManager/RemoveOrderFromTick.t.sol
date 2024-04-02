@@ -9,12 +9,12 @@ import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 /**
- * @custom:feature Test the removeOrderFromTick function of the OrderManager contract
+ * @custom:feature Test the withdrawAssetsFromTick function of the OrderManager contract
  * @custom:background Given a protocol initialized with default params
  * @custom:and 100 wstETH in the test contract
  * @custom:and a 1 ether order at the 2000$ tick
  */
-contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderManagerErrors, IOrderManagerEvents {
+contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrderManagerErrors, IOrderManagerEvents {
     int24 private _tick;
     uint232 private _amount;
 
@@ -26,7 +26,7 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
 
         wstETH.mintAndApprove(address(this), _amount, address(orderManager), type(uint256).max);
         wstETH.mintAndApprove(USER_1, _amount + 1 ether, address(orderManager), type(uint256).max);
-        orderManager.addOrderInTick(_tick, _amount);
+        orderManager.depositAssetsInTick(_tick, _amount);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -34,37 +34,37 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario removeOrderFromTick is called but there are no order for the user in the tick
+     * @custom:scenario withdrawAssetsFromTick is called but there are no order for the user in the tick
      * @custom:given A tick with orders but none for the user
-     * @custom:when removeOrderFromTick is called for this tick
-     * @custom:then the call reverts with a OrderManagerNoOrderForUserInTick error
+     * @custom:when withdrawAssetsFromTick is called for this tick
+     * @custom:then the call reverts with a OrderManagerInsufficientFunds error
      */
     function test_RervertsWhen_noTickForTheCurrentUser() external {
         vm.prank(USER_1);
-        vm.expectRevert(abi.encodeWithSelector(OrderManagerNoOrderForUserInTick.selector, _tick, USER_1));
-        orderManager.removeOrderFromTick(_tick, _amount);
+        vm.expectRevert(abi.encodeWithSelector(OrderManagerInsufficientFunds.selector, _tick, USER_1, 0, _amount));
+        orderManager.withdrawAssetsFromTick(_tick, _amount);
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                             removeOrderFromTick                            */
+    /*                           withdrawAssetsFromTick                           */
     /* -------------------------------------------------------------------------- */
 
     /**
      * @custom:scenario A user wants to remove his order from a tick
      * @custom:given A tick with an order from the user
-     * @custom:when removeOrderFromTick is called for this tick
+     * @custom:when withdrawAssetsFromTick is called for this tick
      * @custom:then the amount of the user in the tick is removed from the contract
      * @custom:and an UserWithdrewAssetsFromTick event is emitted
      * @custom:and the assets are sent back to the user
      * @custom:and the state of the order manager is updated
      */
-    function test_removeOrderFromTick() external {
+    function test_withdrawAssetsFromTick() external {
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
         emit UserWithdrewAssetsFromTick(address(this), 0, _tick, 0);
-        orderManager.removeOrderFromTick(_tick, _amount);
+        orderManager.withdrawAssetsFromTick(_tick, _amount);
 
         assertEq(
             orderManagerBalanceBefore - _amount,
@@ -92,13 +92,13 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
     /**
      * @custom:scenario A user wants to remove his order from a tick partially
      * @custom:given A tick with an order from the user
-     * @custom:when removeOrderFromTick is called for this tick with an amount lower than the amount in the tick
+     * @custom:when withdrawAssetsFromTick is called for this tick with an amount lower than the amount in the tick
      * @custom:then the amount of the user in the tick is removed from the contract
      * @custom:and an UserWithdrewAssetsFromTick event is emitted
      * @custom:and the assets are sent back to the user
      * @custom:and the state of the order manager is updated
      */
-    function test_removeOrderFromTickPartially() external {
+    function test_withdrawAssetsFromTickPartially() external {
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
         uint232 partialAmount = _amount / 3;
@@ -107,7 +107,7 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
         /* ----------------- 1st call that withdraw a partial amount ---------------- */
         vm.expectEmit();
         emit UserWithdrewAssetsFromTick(address(this), amountLeft, _tick, 0);
-        orderManager.removeOrderFromTick(_tick, partialAmount);
+        orderManager.withdrawAssetsFromTick(_tick, partialAmount);
 
         assertEq(
             orderManagerBalanceBefore - partialAmount,
@@ -136,7 +136,7 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
 
         vm.expectEmit();
         emit UserWithdrewAssetsFromTick(address(this), 0, _tick, 0);
-        orderManager.removeOrderFromTick(_tick, amountLeft);
+        orderManager.withdrawAssetsFromTick(_tick, amountLeft);
 
         assertEq(
             orderManagerBalanceBefore - amountLeft,
