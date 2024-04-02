@@ -85,7 +85,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         usdn = new Usdn(address(0), address(0));
         wstETH = new WstETH();
         sdex = new Sdex();
-        orderManager = new OrderManagerHandler();
         oracleMiddleware = new MockOracleMiddleware();
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager =
@@ -134,7 +133,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         wstETH.approve(address(protocol), type(uint256).max);
 
-        orderManager.initialize(protocol);
+        orderManager = new OrderManagerHandler(protocol);
+
         // leverage approx 2x
         protocol.initialize(
             testParams.initialDeposit,

@@ -4,8 +4,6 @@ pragma solidity 0.8.20;
 import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { IOrderManagerErrors } from "src/interfaces/OrderManager/IOrderManagerErrors.sol";
 import { IOrderManagerEvents } from "src/interfaces/OrderManager/IOrderManagerEvents.sol";
-import { OrderManagerHandler } from "test/unit/OrderManager/utils/Handler.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -34,22 +32,6 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
     /* -------------------------------------------------------------------------- */
     /*                                   Reverts                                  */
     /* -------------------------------------------------------------------------- */
-
-    /**
-     * @custom:scenario removeOrderFromTick is called although the order manager contract hasn't been initialized
-     * @custom:given A non-initialized order manager contract
-     * @custom:when removeOrderFromTick is called
-     * @custom:then the call reverts with a InitializableReentrancyGuardUninitialized error
-     */
-    function test_RervertsWhen_orderManagerNotInitialized() external {
-        // Create a new instance of the protocol that is not initialized
-        orderManager = new OrderManagerHandler();
-
-        vm.expectRevert(
-            abi.encodeWithSelector(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
-        );
-        orderManager.removeOrderFromTick(_tick);
-    }
 
     /**
      * @custom:scenario removeOrderFromTick is called when there are no orders in the tick

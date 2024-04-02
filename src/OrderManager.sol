@@ -8,20 +8,22 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @title OrderManager contract
  * @notice This contract stores and manage orders that should serve to open a long position when a liquidation happen in
  * the same tick in the USDN protocol.
  */
-contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
+contract OrderManager is Ownable, IOrderManager {
     using SafeERC20 for IERC20Metadata;
 
     int24 public constant PENDING_ORDERS_TICK = type(int24).min;
 
     /// @notice The USDN protocol
-    IUsdnProtocol internal _usdnProtocol;
+    IUsdnProtocol internal immutable _usdnProtocol;
+
+    /// @notice The asset used in the USDN protocol
+    IERC20Metadata internal immutable _asset;
 
     /// @notice The user order's index in a _ordersInTick array
     mapping(address => mapping(bytes32 => uint256)) internal _userOrderIndexInTick;
@@ -32,7 +34,17 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
     /// @notice The accumulated data of all the orders for a tick hash
     mapping(bytes32 => OrdersDataInTick) internal _ordersDataInTick;
 
-    constructor() Ownable(msg.sender) { }
+    /**
+     * @notice Initialize the contract with all the needed variables.
+     * @param usdnProtocol The address of the USDN protocol
+     */
+    constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) {
+        _usdnProtocol = usdnProtocol;
+        _asset = usdnProtocol.getAsset();
+
+        // Set allowance to allow the USDN protocol to pull assets from this contract
+        _asset.forceApprove(address(usdnProtocol), type(uint256).max);
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                                   Getters                                  */
@@ -70,18 +82,10 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOrderManager
-    function initialize(IUsdnProtocol usdnProtocol) external onlyOwner initializer {
-        _usdnProtocol = usdnProtocol;
-
-        // Set allowance to allow the USDN protocol to pull assets from this contract
-        usdnProtocol.getAsset().forceApprove(address(usdnProtocol), type(uint256).max);
-    }
-
-    /// @inheritdoc IOrderManager
     function approveAssetsForSpending(uint256 allowance) external onlyOwner {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
 
-        usdnProtocol.getAsset().safeIncreaseAllowance(address(usdnProtocol), allowance);
+        _asset.safeIncreaseAllowance(address(usdnProtocol), allowance);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -89,7 +93,7 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOrderManager
-    function addOrderInTick(int24 tick, uint96 amount) external initializedAndNonReentrant {
+    function addOrderInTick(int24 tick, uint96 amount) external {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
 
         // Check if the provided tick is valid and inside limits
@@ -115,13 +119,13 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
         _ordersInTick[tickHash].push(Order({ amountOfAssets: amount, user: msg.sender }));
 
         // Transfer the user assets to this contract
-        usdnProtocol.getAsset().safeTransferFrom(msg.sender, address(this), amount);
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         emit OrderCreated(msg.sender, amount, tick, tickVersion, orderIndex);
     }
 
     /// @inheritdoc IOrderManager
-    function removeOrderFromTick(int24 tick) external initializedAndNonReentrant {
+    function removeOrderFromTick(int24 tick) external {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
         uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
@@ -156,7 +160,7 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
         _ordersDataInTick[tickHash].amountOfAssets -= userOrder.amountOfAssets;
 
         // Transfer the assets back to the user
-        usdnProtocol.getAsset().safeTransfer(msg.sender, userOrder.amountOfAssets);
+        _asset.safeTransfer(msg.sender, userOrder.amountOfAssets);
 
         emit OrderRemoved(msg.sender, tick, tickVersion, userOrderIndex);
     }

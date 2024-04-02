@@ -5,8 +5,6 @@ import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { IOrderManagerErrors } from "src/interfaces/OrderManager/IOrderManagerErrors.sol";
 import { IOrderManagerEvents } from "src/interfaces/OrderManager/IOrderManagerEvents.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
-import { OrderManagerHandler } from "test/unit/OrderManager/utils/Handler.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -27,23 +25,6 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
     /* -------------------------------------------------------------------------- */
     /*                                   Reverts                                  */
     /* -------------------------------------------------------------------------- */
-
-    /**
-     * @custom:scenario addOrderInTick is called although the order manager contract hasn't been initialized
-     * @custom:given A non-initialized order manager contract
-     * @custom:when addOrderInTick is called
-     * @custom:then the call reverts with a InitializableReentrancyGuardUninitialized error
-     */
-    function test_RervertsWhen_orderManagerNotInitialized() external {
-        // Create a new instance of the protocol that is not initialized
-        orderManager = new OrderManagerHandler();
-        int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(InitializableReentrancyGuard.InitializableReentrancyGuardUninitialized.selector)
-        );
-        orderManager.addOrderInTick(tick, 1 ether);
-    }
 
     /**
      * @custom:scenario addOrderInTick is called with a tick not respecting the tick spacing
