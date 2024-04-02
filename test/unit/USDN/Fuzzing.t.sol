@@ -109,6 +109,9 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
      * @custom:and The balance of the user is increased by the amount of tokens (with 1 wei tolerance)
      * @custom:and The sum of the two balances does not change (with 1 wei tolerance)
      * @custom:and The `Transfer` event is emitted with the correct amount
+     * @custom:and The shares of this contract are decreased by the amount of transferred shares
+     * @custom:and The shares of the user are increased by the amount of transferred shares
+     * @custom:and The sum of the shares does not change
      * @param divisor The divisor to use
      * @param balanceThis The balance of this contract
      * @param balanceUser The balance of the user
@@ -134,11 +137,15 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
 
         uint256 balanceBefore = usdn.balanceOf(address(this));
         uint256 balanceUserBefore = usdn.balanceOf(USER_1);
+        uint256 sharesBefore = usdn.sharesOf(address(this));
+        uint256 sharesUserBefore = usdn.sharesOf(USER_1);
         transferAmount = bound(transferAmount, 0, balanceBefore);
 
         vm.expectEmit(address(usdn));
         emit Transfer(address(this), USER_1, transferAmount); // expected event
         usdn.transfer(USER_1, transferAmount);
+
+        uint256 transferredShares = usdn.sharesOf(USER_1) - sharesUserBefore;
 
         assertApproxEqAbs(usdn.balanceOf(address(this)), balanceBefore - transferAmount, 1, "contract balance decrease");
         assertApproxEqAbs(usdn.balanceOf(USER_1), balanceUserBefore + transferAmount, 1, "user balance increase");
@@ -148,6 +155,9 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
             1,
             "sum of balances"
         );
+        assertEq(usdn.sharesOf(address(this)), sharesBefore - transferredShares, "contract shares decrease");
+        assertEq(usdn.sharesOf(USER_1), sharesUserBefore + transferredShares, "user shares increase");
+        assertEq(sharesBefore + sharesUserBefore, usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), "sum of shares");
     }
 
     /**
