@@ -244,7 +244,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         assertEq(
             initialTotalExpo + position.totalExpo,
             protocol.getTotalExpo(),
-            "Total expo should have increased by the position's total expo"
+            "Total expo should have increased by the total expo of position"
         );
         assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
 
@@ -323,7 +323,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         assertEq(
             initialTotalExpo + position.totalExpo,
             protocol.getTotalExpo(),
-            "Total expo should have increased by the position's total expo"
+            "Total expo should have increased by the total expo of position"
         );
         assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
     }
