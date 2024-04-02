@@ -52,7 +52,6 @@ contract TestImbalanceLimitWithdrawalFuzzing is UsdnProtocolBaseFixture {
             );
         }
 
-        // call `i_checkImbalanceLimitWithdrawal` with withdrawalAmount and totalExpo
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalAmount, totalExpo);
     }
 }

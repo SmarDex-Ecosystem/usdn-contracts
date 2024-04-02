@@ -183,9 +183,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         int256 currentLongExpo = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
 
-        // By increasing vault expo, deposit will inevitably increase the gap between vault and long expo
-        // As it is not possible to calculate imbalance correctly in cases negative long expo or null,
-        // deposit will be reverted
+        // By increasing the vault expo, the deposit will inevitably increase the gap between the vault and long expo
+        // As it is not possible to calculate the imbalance correctly in cases of negative or null long expo,
+        // the deposit will be reverted
         if (currentLongExpo <= 0) {
             revert UsdnProtocolInvalidLongExpo();
         }
@@ -216,9 +216,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         int256 newVaultExpo = _balanceVault.toInt256().safeSub(withdrawalValue.toInt256());
 
-        // cannot be calculated if equal zero and must also be
-        // reverted if withdrawal amount is higher than balance vault
-        if (newVaultExpo <= 0) {
+        // cannot be calculated if equal zero
+        if (newVaultExpo == 0) {
             revert UsdnProtocolInvalidVaultExpo();
         }
 
@@ -291,16 +290,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidLongExpo();
         }
 
-        // In rare cases close a position will increase the long expo, in most others decrease it
-        // As it is not possible to calculate imbalance correctly when long expo remain or become negative
-        // these cases will be dealt in a specific way
+        // In rare cases, closing a position can increase the long expo, while in most cases it decreases it.
+        // As it is not possible to calculate the imbalance correctly when the new long expo is negative,
+        // this case is dealt with in a specific way.
         if (newLongExpo < 0) {
             // the current long expo
             int256 currentLongExpo = totalExpo.safeSub(balanceLong);
-            // In the case close position will increase or maintain the long expo it will be automatically accepted
+            // We accept the action if it leads to an increase in the long trading expo (reduces imbalance).
             if (newLongExpo >= currentLongExpo) {
                 return;
-                // In the case close position will decrease the long expo it will be reverted
+                // We revert if the actions leads to a decrease in the (already negative) long trading expo.
             } else {
                 revert UsdnProtocolInvalidLongExpo();
             }

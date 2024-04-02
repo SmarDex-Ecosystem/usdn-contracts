@@ -39,7 +39,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitDeposit` function is called
      * @custom:then The transaction should revert
      */
-    function test_RevertWith_checkImbalanceLimitDepositZeroLongExpo() public {
+    function test_RevertWhen_checkImbalanceLimitDepositZeroLongExpo() public {
         // disable close limit
         vm.prank(ADMIN);
         protocol.setExpoImbalanceLimits(200, 200, 600, 0);
@@ -89,7 +89,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitDeposit` function is called
      * @custom:then The transaction should revert
      */
-    function test_RevertWith_checkImbalanceLimitDepositNegativeLongExpo() public {
+    function test_RevertWhen_checkImbalanceLimitDepositNegativeLongExpo() public {
         setUpUserPositionInLong(
             address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
         );
@@ -131,7 +131,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitDeposit` function is called with a value above the deposit limit
      * @custom:then The transaction should revert
      */
-    function test_RevertWith_checkImbalanceLimitDepositOutLimit() public {
+    function test_RevertWhen_checkImbalanceLimitDepositOutLimit() public {
         (int256 depositLimitBps, uint256 vaultExpoValueToLimit) = _getDepositLimitValues();
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, depositLimitBps)
