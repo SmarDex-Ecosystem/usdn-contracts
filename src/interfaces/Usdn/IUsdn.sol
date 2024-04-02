@@ -28,12 +28,38 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function sharesOf(address account) external view returns (uint256 shares);
 
     /**
+     * @notice Transfer a given amount of shares from the `msg.sender` to `to`.
+     * @param to Recipient of the shares
+     * @param value Number of shares to transfer
+     * @return `true` in case of success
+     */
+    function transferShares(address to, uint256 value) external returns (bool);
+
+    /**
+     * @notice Transfer a given amount of shares from the `from` to `to`.
+     * @dev There should be sufficient allowance for the spender
+     * @param from Owner of the shares
+     * @param to Recipient of the shares
+     * @param value Number of shares to transfer
+     * @return `true` in case of success
+     */
+    function transferSharesFrom(address from, address to, uint256 value) external returns (bool);
+
+    /**
      * @notice Restricted function to mint new shares, providing a token value.
      * @dev Caller must have the MINTER_ROLE.
      * @param to account to receive the new shares
      * @param amount amount of tokens to mint, is internally converted to the proper shares amounts
      */
     function mint(address to, uint256 amount) external;
+
+    /**
+     * @notice Restricted function to mint new shares.
+     * @dev Caller must have the MINTER_ROLE.
+     * @param to account to receive the new shares
+     * @param amount amount of shares to mint
+     */
+    function mintShares(address to, uint256 amount) external;
 
     /**
      * @notice Destroy a `value` amount of tokens from the caller, reducing the total supply.
@@ -47,6 +73,19 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * @param value amount of tokens to burn, is internally converted to the proper shares amounts
      */
     function burnFrom(address account, uint256 value) external;
+
+    /**
+     * @notice Destroy a `value` amount of shares from the caller, reducing the total supply.
+     * @param value amount of shares to burn
+     */
+    function burnShares(uint256 value) external;
+
+    /**
+     * @notice Destroy a `value` amount of shares from `account`, deducting from the caller's allowance.
+     * @param account account to burn shares from
+     * @param value amount of shares to burn
+     */
+    function burnSharesFrom(address account, uint256 value) external;
 
     /**
      * @notice Convert a number of tokens to the corresponding amount of shares.
