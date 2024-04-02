@@ -5,7 +5,7 @@ interface IOrderManagerEvents {
     /**
      * @notice Emitted when a user deposit assets in a tick.
      * @param user The user that deposited the assets
-     * @param amount The amount of assets in the order
+     * @param amount The amount of assets deposited
      * @param tick The desired tick to open the position in
      * @param tickVersion The version of the tick
      */

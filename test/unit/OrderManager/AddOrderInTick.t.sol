@@ -151,7 +151,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit UserDepositedAssetsInTick(address(this), amount * 2, tick, tickVersion);
+        emit UserDepositedAssetsInTick(address(this), amount, tick, tickVersion);
         orderManager.addOrderInTick(tick, amount);
 
         userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
