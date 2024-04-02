@@ -101,6 +101,66 @@ contract TestUsdnFuzzing is UsdnTokenFixture {
     }
 
     /**
+     * @custom:scenario Mint two balances, adjust divisor and then transfer an amount of tokens between the two
+     * @custom:given This contract with a balance between 1 and MAX_TOKENS
+     * @custom:and A user with a balance between 0 and MAX_TOKENS - balance of this contract
+     * @custom:when The tokens are transferred to the user after changing the divisor
+     * @custom:then The balance of this contract is decreased by the amount of tokens (with 1 wei tolerance)
+     * @custom:and The balance of the user is increased by the amount of tokens (with 1 wei tolerance)
+     * @custom:and The sum of the two balances does not change (with 1 wei tolerance)
+     * @custom:and The `Transfer` event is emitted with the correct amount
+     * @custom:and The shares of this contract are decreased by the amount of transferred shares
+     * @custom:and The shares of the user are increased by the amount of transferred shares
+     * @custom:and The sum of the shares does not change
+     * @param divisor The divisor to use
+     * @param balanceThis The balance of this contract
+     * @param balanceUser The balance of the user
+     * @param transferAmount The amount of tokens to transfer
+     */
+    function testFuzz_transferWithTwoBalances(
+        uint256 divisor,
+        uint256 balanceThis,
+        uint256 balanceUser,
+        uint256 transferAmount
+    ) public {
+        divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
+        balanceThis = bound(balanceThis, 1, usdn.maxTokens());
+        balanceUser = bound(balanceUser, 0, usdn.maxTokens() - balanceThis);
+        usdn.mint(address(this), balanceThis);
+        if (balanceUser > 0) {
+            usdn.mint(USER_1, balanceUser);
+        }
+
+        if (divisor < usdn.MAX_DIVISOR()) {
+            usdn.rebase(divisor);
+        }
+
+        uint256 balanceBefore = usdn.balanceOf(address(this));
+        uint256 balanceUserBefore = usdn.balanceOf(USER_1);
+        uint256 sharesBefore = usdn.sharesOf(address(this));
+        uint256 sharesUserBefore = usdn.sharesOf(USER_1);
+        transferAmount = bound(transferAmount, 0, balanceBefore);
+
+        vm.expectEmit(address(usdn));
+        emit Transfer(address(this), USER_1, transferAmount); // expected event
+        usdn.transfer(USER_1, transferAmount);
+
+        uint256 transferredShares = usdn.sharesOf(USER_1) - sharesUserBefore;
+
+        assertApproxEqAbs(usdn.balanceOf(address(this)), balanceBefore - transferAmount, 1, "contract balance decrease");
+        assertApproxEqAbs(usdn.balanceOf(USER_1), balanceUserBefore + transferAmount, 1, "user balance increase");
+        assertApproxEqAbs(
+            balanceBefore + balanceUserBefore,
+            usdn.balanceOf(address(this)) + usdn.balanceOf(USER_1),
+            1,
+            "sum of balances"
+        );
+        assertEq(usdn.sharesOf(address(this)), sharesBefore - transferredShares, "contract shares decrease");
+        assertEq(usdn.sharesOf(USER_1), sharesUserBefore + transferredShares, "user shares increase");
+        assertEq(sharesBefore + sharesUserBefore, usdn.sharesOf(address(this)) + usdn.sharesOf(USER_1), "sum of shares");
+    }
+
+    /**
      * @custom:scenario Check that the total supply is the sum of the balances of all holders
      * @custom:given A divisor between MAX_DIVISOR and MIN_DIVISOR
      * @custom:and 10 holders with random balances
