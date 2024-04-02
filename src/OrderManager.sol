@@ -23,7 +23,7 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
     /// @notice The USDN protocol
     IUsdnProtocol internal _usdnProtocol;
 
-    /// @notice The index of the order of a user in an order array
+    /// @notice The user order's index in a _ordersInTick array
     mapping(address => mapping(bytes32 => uint256)) internal _userOrderIndexInTick;
 
     /// @notice The orders for a tick hash
