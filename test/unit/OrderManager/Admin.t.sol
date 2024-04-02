@@ -60,14 +60,14 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture {
 
         // Sanity check
         assertEq(
-            orderManager.getUsdnProtocol(),
+            address(orderManager.getUsdnProtocol()),
             address(0),
             "The USDN protocol address should not be set in order for this test to work"
         );
 
         orderManager.initialize(protocol);
 
-        assertEq(orderManager.getUsdnProtocol(), address(protocol), "The USDN protocol address was not set");
+        assertEq(address(orderManager.getUsdnProtocol()), address(protocol), "The USDN protocol address was not set");
         assertEq(
             protocol.getAsset().allowance(address(orderManager), address(protocol)),
             type(uint256).max,
