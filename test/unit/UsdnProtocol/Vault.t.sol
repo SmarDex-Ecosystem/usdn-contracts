@@ -99,8 +99,8 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
      * @param amount The amount to be split and merged
      */
     function testFuzz_withdrawalAmountSplitting(uint152 amount) public {
-        uint24 lsb = protocol.i_getWithdrawalAmountLSB(amount);
-        uint128 msb = protocol.i_getWithdrawalAmountMSB(amount);
+        uint24 lsb = protocol.i_calcWithdrawalAmountLSB(amount);
+        uint128 msb = protocol.i_calcWithdrawalAmountMSB(amount);
         uint256 res = protocol.i_mergeWithdrawalAmountParts(lsb, msb);
         assertEq(res, amount, "Amount splitting and merging failed");
     }

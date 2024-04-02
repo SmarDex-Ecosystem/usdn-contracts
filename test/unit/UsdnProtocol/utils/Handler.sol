@@ -318,11 +318,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _mergeWithdrawalAmountParts(sharesLSB, sharesMSB);
     }
 
-    function i_getWithdrawalAmountLSB(uint152 usdnShares) external pure returns (uint24) {
-        return _getWithdrawalAmountLSB(usdnShares);
+    function i_calcWithdrawalAmountLSB(uint152 usdnShares) external pure returns (uint24) {
+        return _calcWithdrawalAmountLSB(usdnShares);
     }
 
-    function i_getWithdrawalAmountMSB(uint152 usdnShares) external pure returns (uint128) {
-        return _getWithdrawalAmountMSB(usdnShares);
+    function i_calcWithdrawalAmountMSB(uint152 usdnShares) external pure returns (uint128) {
+        return _calcWithdrawalAmountMSB(usdnShares);
     }
 }

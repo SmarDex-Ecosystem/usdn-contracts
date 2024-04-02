@@ -134,7 +134,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param usdnShares The amount of USDN shares
      * @return sharesLSB_ The 24 least significant bits of the USDN shares
      */
-    function _getWithdrawalAmountLSB(uint152 usdnShares) internal pure returns (uint24 sharesLSB_) {
+    function _calcWithdrawalAmountLSB(uint152 usdnShares) internal pure returns (uint24 sharesLSB_) {
         sharesLSB_ = uint24(usdnShares);
     }
 
@@ -143,7 +143,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param usdnShares The amount of USDN shares
      * @return sharesMSB_ The 128 most significant bits of the USDN shares
      */
-    function _getWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
+    function _calcWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
         sharesMSB_ = uint128(usdnShares >> 24);
     }
 
