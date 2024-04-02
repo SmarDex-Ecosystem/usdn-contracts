@@ -10,6 +10,4 @@ interface IOrderManagerErrors {
     error OrderManagerNoOrderForUserInTick(int24 tick, address user);
     /// @notice Indicates that the caller is not the usdn protocol.
     error OrderManagerCallerIsNotUSDNProtocol(address caller);
-    /// @notice Indicates that the caller is not the usdn protocol.
-    error OrderManagerUserAlreadyInTick(address caller, int24 tick, uint256 tickVersion);
 }

@@ -67,27 +67,12 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         orderManager.addOrderInTick(tick, 1 ether);
     }
 
-    /**
-     * @custom:scenario addOrderInTick is called by a user that already has an order in the tick
-     * @custom:given An order from a user in a tick
-     * @custom:when addOrderInTick is called by the same user
-     * @custom:then the call reverts with a OrderManagerUserAlreadyInTick error
-     */
-    function test_RervertsWhen_userAlreadyHasOrderInTick() external {
-        int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
-
-        orderManager.addOrderInTick(tick, 1 ether);
-
-        vm.expectRevert(abi.encodeWithSelector(OrderManagerUserAlreadyInTick.selector, address(this), tick, 0));
-        orderManager.addOrderInTick(tick, 1 ether);
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                               addOrderInTick                               */
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario A user add an  order in a tick
+     * @custom:scenario A user add an order in a tick
      * @custom:given A user with a 1 ether balance
      * @custom:when That user calls addOrderInTick
      * @custom:then The order is created
@@ -128,12 +113,75 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
     }
 
     /**
+     * @custom:scenario A user add 2 orders in a tick
+     * @custom:given A user with a 1 ether balance
+     * @custom:when That user calls addOrderInTick 2 times on the same tick
+     * @custom:then The amount of funds in the tick is equal to the sum of amounts in both calls
+     * @custom:and 2 OrderCreated events are emitted
+     * @custom:and the funds are transferred from the user to the contract
+     * @custom:and the state of the contract is updated
+     */
+    function test_addOrdersInTheSameTick() external {
+        int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
+        uint256 tickVersion = 0;
+        uint96 amount = 0.5 ether;
+        uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
+        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
+
+        /* -------------------------------- 1st call -------------------------------- */
+
+        vm.expectEmit();
+        emit OrderCreated(address(this), amount, tick, tickVersion);
+        orderManager.addOrderInTick(tick, amount);
+
+        uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
+        assertEq(userOrderAmount, amount, "Wrong amount of assets saved for the user");
+        assertEq(userBalanceBefore - amount, wstETH.balanceOf(address(this)), "The assets were not taken from the user");
+
+        IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
+        assertEq(ordersData.amountOfAssets, amount, "The accumulated amount should be equal to the amount of the order");
+        assertEq(
+            orderManagerBalanceBefore + amount,
+            wstETH.balanceOf(address(orderManager)),
+            "The assets were not sent to the order manager"
+        );
+
+        /* -------------------------------- 2nd call -------------------------------- */
+        orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
+        userBalanceBefore = wstETH.balanceOf(address(this));
+
+        vm.expectEmit();
+        emit OrderCreated(address(this), amount, tick, tickVersion);
+        orderManager.addOrderInTick(tick, amount);
+
+        userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
+        assertEq(
+            userOrderAmount,
+            amount * 2,
+            "The amount of assets saved for the user should be the sum of the amount in the tick"
+        );
+        assertEq(
+            userBalanceBefore - amount,
+            wstETH.balanceOf(address(this)),
+            "The assets were not taken from the user on the 2nd call"
+        );
+
+        ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
+        assertEq(ordersData.amountOfAssets, amount * 2, "The accumulated amount should be equal to the sum of amounts");
+        assertEq(
+            orderManagerBalanceBefore + amount,
+            wstETH.balanceOf(address(orderManager)),
+            "The assets were not sent to the order manager on the 2nd call"
+        );
+    }
+
+    /**
      * @custom:scenario 2 users add an order in the same tick
      * @custom:given 2 users with a balance of at least 1 ether
-     * @custom:when That user calls addOrderInTick
-     * @custom:then The order is created
-     * @custom:and an OrderCreated event is emitted
-     * @custom:and the funds are transferred from the user to the contract
+     * @custom:when Those users call addOrderInTick wit te same tick
+     * @custom:then The orders are created
+     * @custom:and OrderCreated events are emitted
+     * @custom:and the funds are transferred from the users to the contract
      * @custom:and the state of the contract is updated
      */
     function test_addMultipleOrdersInTheSameTick() external {
@@ -169,7 +217,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         assertEq(ordersData.longPositionTickVersion, 0, "The tick version shoudl be 0");
         assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
 
-        /* -------------- Add one more order to check the accumulation -------------- */
+        /* ------------------------- Order of the other user ------------------------ */
         uint256 accumulatedAmountBefore = ordersData.amountOfAssets;
         amount = 2 ether;
 
@@ -185,7 +233,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         assertEq(
             ordersData.amountOfAssets,
             amount + accumulatedAmountBefore,
-            "The accumulated amount of assets should be the sum of all the added positions"
+            "The accumulated amount of assets should be the sum of all the added amounts of funds"
         );
     }
 }

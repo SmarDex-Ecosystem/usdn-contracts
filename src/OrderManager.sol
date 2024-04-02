@@ -95,19 +95,14 @@ contract OrderManager is Ownable, IOrderManager {
             revert OrderManagerInvalidTick(tick);
         }
 
+        // Get the tick hash the order will be in
         uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
-
-        // Check if the user already has deposited assets in this tick
-        if (_userAmountInTick[tickHash][msg.sender] > 0) {
-            revert OrderManagerUserAlreadyInTick(msg.sender, tick, tickVersion);
-        }
 
         // Save the order's data
         _ordersDataInTick[tickHash].amountOfAssets += amount;
         _ordersDataInTick[tickHash].longPositionTick = PENDING_ORDERS_TICK;
-
-        _userAmountInTick[tickHash][msg.sender] = amount;
+        _userAmountInTick[tickHash][msg.sender] += amount;
 
         // Transfer the user assets to this contract
         _asset.safeTransferFrom(msg.sender, address(this), amount);
