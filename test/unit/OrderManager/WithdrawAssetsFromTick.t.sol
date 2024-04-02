@@ -51,10 +51,10 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario A user wants to remove his order from a tick
+     * @custom:scenario A user wants to withdraw his assets from a tick
      * @custom:given A tick with an order from the user
-     * @custom:when withdrawAssetsFromTick is called for this tick
-     * @custom:then the amount of the user in the tick is removed from the contract
+     * @custom:when withdrawAssetsFromTick is called for this tick with te full amount
+     * @custom:then the assets are removed from the tick
      * @custom:and an UserWithdrewAssetsFromTick event is emitted
      * @custom:and the assets are sent back to the user
      * @custom:and the state of the order manager is updated
