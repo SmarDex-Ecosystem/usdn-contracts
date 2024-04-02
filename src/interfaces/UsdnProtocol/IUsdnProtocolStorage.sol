@@ -161,7 +161,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getUsdnRebaseInterval() external view returns (uint256);
 
     /// @notice The minimum long position collateral value, in dollars (with _priceFeedDecimals)
-
     function getMinLongPosition() external view returns (uint256);
 
     /* -------------------------------------------------------------------------- */
