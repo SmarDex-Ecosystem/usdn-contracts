@@ -6,8 +6,6 @@ interface IOrderManagerErrors {
     error OrderManagerNotInitialized();
     /// @notice Indicates that the provided tick is not a multiple of the tick spacing or outside of the limits.
     error OrderManagerInvalidTick(int24 tick);
-    /// @notice Indicates that the current user tried to manipulate the order of another user.
+    /// @notice Indicates that the current user tried to withdraw more assets than his deposits.
     error OrderManagerInsufficientFunds(int24 tick, address user, uint232 amountInTick, uint232 amountToWithdraw);
-    /// @notice Indicates that the caller is not the usdn protocol.
-    error OrderManagerCallerIsNotUSDNProtocol(address caller);
 }
