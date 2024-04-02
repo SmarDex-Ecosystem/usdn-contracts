@@ -27,7 +27,7 @@ contract OrderManager is Ownable, IOrderManager {
     IERC20Metadata internal immutable _asset;
 
     /// @notice The amount of assets a user has in a tick
-    mapping(bytes32 => mapping(address => uint232)) _userAmountInTick;
+    mapping(bytes32 => mapping(address => uint232)) internal _userAmountInTick;
 
     /// @notice The accumulated data of all the orders for a tick hash
     mapping(bytes32 => OrdersDataInTick) internal _ordersDataInTick;
