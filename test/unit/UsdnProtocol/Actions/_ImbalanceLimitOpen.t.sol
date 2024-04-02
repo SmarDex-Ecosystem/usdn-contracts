@@ -112,9 +112,6 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         // new price below any position but only one will be liquidated
         protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
 
-        // wait a day without liquidation
-        skip(1 days);
-
         int256 currentLongExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
         assertLt(currentLongExpo, 0);
 

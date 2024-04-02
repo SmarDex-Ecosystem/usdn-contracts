@@ -136,9 +136,6 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         // new price below any position but only one will be liquidated
         protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
 
-        // wait a day without liquidation
-        skip(1 days);
-
         int256 currentLongExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
         // current long expo should be negative
         assertLt(currentLongExpo, 0);
@@ -165,9 +162,6 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         // new price below any position but only one will be liquidated
         protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
 
-        // wait a day without liquidation
-        skip(1 days);
-
         int256 currentLongExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
         // current long expo should be negative
         assertLt(currentLongExpo, 0);
@@ -193,9 +187,6 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // new price below any position but only one will be liquidated
         protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
-
-        // wait a day without liquidation
-        skip(1 days);
 
         int256 currentLongExpo = int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong());
         // current long expo should be negative

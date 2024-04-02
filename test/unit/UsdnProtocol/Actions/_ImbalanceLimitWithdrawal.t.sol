@@ -84,9 +84,6 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         // new price below any position but only one will be liquidated
         protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
 
-        // wait 3 seconds without liquidation
-        skip(3);
-
         // liquidate the last position but leads bad debt
         protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
 
