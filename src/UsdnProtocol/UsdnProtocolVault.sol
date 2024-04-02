@@ -158,6 +158,6 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         pure
         returns (uint256 usdnShares_)
     {
-        usdnShares_ = uint256(sharesLSB) | uint256(sharesMSB) << 24;
+        usdnShares_ = sharesLSB | uint256(sharesMSB) << 24;
     }
 }
