@@ -98,13 +98,12 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
     function test_addOrderInTick() external {
         int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
         uint256 tickVersion = 0;
-        uint256 expectedOrderIndex = 0;
         uint96 amount = 1 ether;
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit OrderCreated(address(this), amount, tick, tickVersion, expectedOrderIndex);
+        emit OrderCreated(address(this), amount, tick, tickVersion);
         orderManager.addOrderInTick(tick, amount);
 
         assertEq(
@@ -114,9 +113,8 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         );
         assertEq(userBalanceBefore - amount, wstETH.balanceOf(address(this)), "The assets were not taken from the user");
 
-        IOrderManager.Order memory userOrder = orderManager.getOrderInTickAtIndex(tick, tickVersion, expectedOrderIndex);
-        assertEq(userOrder.user, address(this), "Wrong user saved in the order");
-        assertEq(userOrder.amountOfAssets, amount, "Wrong amount of assets saved in the order");
+        uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
+        assertEq(userOrderAmount, amount, "Wrong amount of assets saved for the user");
 
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
         assertEq(ordersData.amountOfAssets, amount, "The accumulated amount should be equal to the amount of the order");
@@ -141,13 +139,12 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
     function test_addMultipleOrdersInTheSameTick() external {
         int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
         uint256 tickVersion = 0;
-        uint256 expectedOrderIndex = 0;
         uint96 amount = 1 ether;
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit OrderCreated(address(this), amount, tick, tickVersion, expectedOrderIndex);
+        emit OrderCreated(address(this), amount, tick, tickVersion);
         orderManager.addOrderInTick(tick, amount);
 
         assertEq(
@@ -157,9 +154,8 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         );
         assertEq(userBalanceBefore - amount, wstETH.balanceOf(address(this)), "The assets were not taken from the user");
 
-        IOrderManager.Order memory userOrder = orderManager.getOrderInTickAtIndex(tick, tickVersion, expectedOrderIndex);
-        assertEq(userOrder.user, address(this), "Wrong user saved in the order");
-        assertEq(userOrder.amountOfAssets, amount, "Wrong amount of assets saved in the order");
+        uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
+        assertEq(userOrderAmount, amount, "Wrong amount of assets saved for the user");
 
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
         assertEq(
@@ -175,17 +171,15 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
 
         /* -------------- Add one more order to check the accumulation -------------- */
         uint256 accumulatedAmountBefore = ordersData.amountOfAssets;
-        expectedOrderIndex = 1;
         amount = 2 ether;
 
         vm.prank(USER_1);
         vm.expectEmit();
-        emit OrderCreated(USER_1, amount, tick, tickVersion, expectedOrderIndex);
+        emit OrderCreated(USER_1, amount, tick, tickVersion);
         orderManager.addOrderInTick(tick, amount);
 
-        userOrder = orderManager.getOrderInTickAtIndex(tick, tickVersion, expectedOrderIndex);
-        assertEq(userOrder.user, USER_1, "Wrong user saved in the order");
-        assertEq(userOrder.amountOfAssets, amount, "Wrong amount of assets saved in the order");
+        userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, USER_1);
+        assertEq(userOrderAmount, amount, "Wrong amount of assets saved for the user");
 
         ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
         assertEq(

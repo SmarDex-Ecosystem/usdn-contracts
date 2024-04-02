@@ -34,20 +34,6 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario removeOrderFromTick is called when there are no orders in the tick
-     * @custom:given A tick with no orders
-     * @custom:when removeOrderFromTick is called for this tick
-     * @custom:then the call reverts with a OrderManagerEmptyTick error
-     */
-    function test_RervertsWhen_noOrderInTheTick() external {
-        // Get the tick around 1000$
-        int24 tick = protocol.getEffectiveTickForPrice(1000 ether);
-
-        vm.expectRevert(abi.encodeWithSelector(OrderManagerEmptyTick.selector, tick));
-        orderManager.removeOrderFromTick(tick);
-    }
-
-    /**
      * @custom:scenario removeOrderFromTick is called but there are no order for the user in the tick
      * @custom:given A tick with orders but none for the user
      * @custom:when removeOrderFromTick is called for this tick
@@ -77,7 +63,7 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit OrderRemoved(address(this), _tick, 0, 0);
+        emit OrderRemoved(address(this), _tick, 0);
         orderManager.removeOrderFromTick(_tick);
 
         assertEq(
@@ -99,48 +85,7 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
         assertEq(ordersData.longPositionTickVersion, 0, "The tick version shoudl be 0");
         assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
 
-        // This call should fail with an array out-of-bound error
-        vm.expectRevert();
-        orderManager.getOrderInTickAtIndex(_tick, 0, 0);
-    }
-
-    /**
-     * @custom:scenario A user wants to remove his order from a tick with multiple orders in it
-     * @custom:given A tick with an order from the user and another one from anotehr user
-     * @custom:when removeOrderFromTick is called for this tick
-     * @custom:then the order is removed from the order array in the tick
-     * @custom:and the last order in the array takes the index of the removed order
-     */
-    function test_removeOrderFromTickWithMultipleOrdersLeft() external {
-        // create an additional order on the same tick but with a different user
-        vm.prank(USER_1);
-        orderManager.addOrderInTick(_tick, _amount + 1 ether);
-
-        uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
-        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
-
-        vm.expectEmit();
-        emit OrderRemoved(address(this), _tick, 0, 0);
-        orderManager.removeOrderFromTick(_tick);
-
-        assertEq(
-            orderManagerBalanceBefore - _amount,
-            wstETH.balanceOf(address(orderManager)),
-            "The assets should have been taken out of the order manager"
-        );
-        assertEq(
-            userBalanceBefore + _amount, wstETH.balanceOf(address(this)), "The assets should have been sent to the user"
-        );
-
-        IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_tick, 0);
-        assertEq(
-            ordersData.amountOfAssets,
-            orderManagerBalanceBefore - _amount,
-            "The amount of the removed position should have been subtracted from the accumulated amount of assets"
-        );
-
-        IOrderManager.Order memory userOrder = orderManager.getOrderInTickAtIndex(_tick, 0, 0);
-        assertEq(userOrder.user, USER_1, "Order of USER_1 should have taken the index 0");
-        assertEq(userOrder.amountOfAssets, _amount + 1 ether, "Wrong amount of assets saved in the order");
+        uint232 userOrderAmount = orderManager.getUserAmountInTick(_tick, 0, address(this));
+        assertEq(userOrderAmount, 0, "The user should have no assets left on the tick");
     }
 }

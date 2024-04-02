@@ -20,30 +20,17 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
         uint256 longPositionIndex;
     }
 
-    /**
-     * @notice Information about an order.
-     * @param user The address of the user.
-     * @param amountOfAssets The amount of assets in the order.
-     */
-    struct Order {
-        address user;
-        uint96 amountOfAssets;
-    }
-
     /// @notice Tick indicating the orders are still pending
     function PENDING_ORDERS_TICK() external pure returns (int24);
 
     /**
-     * @notice Returns The order at the index of the array of orders in the provided tick.
+     * @notice Returns the amount of assets a user has in a tick.
      * @param tick The tick the order is in.
      * @param tickVersion The tick version.
-     * @param index The index in the order array.
-     * @return order_ The order in the provided tick and index.
+     * @param user The address of the user.
+     * @return The amount of assets a user has in a tick
      */
-    function getOrderInTickAtIndex(int24 tick, uint256 tickVersion, uint256 index)
-        external
-        view
-        returns (Order memory order_);
+    function getUserAmountInTick(int24 tick, uint256 tickVersion, address user) external view returns (uint232);
 
     /**
      * @notice Returns the accumulated data of all the orders in a tick.
@@ -55,9 +42,6 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
         external
         view
         returns (OrdersDataInTick memory ordersData_);
-
-    /// @notice Returns the address of the USDN protocol.
-    function getUsdnProtocol() external view returns (IUsdnProtocol);
 
     /// @notice Set the maximum approval for the USDN protocol to take assets from this contract.
     function approveAssetsForSpending(uint256 allowance) external;

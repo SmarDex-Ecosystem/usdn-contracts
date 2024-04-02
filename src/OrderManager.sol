@@ -25,11 +25,8 @@ contract OrderManager is Ownable, IOrderManager {
     /// @notice The asset used in the USDN protocol
     IERC20Metadata internal immutable _asset;
 
-    /// @notice The user order's index in a _ordersInTick array
-    mapping(address => mapping(bytes32 => uint256)) internal _userOrderIndexInTick;
-
-    /// @notice The orders for a tick hash
-    mapping(bytes32 => Order[]) internal _ordersInTick;
+    /// @notice The amount of assets a user has in a tick
+    mapping(bytes32 => mapping(address => uint232)) _userAmountInTick;
 
     /// @notice The accumulated data of all the orders for a tick hash
     mapping(bytes32 => OrdersDataInTick) internal _ordersDataInTick;
@@ -51,14 +48,10 @@ contract OrderManager is Ownable, IOrderManager {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOrderManager
-    function getOrderInTickAtIndex(int24 tick, uint256 tickVersion, uint256 index)
-        external
-        view
-        returns (Order memory order_)
-    {
+    function getUserAmountInTick(int24 tick, uint256 tickVersion, address user) external view returns (uint232) {
         bytes32 tickHash = _usdnProtocol.tickHash(tick, tickVersion);
 
-        order_ = _ordersInTick[tickHash][index];
+        return _userAmountInTick[tickHash][user];
     }
 
     /// @inheritdoc IOrderManager
@@ -70,11 +63,6 @@ contract OrderManager is Ownable, IOrderManager {
         bytes32 tickHash = _usdnProtocol.tickHash(tick, tickVersion);
 
         ordersData_ = _ordersDataInTick[tickHash];
-    }
-
-    /// @inheritdoc IOrderManager
-    function getUsdnProtocol() external view returns (IUsdnProtocol) {
-        return _usdnProtocol;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -103,25 +91,22 @@ contract OrderManager is Ownable, IOrderManager {
 
         uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
-        uint256 orderIndex = _ordersInTick[tickHash].length;
 
         // If the array is not empty, check if the user already has an order in this tick
-        if (orderIndex > 0 && _ordersInTick[tickHash][_userOrderIndexInTick[msg.sender][tickHash]].user == msg.sender) {
+        if (_userAmountInTick[tickHash][msg.sender] > 0) {
             revert OrderManagerUserAlreadyInTick(msg.sender, tick, tickVersion);
         }
 
         // Save the order's data
         _ordersDataInTick[tickHash].amountOfAssets += amount;
-        if (orderIndex == 0) {
-            _ordersDataInTick[tickHash].longPositionTick = PENDING_ORDERS_TICK;
-        }
+        _ordersDataInTick[tickHash].longPositionTick = PENDING_ORDERS_TICK;
 
-        _ordersInTick[tickHash].push(Order({ amountOfAssets: amount, user: msg.sender }));
+        _userAmountInTick[tickHash][msg.sender] = amount;
 
         // Transfer the user assets to this contract
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
-        emit OrderCreated(msg.sender, amount, tick, tickVersion, orderIndex);
+        emit OrderCreated(msg.sender, amount, tick, tickVersion);
     }
 
     /// @inheritdoc IOrderManager
@@ -129,39 +114,20 @@ contract OrderManager is Ownable, IOrderManager {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
         uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
-        uint256 ordersCountInTick = _ordersInTick[tickHash].length;
+        uint232 userAmount = _userAmountInTick[tickHash][msg.sender];
 
-        // Check that the order array is not empty
-        if (ordersCountInTick == 0) {
-            revert OrderManagerEmptyTick(tick);
-        }
-
-        uint256 userOrderIndex = _userOrderIndexInTick[msg.sender][tickHash];
-        Order memory userOrder = _ordersInTick[tickHash][userOrderIndex];
-
-        // By default, userOrderIndex will be 0
-        // So check that the order at that index matches the current user
-        if (userOrder.user != msg.sender) {
+        // Check that the current user has assets in this tick
+        if (userAmount == 0) {
             revert OrderManagerNoOrderForUserInTick(tick, msg.sender);
         }
 
-        // If there are multiple orders in the tick
-        if (ordersCountInTick > 1) {
-            // Replace the user order with the last order in the array
-            Order memory lastOrderInTick = _ordersInTick[tickHash][ordersCountInTick - 1];
-            _ordersInTick[tickHash][userOrderIndex] = lastOrderInTick;
-            _userOrderIndexInTick[lastOrderInTick.user][tickHash] = userOrderIndex;
-        }
-
-        // Remove the last order (which should either be a duplicate, or the order to remove) from the array
-        _ordersInTick[tickHash].pop();
         // And clean the storage from the removed position's data
-        delete _userOrderIndexInTick[msg.sender][tickHash];
-        _ordersDataInTick[tickHash].amountOfAssets -= userOrder.amountOfAssets;
+        delete _userAmountInTick[tickHash][msg.sender];
+        _ordersDataInTick[tickHash].amountOfAssets -= userAmount;
 
         // Transfer the assets back to the user
-        _asset.safeTransfer(msg.sender, userOrder.amountOfAssets);
+        _asset.safeTransfer(msg.sender, userAmount);
 
-        emit OrderRemoved(msg.sender, tick, tickVersion, userOrderIndex);
+        emit OrderRemoved(msg.sender, tick, tickVersion);
     }
 }
