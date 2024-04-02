@@ -11,12 +11,13 @@ import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
  * @title OrderManager contract
- * @notice This contract stores and manage orders that should serve to open a long position when a liquidation happen in
- * the same tick in the USDN protocol.
+ * @notice This contract stores and manages orders that should serve to open a long position when a liquidation happens
+ * in the same tick in the USDN protocol.
  */
 contract OrderManager is Ownable, IOrderManager {
     using SafeERC20 for IERC20Metadata;
 
+    /// @inheritdoc IOrderManager
     int24 public constant PENDING_ORDERS_TICK = type(int24).min;
 
     /// @notice The USDN protocol
@@ -97,7 +98,7 @@ contract OrderManager is Ownable, IOrderManager {
         uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
 
-        // If the array is not empty, check if the user already has an order in this tick
+        // Check if the user already has deposited assets in this tick
         if (_userAmountInTick[tickHash][msg.sender] > 0) {
             revert OrderManagerUserAlreadyInTick(msg.sender, tick, tickVersion);
         }
@@ -126,7 +127,7 @@ contract OrderManager is Ownable, IOrderManager {
             revert OrderManagerNoOrderForUserInTick(tick, msg.sender);
         }
 
-        // And clean the storage from the removed position's data
+        // Clean the storage from the removed position's data
         delete _userAmountInTick[tickHash][msg.sender];
         _ordersDataInTick[tickHash].amountOfAssets -= userAmount;
 

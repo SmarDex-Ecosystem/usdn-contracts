@@ -20,7 +20,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
         uint256 longPositionIndex;
     }
 
-    /// @notice Tick indicating the orders are still pending
+    /// @notice Tick indicating the orders are not used in a position yet.
     function PENDING_ORDERS_TICK() external pure returns (int24);
 
     /**
@@ -54,7 +54,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
      * and pull the amount of funds from the user to this contract.
      * @dev This function will always use the latest version of the provided tick.
      * @param tick The tick to add the order in.
-     * @param amount The amount of asset the order contains.
+     * @param amount The amount of assets the order contains.
      */
     function addOrderInTick(int24 tick, uint96 amount) external;
 
