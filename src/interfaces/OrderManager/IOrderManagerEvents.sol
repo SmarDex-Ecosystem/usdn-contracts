@@ -9,7 +9,7 @@ interface IOrderManagerEvents {
      * @param tick The desired tick to open the position on
      * @param tickVersion The version of the tick
      */
-    event OrderCreated(address indexed user, uint128 amount, int24 tick, uint256 tickVersion);
+    event OrderCreated(address indexed user, uint232 amount, int24 tick, uint256 tickVersion);
 
     /**
      * @notice Emitted when an order is removed.

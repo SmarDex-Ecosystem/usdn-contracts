@@ -100,14 +100,15 @@ contract OrderManager is Ownable, IOrderManager {
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
 
         // Save the order's data
+        uint232 newUserAmount = _userAmountInTick[tickHash][msg.sender] + amount;
         _ordersDataInTick[tickHash].amountOfAssets += amount;
         _ordersDataInTick[tickHash].longPositionTick = PENDING_ORDERS_TICK;
-        _userAmountInTick[tickHash][msg.sender] += amount;
+        _userAmountInTick[tickHash][msg.sender] = newUserAmount;
 
         // Transfer the user assets to this contract
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
-        emit OrderCreated(msg.sender, amount, tick, tickVersion);
+        emit OrderCreated(msg.sender, newUserAmount, tick, tickVersion);
     }
 
     /// @inheritdoc IOrderManager
