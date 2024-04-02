@@ -721,9 +721,10 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert.
      */
     function test_RevertWhen_setMinLongPosition_Sup() external adminPrank {
+        uint256 usdnDecimals = protocol.getPriceFeedDecimals();
         vm.expectRevert(UsdnProtocolInvalidMinLongPosition.selector);
         // set minimum long position
-        protocol.setMinLongPosition(50_000 * 1e18 + 1);
+        protocol.setMinLongPosition(50_000 * 10 ** usdnDecimals + 1);
     }
 
     /**
