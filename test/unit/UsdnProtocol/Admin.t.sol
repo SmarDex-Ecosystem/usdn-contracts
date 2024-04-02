@@ -77,6 +77,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(customError);
         protocol.setExpoImbalanceLimits(0, 0, 0, 0);
+
+        vm.expectRevert(customError);
+        protocol.setMinLongPosition(0);
     }
 
     /**
