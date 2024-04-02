@@ -316,7 +316,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(withdrawalAction.user, action.user, "action user");
         assertEq(withdrawalAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
         assertEq(int24(withdrawalAction.sharesLSB), action.var1, "action shares LSB");
-        assertEq(uint128(withdrawalAction.sharesMSB), action.amount, "action shares MSB");
+        assertEq(withdrawalAction.sharesMSB, action.amount, "action shares MSB");
         assertEq(withdrawalAction.assetPrice, action.var2, "action price");
         assertEq(withdrawalAction.totalExpo, action.var3, "action expo");
         assertEq(withdrawalAction.balanceVault, action.var4, "action balance vault");
