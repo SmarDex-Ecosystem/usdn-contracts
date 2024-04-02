@@ -295,7 +295,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
         _targetUsdnPrice = uint128(10_087 * 10 ** (_priceFeedDecimals - 4)); // $1.0087
         _usdnRebaseThreshold = uint128(1009 * 10 ** (_priceFeedDecimals - 3)); // $1.009
-        _minLongPosition = 5000 * 10 ** _priceFeedDecimals; // 5000 wstETH
+        _minLongPosition = 5000 * 10 ** _priceFeedDecimals; // 5000 USD
     }
 
     /* -------------------------------------------------------------------------- */
