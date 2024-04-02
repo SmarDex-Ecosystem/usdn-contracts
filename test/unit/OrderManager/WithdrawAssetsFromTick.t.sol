@@ -11,7 +11,8 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 /**
  * @custom:feature Test the withdrawAssetsFromTick function of the OrderManager contract
  * @custom:background Given a protocol initialized with default params
- * @custom:and 100 wstETH in the test contract
+ * @custom:and 1 wstETH in the test contract
+ * @custom:and 2 wstETH in the test USER_1 address
  * @custom:and a 1 ether order at the 2000$ tick
  */
 contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrderManagerErrors, IOrderManagerEvents {

@@ -13,6 +13,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  * @custom:feature Test the depositAssetsInTick function of the OrderManager contract
  * @custom:background Given a protocol initialized with default params
  * @custom:and 100 wstETH in the test contract
+ * @custom:and 100 wstETH in the USER_1 address
  */
 contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderManagerErrors, IOrderManagerEvents {
     function setUp() public {

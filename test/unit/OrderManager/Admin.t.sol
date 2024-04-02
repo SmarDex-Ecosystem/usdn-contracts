@@ -34,7 +34,7 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The owner of the contract calls approveAssetsForSpending
-     * @custom:given A non-initialized order manager contract
+     * @custom:given An order manager contract
      * @custom:when approveAssetsForSpending is called
      * @custom:then The asset allowance of the usdn protocol on this contract should the max value
      */
