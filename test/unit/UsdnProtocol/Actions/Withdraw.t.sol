@@ -90,7 +90,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertTrue(action.action == ProtocolAction.ValidateWithdrawal, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
-        uint256 shares = uint256(action.sharesLSB) | uint256(action.sharesMSB) << 24;
+        uint256 shares = protocol.i_mergeWithdrawalAmountParts(action.sharesLSB, action.sharesMSB);
         assertEq(shares, USDN_AMOUNT * usdn.divisor(), "action shares");
 
         // the pending action should be actionable after the validation deadline
@@ -236,7 +236,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             available = available2;
         }
 
-        uint256 shares = uint256(withdrawal.sharesLSB) | uint256(withdrawal.sharesMSB) << 24;
+        uint256 shares = protocol.i_mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         uint256 withdrawnAmount = FixedPointMathLib.fullMulDiv(shares, available, withdrawal.usdnTotalShares);
         assertEq(withdrawnAmount, expectedAssetAmount, "asset amount");

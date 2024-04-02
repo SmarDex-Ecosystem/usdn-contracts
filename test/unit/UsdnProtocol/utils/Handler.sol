@@ -313,4 +313,16 @@ contract UsdnProtocolHandler is UsdnProtocol {
     {
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
+
+    function i_mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB) external pure returns (uint256) {
+        return _mergeWithdrawalAmountParts(sharesLSB, sharesMSB);
+    }
+
+    function i_getWithdrawalAmountLSB(uint152 usdnShares) external pure returns (uint24) {
+        return _getWithdrawalAmountLSB(usdnShares);
+    }
+
+    function i_getWithdrawalAmountMSB(uint152 usdnShares) external pure returns (uint128) {
+        return _getWithdrawalAmountMSB(usdnShares);
+    }
 }

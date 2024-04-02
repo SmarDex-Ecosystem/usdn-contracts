@@ -557,8 +557,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             timestamp: uint40(block.timestamp),
             user: user,
             securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
-            sharesLSB: uint24(usdnShares),
-            sharesMSB: uint128(usdnShares >> 24),
+            sharesLSB: _getWithdrawalAmountLSB(usdnShares),
+            sharesMSB: _getWithdrawalAmountMSB(usdnShares),
             assetPrice: pendingActionPrice,
             totalExpo: totalExpo,
             balanceVault: balanceVault,
@@ -623,7 +623,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             available = available2;
         }
 
-        uint256 shares = uint256(withdrawal.sharesLSB) | uint256(withdrawal.sharesMSB) << 24;
+        uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         //                 = shares * assetAvailable / usdnTotalShares
