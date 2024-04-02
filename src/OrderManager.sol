@@ -123,7 +123,7 @@ contract OrderManager is Ownable, IOrderManager {
             revert OrderManagerNoOrderForUserInTick(tick, msg.sender);
         }
 
-        // Clean the storage from the removed position's data
+        // Remove the amount from the storage
         uint232 newUserAmount = userAmount - amountToWithdraw;
         _userAmountInTick[tickHash][msg.sender] = newUserAmount;
         _ordersDataInTick[tickHash].amountOfAssets -= amountToWithdraw;
