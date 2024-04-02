@@ -51,12 +51,12 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
      * The transaction must have _securityDepositValue in value.
-     * @param usdnAmount The amount of USDN to burn.
+     * @param usdnShares The amount of USDN shares to burn.
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
     function initiateWithdrawal(
-        uint128 usdnAmount,
+        uint152 usdnShares,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable;

@@ -6,7 +6,8 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import {
     PendingAction,
-    VaultPendingAction,
+    DepositPendingAction,
+    WithdrawalPendingAction,
     LongPendingAction,
     ProtocolAction,
     PreviousActionsData
@@ -134,20 +135,40 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
-    function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {
-        return _toVaultPendingAction(action);
+    function i_toDepositPendingAction(PendingAction memory action)
+        external
+        pure
+        returns (DepositPendingAction memory)
+    {
+        return _toDepositPendingAction(action);
+    }
+
+    function i_toWithdrawalPendingAction(PendingAction memory action)
+        external
+        pure
+        returns (WithdrawalPendingAction memory)
+    {
+        return _toWithdrawalPendingAction(action);
     }
 
     function i_toLongPendingAction(PendingAction memory action) external pure returns (LongPendingAction memory) {
         return _toLongPendingAction(action);
     }
 
-    function i_convertVaultPendingAction(VaultPendingAction memory action)
+    function i_convertDepositPendingAction(DepositPendingAction memory action)
         external
         pure
         returns (PendingAction memory)
     {
-        return _convertVaultPendingAction(action);
+        return _convertDepositPendingAction(action);
+    }
+
+    function i_convertWithdrawalPendingAction(WithdrawalPendingAction memory action)
+        external
+        pure
+        returns (PendingAction memory)
+    {
+        return _convertWithdrawalPendingAction(action);
     }
 
     function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory) {
