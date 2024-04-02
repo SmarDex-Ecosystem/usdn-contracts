@@ -36,7 +36,7 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture {
      * @custom:scenario The owner of the contract calls approveAssetsForSpending
      * @custom:given An order manager contract
      * @custom:when approveAssetsForSpending is called
-     * @custom:then The asset allowance of the usdn protocol on this contract should the max value
+     * @custom:then The asset allowance of the usdn protocol on this contract should be the provided value
      */
     function test_approveAssetsForSpendingSetAllowanceToMax() public {
         // Reset the allowance of the USDN protocol
