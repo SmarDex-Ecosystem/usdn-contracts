@@ -230,7 +230,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint256 totalExpoForTick =
             protocol.getCurrentTotalExpoByTick(protocol.getEffectiveTickForPrice(desiredLiqPrice));
 
-        assertEq(totalExpoForTick, 0, "Total expo for future position's tick should be empty");
+        assertEq(totalExpoForTick, 0, "Total expo for future tick of position should be empty");
 
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
@@ -309,7 +309,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint256 totalExpoForTick =
             protocol.getCurrentTotalExpoByTick(protocol.getEffectiveTickForPrice(desiredLiqPrice));
 
-        assertEq(totalExpoForTick, 0, "Total expo for future position's tick should be empty");
+        assertEq(totalExpoForTick, 0, "Total expo for future tick of position should be empty");
 
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
