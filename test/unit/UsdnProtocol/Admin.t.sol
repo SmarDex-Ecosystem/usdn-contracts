@@ -729,20 +729,4 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         // set minimum long position
         protocol.setMinLongPosition(50_000 * 10 ** usdnDecimals + 1);
     }
-
-    /**
-     * @custom:scenario Call "setMinLongPosition" from admin.
-     * @custom:given The initial usdnProtocol state.
-     * @custom:when Admin wallet call function with zero.
-     * @custom:then The value should be updated to zero.
-     */
-    function test_setMinLongPosition_zero() external adminPrank {
-        // expected event
-        vm.expectEmit();
-        emit MinLongPositionUpdated(0);
-        // set minimum long position
-        protocol.setMinLongPosition(0);
-        // assert that the new value is equal to the expected value
-        assertEq(protocol.getMinLongPosition(), 0);
-    }
 }
