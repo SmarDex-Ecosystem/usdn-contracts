@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @title IUsdnProtocolEvents
  * @notice Events for the USDN Protocol
@@ -13,8 +11,9 @@ interface IUsdnProtocolEvents {
      * @param user The user address.
      * @param to The address that will receive the USDN tokens.
      * @param amount The amount of asset that were deposited.
+     * @param timestamp The timestamp of the action.
      */
-    event InitiatedDeposit(address indexed user, address indexed to, uint256 amount);
+    event InitiatedDeposit(address indexed user, address indexed to, uint256 amount, uint256 timestamp);
 
     /**
      * @notice Emitted when a user validates a deposit.
@@ -22,16 +21,20 @@ interface IUsdnProtocolEvents {
      * @param to The address that received the USDN tokens.
      * @param amountDeposited The amount of asset that were deposited.
      * @param usdnMinted The amount of USDN that were minted.
+     * @param timestamp The timestamp of the InitiatedDeposit action.
      */
-    event ValidatedDeposit(address indexed user, address indexed to, uint256 amountDeposited, uint256 usdnMinted);
+    event ValidatedDeposit(
+        address indexed user, address indexed to, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
+    );
 
     /**
      * @notice Emitted when a user initiates a withdrawal.
      * @param user The user address.
      * @param to The address that will receive the assets.
      * @param usdnAmount The amount of USDN that will be burned.
+     * @param timestamp The timestamp of the action.
      */
-    event InitiatedWithdrawal(address indexed user, address indexed to, uint256 usdnAmount);
+    event InitiatedWithdrawal(address indexed user, address indexed to, uint256 usdnAmount, uint256 timestamp);
 
     /**
      * @notice Emitted when a user validates a withdrawal.
@@ -39,8 +42,11 @@ interface IUsdnProtocolEvents {
      * @param to The address that received the assets.
      * @param amountWithdrawn The amount of asset that were withdrawn.
      * @param usdnBurned The amount of USDN that were burned.
+     * @param timestamp The timestamp of the InitiatedWithdrawal action.
      */
-    event ValidatedWithdrawal(address indexed user, address indexed to, uint256 amountWithdrawn, uint256 usdnBurned);
+    event ValidatedWithdrawal(
+        address indexed user, address indexed to, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp
+    );
 
     /**
      * @notice Emitted when a user initiates the opening of a long position.
@@ -71,17 +77,24 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user validates the opening of a long position.
      * @param user The user address.
+     * @param user The address that will be the owner of the position.
      * @param newLeverage The initial leverage of the position (final).
      * @param newStartPrice The asset price at the moment of the position creation (final).
      * @param tick The tick containing the position.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted too
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      * @param tickVersion The tick version.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted too
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      * @param index The index of the position inside the tick array.
-     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceChanged` will be emitted too
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      */
     event ValidatedOpenPosition(
-        address indexed user, uint128 newLeverage, uint128 newStartPrice, int24 tick, uint256 tickVersion, uint256 index
+        address indexed user,
+        address indexed to,
+        uint128 newLeverage,
+        uint128 newStartPrice,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index
     );
 
     /**
@@ -93,7 +106,7 @@ interface IUsdnProtocolEvents {
      * @param newTickVersion The new tick version.
      * @param newIndex The new index of the position inside the `newTick` array.
      */
-    event LiquidationPriceChanged(
+    event LiquidationPriceUpdated(
         int24 indexed oldTick,
         uint256 indexed oldTickVersion,
         uint256 indexed oldIndex,
@@ -103,15 +116,25 @@ interface IUsdnProtocolEvents {
     );
 
     /**
-     * @notice Emitted when a user initiates the closing of a long position.
+     * @notice Emitted when a user initiates the closing of all or part of a long position.
      * @param user The user address.
      * @param to The address that will receive the assets.
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
+     * @param amountRemaining The amount of collateral remaining in the position.
+     * If the entirety of the position is being closed, this value is zero.
+     * @param totalExpoRemaining The total expo remaining in the position.
+     * If the entirety of the position is being closed, this value is zero.
      */
     event InitiatedClosePosition(
-        address indexed user, address indexed to, int24 tick, uint256 tickVersion, uint256 index
+        address indexed user,
+        address indexed to,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index,
+        uint128 amountRemaining,
+        uint128 totalExpoRemaining
     );
 
     /**
@@ -179,6 +202,78 @@ interface IUsdnProtocolEvents {
     event StalePendingActionRemoved(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
 
     /**
+     * @notice Emitted when the position fees are updated.
+     * @param positionFee The new position fee (in percentage).
+     */
+    event PositionFeeUpdated(uint256 positionFee);
+
+    /**
+     * @notice Emitted when the ratio of USDN to SDEX tokens to burn on deposit is updated.
+     * @param newRatio The new ratio.
+     */
+    event BurnSdexOnDepositRatioUpdated(uint256 newRatio);
+
+    /**
+     * @notice Emitted when the deposit value is updated.
+     * @param securityDepositValue The new deposit value.
+     */
+    event SecurityDepositValueUpdated(uint256 securityDepositValue);
+
+    /**
+     * @notice Emitted when the oracle middleware is updated.
+     * @param newMiddleware The new oracle middleware address.
+     */
+    event OracleMiddlewareUpdated(address newMiddleware);
+
+    /**
+     * @notice Emitted when the minLeverage is updated.
+     * @param newMinLeverage The new minLeverage.
+     */
+    event MinLeverageUpdated(uint256 newMinLeverage);
+
+    /**
+     * @notice Emitted when the maxLeverage is updated.
+     * @param newMaxLeverage The new maxLeverage.
+     */
+    event MaxLeverageUpdated(uint256 newMaxLeverage);
+
+    /**
+     * @notice Emitted when the validationDeadline is updated.
+     * @param newValidationDeadline The new validationDeadline.
+     */
+    event ValidationDeadlineUpdated(uint256 newValidationDeadline);
+
+    /**
+     * @notice Emitted when the liquidationPenalty is updated.
+     * @param newLiquidationPenalty The new liquidationPenalty.
+     */
+    event LiquidationPenaltyUpdated(uint24 newLiquidationPenalty);
+
+    /**
+     * @notice Emitted when the safetyMargin is updated.
+     * @param newSafetyMargin The new safetyMargin.
+     */
+    event SafetyMarginBpsUpdated(uint256 newSafetyMargin);
+
+    /**
+     * @notice Emitted when the liquidationIteration is updated.
+     * @param newLiquidationIteration The new liquidationIteration.
+     */
+    event LiquidationIterationUpdated(uint16 newLiquidationIteration);
+
+    /**
+     * @notice Emitted when the EMAPeriod is updated.
+     * @param newEMAPeriod The new EMAPeriod.
+     */
+    event EMAPeriodUpdated(uint128 newEMAPeriod);
+
+    /**
+     * @notice Emitted when the fundingSF is updated.
+     * @param newFundingSF The new fundingSF.
+     */
+    event FundingSFUpdated(uint256 newFundingSF);
+
+    /**
      * @notice Emitted when a user (liquidator) successfully liquidated positions.
      * @param liquidator The address that initiated the liquidation.
      * @param rewards The amount of tokens the liquidator received in rewards.
@@ -215,4 +310,33 @@ interface IUsdnProtocolEvents {
      * @param feeThreshold The new fee threshold.
      */
     event FeeThresholdUpdated(uint256 feeThreshold);
+
+    /**
+     * @notice Emitted when the target USDN price is updated.
+     * @param price The new target USDN price.
+     */
+    event TargetUsdnPriceUpdated(uint128 price);
+
+    /**
+     * @notice Emitted when the USDN rebase threshold is updated.
+     * @param threshold The new target USDN price.
+     */
+    event UsdnRebaseThresholdUpdated(uint128 threshold);
+
+    /**
+     * @notice Emitted when the USDN rebase interval is updated.
+     * @param interval The new interval.
+     */
+    event UsdnRebaseIntervalUpdated(uint256 interval);
+
+    /**
+     * @notice Emitted when imbalance limits are updated.
+     * @param newOpenLimitBps The new open limit.
+     * @param newDepositLimitBps The new deposit limit.
+     * @param newWithdrawalLimitBps The new withdrawal limit.
+     * @param newCloseLimitBps The new close limit.
+     */
+    event ImbalanceLimitsUpdated(
+        uint256 newOpenLimitBps, uint256 newDepositLimitBps, uint256 newWithdrawalLimitBps, uint256 newCloseLimitBps
+    );
 }

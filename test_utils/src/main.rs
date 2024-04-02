@@ -1,6 +1,5 @@
 use std::ops::DivAssign;
-
-use alloy_primitives::{FixedBytes, I256, U256};
+use alloy_primitives::{Bytes, FixedBytes, I256, U256};
 use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose::STANDARD, Engine as _};
@@ -22,6 +21,7 @@ struct HermesResponse {
 struct PythPrice {
     conf: String,
     price: String,
+    expo: i64,
     publish_time: u64,
 }
 #[derive(Parser)]
@@ -64,6 +64,12 @@ enum Commands {
         /// The publish time
         publish_time: u64,
     },
+    /// Compare different total expo calculation implementations
+    CalcExpo {
+        start_price: String,
+        liq_price: String,
+        amount: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -105,12 +111,29 @@ fn main() -> Result<()> {
             print_u256_hex(res)?;
         }
         Commands::PythPrice { feed, publish_time } => {
+            let mut hermes_api_url = std::env::var("HERMES_RA2_NODE_URL")?;
+            // add / to the end of the url if it's not there
+            if !hermes_api_url.ends_with('/') {
+                hermes_api_url.push('/');
+            }
+
             let request_url = format!(
-                "https://hermes.pyth.network/api/get_price_feed?id={feed}&publish_time={publish_time}&binary=true"
+                "{hermes_api_url}get_price_feed?id={feed}&publish_time={publish_time}&binary=true"
             );
             let response = reqwest::blocking::get(request_url)?;
             let price: HermesResponse = response.json()?;
             print_pyth_response(price)?;
+        }
+        Commands::CalcExpo { start_price, liq_price, amount } => {
+            let start_price: Integer = start_price.parse()?;
+            let liq_price: Integer = liq_price.parse()?;
+            let amount: Integer = amount.parse()?;
+
+            let price_diff = Integer::from(&start_price - &liq_price);
+            let mut total_expo = Float::with_val(512, amount) * start_price / price_diff;
+            total_expo.floor_mut();
+            
+            print_u256_hex(total_expo.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
         }
     }
     Ok(())
@@ -138,14 +161,19 @@ fn print_u256_hex(x: Integer) -> Result<()> {
 fn print_pyth_response(response: HermesResponse) -> Result<()> {
     let price_hex = response.price.price.parse::<U256>()?;
     let conf_hex = response.price.conf.parse::<U256>()?;
+    let decimals: u64 = response.price.expo.abs().try_into()?;
+    let decimals_hex = U256::from(decimals);
     // Decode vaa from base64 to hex
     let decoded_vaa = STANDARD.decode(response.vaa)?;
     let data = (
         price_hex,
         conf_hex,
+        decimals_hex,
         U256::from(response.price.publish_time),
         &decoded_vaa,
     );
-    print!("{}", const_hex::encode_prefixed(data.abi_encode_params()));
+    let bytes = data.abi_encode_params();
+    let bytes: Bytes = bytes.into();
+    print!("{bytes}");
     Ok(())
 }

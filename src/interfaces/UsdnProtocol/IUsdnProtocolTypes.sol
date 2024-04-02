@@ -3,15 +3,15 @@ pragma solidity >=0.8.0;
 
 /**
  * @notice Information about a long user position.
- * @param leverage The leverage of the position (0 for vault deposits).
  * @param timestamp The timestamp of the position start.
  * @param user The user address.
+ * @param totalExpo The total expo of the position (0 for vault deposits).
  * @param amount The amount of the position.
  */
 struct Position {
     uint40 timestamp; // 5 bytes. Max 1_099_511_627_775 (36812-02-20 01:36:15)
     address user; // 20 bytes
-    uint128 leverage; // 16 bytes. Max 340_282_366_920_938_463.463_374_607_431_768_211_455 x
+    uint128 totalExpo; // 16 bytes. Max 340_282_366_920_938_463_463.374_607_431_768_211_455 ether
     uint128 amount; // 16 bytes.
 }
 
@@ -51,6 +51,7 @@ enum ProtocolAction {
  * @param user The user address.
  * @param to The to address.
  * @param var1 See `VaultPendingAction` and `LongPendingAction`.
+ * @param securityDepositValue The security deposit of the pending action.
  * @param amount The amount of the pending action.
  * @param var2 See `VaultPendingAction` and `LongPendingAction`.
  * @param var3 See `VaultPendingAction` and `LongPendingAction`.
@@ -64,6 +65,7 @@ struct PendingAction {
     address user; // 20 bytes
     address to; // 20 bytes
     int24 var1; // 3 bytes
+    uint24 securityDepositValue; // 3 bytes
     uint128 amount; // 16 bytes
     uint128 var2; // 16 bytes
     uint256 var3; // 32 bytes
@@ -79,6 +81,7 @@ struct PendingAction {
  * @param user The user address.
  * @param to The to address.
  * @param _unused Unused field to align the struct to `PendingAction`.
+ * @param securityDepositValue The security deposit of the pending action.
  * @param amount The amount of the pending action.
  * @param assetPrice The price of the asset at the time of last update.
  * @param totalExpo The total exposure at the time of last update.
@@ -92,6 +95,7 @@ struct VaultPendingAction {
     address user; // 20 bytes
     address to; // 20 bytes
     int24 _unused; // 3 bytes
+    uint24 securityDepositValue; // 3 bytes
     uint128 amount; // 16 bytes
     uint128 assetPrice; // 16 bytes
     uint256 totalExpo; // 32 bytes
@@ -107,8 +111,9 @@ struct VaultPendingAction {
  * @param user The user address.
  * @param to The to address.
  * @param tick The tick of the position.
+ * @param securityDepositValue The security deposit of the pending action.
  * @param closeAmount The amount of the pending action (only used when closing a position).
- * @param closeLeverage The initial leverage of the position (only used when closing a position).
+ * @param closeTotalExpo The total expo of the position (only used when closing a position).
  * @param tickVersion The version of the tick.
  * @param index The index of the position in the tick list.
  * @param closeLiqMultiplier The liquidation multiplier at the time of the last update (only used when closing a
@@ -122,10 +127,23 @@ struct LongPendingAction {
     address user; // 20 bytes
     address to; // 20 bytes
     int24 tick; // 3 bytes
+    uint24 securityDepositValue; // 3 bytes
     uint128 closeAmount; // 16 bytes
-    uint128 closeLeverage; // 16 bytes
+    uint128 closeTotalExpo; // 16 bytes
     uint256 tickVersion; // 32 bytes
     uint256 index; // 32 bytes
     uint256 closeLiqMultiplier; // 32 bytes
     uint256 closeTempTransfer; // 32 bytes
+}
+
+/**
+ * @notice The data allowing to validate an actionable pending action.
+ * @param priceData An array of bytes, each representing the data to be forwarded to the oracle middleware to validate
+ * a pending action in the queue.
+ * @param rawIndices An array of raw indices in the pending actions queue, in the same order as the corresponding
+ * priceData
+ */
+struct PreviousActionsData {
+    bytes[] priceData;
+    uint128[] rawIndices;
 }

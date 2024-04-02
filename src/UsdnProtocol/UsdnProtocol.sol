@@ -7,12 +7,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import {
-    PendingAction,
-    VaultPendingAction,
-    ProtocolAction,
-    Position
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -24,15 +19,13 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
-    /// @dev The minimum amount of wstETH for the initialization deposit and long.
+    /// @inheritdoc IUsdnProtocol
     uint256 public constant MIN_INIT_DEPOSIT = 1 ether;
-
-    /// @dev The amount of collateral for the first "dead" long position.
-    uint128 public constant FIRST_LONG_AMOUNT = 1000;
 
     /**
      * @notice Constructor.
      * @param usdn The USDN ERC20 contract.
+     * @param sdex The SDEX ERC20 contract.
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
      * @param liquidationRewardsManager The liquidation rewards manager contract.
@@ -41,6 +34,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      */
     constructor(
         IUsdn usdn,
+        IERC20Metadata sdex,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
@@ -48,17 +42,10 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         address feeCollector
     )
         Ownable(msg.sender)
-        UsdnProtocolStorage(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
+        UsdnProtocolStorage(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
     { }
 
-    /**
-     * @notice Initialize the protocol.
-     * @dev This function can only be called once. Other external functions can only be called after the initialization.
-     * @param depositAmount The amount of wstETH to deposit.
-     * @param longAmount The amount of wstETH to use for the long.
-     * @param desiredLiqPrice The desired liquidation price for the long.
-     * @param currentPriceData The current price data.
-     */
+    /// @inheritdoc IUsdnProtocol
     function initialize(
         uint128 depositAmount,
         uint128 longAmount,
@@ -77,101 +64,330 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
 
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Initialize, block.timestamp, currentPriceData);
+
         // Create vault deposit
-        PriceInfo memory currentPrice;
-        {
-            PendingAction memory pendingAction = _convertVaultPendingAction(
-                VaultPendingAction({
-                    action: ProtocolAction.ValidateDeposit,
-                    timestamp: 0, // not needed since we have a special ProtocolAction for init
-                    user: msg.sender,
-                    to: msg.sender,
-                    _unused: 0, // unused
-                    amount: depositAmount,
-                    assetPrice: 0, // special case for init
-                    totalExpo: 0,
-                    balanceVault: 0,
-                    balanceLong: 0,
-                    usdnTotalSupply: 0
-                })
-            );
+        _createInitialDeposit(depositAmount, currentPrice.price.toUint128());
 
-            // Transfer the wstETH for the deposit
-            _asset.safeTransferFrom(msg.sender, address(this), depositAmount);
-
-            emit InitiatedDeposit(msg.sender, msg.sender, depositAmount);
-            // Mint USDN (a small amount is minted to the dead address)
-            // last parameter = initializing
-            currentPrice = _validateDepositWithAction(pendingAction, currentPriceData, true);
-        }
-
-        _lastUpdateTimestamp = uint40(block.timestamp);
+        _lastUpdateTimestamp = uint128(block.timestamp);
         _lastPrice = currentPrice.price.toUint128();
 
-        // Transfer the wstETH for the long
-        _asset.safeTransferFrom(msg.sender, address(this), longAmount);
+        int24 tick = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
+        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
+        uint128 leverage = _getLeverage(currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
+        uint128 positionTotalExpo =
+            _calculatePositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
 
-        // Create long positions with min leverage
-        _createInitialPosition(DEAD_ADDRESS, FIRST_LONG_AMOUNT, currentPrice.price.toUint128(), minTick());
-        _createInitialPosition(
-            msg.sender,
-            longAmount - FIRST_LONG_AMOUNT,
-            currentPrice.price.toUint128(),
-            getEffectiveTickForPrice(desiredLiqPrice) // no liquidation penalty
-        );
+        // verify expo is not imbalanced on long side
+        _checkImbalanceLimitOpen(positionTotalExpo, longAmount);
 
-        _refundExcessEther();
+        // Create long position
+        _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, leverage, positionTotalExpo);
+
+        uint256 balance = address(this).balance;
+        if (balance != 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = payable(msg.sender).call{ value: balance }("");
+            if (!success) {
+                revert UsdnProtocolEtherRefundFailed();
+            }
+        }
     }
 
-    function _createInitialPosition(address user, uint128 amount, uint128 price, int24 tick) internal {
-        uint128 liquidationPrice = getEffectivePriceForTick(tick);
-        uint128 leverage = _getLeverage(price, liquidationPrice);
-        Position memory long =
-            Position({ user: user, amount: amount, leverage: leverage, timestamp: uint40(block.timestamp) });
-        // Save the position and update the state
-        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
-        emit InitiatedOpenPosition(
-            user, user, long.timestamp, long.leverage, long.amount, price, tick, tickVersion, index
-        );
-        emit ValidatedOpenPosition(user, long.leverage, price, tick, tickVersion, index);
+    /// @inheritdoc IUsdnProtocol
+    function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external onlyOwner {
+        // check address zero middleware
+        if (address(newOracleMiddleware) == address(0)) {
+            revert UsdnProtocolInvalidMiddlewareAddress();
+        }
+        _oracleMiddleware = newOracleMiddleware;
+        emit OracleMiddlewareUpdated(address(newOracleMiddleware));
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external onlyOwner {
+        if (address(newLiquidationRewardsManager) == address(0)) {
+            revert UsdnProtocolInvalidLiquidationRewardsManagerAddress();
+        }
+
+        _liquidationRewardsManager = newLiquidationRewardsManager;
+
+        emit LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setMinLeverage(uint256 newMinLeverage) external onlyOwner {
+        // zero minLeverage
+        if (newMinLeverage <= 10 ** LEVERAGE_DECIMALS) {
+            revert UsdnProtocolInvalidMinLeverage();
+        }
+
+        // minLeverage greater or equal maxLeverage
+        if (newMinLeverage >= _maxLeverage) {
+            revert UsdnProtocolInvalidMinLeverage();
+        }
+
+        _minLeverage = newMinLeverage;
+        emit MinLeverageUpdated(newMinLeverage);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
+        // maxLeverage lower or equal minLeverage
+        if (newMaxLeverage <= _minLeverage) {
+            revert UsdnProtocolInvalidMaxLeverage();
+        }
+
+        // maxLeverage greater than max 100
+        if (newMaxLeverage > 100 * 10 ** LEVERAGE_DECIMALS) {
+            revert UsdnProtocolInvalidMaxLeverage();
+        }
+
+        _maxLeverage = newMaxLeverage;
+        emit MaxLeverageUpdated(newMaxLeverage);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setValidationDeadline(uint256 newValidationDeadline) external onlyOwner {
+        // validation deadline lower than min 1 minute
+        if (newValidationDeadline < 60) {
+            revert UsdnProtocolInvalidValidationDeadline();
+        }
+
+        // validation deadline greater than max 1 day
+        if (newValidationDeadline > 1 days) {
+            revert UsdnProtocolInvalidValidationDeadline();
+        }
+
+        _validationDeadline = newValidationDeadline;
+        emit ValidationDeadlineUpdated(newValidationDeadline);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setLiquidationPenalty(uint24 newLiquidationPenalty) external onlyOwner {
+        // liquidationPenalty greater than max 15
+        if (newLiquidationPenalty > 15) {
+            revert UsdnProtocolInvalidLiquidationPenalty();
+        }
+
+        _liquidationPenalty = newLiquidationPenalty;
+        emit LiquidationPenaltyUpdated(newLiquidationPenalty);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setSafetyMarginBps(uint256 newSafetyMarginBps) external onlyOwner {
+        // safetyMarginBps greater than max 2000: 20%
+        if (newSafetyMarginBps > 2000) {
+            revert UsdnProtocolInvalidSafetyMarginBps();
+        }
+
+        _safetyMarginBps = newSafetyMarginBps;
+        emit SafetyMarginBpsUpdated(newSafetyMarginBps);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setLiquidationIteration(uint16 newLiquidationIteration) external onlyOwner {
+        // newLiquidationIteration greater than MAX_LIQUIDATION_ITERATION
+        if (newLiquidationIteration > MAX_LIQUIDATION_ITERATION) {
+            revert UsdnProtocolInvalidLiquidationIteration();
+        }
+
+        _liquidationIteration = newLiquidationIteration;
+        emit LiquidationIterationUpdated(newLiquidationIteration);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setEMAPeriod(uint128 newEMAPeriod) external onlyOwner {
+        // EMAPeriod is greater than max 3 months
+        if (newEMAPeriod > 90 days) {
+            revert UsdnProtocolInvalidEMAPeriod();
+        }
+
+        _EMAPeriod = newEMAPeriod;
+        emit EMAPeriodUpdated(newEMAPeriod);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setFundingSF(uint256 newFundingSF) external onlyOwner {
+        // newFundingSF is greater than max
+        if (newFundingSF > 10 ** FUNDING_SF_DECIMALS) {
+            revert UsdnProtocolInvalidFundingSF();
+        }
+
+        _fundingSF = newFundingSF;
+        emit FundingSFUpdated(newFundingSF);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setProtocolFeeBps(uint16 newProtocolFeeBps) external onlyOwner {
+        if (newProtocolFeeBps > BPS_DIVISOR) {
+            revert UsdnProtocolInvalidProtocolFeeBps();
+        }
+        _protocolFeeBps = newProtocolFeeBps;
+        emit FeeBpsUpdated(newProtocolFeeBps);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setPositionFeeBps(uint16 newPositionFee) external onlyOwner {
+        // newPositionFee greater than max 2000: 20%
+        if (newPositionFee > 2000) {
+            revert UsdnProtocolInvalidPositionFee();
+        }
+        _positionFeeBps = newPositionFee;
+        emit PositionFeeUpdated(newPositionFee);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {
+        // If newRatio is greater than 5%
+        if (newRatio > SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
+            revert UsdnProtocolInvalidBurnSdexOnDepositRatio();
+        }
+
+        _sdexBurnOnDepositRatio = newRatio;
+
+        emit BurnSdexOnDepositRatioUpdated(newRatio);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setSecurityDepositValue(uint256 securityDepositValue) external onlyOwner {
+        // we allow to set the security deposit between 10 ** 15 (0.001 ether) and 10 ethers
+        // the value must be a multiple of the SECURITY_DEPOSIT_FACTOR
+        if (securityDepositValue > 10 ether || securityDepositValue % SECURITY_DEPOSIT_FACTOR != 0) {
+            revert UsdnProtocolInvalidSecurityDepositValue();
+        }
+
+        _securityDepositValue = securityDepositValue;
+        emit SecurityDepositValueUpdated(securityDepositValue);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setFeeThreshold(uint256 newFeeThreshold) external onlyOwner {
+        _feeThreshold = newFeeThreshold;
+        emit FeeThresholdUpdated(newFeeThreshold);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setFeeCollector(address newFeeCollector) external onlyOwner {
+        if (newFeeCollector == address(0)) {
+            revert UsdnProtocolInvalidFeeCollector();
+        }
+        _feeCollector = newFeeCollector;
+        emit FeeCollectorUpdated(newFeeCollector);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setExpoImbalanceLimits(
+        uint256 newOpenLimitBps,
+        uint256 newDepositLimitBps,
+        uint256 newWithdrawalLimitBps,
+        uint256 newCloseLimitBps
+    ) external onlyOwner {
+        _openExpoImbalanceLimitBps = newOpenLimitBps.toInt256();
+        _depositExpoImbalanceLimitBps = newDepositLimitBps.toInt256();
+
+        if (newWithdrawalLimitBps != 0 && newWithdrawalLimitBps < newOpenLimitBps) {
+            // withdrawal limit lower than open not permitted
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
+        }
+        _withdrawalExpoImbalanceLimitBps = newWithdrawalLimitBps.toInt256();
+
+        if (newCloseLimitBps != 0 && newCloseLimitBps < newDepositLimitBps) {
+            // close limit lower than deposit not permitted
+            revert UsdnProtocolInvalidExpoImbalanceLimit();
+        }
+        _closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
+
+        emit ImbalanceLimitsUpdated(newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps);
+    }
+
+    function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
+        if (newPrice > _usdnRebaseThreshold) {
+            revert UsdnProtocolInvalidTargetUsdnPrice();
+        }
+        if (newPrice < uint128(10 ** _priceFeedDecimals)) {
+            // values smaller than $1 are not allowed
+            revert UsdnProtocolInvalidTargetUsdnPrice();
+        }
+        _targetUsdnPrice = newPrice;
+        emit TargetUsdnPriceUpdated(newPrice);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setUsdnRebaseThreshold(uint128 newThreshold) external onlyOwner {
+        if (newThreshold < _targetUsdnPrice) {
+            revert UsdnProtocolInvalidUsdnRebaseThreshold();
+        }
+        _usdnRebaseThreshold = newThreshold;
+        emit UsdnRebaseThresholdUpdated(newThreshold);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setUsdnRebaseInterval(uint256 newInterval) external onlyOwner {
+        _usdnRebaseInterval = newInterval;
+        emit UsdnRebaseIntervalUpdated(newInterval);
     }
 
     /**
-     * @notice Replace the LiquidationRewardsManager contract with a new implementation.
-     * @dev Cannot be the 0 address.
-     * @param newLiquidationRewardsManager the address of the new contract.
+     * @notice Create initial deposit
+     * @dev To be called from `initialize`
+     * @param amount The initial deposit amount
+     * @param price The current asset price
      */
-    function setLiquidationRewardsManager(address newLiquidationRewardsManager) external onlyOwner {
-        if (newLiquidationRewardsManager == address(0)) {
-            revert UsdnProtocolLiquidationRewardsManagerIsZeroAddress();
-        }
+    function _createInitialDeposit(uint128 amount, uint128 price) internal {
+        _checkUninitialized(); // prevent using this function after initialization
 
-        _liquidationRewardsManager = ILiquidationRewardsManager(newLiquidationRewardsManager);
+        // Transfer the wstETH for the deposit
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
+        _balanceVault += amount;
+        emit InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp);
 
-        emit LiquidationRewardsManagerUpdated(newLiquidationRewardsManager);
+        // Calculate the total minted amount of USDN (vault balance and total supply are zero for now, we assume the
+        // USDN price to be $1)
+        uint256 usdnToMint = _calcMintUsdn(amount, 0, 0, price);
+        // Mint the min amount and send to dead address so it can never be removed from the total supply
+        _usdn.mint(DEAD_ADDRESS, MIN_USDN_SUPPLY);
+        // Mint the user's share
+        uint256 mintToUser = usdnToMint - MIN_USDN_SUPPLY;
+        _usdn.mint(msg.sender, mintToUser);
+
+        // Emit events
+        emit ValidatedDeposit(DEAD_ADDRESS, DEAD_ADDRESS, 0, MIN_USDN_SUPPLY, block.timestamp);
+        emit ValidatedDeposit(msg.sender, msg.sender, amount, mintToUser, block.timestamp);
     }
 
-    /// @inheritdoc IUsdnProtocol
-    function setFeeBps(uint16 protocolFeeBps) external onlyOwner {
-        if (protocolFeeBps > BPS_DIVISOR) {
-            revert UsdnProtocolInvalidProtocolFeeBps();
-        }
-        _protocolFeeBps = protocolFeeBps;
-        emit FeeBpsUpdated(protocolFeeBps);
-    }
+    /**
+     * @notice Create initial long position
+     * @dev To be called from `initialize`
+     * @param amount The initial position amount
+     * @param price The current asset price
+     * @param tick The tick corresponding to the liquidation price (without penalty)
+     */
+    function _createInitialPosition(
+        uint128 amount,
+        uint128 price,
+        int24 tick,
+        uint128 leverage,
+        uint128 positionTotalExpo
+    ) internal {
+        _checkUninitialized(); // prevent using this function after initialization
 
-    /// @inheritdoc IUsdnProtocol
-    function setFeeCollector(address feeCollector) external onlyOwner {
-        if (feeCollector == address(0)) {
-            revert UsdnProtocolInvalidFeeCollector();
-        }
-        _feeCollector = feeCollector;
-        emit FeeCollectorUpdated(feeCollector);
-    }
+        // Transfer the wstETH for the long
+        _asset.safeTransferFrom(msg.sender, address(this), amount);
 
-    /// @inheritdoc IUsdnProtocol
-    function setFeeThreshold(uint256 feeThreshold) external onlyOwner {
-        _feeThreshold = feeThreshold;
-        emit FeeThresholdUpdated(feeThreshold);
+        // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
+        tick = tick + int24(_liquidationPenalty) * _tickSpacing;
+        Position memory long = Position({
+            user: msg.sender,
+            amount: amount,
+            totalExpo: positionTotalExpo,
+            timestamp: uint40(block.timestamp)
+        });
+        // Save the position and update the state
+        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
+        emit InitiatedOpenPosition(
+            msg.sender, msg.sender, long.timestamp, leverage, long.amount, price, tick, tickVersion, index
+        );
+        emit ValidatedOpenPosition(msg.sender, msg.sender, leverage, price, tick, tickVersion, index);
     }
 }

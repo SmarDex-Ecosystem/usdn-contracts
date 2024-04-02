@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { console, Test } from "forge-std/Test.sol";
+import { console2, Test } from "forge-std/Test.sol";
+
+import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 
 import { Usdn } from "src/Usdn.sol";
 
@@ -10,93 +12,146 @@ import { Usdn } from "src/Usdn.sol";
  * @dev Wrapper to test internal functions and access internal constants, as well as perform invariant testing
  */
 contract UsdnHandler is Usdn, Test {
-    // use multiple actors for invariant testing
-    address[] public actors;
-
-    // current actor
-    address internal _currentActor;
+    using EnumerableMap for EnumerableMap.AddressToUintMap;
 
     // track theoretical shares
-    mapping(address account => uint256) public shares;
+    EnumerableMap.AddressToUintMap private _sharesHandle;
 
     // track theoretical total supply
     uint256 public totalSharesSum;
 
-    constructor(address[] memory _actors) Usdn(address(0), address(0)) {
-        actors = _actors;
+    constructor() Usdn(address(0), address(0)) { }
+
+    function i_approve(address owner, address spender, uint256 value) external {
+        _approve(owner, spender, value);
     }
 
-    function approve(address _owner, address _spender, uint256 _value) external {
-        _approve(_owner, _spender, _value);
+    function i_transfer(address from, address to, uint256 value) external {
+        _transfer(from, to, value);
     }
 
-    function transfer(address _from, address _to, uint256 _value) external {
-        _transfer(_from, _to, _value);
+    function i_burn(address owner, uint256 value) external {
+        _burn(owner, value);
     }
 
-    function burn(address _owner, uint256 _value) external {
-        _burn(_owner, _value);
+    function i_transferShares(address from, address to, uint256 value, uint256 tokenValue) external {
+        _transferShares(from, to, value, tokenValue);
+    }
+
+    function i_burnShares(address owner, uint256 value, uint256 tokenValue) external {
+        _burnShares(owner, value, tokenValue);
     }
 
     /* ------------------ Functions used for invariant testing ------------------ */
 
-    modifier useActor(uint256 actorIndexSeed) {
-        console.log("bound actor ID");
-        _currentActor = actors[bound(actorIndexSeed, 0, actors.length - 1)];
-        vm.startPrank(_currentActor);
-        _;
-        vm.stopPrank();
+    function getSharesOfAddress(address account) external view returns (uint256) {
+        (, uint256 valueShares) = _sharesHandle.tryGet(account);
+        return valueShares;
     }
 
-    function adjustDivisorTest(uint256 newDivisor) external {
+    function getElementOfIndex(uint256 index) external view returns (address, uint256) {
+        return _sharesHandle.at(index);
+    }
+
+    function getLengthOfShares() external view returns (uint256) {
+        return _sharesHandle.length();
+    }
+
+    function rebaseTest(uint256 newDivisor) external {
         if (_divisor == MIN_DIVISOR) {
             return;
         }
-        console.log("bound divisor");
+        console2.log("bound divisor");
         newDivisor = bound(newDivisor, MIN_DIVISOR, _divisor - 1);
-        emit DivisorAdjusted(_divisor, newDivisor);
+        emit Rebase(_divisor, newDivisor);
         _divisor = newDivisor;
     }
 
-    function mintTest(uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
-        if (totalSupply() == maxTokens()) {
+    function mintTest(uint256 value) external {
+        if (totalSupply() >= maxTokens() - 1) {
             return;
         }
-        console.log("bound mint value");
-        value = bound(value, 1, maxTokens() - totalSupply());
+        console2.log("bound mint value");
+        value = bound(value, 1, maxTokens() - totalSupply() - 1);
         uint256 valueShares = value * _divisor;
         totalSharesSum += valueShares;
-        shares[_currentActor] += valueShares;
-        _mint(_currentActor, value);
+        (, uint256 lastShares) = _sharesHandle.tryGet(msg.sender);
+        _sharesHandle.set(msg.sender, lastShares + valueShares);
+        _mint(msg.sender, value);
     }
 
-    function burnTest(uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
-        if (balanceOf(_currentActor) == 0) {
+    function burnTest(uint256 value) external {
+        if (balanceOf(msg.sender) == 0) {
             return;
         }
-        console.log("bound burn value");
-        value = bound(value, 1, balanceOf(_currentActor));
+        console2.log("bound burn value");
+        value = bound(value, 1, balanceOf(msg.sender));
         uint256 valueShares = value * _divisor;
+
+        uint256 lastShares = _sharesHandle.get(msg.sender);
+        if (valueShares > lastShares) {
+            valueShares = lastShares;
+        }
         totalSharesSum -= valueShares;
-        shares[_currentActor] -= valueShares;
-        _burn(_currentActor, value);
+        _sharesHandle.set(msg.sender, lastShares - valueShares);
+        _burn(msg.sender, value);
     }
 
-    function transferTest(uint256 actorTo, uint256 value, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
-        console.log("bound 'to' actor ID");
-        address to = actors[bound(actorTo, 0, actors.length - 1)];
-        if (balanceOf(_currentActor) == 0) {
+    function transferTest(address to, uint256 value) external {
+        if (balanceOf(msg.sender) == 0 || to == address(0)) {
             return;
         }
-        console.log("bound transfer value");
-        value = bound(value, 1, balanceOf(_currentActor));
+        console2.log("bound transfer value");
+        value = bound(value, 1, balanceOf(msg.sender));
         uint256 valueShares = value * _divisor;
-        if (valueShares > shares[_currentActor]) {
-            valueShares = shares[_currentActor];
+        uint256 lastShares = _sharesHandle.get(msg.sender);
+        if (valueShares > lastShares) {
+            valueShares = lastShares;
         }
+        _sharesHandle.set(msg.sender, lastShares - valueShares);
+        (, uint256 toShares) = _sharesHandle.tryGet(to);
+        _sharesHandle.set(to, toShares + valueShares);
 
-        shares[_currentActor] -= valueShares;
-        shares[to] += valueShares;
-        _transfer(_currentActor, to, value);
+        _transfer(msg.sender, to, value);
+    }
+
+    function mintSharesTest(uint256 value) external {
+        if (_totalShares >= type(uint256).max) {
+            return;
+        }
+        console2.log("bound mint shares value");
+        value = bound(value, 1, type(uint256).max - _totalShares);
+        totalSharesSum += value;
+        (, uint256 lastShares) = _sharesHandle.tryGet(msg.sender);
+        _sharesHandle.set(msg.sender, lastShares + value);
+        _updateShares(address(0), msg.sender, value, convertToTokens(value));
+    }
+
+    function burnSharesTest(uint256 value) external {
+        if (sharesOf(msg.sender) == 0) {
+            return;
+        }
+        console2.log("bound burn shares value");
+        value = bound(value, 1, sharesOf(msg.sender));
+
+        totalSharesSum -= value;
+
+        uint256 lastShares = _sharesHandle.get(msg.sender);
+        _sharesHandle.set(msg.sender, lastShares - value);
+        _burnShares(msg.sender, value, convertToTokens(value));
+    }
+
+    function transferSharesTest(address to, uint256 value) external {
+        if (sharesOf(msg.sender) == 0 || to == address(0)) {
+            return;
+        }
+        console2.log("bound transfer shares value");
+        value = bound(value, 1, sharesOf(msg.sender));
+        uint256 lastShares = _sharesHandle.get(msg.sender);
+        _sharesHandle.set(msg.sender, lastShares - value);
+        (, uint256 toShares) = _sharesHandle.tryGet(to);
+        _sharesHandle.set(to, toShares + value);
+
+        _transferShares(msg.sender, to, value, convertToTokens(value));
     }
 }

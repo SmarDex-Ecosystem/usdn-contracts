@@ -12,6 +12,12 @@ interface IOracleMiddlewareErrors {
     /// @notice The oracle price is invalid (too old)
     error OracleMiddlewarePriceTooOld(uint256 timestamp);
 
+    /// @notice The pyth price reported a positive exponent (negative decimals)
+    error OracleMiddlewarePythPositiveExponent(int32 expo);
+
+    /// @notice the confidence ratio is too high
+    error OracleMiddlewareConfRatioTooHigh();
+
     /// @notice Not enough ether was provided to cover the cost of price validation
     error OracleMiddlewareInsufficientFee();
 

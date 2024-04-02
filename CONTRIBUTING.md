@@ -71,8 +71,8 @@ setup function.
 
 ### Test files
 
-Inside the contract sub-folder, test files should be named `ContractName.function.t.sol` where `function` is the name
-of the function being tested. For very small functions, they can be grouped in a single file/contract named accordingly.
+Inside the contract sub-folder, test files should be named `Function.t.sol` where `Function` is the name of the function or part
+being tested, in PascalCase. For very small functions, they can be grouped in a single file/contract named accordingly.
 
 The contract name inside that file should be `TestContractNameMethod`.
 
@@ -137,7 +137,7 @@ contract TestMyTokenTransfer is MyTokenFixture {
 }
 ```
 
-### Expect statements
+### Assert statements
 
 When using `assert*` statements in the tests, foundry allows to pass a third parameter with a string of characters.
 

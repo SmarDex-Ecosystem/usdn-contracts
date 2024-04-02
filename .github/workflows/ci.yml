@@ -1,8 +1,8 @@
-name: Main worflow
+name: Main workflow
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 env:
@@ -29,11 +29,12 @@ jobs:
       - name: Install deps
         run: npm ci && forge install
 
-      - name: Check gas snapshots
-        run: npm run snapshot:check
+      # skip for now
+      #- name: Check gas snapshots
+      #  run: npm run snapshot:check
 
       - name: Run tests
-        run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork --gas-report
+        run: forge test --no-match-test "(FFI|Fork)" --no-match-contract Fork
   run-slither:
     runs-on: ubuntu-latest
     steps:

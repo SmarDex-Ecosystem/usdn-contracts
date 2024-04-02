@@ -25,3 +25,9 @@ lcov.info
 
 # docs
 docs/
+
+# IDE
+.idea/
+
+# Removed for now, might enable after v1.0
+.gas-snapshot

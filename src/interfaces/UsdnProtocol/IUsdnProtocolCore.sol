@@ -10,56 +10,37 @@ import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.so
  */
 interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /// @notice The address that holds the minimum supply of USDN and first minimum long position.
-    function DEAD_ADDRESS() external view returns (address);
+    function DEAD_ADDRESS() external pure returns (address);
 
-    /// @notice The default max number of iterations for the checking the pending actions queue
-    function DEFAULT_QUEUE_MAX_ITER() external view returns (uint256);
+    /// @notice The maximum number of actionable pending action items returned by `getActionablePendingActions`
+    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
+
+    /* -------------------------- Public view functions ------------------------- */
 
     /**
-     * @notice Get the predicted value of the liquidation price multiplier for the given asset price and timestamp
-     * @dev The effect of the funding rates since the last contract state update are taken into account
-     * @param currentPrice The current or predicted asset price
-     * @param timestamp The timestamp corresponding to `currentPrice`
+     * @notice Get the predicted value of the liquidation price multiplier for the given timestamp
+     * @dev The effect of the funding rates since the last contract state update are taken into account. If the provided
+     * timestamp is older than the last state update, the function reverts with `UsdnProtocolTimestampTooOld`.
+     * @param timestamp The current timestamp
      */
-    function getLiquidationMultiplier(uint128 currentPrice, uint128 timestamp) external view returns (uint256);
+    function getLiquidationMultiplier(uint128 timestamp) external view returns (uint256);
 
     /**
-     * @notice Get the predicted value of the funding for the given asset price and timestamp
-     * @dev The effect of any profits or losses from the long positions since the last contract state update are taken
-     * into account.
-     * When multiplied with the long trading exposure, this value gives the asset balance that needs to be paid to
-     * the vault side (or long side if negative).
-     * @param currentPrice The current or predicted asset price
-     * @param timestamp The timestamp corresponding to `currentPrice`
+     * @notice Get the predicted value of the funding since the last state update for the given timestamp
+     * @dev When multiplied with the long trading exposure, this value gives the asset balance that needs to be paid to
+     * the vault side (or long side if negative). If the provided timestamp is older than the last state update, the
+     * function reverts with `UsdnProtocolTimestampTooOld`.
+     * @param timestamp The current timestamp
      * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
-     * @return longExpo_ The long trading exposure (with asset decimals)
-     * @return vaultExpo_ The vault trading exposure (with asset decimals)
+     * @return oldLongExpo_ The long trading exposure after the last state update
      */
-    function funding(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (int256 fund_, int256 longExpo_, int256 vaultExpo_);
-
-    /**
-     * @notice Get the predicted value of the funding (in asset units) for the given asset price and timestamp
-     * @dev The effect of any profits or losses from the long positions since the last contract state update are taken
-     * into account.
-     * @param currentPrice The current or predicted asset price
-     * @param timestamp The timestamp corresponding to `currentPrice`
-     * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
-     * @return longExpo_ The long trading exposure (with asset decimals)
-     * @return vaultExpo_ The vault trading exposure (with asset decimals)
-     * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
-     */
-    function fundingAsset(uint128 currentPrice, uint128 timestamp)
-        external
-        view
-        returns (int256 fundingAsset_, int256 longExpo_, int256 vaultExpo_, int256 fund_);
+    function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_);
 
     /**
      * @notice Get the predicted value of the long balance for the given asset price and timestamp
      * @dev The effect of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account
+     * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`.
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
@@ -68,7 +49,8 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the vault balance for the given asset price and timestamp
      * @dev The effect of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account
+     * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`.
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
@@ -93,13 +75,38 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
 
     /**
-     * @notice Retrieve a pending action that must be validated by the next user action in the protocol.
-     * @dev If this function returns a pending action, then the next user action MUST include the price update data
-     * for this pending action as the last parameter.
-     * @dev Front-ends are encouraged to set the `from` address when calling this function, so that we can return the
-     * correct actionable action for a given user.
-     * @param maxIter The maximum number of iterations to find the first initialized item
+     * @notice Retrieve a list of pending actions, one of which must be validated by the next user action in the
+     * protocol.
+     * @dev If this function returns a non-empty list of pending actions, then the next user action MUST include the
+     * corresponding list of price update data and raw indices as the last parameter.
+     * @param currentUser The address of the user that will submit the price signatures for third-party actions
+     * validations. This is used to filter out their own actions from the returned list.
+     * @return actions_ The pending actions if any, otherwise an empty array. Note that some items can be zero-valued
+     * and there is no need to provide price data for those (an empty `bytes` suffices).
+     * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
+     * array.
+     */
+    function getActionablePendingActions(address currentUser)
+        external
+        view
+        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
+
+    /**
+     * @notice Retrieve a user pending action.
+     * @param user The user address
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
      */
-    function getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory action_);
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_);
+
+    /**
+     * @notice Calculation of the EMA of the funding rate
+     * @param lastFunding The last funding rate
+     * @param secondsElapsed The number of seconds elapsed since the last protocol action
+     * @param emaPeriod The EMA period
+     * @param previousEMA The previous EMA
+     */
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+        external
+        pure
+        returns (int256);
 }
