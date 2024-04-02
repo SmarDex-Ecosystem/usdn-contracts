@@ -28,12 +28,13 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     constructor(
         IUsdn usdn,
+        IERC20Metadata sdex,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
-    ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
+    ) UsdnProtocol(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
     /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
     function resetEMA() external {
@@ -53,7 +54,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint256 index,
         uint128 amountToClose,
         bytes calldata currentPriceData
-    ) external {
+    ) external returns (uint256 securityDepositValue_) {
         return _initiateClosePosition(user, tick, tickVersion, index, amountToClose, currentPriceData);
     }
 
@@ -74,7 +75,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         external
         pure
-        returns (uint256 value_)
+        returns (int256 value_)
     {
         return _positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
     }
@@ -159,7 +160,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint128 expo,
         uint256 liqMultiplier,
         uint256 tempTransferred
-    ) external view returns (uint256) {
+    ) external view returns (uint256, int256) {
         return _assetToTransfer(currentPrice, tick, expo, liqMultiplier, tempTransferred);
     }
 
@@ -181,6 +182,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
         returns (uint256 toMint_)
     {
         return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
+    }
+
+    function i_calcSdexToBurn(uint256 usdnAmount) external view returns (uint256 toBurn_) {
+        return _calcSdexToBurn(usdnAmount);
     }
 
     function i_vaultAssetAvailable(
@@ -249,24 +254,20 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _usdnRebase(assetPrice, ignoreInterval);
     }
 
-    function i_calcUsdnPrice(
-        uint256 vaultBalance,
-        uint128 assetPrice,
-        uint256 usdnTotalSupply,
-        uint8 usdnDecimals,
-        uint8 assetDecimals
-    ) external pure returns (uint256) {
-        return _calcUsdnPrice(vaultBalance, assetPrice, usdnTotalSupply, usdnDecimals, assetDecimals);
+    function i_calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
+        external
+        pure
+        returns (uint256)
+    {
+        return _calcUsdnPrice(vaultBalance, assetPrice, usdnTotalSupply, assetDecimals);
     }
 
-    function i_calcRebaseTotalSupply(
-        uint256 vaultBalance,
-        uint128 assetPrice,
-        uint128 targetPrice,
-        uint8 usdnDecimals,
-        uint8 assetDecimals
-    ) external pure returns (uint256) {
-        return _calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, usdnDecimals, assetDecimals);
+    function i_calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
+        external
+        pure
+        returns (uint256)
+    {
+        return _calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
     }
 
     function i_addPendingAction(address user, PendingAction memory action) external {
@@ -277,11 +278,18 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getPendingAction(user);
     }
 
-    function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool) {
+    function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool, uint256) {
         return _executePendingAction(data);
     }
 
     function i_executePendingActionOrRevert(PreviousActionsData calldata data) external {
         _executePendingActionOrRevert(data);
+    }
+
+    function i_refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore)
+        external
+        payable
+    {
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
 }

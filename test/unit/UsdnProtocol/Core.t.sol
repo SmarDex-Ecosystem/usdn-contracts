@@ -59,11 +59,11 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             0
         );
 
-        uint256 longPosValue = protocol.i_positionValue(params.initialPrice, longLiqPrice, firstPos.totalExpo);
+        int256 longPosValue = protocol.i_positionValue(params.initialPrice, longLiqPrice, firstPos.totalExpo);
 
         // there are rounding errors when calculating the value of a position, here we have up to 1 wei of error for
         // each position, but always in favor of the protocol.
-        assertGe(uint256(protocol.i_longAssetAvailable(params.initialPrice)), longPosValue, "long balance");
+        assertGe(protocol.i_longAssetAvailable(params.initialPrice), longPosValue, "long balance");
     }
 
     /**

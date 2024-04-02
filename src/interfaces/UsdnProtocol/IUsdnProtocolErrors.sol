@@ -24,6 +24,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the asset decimals are invalid
     error UsdnProtocolInvalidAssetDecimals(uint8 assetDecimals);
 
+    /// @dev Indicates that the token decimals are not equal to TOKENS_DECIMALS
+    error UsdnProtocolInvalidTokenDecimals();
+
     /// @dev Indicates that the user is not allowed to perform an action
     error UsdnProtocolUnauthorized();
 
@@ -60,6 +63,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided position fee exceeds the maximum allowed
     error UsdnProtocolInvalidPositionFee();
 
+    /// @dev Indicates that the provided ratio exceeds the maximum allowed
+    error UsdnProtocolInvalidBurnSdexOnDepositRatio();
+
     /// @dev Indicates that the new middleware address value is invalid.
     error UsdnProtocolInvalidMiddlewareAddress();
 
@@ -95,6 +101,15 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided fee collector address is invalid
     error UsdnProtocolInvalidFeeCollector();
+
+    /// @dev Indicates that the provided security deposit is lower than _securityDepositValue
+    error UsdnProtocolSecurityDepositTooLow();
+
+    /// @dev Indicates that the wanted security deposit value cannot be set
+    error UsdnProtocolInvalidSecurityDepositValue();
+
+    /// @dev Indicates that the ether balance of the contract at the end of the action is not the expected one
+    error UsdnProtocolUnexpectedBalance();
 
     /// @dev Indicates that the soft longExpo imbalance limit provided is invalid
     error UsdnProtocolInvalidExpoImbalanceLimit();

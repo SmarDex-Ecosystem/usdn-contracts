@@ -26,11 +26,20 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The number of decimals for funding rate values
     function FUNDING_RATE_DECIMALS() external pure returns (uint8);
 
+    /// @notice The number of decimals for tokens used in the protocol (except the asset)
+    function TOKENS_DECIMALS() external pure returns (uint8);
+
     /// @notice The number of decimals for liquidation multiplier values
     function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8);
 
     /// @notice The number of decimals for the scaling factor of the funding rate
     function FUNDING_SF_DECIMALS() external pure returns (uint8);
+
+    /// @notice Divisor for the ratio of USDN to SDEX to burn on deposit
+    function SDEX_BURN_ON_DEPOSIT_DIVISOR() external pure returns (uint256);
+
+    /// @notice The factor to convert the security deposit value to an uint24
+    function SECURITY_DEPOSIT_FACTOR() external pure returns (uint128);
 
     /**
      * @notice Divisor for the bps values
@@ -55,6 +64,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The asset ERC20 contract (wstETH).
     function getAsset() external view returns (IERC20Metadata);
 
+    /// @notice The SDEX ERC20 contract.
+    function getSdex() external view returns (IERC20Metadata);
+
     /// @notice The price feed decimals.
     function getPriceFeedDecimals() external view returns (uint8);
 
@@ -63,9 +75,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The USDN ERC20 contract.
     function getUsdn() external view returns (IUsdn);
-
-    /// @notice The decimals of the USDN token.
-    function getUsdnDecimals() external view returns (uint8);
 
     /// @notice The MIN_DIVISOR constant of the USDN token.
     function getUsdnMinDivisor() external view returns (uint256);
@@ -109,6 +118,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The position fee in bps
     function getPositionFeeBps() external view returns (uint16);
+
+    /// @notice The ratio of USDN to SDEX tokens to burn on deposit (to be divided by SDEX_BURN_ON_DEPOSIT_DIVISOR)
+    function getSdexBurnOnDepositRatio() external view returns (uint32);
+
+    /// @notice The security deposit required for a new position
+    function getSecurityDepositValue() external view returns (uint256);
 
     /// @notice The fee threshold before fees are sent to the fee collector
     function getFeeThreshold() external view returns (uint256);
