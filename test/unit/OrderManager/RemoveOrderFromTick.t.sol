@@ -16,7 +16,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  */
 contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderManagerErrors, IOrderManagerEvents {
     int24 private _tick;
-    uint96 private _amount;
+    uint232 private _amount;
 
     function setUp() public {
         _setUp(DEFAULT_PARAMS);
@@ -42,7 +42,7 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
     function test_RervertsWhen_noTickForTheCurrentUser() external {
         vm.prank(USER_1);
         vm.expectRevert(abi.encodeWithSelector(OrderManagerNoOrderForUserInTick.selector, _tick, USER_1));
-        orderManager.removeOrderFromTick(_tick);
+        orderManager.removeOrderFromTick(_tick, _amount);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -53,7 +53,7 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
      * @custom:scenario A user wants to remove his order from a tick
      * @custom:given A tick with an order from the user
      * @custom:when removeOrderFromTick is called for this tick
-     * @custom:then the order is removed from the order array in the tick
+     * @custom:then the amount of the user in the tick is removed from the contract
      * @custom:and an UserWithdrewAssetsFromTick event is emitted
      * @custom:and the assets are sent back to the user
      * @custom:and the state of the order manager is updated
@@ -63,8 +63,8 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit UserWithdrewAssetsFromTick(address(this), _tick, 0);
-        orderManager.removeOrderFromTick(_tick);
+        emit UserWithdrewAssetsFromTick(address(this), 0, _tick, 0);
+        orderManager.removeOrderFromTick(_tick, _amount);
 
         assertEq(
             orderManagerBalanceBefore - _amount,
@@ -86,6 +86,73 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
         assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
 
         uint232 userOrderAmount = orderManager.getUserAmountInTick(_tick, 0, address(this));
+        assertEq(userOrderAmount, 0, "The user should have no assets left on the tick");
+    }
+
+    /**
+     * @custom:scenario A user wants to remove his order from a tick partially
+     * @custom:given A tick with an order from the user
+     * @custom:when removeOrderFromTick is called for this tick with an amount lower than the amount in the tick
+     * @custom:then the amount of the user in the tick is removed from the contract
+     * @custom:and an UserWithdrewAssetsFromTick event is emitted
+     * @custom:and the assets are sent back to the user
+     * @custom:and the state of the order manager is updated
+     */
+    function test_removeOrderFromTickPartially() external {
+        uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
+        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
+        uint232 partialAmount = _amount / 3;
+        uint232 amountLeft = _amount - partialAmount;
+
+        /* ----------------- 1st call that withdraw a partial amount ---------------- */
+        vm.expectEmit();
+        emit UserWithdrewAssetsFromTick(address(this), amountLeft, _tick, 0);
+        orderManager.removeOrderFromTick(_tick, partialAmount);
+
+        assertEq(
+            orderManagerBalanceBefore - partialAmount,
+            wstETH.balanceOf(address(orderManager)),
+            "The partial amount should have been taken out of the order manager"
+        );
+        assertEq(
+            userBalanceBefore + partialAmount,
+            wstETH.balanceOf(address(this)),
+            "The partial amount should have been sent to the user"
+        );
+
+        IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_tick, 0);
+        assertEq(
+            ordersData.amountOfAssets,
+            amountLeft,
+            "The partial amount should have been subtracted from the accumulated amount"
+        );
+
+        uint232 userOrderAmount = orderManager.getUserAmountInTick(_tick, 0, address(this));
+        assertEq(userOrderAmount, amountLeft, "The user should have assets left on the tick");
+
+        /* -------------- 2nd call that withdraw the rest of the assets ------------- */
+        orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
+        userBalanceBefore = wstETH.balanceOf(address(this));
+
+        vm.expectEmit();
+        emit UserWithdrewAssetsFromTick(address(this), 0, _tick, 0);
+        orderManager.removeOrderFromTick(_tick, amountLeft);
+
+        assertEq(
+            orderManagerBalanceBefore - amountLeft,
+            wstETH.balanceOf(address(orderManager)),
+            "The assets should have been taken out of the order manager"
+        );
+        assertEq(
+            userBalanceBefore + amountLeft,
+            wstETH.balanceOf(address(this)),
+            "The assets should have been sent to the user"
+        );
+
+        ordersData = orderManager.getOrdersDataInTick(_tick, 0);
+        assertEq(ordersData.amountOfAssets, 0, "The accumulated amount should be equal to 0");
+
+        userOrderAmount = orderManager.getUserAmountInTick(_tick, 0, address(this));
         assertEq(userOrderAmount, 0, "The user should have no assets left on the tick");
     }
 }

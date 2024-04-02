@@ -87,7 +87,7 @@ contract OrderManager is Ownable, IOrderManager {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOrderManager
-    function addOrderInTick(int24 tick, uint96 amount) external {
+    function addOrderInTick(int24 tick, uint232 amount) external {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
 
         // Check if the provided tick is valid and inside limits
@@ -112,24 +112,25 @@ contract OrderManager is Ownable, IOrderManager {
     }
 
     /// @inheritdoc IOrderManager
-    function removeOrderFromTick(int24 tick) external {
+    function removeOrderFromTick(int24 tick, uint232 amountToWithdraw) external {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
         uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
         uint232 userAmount = _userAmountInTick[tickHash][msg.sender];
 
         // Check that the current user has assets in this tick
-        if (userAmount == 0) {
+        if (userAmount < amountToWithdraw) {
             revert OrderManagerNoOrderForUserInTick(tick, msg.sender);
         }
 
         // Clean the storage from the removed position's data
-        delete _userAmountInTick[tickHash][msg.sender];
-        _ordersDataInTick[tickHash].amountOfAssets -= userAmount;
+        uint232 newUserAmount = userAmount - amountToWithdraw;
+        _userAmountInTick[tickHash][msg.sender] = newUserAmount;
+        _ordersDataInTick[tickHash].amountOfAssets -= amountToWithdraw;
 
         // Transfer the assets back to the user
-        _asset.safeTransfer(msg.sender, userAmount);
+        _asset.safeTransfer(msg.sender, amountToWithdraw);
 
-        emit UserWithdrewAssetsFromTick(msg.sender, tick, tickVersion);
+        emit UserWithdrewAssetsFromTick(msg.sender, newUserAmount, tick, tickVersion);
     }
 }

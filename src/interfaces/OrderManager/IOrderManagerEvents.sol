@@ -14,8 +14,9 @@ interface IOrderManagerEvents {
     /**
      * @notice Emitted when a user withdraw assets from a tick.
      * @param user The owner of the removed assets
+     * @param amountRemaining The amount remaining for that user in this tick
      * @param tick The tick the order was in
      * @param tickVersion The version of the tick
      */
-    event UserWithdrewAssetsFromTick(address indexed user, int24 tick, uint256 tickVersion);
+    event UserWithdrewAssetsFromTick(address indexed user, uint232 amountRemaining, int24 tick, uint256 tickVersion);
 }

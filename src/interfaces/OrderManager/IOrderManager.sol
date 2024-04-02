@@ -54,14 +54,15 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
      * and pull the amount of funds from the user to this contract.
      * @dev This function will always use the latest version of the provided tick.
      * @param tick The tick to add the order in.
-     * @param amount The amount of assets the order contains.
+     * @param amount The amount of assets to deposit.
      */
-    function addOrderInTick(int24 tick, uint96 amount) external;
+    function addOrderInTick(int24 tick, uint232 amount) external;
 
     /**
      * @notice Remove the order of the user from the provided tick and send back the funds to him.
      * @dev This function will always use the latest version of the provided tick.
      * @param tick The tick to remove the order from.
+     * @param amountToWithdraw The amount of assets to withdraw.
      */
-    function removeOrderFromTick(int24 tick) external;
+    function removeOrderFromTick(int24 tick, uint232 amountToWithdraw) external;
 }
