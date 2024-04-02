@@ -61,8 +61,8 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
     }
 
     /// @inheritdoc IOrderManager
-    function getUsdnProtocol() external view returns (address) {
-        return address(_usdnProtocol);
+    function getUsdnProtocol() external view returns (IUsdnProtocol) {
+        return _usdnProtocol;
     }
 
     /* -------------------------------------------------------------------------- */

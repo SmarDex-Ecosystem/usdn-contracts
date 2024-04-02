@@ -57,7 +57,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
         returns (OrdersDataInTick memory ordersData_);
 
     /// @notice Returns the address of the USDN protocol.
-    function getUsdnProtocol() external view returns (address);
+    function getUsdnProtocol() external view returns (IUsdnProtocol);
 
     /**
      * @notice Initialize the contract with all the needed variables.
