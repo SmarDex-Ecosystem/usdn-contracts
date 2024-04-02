@@ -50,19 +50,19 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
     function approveAssetsForSpending(uint256 allowance) external;
 
     /**
-     * @notice Add an order with the provided amount to the provided tick
-     * and pull the amount of funds from the user to this contract.
+     * @notice Deposit the provided amount of assets to the provided tick
+     * and transfer the assets from the user to this contract.
      * @dev This function will always use the latest version of the provided tick.
      * @param tick The tick to add the order in.
      * @param amount The amount of assets to deposit.
      */
-    function addOrderInTick(int24 tick, uint232 amount) external;
+    function depositAssetsInTick(int24 tick, uint232 amount) external;
 
     /**
-     * @notice Remove the order of the user from the provided tick and send back the funds to him.
+     * @notice Withdraw an amount of the user's assets from the provided tick and send them back to him.
      * @dev This function will always use the latest version of the provided tick.
      * @param tick The tick to remove the order from.
      * @param amountToWithdraw The amount of assets to withdraw.
      */
-    function removeOrderFromTick(int24 tick, uint232 amountToWithdraw) external;
+    function withdrawAssetsFromTick(int24 tick, uint232 amountToWithdraw) external;
 }

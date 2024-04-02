@@ -87,7 +87,7 @@ contract OrderManager is Ownable, IOrderManager {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOrderManager
-    function addOrderInTick(int24 tick, uint232 amount) external {
+    function depositAssetsInTick(int24 tick, uint232 amount) external {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
 
         // Check if the provided tick is valid and inside limits
@@ -112,7 +112,7 @@ contract OrderManager is Ownable, IOrderManager {
     }
 
     /// @inheritdoc IOrderManager
-    function removeOrderFromTick(int24 tick, uint232 amountToWithdraw) external {
+    function withdrawAssetsFromTick(int24 tick, uint232 amountToWithdraw) external {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
         uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
