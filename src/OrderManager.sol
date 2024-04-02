@@ -93,8 +93,9 @@ contract OrderManager is Ownable, IOrderManager, InitializableReentrancyGuard {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
 
         // Check if the provided tick is valid and inside limits
-        if (tick < TickMath.MIN_TICK || tick > TickMath.MAX_TICK) revert OrderManagerInvalidTick(tick);
-        if (tick % usdnProtocol.getTickSpacing() != 0) revert OrderManagerInvalidTick(tick);
+        if (tick < TickMath.MIN_TICK || tick > TickMath.MAX_TICK || tick % usdnProtocol.getTickSpacing() != 0) {
+            revert OrderManagerInvalidTick(tick);
+        }
 
         uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
