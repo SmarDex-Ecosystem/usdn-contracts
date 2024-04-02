@@ -54,7 +54,7 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
      * @custom:given A tick with an order from the user
      * @custom:when removeOrderFromTick is called for this tick
      * @custom:then the order is removed from the order array in the tick
-     * @custom:and an OrderRemoved event is emitted
+     * @custom:and an UserWithdrewAssetsFromTick event is emitted
      * @custom:and the assets are sent back to the user
      * @custom:and the state of the order manager is updated
      */
@@ -63,7 +63,7 @@ contract TestOrderManagerRemoveOrderFromTick is UsdnProtocolBaseFixture, IOrderM
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit OrderRemoved(address(this), _tick, 0);
+        emit UserWithdrewAssetsFromTick(address(this), _tick, 0);
         orderManager.removeOrderFromTick(_tick);
 
         assertEq(

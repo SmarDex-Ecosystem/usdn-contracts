@@ -108,7 +108,7 @@ contract OrderManager is Ownable, IOrderManager {
         // Transfer the user assets to this contract
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
-        emit OrderCreated(msg.sender, newUserAmount, tick, tickVersion);
+        emit UserDepositedAssetsInTick(msg.sender, newUserAmount, tick, tickVersion);
     }
 
     /// @inheritdoc IOrderManager
@@ -130,6 +130,6 @@ contract OrderManager is Ownable, IOrderManager {
         // Transfer the assets back to the user
         _asset.safeTransfer(msg.sender, userAmount);
 
-        emit OrderRemoved(msg.sender, tick, tickVersion);
+        emit UserWithdrewAssetsFromTick(msg.sender, tick, tickVersion);
     }
 }

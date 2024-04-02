@@ -72,11 +72,11 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario A user add an order in a tick
+     * @custom:scenario A user adds an order in a tick
      * @custom:given A user with a 1 ether balance
      * @custom:when That user calls addOrderInTick
      * @custom:then The order is created
-     * @custom:and an OrderCreated event is emitted
+     * @custom:and an UserDepositedAssetsInTick event is emitted
      * @custom:and the funds are transferred from the user to the contract
      * @custom:and the state of the contract is updated
      */
@@ -88,7 +88,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit OrderCreated(address(this), amount, tick, tickVersion);
+        emit UserDepositedAssetsInTick(address(this), amount, tick, tickVersion);
         orderManager.addOrderInTick(tick, amount);
 
         assertEq(
@@ -113,15 +113,15 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
     }
 
     /**
-     * @custom:scenario A user add 2 orders in a tick
+     * @custom:scenario A user adds 2 orders in a tick
      * @custom:given A user with a 1 ether balance
      * @custom:when That user calls addOrderInTick 2 times on the same tick
      * @custom:then The amount of funds in the tick is equal to the sum of amounts in both calls
-     * @custom:and 2 OrderCreated events are emitted
+     * @custom:and 2 UserDepositedAssetsInTick events are emitted
      * @custom:and the funds are transferred from the user to the contract
      * @custom:and the state of the contract is updated
      */
-    function test_addOrdersInTheSameTick() external {
+    function test_addMultipleOrdersInTheSameTick() external {
         int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
         uint256 tickVersion = 0;
         uint96 amount = 0.5 ether;
@@ -131,7 +131,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         /* -------------------------------- 1st call -------------------------------- */
 
         vm.expectEmit();
-        emit OrderCreated(address(this), amount, tick, tickVersion);
+        emit UserDepositedAssetsInTick(address(this), amount, tick, tickVersion);
         orderManager.addOrderInTick(tick, amount);
 
         uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
@@ -151,7 +151,7 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit OrderCreated(address(this), amount * 2, tick, tickVersion);
+        emit UserDepositedAssetsInTick(address(this), amount * 2, tick, tickVersion);
         orderManager.addOrderInTick(tick, amount);
 
         userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
@@ -180,34 +180,39 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
      * @custom:given 2 users with a balance of at least 1 ether
      * @custom:when Those users call addOrderInTick wit te same tick
      * @custom:then The orders are created
-     * @custom:and OrderCreated events are emitted
+     * @custom:and UserDepositedAssetsInTick events are emitted
      * @custom:and the funds are transferred from the users to the contract
      * @custom:and the state of the contract is updated
      */
-    function test_addMultipleOrdersInTheSameTick() external {
+    function test_addMultipleOrdersInTheSameTickFromDifferentUsers() external {
         int24 tick = protocol.getEffectiveTickForPrice(2000 ether);
         uint256 tickVersion = 0;
-        uint96 amount = 1 ether;
+        uint96 amountUser1 = 1 ether;
+        uint96 amountUser2 = 2 ether;
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit OrderCreated(address(this), amount, tick, tickVersion);
-        orderManager.addOrderInTick(tick, amount);
+        emit UserDepositedAssetsInTick(address(this), amountUser1, tick, tickVersion);
+        orderManager.addOrderInTick(tick, amountUser1);
 
         assertEq(
-            orderManagerBalanceBefore + amount,
+            orderManagerBalanceBefore + amountUser1,
             wstETH.balanceOf(address(orderManager)),
             "The assets were not sent to the order manager"
         );
-        assertEq(userBalanceBefore - amount, wstETH.balanceOf(address(this)), "The assets were not taken from the user");
+        assertEq(
+            userBalanceBefore - amountUser1, wstETH.balanceOf(address(this)), "The assets were not taken from the user"
+        );
 
         uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
-        assertEq(userOrderAmount, amount, "Wrong amount of assets saved for the user");
+        assertEq(userOrderAmount, amountUser1, "Wrong amount of assets saved for the user");
 
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
         assertEq(
-            ordersData.amountOfAssets, amount, "The accumulated amount should be equal to the amount of the only order"
+            ordersData.amountOfAssets,
+            amountUser1,
+            "The accumulated amount should be equal to the amount of the only order"
         );
         assertEq(
             ordersData.longPositionTick,
@@ -218,21 +223,20 @@ contract TestOrderManagerAddOrderInTick is UsdnProtocolBaseFixture, IOrderManage
         assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
 
         /* ------------------------- Order of the other user ------------------------ */
-        uint256 accumulatedAmountBefore = ordersData.amountOfAssets;
-        amount = 2 ether;
-
         vm.prank(USER_1);
         vm.expectEmit();
-        emit OrderCreated(USER_1, amount, tick, tickVersion);
-        orderManager.addOrderInTick(tick, amount);
+        emit UserDepositedAssetsInTick(USER_1, amountUser2, tick, tickVersion);
+        orderManager.addOrderInTick(tick, amountUser2);
 
+        userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
+        assertEq(userOrderAmount, amountUser1, "The amount of assets for the first user should not have changed");
         userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, USER_1);
-        assertEq(userOrderAmount, amount, "Wrong amount of assets saved for the user");
+        assertEq(userOrderAmount, amountUser2, "Wrong amount of assets saved for the user");
 
         ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
         assertEq(
             ordersData.amountOfAssets,
-            amount + accumulatedAmountBefore,
+            amountUser1 + amountUser2,
             "The accumulated amount of assets should be the sum of all the added amounts of funds"
         );
     }
