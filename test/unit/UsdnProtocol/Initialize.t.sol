@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 import { Sdex } from "test/utils/Sdex.sol";
 import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
@@ -199,4 +199,58 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         );
         assertEq(pos.timestamp, block.timestamp, "position timestamp");
     }
+
+    /**
+     * @custom:scenario Initialize with low amount for deposit
+     * @custom:when The deployer calls the `initialize` function with a deposit amount lower than the minimum required
+     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
+     */
+    function test_RevertWhen_initializeDepositAmountLow() public {
+        uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitAmount.selector, minDeposit));
+        protocol.initialize(uint128(minDeposit - 1), INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
+    }
+
+    /**
+     * @custom:scenario Initialize with low amount for long
+     * @custom:when The deployer calls the `initialize` function with a long amount lower than the minimum required
+     * @custom:then The transaction reverts with the error `UsdnProtocolMinInitAmount`
+     */
+    function test_RevertWhen_initializeLongAmountLow() public {
+        uint256 minDeposit = protocol.MIN_INIT_DEPOSIT();
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolMinInitAmount.selector, minDeposit));
+        protocol.initialize(INITIAL_DEPOSIT, uint128(minDeposit - 1), INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
+    }
+
+    /**
+     * @custom:scenario Initialize while some USDN that was minted previously
+     * @custom:when The deployer calls the `initialize` function
+     * @custom:and USDN has been minted previously
+     * @custom:then The transaction reverts with the error `UsdnProtocolInvalidUsdn`
+     */
+    function test_RevertWhen_initializeUsdnSupply() public {
+        vm.prank(DEPLOYER);
+        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
+
+        usdn.mint(address(this), 100 ether);
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
+    }
+
+    /**
+     * @custom:scenario Send too much ether while initializing
+     * @custom:given The oracle is free to use
+     * @custom:when The deployer sends ether while initializing the protocol
+     * @custom:then The protocol refunds the excess ether and the balance remains the same
+     */
+    function test_initializeRefundEther() public {
+        uint256 balanceBefore = address(this).balance;
+        protocol.initialize{ value: 1 ether }(
+            INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE)
+        );
+        assertEq(address(this).balance, balanceBefore, "balance");
+    }
+
+    receive() external payable { }
 }
