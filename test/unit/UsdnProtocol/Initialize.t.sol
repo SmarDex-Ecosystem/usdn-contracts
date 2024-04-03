@@ -86,7 +86,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with the error `InitializableReentrancyGuardInvalidInitialization`
      */
     function test_RevertWhen_createInitialDepositAlreadyInitialized() public {
-        protocol.initialize(INITIAL_DEPOSIT, INITIAL_DEPOSIT, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
 
         vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector);
         protocol.i_createInitialDeposit(INITIAL_DEPOSIT, INITIAL_PRICE);
@@ -134,7 +134,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with the error `InitializableReentrancyGuardInvalidInitialization`
      */
     function test_RevertWhen_createInitialPositionAlreadyInitialized() public {
-        protocol.initialize(INITIAL_DEPOSIT, INITIAL_DEPOSIT, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
 
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
         uint128 leverage = uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS());
@@ -143,5 +143,60 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         protocol.i_createInitialPosition(
             INITIAL_POSITION, INITIAL_PRICE, tickWithoutPenalty, leverage, 2 * INITIAL_POSITION
         );
+    }
+
+    /**
+     * @custom:scenario Deployer initializes the protocol
+     * @custom:when The deployer calls the `initialize` function
+     * @custom:then The deployer's wstETH balance is decreased by the deposit and position amounts
+     * @custom:and The protocol's wstETH balance is increased by the deposit and position amounts
+     * @custom:and The deployer's USDN balance is increased by the minted amount
+     * @custom:and The dead address' USDN balance is increased by the minimum USDN supply
+     * @custom:and All the events are emitted
+     * @custom:and The position is stored in the protocol
+     */
+    function test_initialize() public {
+        uint256 expectedUsdnMinted = (
+            uint256(INITIAL_DEPOSIT) * INITIAL_PRICE
+                / 10 ** (protocol.getAssetDecimals() + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
+        ) - protocol.MIN_USDN_SUPPLY();
+        int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
+        int24 expectedTick = tickWithoutPenalty + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing();
+        uint128 liquidationPriceWithoutPenalty = protocol.getEffectivePriceForTick(tickWithoutPenalty);
+        uint128 leverage = protocol.i_getLeverage(INITIAL_PRICE, liquidationPriceWithoutPenalty);
+        uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
+
+        vm.expectEmit();
+        emit InitiatedDeposit(address(this), INITIAL_DEPOSIT, block.timestamp);
+        vm.expectEmit();
+        emit ValidatedDeposit(protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp);
+        vm.expectEmit();
+        emit ValidatedDeposit(address(this), INITIAL_DEPOSIT, expectedUsdnMinted, block.timestamp);
+        vm.expectEmit();
+        emit InitiatedOpenPosition(
+            address(this), uint40(block.timestamp), leverage, INITIAL_POSITION, INITIAL_PRICE, expectedTick, 0, 0
+        );
+        vm.expectEmit();
+        emit ValidatedOpenPosition(address(this), leverage, INITIAL_PRICE, expectedTick, 0, 0);
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
+
+        assertEq(
+            wstETH.balanceOf(address(this)),
+            assetBalanceBefore - INITIAL_DEPOSIT - INITIAL_POSITION,
+            "deployer wstETH balance"
+        );
+        assertEq(wstETH.balanceOf(address(protocol)), INITIAL_DEPOSIT + INITIAL_POSITION, "protocol wstETH balance");
+        assertEq(usdn.balanceOf(address(this)), expectedUsdnMinted, "deployer USDN balance");
+        assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "dead address USDN balance");
+
+        Position memory pos = protocol.getLongPosition(expectedTick, 0, 0);
+        assertEq(pos.user, address(this), "position user");
+        assertEq(pos.amount, INITIAL_POSITION, "position amount");
+        assertEq(
+            pos.totalExpo,
+            uint256(leverage) * INITIAL_POSITION / 10 ** protocol.LEVERAGE_DECIMALS(),
+            "position total expo"
+        );
+        assertEq(pos.timestamp, block.timestamp, "position timestamp");
     }
 }
