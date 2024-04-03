@@ -24,7 +24,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.enableSecurityDeposit = true;
+        params.flags.enableSecurityDeposit = true;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), 1000 ether, address(protocol), type(uint256).max);
         priceData = abi.encode(params.initialPrice);

@@ -20,6 +20,7 @@
     "lint": "solhint 'src/**/*.sol'",
     "lint:test": "solhint -c test/.solhint.json 'test/**/*.sol'",
     "slither": "slither .",
+    "natspec": "npx natspec-smells &> natspec-smells.txt",
     "exportAbi": "forge build --ast && ts-node ./script/exportAbi.ts -g '{Usdn.sol,UsdnProtocol/UsdnProtocol.sol,OracleMiddleware/OracleMiddleware.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
     "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf lib && forge clean && npm i && forge install"
   },
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.5.3",
     "@chainlink/contracts": "^0.8.0",
+    "@defi-wonderland/natspec-smells": "^1.1.1",
     "@openzeppelin/contracts": "^5.0.0",
     "@pythnetwork/pyth-sdk-solidity": "^2.3.0",
     "@types/luxon": "^3.4.2",
