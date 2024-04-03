@@ -13,6 +13,7 @@ import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
@@ -113,6 +114,17 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _liquidationRewardsManager = newLiquidationRewardsManager;
 
         emit LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setOrderManager(IOrderManager newOrderManager) external onlyOwner {
+        if (address(newOrderManager) == address(0)) {
+            revert UsdnProtocolInvalidOrderManagerAddress();
+        }
+
+        _orderManager = newOrderManager;
+
+        emit OrderManagerUpdated(address(newOrderManager));
     }
 
     /// @inheritdoc IUsdnProtocol

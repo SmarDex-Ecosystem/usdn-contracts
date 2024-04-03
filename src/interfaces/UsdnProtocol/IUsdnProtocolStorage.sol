@@ -9,6 +9,7 @@ import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolEr
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -88,6 +89,9 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The liquidation rewards manager contract
     function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager);
+
+    /// @notice The order manager contract
+    function getOrderManager() external view returns (IOrderManager);
 
     /// @notice The minimum leverage for a position
     function getMinLeverage() external view returns (uint256);

@@ -8,6 +8,7 @@ import { WstETH } from "test/utils/WstEth.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
+import { OrderManager } from "src/OrderManager.sol";
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -23,6 +24,7 @@ contract Deploy is Script {
             Sdex Sdex_,
             WstEthOracleMiddleware WstEthOracleMiddleware_,
             LiquidationRewardsManager LiquidationRewardsManager_,
+            OrderManager OrderManager_,
             Usdn Usdn_,
             UsdnProtocol UsdnProtocol_
         )
@@ -136,6 +138,17 @@ contract Deploy is Script {
             100,
             vm.envAddress("FEE_COLLECTOR")
         );
+
+        // Deploy the OrderManager if necessary
+        address orderManagerAddress = vm.envOr("ORDER_MANAGER_ADDRESS", address(0));
+        if (orderManagerAddress != address(0)) {
+            OrderManager_ = OrderManager(orderManagerAddress);
+        } else {
+            OrderManager_ = new OrderManager(UsdnProtocol_);
+        }
+
+        // Set the order manager on the USDN protocol
+        UsdnProtocol_.setOrderManager(OrderManager_);
 
         // Grant USDN minter & rebaser roles to protocol and approve wstETH spending
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
