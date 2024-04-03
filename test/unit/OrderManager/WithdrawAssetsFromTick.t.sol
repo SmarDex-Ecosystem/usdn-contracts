@@ -40,7 +40,7 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
      * @custom:when withdrawAssetsFromTick is called for this tick
      * @custom:then the call reverts with a OrderManagerInsufficientFunds error
      */
-    function test_RervertsWhen_noTickForTheCurrentUser() external {
+    function test_RevertWhen_noTickForTheCurrentUser() external {
         vm.prank(USER_1);
         vm.expectRevert(abi.encodeWithSelector(OrderManagerInsufficientFunds.selector, _tick, USER_1, 0, _amount));
         orderManager.withdrawAssetsFromTick(_tick, _amount);
@@ -51,7 +51,7 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario A user wants to withdraw his assets from a tick
+     * @custom:scenario A user wants to withdraw their assets from a tick
      * @custom:given A tick with an order from the user
      * @custom:when withdrawAssetsFromTick is called for this tick with te full amount
      * @custom:then the assets are removed from the tick
@@ -83,7 +83,7 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
             orderManager.PENDING_ORDERS_TICK(),
             "The tick should be equal to the PENDING_ORDERS_TICK constant"
         );
-        assertEq(ordersData.longPositionTickVersion, 0, "The tick version shoudl be 0");
+        assertEq(ordersData.longPositionTickVersion, 0, "The tick version should be 0");
         assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
 
         uint232 userOrderAmount = orderManager.getUserAmountInTick(_tick, 0, address(this));
@@ -91,7 +91,7 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
     }
 
     /**
-     * @custom:scenario A user wants to remove his order from a tick partially
+     * @custom:scenario A user wants to remove their order from a tick partially
      * @custom:given A tick with an order from the user
      * @custom:when withdrawAssetsFromTick is called for this tick with an amount lower than the amount in the tick
      * @custom:then the amount of the user in the tick is removed from the contract
