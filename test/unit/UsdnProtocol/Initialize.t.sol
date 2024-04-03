@@ -11,6 +11,7 @@ import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 
 import { Usdn } from "src/Usdn.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -20,6 +21,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     uint128 public constant INITIAL_DEPOSIT = 100 ether;
 
     function setUp() public {
+        vm.warp(DEFAULT_PARAMS.initialTimestamp);
         usdn = new Usdn(address(0), address(0));
         wstETH = new WstETH();
         sdex = new Sdex();
@@ -73,5 +75,19 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_DEPOSIT, "protocol wstETH balance");
         assertEq(usdn.balanceOf(address(this)), expectedUsdnMinted, "deployer USDN balance");
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "dead address USDN balance");
+    }
+
+    /**
+     * @custom:scenario Initial deposit internal function cannot be called once the protocol has been initialized
+     * @custom:given The protocol has been initialized
+     * @custom:when The deployer calls the internal function to create an initial deposit
+     * @custom:then The transaction reverts with the error `InitializableReentrancyGuardInvalidInitialization`
+     */
+    function test_RevertWhen_createInitialDepositAlreadyInitialized() public {
+        uint128 price = 3000 ether;
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_DEPOSIT, price / 2, abi.encode(price));
+
+        vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector);
+        protocol.i_createInitialDeposit(INITIAL_DEPOSIT, price);
     }
 }
