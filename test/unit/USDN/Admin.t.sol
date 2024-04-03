@@ -28,5 +28,8 @@ contract TestUsdnAdmin is UsdnTokenFixture {
 
         vm.expectRevert(unauthorizedError);
         usdn.mint(USER_1, 100 ether);
+
+        vm.expectRevert(unauthorizedError);
+        usdn.mintShares(USER_1, 100);
     }
 }
