@@ -48,13 +48,15 @@ contract Deploy is Script {
             wstETHAddress = payable(address(WstETH_));
         }
 
-        // Deploy SDEX if needed
-        address sdexAddress = payable(vm.envOr("SDEX_ADDRESS", address(0)));
-        if (sdexAddress != address(0)) {
-            Sdex_ = Sdex(sdexAddress);
-        } else {
-            Sdex_ = new Sdex();
-            sdexAddress = address(Sdex_);
+        {
+            // Deploy SDEX if needed
+            address sdexAddress = payable(vm.envOr("SDEX_ADDRESS", address(0)));
+            if (sdexAddress != address(0)) {
+                Sdex_ = Sdex(sdexAddress);
+            } else {
+                Sdex_ = new Sdex();
+                sdexAddress = address(Sdex_);
+            }
         }
 
         // Deploy oracle middleware if needed
@@ -63,69 +65,76 @@ contract Deploy is Script {
         // cache environment type
         bool isProdEnv = block.chainid != vm.envOr("FORK_CHAIN_ID", uint256(31_337));
 
-        // attach
-        if (middlewareAddress != address(0)) {
-            // prod
-            if (isProdEnv) {
-                WstEthOracleMiddleware_ = WstEthOracleMiddleware(middlewareAddress);
-                // fork
+        {
+            // attach
+            if (middlewareAddress != address(0)) {
+                // prod
+                if (isProdEnv) {
+                    WstEthOracleMiddleware_ = WstEthOracleMiddleware(middlewareAddress);
+                    // fork
+                } else {
+                    WstEthOracleMiddleware_ = MockWstEthOracleMiddleware(middlewareAddress);
+                }
+
+                // deploy
             } else {
-                WstEthOracleMiddleware_ = MockWstEthOracleMiddleware(middlewareAddress);
+                address pythAddress = vm.envAddress("PYTH_ADDRESS");
+                bytes32 pythPriceId = vm.envBytes32("PYTH_STETH_PRICE_ID");
+                address chainlinkPriceAddress = vm.envAddress("CHAINLINK_STETH_PRICE_ADDRESS");
+                uint256 chainlinkPriceValidity =
+                    vm.envOr("CHAINLINK_STETH_PRICE_VALIDITY", uint256(1 hours + 2 minutes));
+
+                // prod
+                if (isProdEnv) {
+                    WstEthOracleMiddleware_ = new WstEthOracleMiddleware(
+                        pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
+                    );
+                    // fork
+                } else {
+                    WstEthOracleMiddleware_ = new MockWstEthOracleMiddleware(
+                        pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
+                    );
+                }
+
+                middlewareAddress = address(WstEthOracleMiddleware_);
             }
-
-            // deploy
-        } else {
-            address pythAddress = vm.envAddress("PYTH_ADDRESS");
-            bytes32 pythPriceId = vm.envBytes32("PYTH_STETH_PRICE_ID");
-            address chainlinkPriceAddress = vm.envAddress("CHAINLINK_STETH_PRICE_ADDRESS");
-            uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_STETH_PRICE_VALIDITY", uint256(1 hours + 2 minutes));
-
-            // prod
-            if (isProdEnv) {
-                WstEthOracleMiddleware_ = new WstEthOracleMiddleware(
-                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
-                );
-                // fork
-            } else {
-                WstEthOracleMiddleware_ = new MockWstEthOracleMiddleware(
-                    pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
-                );
-            }
-
-            middlewareAddress = address(WstEthOracleMiddleware_);
         }
 
-        // Deploy the LiquidationRewardsManager if necessary
-        address liquidationRewardsManagerAddress = vm.envOr("LIQUIDATION_REWARDS_MANAGER_ADDRESS", address(0));
-
-        if (liquidationRewardsManagerAddress != address(0)) {
-            if (isProdEnv) {
-                LiquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
+        {
+            // Deploy the LiquidationRewardsManager if necessary
+            address liquidationRewardsManagerAddress = vm.envOr("LIQUIDATION_REWARDS_MANAGER_ADDRESS", address(0));
+            if (liquidationRewardsManagerAddress != address(0)) {
+                if (isProdEnv) {
+                    LiquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
+                } else {
+                    LiquidationRewardsManager_ = MockLiquidationRewardsManager(liquidationRewardsManagerAddress);
+                }
             } else {
-                LiquidationRewardsManager_ = MockLiquidationRewardsManager(liquidationRewardsManagerAddress);
-            }
-        } else {
-            address chainlinkGasPriceFeed = vm.envAddress("CHAINLINK_GAS_PRICE_ADDRESS");
-            uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", uint256(2 hours + 5 minutes));
-            if (isProdEnv) {
-                LiquidationRewardsManager_ =
-                    new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity);
-            } else {
-                LiquidationRewardsManager_ = new MockLiquidationRewardsManager(
-                    chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity
-                );
-            }
+                address chainlinkGasPriceFeed = vm.envAddress("CHAINLINK_GAS_PRICE_ADDRESS");
+                uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", uint256(2 hours + 5 minutes));
+                if (isProdEnv) {
+                    LiquidationRewardsManager_ = new LiquidationRewardsManager(
+                        chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity
+                    );
+                } else {
+                    LiquidationRewardsManager_ = new MockLiquidationRewardsManager(
+                        chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity
+                    );
+                }
 
-            liquidationRewardsManagerAddress = address(LiquidationRewardsManager_);
+                liquidationRewardsManagerAddress = address(LiquidationRewardsManager_);
+            }
         }
 
-        // Deploy USDN token, without a specific minter or rebaser for now
-        address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
-        if (usdnAddress != address(0)) {
-            Usdn_ = Usdn(usdnAddress);
-        } else {
-            Usdn_ = new Usdn(address(0), address(0));
-            usdnAddress = address(Usdn_);
+        {
+            // Deploy USDN token, without a specific minter or rebaser for now
+            address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
+            if (usdnAddress != address(0)) {
+                Usdn_ = Usdn(usdnAddress);
+            } else {
+                Usdn_ = new Usdn(address(0), address(0));
+                usdnAddress = address(Usdn_);
+            }
         }
 
         // Deploy the protocol with tick spacing 100 = 1%
