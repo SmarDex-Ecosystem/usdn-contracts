@@ -12,6 +12,7 @@ import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { Usdn } from "src/Usdn.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -19,6 +20,8 @@ import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyG
  */
 contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     uint128 public constant INITIAL_DEPOSIT = 100 ether;
+    uint128 public constant INITIAL_POSITION = 100 ether;
+    uint128 public constant INITIAL_PRICE = 3000 ether;
 
     function setUp() public {
         vm.warp(DEFAULT_PARAMS.initialTimestamp);
@@ -56,9 +59,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:and The `ValidatedDeposit` event is emitted for the deployer
      */
     function test_createInitialDeposit() public {
-        uint128 price = 3000 ether;
         uint256 expectedUsdnMinted = (
-            uint256(INITIAL_DEPOSIT) * price
+            uint256(INITIAL_DEPOSIT) * INITIAL_PRICE
                 / 10 ** (protocol.getAssetDecimals() + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
         ) - protocol.MIN_USDN_SUPPLY();
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
@@ -69,7 +71,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         emit ValidatedDeposit(protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp);
         vm.expectEmit();
         emit ValidatedDeposit(address(this), INITIAL_DEPOSIT, expectedUsdnMinted, block.timestamp);
-        protocol.i_createInitialDeposit(INITIAL_DEPOSIT, price);
+        protocol.i_createInitialDeposit(INITIAL_DEPOSIT, INITIAL_PRICE);
 
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore - INITIAL_DEPOSIT, "deployer wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_DEPOSIT, "protocol wstETH balance");
@@ -84,10 +86,62 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:then The transaction reverts with the error `InitializableReentrancyGuardInvalidInitialization`
      */
     function test_RevertWhen_createInitialDepositAlreadyInitialized() public {
-        uint128 price = 3000 ether;
-        protocol.initialize(INITIAL_DEPOSIT, INITIAL_DEPOSIT, price / 2, abi.encode(price));
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_DEPOSIT, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
 
         vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector);
-        protocol.i_createInitialDeposit(INITIAL_DEPOSIT, price);
+        protocol.i_createInitialDeposit(INITIAL_DEPOSIT, INITIAL_PRICE);
+    }
+
+    /**
+     * @custom:scenario Deployer creates an initial position via the internal function
+     * @custom:when The deployer calls the internal function to create an initial position
+     * @custom:then The deployer's wstETH balance is decreased by the position amount
+     * @custom:and The protocol's wstETH balance is increased by the position amount
+     * @custom:and The `InitiatedOpenPosition` event is emitted
+     * @custom:and The `ValidatedOpenPosition` event is emitted
+     * @custom:and The position is stored in the protocol
+     */
+    function test_createInitialPosition() public {
+        int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
+        int24 expectedTick = tickWithoutPenalty + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing();
+        uint128 leverage = uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS());
+        uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
+
+        vm.expectEmit();
+        emit InitiatedOpenPosition(
+            address(this), uint40(block.timestamp), leverage, INITIAL_POSITION, INITIAL_PRICE, expectedTick, 0, 0
+        );
+        vm.expectEmit();
+        emit ValidatedOpenPosition(address(this), leverage, INITIAL_PRICE, expectedTick, 0, 0);
+        protocol.i_createInitialPosition(
+            INITIAL_POSITION, INITIAL_PRICE, tickWithoutPenalty, leverage, 2 * INITIAL_POSITION
+        );
+
+        assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore - INITIAL_POSITION, "deployer wstETH balance");
+        assertEq(wstETH.balanceOf(address(protocol)), INITIAL_POSITION, "protocol wstETH balance");
+
+        Position memory pos = protocol.getLongPosition(expectedTick, 0, 0);
+        assertEq(pos.user, address(this), "position user");
+        assertEq(pos.amount, INITIAL_POSITION, "position amount");
+        assertEq(pos.totalExpo, 2 * INITIAL_POSITION, "position total expo");
+        assertEq(pos.timestamp, block.timestamp, "position timestamp");
+    }
+
+    /**
+     * @custom:scenario Initial position internal function cannot be called once the protocol has been initialized
+     * @custom:given The protocol has been initialized
+     * @custom:when The deployer calls the internal function to create an initial position
+     * @custom:then The transaction reverts with the error `InitializableReentrancyGuardInvalidInitialization`
+     */
+    function test_RevertWhen_createInitialPositionAlreadyInitialized() public {
+        protocol.initialize(INITIAL_DEPOSIT, INITIAL_DEPOSIT, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
+
+        int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
+        uint128 leverage = uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS());
+
+        vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardInvalidInitialization.selector);
+        protocol.i_createInitialPosition(
+            INITIAL_POSITION, INITIAL_PRICE, tickWithoutPenalty, leverage, 2 * INITIAL_POSITION
+        );
     }
 }
