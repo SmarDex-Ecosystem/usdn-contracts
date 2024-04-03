@@ -32,6 +32,9 @@ contract OrderManager is Ownable, IOrderManager {
     /// @notice The accumulated data of all the orders for a tick hash
     mapping(bytes32 => OrdersDataInTick) internal _ordersDataInTick;
 
+    /// @notice The leverage of the long position created from orders in a tick
+    uint256 internal _ordersLeverage;
+
     /**
      * @notice Initialize the contract with all the needed variables.
      * @param usdnProtocol The address of the USDN protocol
@@ -71,6 +74,11 @@ contract OrderManager is Ownable, IOrderManager {
         return _usdnProtocol;
     }
 
+    /// @inheritdoc IOrderManager
+    function getOrdersLeverage() external view returns (uint256) {
+        return _ordersLeverage;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                    Admin                                   */
     /* -------------------------------------------------------------------------- */
@@ -78,6 +86,17 @@ contract OrderManager is Ownable, IOrderManager {
     /// @inheritdoc IOrderManager
     function approveAssetsForSpending(uint256 addAllowance) external onlyOwner {
         _asset.safeIncreaseAllowance(address(_usdnProtocol), addAllowance);
+    }
+
+    /// @inheritdoc IOrderManager
+    function setOrdersLeverage(uint256 newLeverage) external onlyOwner {
+        if (newLeverage < _usdnProtocol.getMinLeverage() || newLeverage > _usdnProtocol.getMaxLeverage()) {
+            revert OrderManagerInvalidLeverage();
+        }
+
+        _ordersLeverage = newLeverage;
+
+        emit OrdersLeverageUpdated(newLeverage);
     }
 
     /* -------------------------------------------------------------------------- */

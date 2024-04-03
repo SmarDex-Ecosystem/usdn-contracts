@@ -52,11 +52,21 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
      */
     function getUsdnProtocol() external view returns (IUsdnProtocol);
 
+    /// @notice Returns the leverage for pending orders.
+    function getOrdersLeverage() external view returns (uint256);
+
     /**
      * @notice Increase the approval of assets for the USDN protocol spender by `addAllowance`.
      * @param addAllowance Amount to add to the allowance of the UsdnProtocol contract
      */
     function approveAssetsForSpending(uint256 addAllowance) external;
+
+    /**
+     * @notice Sets the new leverage applied to pending orders.
+     * @dev Positions that are already created in the USDN Protocol are not affected by this change.
+     * @param newLeverage The new leverage to apply to future positions
+     */
+    function setOrdersLeverage(uint256 newLeverage) external;
 
     /**
      * @notice Deposit the provided amount of assets to the provided tick

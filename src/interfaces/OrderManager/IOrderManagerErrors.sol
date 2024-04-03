@@ -5,6 +5,9 @@ interface IOrderManagerErrors {
     /// @notice Indicates that the contract was not initialized.
     error OrderManagerNotInitialized();
 
+    /// @notice Indicates that the provided leverage is higher than the max leverage, or lower than the min leverage.
+    error OrderManagerInvalidLeverage();
+
     /**
      * @notice Indicates that the provided tick is not a multiple of the tick spacing or outside of the limits.
      * @param tick The invalid tick.

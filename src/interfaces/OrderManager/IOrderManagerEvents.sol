@@ -19,4 +19,10 @@ interface IOrderManagerEvents {
      * @param tickVersion The version of the tick
      */
     event UserWithdrewAssetsFromTick(address indexed user, uint256 amountRemaining, int24 tick, uint256 tickVersion);
+
+    /**
+     * @notice Emitted when the leverage of the orders has been updated.
+     * @param newLeverage The new leverage
+     */
+    event OrdersLeverageUpdated(uint256 newLeverage);
 }
