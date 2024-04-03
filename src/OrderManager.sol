@@ -76,10 +76,10 @@ contract OrderManager is Ownable, IOrderManager {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOrderManager
-    function approveAssetsForSpending(uint256 allowance) external onlyOwner {
+    function approveAssetsForSpending(uint256 addAllowance) external onlyOwner {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
 
-        _asset.safeIncreaseAllowance(address(usdnProtocol), allowance);
+        _asset.safeIncreaseAllowance(address(usdnProtocol), addAllowance);
     }
 
     /* -------------------------------------------------------------------------- */
