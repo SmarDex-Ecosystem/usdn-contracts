@@ -316,7 +316,7 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when the minimum long position is updated.
-     * @param minLongPosition The new minimum long position..
+     * @param minLongPosition The new minimum long position.
      */
     event MinLongPositionUpdated(uint256 minLongPosition);
 }
