@@ -99,7 +99,7 @@ contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderM
         );
         assertEq(userBalanceBefore - amount, wstETH.balanceOf(address(this)), "The assets were not taken from the user");
 
-        uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
+        uint256 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
         assertEq(userOrderAmount, amount, "Wrong amount of assets saved for the user");
 
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
@@ -135,7 +135,7 @@ contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderM
         emit UserDepositedAssetsInTick(address(this), amount, tick, tickVersion);
         orderManager.depositAssetsInTick(tick, amount);
 
-        uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
+        uint256 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
         assertEq(userOrderAmount, amount, "Wrong amount of assets saved for the user");
         assertEq(userBalanceBefore - amount, wstETH.balanceOf(address(this)), "The assets were not taken from the user");
 
@@ -206,7 +206,7 @@ contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderM
             userBalanceBefore - amountUser1, wstETH.balanceOf(address(this)), "The assets were not taken from the user"
         );
 
-        uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
+        uint256 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
         assertEq(userOrderAmount, amountUser1, "Wrong amount of assets saved for the user");
 
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);

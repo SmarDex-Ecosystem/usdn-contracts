@@ -86,7 +86,7 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
         assertEq(ordersData.longPositionTickVersion, 0, "The tick version should be 0");
         assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
 
-        uint232 userOrderAmount = orderManager.getUserAmountInTick(_tick, 0, address(this));
+        uint256 userOrderAmount = orderManager.getUserAmountInTick(_tick, 0, address(this));
         assertEq(userOrderAmount, 0, "The user should have no assets left on the tick");
     }
 
@@ -128,7 +128,7 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
             "The partial amount should have been subtracted from the accumulated amount"
         );
 
-        uint232 userOrderAmount = orderManager.getUserAmountInTick(_tick, 0, address(this));
+        uint256 userOrderAmount = orderManager.getUserAmountInTick(_tick, 0, address(this));
         assertEq(userOrderAmount, amountLeft, "The user should have assets left on the tick");
 
         /* -------------- 2nd call that withdraw the rest of the assets ------------- */

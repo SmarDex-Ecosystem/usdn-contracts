@@ -27,7 +27,7 @@ contract OrderManager is Ownable, IOrderManager {
     IERC20Metadata internal immutable _asset;
 
     /// @notice The amount of assets a user has in a tick
-    mapping(bytes32 => mapping(address => uint232)) internal _userAmountInTick;
+    mapping(bytes32 => mapping(address => uint256)) internal _userAmountInTick;
 
     /// @notice The accumulated data of all the orders for a tick hash
     mapping(bytes32 => OrdersDataInTick) internal _ordersDataInTick;
@@ -49,7 +49,7 @@ contract OrderManager is Ownable, IOrderManager {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IOrderManager
-    function getUserAmountInTick(int24 tick, uint256 tickVersion, address user) external view returns (uint232) {
+    function getUserAmountInTick(int24 tick, uint256 tickVersion, address user) external view returns (uint256) {
         bytes32 tickHash = _usdnProtocol.tickHash(tick, tickVersion);
 
         return _userAmountInTick[tickHash][user];
@@ -100,7 +100,7 @@ contract OrderManager is Ownable, IOrderManager {
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
 
         // Save the order's data
-        uint232 newUserAmount = _userAmountInTick[tickHash][msg.sender] + amount;
+        uint256 newUserAmount = _userAmountInTick[tickHash][msg.sender] + amount;
         OrdersDataInTick storage ordersData = _ordersDataInTick[tickHash];
         ordersData.amountOfAssets += amount;
         ordersData.longPositionTick = PENDING_ORDERS_TICK;
@@ -117,7 +117,7 @@ contract OrderManager is Ownable, IOrderManager {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
         uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
-        uint232 userAmount = _userAmountInTick[tickHash][msg.sender];
+        uint256 userAmount = _userAmountInTick[tickHash][msg.sender];
 
         // Check that the current user has assets in this tick
         if (userAmount < amountToWithdraw) {
@@ -125,7 +125,7 @@ contract OrderManager is Ownable, IOrderManager {
         }
 
         // Remove the amount from the storage
-        uint232 newUserAmount = userAmount - amountToWithdraw;
+        uint256 newUserAmount = userAmount - amountToWithdraw;
         _userAmountInTick[tickHash][msg.sender] = newUserAmount;
         _ordersDataInTick[tickHash].amountOfAssets -= amountToWithdraw;
 

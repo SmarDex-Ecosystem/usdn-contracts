@@ -30,7 +30,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
      * @param user The address of the user.
      * @return The amount of assets a user has in a tick
      */
-    function getUserAmountInTick(int24 tick, uint256 tickVersion, address user) external view returns (uint232);
+    function getUserAmountInTick(int24 tick, uint256 tickVersion, address user) external view returns (uint256);
 
     /**
      * @notice Returns the accumulated data of all the orders in a tick.
