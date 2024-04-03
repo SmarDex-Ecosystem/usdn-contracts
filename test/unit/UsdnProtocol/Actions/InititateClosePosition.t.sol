@@ -8,7 +8,8 @@ import {
     LongPendingAction,
     Position,
     PreviousActionsData,
-    ProtocolAction
+    ProtocolAction,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -65,7 +66,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             )
         );
         protocol.i_initiateClosePosition(
-            address(this), address(this), tick, tickVersion, index, amountToClose, priceData
+            address(this), address(this), PositionId(tick, tickVersion, index), amountToClose, priceData
         );
     }
 
@@ -77,7 +78,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_RevertWhen_notUser() public {
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
-        protocol.i_initiateClosePosition(USER_1, USER_1, tick, tickVersion, index, positionAmount, priceData);
+        protocol.i_initiateClosePosition(
+            USER_1, USER_1, PositionId(tick, tickVersion, index), positionAmount, priceData
+        );
     }
 
     /**
@@ -90,7 +93,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolAmountToCloseIsZero.selector));
-        protocol.i_initiateClosePosition(address(this), address(this), tick, tickVersion, index, 0, priceData);
+        protocol.i_initiateClosePosition(
+            address(this), address(this), PositionId(tick, tickVersion, index), 0, priceData
+        );
     }
 
     /**
@@ -111,7 +116,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         priceData = abi.encode(params.initialPrice);
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion));
         protocol.i_initiateClosePosition(
-            address(this), address(this), tick, tickVersion, index, positionAmount / 2, priceData
+            address(this), address(this), PositionId(tick, tickVersion, index), positionAmount / 2, priceData
         );
     }
 
@@ -300,7 +305,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             posBefore.totalExpo - totalExpoToClose
         );
         protocol.i_initiateClosePosition(
-            address(this), address(this), tick, tickVersion, index, amountToClose, abi.encode(params.initialPrice)
+            address(this),
+            address(this),
+            PositionId(tick, tickVersion, index),
+            amountToClose,
+            abi.encode(params.initialPrice)
         );
 
         /* ------------------------- Pending action's state ------------------------- */

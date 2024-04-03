@@ -147,3 +147,15 @@ struct PreviousActionsData {
     bytes[] priceData;
     uint128[] rawIndices;
 }
+
+/**
+ * @notice The unique identifier for a long position.
+ * @param tick The tick of the position.
+ * @param tickVersion The version of the tick.
+ * @param index The index of the position in the tick list.
+ */
+struct PositionId {
+    int24 tick;
+    uint256 tickVersion;
+    uint256 index;
+}
