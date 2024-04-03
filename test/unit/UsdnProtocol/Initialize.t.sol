@@ -224,12 +224,11 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Initialize while some USDN that was minted previously
+     * @custom:given The test contract has the minter role for USDN and some USDN was minted
      * @custom:when The deployer calls the `initialize` function
-     * @custom:and USDN has been minted previously
      * @custom:then The transaction reverts with the error `UsdnProtocolInvalidUsdn`
      */
     function test_RevertWhen_initializeUsdnSupply() public {
-        vm.prank(DEPLOYER);
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
 
         usdn.mint(address(this), 100 ether);
