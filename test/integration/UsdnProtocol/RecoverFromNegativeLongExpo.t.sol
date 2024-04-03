@@ -37,7 +37,14 @@ contract RecoverFromNegativeLongExpoTest is UsdnProtocolBaseIntegrationFixture {
 
         _waitDelay();
 
-        mockPyth.setPrice(int64(int256(uint256(params.initialLiqPrice) / 1e10 / 2)));
+        mockPyth.setPrice(
+            int64(
+                int256(
+                    uint256(params.initialLiqPrice)
+                        / 10 ** (protocol.getAssetDecimals() - uint256(-int256(mockPyth.expo()))) / 2
+                )
+            )
+        );
 
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost("beef", ProtocolAction.ValidateOpenPosition)
