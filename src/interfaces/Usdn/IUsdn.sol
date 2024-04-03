@@ -28,12 +28,38 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function sharesOf(address account) external view returns (uint256 shares);
 
     /**
+     * @notice Transfer a given amount of shares from the `msg.sender` to `to`.
+     * @param to Recipient of the shares
+     * @param value Number of shares to transfer
+     * @return `true` in case of success
+     */
+    function transferShares(address to, uint256 value) external returns (bool);
+
+    /**
+     * @notice Transfer a given amount of shares from the `from` to `to`.
+     * @dev There should be sufficient allowance for the spender
+     * @param from Owner of the shares
+     * @param to Recipient of the shares
+     * @param value Number of shares to transfer
+     * @return `true` in case of success
+     */
+    function transferSharesFrom(address from, address to, uint256 value) external returns (bool);
+
+    /**
      * @notice Restricted function to mint new shares, providing a token value.
      * @dev Caller must have the MINTER_ROLE.
      * @param to account to receive the new shares
      * @param amount amount of tokens to mint, is internally converted to the proper shares amounts
      */
     function mint(address to, uint256 amount) external;
+
+    /**
+     * @notice Restricted function to mint new shares.
+     * @dev Caller must have the MINTER_ROLE.
+     * @param to account to receive the new shares
+     * @param amount amount of shares to mint
+     */
+    function mintShares(address to, uint256 amount) external;
 
     /**
      * @notice Destroy a `value` amount of tokens from the caller, reducing the total supply.
@@ -47,6 +73,19 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * @param value amount of tokens to burn, is internally converted to the proper shares amounts
      */
     function burnFrom(address account, uint256 value) external;
+
+    /**
+     * @notice Destroy a `value` amount of shares from the caller, reducing the total supply.
+     * @param value amount of shares to burn
+     */
+    function burnShares(uint256 value) external;
+
+    /**
+     * @notice Destroy a `value` amount of shares from `account`, deducting from the caller's allowance.
+     * @param account account to burn shares from
+     * @param value amount of shares to burn
+     */
+    function burnSharesFrom(address account, uint256 value) external;
 
     /**
      * @notice Convert a number of tokens to the corresponding amount of shares.
@@ -75,9 +114,10 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /**
      * @notice Restricted function to decrease the global divisor, which effectively grows all balances and the total
      * supply.
-     * @param divisor the new divisor, must be strictly smaller than the current one
+     * @param divisor the new divisor, must be strictly smaller than the current one and greater or equal to
+     * MIN_DIVISOR.
      */
-    function adjustDivisor(uint256 divisor) external;
+    function rebase(uint256 divisor) external;
 
     /* -------------------------------------------------------------------------- */
     /*                             Dev view functions                             */
@@ -89,8 +129,8 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /// @dev Minter role signature.
     function MINTER_ROLE() external pure returns (bytes32);
 
-    /// @dev Adjustment role signature.
-    function ADJUSTMENT_ROLE() external pure returns (bytes32);
+    /// @dev Rebaser role signature.
+    function REBASER_ROLE() external pure returns (bytes32);
 
     /// @dev Maximum value of the divisor, which is also the initial value.
     function MAX_DIVISOR() external pure returns (uint256);

@@ -50,6 +50,7 @@ enum ProtocolAction {
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
  * @param var1 See `VaultPendingAction` and `LongPendingAction`.
+ * @param securityDepositValue The security deposit of the pending action.
  * @param amount The amount of the pending action.
  * @param var2 See `VaultPendingAction` and `LongPendingAction`.
  * @param var3 See `VaultPendingAction` and `LongPendingAction`.
@@ -62,6 +63,7 @@ struct PendingAction {
     uint40 timestamp; // 5 bytes
     address user; // 20 bytes
     int24 var1; // 3 bytes
+    uint24 securityDepositValue; // 3 bytes
     uint128 amount; // 16 bytes
     uint128 var2; // 16 bytes
     uint256 var3; // 32 bytes
@@ -76,6 +78,7 @@ struct PendingAction {
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
  * @param _unused Unused field to align the struct to `PendingAction`.
+ * @param securityDepositValue The security deposit of the pending action.
  * @param amount The amount of the pending action.
  * @param assetPrice The price of the asset at the time of last update.
  * @param totalExpo The total exposure at the time of last update.
@@ -88,6 +91,7 @@ struct VaultPendingAction {
     uint40 timestamp; // 5 bytes
     address user; // 20 bytes
     int24 _unused; // 3 bytes
+    uint24 securityDepositValue; // 3 bytes
     uint128 amount; // 16 bytes
     uint128 assetPrice; // 16 bytes
     uint256 totalExpo; // 32 bytes
@@ -102,6 +106,7 @@ struct VaultPendingAction {
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
  * @param tick The tick of the position.
+ * @param securityDepositValue The security deposit of the pending action.
  * @param closeAmount The amount of the pending action (only used when closing a position).
  * @param closeTotalExpo The total expo of the position (only used when closing a position).
  * @param tickVersion The version of the tick.
@@ -116,10 +121,23 @@ struct LongPendingAction {
     uint40 timestamp; // 5 bytes
     address user; // 20 bytes
     int24 tick; // 3 bytes
+    uint24 securityDepositValue; // 3 bytes
     uint128 closeAmount; // 16 bytes
     uint128 closeTotalExpo; // 16 bytes
     uint256 tickVersion; // 32 bytes
     uint256 index; // 32 bytes
     uint256 closeLiqMultiplier; // 32 bytes
     uint256 closeTempTransfer; // 32 bytes
+}
+
+/**
+ * @notice The data allowing to validate an actionable pending action.
+ * @param priceData An array of bytes, each representing the data to be forwarded to the oracle middleware to validate
+ * a pending action in the queue.
+ * @param rawIndices An array of raw indices in the pending actions queue, in the same order as the corresponding
+ * priceData
+ */
+struct PreviousActionsData {
+    bytes[] priceData;
+    uint128[] rawIndices;
 }

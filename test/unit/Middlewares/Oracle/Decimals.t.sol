@@ -21,15 +21,6 @@ contract TestOracleMiddlewareDecimals is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `pythDecimals` getter
-     * @custom:when The result of the result of the function is compared to 8
-     * @custom:then It should succeed
-     */
-    function test_pythDecimals() public {
-        assertEq(oracleMiddleware.getPythDecimals(), 8);
-    }
-
-    /**
      * @custom:scenario Call `chainlinkDecimals` getter
      * @custom:when The result of the result of the function is compared to 8
      * @custom:then It should succeed

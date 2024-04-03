@@ -2,14 +2,16 @@
 pragma solidity 0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import {
     PendingAction,
     VaultPendingAction,
     LongPendingAction,
-    ProtocolAction
+    ProtocolAction,
+    PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
+import { UsdnProtocol, Position } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
@@ -22,25 +24,58 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
  */
 contract UsdnProtocolHandler is UsdnProtocol {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
+    using LibBitmap for LibBitmap.Bitmap;
 
     constructor(
         IUsdn usdn,
+        IERC20Metadata sdex,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
-    ) UsdnProtocol(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
+    ) UsdnProtocol(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
     /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
     function resetEMA() external {
         _EMA = 0;
     }
 
+    /// @dev Push a pending item to the front of the pending actions queue
+    function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
+        rawIndex_ = _pendingActionsQueue.pushFront(action);
+        _pendingActions[action.user] = uint256(rawIndex_) + 1;
+    }
+
+    function i_initiateClosePosition(
+        address user,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index,
+        uint128 amountToClose,
+        bytes calldata currentPriceData
+    ) external returns (uint256 securityDepositValue_) {
+        return _initiateClosePosition(user, tick, tickVersion, index, amountToClose, currentPriceData);
+    }
+
+    function i_validateClosePosition(address user, bytes calldata priceData) external {
+        _validateClosePosition(user, priceData);
+    }
+
+    function i_removeAmountFromPosition(
+        int24 tick,
+        uint256 index,
+        Position memory pos,
+        uint128 amountToRemove,
+        uint128 totalExpoToRemove
+    ) external {
+        return _removeAmountFromPosition(tick, index, pos, amountToRemove, totalExpoToRemove);
+    }
+
     function i_positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         external
         pure
-        returns (uint256 value_)
+        returns (int256 value_)
     {
         return _positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
     }
@@ -48,7 +83,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
         external
         pure
-        returns (uint256 totalExpo_)
+        returns (uint128 totalExpo_)
     {
         return _calculatePositionTotalExpo(amount, startPrice, liquidationPrice);
     }
@@ -58,8 +93,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         delete _pendingActions[user];
     }
 
-    function i_getActionablePendingAction(uint256 maxIter) external returns (PendingAction memory) {
-        return _getActionablePendingAction(maxIter);
+    function i_getActionablePendingAction() external returns (PendingAction memory, uint128) {
+        return _getActionablePendingAction();
     }
 
     function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
@@ -125,7 +160,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint128 expo,
         uint256 liqMultiplier,
         uint256 tempTransferred
-    ) external view returns (uint256) {
+    ) external view returns (uint256, int256) {
         return _assetToTransfer(currentPrice, tick, expo, liqMultiplier, tempTransferred);
     }
 
@@ -133,7 +168,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _tickValue(currentPrice, tick, tickTotalExpo);
     }
 
-    function i_getOraclePrice(ProtocolAction action, uint40 timestamp, bytes calldata priceData)
+    function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
         external
         payable
         returns (PriceInfo memory)
@@ -147,6 +182,10 @@ contract UsdnProtocolHandler is UsdnProtocol {
         returns (uint256 toMint_)
     {
         return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
+    }
+
+    function i_calcSdexToBurn(uint256 usdnAmount) external view returns (uint256 toBurn_) {
+        return _calcSdexToBurn(usdnAmount);
     }
 
     function i_vaultAssetAvailable(
@@ -175,7 +214,82 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getLiquidationPrice(startPrice, leverage);
     }
 
+    function i_checkImbalanceLimitDeposit(uint256 depositValue) external view {
+        _checkImbalanceLimitDeposit(depositValue);
+    }
+
+    function i_checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view {
+        _checkImbalanceLimitWithdrawal(withdrawalValue, totalExpo);
+    }
+
+    function i_checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view {
+        _checkImbalanceLimitOpen(openTotalExpoValue, openCollatValue);
+    }
+
+    function i_checkImbalanceLimitClose(uint256 closeExpoValue, uint256 closeCollatValue) external view {
+        _checkImbalanceLimitClose(closeExpoValue, closeCollatValue);
+    }
+
     function i_getLeverage(uint128 price, uint128 liqPrice) external pure returns (uint128) {
         return _getLeverage(price, liqPrice);
+    }
+
+    function i_bitmapIndexToTick(uint256 index) external view returns (int24) {
+        return _bitmapIndexToTick(index);
+    }
+
+    function i_tickToBitmapIndex(int24 tick) external view returns (uint256) {
+        return _tickToBitmapIndex(tick);
+    }
+
+    function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
+        return _tickBitmap.findLastSet(_tickToBitmapIndex(searchFrom));
+    }
+
+    function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
+        return _updateEMA(secondsElapsed);
+    }
+
+    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool) {
+        return _usdnRebase(assetPrice, ignoreInterval);
+    }
+
+    function i_calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
+        external
+        pure
+        returns (uint256)
+    {
+        return _calcUsdnPrice(vaultBalance, assetPrice, usdnTotalSupply, assetDecimals);
+    }
+
+    function i_calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
+        external
+        pure
+        returns (uint256)
+    {
+        return _calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
+    }
+
+    function i_addPendingAction(address user, PendingAction memory action) external {
+        _addPendingAction(user, action);
+    }
+
+    function i_getPendingAction(address user) external view returns (PendingAction memory, uint128) {
+        return _getPendingAction(user);
+    }
+
+    function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool, uint256) {
+        return _executePendingAction(data);
+    }
+
+    function i_executePendingActionOrRevert(PreviousActionsData calldata data) external {
+        _executePendingActionOrRevert(data);
+    }
+
+    function i_refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore)
+        external
+        payable
+    {
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
 }

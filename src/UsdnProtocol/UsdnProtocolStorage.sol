@@ -28,10 +28,19 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint8 public constant FUNDING_RATE_DECIMALS = 18;
 
     /// @inheritdoc IUsdnProtocolStorage
+    uint8 public constant TOKENS_DECIMALS = 18;
+
+    /// @inheritdoc IUsdnProtocolStorage
     uint8 public constant LIQUIDATION_MULTIPLIER_DECIMALS = 38;
 
     /// @inheritdoc IUsdnProtocolStorage
     uint8 public constant FUNDING_SF_DECIMALS = 3;
+
+    /// @inheritdoc IUsdnProtocolStorage
+    uint256 public constant SDEX_BURN_ON_DEPOSIT_DIVISOR = 1e8;
+
+    /// @inheritdoc IUsdnProtocolStorage
+    uint128 public constant SECURITY_DEPOSIT_FACTOR = 1e15;
 
     /// @inheritdoc IUsdnProtocolStorage
     uint256 public constant BPS_DIVISOR = 10_000;
@@ -62,8 +71,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The USDN ERC20 contract.
     IUsdn internal immutable _usdn;
 
-    /// @notice The decimals of the USDN token.
-    uint8 internal immutable _usdnDecimals;
+    /// @notice The SDEX ERC20 contract.
+    IERC20Metadata internal immutable _sdex;
+
+    /// @notice The MIN_DIVISOR constant of the USDN token.
+    uint256 internal immutable _usdnMinDivisor;
 
     /* -------------------------------------------------------------------------- */
     /*                                 Parameters                                 */
@@ -93,7 +105,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice User current liquidation iteration in tick.
     uint16 internal _liquidationIteration = 3;
 
-    // TODO: Add checks when creating the setter for this variable (!= 0)
     /// @notice The moving average period of the funding rate
     uint128 internal _EMAPeriod = 5 days;
 
@@ -109,8 +120,54 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The fee threshold above which fee will be sent
     uint256 internal _feeThreshold = 1 ether;
 
+    /**
+     * @notice The imbalance limit of the long expo for open actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long
+     * the open rebalancing mechanism is triggered, preventing the opening of a new long position.
+     */
+    int256 internal _openExpoImbalanceLimitBps = 200;
+
+    /**
+     * @notice The imbalance limit of the long expo for withdrawal actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of long,
+     * the withdrawal rebalancing mechanism is triggered, preventing the withdraw of existing vault position.
+     */
+    int256 internal _withdrawalExpoImbalanceLimitBps = 600;
+
+    /**
+     * @notice The imbalance limit of the vault expo for deposit actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the deposit vault rebalancing mechanism is triggered, preventing the opening of new vault position.
+     */
+    int256 internal _depositExpoImbalanceLimitBps = 200;
+
+    /**
+     * @notice The imbalance limit of the vault expo for close actions (in basis points).
+     * @dev As soon as the difference between vault expo and long expo exceeds this basis point limit in favor of vault,
+     * the withdrawal vault rebalancing mechanism is triggered, preventing the close of existing long position.
+     */
+    int256 internal _closeExpoImbalanceLimitBps = 600;
+
     /// @notice The position fee in basis point
     uint16 internal _positionFeeBps = 4; // 0.04%
+
+    /// @notice The ratio of USDN to SDEX tokens to burn on deposit
+    uint32 internal _sdexBurnOnDepositRatio = 1e6; // 1%
+
+    /// @notice The deposit required for a new position (0.5 ether)
+    uint256 internal _securityDepositValue = 0.5 ether;
+
+    /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
+    uint128 internal _targetUsdnPrice;
+
+    /// @notice The USDN price threshold to trigger a rebase (with _priceFeedDecimals)
+    uint128 internal _usdnRebaseThreshold;
+
+    /**
+     * @notice The interval between two automatic rebase checks. Disabled by default.
+     * @dev A rebase can be forced (if the `_usdnRebaseThreshold` is exceeded) by calling the `liquidate` function
+     */
+    uint256 internal _usdnRebaseInterval = 0;
 
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
@@ -152,6 +209,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The balance of deposits (with asset decimals)
     uint256 internal _balanceVault;
 
+    /// @notice The timestamp when the last USDN rebase check was performed
+    uint256 internal _lastRebaseCheck;
+
     /* ----------------------------- Long positions ----------------------------- */
 
     /// @notice The exponential moving average of the funding (0.0003 at initialization)
@@ -187,6 +247,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /**
      * @notice Constructor.
      * @param usdn The USDN ERC20 contract.
+     * @param sdex The SDEX ERC20 contract.
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
      * @param liquidationRewardsManager The liquidation rewards manager contract.
@@ -195,6 +256,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     constructor(
         IUsdn usdn,
+        IERC20Metadata sdex,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
@@ -210,7 +272,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         }
 
         _usdn = usdn;
-        _usdnDecimals = usdn.decimals();
+        _sdex = sdex;
+        // Those tokens should have 18 decimals
+        if (usdn.decimals() != TOKENS_DECIMALS || sdex.decimals() != TOKENS_DECIMALS) {
+            revert UsdnProtocolInvalidTokenDecimals();
+        }
+
+        _usdnMinDivisor = usdn.MIN_DIVISOR();
         _asset = asset;
         _assetDecimals = asset.decimals();
         if (_assetDecimals < FUNDING_SF_DECIMALS) {
@@ -221,6 +289,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         _liquidationRewardsManager = liquidationRewardsManager;
         _tickSpacing = tickSpacing;
         _feeCollector = feeCollector;
+
+        _targetUsdnPrice = uint128(10_087 * 10 ** (_priceFeedDecimals - 4)); // $1.0087
+        _usdnRebaseThreshold = uint128(1009 * 10 ** (_priceFeedDecimals - 3)); // $1.009
     }
 
     /* -------------------------------------------------------------------------- */
@@ -235,6 +306,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getAsset() external view returns (IERC20Metadata) {
         return _asset;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getSdex() external view returns (IERC20Metadata) {
+        return _sdex;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -253,8 +329,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getUsdnDecimals() external view returns (uint8) {
-        return _usdnDecimals;
+    function getUsdnMinDivisor() external view returns (uint256) {
+        return _usdnMinDivisor;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -322,6 +398,16 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
+    function getSdexBurnOnDepositRatio() external view returns (uint32) {
+        return _sdexBurnOnDepositRatio;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getSecurityDepositValue() external view returns (uint256) {
+        return _securityDepositValue;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
     function getFeeThreshold() external view returns (uint256) {
         return _feeThreshold;
     }
@@ -334,6 +420,21 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getMiddlewareValidationDelay() external view returns (uint256) {
         return _oracleMiddleware.getValidationDelay();
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getTargetUsdnPrice() external view returns (uint128) {
+        return _targetUsdnPrice;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getUsdnRebaseThreshold() external view returns (uint128) {
+        return _usdnRebaseThreshold;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getUsdnRebaseInterval() external view returns (uint256) {
+        return _usdnRebaseInterval;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -371,13 +472,19 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getPendingActionAt(uint256 index) external view returns (PendingAction memory) {
-        return _pendingActionsQueue.at(index);
+    function getPendingActionAt(uint256 index) external view returns (PendingAction memory action_) {
+        // slither-disable-next-line unused-return
+        (action_,) = _pendingActionsQueue.at(index);
     }
 
     /// @inheritdoc IUsdnProtocolStorage
     function getBalanceVault() external view returns (uint256) {
         return _balanceVault;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getLastRebaseCheck() external view returns (uint256) {
+        return _lastRebaseCheck;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -401,15 +508,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getTotalExpoByTick(int24 tick, uint256 version) external view returns (uint256) {
-        bytes32 cachedTickHash = tickHash(tick, version);
+    function getTotalExpoByTick(int24 tick) external view returns (uint256) {
+        bytes32 cachedTickHash = tickHash(tick, _tickVersion[tick]);
         return _totalExpoByTick[cachedTickHash];
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getPositionsInTick(int24 tick, uint256 version) external view returns (uint256) {
-        bytes32 cachedTickHash = tickHash(tick, version);
-        return _positionsInTick[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -446,5 +547,24 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function tickHash(int24 tick, uint256 version) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(tick, version));
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getExpoImbalanceLimits()
+        external
+        view
+        returns (
+            int256 openExpoImbalanceLimitBps_,
+            int256 depositExpoImbalanceLimitBps_,
+            int256 withdrawalExpoImbalanceLimitBps_,
+            int256 closeExpoImbalanceLimitBps_
+        )
+    {
+        return (
+            _openExpoImbalanceLimitBps,
+            _depositExpoImbalanceLimitBps,
+            _withdrawalExpoImbalanceLimitBps,
+            _closeExpoImbalanceLimitBps
+        );
     }
 }

@@ -24,6 +24,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the asset decimals are invalid
     error UsdnProtocolInvalidAssetDecimals(uint8 assetDecimals);
 
+    /// @dev Indicates that the token decimals are not equal to TOKENS_DECIMALS
+    error UsdnProtocolInvalidTokenDecimals();
+
     /// @dev Indicates that the user is not allowed to perform an action
     error UsdnProtocolUnauthorized();
 
@@ -60,6 +63,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided position fee exceeds the maximum allowed
     error UsdnProtocolInvalidPositionFee();
 
+    /// @dev Indicates that the provided ratio exceeds the maximum allowed
+    error UsdnProtocolInvalidBurnSdexOnDepositRatio();
+
     /// @dev Indicates that the new middleware address value is invalid.
     error UsdnProtocolInvalidMiddlewareAddress();
 
@@ -90,9 +96,48 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided address for the LiquidationRewardsManager contract address is invalid.
     error UsdnProtocolInvalidLiquidationRewardsManagerAddress();
 
-    /// @dev Indicates that the provided fee percentage value is invalid.
+    /// @dev Indicates that the provided fee basis point value is invalid.
     error UsdnProtocolInvalidProtocolFeeBps();
 
     /// @dev Indicates that the provided fee collector address is invalid
     error UsdnProtocolInvalidFeeCollector();
+
+    /// @dev Indicates that the provided security deposit is lower than _securityDepositValue
+    error UsdnProtocolSecurityDepositTooLow();
+
+    /// @dev Indicates that the wanted security deposit value cannot be set
+    error UsdnProtocolInvalidSecurityDepositValue();
+
+    /// @dev Indicates that the ether balance of the contract at the end of the action is not the expected one
+    error UsdnProtocolUnexpectedBalance();
+
+    /// @dev Indicates that the soft longExpo imbalance limit provided is invalid
+    error UsdnProtocolInvalidExpoImbalanceLimit();
+
+    /// @dev Indicates that the protocol imbalance limit is reached
+    error UsdnProtocolImbalanceLimitReached(int256 imbalanceBps);
+
+    /// @dev Indicates that the protocol vault expo is invalid
+    error UsdnProtocolInvalidVaultExpo();
+
+    /// @dev Indicates that the protocol long expo is invalid
+    error UsdnProtocolInvalidLongExpo();
+
+    /**
+     * @dev Indicates that the data provided to validate an actionable pending action is invalid (zero length or length
+     * mismatch)
+     */
+    error UsdnProtocolInvalidPendingActionData();
+
+    /// @dev Indicates that the provided target USDN price is invalid
+    error UsdnProtocolInvalidTargetUsdnPrice();
+
+    /// @dev Indicates that the provided USDN rebase threshold is invalid
+    error UsdnProtocolInvalidUsdnRebaseThreshold();
+
+    /// @dev Indicates that the amount to close in a position is higher than the amount in the position itself.
+    error UsdnProtocolAmountToCloseHigherThanPositionAmount(uint128 amountToClose, uint128 positionAmount);
+
+    /// @dev Indicates that the amount to close in a position is 0.
+    error UsdnProtocolAmountToCloseIsZero();
 }

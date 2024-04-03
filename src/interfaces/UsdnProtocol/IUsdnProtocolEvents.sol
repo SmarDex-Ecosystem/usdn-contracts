@@ -10,31 +10,35 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when a user initiates a deposit.
      * @param user The user address.
      * @param amount The amount of asset that were deposited.
+     * @param timestamp The timestamp of the action.
      */
-    event InitiatedDeposit(address indexed user, uint256 amount);
+    event InitiatedDeposit(address indexed user, uint256 amount, uint256 timestamp);
 
     /**
      * @notice Emitted when a user validates a deposit.
      * @param user The user address.
      * @param amountDeposited The amount of asset that were deposited.
      * @param usdnMinted The amount of USDN that were minted.
+     * @param timestamp The timestamp of the InitiatedDeposit action.
      */
-    event ValidatedDeposit(address indexed user, uint256 amountDeposited, uint256 usdnMinted);
+    event ValidatedDeposit(address indexed user, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp);
 
     /**
      * @notice Emitted when a user initiates a withdrawal.
      * @param user The user address.
      * @param usdnAmount The amount of USDN that will be burned.
+     * @param timestamp The timestamp of the action.
      */
-    event InitiatedWithdrawal(address indexed user, uint256 usdnAmount);
+    event InitiatedWithdrawal(address indexed user, uint256 usdnAmount, uint256 timestamp);
 
     /**
      * @notice Emitted when a user validates a withdrawal.
      * @param user The user address.
      * @param amountWithdrawn The amount of asset that were withdrawn.
      * @param usdnBurned The amount of USDN that were burned.
+     * @param timestamp The timestamp of the InitiatedWithdrawal action.
      */
-    event ValidatedWithdrawal(address indexed user, uint256 amountWithdrawn, uint256 usdnBurned);
+    event ValidatedWithdrawal(address indexed user, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp);
 
     /**
      * @notice Emitted when a user initiates the opening of a long position.
@@ -95,13 +99,24 @@ interface IUsdnProtocolEvents {
     );
 
     /**
-     * @notice Emitted when a user initiates the closing of a long position.
+     * @notice Emitted when a user initiates the closing of all or part of a long position.
      * @param user The user address.
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
+     * @param amountRemaining The amount of collateral remaining in the position.
+     * If the entirety of the position is being closed, this value is zero.
+     * @param totalExpoRemaining The total expo remaining in the position.
+     * If the entirety of the position is being closed, this value is zero.
      */
-    event InitiatedClosePosition(address indexed user, int24 tick, uint256 tickVersion, uint256 index);
+    event InitiatedClosePosition(
+        address indexed user,
+        int24 tick,
+        uint256 tickVersion,
+        uint256 index,
+        uint128 amountRemaining,
+        uint128 totalExpoRemaining
+    );
 
     /**
      * @notice Emitted when a user validates the closing of a long position
@@ -165,6 +180,18 @@ interface IUsdnProtocolEvents {
      * @param positionFee The new position fee (in percentage).
      */
     event PositionFeeUpdated(uint256 positionFee);
+
+    /**
+     * @notice Emitted when the ratio of USDN to SDEX tokens to burn on deposit is updated.
+     * @param newRatio The new ratio.
+     */
+    event BurnSdexOnDepositRatioUpdated(uint256 newRatio);
+
+    /**
+     * @notice Emitted when the deposit value is updated.
+     * @param securityDepositValue The new deposit value.
+     */
+    event SecurityDepositValueUpdated(uint256 securityDepositValue);
 
     /**
      * @notice Emitted when the oracle middleware is updated.
@@ -257,4 +284,33 @@ interface IUsdnProtocolEvents {
      * @param feeThreshold The new fee threshold.
      */
     event FeeThresholdUpdated(uint256 feeThreshold);
+
+    /**
+     * @notice Emitted when the target USDN price is updated.
+     * @param price The new target USDN price.
+     */
+    event TargetUsdnPriceUpdated(uint128 price);
+
+    /**
+     * @notice Emitted when the USDN rebase threshold is updated.
+     * @param threshold The new target USDN price.
+     */
+    event UsdnRebaseThresholdUpdated(uint128 threshold);
+
+    /**
+     * @notice Emitted when the USDN rebase interval is updated.
+     * @param interval The new interval.
+     */
+    event UsdnRebaseIntervalUpdated(uint256 interval);
+
+    /**
+     * @notice Emitted when imbalance limits are updated.
+     * @param newOpenLimitBps The new open limit.
+     * @param newDepositLimitBps The new deposit limit.
+     * @param newWithdrawalLimitBps The new withdrawal limit.
+     * @param newCloseLimitBps The new close limit.
+     */
+    event ImbalanceLimitsUpdated(
+        uint256 newOpenLimitBps, uint256 newDepositLimitBps, uint256 newWithdrawalLimitBps, uint256 newCloseLimitBps
+    );
 }

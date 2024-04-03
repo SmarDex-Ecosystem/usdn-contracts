@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { Script } from "forge-std/Script.sol";
 
+import { Sdex } from "test/utils/Sdex.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
@@ -19,6 +20,7 @@ contract Deploy is Script {
         external
         returns (
             WstETH WstETH_,
+            Sdex Sdex_,
             WstEthOracleMiddleware WstEthOracleMiddleware_,
             LiquidationRewardsManager LiquidationRewardsManager_,
             Usdn Usdn_,
@@ -42,6 +44,15 @@ contract Deploy is Script {
         } else {
             WstETH_ = new WstETH();
             wstETHAddress = payable(address(WstETH_));
+        }
+
+        // Deploy SDEX if needed
+        address sdexAddress = payable(vm.envOr("SDEX_ADDRESS", address(0)));
+        if (sdexAddress != address(0)) {
+            Sdex_ = Sdex(sdexAddress);
+        } else {
+            Sdex_ = new Sdex();
+            sdexAddress = address(Sdex_);
         }
 
         // Deploy oracle middleware if needed
@@ -106,7 +117,7 @@ contract Deploy is Script {
             liquidationRewardsManagerAddress = address(LiquidationRewardsManager_);
         }
 
-        // Deploy USDN token, without a specific minter or adjuster for now
+        // Deploy USDN token, without a specific minter or rebaser for now
         address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
         if (usdnAddress != address(0)) {
             Usdn_ = Usdn(usdnAddress);
@@ -117,13 +128,20 @@ contract Deploy is Script {
 
         // Deploy the protocol with tick spacing 100 = 1%
         UsdnProtocol_ = new UsdnProtocol(
-            Usdn_, WstETH_, WstEthOracleMiddleware_, LiquidationRewardsManager_, 100, vm.envAddress("FEE_COLLECTOR")
+            Usdn_,
+            Sdex_,
+            WstETH_,
+            WstEthOracleMiddleware_,
+            LiquidationRewardsManager_,
+            100,
+            vm.envAddress("FEE_COLLECTOR")
         );
 
-        // Grant USDN minter role to protocol and approve wstETH spending
-
+        // Grant USDN minter & rebaser roles to protocol and approve wstETH spending
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
+        Usdn_.grantRole(Usdn_.REBASER_ROLE(), address(UsdnProtocol_));
         WstETH_.approve(address(UsdnProtocol_), depositAmount + longAmount);
+
         // Initialize if needed
         if (depositAmount > 0 && longAmount > 0) {
             uint256 desiredLiqPrice;

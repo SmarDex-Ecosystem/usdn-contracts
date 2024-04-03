@@ -16,22 +16,29 @@ contract TestUsdnInvariants is UsdnTokenFixture {
         super.setUp();
 
         targetContract(address(usdn));
-        bytes4[] memory selectors = new bytes4[](4);
-        selectors[0] = usdn.adjustDivisorTest.selector;
+        bytes4[] memory selectors = new bytes4[](7);
+        selectors[0] = usdn.rebaseTest.selector;
         selectors[1] = usdn.mintTest.selector;
         selectors[2] = usdn.burnTest.selector;
         selectors[3] = usdn.transferTest.selector;
+        selectors[4] = usdn.mintSharesTest.selector;
+        selectors[5] = usdn.burnSharesTest.selector;
+        selectors[6] = usdn.transferSharesTest.selector;
         targetSelector(FuzzSelector({ addr: address(usdn), selectors: selectors }));
+        targetSender(USER_1);
+        targetSender(USER_2);
+        targetSender(USER_3);
+        targetSender(USER_4);
     }
 
     /**
      * @custom:scenario Check that the contract returns the expected number of shares for each user
      */
     function invariant_shares() public displayBalancesAndShares {
-        assertEq(usdn.sharesOf(USER_1), usdn.shares(USER_1), "shares of user 1");
-        assertEq(usdn.sharesOf(USER_2), usdn.shares(USER_2), "shares of user 2");
-        assertEq(usdn.sharesOf(USER_3), usdn.shares(USER_3), "shares of user 3");
-        assertEq(usdn.sharesOf(USER_4), usdn.shares(USER_4), "shares of user 4");
+        assertEq(usdn.sharesOf(USER_1), usdn.getSharesOfAddress(USER_1), "shares of user 1");
+        assertEq(usdn.sharesOf(USER_2), usdn.getSharesOfAddress(USER_2), "shares of user 2");
+        assertEq(usdn.sharesOf(USER_3), usdn.getSharesOfAddress(USER_3), "shares of user 3");
+        assertEq(usdn.sharesOf(USER_4), usdn.getSharesOfAddress(USER_4), "shares of user 4");
     }
 
     /**
@@ -45,7 +52,11 @@ contract TestUsdnInvariants is UsdnTokenFixture {
      * @custom:scenario Check that the sum of the user shares is equal to the total shares
      */
     function invariant_sumOfSharesBalances() public displayBalancesAndShares {
-        uint256 sum = usdn.shares(USER_1) + usdn.shares(USER_2) + usdn.shares(USER_3) + usdn.shares(USER_4);
+        uint256 sum;
+        for (uint256 i = 0; i < usdn.getLengthOfShares(); i++) {
+            (, uint256 value) = usdn.getElementOfIndex(i);
+            sum += value;
+        }
         assertEq(usdn.totalShares(), sum, "sum of user shares vs total shares");
     }
 
@@ -55,7 +66,11 @@ contract TestUsdnInvariants is UsdnTokenFixture {
      * can stack up.
      */
     function invariant_totalSupply() public displayBalancesAndShares {
-        uint256 sum = usdn.balanceOf(USER_1) + usdn.balanceOf(USER_2) + usdn.balanceOf(USER_3) + usdn.balanceOf(USER_4);
+        uint256 sum;
+        for (uint256 i = 0; i < usdn.getLengthOfShares(); i++) {
+            (address user,) = usdn.getElementOfIndex(i);
+            sum += usdn.balanceOf(user);
+        }
         assertApproxEqAbs(sum, usdn.totalSupply(), 2, "sum of user balances vs total supply");
     }
 

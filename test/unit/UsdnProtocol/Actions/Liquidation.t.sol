@@ -11,8 +11,6 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
-        wstETH.mintAndApprove(USER_1, 100_000 ether, address(protocol), type(uint256).max);
 
         usdn.approve(address(protocol), type(uint256).max);
 
@@ -45,10 +43,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
 
+        wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
-        protocol.initiateDeposit(1 ether, abi.encode(effectivePriceForTick), "");
+        protocol.initiateDeposit(1 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -77,7 +76,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
 
-        protocol.validateDeposit(abi.encode(effectivePriceForTick), "");
+        protocol.validateDeposit(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -109,7 +108,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
 
-        protocol.initiateWithdrawal(uint128(usdn.balanceOf(address(this))), abi.encode(effectivePriceForTick), "");
+        protocol.initiateWithdrawal(
+            uint128(usdn.balanceOf(address(this))), abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -138,7 +139,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
 
-        protocol.validateWithdrawal(abi.encode(effectivePriceForTick), "");
+        protocol.validateWithdrawal(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -167,10 +168,13 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
 
+        wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
-        protocol.initiateOpenPosition(1 ether, desiredLiqPrice - 200 ether, abi.encode(effectivePriceForTick), "");
+        protocol.initiateOpenPosition(
+            1 ether, desiredLiqPrice - 200 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA
+        );
     }
 
     /**
@@ -201,7 +205,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
-        protocol.validateOpenPosition(abi.encode(effectivePriceForTick), "");
+        protocol.validateOpenPosition(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -237,7 +241,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatedTick(tickToLiquidate, tickVersionToLiquidate, 0, 0, 0);
 
         protocol.initiateClosePosition(
-            tickToClose, tickVersionToClose, indexToClose, abi.encode(effectivePriceForTick), ""
+            tickToClose,
+            tickVersionToClose,
+            indexToClose,
+            1 ether,
+            abi.encode(effectivePriceForTick),
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -270,7 +279,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tickToLiquidate, tickVersionToLiquidate, 0, 0, 0);
 
-        protocol.validateClosePosition(abi.encode(effectivePriceForTick), "");
+        protocol.validateClosePosition(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -336,12 +345,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 1000 gwei, 20_000);
+        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 1000 gwei, 20_000);
 
         // Trigger PnL and funding calculations now to avoid having to predict them later
         protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
 
-        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0);
+        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
         // Sanity check
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
 
@@ -350,7 +359,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Get the proper liquidation price for the tick
         price = protocol.getEffectivePriceForTick(tick);
-        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTotalExpoByTick(tick, 0));
+        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTotalExpoByTick(tick));
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
@@ -375,6 +384,62 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario A liquidator liquidate a tick and receive a reward but the vault doesn't have enough balance
+     * @custom:given There is a tick that can be liquidated
+     * @custom:and The vault doesn't have enough assets to cover the liquidator rewards
+     * @custom:when A liquidator calls the function liquidate()
+     * @custom:then The tick is liquidated
+     * @custom:and The protocol send rewards for the liquidation based on what's left in the vault
+     */
+    function test_canLiquidateAndReceiveRewardsUpToTheVaultBalance() public {
+        uint128 price = 2000 ether;
+
+        // Setup a long position from another user
+        (int24 tick,,) =
+            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, price);
+
+        // Change The rewards calculations parameters to not be dependent of the initial values
+        vm.prank(DEPLOYER);
+        // Put incredibly high values to empty the vault
+        liquidationRewardsManager.setRewardsParameters(500_000, 1_000_000, 200_000, 8000 gwei, 20_000);
+
+        uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
+        uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
+
+        // Set high gas fees
+        chainlinkGasPriceFeed.setLatestRoundData(1, 8000 gwei, block.timestamp, 1);
+        vm.txGasPrice(8000 gwei);
+
+        uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
+        // Sanity check
+        assertGt(
+            expectedLiquidatorRewards,
+            vaultBalanceBeforeRewards,
+            "The expected liquidation rewards should be higher than the balance of the vault"
+        );
+
+        // Get the proper liquidation price for the tick
+        price = protocol.getEffectivePriceForTick(tick);
+        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTotalExpoByTick(tick));
+
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.LiquidatorRewarded(
+            address(this), vaultBalanceBeforeRewards + uint256(collateralLiquidated)
+        );
+        uint256 liquidatedPositions = protocol.liquidate(abi.encode(price), 1);
+
+        // Check that the right number of positions have been liquidated
+        assertEq(liquidatedPositions, 1, "One position should have been liquidated");
+
+        assertEq(
+            wstETH.balanceOf(address(this)) - wstETHBalanceBeforeRewards,
+            vaultBalanceBeforeRewards + uint256(collateralLiquidated),
+            "The liquidator did not receive the right amount of rewards"
+        );
+        assertEq(protocol.getBalanceVault(), 0, "The vault should have given what was left");
+    }
+
+    /**
      * @custom:scenario The user sends too much ether when liquidating positions
      * @custom:given The user performs a liquidation
      * @custom:when The user sends 0.5 ether as value in the `liquidate` call
@@ -390,11 +455,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // create high risk position
         protocol.initiateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(5 ether, 9 * currentPrice / 10, priceData, "");
+        }(5 ether, 9 * currentPrice / 10, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-        }(priceData, "");
+        }(priceData, EMPTY_PREVIOUS_DATA);
         assertEq(protocol.getTotalLongPositions(), initialTotalPos + 1, "total positions after create");
 
         // price drops

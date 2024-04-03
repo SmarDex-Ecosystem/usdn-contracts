@@ -12,8 +12,8 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /// @notice The address that holds the minimum supply of USDN and first minimum long position.
     function DEAD_ADDRESS() external pure returns (address);
 
-    /// @notice The default max number of iterations for the checking the pending actions queue
-    function DEFAULT_QUEUE_MAX_ITER() external pure returns (uint256);
+    /// @notice The maximum number of actionable pending action items returned by `getActionablePendingActions`
+    function MAX_ACTIONABLE_PENDING_ACTIONS() external pure returns (uint256);
 
     /* -------------------------- Public view functions ------------------------- */
 
@@ -37,19 +37,10 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_);
 
     /**
-     * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
-     * timestamp
-     * @dev If the provided timestamp is older than the last state update, the result will be zero.
-     * @param timestamp The current timestamp
-     * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
-     * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
-     */
-    function fundingAsset(uint128 timestamp) external view returns (int256 fundingAsset_, int256 fund_);
-
-    /**
      * @notice Get the predicted value of the long balance for the given asset price and timestamp
      * @dev The effect of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account
+     * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`.
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
@@ -58,7 +49,8 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the vault balance for the given asset price and timestamp
      * @dev The effect of the funding rates and any profit or loss of the long positions since the last contract state
-     * update are taken into account
+     * update are taken into account, as well as the fees. If the provided timestamp is older than the last state
+     * update, the function reverts with `UsdnProtocolTimestampTooOld`.
      * @param currentPrice The current or predicted asset price
      * @param timestamp The timestamp corresponding to `currentPrice`
      */
@@ -83,15 +75,21 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
 
     /**
-     * @notice Retrieve a pending action that must be validated by the next user action in the protocol.
-     * @dev If this function returns a pending action, then the next user action MUST include the price update data
-     * for this pending action as the last parameter.
-     * @dev Front-ends are encouraged to set the `from` address when calling this function, so that we can return the
-     * correct actionable action for a given user.
-     * @param maxIter The maximum number of iterations to find the first initialized item
-     * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
+     * @notice Retrieve a list of pending actions, one of which must be validated by the next user action in the
+     * protocol.
+     * @dev If this function returns a non-empty list of pending actions, then the next user action MUST include the
+     * corresponding list of price update data and raw indices as the last parameter.
+     * @param currentUser The address of the user that will submit the price signatures for third-party actions
+     * validations. This is used to filter out their own actions from the returned list.
+     * @return actions_ The pending actions if any, otherwise an empty array. Note that some items can be zero-valued
+     * and there is no need to provide price data for those (an empty `bytes` suffices).
+     * @return rawIndices_ The raw indices of the actionable pending actions in the queue if any, otherwise an empty
+     * array.
      */
-    function getActionablePendingAction(uint256 maxIter) external view returns (PendingAction memory action_);
+    function getActionablePendingActions(address currentUser)
+        external
+        view
+        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_);
 
     /**
      * @notice Retrieve a user pending action.
@@ -99,4 +97,16 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
      * @return action_ The pending action if any, otherwise a struct with all fields set to zero and ProtocolAction.None
      */
     function getUserPendingAction(address user) external view returns (PendingAction memory action_);
+
+    /**
+     * @notice Calculation of the EMA of the funding rate
+     * @param lastFunding The last funding rate
+     * @param secondsElapsed The number of seconds elapsed since the last protocol action
+     * @param emaPeriod The EMA period
+     * @param previousEMA The previous EMA
+     */
+    function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
+        external
+        pure
+        returns (int256);
 }

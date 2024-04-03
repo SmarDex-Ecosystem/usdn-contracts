@@ -41,7 +41,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getLongPositionsLength(int24 tick) external view returns (uint256 len_) {
+    function getPositionsInTick(int24 tick) external view returns (uint256 len_) {
         (bytes32 tickHash,) = _tickHash(tick);
         len_ = _positionsInTick[tickHash];
     }
@@ -58,7 +58,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     function getPositionValue(int24 tick, uint256 tickVersion, uint256 index, uint128 price, uint128 timestamp)
         external
         view
-        returns (uint256 value_)
+        returns (int256 value_)
     {
         Position memory pos = getLongPosition(tick, tickVersion, index);
         uint256 liquidationMultiplier = getLiquidationMultiplier(timestamp);
@@ -143,18 +143,22 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param currentPrice The current price of the asset
      * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
      * @param positionTotalExpo The total expo of the position
+     * @return value_ The value of the position. If the current price is smaller than the liquidation price without
+     * penalty, then the position value is negative (bad debt)
      */
     function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         internal
         pure
-        returns (uint256 value_)
+        returns (int256 value_)
     {
-        // Avoid an underflow
         if (currentPrice < liqPriceWithoutPenalty) {
-            return 0;
+            value_ = -FixedPointMathLib.fullMulDiv(positionTotalExpo, liqPriceWithoutPenalty - currentPrice, currentPrice)
+                .toInt256();
+        } else {
+            value_ = FixedPointMathLib.fullMulDiv(
+                positionTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice
+            ).toInt256();
         }
-
-        value_ = FixedPointMathLib.fullMulDiv(positionTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice);
     }
 
     /**
@@ -213,7 +217,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
-        maxLiquidationPrice_ = uint128(price * (BPS_DIVISOR - _safetyMarginBps) / BPS_DIVISOR);
+        maxLiquidationPrice_ = (price * (BPS_DIVISOR - _safetyMarginBps) / BPS_DIVISOR).toUint128();
     }
 
     function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {
@@ -251,28 +255,47 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         tickArray.push(long);
     }
 
-    function _removePosition(int24 tick, uint256 tickVersion, uint256 index) internal returns (Position memory pos_) {
-        (bytes32 tickHash, uint256 version) = _tickHash(tick);
+    /**
+     * @notice Remove the provided total amount from its position and update the position, tick and protocol's balances.
+     * If the amount to remove is greater or equal than the position's, the position is deleted instead.
+     * @param tick The tick to remove from
+     * @param index Index of the position in the tick array
+     * @param pos The position to remove the amount from
+     * @param amountToRemove The amount to remove from the position
+     * @param totalExpoToRemove The total expo to remove from the position
+     */
+    function _removeAmountFromPosition(
+        int24 tick,
+        uint256 index,
+        Position memory pos,
+        uint128 amountToRemove,
+        uint128 totalExpoToRemove
+    ) internal {
+        (bytes32 tickHash,) = _tickHash(tick);
+        if (amountToRemove < pos.amount) {
+            Position storage position = _longPositions[tickHash][index];
+            position.totalExpo = pos.totalExpo - totalExpoToRemove;
 
-        if (version != tickVersion) {
-            revert UsdnProtocolOutdatedTick(version, tickVersion);
+            unchecked {
+                position.amount = pos.amount - amountToRemove;
+            }
+        } else {
+            totalExpoToRemove = pos.totalExpo;
+            unchecked {
+                --_positionsInTick[tickHash];
+                --_totalLongPositions;
+            }
+
+            // Remove from tick array (set to zero to avoid shifting indices)
+            delete _longPositions[tickHash][index];
+            if (_positionsInTick[tickHash] == 0) {
+                // we removed the last position in the tick
+                _tickBitmap.unset(_tickToBitmapIndex(tick));
+            }
         }
 
-        Position[] storage tickArray = _longPositions[tickHash];
-        pos_ = tickArray[index];
-
-        // Adjust state
-        _totalExpo -= pos_.totalExpo;
-        _totalExpoByTick[tickHash] -= pos_.totalExpo;
-        --_positionsInTick[tickHash];
-        --_totalLongPositions;
-
-        // Remove from tick array (set to zero to avoid shifting indices)
-        delete tickArray[index];
-        if (_positionsInTick[tickHash] == 0) {
-            // we removed the last position in the tick
-            _tickBitmap.unset(_tickToBitmapIndex(tick));
-        }
+        _totalExpo -= totalExpoToRemove;
+        _totalExpoByTick[tickHash] -= totalExpoToRemove;
     }
 
     /**

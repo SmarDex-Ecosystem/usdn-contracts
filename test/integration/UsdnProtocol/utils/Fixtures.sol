@@ -8,6 +8,7 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import {
     DEPLOYER,
     ADMIN,
+    SDEX,
     WSTETH,
     PYTH_STETH_USD,
     PYTH_ORACLE,
@@ -21,6 +22,7 @@ import {
     PYTH_DATA_STETH
 } from "test/integration/Middlewares/utils/Constants.sol";
 import { WstETH } from "test/utils/WstEth.sol";
+import { Sdex } from "test/utils/Sdex.sol";
 import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
@@ -28,7 +30,7 @@ import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 
@@ -38,8 +40,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         uint128 initialLong;
         uint128 initialLiqPrice;
         uint128 initialPrice;
-        uint256 initialTimestamp;
+        uint256 initialTimestamp; // ignored if fork is true
         bool fork;
+        uint256 forkWarp; // warp to this timestamp after forking, before deploying protocol. Zero to disable
     }
 
     SetUpParams public params;
@@ -49,10 +52,12 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         initialLiqPrice: 1000 ether, // leverage approx 2x
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
-        fork: false
+        fork: false,
+        forkWarp: 0
     });
 
     Usdn public usdn;
+    Sdex public sdex;
     UsdnProtocolHandler public protocol;
     WstETH public wstETH;
     MockPyth public mockPyth;
@@ -60,14 +65,21 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     WstEthOracleMiddleware public oracleMiddleware;
     LiquidationRewardsManager public liquidationRewardsManager;
 
+    PreviousActionsData internal EMPTY_PREVIOUS_DATA =
+        PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
+
     function _setUp(SetUpParams memory testParams) public virtual {
         if (testParams.fork) {
             string memory url = vm.rpcUrl("mainnet");
             vm.createSelectFork(url);
             uint256 initBlock = block.number - 1000;
             vm.rollFork(initBlock);
+            if (testParams.forkWarp > 0) {
+                vm.warp(testParams.forkWarp);
+            }
             dealAccounts(); // provide test accounts with ETH again
             wstETH = WstETH(payable(WSTETH));
+            sdex = Sdex(SDEX);
             IPyth pyth = IPyth(PYTH_ORACLE);
             AggregatorV3Interface chainlinkOnChain = AggregatorV3Interface(CHAINLINK_ORACLE_STETH);
             oracleMiddleware = new WstEthOracleMiddleware(
@@ -75,6 +87,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             );
         } else {
             wstETH = new WstETH();
+            sdex = new Sdex();
             mockPyth = new MockPyth();
             mockChainlinkOnChain = new MockChainlinkOnChain();
             mockChainlinkOnChain.setLastPublishTime(testParams.initialTimestamp - 10 minutes);
@@ -92,6 +105,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
         protocol = new UsdnProtocolHandler(
             usdn,
+            sdex,
             wstETH,
             oracleMiddleware,
             liquidationRewardsManager,
@@ -100,6 +114,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         );
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
         wstETH.approve(address(protocol), type(uint256).max);
         // leverage approx 2x
         protocol.initialize{ value: oracleMiddleware.validationCost("", ProtocolAction.Initialize) }(
@@ -111,15 +126,13 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
     function getHermesApiSignature(bytes32 feed, uint256 timestamp)
         internal
-        returns (uint256, uint256, uint256, bytes memory)
+        returns (uint256 price_, uint256 conf_, uint256 decimals_, uint256 timestamp_, bytes memory data_)
     {
-        string[] memory cmds = new string[](4);
-        cmds[0] = "./test_utils/target/release/test_utils";
-        cmds[1] = "pyth-price";
-        cmds[2] = vm.toString(feed);
-        cmds[3] = vm.toString(timestamp);
-        bytes memory result = vm.ffi(cmds);
-        return abi.decode(result, (uint256, uint256, uint256, bytes));
+        bytes memory result = vmFFIRustCommand("pyth-price", vm.toString(feed), vm.toString(timestamp));
+
+        require(keccak256(result) != keccak256(""), "Rust command returned an error");
+
+        return abi.decode(result, (uint256, uint256, uint256, uint256, bytes));
     }
 
     function getMockedPythSignature() internal pure returns (uint256, uint256, uint256, bytes memory) {

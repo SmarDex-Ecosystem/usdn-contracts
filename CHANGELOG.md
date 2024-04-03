@@ -1,5 +1,72 @@
 # Changelog
 
+## [0.11.1](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.11.0...v0.11.1) (2024-03-25)
+
+
+### Bug Fixes
+
+* **middleware:** infinite loop in mock contract ([#164](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/164)) ([64ef1a0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/64ef1a0b5c616d112c6c02b2df0b81fe25b29227))
+
+## [0.11.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.10.0...v0.11.0) (2024-03-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* **middleware:** removed `getPythDecimals` from oracle middleware
+* **actions:** `initiateDeposit`, `validateDeposit`, `initiateWithdrawal`, `validateWithdrawal`, `initiateOpenPosition`, `validateOpenPosition`, `initiateClosePosition` and `validateClosePosition` now take a `PreviousActionsData` struct as last argument. `getActionablePendingAction` for now returns a single action and its corresponding rawIndex. `DoubleEndedQueue` returns a second argument with the raw index for methods `front`, `back` and `at`.
+* `getTotalExpoByTick` now doesn't require the tick version anymore, `getPositionsInTick` now doesn't require the tick version anymore, `getLongPositionsLength` was removed as it was doing the same thing as `getPositionsInTick`
+* new parameter `timestamp` in events `InitiatedDeposit`, `InitiatedWithdrawal`, `ValidatedDeposit` and `ValidatedWithdrawal`
+
+### Features
+
+* **actions:** manually validate pending actions ([#145](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/145)) ([84e3d2f](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/84e3d2f31c909dff93f072a037d47f0950b2bc52))
+* add timestamp in emit ([eb11fbe](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/eb11fbeeb8ac7e921c3b3d48f7fef88e05b1eb79))
+* **middleware:** use cached pyth price ([#152](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/152)) ([e9cc402](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/e9cc4022a09a504ed99f00002a11c5820ab43251))
+* **positions:** expo limits mechanism ([#103](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/103)) ([eb4fe56](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/eb4fe568c53c5be5977342da87b39f8f51054b8f))
+
+
+### Bug Fixes
+
+* disable slither false positive ([2672f14](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/2672f14394b90b9eb39170228d656abe3055f034))
+* **funding:** decimals in returned values ([#150](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/150)) ([18a58a7](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/18a58a747289bcbc11c642cbfdfaeecfa8369a86))
+* **gas-test:** fix liquidation gas usage test ([2672f14](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/2672f14394b90b9eb39170228d656abe3055f034))
+* **middleware:** unify types and fix some bugs ([#141](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/141)) ([cfae831](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/cfae831b3b6fc4c7a36ba9cb3d3378a2be88b1a7))
+
+
+### Code Refactoring
+
+* remove tick version parameter to external functions and delete duplicated function ([2672f14](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/2672f14394b90b9eb39170228d656abe3055f034))
+
+## [0.10.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.9.0...v0.10.0) (2024-03-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **actions:** `initiateDeposit`, `validateDeposit`, `initiateWithdrawal`, `validateWithdrawal`, `initiateOpenPosition`, `validateOpenPosition`, `initiateClosePosition` and `validateClosePosition` now take a `PreviousActionsData` struct as last argument. `getActionablePendingAction` for now returns a single action and its corresponding rawIndex. `DoubleEndedQueue` returns a second argument with the raw index for methods `front`, `back` and `at`.
+* **close-long:** Position and PendingAction structs do not return the leverage anymore, they have the position expo instead
+* **core:** changed visibility of funding and fundingAsset functions ([#143](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/143))
+* **core:** view functions for balances now consider funding and fees ([#131](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/131))
+* **usdn:** `ADJUSTMENT_ROLE` becomes `REBASER_ROLE`, `adjustDivisor` becomes `rebase`, `DivisorAdjusted` becomes `Rebase`
+
+### Features
+
+* **actions:** separated external functions in multiple internal functions ([#135](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/135)) ([3bdab81](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/3bdab81c068e502712d5c5e0a8461978b5c34f18))
+* **close-long:** add the ability to partially close a position ([#130](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/130)) ([62ff252](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/62ff252d668f5bd54741ae1b2cfa9f341f33654d))
+* **core:** changed visibility of funding and fundingAsset functions ([#143](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/143)) ([d63cb41](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/d63cb41415a8e53a5632c71b22d6862128a3b7e6))
+* **core:** view functions for balances now consider funding and fees ([#131](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/131)) ([4c323c9](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/4c323c92d2945decabc27e6739da516a41aa02be))
+* **usdn:** add automatic rebase ([#124](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/124)) ([007df26](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/007df26c1f050546c7372ffedd5a2d2845e88248))
+
+
+### Bug Fixes
+
+* **assettotransfer:** fix the double subtraction in asset to transfer when validating a close position ([#138](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/138)) ([8bc712c](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/8bc712ce71bf2c81fcf311b6fe08431fa0d65f60))
+* **position-totalexpo:** use the liq price without penalty to calculate the position total expo ([#134](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/134)) ([90b2ca4](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/90b2ca4f17bcf236dd09ec59a6bbce4f1bb3680e))
+
+
+### Code Refactoring
+
+* **actions:** allow to pass a list of pending actions data ([#133](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/133)) ([efaea43](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/efaea43f8a2a38e39f8f41a21f92eb5c9649c832))
+
 ## [0.9.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.8.0...v0.9.0) (2024-03-07)
 
 

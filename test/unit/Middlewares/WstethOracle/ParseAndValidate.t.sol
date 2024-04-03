@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { WstethBaseFixture } from "test/unit/Middlewares/utils/Fixtures.sol";
-import { STETH_PRICE, STETH_CONF } from "test/unit/Middlewares/utils/Constants.sol";
+import { STETH_PRICE, STETH_CONF, STETH_DECIMALS } from "test/unit/Middlewares/utils/Constants.sol";
 
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -25,12 +25,8 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
     constructor() {
         super.setUp();
 
-        FORMATTED_STETH_PRICE = uint256(
-            uint256(uint64(STETH_PRICE)) * 10 ** wstethOracle.getDecimals() / 10 ** wstethOracle.getPythDecimals()
-        );
-        FORMATTED_STETH_CONF = uint256(
-            uint256(uint64(STETH_CONF)) * 10 ** wstethOracle.getDecimals() / 10 ** wstethOracle.getPythDecimals()
-        );
+        FORMATTED_STETH_PRICE = STETH_PRICE * 10 ** wstethOracle.getDecimals() / 10 ** STETH_DECIMALS;
+        FORMATTED_STETH_CONF = STETH_CONF * 10 ** wstethOracle.getDecimals() / 10 ** STETH_DECIMALS;
         STETH_CONF_RATIO = FORMATTED_STETH_CONF * wstethOracle.getConfRatio() / wstethOracle.getConfRatioDenom();
         STETH_PER_TOKEN = wsteth.stEthPerToken();
     }
@@ -66,13 +62,19 @@ contract TestWstethOracleParseAndValidatePrice is WstethBaseFixture {
             }(timestamp, action, abi.encode("data"));
 
             // Price + conf
-            if (action == ProtocolAction.ValidateOpenPosition) {
+            if (
+                action == ProtocolAction.InitiateWithdrawal || action == ProtocolAction.ValidateWithdrawal
+                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.ValidateOpenPosition
+            ) {
                 assertEq(
                     price.price, stethToWsteth(FORMATTED_STETH_PRICE + STETH_CONF_RATIO, STETH_PER_TOKEN), errorMessage
                 );
             }
             // Price - conf
-            else if (action == ProtocolAction.ValidateClosePosition || action == ProtocolAction.ValidateDeposit) {
+            else if (
+                action == ProtocolAction.InitiateDeposit || action == ProtocolAction.ValidateDeposit
+                    || action == ProtocolAction.InitiateClosePosition || action == ProtocolAction.ValidateClosePosition
+            ) {
                 assertEq(
                     price.price, stethToWsteth(FORMATTED_STETH_PRICE - STETH_CONF_RATIO, STETH_PER_TOKEN), errorMessage
                 );
