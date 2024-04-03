@@ -505,7 +505,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Convert a `PendingAction` to a `DepositPendingAction`
+     * @notice Convert a `PendingAction` to a `WithdrawalPendingAction`
      * @param action An untyped pending action
      * @return vaultAction_ The converted withdrawal pending action
      */
