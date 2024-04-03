@@ -19,7 +19,7 @@ contract RecoverFromNegativeLongExpoTest is UsdnProtocolBaseIntegrationFixture {
     /**
      * @custom:given A initial balanced protocol
      * @custom:and A user long position is initiated
-     * @custom:and Price crash below all liquidation price
+     * @custom:and Price drop below all liquidation price
      * @custom:and The user position trying to be validated
      * @custom:and Protocol goes with a negative long expo
      * @custom:when A user open a long position
