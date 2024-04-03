@@ -101,8 +101,9 @@ contract OrderManager is Ownable, IOrderManager {
 
         // Save the order's data
         uint232 newUserAmount = _userAmountInTick[tickHash][msg.sender] + amount;
-        _ordersDataInTick[tickHash].amountOfAssets += amount;
-        _ordersDataInTick[tickHash].longPositionTick = PENDING_ORDERS_TICK;
+        OrdersDataInTick storage ordersData = _ordersDataInTick[tickHash];
+        ordersData.amountOfAssets += amount;
+        ordersData.longPositionTick = PENDING_ORDERS_TICK;
         _userAmountInTick[tickHash][msg.sender] = newUserAmount;
 
         // Transfer the user assets to this contract
