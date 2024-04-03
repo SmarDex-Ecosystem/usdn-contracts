@@ -11,7 +11,6 @@ import { Sdex } from "test/utils/Sdex.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import {
@@ -85,8 +84,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware();
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
-        liquidationRewardsManager =
-            new LiquidationRewardsManager(address(chainlinkGasPriceFeed), IWstETH(address(wstETH)), 2 days);
+        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
 
         protocol = new UsdnProtocolHandler(
             usdn,

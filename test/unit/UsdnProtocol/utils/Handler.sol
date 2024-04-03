@@ -292,4 +292,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
     {
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
+
+    function i_createInitialDeposit(uint128 amount, uint128 price) external {
+        _createInitialDeposit(amount, price);
+    }
 }
