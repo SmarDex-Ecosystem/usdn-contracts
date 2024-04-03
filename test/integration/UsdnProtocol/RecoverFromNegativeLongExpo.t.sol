@@ -8,8 +8,8 @@ import { USER_1 } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature This test restores balance to a protocol with a negative long expo
- * @custom:background In the event of negative long expo, the protocol blocks deposit and close actions to prevent the
- * expo imbalance from worsening, but allows open and withdrawal to help restore positive expo
+ * @custom:background In the event of a negative long expo, the protocol blocks deposit and close actions to prevent the
+ * expo imbalance from worsening, but allows open and withdrawal to help restore a positive expo
  */
 contract RecoverFromNegativeLongExpoTest is UsdnProtocolBaseIntegrationFixture {
     function setUp() public {
