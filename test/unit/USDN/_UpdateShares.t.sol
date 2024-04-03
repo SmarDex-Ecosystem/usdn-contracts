@@ -9,7 +9,7 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 /**
  * @custom:feature The `_update` function of `USDN`
  */
-contract TestUsdnUpdateShare is UsdnTokenFixture {
+contract TestUsdnUpdateShares is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
@@ -134,5 +134,67 @@ contract TestUsdnUpdateShare is UsdnTokenFixture {
         uint256 tokens = usdn.convertToTokens(shares + 1);
         vm.expectRevert(abi.encodeWithSelector(UsdnInsufficientSharesBalance.selector, USER_1, shares, shares + 1));
         usdn.i_updateShares(USER_1, address(this), shares + 1, tokens);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                 BurnShares                                 */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario Burning a portion of the shares
+     * @custom:given A divisor of 0.5x MAX_DIVISOR
+     * @custom:when 50e36 shares are burned
+     * @custom:then The `Transfer` event is emitted with the user as the sender, the zero address as the recipient and
+     * amount 100e18
+     * @custom:and The user's shares are decreased by 50e36
+     * @custom:and The user's balance is decreased by 100 tokens
+     * @custom:and The total shares are decreased by 50e36
+     * @custom:and The total supply is decreased by 100 tokens
+     */
+    function test_burnSharesPartial() public {
+        usdn.mintShares(USER_1, 100e36);
+        usdn.rebase(usdn.MAX_DIVISOR() / 2);
+        assertEq(usdn.sharesOf(USER_1), 100e36, "initial shares");
+        assertEq(usdn.balanceOf(USER_1), 200 ether, "initial balance");
+
+        uint256 shares = 50e36;
+        vm.expectEmit(address(usdn));
+        emit Transfer(USER_1, address(0), 100 ether); // expected event
+        usdn.i_updateShares(USER_1, address(0), shares, usdn.convertToTokens(shares));
+
+        assertEq(usdn.sharesOf(USER_1), shares, "shares after burn");
+        assertEq(usdn.balanceOf(USER_1), 100 ether, "balance after burn");
+        assertEq(usdn.totalShares(), shares, "total shares after burn");
+        assertEq(usdn.totalSupply(), 100 ether, "total supply after burn");
+    }
+
+    /**
+     * @custom:scenario Burning the entire shares balance
+     * @custom:when 100e36 shares are burned
+     * @custom:then The `Transfer` event is emitted with the user as the sender, the zero address as the recipient and
+     * amount 100 tokens
+     * @custom:and The user's shares balance is zero
+     * @custom:and The total shares is zero
+     */
+    function test_burnAllShares() public {
+        usdn.mintShares(USER_1, 100e36);
+        vm.expectEmit(address(usdn));
+        emit Transfer(USER_1, address(0), 100 ether); // expected event
+        usdn.i_updateShares(USER_1, address(0), 100e36, usdn.convertToTokens(100e36));
+
+        assertEq(usdn.sharesOf(USER_1), 0, "shares balance after burn");
+        assertEq(usdn.totalShares(), 0, "total shares after burn");
+    }
+
+    /**
+     * @custom:scenario Burning more shares than the balance
+     * @custom:when 101e36 shares are burned
+     * @custom:then The transaction reverts with the `UsdnInsufficientSharesBalance` error
+     */
+    function test_RevertWhen_burnSharesInsufficientBalance() public {
+        usdn.mintShares(USER_1, 100e36);
+        uint256 tokens = usdn.convertToTokens(101e36);
+        vm.expectRevert(abi.encodeWithSelector(UsdnInsufficientSharesBalance.selector, USER_1, 100e36, 101e36));
+        usdn.i_updateShares(USER_1, address(0), 101e36, tokens);
     }
 }
