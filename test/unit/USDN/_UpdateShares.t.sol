@@ -103,6 +103,7 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
      * @param sharesAmount The amount of shares to transfer
      */
     function testFuzz_transferShares(uint256 divisor, uint256 sharesAmount) public {
+        usdn.mint(USER_1, 100 ether);
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         if (divisor < usdn.MAX_DIVISOR()) {
             usdn.rebase(divisor);
@@ -127,8 +128,6 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
      * @custom:then The transaction reverts with the USDNInsufficientSharesBalance error
      */
     function test_RevertWhen_transferSharesInsufficientBalance() public {
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
         usdn.mint(USER_1, 100 ether);
         uint256 shares = usdn.sharesOf(USER_1);
         uint256 tokens = usdn.convertToTokens(shares + 1);
