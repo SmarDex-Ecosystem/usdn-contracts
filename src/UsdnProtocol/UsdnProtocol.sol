@@ -118,10 +118,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setOrderManager(IOrderManager newOrderManager) external onlyOwner {
-        if (address(newOrderManager) == address(0)) {
-            revert UsdnProtocolInvalidOrderManagerAddress();
-        }
-
         _orderManager = newOrderManager;
 
         emit OrderManagerUpdated(address(newOrderManager));

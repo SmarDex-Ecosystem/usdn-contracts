@@ -96,9 +96,6 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided address for the LiquidationRewardsManager contract address is invalid.
     error UsdnProtocolInvalidLiquidationRewardsManagerAddress();
 
-    /// @dev Indicates that the provided address for the OrderManager contract address is invalid.
-    error UsdnProtocolInvalidOrderManagerAddress();
-
     /// @dev Indicates that the provided fee basis point value is invalid.
     error UsdnProtocolInvalidProtocolFeeBps();
 

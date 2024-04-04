@@ -550,14 +550,18 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @dev As tolerating the zero address is unusual, this test relevant even though it doesn't increase the coverage
      * @custom:scenario Call "setOrderManager" from admin.
      * @custom:given The initial usdnProtocol state from admin wallet.
      * @custom:when Admin wallet trigger admin contract function.
-     * @custom:then Revert because new address is address zero.
+     * @custom:then Order manager is now the zero address.
      */
-    function test_RevertWhen_setOrderManagerWithZeroAddress() external adminPrank {
-        vm.expectRevert(UsdnProtocolInvalidOrderManagerAddress.selector);
+    function test_setOrderManagerWithZeroAddress() external adminPrank {
+        vm.expectEmit();
+        emit OrderManagerUpdated(address(0));
         protocol.setOrderManager(IOrderManager(address(0)));
+
+        assertEq(address(protocol.getOrderManager()), address(address(0)));
     }
 
     /**

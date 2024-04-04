@@ -18,7 +18,7 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture {
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                         approveAssetsForSpending()                         */
+    /*                                   Reverts                                  */
     /* -------------------------------------------------------------------------- */
 
     /**
@@ -31,6 +31,10 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         orderManager.approveAssetsForSpending(1);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                         approveAssetsForSpending()                         */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @custom:scenario The owner of the contract calls approveAssetsForSpending
