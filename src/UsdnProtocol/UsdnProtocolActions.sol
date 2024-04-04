@@ -42,10 +42,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
-
         uint256 balanceBefore = address(this).balance;
-
         uint256 amountToRefund = _initiateDeposit(msg.sender, amount, currentPriceData);
+
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -421,7 +420,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
-
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
 
@@ -433,6 +431,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 pendingActionPrice =
             (currentPrice.price - currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
+        int256 vaultAssetAvailable =
+            _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice);
+
+        if (vaultAssetAvailable < 0) {
+            vaultAssetAvailable = 0;
+        }
+
         VaultPendingAction memory pendingAction = VaultPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
@@ -442,8 +447,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             amount: amount,
             assetPrice: pendingActionPrice,
             totalExpo: _totalExpo,
-            balanceVault: _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
-                .toUint256(),
+            balanceVault: vaultAssetAvailable.toUint256(),
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
         });
@@ -454,6 +458,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 usdnToMintEstimated = _calcMintUsdn(
             pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
         );
+
         uint256 sdexToBurn = _calcSdexToBurn(usdnToMintEstimated);
 
         // Transfer assets

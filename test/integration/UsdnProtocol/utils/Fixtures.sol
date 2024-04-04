@@ -27,7 +27,7 @@ import { MockPyth } from "test/unit/Middlewares/utils/MockPyth.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 
-import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
+import { MockLiquidationRewardsManager } from "test/unit/Middlewares/utils/MockLiquidationRewardsManager.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -63,7 +63,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     MockPyth public mockPyth;
     MockChainlinkOnChain public mockChainlinkOnChain;
     WstEthOracleMiddleware public oracleMiddleware;
-    LiquidationRewardsManager public liquidationRewardsManager;
+    MockLiquidationRewardsManager public liquidationRewardsManager;
 
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
@@ -102,7 +102,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         require(success, "DEPLOYER wstETH mint failed");
         usdn = new Usdn(address(0), address(0));
         AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
-        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
+        liquidationRewardsManager = new MockLiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
         protocol = new UsdnProtocolHandler(
             usdn,
             sdex,
