@@ -443,8 +443,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
         );
         (uint256 sdexToBurn, uint32 burnRatio) = _calcSdexToBurn(usdnToMintEstimated);
-        // We want to at least mint 1 wei of USDN and burn 1 wei of SDEX if SDEX burning is enabled
-        if (usdnToMintEstimated == 0 || (burnRatio != 0 && sdexToBurn == 0)) {
+        // We want to at least mint 1 wei of USDN
+        if (usdnToMintEstimated == 0) {
+            revert UsdnProtocolDepositTooSmall();
+        }
+        // We want to at least burn 1 wei of SDEX if SDEX burning is enabled
+        if (burnRatio != 0 && sdexToBurn == 0) {
             revert UsdnProtocolDepositTooSmall();
         }
         if (sdexToBurn > 0) {
