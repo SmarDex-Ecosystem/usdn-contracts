@@ -103,6 +103,84 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user initiates a small deposit and no USDN would be minted
+     * @custom:given The price of wstETH is $0.1
+     * @custom:when The user initiates a deposit of 9 wei of wstETH
+     * @custom:then The protocol reverts with `UsdnProtocolDepositTooSmall`
+     */
+    function test_RevertWhen_depositTooSmallNoUSDN() public {
+        params = DEFAULT_PARAMS;
+        params.initialPrice = 0.1 ether;
+        params.flags.enableSdexBurnOnDeposit = true;
+        super._setUp(params);
+        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
+        sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
+
+        uint128 deposited = 9;
+
+        uint256 usdnToMintEstimated =
+            protocol.i_calcMintUsdn(deposited, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
+        assertEq(usdnToMintEstimated, 0, "usdn minted");
+
+        vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
+        protocol.initiateDeposit(deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario The user initiates a small deposit and no SDEX would be burned
+     * @custom:given The price of wstETH is $1
+     * @custom:and The SDEX burn on deposit is enabled at 1% of the minted USDN
+     * @custom:when The user initiates a deposit of 99 wei of wstETH
+     * @custom:then The protocol would mint more than 0 USDN
+     * @custom:and The protocol would burn 0 SDEX
+     * @custom:and The protocol reverts with `UsdnProtocolDepositTooSmall`
+     */
+    function test_RevertWhen_depositTooSmallNoSDEXBurned() public {
+        params = DEFAULT_PARAMS;
+        params.initialPrice = 1 ether;
+        params.flags.enableSdexBurnOnDeposit = true;
+        super._setUp(params);
+        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
+        sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
+
+        uint128 deposited = 99;
+
+        uint256 usdnToMintEstimated =
+            protocol.i_calcMintUsdn(deposited, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
+        assertGt(usdnToMintEstimated, 0, "usdn minted");
+
+        (uint256 sdexToBurn,) = protocol.i_calcSdexToBurn(usdnToMintEstimated);
+        assertEq(sdexToBurn, 0, "sdex burned");
+
+        vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
+        protocol.initiateDeposit(deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario The user initiates a small deposit and SDEX burn is disabled
+     * @custom:given The price of wstETH is $1
+     * @custom:and The SDEX burn on deposit is disabled
+     * @custom:when The user initiates a deposit of 99 wei of wstETH
+     * @custom:then The protocol would mint more than 0 USDN
+     * @custom:and The transaction does not revert
+     */
+    function test_smallDepositSDEXBurnDisabled() public {
+        params = DEFAULT_PARAMS;
+        params.initialPrice = 1 ether;
+        params.flags.enableSdexBurnOnDeposit = false;
+        super._setUp(params);
+        wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
+
+        uint128 deposited = 99;
+
+        uint256 usdnToMintEstimated =
+            protocol.i_calcMintUsdn(deposited, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
+        assertGt(usdnToMintEstimated, 0, "usdn minted");
+
+        protocol.initiateDeposit(deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
      * @custom:scenario The user initiates and validates a deposit while the price of the asset increases
      * @custom:given The user deposits 1 wstETH
      * @custom:and The price of the asset is $2000 at the moment of initiation
