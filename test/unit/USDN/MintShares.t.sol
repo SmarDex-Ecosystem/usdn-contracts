@@ -25,16 +25,4 @@ contract TestUsdnMintShares is UsdnTokenFixture {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
         usdn.mintShares(address(0), 100);
     }
-
-    /**
-     * @custom:scenario Minting shares that would overflow the total supply of shares
-     * @custom:given The max amount of tokens has already been minted
-     * @custom:when max amount of additional tokens are minted
-     * @custom:then The transaction reverts with an overflow error
-     */
-    function test_RevertWhen_mintSharesOverflowTotal() public {
-        usdn.mintShares(address(this), type(uint256).max);
-        vm.expectRevert();
-        usdn.mintShares(address(this), 1);
-    }
 }

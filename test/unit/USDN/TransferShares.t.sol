@@ -3,7 +3,6 @@ pragma solidity 0.8.20;
 
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
-import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
@@ -22,7 +21,7 @@ contract TestUsdnTransferShares is UsdnTokenFixture {
      */
     function test_RevertWhen_transferSharesFromZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidSender.selector, address(0)));
-        usdn.i_transferShares(address(0), USER_1, 1e36, 1e18);
+        usdn.i_transferShares(address(0), address(this), 1e36, 1e18);
     }
 
     /**

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
- * @custom:feature The `_update` function of `USDN`
+ * @custom:feature The `_updateShares` function of `USDN`
+ * @custom:background The contract has the `MINTER_ROLE` and `REBASER_ROLE`
+ * @custom:and The divisor is MAX_DIVISOR
  */
 contract TestUsdnUpdateShares is UsdnTokenFixture {
     function setUp() public override {
@@ -45,7 +45,6 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
 
     /**
      * @custom:scenario Minting tokens with a divisor
-     * @custom:given This contract has the `REBASER_ROLE`
      * @custom:when The divisor is adjusted to 0.5x MAX_DIVISOR
      * @custom:and 50e36 shares are minted to a user
      * @custom:then The `Transfer` event is emitted with the zero address as the sender, the user as the recipient and
@@ -72,7 +71,6 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
 
     /**
      * @custom:scenario Minting uint256.max shares at maximum divisor then decreasing divisor to min value
-     * @custom:given This contract has the `REBASER_ROLE`
      * @custom:when uint256.max shares are minted at the max divisor
      * @custom:and The divisor is adjusted to the minimum value
      * @custom:then The user's shares is uint256.max and nothing reverts
@@ -87,13 +85,27 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
         assertEq(usdn.balanceOf(USER_1), usdn.maxTokens(), "tokens");
     }
 
+    /**
+     * @custom:scenario Minting shares that would overflow the total supply of shares
+     * @custom:given The max amount of tokens has already been minted
+     * @custom:when max amount of additional tokens are minted
+     * @custom:then The transaction reverts with an overflow error
+     */
+    function test_RevertWhen_mintSharesOverflowTotal() public {
+        usdn.i_updateShares(address(0), address(this), type(uint256).max, usdn.convertToTokens(type(uint256).max));
+        uint256 token = usdn.convertToTokens(1);
+        vm.expectRevert();
+        usdn.i_updateShares(address(0), address(this), 1, token);
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                               TransferShares                               */
     /* -------------------------------------------------------------------------- */
 
     /**
      * @custom:scenario Transfer shares after a rebase
-     * @custom:given The USDN was rebased with a random divisor
+     * @custom:given 100 tokens are minted to a user
+     * @custom:and The USDN was rebased with a random divisor
      * @custom:when The user transfers a random amount of shares to the test contract
      * @custom:then The user's balance is decreased by the transferred amount
      * @custom:and The contract's balance is increased by the transferred amount
@@ -124,6 +136,7 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
 
     /**
      * @custom:scenario Transfer more shares than the balance
+     * @custom:given 100 tokens are minted to a user
      * @custom:when The user tries to transfer more shares than they have
      * @custom:then The transaction reverts with the USDNInsufficientSharesBalance error
      */
@@ -141,7 +154,8 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
 
     /**
      * @custom:scenario Burning a portion of the shares
-     * @custom:given A divisor of 0.5x MAX_DIVISOR
+     * @custom:given 100e36 shares are minted to a user
+     * @custom:and A divisor of 0.5x MAX_DIVISOR
      * @custom:when 50e36 shares are burned
      * @custom:then The `Transfer` event is emitted with the user as the sender, the zero address as the recipient and
      * amount 100e18
@@ -169,6 +183,7 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
 
     /**
      * @custom:scenario Burning the entire shares balance
+     * @custom:given 100e36 shares are minted to a user
      * @custom:when 100e36 shares are burned
      * @custom:then The `Transfer` event is emitted with the user as the sender, the zero address as the recipient and
      * amount 100 tokens
@@ -187,6 +202,7 @@ contract TestUsdnUpdateShares is UsdnTokenFixture {
 
     /**
      * @custom:scenario Burning more shares than the balance
+     * @custom:given 100e36 shares are minted to a user
      * @custom:when 101e36 shares are burned
      * @custom:then The transaction reverts with the `UsdnInsufficientSharesBalance` error
      */

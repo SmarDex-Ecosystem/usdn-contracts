@@ -4,7 +4,6 @@ pragma solidity 0.8.20;
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
-import { USER_1 } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature The admin functions of the usdn
@@ -27,9 +26,9 @@ contract TestUsdnAdmin is UsdnTokenFixture {
         );
 
         vm.expectRevert(unauthorizedError);
-        usdn.mint(USER_1, 100 ether);
+        usdn.mint(address(this), 100 ether);
 
         vm.expectRevert(unauthorizedError);
-        usdn.mintShares(USER_1, 100);
+        usdn.mintShares(address(this), 100);
     }
 }

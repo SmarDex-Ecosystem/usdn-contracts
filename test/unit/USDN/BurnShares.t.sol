@@ -15,9 +15,6 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 contract TestUsdnBurnShares is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
-        usdn.mintShares(USER_1, 100e36);
     }
 
     /**

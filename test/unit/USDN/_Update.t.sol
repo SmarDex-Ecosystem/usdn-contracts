@@ -8,10 +8,14 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
  * @custom:feature The `_update` function of `USDN`
+ * @custom:background The contract has the `MINTER_ROLE` and `REBASER_ROLE`
+ * @custom:and The divisor is MAX_DIVISOR
  */
 contract TestUsdnUpdate is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
+        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -52,7 +56,6 @@ contract TestUsdnUpdate is UsdnTokenFixture {
      * @custom:and The total shares are 50
      */
     function test_mintWithMultiplier() public {
-        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
 
         vm.expectEmit(address(usdn));
@@ -73,7 +76,6 @@ contract TestUsdnUpdate is UsdnTokenFixture {
      * @custom:then The user's balance is MAX_TOKENS * MAX_DIVISOR / MIN_DIVISOR and nothing reverts
      */
     function test_mintMaxAndIncreaseMultiplier() public {
-        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
         uint256 maxTokens = usdn.maxTokens();
         usdn.i_update(address(0), USER_1, maxTokens);
 
@@ -112,8 +114,6 @@ contract TestUsdnUpdate is UsdnTokenFixture {
      * @custom:and The total shares are decreased by 25
      */
     function test_burnPartial() public {
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
         usdn.mint(USER_1, 100 ether);
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
         assertEq(usdn.balanceOf(USER_1), 200 ether, "initial balance");
@@ -143,8 +143,6 @@ contract TestUsdnUpdate is UsdnTokenFixture {
      * tokens, they might have a fraction of a token left.
      */
     function test_burnAll() public {
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
         usdn.mint(USER_1, 100 ether);
         usdn.rebase(9 * usdn.MAX_DIVISOR() / 10);
         assertEq(usdn.balanceOf(USER_1), 111_111_111_111_111_111_111, "initial balance");
@@ -164,8 +162,6 @@ contract TestUsdnUpdate is UsdnTokenFixture {
      * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
      */
     function test_RevertWhen_burnInsufficientBalance() public {
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
         usdn.mint(USER_1, 100 ether);
         vm.expectRevert(
             abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, USER_1, 100 ether, 101 ether)
@@ -181,8 +177,6 @@ contract TestUsdnUpdate is UsdnTokenFixture {
      * @custom:then The transaction reverts with the `ERC20InsufficientBalance` error
      */
     function test_RevertWhen_burnInsufficientBalanceWithMultiplier() public {
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
         usdn.mint(USER_1, 100 ether);
         usdn.rebase(usdn.MAX_DIVISOR() / 2);
         assertEq(usdn.balanceOf(USER_1), 200 ether);
