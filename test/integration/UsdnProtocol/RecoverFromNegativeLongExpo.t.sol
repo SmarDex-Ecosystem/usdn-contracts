@@ -31,20 +31,25 @@ contract RecoverFromNegativeLongExpoTest is UsdnProtocolBaseIntegrationFixture {
         require(success, "Recover negative long expo: wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
 
-        protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, params.initialLiqPrice + (params.initialLiqPrice * 2 / 10), "", EMPTY_PREVIOUS_DATA
+        uint256 assetDecimals = uint256(uint8(protocol.getAssetDecimals()));
+        uint256 pythDecimals = uint256(-int256(mockPyth.expo()));
+
+        uint128 initialPrice = _getAdjustedPrice(uint256(uint64(mockPyth.price())), assetDecimals, pythDecimals);
+
+        uint256 minLongValue = uint256(protocol.getMinLongPosition());
+        uint128 minLongAmount = uint128(minLongValue * (10 ** assetDecimals) / initialPrice);
+        uint256 securityDepositValue = protocol.getSecurityDepositValue();
+        uint256 initiateValidationCost = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition);
+
+        protocol.initiateOpenPosition{ value: initiateValidationCost + securityDepositValue }(
+            minLongAmount, params.initialLiqPrice + (params.initialLiqPrice * 2 / 10), "", EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
 
-        mockPyth.setPrice(
-            int64(
-                int256(
-                    uint256(params.initialLiqPrice)
-                        / 10 ** (protocol.getAssetDecimals() - uint256(-int256(mockPyth.expo()))) / 2
-                )
-            )
-        );
+        uint256 adjustedLowMockPrice = _getAdjustedPrice(params.initialLiqPrice / 2, pythDecimals, assetDecimals);
+
+        mockPyth.setPrice(int64(int256(adjustedLowMockPrice)));
 
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost("beef", ProtocolAction.ValidateOpenPosition)
@@ -53,18 +58,38 @@ contract RecoverFromNegativeLongExpoTest is UsdnProtocolBaseIntegrationFixture {
         // long expo should be negative
         assertLt(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo should be negative");
 
-        uint128 currentPrice = uint128(
-            uint256(uint64(mockPyth.price())) * 10 ** (protocol.getAssetDecimals() - uint256(-int256(mockPyth.expo())))
-        );
+        uint128 priceDown = _getAdjustedPrice(uint256(uint64(mockPyth.price())), assetDecimals, pythDecimals);
 
-        protocol.initiateOpenPosition{ value: oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition) }(
-            1 ether, currentPrice / 2, "", EMPTY_PREVIOUS_DATA
+        uint128 minLongAmountDown = uint128(minLongValue * (10 ** assetDecimals) / priceDown);
+
+        protocol.initiateOpenPosition{ value: initiateValidationCost + securityDepositValue }(
+            minLongAmountDown, priceDown / 2, "", EMPTY_PREVIOUS_DATA
         );
 
         // long expo should be positive
         assertTrue(
             int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()) > 0, "long expo should be positive"
         );
+
         vm.stopPrank();
+    }
+
+    /**
+     * @dev Get the price adjusted to the target decimals
+     * @param price The price to adjust
+     * @param originDecimals The origin decimals
+     * @param targetDecimals The targeted decimals
+     * @return adjustedPrice_ The adjusted price
+     */
+    function _getAdjustedPrice(uint256 price, uint256 originDecimals, uint256 targetDecimals)
+        private
+        pure
+        returns (uint128 adjustedPrice_)
+    {
+        if (originDecimals > targetDecimals) {
+            adjustedPrice_ = uint128(price * (10 ** (originDecimals - targetDecimals)));
+        } else {
+            adjustedPrice_ = uint128(price / (10 ** (targetDecimals - originDecimals)));
+        }
     }
 }
