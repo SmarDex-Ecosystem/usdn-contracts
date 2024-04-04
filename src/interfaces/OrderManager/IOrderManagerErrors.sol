@@ -21,5 +21,11 @@ interface IOrderManagerErrors {
      * @param amountInTick The amount available in the tick for the user.
      * @param amountToWithdraw The amount the user tried to withdraw.
      */
-    error OrderManagerInsufficientFunds(int24 tick, address user, uint256 amountInTick, uint256 amountToWithdraw);
+    error OrderManagerInsufficientFunds(int24 tick, address user, uint232 amountInTick, uint232 amountToWithdraw);
+
+    /**
+     * @notice Indicates that the caller is not the usdn protocol.
+     * @param caller The address of the caller.
+     */
+    error OrderManagerCallerIsNotUSDNProtocol(address caller);
 }

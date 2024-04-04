@@ -84,4 +84,17 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
      * @param amountToWithdraw The amount of assets to withdraw.
      */
     function withdrawAssetsFromTick(int24 tick, uint232 amountToWithdraw) external;
+
+    /**
+     * @notice Remove the orders from the current tick, transfer them in the _positionsInTickHash mapping
+     * and return the position size and liquidation price of the position.
+     * @dev Can only be called by the USDN protocol.
+     * @param currentPrice The price at which the liquidation occured.
+     * @param liquidatedTickHash The tick hash of the liquidated tick.
+     * @return longPositionTick_ The liquidation tick of the long position to be created.
+     * @return amount_ The amount of collateral for the position.
+     */
+    function createPositionFromOrdersInTick(uint128 currentPrice, bytes32 liquidatedTickHash)
+        external
+        returns (int24 longPositionTick_, uint256 amount_);
 }

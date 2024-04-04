@@ -45,6 +45,9 @@ contract OrderManager is Ownable, IOrderManager {
 
         // Set allowance to allow the USDN protocol to pull assets from this contract
         _asset.forceApprove(address(usdnProtocol), type(uint256).max);
+
+        // Set the default leverage
+        _ordersLeverage = 2 * 10 ** usdnProtocol.LEVERAGE_DECIMALS();
     }
 
     /* -------------------------------------------------------------------------- */
@@ -150,5 +153,36 @@ contract OrderManager is Ownable, IOrderManager {
         _asset.safeTransfer(msg.sender, amountToWithdraw);
 
         emit UserWithdrewAssetsFromTick(msg.sender, newUserAmount, tick, tickVersion);
+    }
+
+    /// @inheritdoc IOrderManager
+    function createPositionFromOrdersInTick(uint128 currentPrice, bytes32 liquidatedTickHash)
+        external
+        returns (int24 longPositionTick_, uint256 amount_)
+    {
+        // This function can only be called by the USDN protocol
+        if (msg.sender != address(_usdnProtocol)) {
+            revert OrderManagerCallerIsNotUSDNProtocol(msg.sender);
+        }
+
+        OrdersDataInTick storage ordersData = _ordersDataInTick[liquidatedTickHash];
+        amount_ = ordersData.amountOfAssets;
+        if (amount_ == 0) {
+            return (PENDING_ORDERS_TICK, 0);
+        }
+
+        // Calculate the liquidation price relative to the leverage
+        // _ordersLeverage limits are below type(uint128).max, so cast is safe here
+        uint256 liquidationPrice =
+            currentPrice - ((10 ** _usdnProtocol.LEVERAGE_DECIMALS() * currentPrice) / _ordersLeverage);
+
+        // Save the position tick in the orders data
+        // TODO import safecast library? *go cry in a corner*
+        longPositionTick_ = _usdnProtocol.getEffectiveTickForPrice(uint128(liquidationPrice));
+
+        // Update the orders data with the long position information
+        ordersData.longPositionTick = longPositionTick_;
+        ordersData.longPositionTickVersion = _usdnProtocol.getTickVersion(longPositionTick_);
+        ordersData.longPositionIndex = _usdnProtocol.getPositionsInTick(longPositionTick_);
     }
 }
