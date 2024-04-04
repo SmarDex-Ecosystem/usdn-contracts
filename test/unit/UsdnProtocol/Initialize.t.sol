@@ -54,6 +54,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      * @custom:and The protocol's wstETH balance is increased by the deposit amount
      * @custom:and The deployer's USDN balance is increased by the minted amount
      * @custom:and The dead address' USDN balance is increased by the minimum USDN supply
+     * @custom:and The vault balance is equal to the deposit amount
      * @custom:and The `InitiatedDeposit` event is emitted
      * @custom:and The `ValidatedDeposit` event is emitted for the dead address
      * @custom:and The `ValidatedDeposit` event is emitted for the deployer
@@ -77,6 +78,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_DEPOSIT, "protocol wstETH balance");
         assertEq(usdn.balanceOf(address(this)), expectedUsdnMinted, "deployer USDN balance");
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "dead address USDN balance");
+        assertEq(protocol.getBalanceVault(), INITIAL_DEPOSIT, "vault balance");
     }
 
     /**
