@@ -6,8 +6,7 @@ import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
- * @custom:feature The `transferShares` function of `USDN`
- * @custom:background Given a user with 100 tokens
+ * @custom:feature The `_transferShares` function of `USDN`
  */
 contract TestUsdnTransferShares is UsdnTokenFixture {
     function setUp() public override {

@@ -3,14 +3,10 @@ pragma solidity 0.8.20;
 
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
-import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
- * @custom:feature The `burnShares` function of `USDN`
- * @custom:background Given a user with 100e36 shares
- * @custom:and The contract has the `MINTER_ROLE` and `REBASER_ROLE`
- * @custom:and The divisor is MAX_DIVISOR
+ * @custom:feature The `_burnShares` function of `USDN`
  */
 contract TestUsdnBurnShares is UsdnTokenFixture {
     function setUp() public override {
