@@ -121,6 +121,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
 
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore - INITIAL_POSITION, "deployer wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_POSITION, "protocol wstETH balance");
+        assertEq(protocol.getBalanceLong(), INITIAL_POSITION, "protocol long balance");
 
         Position memory pos = protocol.getLongPosition(expectedTick, 0, 0);
         assertEq(pos.user, address(this), "position user");
