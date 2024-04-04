@@ -47,7 +47,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
         uint256 usdnToMint =
             protocol.i_calcMintUsdn(depositAmount, protocol.getBalanceVault(), protocol.getUsdn().totalSupply(), price);
-        uint256 expectedSdexBurnAmount = protocol.i_calcSdexToBurn(usdnToMint);
+        (uint256 expectedSdexBurnAmount,) = protocol.i_calcSdexToBurn(usdnToMint);
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
         address deadAddress = protocol.DEAD_ADDRESS();
 

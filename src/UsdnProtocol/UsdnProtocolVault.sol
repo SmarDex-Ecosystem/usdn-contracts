@@ -49,9 +49,11 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @notice Calculate the amount of sdex to burn when minting USDN tokens
      * @param usdnAmount The amount of usdn to be minted
      * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
+     * @return sdexBurnRatio_ The ratio of SDEX to burn for each minted USDN
      */
-    function _calcSdexToBurn(uint256 usdnAmount) internal view returns (uint256 sdexToBurn_) {
-        sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, _sdexBurnOnDepositRatio, SDEX_BURN_ON_DEPOSIT_DIVISOR);
+    function _calcSdexToBurn(uint256 usdnAmount) internal view returns (uint256 sdexToBurn_, uint32 sdexBurnRatio_) {
+        sdexBurnRatio_ = _sdexBurnOnDepositRatio;
+        sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, sdexBurnRatio_, SDEX_BURN_ON_DEPOSIT_DIVISOR);
     }
 
     /**
