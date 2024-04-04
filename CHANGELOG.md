@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.12.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.11.1...v0.12.0) (2024-04-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* **withdraw:** `initiateWithdrawal` now takes an input amount of USDN shares instead of USDN tokens, and the type is `uint152`. The `VaultPendingAction` type has been replaced by `DepositPendingAction` and `WithdrawalPendingAction`, the `PendingAction` and `LongPendingAction` types have re-ordered fields.
+* **sdex-burn:** A user calling `initiateDeposit` now needs to have enough SDEX tokens and to have approved the spending of his tokens by the USDN protocol. `getUsdnDecimals` has been removed, use `TOKENS_DECIMALS` instead, or the `decimals()` function on the token contract instead.
+* **actions:** PendingAction, VaultPendingAction and LongPendingAction have now a variable to keep the value of the security deposit done in the initialise action
+* **actions:** `getPositionValue` now returns a signed int which is negative in case of bad debt
+
+### Features
+
+* **actions:** security deposit ([#137](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/137)) ([c09d964](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/c09d96427a7e127a7020c3796e21cb629291650d))
+* add minimum long position value ([#167](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/167)) ([6ffb50a](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/6ffb50aab35087c83a2bebd607e5751d5e2bddce))
+* add wusdn and test ([#156](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/156)) ([3ca9024](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/3ca9024339dd901b5ac790944b1c5578431bb6cb))
+* **rebase:** change default values for rebase parameters ([#162](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/162)) ([27a9ccd](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/27a9ccde34715035196375aa53086a3623647b57))
+* **sdex-burn:** depositing assets in the protocol now requires the user to have enough SDEX in his wallet to support the burn fee. ([6d08982](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/6d089823c4e5fd95498d80062dd7977b7fdc3a88))
+* **storage:** update initial target usdn price ([#168](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/168)) ([bd5568b](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/bd5568b1e4286750488efe826cc619248dd2eb43))
+* **usdn:** add functions to transfer, mint, burn shares ([#163](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/163)) ([f9bc31c](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/f9bc31c79ae1f9a6b056ace665441653e1264f40))
+
+
+### Bug Fixes
+
+* **actions:** fix handling of bad debt in case of single position liq ([#160](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/160)) ([d60d99b](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/d60d99b415221ce883600efdd232b747026cb73b))
+* **withdraw:** use USDN shares for withdrawal input and burn ([#173](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/173)) ([9f1879f](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/9f1879f73bb02e9f93f6291ae0dec62d3fe342df))
+
 ## [0.11.1](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.11.0...v0.11.1) (2024-03-25)
 
 
