@@ -169,6 +169,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     uint256 internal _usdnRebaseInterval = 0;
 
+    /// @notice The minimum long position size in dollar (with _priceFeedDecimals)
+    uint256 internal _minLongPosition;
+
     /* -------------------------------------------------------------------------- */
     /*                                    State                                   */
     /* -------------------------------------------------------------------------- */
@@ -292,6 +295,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
         _targetUsdnPrice = uint128(10_087 * 10 ** (_priceFeedDecimals - 4)); // $1.0087
         _usdnRebaseThreshold = uint128(1009 * 10 ** (_priceFeedDecimals - 3)); // $1.009
+        _minLongPosition = 5000 * 10 ** _priceFeedDecimals; // 5000 USD
     }
 
     /* -------------------------------------------------------------------------- */
@@ -435,6 +439,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getUsdnRebaseInterval() external view returns (uint256) {
         return _usdnRebaseInterval;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getMinLongPosition() external view returns (uint256) {
+        return _minLongPosition;
     }
 
     /* -------------------------------------------------------------------------- */

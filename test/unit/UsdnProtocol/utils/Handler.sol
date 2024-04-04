@@ -325,4 +325,18 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_calcWithdrawalAmountMSB(uint152 usdnShares) external pure returns (uint128) {
         return _calcWithdrawalAmountMSB(usdnShares);
     }
+
+    function i_createInitialDeposit(uint128 amount, uint128 price) external {
+        _createInitialDeposit(amount, price);
+    }
+
+    function i_createInitialPosition(
+        uint128 amount,
+        uint128 price,
+        int24 tick,
+        uint128 leverage,
+        uint128 positionTotalExpo
+    ) external {
+        _createInitialPosition(amount, price, tick, leverage, positionTotalExpo);
+    }
 }

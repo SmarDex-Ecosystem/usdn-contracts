@@ -20,7 +20,7 @@ import {
 contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.enablePositionFees = true;
+        params.flags.enablePositionFees = true;
 
         super._setUp(params);
     }
