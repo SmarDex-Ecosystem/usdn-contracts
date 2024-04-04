@@ -30,6 +30,6 @@ contract TestUsdnTransferShares is UsdnTokenFixture {
      */
     function test_RevertWhen_transferSharesToZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
-        usdn.transferShares(address(0), 1e36);
+        usdn.i_transferShares(address(this), address(0), 1e36, 1e18);
     }
 }
