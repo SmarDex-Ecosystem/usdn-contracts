@@ -19,9 +19,9 @@ import {
 contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.enablePositionFees = false;
-        params.enableProtocolFees = false;
-        params.enableFunding = false;
+        params.flags.enablePositionFees = false;
+        params.flags.enableProtocolFees = false;
+        params.flags.enableFunding = false;
         super._setUp(params);
     }
 
@@ -229,6 +229,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // Two other users want to now enter the protocol
         wstETH.mintAndApprove(USER_3, 100_000 ether, address(protocol), type(uint256).max);
         wstETH.mintAndApprove(USER_4, 100_000 ether, address(protocol), type(uint256).max);
+        sdex.mintAndApprove(USER_3, 100_000 ether, address(protocol), type(uint256).max);
+        sdex.mintAndApprove(USER_4, 100_000 ether, address(protocol), type(uint256).max);
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 2, "actions length");
         bytes[] memory previousPriceData = new bytes[](actions.length);
@@ -264,6 +266,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             timestamp: uint40(block.timestamp),
             user: address(this),
             var1: 0, // must be zero because unused
+            securityDepositValue: 2424,
             amount: 42,
             var2: 69,
             var3: 420,
@@ -275,6 +278,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertTrue(vaultAction.action == action.action, "action action");
         assertEq(vaultAction.timestamp, action.timestamp, "action timestamp");
         assertEq(vaultAction.user, action.user, "action user");
+        assertEq(vaultAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
         assertEq(vaultAction.amount, action.amount, "action amount");
         assertEq(vaultAction.assetPrice, action.var2, "action price");
         assertEq(vaultAction.totalExpo, action.var3, "action expo");
@@ -298,6 +302,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             user: address(this),
             var1: 2398,
             amount: 42,
+            securityDepositValue: 2424,
             var2: 69,
             var3: 420,
             var4: 1337,
@@ -309,6 +314,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(longAction.timestamp, action.timestamp, "action timestamp");
         assertEq(longAction.user, action.user, "action user");
         assertEq(longAction.tick, action.var1, "action tick");
+        assertEq(longAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
         assertEq(longAction.closeAmount, action.amount, "action amount");
         assertEq(longAction.closeTotalExpo, action.var2, "action total expo");
         assertEq(longAction.tickVersion, action.var3, "action version");

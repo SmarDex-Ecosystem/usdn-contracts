@@ -22,16 +22,24 @@ contract UsdnHandler is Usdn, Test {
 
     constructor() Usdn(address(0), address(0)) { }
 
-    function approve(address _owner, address _spender, uint256 _value) external {
-        _approve(_owner, _spender, _value);
+    function i_approve(address owner, address spender, uint256 value) external {
+        _approve(owner, spender, value);
     }
 
-    function transfer(address _from, address _to, uint256 _value) external {
-        _transfer(_from, _to, _value);
+    function i_transfer(address from, address to, uint256 value) external {
+        _transfer(from, to, value);
     }
 
-    function burn(address _owner, uint256 _value) external {
-        _burn(_owner, _value);
+    function i_burn(address owner, uint256 value) external {
+        _burn(owner, value);
+    }
+
+    function i_transferShares(address from, address to, uint256 value, uint256 tokenValue) external {
+        _transferShares(from, to, value, tokenValue);
+    }
+
+    function i_burnShares(address owner, uint256 value, uint256 tokenValue) external {
+        _burnShares(owner, value, tokenValue);
     }
 
     /* ------------------ Functions used for invariant testing ------------------ */
@@ -90,7 +98,6 @@ contract UsdnHandler is Usdn, Test {
     }
 
     function transferTest(address to, uint256 value) external {
-        console2.log("bound 'to' actor ID");
         if (balanceOf(msg.sender) == 0 || to == address(0)) {
             return;
         }
@@ -106,5 +113,45 @@ contract UsdnHandler is Usdn, Test {
         _sharesHandle.set(to, toShares + valueShares);
 
         _transfer(msg.sender, to, value);
+    }
+
+    function mintSharesTest(uint256 value) external {
+        if (_totalShares >= type(uint256).max) {
+            return;
+        }
+        console2.log("bound mint shares value");
+        value = bound(value, 1, type(uint256).max - _totalShares);
+        totalSharesSum += value;
+        (, uint256 lastShares) = _sharesHandle.tryGet(msg.sender);
+        _sharesHandle.set(msg.sender, lastShares + value);
+        _updateShares(address(0), msg.sender, value, convertToTokens(value));
+    }
+
+    function burnSharesTest(uint256 value) external {
+        if (sharesOf(msg.sender) == 0) {
+            return;
+        }
+        console2.log("bound burn shares value");
+        value = bound(value, 1, sharesOf(msg.sender));
+
+        totalSharesSum -= value;
+
+        uint256 lastShares = _sharesHandle.get(msg.sender);
+        _sharesHandle.set(msg.sender, lastShares - value);
+        _burnShares(msg.sender, value, convertToTokens(value));
+    }
+
+    function transferSharesTest(address to, uint256 value) external {
+        if (sharesOf(msg.sender) == 0 || to == address(0)) {
+            return;
+        }
+        console2.log("bound transfer shares value");
+        value = bound(value, 1, sharesOf(msg.sender));
+        uint256 lastShares = _sharesHandle.get(msg.sender);
+        _sharesHandle.set(msg.sender, lastShares - value);
+        (, uint256 toShares) = _sharesHandle.tryGet(to);
+        _sharesHandle.set(to, toShares + value);
+
+        _transferShares(msg.sender, to, value, convertToTokens(value));
     }
 }

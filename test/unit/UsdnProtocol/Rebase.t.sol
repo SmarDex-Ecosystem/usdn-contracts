@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { Vm } from "forge-std/Vm.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { DEPLOYER } from "test/utils/Constants.sol";
+import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
 
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -12,17 +12,21 @@ import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProto
 /**
  * @custom:feature Test the rebasing of the USDN token depending on its price
  * @custom:background Given a protocol instance that was initialized with more expo in the long side and rebase enabled
+ * @custom:and A USDN rebase interval of 12 hours
  */
 contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 5 ether;
         params.initialLong = 10 ether;
-        params.enablePositionFees = false;
-        params.enableProtocolFees = false;
-        params.enableFunding = false;
-        params.enableUsdnRebase = true;
+        params.flags.enablePositionFees = false;
+        params.flags.enableProtocolFees = false;
+        params.flags.enableFunding = false;
+        params.flags.enableUsdnRebase = true;
         super._setUp(params);
+
+        vm.prank(ADMIN);
+        protocol.setUsdnRebaseInterval(12 hours);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         usdn.approve(address(protocol), type(uint256).max);
@@ -39,27 +43,22 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @param vaultBalance The balance of the vault
      * @param assetPrice The price of the asset
      * @param targetPrice The target price for the USDN token
-     * @param usdnDecimals The number of decimals for the USDN token
      * @param assetDecimals The number of decimals for the asset token
      */
     function testFuzz_calcRebaseTotalSupply(
         uint128 vaultBalance,
         uint128 assetPrice,
         uint128 targetPrice,
-        uint8 usdnDecimals,
         uint8 assetDecimals
     ) public {
-        usdnDecimals = uint8(bound(usdnDecimals, 6, 18));
         assetDecimals = uint8(bound(assetDecimals, 6, 18));
         // when the balance becomes really small, the error on the final price becomes larger
         vaultBalance = uint128(bound(vaultBalance, 10 ** assetDecimals, type(uint128).max));
         assetPrice = uint128(bound(assetPrice, 0.01 ether, type(uint128).max));
         targetPrice = uint128(bound(targetPrice, 1 ether, 2 ether));
-        uint256 newTotalSupply =
-            protocol.i_calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, usdnDecimals, assetDecimals);
+        uint256 newTotalSupply = protocol.i_calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
         vm.assume(newTotalSupply > 0);
-        uint256 newPrice =
-            protocol.i_calcUsdnPrice(vaultBalance, assetPrice, newTotalSupply, usdnDecimals, assetDecimals);
+        uint256 newPrice = protocol.i_calcUsdnPrice(vaultBalance, assetPrice, newTotalSupply, assetDecimals);
 
         // Here we potentially have a small error, in part due to how the price results from the total supply, which
         // itself results from the division by the divisor. We can't expect the price to be exactly the target price.
@@ -91,11 +90,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         uint256 expectedVaultBalance =
             uint256(protocol.vaultAssetAvailableWithFunding(newPrice, uint128(block.timestamp - 30)));
         uint256 expectedTotalSupply = protocol.i_calcRebaseTotalSupply(
-            expectedVaultBalance,
-            newPrice,
-            protocol.getTargetUsdnPrice(),
-            protocol.getUsdnDecimals(),
-            protocol.getAssetDecimals()
+            expectedVaultBalance, newPrice, protocol.getTargetUsdnPrice(), protocol.getAssetDecimals()
         );
         uint256 expectedDivisor = usdn.totalSupply() * usdn.divisor() / expectedTotalSupply;
 

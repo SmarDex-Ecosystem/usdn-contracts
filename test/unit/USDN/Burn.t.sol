@@ -173,6 +173,6 @@ contract TestUsdnBurn is UsdnTokenFixture {
      */
     function test_RevertWhen_burnFromZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidSender.selector, address(0)));
-        usdn.burn(address(0), 50 ether);
+        usdn.i_burn(address(0), 50 ether);
     }
 }

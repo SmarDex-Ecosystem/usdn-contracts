@@ -85,6 +85,19 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setPositionFeeBps(uint16 newPositionFee) external;
 
     /**
+     * @notice Update the ratio of USDN to SDEX tokens to burn on deposit.
+     * @param newRatio The new ratio.
+     */
+    function setSdexBurnOnDepositRatio(uint32 newRatio) external;
+
+    /**
+     * @notice Set the security deposit value.
+     * @dev The value must be a multiple of SECURITY_DEPOSIT_FACTOR to avoid loosing eth du to rounding errors.
+     * @param securityDepositValue The security deposit value.
+     */
+    function setSecurityDepositValue(uint256 securityDepositValue) external;
+
+    /**
      * @notice Set the minimum amount of fees to be collected before they can be withdrawn
      * @param newFeeThreshold The minimum amount of fees to be collected before they can be withdrawn
      */
@@ -135,4 +148,11 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * When calling `liquidate`, this limit is ignored and the check is always performed.
      */
     function setUsdnRebaseInterval(uint256 newInterval) external;
+
+    /**
+     * @notice Set the minimum long position size in USD
+     * @param newMinLongPosition The new minimum long position, with _priceFeedDecimals
+     * @dev This value is used to prevent users from opening positions that are too small
+     */
+    function setMinLongPosition(uint256 newMinLongPosition) external;
 }

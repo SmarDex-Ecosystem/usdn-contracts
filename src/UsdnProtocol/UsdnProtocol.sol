@@ -25,6 +25,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     /**
      * @notice Constructor.
      * @param usdn The USDN ERC20 contract.
+     * @param sdex The SDEX ERC20 contract.
      * @param asset The asset ERC20 contract (wstETH).
      * @param oracleMiddleware The oracle middleware contract.
      * @param liquidationRewardsManager The liquidation rewards manager contract.
@@ -33,6 +34,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      */
     constructor(
         IUsdn usdn,
+        IERC20Metadata sdex,
         IERC20Metadata asset,
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
@@ -40,7 +42,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         address feeCollector
     )
         Ownable(msg.sender)
-        UsdnProtocolStorage(usdn, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
+        UsdnProtocolStorage(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
     { }
 
     /// @inheritdoc IUsdnProtocol
@@ -82,7 +84,14 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Create long position
         _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, leverage, positionTotalExpo);
 
-        _refundExcessEther();
+        uint256 balance = address(this).balance;
+        if (balance != 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = payable(msg.sender).call{ value: balance }("");
+            if (!success) {
+                revert UsdnProtocolEtherRefundFailed();
+            }
+        }
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -229,6 +238,30 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
+    function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {
+        // If newRatio is greater than 5%
+        if (newRatio > SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
+            revert UsdnProtocolInvalidBurnSdexOnDepositRatio();
+        }
+
+        _sdexBurnOnDepositRatio = newRatio;
+
+        emit BurnSdexOnDepositRatioUpdated(newRatio);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setSecurityDepositValue(uint256 securityDepositValue) external onlyOwner {
+        // we allow to set the security deposit between 10 ** 15 (0.001 ether) and 10 ethers
+        // the value must be a multiple of the SECURITY_DEPOSIT_FACTOR
+        if (securityDepositValue > 10 ether || securityDepositValue % SECURITY_DEPOSIT_FACTOR != 0) {
+            revert UsdnProtocolInvalidSecurityDepositValue();
+        }
+
+        _securityDepositValue = securityDepositValue;
+        emit SecurityDepositValueUpdated(securityDepositValue);
+    }
+
+    /// @inheritdoc IUsdnProtocol
     function setFeeThreshold(uint256 newFeeThreshold) external onlyOwner {
         _feeThreshold = newFeeThreshold;
         emit FeeThresholdUpdated(newFeeThreshold);
@@ -293,6 +326,15 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setUsdnRebaseInterval(uint256 newInterval) external onlyOwner {
         _usdnRebaseInterval = newInterval;
         emit UsdnRebaseIntervalUpdated(newInterval);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setMinLongPosition(uint256 newMinLongPosition) external onlyOwner {
+        if (newMinLongPosition > 50_000 * 10 ** _priceFeedDecimals) {
+            revert UsdnProtocolInvalidMinLongPosition();
+        }
+        _minLongPosition = newMinLongPosition;
+        emit MinLongPositionUpdated(newMinLongPosition);
     }
 
     /**

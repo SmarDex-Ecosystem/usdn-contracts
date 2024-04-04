@@ -1,0 +1,37 @@
+name: Natspec report
+on:
+  pull_request:
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  natspec-smells:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci && forge install
+
+      - name: Report natspec smells findings
+        uses: Blockchain-RA2-Tech/natspec-smells-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: ./
+          update-comment: true

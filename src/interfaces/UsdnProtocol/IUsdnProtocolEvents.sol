@@ -182,6 +182,18 @@ interface IUsdnProtocolEvents {
     event PositionFeeUpdated(uint256 positionFee);
 
     /**
+     * @notice Emitted when the ratio of USDN to SDEX tokens to burn on deposit is updated.
+     * @param newRatio The new ratio.
+     */
+    event BurnSdexOnDepositRatioUpdated(uint256 newRatio);
+
+    /**
+     * @notice Emitted when the deposit value is updated.
+     * @param securityDepositValue The new deposit value.
+     */
+    event SecurityDepositValueUpdated(uint256 securityDepositValue);
+
+    /**
      * @notice Emitted when the oracle middleware is updated.
      * @param newMiddleware The new oracle middleware address.
      */
@@ -301,4 +313,10 @@ interface IUsdnProtocolEvents {
     event ImbalanceLimitsUpdated(
         uint256 newOpenLimitBps, uint256 newDepositLimitBps, uint256 newWithdrawalLimitBps, uint256 newCloseLimitBps
     );
+
+    /**
+     * @notice Emitted when the minimum long position is updated.
+     * @param minLongPosition The new minimum long position.
+     */
+    event MinLongPositionUpdated(uint256 minLongPosition);
 }

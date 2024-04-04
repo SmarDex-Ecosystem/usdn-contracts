@@ -13,8 +13,8 @@ import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfac
 contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.enableProtocolFees = false;
-        params.enableFunding = false;
+        params.flags.enableProtocolFees = false;
+        params.flags.enableFunding = false;
         _setUp(params);
     }
 
@@ -29,7 +29,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
 
         vm.expectEmit(true, false, false, false);
         emit ValidatedOpenPosition(USER_1, 0, 0, 0, 0, 0);
-        (bool success, bool executed) = protocol.i_executePendingAction(previousActionsData);
+        (bool success, bool executed,) = protocol.i_executePendingAction(previousActionsData);
 
         assertTrue(success, "success");
         assertTrue(executed, "executed");
@@ -48,7 +48,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
      * @custom:then The function returns true for `success` and false for `executed`
      */
     function test_executePendingActionNone() public {
-        (bool success, bool executed) = protocol.i_executePendingAction(EMPTY_PREVIOUS_DATA);
+        (bool success, bool executed,) = protocol.i_executePendingAction(EMPTY_PREVIOUS_DATA);
         assertTrue(success, "success");
         assertEq(executed, false, "executed");
     }
@@ -64,7 +64,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
         PreviousActionsData memory previousActionsData = _setUpPendingAction();
         previousActionsData.rawIndices = new uint128[](0);
 
-        (bool success, bool executed) = protocol.i_executePendingAction(previousActionsData);
+        (bool success, bool executed,) = protocol.i_executePendingAction(previousActionsData);
         assertEq(success, false, "success");
         assertEq(executed, false, "executed");
     }
@@ -77,7 +77,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
      */
     function test_executePendingActionEmptyData() public {
         _setUpPendingAction();
-        (bool success, bool executed) = protocol.i_executePendingAction(EMPTY_PREVIOUS_DATA);
+        (bool success, bool executed,) = protocol.i_executePendingAction(EMPTY_PREVIOUS_DATA);
         assertEq(success, false, "success");
         assertEq(executed, false, "executed");
     }
@@ -93,7 +93,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
         PreviousActionsData memory previousActionsData = _setUpPendingAction();
         previousActionsData.rawIndices[0] = 69;
 
-        (bool success, bool executed) = protocol.i_executePendingAction(previousActionsData);
+        (bool success, bool executed,) = protocol.i_executePendingAction(previousActionsData);
         assertEq(success, false, "success");
         assertEq(executed, false, "executed");
     }

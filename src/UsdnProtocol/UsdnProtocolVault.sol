@@ -17,7 +17,6 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
             vaultAssetAvailableWithFunding(currentPrice, timestamp).toUint256(),
             currentPrice,
             _usdn.totalSupply(),
-            _usdnDecimals,
             _assetDecimals
         );
     }
@@ -33,20 +32,26 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param vaultBalance The vault balance
      * @param assetPrice The price of the asset
      * @param usdnTotalSupply The total supply of the USDN token
-     * @param usdnDecimals The number of decimals of the USDN token
      * @param assetDecimals The number of decimals of the underlying asset
      * @return price_ The price of the USDN token
      */
-    function _calcUsdnPrice(
-        uint256 vaultBalance,
-        uint128 assetPrice,
-        uint256 usdnTotalSupply,
-        uint8 usdnDecimals,
-        uint8 assetDecimals
-    ) internal pure returns (uint256 price_) {
+    function _calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
+        internal
+        pure
+        returns (uint256 price_)
+    {
         price_ = FixedPointMathLib.fullMulDiv(
-            vaultBalance, uint256(assetPrice) * 10 ** usdnDecimals, usdnTotalSupply * 10 ** assetDecimals
+            vaultBalance, uint256(assetPrice) * 10 ** TOKENS_DECIMALS, usdnTotalSupply * 10 ** assetDecimals
         );
+    }
+
+    /**
+     * @notice Calculate the amount of sdex to burn when minting USDN tokens
+     * @param usdnAmount The amount of usdn to be minted
+     * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
+     */
+    function _calcSdexToBurn(uint256 usdnAmount) internal view returns (uint256 sdexToBurn_) {
+        sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, _sdexBurnOnDepositRatio, SDEX_BURN_ON_DEPOSIT_DIVISOR);
     }
 
     /**
@@ -54,19 +59,16 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param vaultBalance The balance of the vault
      * @param assetPrice The price of the underlying asset
      * @param targetPrice The target USDN price to reach
-     * @param usdnDecimals The number of decimals of the USDN token
      * @param assetDecimals The number of decimals of the asset
      * @return totalSupply_ The required total supply to achieve `targetPrice`
      */
-    function _calcRebaseTotalSupply(
-        uint256 vaultBalance,
-        uint128 assetPrice,
-        uint128 targetPrice,
-        uint8 usdnDecimals,
-        uint8 assetDecimals
-    ) internal pure returns (uint256 totalSupply_) {
+    function _calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
+        internal
+        pure
+        returns (uint256 totalSupply_)
+    {
         totalSupply_ = FixedPointMathLib.fullMulDiv(
-            vaultBalance, uint256(assetPrice) * 10 ** usdnDecimals, uint256(targetPrice) * 10 ** assetDecimals
+            vaultBalance, uint256(assetPrice) * 10 ** TOKENS_DECIMALS, uint256(targetPrice) * 10 ** assetDecimals
         );
     }
 
@@ -89,15 +91,13 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
             return false;
         }
         uint256 balanceVault = _balanceVault;
-        uint8 usdnDecimals = _usdnDecimals;
         uint8 assetDecimals = _assetDecimals;
         uint256 usdnTotalSupply = usdn.totalSupply();
-        uint256 uPrice = _calcUsdnPrice(balanceVault, assetPrice, usdnTotalSupply, usdnDecimals, assetDecimals);
+        uint256 uPrice = _calcUsdnPrice(balanceVault, assetPrice, usdnTotalSupply, assetDecimals);
         if (uPrice <= _usdnRebaseThreshold) {
             return false;
         }
-        uint256 targetTotalSupply =
-            _calcRebaseTotalSupply(balanceVault, assetPrice, _targetUsdnPrice, usdnDecimals, assetDecimals);
+        uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, _targetUsdnPrice, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
         usdn.rebase(newDivisor);
         rebased_ = true;
@@ -122,8 +122,9 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     {
         if (vaultBalance == 0) {
             // initialization, we consider the USDN price to be 1 USD
-            return
-                FixedPointMathLib.fullMulDiv(amount, price, 10 ** (_assetDecimals + _priceFeedDecimals - _usdnDecimals));
+            return FixedPointMathLib.fullMulDiv(
+                amount, price, 10 ** (_assetDecimals + _priceFeedDecimals - TOKENS_DECIMALS)
+            );
         }
         toMint_ = FixedPointMathLib.fullMulDiv(amount, usdnTotalSupply, vaultBalance);
     }
