@@ -8,7 +8,8 @@ import { ADMIN } from "test/utils/Constants.sol";
 
 import {
     PendingAction,
-    VaultPendingAction,
+    DepositPendingAction,
+    WithdrawalPendingAction,
     LongPendingAction,
     ProtocolAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -214,7 +215,8 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 depositAmount = 1 ether;
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, depositAmount, 2000 ether);
 
-        VaultPendingAction memory action = protocol.i_toVaultPendingAction(protocol.getUserPendingAction(address(this)));
+        DepositPendingAction memory action =
+            protocol.i_toDepositPendingAction(protocol.getUserPendingAction(address(this)));
 
         uint256 priceWithoutFees =
             2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
@@ -245,7 +247,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         _waitDelay();
 
         PendingAction memory action = protocol.getUserPendingAction(address(this));
-        VaultPendingAction memory deposit = protocol.i_toVaultPendingAction(action);
+        DepositPendingAction memory deposit = protocol.i_toDepositPendingAction(action);
 
         // Check stored position asset price
         uint256 expectedBalanceB = protocol.i_calcMintUsdn(
@@ -300,7 +302,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.initiateWithdrawal(uint128(mintedUsdn), currentPrice, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         PendingAction memory action = protocol.getUserPendingAction(address(this));
-        VaultPendingAction memory withdraw = protocol.i_toVaultPendingAction(action);
+        WithdrawalPendingAction memory withdraw = protocol.i_toWithdrawalPendingAction(action);
 
         // Check stored position asset price
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
