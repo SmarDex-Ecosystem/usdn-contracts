@@ -24,13 +24,9 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     uint128 public constant INITIAL_PRICE = 3000 ether;
 
     function setUp() public {
-        vm.warp(DEFAULT_PARAMS.initialTimestamp);
+        super._setUp(DEFAULT_PARAMS);
+        vm.startPrank(DEPLOYER);
         usdn = new Usdn(address(0), address(0));
-        wstETH = new WstETH();
-        sdex = new Sdex();
-        oracleMiddleware = new MockOracleMiddleware();
-        chainlinkGasPriceFeed = new MockChainlinkOnChain();
-        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
 
         protocol = new UsdnProtocolHandler(
             usdn,
@@ -44,7 +40,9 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 
-        wstETH.approve(address(protocol), type(uint256).max);
+        protocol.transferOwnership(address(this));
+        vm.stopPrank();
+        wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
     }
 
     /**
@@ -227,13 +225,12 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Initialize while some USDN that was minted previously
-     * @custom:given The test contract has the minter role for USDN and some USDN was minted
+     * @custom:given Some USDN was minted before initialization
      * @custom:when The deployer calls the `initialize` function
      * @custom:then The transaction reverts with the error `UsdnProtocolInvalidUsdn`
      */
     function test_RevertWhen_initializeUsdnSupply() public {
-        usdn.grantRole(usdn.MINTER_ROLE(), address(this));
-
+        vm.prank(address(protocol));
         usdn.mint(address(this), 100 ether);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidUsdn.selector, address(usdn)));
