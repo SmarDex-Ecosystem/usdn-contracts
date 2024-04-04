@@ -3,10 +3,6 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
-import { WstETH } from "test/utils/WstEth.sol";
-import { Sdex } from "test/utils/Sdex.sol";
-import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
-import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 
 import { Usdn } from "src/Usdn.sol";
