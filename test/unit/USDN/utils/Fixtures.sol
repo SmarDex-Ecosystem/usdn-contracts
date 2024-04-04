@@ -17,11 +17,6 @@ contract UsdnTokenFixture is BaseFixture, IEvents, IUsdnEvents, IUsdnErrors {
     UsdnHandler public usdn;
 
     function setUp() public virtual {
-        address[] memory _actors = new address[](4);
-        _actors[0] = USER_1;
-        _actors[1] = USER_2;
-        _actors[2] = USER_3;
-        _actors[3] = USER_4;
         usdn = new UsdnHandler();
     }
 
