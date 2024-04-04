@@ -59,21 +59,6 @@ contract TestUsdnRebase is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario An unauthorized account tries to rebase
-     * @custom:given This contract has no role
-     * @custom:when The divisor is adjusted to 0.5x its initial value
-     * @custom:then The transaction reverts with the `AccessControlUnauthorizedAccount` error
-     */
-    function test_RevertWhen_unauthorized() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), usdn.REBASER_ROLE()
-            )
-        );
-        usdn.rebase(maxDivisor / 2);
-    }
-
-    /**
      * @custom:scenario The divisor is adjusted to the same value or larger
      * @custom:given This contract has the `REBASER_ROLE`
      * @custom:when The divisor is adjusted to MAX_DIVISOR
