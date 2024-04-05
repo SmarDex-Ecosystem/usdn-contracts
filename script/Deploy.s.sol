@@ -196,7 +196,7 @@ contract Deploy is Script {
     }
 
     /**
-     * @notice Deploy the USDN Protocol
+     * @notice Initialize the USDN Protocol
      * @param isProdEnv env check
      * @param UsdnProtocol_ the USDN protocol
      * @param WstEthOracleMiddleware_ the WstETH oracle middleware
