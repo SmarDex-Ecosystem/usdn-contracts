@@ -5,10 +5,10 @@ import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
- * @custom:feature The `transferShares` function of `USDN`
+ * @custom:feature The `burnShares` function of `USDN`
  * @custom:background Given a user with 100 tokens
  */
-contract TestUsdnTransferShares is UsdnTokenFixture {
+contract TestUsdnBurnShares is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));
@@ -17,18 +17,18 @@ contract TestUsdnTransferShares is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Transfer shares call _transferShares with correct arguments
-     * @custom:when 100 shares are transfer from a user to the contract
+     * @custom:scenario Burn shares call _burnShares with correct arguments
+     * @custom:when 100 shares are burn by a user
      * @custom:then The `Transfer` event should be emitted with the sender address as the sender,
-     * the contract address as the recipient, and an amount corresponding to the value calculated by the
+     * 0 address as the recipient, and an amount corresponding to the value calculated by the
      * `usdn.convertToTokens` function
      */
-    function test_transferSharesCorrectArguments() public {
+    function test_burnSharesCorrectArguments() public {
         uint256 tokensExpected = usdn.convertToTokens(100 ether);
         address sender = USER_1;
         vm.expectEmit(address(usdn));
-        emit Transfer(sender, address(this), tokensExpected); // expected event
+        emit Transfer(sender, address(0), tokensExpected); // expected event
         vm.prank(sender);
-        usdn.transferShares(address(this), 100 ether);
+        usdn.burnShares(100 ether);
     }
 }
