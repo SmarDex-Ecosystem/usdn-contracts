@@ -7,12 +7,12 @@ import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
- * @custom:feature The `burnSharesFrom` function of `USDN`
+ * @custom:feature The `TestUsdnBurnSharesFrom` function of `USDN`
  * @custom:background Given a user with 100e36 shares
  * @custom:and The contract has the `MINTER_ROLE` and `REBASER_ROLE`
  * @custom:and The divisor is MAX_DIVISOR
  */
-contract TestUsdnBurnShares is UsdnTokenFixture {
+contract TestUsdnBurnSharesFrom is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
         usdn.grantRole(usdn.MINTER_ROLE(), address(this));

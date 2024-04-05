@@ -6,7 +6,7 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
- * @custom:feature The role functions of the usdn
+ * @custom:feature The privileged functions of USDN
  * @custom:background Given a usdn instance that was initialized with default params
  */
 contract TestUsdnRole is UsdnTokenFixture {
@@ -15,12 +15,12 @@ contract TestUsdnRole is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Call all role functions with wallet dose not have the right role.
+     * @custom:scenario Call all privileged functions with a wallet which does not have the required role.
      * @custom:given The initial usdn state.
-     * @custom:when wallet who not have the right role call the role functions.
-     * @custom:then Each functions should revert with the error correspondign to the role.
+     * @custom:when A user without the required role calls all privileged functions.
+     * @custom:then Each functions should revert with the error corresponding to the role.
      */
-    function test_RevertWhen_walletNotHaveRoleCallRoleFunctions() external {
+    function test_RevertWhen_unauthorized() external {
         bytes memory minterUnauthorizedError = abi.encodeWithSelector(
             IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), usdn.MINTER_ROLE()
         );
