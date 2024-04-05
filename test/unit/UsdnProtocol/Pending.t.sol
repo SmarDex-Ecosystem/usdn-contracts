@@ -6,7 +6,8 @@ import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
 
 import {
     PendingAction,
-    VaultPendingAction,
+    DepositPendingAction,
+    WithdrawalPendingAction,
     LongPendingAction,
     ProtocolAction,
     PreviousActionsData
@@ -255,18 +256,18 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Convert an untyped pending action into a vault pending action
+     * @custom:scenario Convert an untyped pending action into a deposit pending action
      * @custom:given An untyped `PendingAction`
-     * @custom:when The action is converted to a `VaultPendingAction` and back into a `PendingAction`
+     * @custom:when The action is converted to a `DepositPendingAction` and back into a `PendingAction`
      * @custom:then The original and the converted `PendingAction` are equal
      */
-    function test_internalConvertVaultPendingAction() public {
+    function test_internalConvertDepositPendingAction() public {
         PendingAction memory action = PendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
             user: address(this),
-            var1: 0, // must be zero because unused
             securityDepositValue: 2424,
+            var1: 0, // must be zero because unused
             amount: 42,
             var2: 69,
             var3: 420,
@@ -274,19 +275,55 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             var5: 9000,
             var6: 23
         });
-        VaultPendingAction memory vaultAction = protocol.i_toVaultPendingAction(action);
-        assertTrue(vaultAction.action == action.action, "action action");
-        assertEq(vaultAction.timestamp, action.timestamp, "action timestamp");
-        assertEq(vaultAction.user, action.user, "action user");
-        assertEq(vaultAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
-        assertEq(vaultAction.amount, action.amount, "action amount");
-        assertEq(vaultAction.assetPrice, action.var2, "action price");
-        assertEq(vaultAction.totalExpo, action.var3, "action expo");
-        assertEq(vaultAction.balanceVault, action.var4, "action balance vault");
-        assertEq(vaultAction.balanceLong, action.var5, "action balance long");
-        assertEq(vaultAction.usdnTotalSupply, action.var6, "action total supply");
-        PendingAction memory result = protocol.i_convertVaultPendingAction(vaultAction);
-        _assertActionsEqual(action, result, "vault pending action conversion");
+        DepositPendingAction memory depositAction = protocol.i_toDepositPendingAction(action);
+        assertTrue(depositAction.action == action.action, "action action");
+        assertEq(depositAction.timestamp, action.timestamp, "action timestamp");
+        assertEq(depositAction.user, action.user, "action user");
+        assertEq(depositAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
+        assertEq(depositAction.amount, action.amount, "action amount");
+        assertEq(depositAction.assetPrice, action.var2, "action price");
+        assertEq(depositAction.totalExpo, action.var3, "action expo");
+        assertEq(depositAction.balanceVault, action.var4, "action balance vault");
+        assertEq(depositAction.balanceLong, action.var5, "action balance long");
+        assertEq(depositAction.usdnTotalSupply, action.var6, "action total supply");
+        PendingAction memory result = protocol.i_convertDepositPendingAction(depositAction);
+        _assertActionsEqual(action, result, "deposit pending action conversion");
+    }
+
+    /**
+     * @custom:scenario Convert an untyped pending action into a withdrawal pending action
+     * @custom:given An untyped `PendingAction`
+     * @custom:when The action is converted to a `WithdrawalPendingAction` and back into a `PendingAction`
+     * @custom:then The original and the converted `PendingAction` are equal
+     */
+    function test_internalConvertWithdrawalPendingAction() public {
+        PendingAction memory action = PendingAction({
+            action: ProtocolAction.ValidateWithdrawal,
+            timestamp: uint40(block.timestamp),
+            user: address(this),
+            securityDepositValue: 2424,
+            var1: 125,
+            amount: 42,
+            var2: 69,
+            var3: 420,
+            var4: 1337,
+            var5: 9000,
+            var6: 23
+        });
+        WithdrawalPendingAction memory withdrawalAction = protocol.i_toWithdrawalPendingAction(action);
+        assertTrue(withdrawalAction.action == action.action, "action action");
+        assertEq(withdrawalAction.timestamp, action.timestamp, "action timestamp");
+        assertEq(withdrawalAction.user, action.user, "action user");
+        assertEq(withdrawalAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
+        assertEq(int24(withdrawalAction.sharesLSB), action.var1, "action shares LSB");
+        assertEq(withdrawalAction.sharesMSB, action.amount, "action shares MSB");
+        assertEq(withdrawalAction.assetPrice, action.var2, "action price");
+        assertEq(withdrawalAction.totalExpo, action.var3, "action expo");
+        assertEq(withdrawalAction.balanceVault, action.var4, "action balance vault");
+        assertEq(withdrawalAction.balanceLong, action.var5, "action balance long");
+        assertEq(withdrawalAction.usdnTotalShares, action.var6, "action total supply");
+        PendingAction memory result = protocol.i_convertWithdrawalPendingAction(withdrawalAction);
+        _assertActionsEqual(action, result, "withdrawal pending action conversion");
     }
 
     /**
