@@ -16,7 +16,6 @@ contract TestUsdnRole is UsdnTokenFixture {
 
     /**
      * @custom:scenario Call all privileged functions with a wallet which does not have the required role.
-     * @custom:given The initial usdn state.
      * @custom:when A user without the required role calls all privileged functions.
      * @custom:then Each functions should revert with the error corresponding to the role.
      */
