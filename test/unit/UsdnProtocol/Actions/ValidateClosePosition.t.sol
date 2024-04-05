@@ -38,11 +38,13 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         super._setUp(params);
 
         (tick, tickVersion, index) = setUpUserPositionInLong(
-            address(this),
-            ProtocolAction.ValidateOpenPosition,
-            positionAmount,
-            params.initialPrice - (params.initialPrice / 5),
-            params.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                positionAmount,
+                params.initialPrice - (params.initialPrice / 5),
+                params.initialPrice
+            )
         );
     }
 
@@ -59,11 +61,13 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     function test_RevertsWhen_validateClosePositionWithTheWrongPendingAction() external {
         // Setup an initiate action to have a pending validate action for this user
         setUpUserPositionInLong(
-            address(this),
-            ProtocolAction.InitiateOpenPosition,
-            positionAmount,
-            params.initialPrice - (params.initialPrice / 5),
-            params.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.InitiateOpenPosition,
+                positionAmount,
+                params.initialPrice - (params.initialPrice / 5),
+                params.initialPrice
+            )
         );
 
         bytes memory priceData = abi.encode(params.initialPrice);
@@ -112,11 +116,13 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
         // Initiate an open position action for another user
         setUpUserPositionInLong(
-            USER_1,
-            ProtocolAction.InitiateOpenPosition,
-            positionAmount,
-            params.initialPrice - (params.initialPrice / 5),
-            params.initialPrice
+            OpenParams(
+                USER_1,
+                ProtocolAction.InitiateOpenPosition,
+                positionAmount,
+                params.initialPrice - (params.initialPrice / 5),
+                params.initialPrice
+            )
         );
 
         protocol.initiateClosePosition(

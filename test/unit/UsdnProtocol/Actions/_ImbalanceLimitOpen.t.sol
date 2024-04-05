@@ -74,7 +74,13 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      */
     function test_RevertWith_checkImbalanceLimitOpenZeroVaultExpo() public {
         setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                0.1 ether,
+                params.initialPrice / 2,
+                params.initialPrice
+            )
         );
 
         // new price below any position but only one will be liquidated

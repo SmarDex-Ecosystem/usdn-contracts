@@ -56,7 +56,13 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      */
     function test_getMinLiquidationPrice_multiplierGtOne() public {
         setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 500 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                500 ether,
+                params.initialPrice / 2,
+                params.initialPrice
+            )
         );
         skip(1 days);
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
@@ -241,7 +247,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether
+            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
         );
 
         totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);

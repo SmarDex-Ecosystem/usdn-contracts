@@ -95,7 +95,13 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      */
     function test_updateEma_posFunding() public {
         setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 200 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                200 ether,
+                params.initialPrice / 2,
+                params.initialPrice
+            )
         );
 
         int256 lastFunding = protocol.getLastFunding();
@@ -158,7 +164,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_funding_NegLong_ZeroVault() public {
         skip(1 hours);
         uint128 price = params.initialPrice;
-        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1000 ether, price * 90 / 100, price);
+        setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.ValidateOpenPosition, 1000 ether, price * 90 / 100, price)
+        );
 
         skip(1 hours);
         protocol.liquidate(abi.encode(price / 100), 10);
@@ -185,7 +193,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_funding_PosLong_ZeroVault() public {
         skip(1 hours);
         uint128 price = params.initialPrice;
-        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1000 ether, price * 90 / 100, price);
+        setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.ValidateOpenPosition, 1000 ether, price * 90 / 100, price)
+        );
 
         skip(1 hours);
         protocol.liquidate(abi.encode(price * 100), 10);
@@ -212,8 +222,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         skip(1 hours);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
-
-        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, price * 90 / 100, price);
+        setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, price * 90 / 100, price)
+        );
         skip(30);
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp));
@@ -288,8 +299,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         skip(1 hours);
         uint128 price = DEFAULT_PARAMS.initialPrice;
         bytes memory priceData = abi.encode(price);
-
-        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, price * 90 / 100, price);
+        setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, price * 90 / 100, price)
+        );
         skip(30);
 
         (int256 fund,) = protocol.funding(uint128(block.timestamp));

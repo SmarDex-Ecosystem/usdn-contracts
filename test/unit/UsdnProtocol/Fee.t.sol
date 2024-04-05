@@ -110,12 +110,15 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
             address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
         skip(4 days);
+
         setUpUserPositionInLong(
-            address(this),
-            ProtocolAction.ValidateOpenPosition,
-            5000 ether,
-            DEFAULT_PARAMS.initialPrice / 2,
-            DEFAULT_PARAMS.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                5000 ether,
+                DEFAULT_PARAMS.initialPrice / 2,
+                DEFAULT_PARAMS.initialPrice
+            )
         );
         skip(8 days);
         assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");

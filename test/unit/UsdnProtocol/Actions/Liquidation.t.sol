@@ -34,8 +34,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price)
+        );
 
         // TODO remove when the MockOracleMiddleware is fixed
         skip(31 minutes);
@@ -63,8 +64,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price)
+        );
 
         // Initiates the deposit for the other user
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, price);
@@ -92,8 +94,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price)
+        );
 
         // Initiate and validate the deposit for the other user
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, price);
@@ -129,8 +132,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price)
+        );
 
         // Initiate and validate the deposit, then initiate the withdrawal for the other user
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 1 ether, price);
@@ -162,8 +166,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price)
+        );
 
         // TODO remove when the MockOracleMiddleware is fixed
         skip(31 minutes);
@@ -194,13 +199,16 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price)
+        );
 
         // Initiates the position for the other user
         price -= 200 ether;
         desiredLiqPrice -= 200 ether;
-        setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, price);
+        setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, price)
+        );
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
@@ -225,13 +233,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) = setUpUserPositionInLong(
+            OpenParams(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price)
+        );
 
         // Initiates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
-        (int24 tickToClose, uint256 tickVersionToClose, uint256 indexToClose) =
-            setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, price);
+        (int24 tickToClose, uint256 tickVersionToClose, uint256 indexToClose) = setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, price)
+        );
 
         // TODO remove when the MockOracleMiddleware is fixed
         skip(31 minutes);
@@ -269,12 +279,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) = setUpUserPositionInLong(
+            OpenParams(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price)
+        );
 
         // Initiates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
-        setUpUserPositionInLong(address(this), ProtocolAction.InitiateClosePosition, 1 ether, desiredLiqPrice, price);
+        setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.InitiateClosePosition, 1 ether, desiredLiqPrice, price)
+        );
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tickToLiquidate);
@@ -299,7 +312,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function test_nothingHappensIfNoTicksCanBeLiquidated() public {
         bytes memory priceData = abi.encode(2000 ether);
 
-        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, 2000 ether);
+        setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, 2000 ether)
+        );
 
         priceData = abi.encode(1950 ether);
 
@@ -345,7 +360,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Setup a long position from another user
         (int24 tick,,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, price);
+            setUpUserPositionInLong(OpenParams(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, price));
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
@@ -400,7 +415,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Setup a long position from another user
         (int24 tick,,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, price);
+            setUpUserPositionInLong(OpenParams(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, price));
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);

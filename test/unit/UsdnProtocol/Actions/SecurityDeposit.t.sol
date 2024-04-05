@@ -90,7 +90,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      */
     function test_securityDeposit_closePosition() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                1 ether,
+                params.initialPrice / 2,
+                params.initialPrice
+            )
         );
 
         uint256 balanceSenderBefore = address(this).balance;
@@ -146,7 +152,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
         setUpUserPositionInLong(
-            USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            )
         );
         skip(protocol.getValidationDeadline() + 1);
 
@@ -246,7 +254,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_secDec_lt_closePosition() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                1 ether,
+                params.initialPrice / 2,
+                params.initialPrice
+            )
         );
 
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
@@ -318,7 +332,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      */
     function test_securityDeposit_gt_closePosition() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                1 ether,
+                params.initialPrice / 2,
+                params.initialPrice
+            )
         );
         uint256 balanceSenderBefore = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
@@ -615,10 +635,18 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 balanceUser1Before = USER_1.balance;
 
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                1 ether,
+                params.initialPrice / 2,
+                params.initialPrice
+            )
         );
         (int24 tick1, uint256 tickVersion1, uint256 index1) = setUpUserPositionInLong(
-            USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            )
         );
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
@@ -662,10 +690,18 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 balanceProtocolBefore = address(protocol).balance;
 
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                1 ether,
+                params.initialPrice / 2,
+                params.initialPrice
+            )
         );
         (int24 tick1, uint256 tickVersion1, uint256 index1) = setUpUserPositionInLong(
-            USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            )
         );
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(

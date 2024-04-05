@@ -78,9 +78,15 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function _setupSparsePendingActionsQueue() internal {
         // Setup 3 pending actions
-        setUpUserPositionInLong(USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
-        setUpUserPositionInLong(USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
-        setUpUserPositionInLong(USER_3, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
+        setUpUserPositionInLong(
+            OpenParams(USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether)
+        );
+        setUpUserPositionInLong(
+            OpenParams(USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether)
+        );
+        setUpUserPositionInLong(
+            OpenParams(USER_3, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether)
+        );
 
         // Simulate the second item in the queue being empty (sets it to zero values)
         protocol.i_removePendingAction(1, USER_2);
@@ -162,7 +168,9 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_getActionablePendingActionSameUser() public {
         // initiate long
-        setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
+        setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether)
+        );
         // the pending action is actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
@@ -186,8 +194,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         uint128 price1 = 2000 ether;
         uint128 price2 = 2100 ether;
         // Setup 2 pending actions
-        setUpUserPositionInLong(USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, price1);
-        setUpUserPositionInLong(USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, price2);
+        setUpUserPositionInLong(OpenParams(USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, price1));
+        setUpUserPositionInLong(OpenParams(USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, price2));
 
         // Wait
         skip(protocol.getValidationDeadline() + 1);

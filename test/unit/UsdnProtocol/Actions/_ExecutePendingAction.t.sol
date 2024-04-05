@@ -104,7 +104,9 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
      */
     function _setUpPendingAction() internal returns (PreviousActionsData memory previousActionsData_) {
         setUpUserPositionInLong(
-            USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            )
         );
         // make actionable
         skip(protocol.getValidationDeadline() + 1);
