@@ -134,7 +134,7 @@ contract TestOrderManagerFulfillOrdersInTick is UsdnProtocolBaseFixture, IOrderM
 
         vm.prank(address(protocol));
         vm.expectEmit();
-        emit Approval(address(orderManager), address(protocol), type(uint256).max - _orderAmount - 1);
+        emit Approval(address(orderManager), address(protocol), type(uint256).max);
         orderManager.fulfillOrdersInTick(_orderPrice, _orderTickHash);
 
         assertEq(
