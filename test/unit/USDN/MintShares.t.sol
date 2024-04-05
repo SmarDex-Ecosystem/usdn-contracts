@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
+import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
 /**
@@ -24,5 +25,21 @@ contract TestUsdnMintShares is UsdnTokenFixture {
     function test_RevertWhen_mintSharesToZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
         usdn.mintShares(address(0), 100);
+    }
+
+    /**
+     * @custom:scenario Minting shares correctly converts shares into tokens
+     * @custom:when 100 shares are minted for a user
+     * @custom:then The `Transfer` event should be emitted with the zero address as the sender, the user as the
+     * recipient, and an amount corresponding to the value calculated by the `usdn.convertToTokens` function
+     * @custom:and The user's token balance should match the value calculated by the `usdn.convertToTokens` function
+     */
+    function test_mintSharesConversion() public {
+        uint256 tokensExpected = usdn.convertToTokens(100 ether * usdn.MAX_DIVISOR());
+        vm.expectEmit(address(usdn));
+        emit Transfer(address(0), USER_1, tokensExpected); // expected event
+        usdn.mintShares(USER_1, 100 ether * usdn.MAX_DIVISOR());
+
+        assertEq(usdn.balanceOf(USER_1), tokensExpected, "balance of user");
     }
 }
