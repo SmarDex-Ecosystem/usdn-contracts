@@ -16,6 +16,15 @@ import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEth
 import { MockLiquidationRewardsManager } from "src/OracleMiddleware/mock/MockLiquidationRewardsManager.sol";
 
 contract Deploy is Script {
+    /**
+     * @notice deploy the USDN ecosystem
+     * @return WstETH_ The WstETH token
+     * @return Sdex_ The SDEX token
+     * @return WstEthOracleMiddleware_ The WstETH oracle middleware
+     * @return LiquidationRewardsManager_ The liquidation rewards manager
+     * @return Usdn_ The USDN token
+     * @return UsdnProtocol_ The USDN protocol
+     */
     function run()
         external
         returns (
@@ -64,6 +73,13 @@ contract Deploy is Script {
         vm.stopBroadcast();
     }
 
+    /**
+     * @notice Deploy the WstETH oracle middleware if necessary
+     * @dev Will return the already deployed one if an address is in the env variables
+     * @param isProdEnv env check
+     * @param wstETHAddress the addres of the WstETH token
+     * @return WstEthOracleMiddleware_ the deployed contract
+     */
     function _deployWstEthOracleMiddleware(bool isProdEnv, address wstETHAddress)
         internal
         returns (WstEthOracleMiddleware WstEthOracleMiddleware_)
@@ -95,6 +111,13 @@ contract Deploy is Script {
         }
     }
 
+    /**
+     * @notice Deploy the liquidation rewards manager if necessary
+     * @dev Will return the already deployed one if an address is in the env variables
+     * @param isProdEnv env check
+     * @param wstETHAddress the addres of the WstETH token
+     * @return LiquidationRewardsManager_ the deployed contract
+     */
     function _deployLiquidationRewardsManager(bool isProdEnv, address wstETHAddress)
         internal
         returns (LiquidationRewardsManager LiquidationRewardsManager_)
@@ -120,6 +143,11 @@ contract Deploy is Script {
         }
     }
 
+    /**
+     * @notice Deploy the USDN token
+     * @dev Will return the already deployed one if an address is in the env variables
+     * @return Usdn_ the deployed contract
+     */
     function _deployUsdn() internal returns (Usdn Usdn_) {
         address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
         if (usdnAddress != address(0)) {
@@ -130,6 +158,11 @@ contract Deploy is Script {
         }
     }
 
+    /**
+     * @notice Deploy the SDEX token
+     * @dev Will return the already deployed one if an address is in the env variables
+     * @return Sdex_ the deployed contract
+     */
     function _deploySdex() internal returns (Sdex Sdex_) {
         address sdexAddress = payable(vm.envOr("SDEX_ADDRESS", address(0)));
         if (sdexAddress != address(0)) {
@@ -140,6 +173,13 @@ contract Deploy is Script {
         }
     }
 
+    /**
+     * @notice Deploy the WstETH token
+     * @dev Will return the already deployed one if an address is in the env variables
+     * @param depositAmount the amount to deposit during the protocol initialization
+     * @param longAmount the size of the long to open during the protocol initialization
+     * @return WstETH_ the deployed contract
+     */
     function _deployWstETH(uint256 depositAmount, uint256 longAmount) internal returns (WstETH WstETH_) {
         address payable wstETHAddress = payable(vm.envOr("WSTETH_ADDRESS", address(0)));
         if (wstETHAddress != address(0)) {
@@ -155,6 +195,14 @@ contract Deploy is Script {
         }
     }
 
+    /**
+     * @notice Deploy the USDN Protocol
+     * @param isProdEnv env check
+     * @param UsdnProtocol_ the USDN protocol
+     * @param WstEthOracleMiddleware_ the WstETH oracle middleware
+     * @param depositAmount the amount to deposit during the protocol initialization
+     * @param longAmount the size of the long to open during the protocol initialization
+     */
     function _initializeUsdnProtocol(
         bool isProdEnv,
         UsdnProtocol UsdnProtocol_,
