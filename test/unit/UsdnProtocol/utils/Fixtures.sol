@@ -153,6 +153,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
+        protocol.setOrderManager(orderManager);
 
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);

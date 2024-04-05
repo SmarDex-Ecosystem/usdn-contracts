@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -12,6 +14,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 
 abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
+    using SafeERC20 for IERC20Metadata;
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -337,6 +340,50 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // cast to int256 and shift into negative
         int24 compactTick = (int256(index) + int256(type(int24).min)).toInt24();
         tick_ = compactTick * _tickSpacing;
+    }
+
+    /**
+     * TODO We should calculate the amount to take from the orders instead of taking everything
+     * @notice Check if there are orders in the liquidated tick and create a position using the amount available if so.
+     * @param currentPrice The current price
+     * @param liquidatedTickHash The tick hash of the liquidated tick
+     * @param liquidatedTickTotalExpo The total expo of te liquidated tick
+     */
+    function _saveOrderManagerPositionInTick(
+        uint128 currentPrice,
+        bytes32 liquidatedTickHash,
+        uint256 liquidatedTickTotalExpo
+    ) internal {
+        // If the order manager is not set, return;
+        if (address(_orderManager) == address(0)) {
+            return;
+        }
+
+        // get the amount available
+        (int24 liquidationTick, uint256 amountAvailable) =
+            _orderManager.fulfillOrdersInTick(currentPrice, liquidatedTickHash);
+
+        // If there are no orders for this tick, return
+        if (amountAvailable == 0) {
+            return;
+        }
+
+        // TODO calculate the amount to take
+        uint128 amountTaken = amountAvailable.toUint128();
+
+        // Calculate the effective liquidation price for the tick
+        uint128 liqPrice = getEffectivePriceForTick(liquidationTick);
+
+        uint128 posTotalExpo = _calculatePositionTotalExpo(amountTaken, currentPrice, liqPrice);
+        Position memory pos = Position({
+            timestamp: uint40(block.timestamp),
+            user: address(_orderManager),
+            totalExpo: posTotalExpo,
+            amount: amountTaken
+        });
+
+        _saveNewPosition(liquidationTick, pos);
+        _asset.safeTransferFrom(address(_orderManager), address(this), amountTaken);
     }
 
     /**

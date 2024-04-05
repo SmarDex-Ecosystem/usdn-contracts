@@ -94,7 +94,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
      * @return longPositionTick_ The liquidation tick of the long position to be created.
      * @return amount_ The amount of collateral for the position.
      */
-    function createPositionFromOrdersInTick(uint128 currentPrice, bytes32 liquidatedTickHash)
+    function fulfillOrdersInTick(uint128 currentPrice, bytes32 liquidatedTickHash)
         external
         returns (int24 longPositionTick_, uint256 amount_);
 }

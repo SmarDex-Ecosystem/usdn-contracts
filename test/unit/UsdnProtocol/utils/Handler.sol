@@ -256,6 +256,14 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _tickToBitmapIndex(tick);
     }
 
+    function i_saveOrderManagerPositionInTick(
+        uint128 currentPrice,
+        bytes32 liquidatedTickHash,
+        uint256 liquidatedTickTotalExpo
+    ) external {
+        return _saveOrderManagerPositionInTick(currentPrice, liquidatedTickHash, liquidatedTickTotalExpo);
+    }
+
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
         return _tickBitmap.findLastSet(_tickToBitmapIndex(searchFrom));
     }

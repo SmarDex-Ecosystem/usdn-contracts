@@ -86,6 +86,7 @@ contract OrderManager is Ownable, IOrderManager {
     /*                                    Admin                                   */
     /* -------------------------------------------------------------------------- */
 
+    // TODO to be removed if allowance reset is done inside fulfillOrdersInTick directly
     /// @inheritdoc IOrderManager
     function approveAssetsForSpending(uint256 addAllowance) external onlyOwner {
         _asset.safeIncreaseAllowance(address(_usdnProtocol), addAllowance);
@@ -132,6 +133,9 @@ contract OrderManager is Ownable, IOrderManager {
         emit UserDepositedAssetsInTick(msg.sender, newUserAmount, tick, tickVersion);
     }
 
+    // TODO instead of taking the latest version of the tick, just check if the longPositionTick == PENDING_ORDERS_TICK
+    // otherwise, funds can stay stuck if the order manager is not set in the USDN protocol, liquidations happens,
+    // and orders were on the liquidated ticks.
     /// @inheritdoc IOrderManager
     function withdrawAssetsFromTick(int24 tick, uint232 amountToWithdraw) external {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
@@ -156,7 +160,7 @@ contract OrderManager is Ownable, IOrderManager {
     }
 
     /// @inheritdoc IOrderManager
-    function createPositionFromOrdersInTick(uint128 currentPrice, bytes32 liquidatedTickHash)
+    function fulfillOrdersInTick(uint128 currentPrice, bytes32 liquidatedTickHash)
         external
         returns (int24 longPositionTick_, uint256 amount_)
     {
@@ -164,6 +168,8 @@ contract OrderManager is Ownable, IOrderManager {
         if (msg.sender != address(_usdnProtocol)) {
             revert OrderManagerCallerIsNotUSDNProtocol(msg.sender);
         }
+
+        // TODO check if allowance is sufficient, if not, set back to max
 
         OrdersDataInTick storage ordersData = _ordersDataInTick[liquidatedTickHash];
         amount_ = ordersData.amountOfAssets;
