@@ -36,6 +36,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         bool enableSecurityDeposit;
         bool enableSdexBurnOnDeposit;
         bool enableLongLimit;
+        bool enableOrderManager;
     }
 
     struct SetUpParams {
@@ -62,7 +63,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
             enableUsdnRebase: false,
             enableSecurityDeposit: false,
             enableSdexBurnOnDeposit: false,
-            enableLongLimit: false
+            enableLongLimit: false,
+            enableOrderManager: false
         })
     });
 
@@ -153,7 +155,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
-        protocol.setOrderManager(orderManager);
+
+        if (testParams.flags.enableOrderManager) {
+            protocol.setOrderManager(orderManager);
+        }
 
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);

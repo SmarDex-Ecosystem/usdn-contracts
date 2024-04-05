@@ -22,7 +22,9 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
     uint128 private _orderAmount = 1 ether;
 
     function setUp() external {
-        _setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.enableOrderManager = true;
+        _setUp(params);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         wstETH.approve(address(orderManager), type(uint256).max);
