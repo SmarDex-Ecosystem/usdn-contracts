@@ -86,12 +86,6 @@ contract OrderManager is Ownable, IOrderManager {
     /*                                    Admin                                   */
     /* -------------------------------------------------------------------------- */
 
-    // TODO to be removed if allowance reset is done inside fulfillOrdersInTick directly
-    /// @inheritdoc IOrderManager
-    function approveAssetsForSpending(uint256 addAllowance) external onlyOwner {
-        _asset.safeIncreaseAllowance(address(_usdnProtocol), addAllowance);
-    }
-
     /// @inheritdoc IOrderManager
     function setOrdersLeverage(uint256 newLeverage) external onlyOwner {
         if (newLeverage < _usdnProtocol.getMinLeverage() || newLeverage > _usdnProtocol.getMaxLeverage()) {
@@ -169,12 +163,16 @@ contract OrderManager is Ownable, IOrderManager {
             revert OrderManagerCallerIsNotUSDNProtocol(msg.sender);
         }
 
-        // TODO check if allowance is sufficient, if not, set back to max
-
         OrdersDataInTick storage ordersData = _ordersDataInTick[liquidatedTickHash];
         amount_ = ordersData.amountOfAssets;
         if (amount_ == 0) {
             return (PENDING_ORDERS_TICK, 0);
+        }
+
+        // Check if allowance is sufficient, if not, set back to max
+        uint256 remainingAllowance = _asset.allowance(address(this), address(_usdnProtocol));
+        if (remainingAllowance < amount_) {
+            _asset.safeIncreaseAllowance(address(_usdnProtocol), type(uint256).max - remainingAllowance);
         }
 
         // Calculate the liquidation price relative to the leverage

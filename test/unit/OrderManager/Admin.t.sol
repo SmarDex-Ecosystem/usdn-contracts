@@ -20,43 +20,7 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture, IOrderManagerErrors, 
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                         approveAssetsForSpending()                         */
-    /* -------------------------------------------------------------------------- */
-
-    /**
-     * @custom:scenario approveAssetsForSpending is called by a user different from the owner
-     * @custom:given A user different from the owner
-     * @custom:when approveAssetsForSpending is called
-     * @custom:then the call reverts with a OwnableUnauthorizedAccount error
-     */
-    function test_RevertWhen_approveAssetsForSpendingCalledByNonOwner() public {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        orderManager.approveAssetsForSpending(1);
-    }
-
-    /**
-     * @custom:scenario The owner of the contract calls approveAssetsForSpending
-     * @custom:given An order manager contract
-     * @custom:when approveAssetsForSpending is called
-     * @custom:then The asset allowance of the usdn protocol on this contract should be the provided value
-     */
-    function test_approveAssetsForSpendingIncreaseAllowance() public {
-        // Reset the allowance of the USDN protocol
-        vm.prank(address(orderManager));
-        wstETH.approve(address(protocol), 0);
-
-        vm.prank(ADMIN);
-        orderManager.approveAssetsForSpending(420);
-
-        assertEq(
-            protocol.getAsset().allowance(address(orderManager), address(protocol)),
-            420,
-            "The USDN protocol should be allowed to spend assets from the OrderManager contract"
-        );
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                              setOrdersLeverage                             */
+    /*                                   Reverts                                  */
     /* -------------------------------------------------------------------------- */
 
     /**
@@ -98,6 +62,10 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture, IOrderManagerErrors, 
         vm.expectRevert(abi.encodeWithSelector(OrderManagerInvalidLeverage.selector));
         orderManager.setOrdersLeverage(minLeverage - 1);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                              setOrdersLeverage                             */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @custom:scenario setOrdersLeverage is called with a valid leverage value

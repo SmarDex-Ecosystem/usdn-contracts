@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Vm } from "forge-std/Vm.sol";
+
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { IOrderManagerErrors } from "src/interfaces/OrderManager/IOrderManagerErrors.sol";
 import { IOrderManagerEvents } from "src/interfaces/OrderManager/IOrderManagerEvents.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { WstETH } from "test/utils/WstEth.sol";
 
 /**
  * @custom:feature Test the fulfillOrdersInTick function of the OrderManager contract
@@ -14,6 +19,8 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  * @custom:and an order in the 2000$ tick by the test contract
  */
 contract TestOrderManagerFulfillOrdersInTick is UsdnProtocolBaseFixture, IOrderManagerErrors, IOrderManagerEvents {
+    using SafeERC20 for WstETH;
+
     uint128 internal _orderAmount = 1 ether;
     uint128 internal _orderPrice = 2000 ether;
     int24 internal _orderTick;
@@ -111,5 +118,37 @@ contract TestOrderManagerFulfillOrdersInTick is UsdnProtocolBaseFixture, IOrderM
 
         // TODO create test conditions where this is not 0?
         assertEq(ordersData.longPositionTickVersion, 0, "tick version of the long position should be 0");
+    }
+
+    /**
+     * @custom:scenario fulfillOrdersInTick is called with orders in the tick and not enough allowance left
+     * @custom:given An order in the 2000$ tick
+     * @custom:and An open position at the expected liquidation price of the order
+     * @custom:and Not enough allowance for the USDN protocol to transfer the funds out
+     * @custom:when fulfillOrdersInTick is called
+     * @custom:then the allowance is set back to the max
+     */
+    function test_fulfillOrdersInTickWithNoAllowanceLeftIncreasesAllowance() public {
+        vm.prank(address(orderManager));
+        wstETH.forceApprove(address(protocol), _orderAmount - 1);
+
+        vm.prank(address(protocol));
+        vm.expectEmit();
+        emit Approval(address(orderManager), address(protocol), type(uint256).max - _orderAmount - 1);
+        orderManager.fulfillOrdersInTick(_orderPrice, _orderTickHash);
+
+        assertEq(
+            wstETH.allowance(address(orderManager), address(protocol)),
+            type(uint256).max,
+            "The allowance should have been increased to the max possible value"
+        );
+
+        // Now that the allowance is back to the max, make sure we don't re-increase the allowance unnecessarily
+        vm.recordLogs();
+        vm.prank(address(protocol));
+        orderManager.fulfillOrdersInTick(_orderPrice, _orderTickHash);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        assertEq(logs.length, 0, "No events should have been emitted");
     }
 }
