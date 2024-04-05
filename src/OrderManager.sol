@@ -127,15 +127,16 @@ contract OrderManager is Ownable, IOrderManager {
         emit UserDepositedAssetsInTick(msg.sender, newUserAmount, tick, tickVersion);
     }
 
-    // TODO instead of taking the latest version of the tick, just check if the longPositionTick == PENDING_ORDERS_TICK
-    // otherwise, funds can stay stuck if the order manager is not set in the USDN protocol, liquidations happens,
-    // and orders were on the liquidated ticks.
     /// @inheritdoc IOrderManager
-    function withdrawAssetsFromTick(int24 tick, uint232 amountToWithdraw) external {
+    function withdrawAssetsFromTick(int24 tick, uint256 tickVersion, uint232 amountToWithdraw) external {
         IUsdnProtocol usdnProtocol = _usdnProtocol;
-        uint256 tickVersion = usdnProtocol.getTickVersion(tick);
         bytes32 tickHash = usdnProtocol.tickHash(tick, tickVersion);
         uint256 userAmount = _userAmountInTick[tickHash][msg.sender];
+
+        OrdersDataInTick memory ordersData = _ordersDataInTick[tickHash];
+        if (ordersData.longPositionTick != PENDING_ORDERS_TICK) {
+            revert OrderManagerOrderNotPending(tick, tickVersion);
+        }
 
         // Check that the current user has assets in this tick
         if (userAmount < amountToWithdraw) {

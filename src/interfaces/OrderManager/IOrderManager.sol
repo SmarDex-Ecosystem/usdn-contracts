@@ -73,11 +73,12 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
 
     /**
      * @notice Withdraw an amount of the user's assets from the provided tick and send them back to him.
-     * @dev This function will always use the latest version of the provided tick.
+     * @dev Only orders that are still pending are withdrawable.
      * @param tick The tick to remove the order from.
+     * @param tickVersion The version of the tick.
      * @param amountToWithdraw The amount of assets to withdraw.
      */
-    function withdrawAssetsFromTick(int24 tick, uint232 amountToWithdraw) external;
+    function withdrawAssetsFromTick(int24 tick, uint256 tickVersion, uint232 amountToWithdraw) external;
 
     /**
      * @notice Remove the orders from the current tick, transfer them in the _positionsInTickHash mapping

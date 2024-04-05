@@ -17,6 +17,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  */
 contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrderManagerErrors, IOrderManagerEvents {
     int24 private _tick;
+    uint256 private _tickVersion;
     uint232 private _amount;
 
     function setUp() public {
@@ -42,8 +43,27 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
      */
     function test_RevertWhen_noTickForTheCurrentUser() external {
         vm.prank(USER_1);
-        vm.expectRevert(abi.encodeWithSelector(OrderManagerInsufficientFunds.selector, _tick, USER_1, 0, _amount));
-        orderManager.withdrawAssetsFromTick(_tick, _amount);
+        vm.expectRevert(
+            abi.encodeWithSelector(OrderManagerInsufficientFunds.selector, _tick, USER_1, _tickVersion, _amount)
+        );
+        orderManager.withdrawAssetsFromTick(_tick, _tickVersion, _amount);
+    }
+
+    /**
+     * @custom:scenario withdrawAssetsFromTick is called but the orders are not pending anymore
+     * @custom:given A tick with orders that got fulfilled
+     * @custom:when withdrawAssetsFromTick is called for this tick
+     * @custom:then the call reverts with a OrderManagerOrderNotPending error
+     */
+    function test_RervertsWhen_orderIsNotPending() external {
+        bytes32 tickHash = protocol.tickHash(_tick, _tickVersion);
+
+        // Fulfill the order so it's not pending anymore
+        vm.prank(address(protocol));
+        orderManager.fulfillOrdersInTick(2000 ether, tickHash);
+
+        vm.expectRevert(abi.encodeWithSelector(OrderManagerOrderNotPending.selector, _tick, _tickVersion));
+        orderManager.withdrawAssetsFromTick(_tick, _tickVersion, _amount);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -64,8 +84,8 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit UserWithdrewAssetsFromTick(address(this), 0, _tick, 0);
-        orderManager.withdrawAssetsFromTick(_tick, _amount);
+        emit UserWithdrewAssetsFromTick(address(this), 0, _tick, _tickVersion);
+        orderManager.withdrawAssetsFromTick(_tick, _tickVersion, _amount);
 
         assertEq(
             orderManagerBalanceBefore - _amount,
@@ -76,7 +96,7 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
             userBalanceBefore + _amount, wstETH.balanceOf(address(this)), "The assets should have been sent to the user"
         );
 
-        IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_tick, 0);
+        IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_tick, _tickVersion);
         assertEq(ordersData.amountOfAssets, 0, "The accumulated amount should be equal to 0");
         assertEq(
             ordersData.longPositionTick,
@@ -86,7 +106,7 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
         assertEq(ordersData.longPositionTickVersion, 0, "The tick version should be 0");
         assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
 
-        uint256 userOrderAmount = orderManager.getUserAmountInTick(_tick, 0, address(this));
+        uint256 userOrderAmount = orderManager.getUserAmountInTick(_tick, _tickVersion, address(this));
         assertEq(userOrderAmount, 0, "The user should have no assets left on the tick");
     }
 
@@ -108,7 +128,7 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
         /* ----------------- 1st call that withdraw a partial amount ---------------- */
         vm.expectEmit();
         emit UserWithdrewAssetsFromTick(address(this), amountLeft, _tick, 0);
-        orderManager.withdrawAssetsFromTick(_tick, partialAmount);
+        orderManager.withdrawAssetsFromTick(_tick, _tickVersion, partialAmount);
 
         assertEq(
             orderManagerBalanceBefore - partialAmount,
@@ -137,7 +157,7 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
 
         vm.expectEmit();
         emit UserWithdrewAssetsFromTick(address(this), 0, _tick, 0);
-        orderManager.withdrawAssetsFromTick(_tick, amountLeft);
+        orderManager.withdrawAssetsFromTick(_tick, _tickVersion, amountLeft);
 
         assertEq(
             orderManagerBalanceBefore - amountLeft,
@@ -150,10 +170,10 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
             "The assets should have been sent to the user"
         );
 
-        ordersData = orderManager.getOrdersDataInTick(_tick, 0);
+        ordersData = orderManager.getOrdersDataInTick(_tick, _tickVersion);
         assertEq(ordersData.amountOfAssets, 0, "The accumulated amount should be equal to 0");
 
-        userOrderAmount = orderManager.getUserAmountInTick(_tick, 0, address(this));
+        userOrderAmount = orderManager.getUserAmountInTick(_tick, _tickVersion, address(this));
         assertEq(userOrderAmount, 0, "The user should have no assets left on the tick");
     }
 }
