@@ -20,7 +20,10 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
         uint256 longPositionIndex;
     }
 
-    /// @notice Tick indicating the orders are not used in a position yet.
+    /**
+     * @notice Tick indicating the orders are not used in a position yet.
+     * @return The tick that means the orders are pending.
+     */
     function PENDING_ORDERS_TICK() external pure returns (int24);
 
     /**
@@ -43,7 +46,10 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
         view
         returns (OrdersDataInTick memory ordersData_);
 
-    /// @notice Returns the address of the USDN protocol.
+    /**
+     * @notice Returns the address of the USDN protocol.
+     * @return The address of the USDN protocol.
+     */
     function getUsdnProtocol() external view returns (IUsdnProtocol);
 
     /**
