@@ -71,7 +71,7 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
      * @custom:when The function is called with this amount
      * @custom:then The correct amount of SDEX to burn is returned
      */
-    function test_calcSdexToBurn() external {
+    function test_calcSdexToBurn() public {
         uint256 burnRatio = protocol.getSdexBurnOnDepositRatio();
         uint256 burnRatioDivisor = protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR();
         uint8 usdnDecimals = protocol.TOKENS_DECIMALS();
@@ -89,5 +89,19 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
             expectedSdexToBurn,
             "Result does not match expected value when the usdn to mint value is less round"
         );
+    }
+
+    /**
+     * @custom:scenario Check the splitting of the withdrawal shares amount into two parts
+     * @custom:given An amount to be split in the range of uint152
+     * @custom:when The amount is split with the protocol function and then merged back
+     * @custom:then The original amount should be the same as the input
+     * @param amount The amount to be split and merged
+     */
+    function testFuzz_withdrawalAmountSplitting(uint152 amount) public {
+        uint24 lsb = protocol.i_calcWithdrawalAmountLSB(amount);
+        uint128 msb = protocol.i_calcWithdrawalAmountMSB(amount);
+        uint256 res = protocol.i_mergeWithdrawalAmountParts(lsb, msb);
+        assertEq(res, amount, "Amount splitting and merging failed");
     }
 }

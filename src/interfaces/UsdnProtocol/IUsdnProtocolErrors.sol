@@ -51,6 +51,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided collateral and liquidation price result in a leverage that is too high
     error UsdnProtocolLeverageTooHigh();
 
+    /// @dev Indicates that the long position is too small
+    error UsdnProtocolLongPositionTooSmall();
+
     /// @dev Indicates that the liquidation price is higher than or equal to the start price
     error UsdnProtocolInvalidLiquidationPrice(uint128 liquidationPrice, uint128 startPrice);
 
@@ -131,6 +134,9 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided target USDN price is invalid
     error UsdnProtocolInvalidTargetUsdnPrice();
+
+    /// @dev Indicates that the provided min long position is invalid
+    error UsdnProtocolInvalidMinLongPosition();
 
     /// @dev Indicates that the provided USDN rebase threshold is invalid
     error UsdnProtocolInvalidUsdnRebaseThreshold();

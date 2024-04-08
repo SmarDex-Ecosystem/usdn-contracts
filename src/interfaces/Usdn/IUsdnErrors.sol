@@ -14,4 +14,12 @@ interface IUsdnErrors {
 
     /// @dev Indicates that the newly minted tokens would make the total supply of shares overflow uint256
     error UsdnTotalSupplyOverflow();
+
+    /**
+     * @dev Indicates that the sender does not have enough balance to transfer shares
+     * @param sender The sender address
+     * @param balance The shares balance of the sender
+     * @param needed The desired amount of shares to transfer
+     */
+    error UsdnInsufficientSharesBalance(address sender, uint256 balance, uint256 needed);
 }

@@ -79,7 +79,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
      */
     function test_RevertWhen_approveFromZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidApprover.selector, address(0)));
-        usdn.approve(address(0), USER_1, 50 ether);
+        usdn.i_approve(address(0), USER_1, 50 ether);
     }
 
     /**
@@ -119,7 +119,7 @@ contract TestUsdnErc20 is UsdnTokenFixture {
      */
     function test_RevertWhen_transferFromZeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidSender.selector, address(0)));
-        usdn.transfer(address(0), USER_1, 50 ether);
+        usdn.i_transfer(address(0), USER_1, 50 ether);
     }
 
     /**

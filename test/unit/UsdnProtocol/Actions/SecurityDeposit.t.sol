@@ -24,7 +24,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.enableSecurityDeposit = true;
+        params.flags.enableSecurityDeposit = true;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), 1000 ether, address(protocol), type(uint256).max);
         priceData = abi.encode(params.initialPrice);
@@ -427,9 +427,9 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
-        // we initiate a 1 wei withdrawal
-        usdn.approve(address(protocol), 1);
-        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, EMPTY_PREVIOUS_DATA);
+        // we initiate a withdrawal for 1e18 shares of USDN
+        usdn.approve(address(protocol), 2);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1e18, priceData, EMPTY_PREVIOUS_DATA);
         skip(protocol.getValidationDeadline() + 1);
 
         assertSecurityDepositPaid(balanceUser0Before, balanceProtocolBefore);
@@ -441,8 +441,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
         vm.startPrank(USER_1);
-        usdn.approve(address(protocol), 1);
-        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, previousActionsData);
+        usdn.approve(address(protocol), 2);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1e18, priceData, previousActionsData);
         _waitDelay();
 
         assertRefundEthToUser1(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
@@ -476,16 +476,16 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
 
-        // we initiate a 1 wei withdrawal
-        usdn.approve(address(protocol), 1);
-        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, EMPTY_PREVIOUS_DATA);
+        // we initiate a withdrawal for 1e18 sahres of USDN
+        usdn.approve(address(protocol), 2);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1e18, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
         assertSecurityDepositPaid(balanceUser0Before, balanceProtocolBefore);
 
         vm.startPrank(USER_1);
-        usdn.approve(address(protocol), 1);
-        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1, priceData, EMPTY_PREVIOUS_DATA);
+        usdn.approve(address(protocol), 2);
+        protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(1e18, priceData, EMPTY_PREVIOUS_DATA);
         skip(protocol.getValidationDeadline() + 1);
 
         assertSecurityDepositPaidTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
