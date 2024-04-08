@@ -73,7 +73,8 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Test that the function save new position
+     * @custom:scenario Test that the function save new position and modify the
+     * state in conditions(tickBitmap and maxInitializedTick)
      * @custom:given A validated long position
      * @custom:when The function is called with the new position
      * @custom:then The state in conditions should be modified
