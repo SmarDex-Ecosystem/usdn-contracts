@@ -77,7 +77,7 @@ contract Deploy is Script {
      * @notice Deploy the WstETH oracle middleware if necessary
      * @dev Will return the already deployed one if an address is in the env variables
      * @param isProdEnv env check
-     * @param wstETHAddress the addres of the WstETH token
+     * @param wstETHAddress the address of the WstETH token
      * @return wstEthOracleMiddleware_ the deployed contract
      */
     function _deployWstEthOracleMiddleware(bool isProdEnv, address wstETHAddress)
@@ -113,7 +113,7 @@ contract Deploy is Script {
      * @notice Deploy the liquidation rewards manager if necessary
      * @dev Will return the already deployed one if an address is in the env variables
      * @param isProdEnv env check
-     * @param wstETHAddress the addres of the WstETH token
+     * @param wstETHAddress the address of the WstETH token
      * @return liquidationRewardsManager_ the deployed contract
      */
     function _deployLiquidationRewardsManager(bool isProdEnv, address wstETHAddress)
