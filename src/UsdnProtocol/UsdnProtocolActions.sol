@@ -442,7 +442,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 usdnToMintEstimated = _calcMintUsdn(
             pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
         );
-        (uint256 sdexToBurn, uint32 burnRatio) = _calcSdexToBurn(usdnToMintEstimated);
+        uint32 burnRatio = _sdexBurnOnDepositRatio;
+        uint256 sdexToBurn = _calcSdexToBurn(usdnToMintEstimated, burnRatio);
         // We want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
             revert UsdnProtocolDepositTooSmall();

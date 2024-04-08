@@ -47,7 +47,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
         uint256 usdnToMint =
             protocol.i_calcMintUsdn(depositAmount, protocol.getBalanceVault(), protocol.getUsdn().totalSupply(), price);
-        (uint256 expectedSdexBurnAmount,) = protocol.i_calcSdexToBurn(usdnToMint);
+        uint256 expectedSdexBurnAmount = protocol.i_calcSdexToBurn(usdnToMint, protocol.getSdexBurnOnDepositRatio());
         uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
         address deadAddress = protocol.DEAD_ADDRESS();
 
@@ -149,7 +149,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             protocol.i_calcMintUsdn(deposited, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
         assertGt(usdnToMintEstimated, 0, "usdn minted");
 
-        (uint256 sdexToBurn,) = protocol.i_calcSdexToBurn(usdnToMintEstimated);
+        uint256 sdexToBurn = protocol.i_calcSdexToBurn(usdnToMintEstimated, protocol.getSdexBurnOnDepositRatio());
         assertEq(sdexToBurn, 0, "sdex burned");
 
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);

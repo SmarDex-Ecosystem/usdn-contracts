@@ -72,18 +72,18 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
      * @custom:then The correct amount of SDEX to burn is returned
      */
     function test_calcSdexToBurn() external {
-        uint256 burnRatio = protocol.getSdexBurnOnDepositRatio();
+        uint32 burnRatio = protocol.getSdexBurnOnDepositRatio();
         uint256 burnRatioDivisor = protocol.SDEX_BURN_ON_DEPOSIT_DIVISOR();
         uint8 usdnDecimals = protocol.TOKENS_DECIMALS();
         uint256 usdnToMint = 100 * 10 ** usdnDecimals;
 
         uint256 expectedSdexToBurn = usdnToMint * burnRatio / burnRatioDivisor;
-        (uint256 sdexToBurn,) = protocol.i_calcSdexToBurn(usdnToMint);
+        uint256 sdexToBurn = protocol.i_calcSdexToBurn(usdnToMint, burnRatio);
         assertEq(sdexToBurn, expectedSdexToBurn, "Result does not match the expected value");
 
         usdnToMint = 1_582_309 * 10 ** (usdnDecimals - 2);
         expectedSdexToBurn = usdnToMint * burnRatio / burnRatioDivisor;
-        (sdexToBurn,) = protocol.i_calcSdexToBurn(usdnToMint);
+        sdexToBurn = protocol.i_calcSdexToBurn(usdnToMint, burnRatio);
         assertEq(
             sdexToBurn,
             expectedSdexToBurn,

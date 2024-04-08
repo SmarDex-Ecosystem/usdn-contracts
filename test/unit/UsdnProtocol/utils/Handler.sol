@@ -184,8 +184,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
     }
 
-    function i_calcSdexToBurn(uint256 usdnAmount) external view returns (uint256, uint32) {
-        return _calcSdexToBurn(usdnAmount);
+    function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256) {
+        return _calcSdexToBurn(usdnAmount, sdexBurnRatio);
     }
 
     function i_vaultAssetAvailable(
