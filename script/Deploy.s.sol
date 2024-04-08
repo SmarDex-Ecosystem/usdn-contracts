@@ -78,18 +78,18 @@ contract Deploy is Script {
      * @dev Will return the already deployed one if an address is in the env variables
      * @param isProdEnv env check
      * @param wstETHAddress the addres of the WstETH token
-     * @return WstEthOracleMiddleware_ the deployed contract
+     * @return wstEthOracleMiddleware_ the deployed contract
      */
     function _deployWstEthOracleMiddleware(bool isProdEnv, address wstETHAddress)
         internal
-        returns (WstEthOracleMiddleware WstEthOracleMiddleware_)
+        returns (WstEthOracleMiddleware wstEthOracleMiddleware_)
     {
         address middlewareAddress = vm.envOr("MIDDLEWARE_ADDRESS", address(0));
         if (middlewareAddress != address(0)) {
             if (isProdEnv) {
-                WstEthOracleMiddleware_ = WstEthOracleMiddleware(middlewareAddress);
+                wstEthOracleMiddleware_ = WstEthOracleMiddleware(middlewareAddress);
             } else {
-                WstEthOracleMiddleware_ = MockWstEthOracleMiddleware(middlewareAddress);
+                wstEthOracleMiddleware_ = MockWstEthOracleMiddleware(middlewareAddress);
             }
         } else {
             address pythAddress = vm.envAddress("PYTH_ADDRESS");
@@ -98,16 +98,14 @@ contract Deploy is Script {
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_STETH_PRICE_VALIDITY", uint256(1 hours + 2 minutes));
 
             if (isProdEnv) {
-                WstEthOracleMiddleware_ = new WstEthOracleMiddleware(
+                wstEthOracleMiddleware_ = new WstEthOracleMiddleware(
                     pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
                 );
             } else {
-                WstEthOracleMiddleware_ = new MockWstEthOracleMiddleware(
+                wstEthOracleMiddleware_ = new MockWstEthOracleMiddleware(
                     pythAddress, pythPriceId, chainlinkPriceAddress, wstETHAddress, chainlinkPriceValidity
                 );
             }
-
-            middlewareAddress = address(WstEthOracleMiddleware_);
         }
     }
 
@@ -116,27 +114,27 @@ contract Deploy is Script {
      * @dev Will return the already deployed one if an address is in the env variables
      * @param isProdEnv env check
      * @param wstETHAddress the addres of the WstETH token
-     * @return LiquidationRewardsManager_ the deployed contract
+     * @return liquidationRewardsManager_ the deployed contract
      */
     function _deployLiquidationRewardsManager(bool isProdEnv, address wstETHAddress)
         internal
-        returns (LiquidationRewardsManager LiquidationRewardsManager_)
+        returns (LiquidationRewardsManager liquidationRewardsManager_)
     {
         address liquidationRewardsManagerAddress = vm.envOr("LIQUIDATION_REWARDS_MANAGER_ADDRESS", address(0));
         if (liquidationRewardsManagerAddress != address(0)) {
             if (isProdEnv) {
-                LiquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
+                liquidationRewardsManager_ = LiquidationRewardsManager(liquidationRewardsManagerAddress);
             } else {
-                LiquidationRewardsManager_ = MockLiquidationRewardsManager(liquidationRewardsManagerAddress);
+                liquidationRewardsManager_ = MockLiquidationRewardsManager(liquidationRewardsManagerAddress);
             }
         } else {
             address chainlinkGasPriceFeed = vm.envAddress("CHAINLINK_GAS_PRICE_ADDRESS");
             uint256 chainlinkPriceValidity = vm.envOr("CHAINLINK_GAS_PRICE_VALIDITY", uint256(2 hours + 5 minutes));
             if (isProdEnv) {
-                LiquidationRewardsManager_ =
+                liquidationRewardsManager_ =
                     new LiquidationRewardsManager(chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity);
             } else {
-                LiquidationRewardsManager_ = new MockLiquidationRewardsManager(
+                liquidationRewardsManager_ = new MockLiquidationRewardsManager(
                     chainlinkGasPriceFeed, IWstETH(wstETHAddress), chainlinkPriceValidity
                 );
             }
@@ -146,30 +144,28 @@ contract Deploy is Script {
     /**
      * @notice Deploy the USDN token
      * @dev Will return the already deployed one if an address is in the env variables
-     * @return Usdn_ the deployed contract
+     * @return usdn_ the deployed contract
      */
-    function _deployUsdn() internal returns (Usdn Usdn_) {
+    function _deployUsdn() internal returns (Usdn usdn_) {
         address usdnAddress = vm.envOr("USDN_ADDRESS", address(0));
         if (usdnAddress != address(0)) {
-            Usdn_ = Usdn(usdnAddress);
+            usdn_ = Usdn(usdnAddress);
         } else {
-            Usdn_ = new Usdn(address(0), address(0));
-            usdnAddress = address(Usdn_);
+            usdn_ = new Usdn(address(0), address(0));
         }
     }
 
     /**
      * @notice Deploy the SDEX token
      * @dev Will return the already deployed one if an address is in the env variables
-     * @return Sdex_ the deployed contract
+     * @return sdex_ the deployed contract
      */
-    function _deploySdex() internal returns (Sdex Sdex_) {
+    function _deploySdex() internal returns (Sdex sdex_) {
         address sdexAddress = payable(vm.envOr("SDEX_ADDRESS", address(0)));
         if (sdexAddress != address(0)) {
-            Sdex_ = Sdex(sdexAddress);
+            sdex_ = Sdex(sdexAddress);
         } else {
-            Sdex_ = new Sdex();
-            sdexAddress = address(Sdex_);
+            sdex_ = new Sdex();
         }
     }
 
@@ -178,20 +174,19 @@ contract Deploy is Script {
      * @dev Will return the already deployed one if an address is in the env variables
      * @param depositAmount the amount to deposit during the protocol initialization
      * @param longAmount the size of the long to open during the protocol initialization
-     * @return WstETH_ the deployed contract
+     * @return wstEth_ the deployed contract
      */
-    function _deployWstETH(uint256 depositAmount, uint256 longAmount) internal returns (WstETH WstETH_) {
+    function _deployWstETH(uint256 depositAmount, uint256 longAmount) internal returns (WstETH wstEth_) {
         address payable wstETHAddress = payable(vm.envOr("WSTETH_ADDRESS", address(0)));
         if (wstETHAddress != address(0)) {
-            WstETH_ = WstETH(wstETHAddress);
+            wstEth_ = WstETH(wstETHAddress);
             if (vm.envOr("GET_WSTETH", false) && depositAmount > 0 && longAmount > 0) {
-                uint256 ethAmount = (depositAmount + longAmount + 10_000) * WstETH_.stEthPerToken() / 1 ether;
+                uint256 ethAmount = (depositAmount + longAmount + 10_000) * wstEth_.stEthPerToken() / 1 ether;
                 (bool result,) = wstETHAddress.call{ value: ethAmount }(hex"");
                 require(result, "Failed to mint wstETH");
             }
         } else {
-            WstETH_ = new WstETH();
-            wstETHAddress = payable(address(WstETH_));
+            wstEth_ = new WstETH();
         }
     }
 
