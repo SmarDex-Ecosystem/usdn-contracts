@@ -11,7 +11,6 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
  * @custom:feature The _saveNewPosition internal function of the UsdnProtocolLong contract.
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x
- * @custom:and a validated long position of 1 ether with 10x leverage
  */
 contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
     uint256 internal constant LONG_AMOUNT = 1 ether;
