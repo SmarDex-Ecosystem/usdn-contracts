@@ -213,7 +213,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      */
     function test_validateWithdrawDifferentToAddress() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2000 ether), uint128(2000 ether), 0.499963328488023073 ether, USER_1);
+        _checkValidateWithdrawWithPrice(uint128(2000 ether), uint128(2000 ether), 0.499958641112900829 ether, USER_1);
     }
 
     /**
@@ -233,7 +233,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         protocol.setPositionFeeBps(0); // 0% fees
 
         bytes memory currentPrice = abi.encode(initialPrice);
-        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA, to);
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         VaultPendingAction memory withdrawal = protocol.i_toVaultPendingAction(pending);

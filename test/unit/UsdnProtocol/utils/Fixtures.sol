@@ -206,9 +206,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateDeposit{ value: securityDepositValue }(
-            positionSize, priceData, EMPTY_PREVIOUS_DATA, address(this)
-        );
+        protocol.initiateDeposit{ value: securityDepositValue }(positionSize, priceData, EMPTY_PREVIOUS_DATA, user);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
@@ -219,7 +217,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         uint256 balanceOf = usdn.balanceOf(user);
         usdn.approve(address(protocol), balanceOf);
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA, address(this)
+            uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA, user
         );
         _waitDelay();
 
