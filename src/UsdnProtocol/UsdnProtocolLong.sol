@@ -218,6 +218,27 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
     }
 
+    /**
+     * TODO Tests
+     * @notice Calculate the collateral amount a position needs to reach the provided total expo.
+     * @dev Reverts when startPrice <= liquidationPrice
+     * @param totalExpo The total expo to reach
+     * @param startPrice The price of the asset when the position was created
+     * @param liquidationPrice The liquidation price of the position
+     * @return amount_ The collateral amount a position needs to reach the total expo
+     */
+    function _calculatePositionAmountForTotalExpo(uint128 totalExpo, uint128 startPrice, uint128 liquidationPrice)
+        internal
+        pure
+        returns (uint128 amount_)
+    {
+        if (startPrice <= liquidationPrice) {
+            revert UsdnProtocolInvalidLiquidationPrice(liquidationPrice, startPrice);
+        }
+
+        amount_ = FixedPointMathLib.fullMulDiv(totalExpo, startPrice - liquidationPrice, startPrice).toUint128();
+    }
+
     function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {
         uint128 maxLiquidationPrice = (currentPrice * (BPS_DIVISOR - _safetyMarginBps) / BPS_DIVISOR).toUint128();
         if (liquidationPrice >= maxLiquidationPrice) {
@@ -343,23 +364,22 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * TODO We should calculate the amount to take from the orders instead of taking everything
      * @notice Check if there are orders in the liquidated tick and create a position using the amount available if so.
      * @param currentPrice The current price
      * @param liquidatedTickHash The tick hash of the liquidated tick
-     * @param liquidatedTickTotalExpo The total expo of te liquidated tick
+     * @param liquidatedTickTotalExpo The total expo of the liquidated tick
      */
     function _saveOrderManagerPositionInTick(
         uint128 currentPrice,
         bytes32 liquidatedTickHash,
-        uint256 liquidatedTickTotalExpo
+        uint128 liquidatedTickTotalExpo
     ) internal {
         // If the order manager is not set, return;
         if (address(_orderManager) == address(0)) {
             return;
         }
 
-        // get the amount available
+        // Get the amount available in orders in the tick
         (int24 liquidationTick, uint256 amountAvailable) =
             _orderManager.fulfillOrdersInTick(currentPrice, liquidatedTickHash);
 
@@ -368,13 +388,19 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             return;
         }
 
-        // TODO calculate the amount to take
         uint128 amountTaken = amountAvailable.toUint128();
 
         // Calculate the effective liquidation price for the tick
         uint128 liqPrice = getEffectivePriceForTick(liquidationTick);
-
         uint128 posTotalExpo = _calculatePositionTotalExpo(amountTaken, currentPrice, liqPrice);
+
+        // If the total expo of the liquidated tick is lower than the order manager's position total expo
+        // Lower the position size to the liquidated tick's total expo
+        if (liquidatedTickTotalExpo < posTotalExpo) {
+            posTotalExpo = liquidatedTickTotalExpo;
+            amountTaken = _calculatePositionAmountForTotalExpo(liquidatedTickTotalExpo, currentPrice, liqPrice);
+        }
+
         Position memory pos = Position({
             timestamp: uint40(block.timestamp),
             user: address(_orderManager),
@@ -384,6 +410,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         _saveNewPosition(liquidationTick, pos);
         _asset.safeTransferFrom(address(_orderManager), address(this), amountTaken);
+
+        // TODO emit event?
     }
 
     /**

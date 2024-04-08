@@ -8,6 +8,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { IOrderManagerErrors } from "src/interfaces/OrderManager/IOrderManagerErrors.sol";
 import { IOrderManagerEvents } from "src/interfaces/OrderManager/IOrderManagerEvents.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { WstETH } from "test/utils/WstEth.sol";
@@ -102,6 +103,9 @@ contract TestOrderManagerFulfillOrdersInTick is UsdnProtocolBaseFixture, IOrderM
 
         // Create an open position to make sure the index saved in OrdersDataInTick is correct
         protocol.initiateOpenPosition(1 ether, expectedLiquidationPrice, abi.encode(_orderPrice), EMPTY_PREVIOUS_DATA);
+        (,, uint256 existingPosIndex) = setUpUserPositionInLong(
+            msg.sender, ProtocolAction.InitiateOpenPosition, 1 ether, expectedLiquidationPrice, _orderPrice
+        );
 
         int24 expectedLongTick = protocol.getEffectiveTickForPrice(expectedLiquidationPrice);
 
@@ -114,7 +118,11 @@ contract TestOrderManagerFulfillOrdersInTick is UsdnProtocolBaseFixture, IOrderM
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_orderTick, 0);
         assertEq(ordersData.amountOfAssets, 1 ether, "amount in orders data should not have changed");
         assertEq(ordersData.longPositionTick, expectedLongTick, "tick of the long position equal the expected one");
-        assertEq(ordersData.longPositionIndex, 1, "index of the long position should be 1");
+        assertEq(
+            ordersData.longPositionIndex,
+            existingPosIndex + 1,
+            "index of the long position should be the last position in tick's index + 1"
+        );
 
         // TODO create test conditions where this is not 0?
         assertEq(ordersData.longPositionTickVersion, 0, "tick version of the long position should be 0");

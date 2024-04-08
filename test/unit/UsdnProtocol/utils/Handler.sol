@@ -90,6 +90,14 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _calculatePositionTotalExpo(amount, startPrice, liquidationPrice);
     }
 
+    function i_calculatePositionAmountForTotalExpo(uint128 totalExpo, uint128 startPrice, uint128 liquidationPrice)
+        external
+        pure
+        returns (uint128 amount_)
+    {
+        return _calculatePositionAmountForTotalExpo(totalExpo, startPrice, liquidationPrice);
+    }
+
     function i_removePendingAction(uint128 rawIndex, address user) external {
         _pendingActionsQueue.clearAt(rawIndex);
         delete _pendingActions[user];
@@ -259,7 +267,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_saveOrderManagerPositionInTick(
         uint128 currentPrice,
         bytes32 liquidatedTickHash,
-        uint256 liquidatedTickTotalExpo
+        uint128 liquidatedTickTotalExpo
     ) external {
         return _saveOrderManagerPositionInTick(currentPrice, liquidatedTickHash, liquidatedTickTotalExpo);
     }

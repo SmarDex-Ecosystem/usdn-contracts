@@ -17,7 +17,7 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
     int24 private _tick;
     uint256 private _tickVersion;
     bytes32 private _tickHash;
-    uint256 private _tickTotalExpo;
+    uint128 private _tickTotalExpo;
     uint128 private _positionAmount = 1 ether;
     uint128 private _orderAmount = 1 ether;
 
@@ -36,7 +36,7 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
 
         _liqPrice = protocol.getEffectivePriceForTick(_tick);
         _tickHash = protocol.tickHash(_tick, _tickVersion);
-        _tickTotalExpo = protocol.getTotalExpoByTick(_tick);
+        _tickTotalExpo = uint128(protocol.getTotalExpoByTick(_tick));
 
         orderManager.depositAssetsInTick(_tick, _orderAmount);
     }
@@ -79,6 +79,57 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
         assertEq(pos.timestamp, block.timestamp, "The timestamp should be now");
         assertEq(pos.totalExpo, ordersTotalExpo, "The total expo should be equal to the total expo of the orders");
         assertEq(pos.amount, _orderAmount, "The amount should be equal to the amount of assets in the orders");
+    }
+
+    /**
+     * @custom:scenario A tick with orders with more assets than necessary is liquidated
+     * @custom:given The USDN protocol with an order with more assets than the tick to liquidate
+     * @custom:when A tick with orders is liquidated
+     * @custom:then A position belonging to the order manager is created
+     * @custom:and the position only has the amount necessary to match the total expo liquidated
+     */
+    function test_saveOrderManagerPositionInTickWithMaxTotalExpoReached() public {
+        int24 expectedLongTick = protocol.getEffectiveTickForPrice(
+            protocol.i_getLiquidationPrice(_liqPrice, uint128(orderManager.getOrdersLeverage()))
+        );
+        // Deposit more assets than necessary
+        uint128 maxAmount = protocol.i_calculatePositionAmountForTotalExpo(
+            _tickTotalExpo, _liqPrice, protocol.getEffectivePriceForTick(expectedLongTick)
+        );
+        orderManager.depositAssetsInTick(_tick, maxAmount);
+        _orderAmount += maxAmount;
+
+        uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
+        uint256 protocolAssetsBefore = wstETH.balanceOf(address(protocol));
+        uint256 orderManagerAssetsBefore = wstETH.balanceOf(address(orderManager));
+
+        protocol.i_saveOrderManagerPositionInTick(_liqPrice, _tickHash, _tickTotalExpo);
+
+        /* ------------------------------ Global checks ----------------------------- */
+        assertEq(longPositionsCountBefore + 1, protocol.getTotalLongPositions(), "1 position should have been created");
+        assertEq(
+            protocolAssetsBefore + maxAmount,
+            wstETH.balanceOf(address(protocol)),
+            "The max amount available to open a position should have been transferred to the protocol"
+        );
+        assertEq(
+            orderManagerAssetsBefore - maxAmount,
+            wstETH.balanceOf(address(orderManager)),
+            "The max amount available to open a position should have been transferred out of the order manager"
+        );
+
+        /* ----------------------------- Position checks ---------------------------- */
+        IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_tick, _tickVersion);
+        Position memory pos = protocol.getLongPosition(
+            ordersData.longPositionTick, ordersData.longPositionTickVersion, ordersData.longPositionIndex
+        );
+
+        assertEq(pos.user, address(orderManager), "The position should belong to the order manager");
+        assertEq(pos.timestamp, block.timestamp, "The timestamp should be now");
+        assertEq(pos.totalExpo, _tickTotalExpo, "The total expo should be equal to the total expo of the orders");
+        assertEq(
+            pos.amount, maxAmount, "The amount should be equal to the max amount of assets for the tick total expo"
+        );
     }
 
     /**
