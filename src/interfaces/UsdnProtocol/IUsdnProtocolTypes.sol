@@ -169,3 +169,19 @@ struct PreviousActionsData {
     bytes[] priceData;
     uint128[] rawIndices;
 }
+
+/**
+ * @notice Accumulator for tick data
+ * @param totalExpo The sum of the total expo of each position in the tick
+ * @param totalPos The number of positions in the tick
+ * @param liquidationPenalty The liquidation penalty for the positions in the tick
+ * @dev Since the liquidation penalty is a parameter that can be updated, we need to ensure that positions that get
+ * created with a given penalty, use this penalty throughout their lifecycle. As such, once a tick gets populated by
+ * a first position, it gets assigned the current liquidation penalty parameter value and can't use another value until
+ * it gets liquidated.
+ */
+struct TickData {
+    uint256 totalExpo;
+    uint248 totalPos;
+    uint8 liquidationPenalty;
+}

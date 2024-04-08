@@ -32,12 +32,6 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
     function getLongPosition(int24 tick, uint256 tickVersion, uint256 index) external view returns (Position memory);
 
     /**
-     * @notice Get the number of positions in the last version of the given tick
-     * @param tick The tick number
-     */
-    function getPositionsInTick(int24 tick) external view returns (uint256);
-
-    /**
      * @notice Get the minimum acceptable desired liquidation price for a new long position
      * @dev This takes into account the current value of the liquidation price multiplier and the minimum leverage value
      * @param price The current asset price

@@ -9,7 +9,7 @@ import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolEr
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolStorage
@@ -218,10 +218,11 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getTickVersion(int24 tick) external view returns (uint256);
 
     /**
-     * @notice Total exposure in the last version of the given tick.
-     * @param tick The tick number.
+     * @notice Get the tick data for the current tick version
+     * @param tick The tick number
+     * @return the tick data
      */
-    function getTotalExpoByTick(int24 tick) external view returns (uint256);
+    function getTickData(int24 tick) external view returns (TickData memory);
 
     /**
      * @notice The long position per current tick (liquidation price) by position index
@@ -229,18 +230,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @param index The position index.
      */
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory);
-
-    /**
-     * @notice The total exposure per current tick.
-     * @param tick The tick number.
-     */
-    function getCurrentTotalExpoByTick(int24 tick) external view returns (uint256);
-
-    /**
-     * @notice The number of positions per current tick.
-     * @param tick The tick number.
-     */
-    function getCurrentPositionsInTick(int24 tick) external view returns (uint256);
 
     /// @notice The maximum initialized tick
     function getMaxInitializedTick() external view returns (int24);

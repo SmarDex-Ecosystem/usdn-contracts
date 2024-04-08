@@ -10,7 +10,7 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReentrancyGuard {
@@ -232,11 +232,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The long positions per versioned tick (liquidation price)
     mapping(bytes32 => Position[]) internal _longPositions;
 
-    /// @notice Cache of the total exposure per versioned tick
-    mapping(bytes32 => uint256) internal _totalExpoByTick;
-
-    /// @notice Cache of the number of positions per tick
-    mapping(bytes32 => uint256) internal _positionsInTick;
+    /// @notice Accumulated data for a given tick and tick version
+    mapping(bytes32 => TickData) internal _tickData;
 
     /// @notice Cached value of the maximum initialized tick
     int24 internal _maxInitializedTick;
@@ -517,9 +514,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getTotalExpoByTick(int24 tick) external view returns (uint256) {
+    function getTickData(int24 tick) external view returns (TickData memory) {
         bytes32 cachedTickHash = tickHash(tick, _tickVersion[tick]);
-        return _totalExpoByTick[cachedTickHash];
+        return _tickData[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -527,20 +524,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         uint256 version = _tickVersion[tick];
         bytes32 cachedTickHash = tickHash(tick, version);
         return _longPositions[cachedTickHash][index];
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getCurrentTotalExpoByTick(int24 tick) external view returns (uint256) {
-        uint256 version = _tickVersion[tick];
-        bytes32 cachedTickHash = tickHash(tick, version);
-        return _totalExpoByTick[cachedTickHash];
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getCurrentPositionsInTick(int24 tick) external view returns (uint256) {
-        uint256 version = _tickVersion[tick];
-        bytes32 cachedTickHash = tickHash(tick, version);
-        return _positionsInTick[cachedTickHash];
     }
 
     /// @inheritdoc IUsdnProtocolStorage

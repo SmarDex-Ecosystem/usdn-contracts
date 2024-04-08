@@ -6,7 +6,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
@@ -38,12 +38,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             revert UsdnProtocolOutdatedTick(version, tickVersion);
         }
         pos_ = _longPositions[tickHash][index];
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function getPositionsInTick(int24 tick) external view returns (uint256 len_) {
-        (bytes32 tickHash,) = _tickHash(tick);
-        len_ = _positionsInTick[tickHash];
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -227,32 +221,39 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
     }
 
-    function _saveNewPosition(int24 tick, Position memory long)
+    function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
         internal
         returns (uint256 tickVersion_, uint256 index_)
     {
         bytes32 tickHash;
         (tickHash, tickVersion_) = _tickHash(tick);
 
-        // Adjust state
-        _balanceLong += long.amount;
-        _totalExpo += long.totalExpo;
-        _totalExpoByTick[tickHash] += long.totalExpo;
-        ++_positionsInTick[tickHash];
-        ++_totalLongPositions;
-
         // Add to tick array
         Position[] storage tickArray = _longPositions[tickHash];
         index_ = tickArray.length;
-        if (_positionsInTick[tickHash] == 1) {
-            // first position in this tick, we need to reflect that it is populated
-            _tickBitmap.set(_tickToBitmapIndex(tick));
-        }
         if (tick > _maxInitializedTick) {
             // keep track of max initialized tick
             _maxInitializedTick = tick;
         }
         tickArray.push(long);
+
+        // Adjust state
+        _balanceLong += long.amount;
+        _totalExpo += long.totalExpo;
+        ++_totalLongPositions;
+        if (index_ == 0) {
+            // first position in this tick, we need to reflect that it is populated
+            _tickBitmap.set(_tickToBitmapIndex(tick));
+            // we store the data for this tick
+            _tickData[tickHash] =
+                TickData({ totalExpo: long.totalExpo, totalPos: 1, liquidationPenalty: liquidationPenalty });
+        } else {
+            TickData memory tickData = _tickData[tickHash];
+            tickData.totalExpo += long.totalExpo;
+            tickData.totalPos += 1;
+            // we do not need to adjust the tick's liquidationPenalty since it remains constant
+            _tickData[tickHash] = tickData;
+        }
     }
 
     /**
