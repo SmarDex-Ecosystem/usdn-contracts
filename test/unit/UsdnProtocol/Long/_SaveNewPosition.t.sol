@@ -45,13 +45,10 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         uint256 totalExpoInTickBefore = protocol.getCurrentTotalExpoByTick(expectedTick);
         uint256 positionsInTickBefore = protocol.getCurrentPositionsInTick(expectedTick);
         uint256 totalPositionsBefore = protocol.getTotalLongPositions();
-        uint256 tickArrayLengthBefore = protocol.getLongPositionsInTick(expectedTick).length;
 
         protocol.i_saveNewPosition(protocol.getEffectiveTickForPrice(desiredLiqPrice), long);
 
-        Position[] memory tickArray = protocol.getLongPositionsInTick(expectedTick);
-        uint256 tickArrayLengthAfter = tickArray.length;
-        Position memory tickArrayLastPosition = tickArray[tickArray.length - 1];
+        Position memory positionInTick = protocol.getLongPosition(expectedTick, 0, positionsInTickBefore);
 
         // state after opening the position
         assertEq(balanceLongBefore + LONG_AMOUNT, protocol.getBalanceLong(), "balance of long side");
@@ -63,13 +60,12 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         );
         assertEq(positionsInTickBefore + 1, protocol.getPositionsInTick(expectedTick), "positions in tick");
         assertEq(totalPositionsBefore + 1, protocol.getTotalLongPositions(), "total long positions");
-        assertEq(tickArrayLengthBefore + 1, tickArrayLengthAfter, "length tick array");
 
-        // check the last position in the tick array
-        assertEq(long.user, tickArrayLastPosition.user, "last long in tick array: user");
-        assertEq(long.amount, tickArrayLastPosition.amount, "last long in tick array: amount");
-        assertEq(long.totalExpo, tickArrayLastPosition.totalExpo, "last long in tick array: totalExpo");
-        assertEq(long.timestamp, tickArrayLastPosition.timestamp, "last long in tick array: timestamp");
+        // check the last position in the tick
+        assertEq(long.user, positionInTick.user, "last long in tick: user");
+        assertEq(long.amount, positionInTick.amount, "last long in tick: amount");
+        assertEq(long.totalExpo, positionInTick.totalExpo, "last long in tick: totalExpo");
+        assertEq(long.timestamp, positionInTick.timestamp, "last long in tick: timestamp");
     }
 
     /**
