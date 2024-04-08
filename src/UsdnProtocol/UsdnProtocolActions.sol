@@ -448,7 +448,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             amount: amount,
             assetPrice: pendingActionPrice,
             totalExpo: _totalExpo,
-            balanceVault: vaultAssetAvailable.toUint256(),
+            balanceVault: uint256(vaultAssetAvailable),
             balanceLong: _balanceLong,
             usdnTotalSupply: _usdn.totalSupply()
         });
