@@ -9,7 +9,7 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
  * @custom:feature The privileged functions of USDN
  * @custom:background Given a usdn instance that was initialized with default params
  */
-contract TestUsdnRole is UsdnTokenFixture {
+contract TestUsdnAccessControl is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
     }
