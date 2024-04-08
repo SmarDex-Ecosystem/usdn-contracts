@@ -16,6 +16,13 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
     uint256 internal constant LONG_AMOUNT = 1 ether;
     uint128 internal constant CURRENT_PRICE = 2000 ether;
 
+    Position long = Position({
+        user: USER_1,
+        amount: uint128(LONG_AMOUNT),
+        totalExpo: uint128(LONG_AMOUNT) * 3,
+        timestamp: uint40(block.timestamp)
+    });
+
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
         wstETH.mintAndApprove(address(this), 10 ether, address(protocol), type(uint256).max);
@@ -26,9 +33,9 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
      * @custom:given A validated long position
      * @custom:when The function is called with the new position
      * @custom:then The position should be created on the expected tick
-     * @custom:and the protocol's state should be updated
+     * @custom:and The protocol's state should be updated
      */
-    function test_saveNewPosition() external {
+    function test_saveNewPositionState() public {
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
 
@@ -38,46 +45,59 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         uint256 totalExpoInTickBefore = protocol.getCurrentTotalExpoByTick(expectedTick);
         uint256 positionsInTickBefore = protocol.getCurrentPositionsInTick(expectedTick);
         uint256 totalPositionsBefore = protocol.getTotalLongPositions();
-
-        uint128 positionTotalExpo;
-        {
-            bytes memory currentPriceData = abi.encode(CURRENT_PRICE);
-            PriceInfo memory currentPrice =
-                protocol.i_getOraclePrice(ProtocolAction.InitiateOpenPosition, block.timestamp, currentPriceData);
-
-            // Apply fees on price
-            uint128 adjustedPrice = uint128(
-                (currentPrice.price + (currentPrice.price * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR())
-            );
-
-            // we calculate the closest valid tick down for the desired liq price with liquidation penalty
-            int24 tick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
-
-            // remove liquidation penalty for leverage calculation
-            uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-                tick - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
-            );
-
-            positionTotalExpo =
-                protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), adjustedPrice, liqPriceWithoutPenalty);
-        }
-        Position memory long = Position({
-            user: USER_1,
-            amount: uint128(LONG_AMOUNT),
-            totalExpo: positionTotalExpo,
-            timestamp: uint40(block.timestamp)
-        });
+        uint256 tickArrayLengthBefore = protocol.getLongPositionsInTick(expectedTick).length;
 
         protocol.i_saveNewPosition(protocol.getEffectiveTickForPrice(desiredLiqPrice), long);
 
-        assertEq(protocol.getBalanceLong(), balanceLongBefore + LONG_AMOUNT, "balance of long side");
-        assertEq(protocol.getTotalExpo(), totalExpoBefore + positionTotalExpo, "total expo");
+        Position[] memory tickArray = protocol.getLongPositionsInTick(expectedTick);
+        uint256 tickArrayLengthAfter = tickArray.length;
+        Position memory tickArrayLastPosition = tickArray[tickArray.length - 1];
+
+        // state after opening the position
+        assertEq(balanceLongBefore + LONG_AMOUNT, protocol.getBalanceLong(), "balance of long side");
+        assertEq(totalExpoBefore + uint128(LONG_AMOUNT) * 3, protocol.getTotalExpo(), "total expo");
         assertEq(
+            totalExpoInTickBefore + uint128(LONG_AMOUNT) * 3,
             protocol.getCurrentTotalExpoByTick(expectedTick),
-            totalExpoInTickBefore + positionTotalExpo,
             "total expo in tick"
         );
-        assertEq(protocol.getPositionsInTick(expectedTick), positionsInTickBefore + 1, "positions in tick");
-        assertEq(protocol.getTotalLongPositions(), totalPositionsBefore + 1, "total long positions");
+        assertEq(positionsInTickBefore + 1, protocol.getPositionsInTick(expectedTick), "positions in tick");
+        assertEq(totalPositionsBefore + 1, protocol.getTotalLongPositions(), "total long positions");
+        assertEq(tickArrayLengthBefore + 1, tickArrayLengthAfter, "length tick array");
+
+        // check the last position in the tick array
+        assertEq(long.user, tickArrayLastPosition.user, "last long in tick array: user");
+        assertEq(long.amount, tickArrayLastPosition.amount, "last long in tick array: amount");
+        assertEq(long.totalExpo, tickArrayLastPosition.totalExpo, "last long in tick array: totalExpo");
+        assertEq(long.timestamp, tickArrayLastPosition.timestamp, "last long in tick array: timestamp");
+    }
+
+    /**
+     * @custom:scenario Test that the function save new position
+     * @custom:given A validated long position
+     * @custom:when The function is called with the new position
+     * @custom:then The state in conditions should be modified
+     */
+    function test_saveNewPositionConditions() public {
+        uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
+        int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
+
+        // state modified by condition before opening the position
+        uint256 tickBitmapIndexBefore = protocol.findLastSetInTickBitmap(expectedTick);
+        int24 maxInitializedTickBefore = protocol.getMaxInitializedTick();
+
+        protocol.i_saveNewPosition(protocol.getEffectiveTickForPrice(desiredLiqPrice), long);
+        uint256 tickBitmapIndexAfter = protocol.findLastSetInTickBitmap(expectedTick);
+        int24 initializedTickAfter = protocol.getMaxInitializedTick();
+
+        // check state modified by condition after opening the position
+        assertNotEq(tickBitmapIndexBefore, tickBitmapIndexAfter, "first position in this tick");
+        assertLt(maxInitializedTickBefore, initializedTickAfter, "max initialized tick");
+
+        protocol.i_saveNewPosition(protocol.getEffectiveTickForPrice(desiredLiqPrice), long);
+
+        // state not modified by condition after opening the position
+        assertEq(tickBitmapIndexAfter, protocol.findLastSetInTickBitmap(expectedTick), "second position in this tick");
+        assertEq(initializedTickAfter, protocol.getMaxInitializedTick(), "second position max initialized tick");
     }
 }
