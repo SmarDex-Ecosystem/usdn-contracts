@@ -99,7 +99,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getValidationDeadline() external view returns (uint256);
 
     /// @notice The liquidation penalty (in tick spacing units)
-    function getLiquidationPenalty() external view returns (uint24);
+    function getLiquidationPenalty() external view returns (uint8);
 
     /// @notice Safety margin for the liquidation price of newly open positions
     function getSafetyMarginBps() external view returns (uint256);

@@ -52,9 +52,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 longLiqPrice =
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
 
-        Position memory firstPos = protocol.getLongPosition(
+        (Position memory firstPos,) = protocol.getLongPosition(
             protocol.getEffectiveTickForPrice(longLiqPrice)
-                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
+                + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
             0,
             0
         );

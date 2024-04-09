@@ -28,8 +28,13 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
      * @param tick The tick containing the long position
      * @param tickVersion The tick version
      * @param index The index of the long position inside the tick array
+     * @return The position data
+     * @return The liquidation penalty for that position (and associated tick)
      */
-    function getLongPosition(int24 tick, uint256 tickVersion, uint256 index) external view returns (Position memory);
+    function getLongPosition(int24 tick, uint256 tickVersion, uint256 index)
+        external
+        view
+        returns (Position memory, uint8);
 
     /**
      * @notice Get the minimum acceptable desired liquidation price for a new long position

@@ -8,7 +8,8 @@ import {
     ProtocolAction,
     LongPendingAction,
     Position,
-    PendingAction
+    PendingAction,
+    TickData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -42,7 +43,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
                 / (
                     CURRENT_PRICE
                         - protocol.getEffectivePriceForTick(
-                            expectedTick - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
+                            expectedTick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
                         )
                 )
         );
@@ -69,7 +70,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
         uint256 tickLiqPrice = protocol.getEffectivePriceForTick(
-            tick - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
+            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
         );
 
         // check state after opening the position
@@ -83,8 +84,9 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         uint256 positionExpo =
             protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, uint128(tickLiqPrice));
         assertEq(protocol.getTotalExpo(), totalExpoBefore + positionExpo, "protocol total expo");
-        assertEq(protocol.getTotalExpoByTick(expectedTick), positionExpo, "total expo in tick");
-        assertEq(protocol.getPositionsInTick(expectedTick), 1, "positions in tick");
+        TickData memory tickData = protocol.getTickData(expectedTick);
+        assertEq(tickData.totalExpo, positionExpo, "total expo in tick");
+        assertEq(tickData.totalPos, 1, "positions in tick");
         assertEq(protocol.getBalanceLong(), balanceLongBefore + LONG_AMOUNT, "balance of long side");
 
         // the pending action should not yet be actionable by a third party
@@ -191,7 +193,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
-        Position memory tempPos = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory tempPos,) = protocol.getLongPosition(tick, tickVersion, index);
 
         _waitDelay();
 
@@ -201,13 +203,14 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         emit ValidatedOpenPosition(address(this), 0, newPrice, tick, tickVersion, index);
         protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
-        Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory pos,) = protocol.getLongPosition(tick, tickVersion, index);
         assertEq(pos.user, tempPos.user, "user");
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
         // price increased -> total expo decreased
         assertLt(pos.totalExpo, tempPos.totalExpo, "totalExpo");
 
-        assertEq(protocol.getTotalExpoByTick(tick), pos.totalExpo, "total expo in tick");
+        TickData memory tickData = protocol.getTickData(tick);
+        assertEq(tickData.totalExpo, pos.totalExpo, "total expo in tick");
         assertEq(protocol.getTotalExpo(), initialTotalExpo + pos.totalExpo, "total expo");
     }
 
@@ -227,16 +230,17 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
-        Position memory tempPos = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory tempPos,) = protocol.getLongPosition(tick, tickVersion, index);
 
         _waitDelay();
 
         uint128 newPrice = CURRENT_PRICE - 100 ether;
         uint128 newLiqPrice = protocol.i_getLiquidationPrice(newPrice, uint128(protocol.getMaxLeverage()));
         int24 newTick = protocol.getEffectiveTickForPrice(newLiqPrice)
-            + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing();
+            + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
         uint256 newTickVersion = protocol.getTickVersion(newTick);
-        uint256 newIndex = protocol.getPositionsInTick(newTick);
+        TickData memory tickData = protocol.getTickData(newTick);
+        uint256 newIndex = tickData.totalPos;
 
         vm.expectEmit();
         emit LiquidationPriceUpdated(tick, tickVersion, index, newTick, newTickVersion, newIndex);
@@ -244,7 +248,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         emit ValidatedOpenPosition(address(this), 0, newPrice, newTick, newTickVersion, newIndex);
         protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
-        Position memory pos = protocol.getLongPosition(newTick, newTickVersion, newIndex);
+        (Position memory pos,) = protocol.getLongPosition(newTick, newTickVersion, newIndex);
         assertEq(pos.user, tempPos.user, "user");
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
         assertEq(pos.amount, tempPos.amount, "amount");

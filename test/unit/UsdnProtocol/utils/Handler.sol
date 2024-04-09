@@ -10,7 +10,8 @@ import {
     WithdrawalPendingAction,
     LongPendingAction,
     ProtocolAction,
-    PreviousActionsData
+    PreviousActionsData,
+    TickData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol, Position } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -178,15 +179,16 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_assetToTransfer(
         uint128 currentPrice,
         int24 tick,
+        uint8 liquidationPenalty,
         uint128 expo,
         uint256 liqMultiplier,
         uint256 tempTransferred
     ) external view returns (uint256, int256) {
-        return _assetToTransfer(currentPrice, tick, expo, liqMultiplier, tempTransferred);
+        return _assetToTransfer(currentPrice, tick, liquidationPenalty, expo, liqMultiplier, tempTransferred);
     }
 
-    function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {
-        return _tickValue(currentPrice, tick, tickTotalExpo);
+    function i_tickValue(uint256 currentPrice, int24 tick, TickData memory tickData) external view returns (int256) {
+        return _tickValue(currentPrice, tick, tickData);
     }
 
     function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
