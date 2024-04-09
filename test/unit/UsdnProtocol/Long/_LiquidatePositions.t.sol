@@ -6,10 +6,17 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { ProtocolAction, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
-/// @custom:feature Test the _liquidatePositions internal function of the long layer
+/**
+ * @custom:feature Test the _liquidatePositions internal function of the long layer
+ * @custom:background Given an instantiated protocol with an order manager set
+ */
 contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.enableOrderManager = true;
+        super._setUp(params);
+
+        wstETH.mintAndApprove(address(this), 1 ether, address(orderManager), type(uint256).max);
     }
 
     /**
@@ -170,6 +177,64 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             protocol.getMaxInitializedTick(),
             TickMath.minUsableTick(protocol.getTickSpacing()),
             "The max Initialized tick should be equal to the very last tick"
+        );
+    }
+
+    /**
+     * @custom:scenario The order manager has orders in a tick that can be liquidated
+     * @custom:given A position has its liquidation price above current price
+     * @custom:and the order manager has orders in the tick
+     * @custom:when User calls _liquidatePositions
+     * @custom:then It should liquidate the position
+     * @custom:and create a position for the order manager
+     * @custom:and add its collateral to the returned newLongBalance value
+     */
+    function test_liquidatingAPositionCreatesAPositionForTheOrderManager() public {
+        uint128 price = 2000 ether;
+        int24 desiredLiqTick = protocol.getEffectiveTickForPrice(price - 200 ether);
+        uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
+        uint128 orderAmount = 0.5 ether;
+
+        // Create an order in the tick to liquidate
+        orderManager.depositAssetsInTick(desiredLiqTick, orderAmount);
+
+        // Create a long position to liquidate
+        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
+
+        uint128 liqPriceAfterFundings =
+            protocol.getEffectivePriceForTick(desiredLiqTick, protocol.getLiquidationMultiplier());
+
+        // Calculate the collateral this position gives on liquidation
+        int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTotalExpoByTick(desiredLiqTick));
+
+        vm.expectEmit(true, false, false, false, address(protocol));
+        emit OrderManagerPositionOpened(address(orderManager), 0, 0, 0, 0, 0, 0, 0);
+        vm.expectEmit();
+        emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
+        (
+            uint256 liquidatedPositions,
+            uint16 liquidatedTicks,
+            int256 collateralLiquidated,
+            uint256 newLongBalance,
+            uint256 newVaultBalance
+        ) = protocol.i_liquidatePositions(uint256(liqPrice), 1, 100 ether, 100 ether);
+
+        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(collateralLiquidated, tickValue, "Collateral liquidated should be equal to tickValue");
+        assertEq(
+            newLongBalance,
+            100 ether - uint256(tickValue) + orderAmount,
+            "The long side should have paid tickValue to the vault side and received the collateral given by the order manager"
+        );
+        assertEq(
+            int256(newVaultBalance), 100 ether + tickValue, "The long side should have paid tickValue to the vault side"
+        );
+
+        assertLt(
+            protocol.getMaxInitializedTick(),
+            desiredLiqTick,
+            "The max Initialized tick should be lower than the last liquidated tick"
         );
     }
 

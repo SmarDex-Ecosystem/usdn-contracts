@@ -84,7 +84,7 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when a position for the order manager has been created.
      * @dev The combination of the tick number, the tick version, and the index constitutes a unique identifier for the
      * position.
-     * @param orderManager The user address.
+     * @param orderManager The address of the order manager.
      * @param timestamp The timestamp of the action.
      * @param leverage The initial leverage of the position (pending validation).
      * @param amount The amount of asset that were deposited as collateral.
