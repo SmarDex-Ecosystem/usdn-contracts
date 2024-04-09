@@ -13,6 +13,7 @@ import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEth
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
+import { OrderManager } from "src/OrderManager.sol";
 import { Usdn } from "src/Usdn.sol";
 
 contract Deploy is Script {
@@ -22,6 +23,7 @@ contract Deploy is Script {
      * @return Sdex_ The SDEX token
      * @return WstEthOracleMiddleware_ The WstETH oracle middleware
      * @return LiquidationRewardsManager_ The liquidation rewards manager
+     * @return OrderManager The order manager
      * @return Usdn_ The USDN token
      * @return UsdnProtocol_ The USDN protocol
      */
