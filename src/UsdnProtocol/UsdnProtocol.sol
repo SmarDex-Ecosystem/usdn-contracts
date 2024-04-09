@@ -336,6 +336,15 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         emit UsdnRebaseIntervalUpdated(newInterval);
     }
 
+    /// @inheritdoc IUsdnProtocol
+    function setMinLongPosition(uint256 newMinLongPosition) external onlyOwner {
+        if (newMinLongPosition > 50_000 * 10 ** _priceFeedDecimals) {
+            revert UsdnProtocolInvalidMinLongPosition();
+        }
+        _minLongPosition = newMinLongPosition;
+        emit MinLongPositionUpdated(newMinLongPosition);
+    }
+
     /**
      * @notice Create initial deposit
      * @dev To be called from `initialize`

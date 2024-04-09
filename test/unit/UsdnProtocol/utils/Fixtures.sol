@@ -11,7 +11,6 @@ import { Sdex } from "test/utils/Sdex.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
-import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import {
@@ -28,12 +27,7 @@ import { OrderManagerHandler } from "test/unit/OrderManager/utils/Handler.sol";
  * @dev Utils for testing the USDN Protocol
  */
 contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, IUsdnProtocolEvents {
-    struct SetUpParams {
-        uint128 initialDeposit;
-        uint128 initialLong;
-        uint128 initialPrice;
-        uint256 initialTimestamp;
-        uint256 initialBlock;
+    struct Flags {
         bool enablePositionFees;
         bool enableProtocolFees;
         bool enableFunding;
@@ -41,6 +35,16 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         bool enableUsdnRebase;
         bool enableSecurityDeposit;
         bool enableSdexBurnOnDeposit;
+        bool enableLongLimit;
+    }
+
+    struct SetUpParams {
+        uint128 initialDeposit;
+        uint128 initialLong;
+        uint128 initialPrice;
+        uint256 initialTimestamp;
+        uint256 initialBlock;
+        Flags flags;
     }
 
     SetUpParams public params;
@@ -50,13 +54,16 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
         initialBlock: block.number,
-        enablePositionFees: false,
-        enableProtocolFees: true,
-        enableFunding: true,
-        enableSecurityDeposit: false,
-        enableLimits: false,
-        enableUsdnRebase: false,
-        enableSdexBurnOnDeposit: false
+        flags: Flags({
+            enablePositionFees: false,
+            enableProtocolFees: true,
+            enableFunding: true,
+            enableLimits: false,
+            enableUsdnRebase: false,
+            enableSecurityDeposit: false,
+            enableSdexBurnOnDeposit: false,
+            enableLongLimit: false
+        })
     });
 
     Usdn public usdn;
@@ -87,8 +94,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         sdex = new Sdex();
         oracleMiddleware = new MockOracleMiddleware();
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
-        liquidationRewardsManager =
-            new LiquidationRewardsManager(address(chainlinkGasPriceFeed), IWstETH(address(wstETH)), 2 days);
+        liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
 
         protocol = new UsdnProtocolHandler(
             usdn,
@@ -102,33 +108,38 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
 
-        if (!testParams.enablePositionFees) {
+        if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);
         }
-        if (!testParams.enableProtocolFees) {
+        if (!testParams.flags.enableProtocolFees) {
             protocol.setProtocolFeeBps(0);
         }
-        if (!testParams.enableFunding) {
+        if (!testParams.flags.enableFunding) {
             protocol.setFundingSF(0);
             protocol.resetEMA();
         }
-        if (!params.enableUsdnRebase) {
+        if (!params.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
             protocol.setUsdnRebaseThreshold(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
             protocol.setTargetUsdnPrice(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
         }
-        if (!params.enableSecurityDeposit) {
+        if (!params.flags.enableSecurityDeposit) {
             protocol.setSecurityDepositValue(0);
         }
 
         // disable imbalance limits
-        if (!testParams.enableLimits) {
+        if (!testParams.flags.enableLimits) {
             protocol.setExpoImbalanceLimits(0, 0, 0, 0);
         }
 
         // disable burn sdex on deposit
-        if (!testParams.enableSdexBurnOnDeposit) {
+        if (!testParams.flags.enableSdexBurnOnDeposit) {
             protocol.setSdexBurnOnDepositRatio(0);
+        }
+
+        // disable open position limit
+        if (!testParams.flags.enableLongLimit) {
+            protocol.setMinLongPosition(0);
         }
 
         wstETH.approve(address(protocol), type(uint256).max);
@@ -318,7 +329,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         // deploy protocol at equilibrium temporarily to get access to constants and calculations
         // it will be re-deployed at the end of the function with new initial values
         params = DEFAULT_PARAMS;
-        params.enableLimits = true;
+        params.flags.enableLimits = true;
         params.initialDeposit = 5 ether;
         params.initialLong = 5 ether;
         _setUp(params);

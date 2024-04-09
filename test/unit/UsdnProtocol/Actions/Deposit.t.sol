@@ -17,7 +17,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
-        params.enableSdexBurnOnDeposit = true;
+        params.flags.enableSdexBurnOnDeposit = true;
         super._setUp(params);
 
         // Sanity check

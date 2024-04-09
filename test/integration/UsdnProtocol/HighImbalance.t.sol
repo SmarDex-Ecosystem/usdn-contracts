@@ -17,8 +17,8 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 1 ether;
-        params.initialLong = 1 ether;
+        params.initialDeposit = 150 ether;
+        params.initialLong = 150 ether;
         params.initialLiqPrice = 1 ether;
         params.initialPrice = 3290 ether;
         params.initialTimestamp = 1_708_088_866; // 16 February 2024 at 14:07 CET
@@ -47,7 +47,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         uint256 messageValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
             + protocol.getSecurityDepositValue();
 
-        protocol.initiateOpenPosition{ value: messageValue }(0.5 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition{ value: messageValue }(3 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA);
 
         vm.warp(1_708_090_246);
         mockPyth.setPrice(3290e8);
@@ -61,7 +61,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockChainlinkOnChain.setLastPublishTime(1_708_090_342 - 10 minutes);
         mockChainlinkOnChain.setLastPrice(3290e8);
 
-        protocol.initiateOpenPosition{ value: messageValue }(0.01 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition{ value: messageValue }(3.01 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA);
 
         vm.warp(1_708_090_438);
         mockPyth.setPrice(3281e8);
@@ -82,7 +82,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         require(success, "USER_2 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
 
-        protocol.initiateOpenPosition{ value: messageValue }(0.0001 ether, 1684 ether, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition{ value: messageValue }(4.0001 ether, 1684 ether, "", EMPTY_PREVIOUS_DATA);
         vm.stopPrank();
 
         assertGe(protocol.longTradingExpoWithFunding(3381 ether, uint128(block.timestamp)), 0, "long expo");

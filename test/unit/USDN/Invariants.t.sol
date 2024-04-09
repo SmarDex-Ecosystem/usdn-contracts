@@ -16,11 +16,14 @@ contract TestUsdnInvariants is UsdnTokenFixture {
         super.setUp();
 
         targetContract(address(usdn));
-        bytes4[] memory selectors = new bytes4[](4);
+        bytes4[] memory selectors = new bytes4[](7);
         selectors[0] = usdn.rebaseTest.selector;
         selectors[1] = usdn.mintTest.selector;
         selectors[2] = usdn.burnTest.selector;
         selectors[3] = usdn.transferTest.selector;
+        selectors[4] = usdn.mintSharesTest.selector;
+        selectors[5] = usdn.burnSharesTest.selector;
+        selectors[6] = usdn.transferSharesTest.selector;
         targetSelector(FuzzSelector({ addr: address(usdn), selectors: selectors }));
         targetSender(USER_1);
         targetSender(USER_2);
