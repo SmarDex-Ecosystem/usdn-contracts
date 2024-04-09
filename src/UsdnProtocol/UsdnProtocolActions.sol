@@ -833,10 +833,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 // above.
                 // Retrieve exact liquidation price without penalty
                 liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
-                // recalculate the leverage with the new liquidation price
-                leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
-                // update position total expo
-                pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
             } else {
                 // The tick's imposed penalty is different from the current setting, so the `tickWithoutPenalty` we
                 // calculated above can't be used to calculate the leverage.
@@ -849,11 +845,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 // Retrieve exact liquidation price without penalty.
                 liqPriceWithoutPenalty =
                     getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * tickSpacing);
-                // recalculate the leverage with the new liquidation price
-                leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
-                // update position total expo
-                pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
             }
+            // recalculate the leverage with the new liquidation price
+            leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
+            // update position total expo
+            pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
 
             // insert position into new tick, update tickVersion and index
             (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos, liquidationPenalty);
