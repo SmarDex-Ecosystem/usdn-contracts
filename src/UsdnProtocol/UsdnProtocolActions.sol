@@ -823,27 +823,28 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             int24 tickWithoutPenalty = getEffectiveTickForPrice(liqPriceWithoutPenalty);
 
             // apply liquidation penalty with the current penalty setting
-            uint8 liquidationPenalty = _getTickLiquidationPenalty(tickHash);
             uint8 currentLiqPenalty = _liquidationPenalty;
             int24 tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * tickSpacing;
-            // check if the current penalty for that tick is different
-            liquidationPenalty = getTickLiquidationPenalty(tick);
+            // retrieve the actual penalty for this tick we want to use
+            uint8 liquidationPenalty = getTickLiquidationPenalty(tick);
+            // check if the penalty for that tick is different from the current setting
             if (liquidationPenalty == currentLiqPenalty) {
-                // Lucky us, we can indeed assign the position to that tick since it's penalty is the same as the
-                // current value.
-
-                // Retrieve exact liquidation price without penalty.
+                // Since the tick's penalty is the same as what we assumed, we can use the `tickWithoutPenalty` from
+                // above.
+                // Retrieve exact liquidation price without penalty
                 liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
                 // recalculate the leverage with the new liquidation price
                 leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
                 // update position total expo
                 pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
             } else {
-                // The current liquidation penalty is e.g. 2 and the tick we want to put the position in has a penalty
-                // of e.g. 3, so we need to use a penalty of 3 for the position we are currently validating.
-                // In case the tick liquidation penalty is lower (e.g. 1), then we use 1 to calculate the liquidation
-                // price, which might lead to a leverage that exceeds the max leverage slightly. We allow this in this
-                // rare occurrence.
+                // The tick's imposed penalty is different from the current setting, so the `tickWithoutPenalty` we
+                // calculated above can't be used to calculate the leverage.
+                // We must instead use the tick's penalty to find the new `liqPriceWithoutPenalty` and calculate the
+                // leverage.
+
+                // Note: In case the tick liquidation penalty is lower than the current setting, it might lead to a
+                // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence.
 
                 // Retrieve exact liquidation price without penalty.
                 liqPriceWithoutPenalty =
