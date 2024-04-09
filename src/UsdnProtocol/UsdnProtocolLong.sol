@@ -219,7 +219,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * TODO Tests
      * @notice Calculate the collateral amount a position needs to reach the provided total expo.
      * @dev Reverts when startPrice <= liquidationPrice
      * @param totalExpo The total expo to reach
@@ -227,7 +226,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param liquidationPrice The liquidation price of the position
      * @return amount_ The collateral amount a position needs to reach the total expo
      */
-    function _calculatePositionAmountForTotalExpo(uint128 totalExpo, uint128 startPrice, uint128 liquidationPrice)
+    function _calcPositionAmount(uint128 totalExpo, uint128 startPrice, uint128 liquidationPrice)
         internal
         pure
         returns (uint128 amount_)
@@ -398,7 +397,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // Lower the position size to the liquidated tick's total expo
         if (liquidatedTickTotalExpo < posTotalExpo) {
             posTotalExpo = liquidatedTickTotalExpo;
-            amountTaken = _calculatePositionAmountForTotalExpo(liquidatedTickTotalExpo, currentPrice, liqPrice);
+            amountTaken = _calcPositionAmount(liquidatedTickTotalExpo, currentPrice, liqPrice);
         }
 
         Position memory pos = Position({

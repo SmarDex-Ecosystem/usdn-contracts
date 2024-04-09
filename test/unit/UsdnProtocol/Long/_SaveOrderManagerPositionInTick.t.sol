@@ -93,7 +93,7 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
             protocol.i_getLiquidationPrice(_liqPrice, uint128(orderManager.getOrdersLeverage()))
         );
         // Deposit more assets than necessary
-        uint128 maxAmount = protocol.i_calculatePositionAmountForTotalExpo(
+        uint128 maxAmount = protocol.i_calcPositionAmount(
             _tickTotalExpo, _liqPrice, protocol.getEffectivePriceForTick(expectedLongTick)
         );
         orderManager.depositAssetsInTick(_tick, maxAmount);

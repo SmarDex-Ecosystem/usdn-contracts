@@ -90,12 +90,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _calculatePositionTotalExpo(amount, startPrice, liquidationPrice);
     }
 
-    function i_calculatePositionAmountForTotalExpo(uint128 totalExpo, uint128 startPrice, uint128 liquidationPrice)
+    function i_calcPositionAmount(uint128 totalExpo, uint128 startPrice, uint128 liquidationPrice)
         external
         pure
         returns (uint128 amount_)
     {
-        return _calculatePositionAmountForTotalExpo(totalExpo, startPrice, liquidationPrice);
+        return _calcPositionAmount(totalExpo, startPrice, liquidationPrice);
     }
 
     function i_removePendingAction(uint128 rawIndex, address user) external {
