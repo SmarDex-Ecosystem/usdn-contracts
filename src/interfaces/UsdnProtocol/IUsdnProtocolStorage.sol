@@ -90,7 +90,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /// @notice The liquidation rewards manager contract
     function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager);
 
-    /// @notice The order manager contract
+    /**
+     * @notice The order manager contract
+     * @return The address of order manager
+     */
     function getOrderManager() external view returns (IOrderManager);
 
     /// @notice The minimum leverage for a position
