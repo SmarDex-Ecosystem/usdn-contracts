@@ -72,7 +72,13 @@ contract TestUsdnProtocolLongCalcPositionAmount is UsdnProtocolBaseFixture {
             calculatedTotalExpo,
             totalExpo,
             10,
-            "The total expo from the calculated amount does not match the calculated total expo"
+            "The difference between the total expo from the calculated amount and the calculated total expo is too high"
         );
+
+        if (calculatedTotalExpo != totalExpo) {
+            assertLt(
+                calculatedTotalExpo, totalExpo, "If both total expo differs, the calculatedTotalExpo should be lower"
+            );
+        }
     }
 }
