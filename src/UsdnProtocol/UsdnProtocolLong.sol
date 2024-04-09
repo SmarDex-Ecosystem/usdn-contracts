@@ -385,10 +385,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint128 amountTaken;
         int24 liquidationTick;
         {
+            uint256 amountAvailable;
             // Get the amount available in orders in the tick
-            (int24 liquidationTickTemp, uint256 amountAvailable) =
-                _orderManager.fulfillOrdersInTick(currentPrice, liquidatedTickHash);
-            liquidationTick = liquidationTickTemp;
+            (liquidationTick, amountAvailable) = _orderManager.fulfillOrdersInTick(currentPrice, liquidatedTickHash);
 
             // If there are no orders for this tick, return
             if (amountAvailable == 0) {
@@ -401,15 +400,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // Calculate the total expo available to not imbalance the protocol
         uint128 posTotalExpo;
         {
-            // Calculate the effective liquidation price for the tick
-            uint128 liqPrice = getEffectivePriceForTick(liquidationTick);
-            posTotalExpo = _calculatePositionTotalExpo(amountTaken, currentPrice, liqPrice);
+            // Calculate liquidation price without the liquidation penalty for the tick
+            uint128 liqPriceWithoutPenalty =
+                getEffectivePriceForTick(liquidationTick - int24(_liquidationPenalty) * _tickSpacing);
+            posTotalExpo = _calculatePositionTotalExpo(amountTaken, currentPrice, liqPriceWithoutPenalty);
 
             // If the total expo of the liquidated tick is lower than the order manager's position total expo
             // Lower the position size to the liquidated tick's total expo
             if (liquidatedTickTotalExpo < posTotalExpo) {
                 posTotalExpo = liquidatedTickTotalExpo;
-                amountTaken = _calcPositionAmount(liquidatedTickTotalExpo, currentPrice, liqPrice);
+                amountTaken = _calcPositionAmount(liquidatedTickTotalExpo, currentPrice, liqPriceWithoutPenalty);
             }
         }
 
@@ -423,7 +423,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 totalExpo: posTotalExpo,
                 amount: amountTaken
             });
-            // TODO apply liquidation penalty?
+
             (tickVersion, index) = _saveNewPosition(liquidationTick, pos);
 
             // Transfer assets from the order manager to the protocol

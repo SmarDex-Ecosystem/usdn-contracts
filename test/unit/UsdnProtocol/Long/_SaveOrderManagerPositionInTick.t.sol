@@ -98,8 +98,11 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
             ordersData.longPositionTick, ordersData.longPositionTickVersion, ordersData.longPositionIndex
         );
 
-        uint128 posLiqPrice = protocol.getEffectivePriceForTick(ordersData.longPositionTick);
-        uint256 ordersTotalExpo = protocol.i_calculatePositionTotalExpo(_orderAmount, _liqPrice, posLiqPrice);
+        uint128 posLiqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
+            expectedLongTick - protocol.getTickSpacing() * int24(protocol.getLiquidationPenalty())
+        );
+        uint256 ordersTotalExpo =
+            protocol.i_calculatePositionTotalExpo(_orderAmount, _liqPrice, posLiqPriceWithoutPenalty);
         assertEq(pos.user, address(orderManager), "The position should belong to the order manager");
         assertEq(pos.timestamp, block.timestamp, "The timestamp should be now");
         assertEq(pos.totalExpo, ordersTotalExpo, "The total expo should be equal to the total expo of the orders");
@@ -119,11 +122,12 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
             protocol.getEffectiveTickForPrice(protocol.i_getLiquidationPrice(_liqPrice, ordersLeverage));
         uint256 expectedLongTickVersion = 0;
         uint256 expectedLongIndex = 0;
+        uint128 posLiqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
+            expectedLongTick - protocol.getTickSpacing() * int24(protocol.getLiquidationPenalty())
+        );
 
         // Deposit more assets than necessary
-        uint128 maxAmount = protocol.i_calcPositionAmount(
-            _tickTotalExpo, _liqPrice, protocol.getEffectivePriceForTick(expectedLongTick)
-        );
+        uint128 maxAmount = protocol.i_calcPositionAmount(_tickTotalExpo, _liqPrice, posLiqPriceWithoutPenalty);
         orderManager.depositAssetsInTick(_tick, maxAmount);
         _orderAmount += maxAmount;
 
