@@ -44,7 +44,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The pending action is actionable after the validation deadline has elapsed
      */
     function test_initiateDeposit() public {
-        initiateDepositScenario(address(this));
+        _initiateDepositScenario(address(this));
     }
 
     /**
@@ -55,10 +55,10 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The user has a pending action of type `InitiateDeposit` with the right beneficiary
      */
     function test_initiateDepositForAnotherUser() public {
-        initiateDepositScenario(USER_1);
+        _initiateDepositScenario(USER_1);
     }
 
-    function initiateDepositScenario(address to) internal {
+    function _initiateDepositScenario(address to) internal {
         uint128 depositAmount = 1 ether;
         uint128 price = 2000 ether;
         bytes memory currentPrice = abi.encode(price); // only used to apply PnL + funding
