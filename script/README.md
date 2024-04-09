@@ -16,6 +16,7 @@ Environment variables can be used to control the script execution:
 - `CHAINLINK_STETH_PRICE_ADDRESS`: required if middleware address not provided, the address of the stETH chainlink oracle
 - `CHAINLINK_STETH_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
 - `LIQUIDATION_REWARDS_MANAGER_ADDRESS`: if provided, skips deployment of the liquidation rewards manager
+- `ORDER_MANAGER_ADDRESS`: if provided, skips deployment of the order manager
 - `CHAINLINK_GAS_PRICE_ADDRESS`: required if liquidation rewards manager address not provided, the address of the gas price chainlink oracle
 - `CHAINLINK_GAS_PRICE_VALIDITY`: the amount of time (in seconds) we consider the price valid. A tolerance should be added to avoid reverting if chainlink misses the heartbeat by a few minutes
 - `USDN_ADDRESS`: if provided, skips deployment of the USDN token
