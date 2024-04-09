@@ -87,7 +87,7 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         int24 initializedTickAfter = protocol.getMaxInitializedTick();
 
         // check state modified by condition after opening the position
-        assertNotEq(tickBitmapIndexBefore, tickBitmapIndexAfter, "first position in this tick");
+        assertLt(tickBitmapIndexBefore, tickBitmapIndexAfter, "first position in this tick");
         assertLt(maxInitializedTickBefore, initializedTickAfter, "max initialized tick");
 
         protocol.i_saveNewPosition(protocol.getEffectiveTickForPrice(desiredLiqPrice), long);
