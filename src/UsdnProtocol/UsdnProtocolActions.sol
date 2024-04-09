@@ -761,36 +761,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _asset.safeTransferFrom(user, address(this), amount);
     }
 
-    /**
-     * @notice During creation of a new long position, calculate the leverage and total exposure of the position.
-     * @param tick The tick of the position.
-     * @param liquidationPenalty The liquidation penalty of the tick.
-     * @param adjustedPrice The adjusted price of the asset.
-     * @param amount The amount of collateral.
-     * @return leverage_ The leverage of the position.
-     * @return totalExpo_ The total exposure of the position.
-     */
-    function _getOpenPositionLeverage(int24 tick, uint8 liquidationPenalty, uint128 adjustedPrice, uint128 amount)
-        internal
-        view
-        returns (uint128 leverage_, uint128 totalExpo_)
-    {
-        // remove liquidation penalty for leverage calculation
-        uint128 liqPriceWithoutPenalty =
-            getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing);
-        totalExpo_ = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
-
-        // calculate position leverage
-        // reverts if liquidationPrice >= entryPrice
-        leverage_ = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
-        if (leverage_ < _minLeverage) {
-            revert UsdnProtocolLeverageTooLow();
-        }
-        if (leverage_ > _maxLeverage) {
-            revert UsdnProtocolLeverageTooHigh();
-        }
-    }
-
     function _validateOpenPosition(address user, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_)
@@ -1118,6 +1088,36 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         if (liquidatedTicks > 0) {
             _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
+        }
+    }
+
+    /**
+     * @notice During creation of a new long position, calculate the leverage and total exposure of the position.
+     * @param tick The tick of the position.
+     * @param liquidationPenalty The liquidation penalty of the tick.
+     * @param adjustedPrice The adjusted price of the asset.
+     * @param amount The amount of collateral.
+     * @return leverage_ The leverage of the position.
+     * @return totalExpo_ The total exposure of the position.
+     */
+    function _getOpenPositionLeverage(int24 tick, uint8 liquidationPenalty, uint128 adjustedPrice, uint128 amount)
+        internal
+        view
+        returns (uint128 leverage_, uint128 totalExpo_)
+    {
+        // remove liquidation penalty for leverage calculation
+        uint128 liqPriceWithoutPenalty =
+            getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing);
+        totalExpo_ = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
+
+        // calculate position leverage
+        // reverts if liquidationPrice >= entryPrice
+        leverage_ = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+        if (leverage_ < _minLeverage) {
+            revert UsdnProtocolLeverageTooLow();
+        }
+        if (leverage_ > _maxLeverage) {
+            revert UsdnProtocolLeverageTooHigh();
         }
     }
 
