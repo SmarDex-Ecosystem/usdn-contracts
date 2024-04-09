@@ -23,7 +23,7 @@ contract Deploy is Script {
      * @return Sdex_ The SDEX token
      * @return WstEthOracleMiddleware_ The WstETH oracle middleware
      * @return LiquidationRewardsManager_ The liquidation rewards manager
-     * @return OrderManager The order manager
+     * @return OrderManager_ The order manager
      * @return Usdn_ The USDN token
      * @return UsdnProtocol_ The USDN protocol
      */
@@ -64,13 +64,8 @@ contract Deploy is Script {
             vm.envAddress("FEE_COLLECTOR")
         );
 
-        // Deploy the OrderManager if necessary
-        address orderManagerAddress = vm.envOr("ORDER_MANAGER_ADDRESS", address(0));
-        if (orderManagerAddress != address(0)) {
-            OrderManager_ = OrderManager(orderManagerAddress);
-        } else {
-            OrderManager_ = new OrderManager(UsdnProtocol_);
-        }
+        // Deploy the order manager
+        OrderManager_ = _deployOrderManager(UsdnProtocol_);
 
         // Set the order manager on the USDN protocol
         UsdnProtocol_.setOrderManager(OrderManager_);
@@ -201,6 +196,21 @@ contract Deploy is Script {
             }
         } else {
             wstEth_ = new WstETH();
+        }
+    }
+
+    /**
+     * @notice Deploy the OrderManager contract if necessary
+     * @dev Will return the already deployed one if an address is in the env variables
+     * @param usdnProtocol the USDN protocol
+     * @return orderManager_ the deployed contract
+     */
+    function _deployOrderManager(UsdnProtocol usdnProtocol) internal returns (OrderManager orderManager_) {
+        address orderManagerAddress = vm.envOr("ORDER_MANAGER_ADDRESS", address(0));
+        if (orderManagerAddress != address(0)) {
+            orderManager_ = OrderManager(orderManagerAddress);
+        } else {
+            orderManager_ = new OrderManager(usdnProtocol);
         }
     }
 
