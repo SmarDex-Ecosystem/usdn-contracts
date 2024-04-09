@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { ADMIN } from "test/utils/Constants.sol";
+import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import {
@@ -109,6 +109,46 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         action = protocol.i_toLongPendingAction(pendingActions[0]);
         assertEq(action.user, address(this), "pending action user");
         vm.stopPrank();
+    }
+
+    /**
+     * @custom:scenario A user opens a position in a tick that had a different liquidation penalty than the current
+     * value.
+     * @custom:given A tick with an existing position and a different liquidation penalty than the current value
+     * @custom:when The user opens a new position in the same tick
+     * @custom:then The new position is opened with the stored liquidation penalty and not the current one
+     */
+    function test_initiateOpenPositionDifferentPenalty() public {
+        uint128 desiredLiqPrice = CURRENT_PRICE * 9 / 10; // leverage approx 10x
+        uint8 originalLiqPenalty = protocol.getLiquidationPenalty();
+        uint8 storedLiqPenalty = originalLiqPenalty - 1;
+
+        vm.prank(ADMIN);
+        protocol.setLiquidationPenalty(storedLiqPenalty); // set a different liquidation penalty
+        // this position is opened to set the liquidation penalty of the tick
+        (int24 tick,,) = setUpUserPositionInLong(
+            USER_1, ProtocolAction.ValidateOpenPosition, uint128(LONG_AMOUNT), desiredLiqPrice, CURRENT_PRICE
+        );
+
+        vm.prank(ADMIN);
+        protocol.setLiquidationPenalty(originalLiqPenalty); // restore liquidation penalty
+        assertEq(
+            protocol.getTickLiquidationPenalty(tick), storedLiqPenalty, "liquidation penalty of the tick was stored"
+        );
+
+        uint128 expectedLiqPrice =
+            protocol.getEffectivePriceForTick(tick - int24(uint24(storedLiqPenalty)) * protocol.getTickSpacing());
+        uint256 expectedTotalExpo =
+            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, expectedLiqPrice);
+
+        // create position which ends up in the same tick
+        (int24 tick2, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
+        );
+        assertEq(tick2, tick, "tick is the same");
+        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(tick2, tickVersion, index);
+        assertEq(pos.totalExpo, expectedTotalExpo, "pos total expo indicates that the stored penalty was used");
+        assertEq(liqPenalty, storedLiqPenalty, "pos liquidation penalty");
     }
 
     /**
