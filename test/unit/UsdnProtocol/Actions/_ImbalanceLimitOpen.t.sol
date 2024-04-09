@@ -54,7 +54,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitOpen` function is called with values above the open limit
      * @custom:then The transaction should revert
      */
-    function test_RevertWith_checkImbalanceLimitOpenOutLimit() public {
+    function test_RevertWhen_checkImbalanceLimitOpenOutLimit() public {
         (int256 openLimitBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, openLimitBps)
@@ -71,7 +71,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitOpen` function is called
      * @custom:then The transaction should revert
      */
-    function test_RevertWith_checkImbalanceLimitOpenZeroVaultExpo() public {
+    function test_RevertWhen_checkImbalanceLimitOpenZeroVaultExpo() public {
         setUpUserPositionInLong(
             address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
         );
