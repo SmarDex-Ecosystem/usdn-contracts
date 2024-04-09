@@ -303,13 +303,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         tickData.totalExpo -= totalExpoToRemove;
     }
 
-    /**
-     * @notice Retrieve the liquidation penalty assigned to `tick` if there are positions in it, otherwise retrieve the
-     * current setting value from storage.
-     * @param tick The tick number
-     * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
-     */
-    function _getTickLiquidationPenalty(int24 tick) internal view returns (int24 liquidationPenalty_) {
+    /// @inheritdoc IUsdnProtocolLong
+    function getTickLiquidationPenalty(int24 tick) public view returns (int24 liquidationPenalty_) {
         (bytes32 tickHash,) = _tickHash(tick);
         liquidationPenalty_ = _getTickLiquidationPenalty(tickHash);
     }

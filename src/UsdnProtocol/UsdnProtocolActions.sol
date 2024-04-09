@@ -690,7 +690,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             // we calculate the closest valid tick down for the desired liq price with liquidation penalty
             tick_ = getEffectiveTickForPrice(desiredLiqPrice);
-            liquidationPenalty = _getTickLiquidationPenalty(tick_);
+            liquidationPenalty = getTickLiquidationPenalty(tick_);
 
             // remove liquidation penalty for leverage calculation
             uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - liquidationPenalty * _tickSpacing);
@@ -810,7 +810,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             int24 currentLiqPenalty = int24(uint24(_liquidationPenalty));
             int24 tick = tickWithoutPenalty + currentLiqPenalty * tickSpacing;
             // check if the current penalty for that tick is different
-            liquidationPenalty = _getTickLiquidationPenalty(tick);
+            liquidationPenalty = getTickLiquidationPenalty(tick);
             if (liquidationPenalty == currentLiqPenalty) {
                 // Lucky us, we can indeed assign the position to that tick since it's penalty is the same as the
                 // current value.
@@ -976,7 +976,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Apply fees on price
         uint128 priceWithFees = (price.price - (price.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
-        int24 liquidationPenalty = _getTickLiquidationPenalty(long.tick);
+        int24 liquidationPenalty = getTickLiquidationPenalty(long.tick);
         (uint256 assetToTransfer, int256 positionValue) = _assetToTransfer(
             priceWithFees,
             long.tick,

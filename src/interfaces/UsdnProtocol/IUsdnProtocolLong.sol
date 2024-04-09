@@ -89,4 +89,12 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
      * @param liqMultiplier The liquidation price multiplier
      */
     function getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external view returns (uint128);
+
+    /**
+     * @notice Retrieve the liquidation penalty assigned to `tick` if there are positions in it, otherwise retrieve the
+     * current setting value from storage.
+     * @param tick The tick number
+     * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
+     */
+    function getTickLiquidationPenalty(int24 tick) external view returns (int24);
 }
