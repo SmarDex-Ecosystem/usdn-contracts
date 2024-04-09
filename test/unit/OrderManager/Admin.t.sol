@@ -38,7 +38,7 @@ contract TestOrderManagerAdmin is UsdnProtocolBaseFixture {
      * @custom:when approveAssetsForSpending is called
      * @custom:then The asset allowance of the usdn protocol on this contract should be the provided value
      */
-    function test_approveAssetsForSpendingSetAllowanceToMax() public {
+    function test_approveAssetsForSpendingIncreaseAllowance() public {
         // Reset the allowance of the USDN protocol
         vm.prank(address(orderManager));
         wstETH.approve(address(protocol), 0);
