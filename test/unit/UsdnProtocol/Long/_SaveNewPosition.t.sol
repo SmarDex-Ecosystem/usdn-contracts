@@ -12,15 +12,11 @@ import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
  * leverage of ~2x
  */
 contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
-    uint256 internal constant LONG_AMOUNT = 1 ether;
+    uint128 internal constant LONG_AMOUNT = 1 ether;
     uint128 internal constant CURRENT_PRICE = 2000 ether;
 
-    Position long = Position({
-        user: USER_1,
-        amount: uint128(LONG_AMOUNT),
-        totalExpo: uint128(LONG_AMOUNT) * 3,
-        timestamp: uint40(block.timestamp)
-    });
+    Position long =
+        Position({ user: USER_1, amount: LONG_AMOUNT, totalExpo: LONG_AMOUNT * 3, timestamp: uint40(block.timestamp) });
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -51,9 +47,9 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
 
         // state after opening the position
         assertEq(balanceLongBefore + LONG_AMOUNT, protocol.getBalanceLong(), "balance of long side");
-        assertEq(totalExpoBefore + uint128(LONG_AMOUNT) * 3, protocol.getTotalExpo(), "total expo");
+        assertEq(totalExpoBefore + LONG_AMOUNT * 3, protocol.getTotalExpo(), "total expo");
         assertEq(
-            totalExpoInTickBefore + uint128(LONG_AMOUNT) * 3,
+            totalExpoInTickBefore + LONG_AMOUNT * 3,
             protocol.getCurrentTotalExpoByTick(expectedTick),
             "total expo in tick"
         );
