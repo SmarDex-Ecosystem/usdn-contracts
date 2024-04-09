@@ -452,10 +452,22 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 usdnToMintEstimated = _calcMintUsdn(
             pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
         );
-        uint256 sdexToBurn = _calcSdexToBurn(usdnToMintEstimated);
+        uint32 burnRatio = _sdexBurnOnDepositRatio;
+        uint256 sdexToBurn = _calcSdexToBurn(usdnToMintEstimated, burnRatio);
+        // We want to at least mint 1 wei of USDN
+        if (usdnToMintEstimated == 0) {
+            revert UsdnProtocolDepositTooSmall();
+        }
+        // We want to at least burn 1 wei of SDEX if SDEX burning is enabled
+        if (burnRatio != 0 && sdexToBurn == 0) {
+            revert UsdnProtocolDepositTooSmall();
+        }
+        if (sdexToBurn > 0) {
+            // Send SDEX to the dead address
+            _sdex.safeTransferFrom(user, DEAD_ADDRESS, sdexToBurn);
+        }
 
         // Transfer assets
-        _sdex.safeTransferFrom(user, DEAD_ADDRESS, sdexToBurn);
         _asset.safeTransferFrom(user, address(this), amount);
 
         emit InitiatedDeposit(user, amount, block.timestamp);
