@@ -81,12 +81,14 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(this)), balanceBefore - LONG_AMOUNT, "user wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), protocolBalanceBefore + LONG_AMOUNT, "protocol wstETH balance");
         assertEq(protocol.getTotalLongPositions(), totalPositionsBefore + 1, "total long positions");
-        uint256 positionExpo =
-            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, uint128(tickLiqPrice));
-        assertEq(protocol.getTotalExpo(), totalExpoBefore + positionExpo, "protocol total expo");
-        TickData memory tickData = protocol.getTickData(expectedTick);
-        assertEq(tickData.totalExpo, positionExpo, "total expo in tick");
-        assertEq(tickData.totalPos, 1, "positions in tick");
+        {
+            uint256 positionExpo =
+                protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, uint128(tickLiqPrice));
+            assertEq(protocol.getTotalExpo(), totalExpoBefore + positionExpo, "protocol total expo");
+            TickData memory tickData = protocol.getTickData(expectedTick);
+            assertEq(tickData.totalExpo, positionExpo, "total expo in tick");
+            assertEq(tickData.totalPos, 1, "positions in tick");
+        }
         assertEq(protocol.getBalanceLong(), balanceLongBefore + LONG_AMOUNT, "balance of long side");
 
         // the pending action should not yet be actionable by a third party

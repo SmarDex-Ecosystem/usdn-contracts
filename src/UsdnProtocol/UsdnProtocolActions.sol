@@ -822,10 +822,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Get the position
         Position memory pos = _longPositions[tickHash][long.index];
         int24 tickSpacing = _tickSpacing;
-        uint8 liquidationPenalty = _getTickLiquidationPenalty(tickHash);
+
         // Re-calculate leverage
         uint128 liqPriceWithoutPenalty =
-            getEffectivePriceForTick(long.tick - int24(uint24(liquidationPenalty)) * tickSpacing);
+            getEffectivePriceForTick(long.tick - int24(uint24(_liquidationPenalty)) * tickSpacing);
         // reverts if liquidationPrice >= entryPrice
         uint128 leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
         // Leverage is always greater than 1 (liquidationPrice is positive).
@@ -841,6 +841,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             int24 tickWithoutPenalty = getEffectiveTickForPrice(liqPriceWithoutPenalty);
 
             // apply liquidation penalty with the current penalty setting
+            uint8 liquidationPenalty = _getTickLiquidationPenalty(tickHash);
             uint8 currentLiqPenalty = _liquidationPenalty;
             int24 tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * tickSpacing;
             // check if the current penalty for that tick is different

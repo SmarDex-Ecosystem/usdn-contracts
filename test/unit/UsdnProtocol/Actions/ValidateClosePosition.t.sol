@@ -200,8 +200,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the user receives half of the position amount
      */
     function test_internalValidatePartialClosePosition() external {
-        uint128 price = params.initialPrice;
-        bytes memory priceData = abi.encode(price);
+        bytes memory priceData = abi.encode(params.initialPrice);
 
         /* ------------------------- Initiate Close Position ------------------------ */
         (Position memory pos,) = protocol.getLongPosition(tick, tickVersion, index);
@@ -214,9 +213,13 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         (Position memory posBefore, uint8 liquidationPenalty) = protocol.getLongPosition(tick, tickVersion, index);
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, amountToClose, pos.amount).toUint128();
-        uint256 liqMultiplier = protocol.getLiquidationMultiplier();
         (uint256 expectedAmountReceived,) = protocol.i_assetToTransfer(
-            price, tick, liquidationPenalty, totalExpoToClose, liqMultiplier, action.closeTempTransfer
+            params.initialPrice,
+            tick,
+            liquidationPenalty,
+            totalExpoToClose,
+            protocol.getLiquidationMultiplier(),
+            action.closeTempTransfer
         );
 
         // Sanity Check
@@ -249,7 +252,12 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         _waitDelay();
         action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         (expectedAmountReceived,) = protocol.i_assetToTransfer(
-            price, tick, liquidationPenalty, pos.totalExpo - totalExpoToClose, liqMultiplier, action.closeTempTransfer
+            params.initialPrice,
+            tick,
+            protocol.getLiquidationPenalty(),
+            pos.totalExpo - totalExpoToClose,
+            protocol.getLiquidationMultiplier(),
+            action.closeTempTransfer
         );
 
         vm.expectEmit();
