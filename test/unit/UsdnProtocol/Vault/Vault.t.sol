@@ -13,7 +13,7 @@ contract TestUsdnProtocolVault is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check the calculation the amount of SDEX tokens to burn depending on the amount of USDN
+     * @custom:scenario Check the calculation of the amount of SDEX tokens to burn depending on the amount of USDN
      * @custom:given An amount of USDN to be minted
      * @custom:when The function is called with this amount
      * @custom:then The correct amount of SDEX to burn is returned
