@@ -4,8 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 
-import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The _saveNewPosition internal function of the UsdnProtocolLong contract.
@@ -46,7 +45,7 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         uint256 positionsInTickBefore = protocol.getCurrentPositionsInTick(expectedTick);
         uint256 totalPositionsBefore = protocol.getTotalLongPositions();
 
-        protocol.i_saveNewPosition(protocol.getEffectiveTickForPrice(desiredLiqPrice), long);
+        protocol.i_saveNewPosition(expectedTick, long);
 
         Position memory positionInTick = protocol.getLongPosition(expectedTick, 0, positionsInTickBefore);
 
