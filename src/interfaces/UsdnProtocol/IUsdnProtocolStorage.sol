@@ -10,6 +10,7 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { Position, PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
+import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolStorage
