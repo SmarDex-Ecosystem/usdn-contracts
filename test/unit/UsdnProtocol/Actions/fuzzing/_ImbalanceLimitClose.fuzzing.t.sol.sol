@@ -30,22 +30,25 @@ contract TestImbalanceLimitCloseFuzzing is UsdnProtocolBaseFixture {
         closeAmount = bound(closeAmount, 1, currentBalanceLong);
         // total expo to remove
         uint256 totalExpoToRemove = closeAmount * uint256(currentTotalExpo) / params.initialLong;
-        // current long expo
-        int256 longExpo = currentTotalExpo - int256(currentBalanceLong);
         // new long expo
         int256 newLongExpo =
             (currentTotalExpo - int256(totalExpoToRemove)) - (int256(currentBalanceLong) - int256(closeAmount));
 
         // expected imbalance bps
-        int256 imbalanceBps =
-            (int256(int128(params.initialDeposit)) - newLongExpo) * int256(protocol.BPS_DIVISOR()) / longExpo;
+        int256 imbalanceBps;
+        if (newLongExpo > 0) {
+            imbalanceBps =
+                (int256(int128(params.initialDeposit)) - newLongExpo) * int256(protocol.BPS_DIVISOR()) / newLongExpo;
+        }
 
         // initial close limit bps
         (,,, int256 initialCloseLimit) = protocol.getExpoImbalanceLimits();
 
-        // call `i_checkImbalanceLimitClose` with totalExpoToRemove and closeAmount
-        if (imbalanceBps >= initialCloseLimit) {
-            // should revert with above close imbalance limit
+        if (newLongExpo == 0) {
+            // should revert because calculation is not possible
+            vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);
+        } else if (imbalanceBps >= initialCloseLimit) {
+            // should revert with `imbalanceBps` close imbalance limit
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
             );
