@@ -304,7 +304,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getTickLiquidationPenalty(int24 tick) public view returns (int24 liquidationPenalty_) {
+    function getTickLiquidationPenalty(int24 tick) public view returns (uint8 liquidationPenalty_) {
         (bytes32 tickHash,) = _tickHash(tick);
         liquidationPenalty_ = _getTickLiquidationPenalty(tickHash);
     }
@@ -316,10 +316,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param tickHash The tick hash
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
      */
-    function _getTickLiquidationPenalty(bytes32 tickHash) internal view returns (int24 liquidationPenalty_) {
+    function _getTickLiquidationPenalty(bytes32 tickHash) internal view returns (uint8 liquidationPenalty_) {
         TickData storage tickData = _tickData[tickHash];
-        liquidationPenalty_ =
-            tickData.totalPos != 0 ? int24(uint24(tickData.liquidationPenalty)) : int24(uint24(_liquidationPenalty));
+        liquidationPenalty_ = tickData.totalPos != 0 ? tickData.liquidationPenalty : _liquidationPenalty;
     }
 
     /**

@@ -96,5 +96,5 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
      * @param tick The tick number
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
      */
-    function getTickLiquidationPenalty(int24 tick) external view returns (int24);
+    function getTickLiquidationPenalty(int24 tick) external view returns (uint8);
 }
