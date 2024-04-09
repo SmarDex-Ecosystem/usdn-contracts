@@ -20,6 +20,7 @@ import {
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
+import { OrderManagerHandler } from "test/unit/OrderManager/utils/Handler.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -72,6 +73,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
     UsdnProtocolHandler public protocol;
+    OrderManagerHandler public orderManager;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
 
@@ -142,6 +144,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         wstETH.approve(address(protocol), type(uint256).max);
 
+        orderManager = new OrderManagerHandler(protocol);
+
         // leverage approx 2x
         protocol.initialize(
             testParams.initialDeposit,
@@ -152,6 +156,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
+        orderManager.transferOwnership(ADMIN);
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();
