@@ -28,6 +28,11 @@ interface IOrderManagerErrors {
      * @param caller The address of the caller.
      */
     error OrderManagerCallerIsNotUSDNProtocol(address caller);
-    /// @notice Indicates that the order is not pending and cannot be interacted with.
+
+    /**
+     * @notice Indicates that the order is not pending and cannot be interacted with.
+     * @param tick The tick the order is in.
+     * @param tickVersion The version of the tick.
+     */
     error OrderManagerOrderNotPending(int24 tick, uint256 tickVersion);
 }
