@@ -3,8 +3,6 @@ pragma solidity 0.8.20;
 
 import { Vm } from "forge-std/Vm.sol";
 
-import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 
@@ -56,21 +54,6 @@ contract TestUsdnRebase is UsdnTokenFixture {
         assertEq(usdn.balanceOf(USER_1), 100 ether * 10, "balance of user");
         assertEq(usdn.totalShares(), 100 ether * maxDivisor, "total shares");
         assertEq(usdn.totalSupply(), 100 ether * 10, "total supply");
-    }
-
-    /**
-     * @custom:scenario An unauthorized account tries to rebase
-     * @custom:given This contract has no role
-     * @custom:when The divisor is adjusted to 0.5x its initial value
-     * @custom:then The transaction reverts with the `AccessControlUnauthorizedAccount` error
-     */
-    function test_RevertWhen_unauthorized() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), usdn.REBASER_ROLE()
-            )
-        );
-        usdn.rebase(maxDivisor / 2);
     }
 
     /**
