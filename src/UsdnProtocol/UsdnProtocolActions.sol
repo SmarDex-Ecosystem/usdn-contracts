@@ -168,8 +168,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund =
-            _initiateClosePosition(msg.sender, tick, tickVersion, index, amountToClose, currentPriceData);
+        uint256 amountToRefund = _initiateClosePosition(
+            msg.sender,
+            PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
+            amountToClose,
+            currentPriceData
+        );
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -900,24 +904,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
      * during the validate action.
      * @param user The address of the user initiating the close position.
-     * @param tick The tick containing the position to close
-     * @param tickVersion The tick version of the position to close
-     * @param index The index of the position inside the tick array
+     * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
      * @return securityDepositValue_ The security deposit value
      */
     function _initiateClosePosition(
         address user,
-        int24 tick,
-        uint256 tickVersion,
-        uint256 index,
+        PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (uint256 securityDepositValue_) {
         // check if the position belongs to the user
         // this reverts if the position was liquidated
-        (Position memory pos, uint8 liquidationPenalty) = getLongPosition(tick, tickVersion, index);
+        (Position memory pos, uint8 liquidationPenalty) = getLongPosition(posId.tick, posId.tickVersion, posId.index);
         if (pos.user != user) {
             revert UsdnProtocolUnauthorized();
         }
@@ -947,18 +947,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         {
             uint256 liqMultiplier = _liquidationMultiplier;
             (uint256 tempTransfer,) =
-                _assetToTransfer(priceWithFees, tick, liquidationPenalty, totalExpoToClose, liqMultiplier, 0);
+                _assetToTransfer(priceWithFees, posId.tick, liquidationPenalty, totalExpoToClose, liqMultiplier, 0);
 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
                 timestamp: uint40(block.timestamp),
                 user: user,
-                tick: tick,
+                tick: posId.tick,
                 securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
                 closeAmount: amountToClose,
                 closeTotalExpo: totalExpoToClose,
-                tickVersion: tickVersion,
-                index: index,
+                tickVersion: posId.tickVersion,
+                index: posId.index,
                 closeLiqMultiplier: liqMultiplier,
                 closeTempTransfer: tempTransfer
             });
@@ -970,11 +970,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(pendingAction));
 
             // Remove the position if it's fully closed
-            _removeAmountFromPosition(tick, index, pos, amountToClose, totalExpoToClose);
+            _removeAmountFromPosition(posId.tick, posId.index, pos, amountToClose, totalExpoToClose);
         }
 
         emit InitiatedClosePosition(
-            user, tick, tickVersion, index, pos.amount - amountToClose, pos.totalExpo - totalExpoToClose
+            user,
+            posId.tick,
+            posId.tickVersion,
+            posId.index,
+            pos.amount - amountToClose,
+            pos.totalExpo - totalExpoToClose
         );
     }
 

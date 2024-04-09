@@ -11,7 +11,8 @@ import {
     LongPendingAction,
     ProtocolAction,
     PreviousActionsData,
-    TickData
+    TickData,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol, Position } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -51,13 +52,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_initiateClosePosition(
         address user,
-        int24 tick,
-        uint256 tickVersion,
-        uint256 index,
+        PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) external returns (uint256 securityDepositValue_) {
-        return _initiateClosePosition(user, tick, tickVersion, index, amountToClose, currentPriceData);
+        return _initiateClosePosition(user, posId, amountToClose, currentPriceData);
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
