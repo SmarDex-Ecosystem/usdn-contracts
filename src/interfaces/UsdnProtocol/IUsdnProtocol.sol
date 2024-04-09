@@ -49,7 +49,6 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Replace the OrderManager contract with a new implementation.
-     * @dev Cannot be the 0 address.
      * @param newOrderManager the address of the new contract.
      */
     function setOrderManager(IOrderManager newOrderManager) external;

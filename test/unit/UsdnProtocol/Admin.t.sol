@@ -553,8 +553,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @dev As tolerating the zero address is unusual, this test relevant even though it doesn't increase the coverage
-     * @custom:scenario Call "setOrderManager" from admin.
+     * @dev As tolerating the zero address is unusual, this test is relevant even though it doesn't increase the
+     * coverage
+     * @custom:scenario Call "setOrderManager" from admin with the zero address.
      * @custom:given The initial usdnProtocol state from admin wallet.
      * @custom:when Admin wallet trigger admin contract function.
      * @custom:then Order manager is now the zero address.
