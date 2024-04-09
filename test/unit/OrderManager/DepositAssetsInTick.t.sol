@@ -33,7 +33,7 @@ contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderM
      * @custom:when depositAssetsInTick is called
      * @custom:then the call reverts with a OrderManagerInvalidTick error
      */
-    function test_RervertsWhen_tickDoesNotMatchTickSpacing() external {
+    function test_RevertWhen_tickDoesNotMatchTickSpacing() external {
         int24 tick = protocol.getEffectiveTickForPrice(2000 ether) + 1;
 
         vm.expectRevert(abi.encodeWithSelector(OrderManagerInvalidTick.selector, tick));
@@ -46,7 +46,7 @@ contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderM
      * @custom:when depositAssetsInTick is called
      * @custom:then the call reverts with a OrderManagerInvalidTick error
      */
-    function test_RervertsWhen_tickIsLowerThanMinTick() external {
+    function test_RevertWhen_tickIsLowerThanMinTick() external {
         int24 tickSpacing = protocol.getTickSpacing();
         int24 tick = TickMath.minUsableTick(tickSpacing) - tickSpacing;
 
@@ -60,7 +60,7 @@ contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderM
      * @custom:when depositAssetsInTick is called
      * @custom:then the call reverts with a OrderManagerInvalidTick error
      */
-    function test_RervertsWhen_tickIsHigherThanMaxTick() external {
+    function test_RevertWhen_tickIsHigherThanMaxTick() external {
         int24 tickSpacing = protocol.getTickSpacing();
         int24 tick = TickMath.maxUsableTick(tickSpacing) + tickSpacing;
 
@@ -99,7 +99,7 @@ contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderM
         );
         assertEq(userBalanceBefore - amount, wstETH.balanceOf(address(this)), "The assets were not taken from the user");
 
-        uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
+        uint256 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
         assertEq(userOrderAmount, amount, "Wrong amount of assets saved for the user");
 
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
@@ -109,7 +109,7 @@ contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderM
             orderManager.PENDING_ORDERS_TICK(),
             "The tick should be equal to the PENDING_ORDERS_TICK constant"
         );
-        assertEq(ordersData.longPositionTickVersion, 0, "The tick version shoudl be 0");
+        assertEq(ordersData.longPositionTickVersion, 0, "The tick version should be 0");
         assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
     }
 
@@ -135,7 +135,7 @@ contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderM
         emit UserDepositedAssetsInTick(address(this), amount, tick, tickVersion);
         orderManager.depositAssetsInTick(tick, amount);
 
-        uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
+        uint256 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
         assertEq(userOrderAmount, amount, "Wrong amount of assets saved for the user");
         assertEq(userBalanceBefore - amount, wstETH.balanceOf(address(this)), "The assets were not taken from the user");
 
@@ -206,7 +206,7 @@ contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderM
             userBalanceBefore - amountUser1, wstETH.balanceOf(address(this)), "The assets were not taken from the user"
         );
 
-        uint232 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
+        uint256 userOrderAmount = orderManager.getUserAmountInTick(tick, tickVersion, address(this));
         assertEq(userOrderAmount, amountUser1, "Wrong amount of assets saved for the user");
 
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(tick, tickVersion);
@@ -220,7 +220,7 @@ contract TestOrderManagerDepositAssetsInTick is UsdnProtocolBaseFixture, IOrderM
             orderManager.PENDING_ORDERS_TICK(),
             "The tick should be equal to the PENDING_ORDERS_TICK constant"
         );
-        assertEq(ordersData.longPositionTickVersion, 0, "The tick version shoudl be 0");
+        assertEq(ordersData.longPositionTickVersion, 0, "The tick version should be 0");
         assertEq(ordersData.longPositionIndex, 0, "Index of the position should be 0");
 
         /* ------------------------- Order of the other user ------------------------ */

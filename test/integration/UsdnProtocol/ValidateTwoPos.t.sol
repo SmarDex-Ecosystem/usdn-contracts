@@ -33,7 +33,7 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         uint256 ethValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
             + protocol.getSecurityDepositValue();
 
-        protocol.initiateOpenPosition{ value: ethValue }(1 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition{ value: ethValue }(2.5 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA);
         uint256 ts1 = block.timestamp;
         vm.stopPrank();
         skip(30);
@@ -41,7 +41,7 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         (success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_2 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{ value: ethValue }(1 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition{ value: ethValue }(2.5 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA);
         uint256 ts2 = block.timestamp;
         vm.stopPrank();
 

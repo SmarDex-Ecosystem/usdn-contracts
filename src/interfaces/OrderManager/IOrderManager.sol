@@ -20,7 +20,10 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
         uint256 longPositionIndex;
     }
 
-    /// @notice Tick indicating the orders are not used in a position yet.
+    /**
+     * @notice Tick indicating the orders are not used in a position yet.
+     * @return The tick that means the orders are pending.
+     */
     function PENDING_ORDERS_TICK() external pure returns (int24);
 
     /**
@@ -30,7 +33,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
      * @param user The address of the user.
      * @return The amount of assets a user has in a tick
      */
-    function getUserAmountInTick(int24 tick, uint256 tickVersion, address user) external view returns (uint232);
+    function getUserAmountInTick(int24 tick, uint256 tickVersion, address user) external view returns (uint256);
 
     /**
      * @notice Returns the accumulated data of all the orders in a tick.
@@ -43,11 +46,17 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
         view
         returns (OrdersDataInTick memory ordersData_);
 
-    /// @notice Returns the address of the USDN protocol.
+    /**
+     * @notice Returns the address of the USDN protocol.
+     * @return The address of the USDN protocol.
+     */
     function getUsdnProtocol() external view returns (IUsdnProtocol);
 
-    /// @notice Set the maximum approval for the USDN protocol to take assets from this contract.
-    function approveAssetsForSpending(uint256 allowance) external;
+    /**
+     * @notice Increase the approval of assets for the USDN protocol spender by `addAllowance`.
+     * @param addAllowance Amount to add to the allowance of the UsdnProtocol contract
+     */
+    function approveAssetsForSpending(uint256 addAllowance) external;
 
     /**
      * @notice Deposit the provided amount of assets to the provided tick
