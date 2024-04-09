@@ -267,9 +267,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_saveOrderManagerPositionInTick(
         uint128 currentPrice,
         bytes32 liquidatedTickHash,
-        uint128 liquidatedTickTotalExpo
-    ) external {
-        return _saveOrderManagerPositionInTick(currentPrice, liquidatedTickHash, liquidatedTickTotalExpo);
+        uint128 liquidatedTickTotalExpo,
+        int256 tempLongBalance
+    ) external returns (int256) {
+        return
+            _saveOrderManagerPositionInTick(currentPrice, liquidatedTickHash, liquidatedTickTotalExpo, tempLongBalance);
     }
 
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {

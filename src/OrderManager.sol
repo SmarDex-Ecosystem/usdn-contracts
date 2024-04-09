@@ -177,17 +177,17 @@ contract OrderManager is Ownable, IOrderManager {
         }
 
         // Calculate the liquidation price relative to the leverage
-        // _ordersLeverage limits are below type(uint128).max, so cast is safe here
         uint256 liquidationPrice =
             currentPrice - ((10 ** _usdnProtocol.LEVERAGE_DECIMALS() * currentPrice) / _ordersLeverage);
 
         // Save the position tick in the orders data
-        // TODO import safecast library? *go cry in a corner*
+        // The liquidation price is below the current price which is below type(uint128).max, so cast is safe here
         longPositionTick_ = _usdnProtocol.getEffectiveTickForPrice(uint128(liquidationPrice));
 
         // Update the orders data with the long position information
         ordersData.longPositionTick = longPositionTick_;
         ordersData.longPositionTickVersion = _usdnProtocol.getTickVersion(longPositionTick_);
+        // The expected index is the amount of positions currently in the tick
         ordersData.longPositionIndex = _usdnProtocol.getPositionsInTick(longPositionTick_);
     }
 }

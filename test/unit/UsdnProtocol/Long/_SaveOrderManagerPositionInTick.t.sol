@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Vm } from "forge-std/Vm.sol";
+
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN } from "test/utils/Constants.sol";
 
@@ -51,8 +53,26 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
         uint256 protocolAssetsBefore = wstETH.balanceOf(address(protocol));
         uint256 orderManagerAssetsBefore = wstETH.balanceOf(address(orderManager));
+        uint128 ordersLeverage = uint128(orderManager.getOrdersLeverage());
+        int24 expectedLongTick =
+            protocol.getEffectiveTickForPrice(protocol.i_getLiquidationPrice(_liqPrice, ordersLeverage));
+        uint256 expectedLongTickVersion = 0;
+        uint256 expectedLongIndex = 0;
 
-        protocol.i_saveOrderManagerPositionInTick(_liqPrice, _tickHash, _tickTotalExpo);
+        vm.expectEmit();
+        emit OrderManagerPositionOpened(
+            address(orderManager),
+            uint40(block.timestamp),
+            ordersLeverage,
+            _orderAmount,
+            _liqPrice,
+            expectedLongTick,
+            expectedLongTickVersion,
+            expectedLongIndex
+        );
+        protocol.i_saveOrderManagerPositionInTick(
+            _liqPrice, _tickHash, _tickTotalExpo, int256(protocol.getBalanceLong())
+        );
 
         /* ------------------------------ Global checks ----------------------------- */
         assertEq(longPositionsCountBefore + 1, protocol.getTotalLongPositions(), "1 position should have been created");
@@ -89,9 +109,12 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
      * @custom:and the position only has the amount necessary to match the total expo liquidated
      */
     function test_saveOrderManagerPositionInTickWithMaxTotalExpoReached() public {
-        int24 expectedLongTick = protocol.getEffectiveTickForPrice(
-            protocol.i_getLiquidationPrice(_liqPrice, uint128(orderManager.getOrdersLeverage()))
-        );
+        uint128 ordersLeverage = uint128(orderManager.getOrdersLeverage());
+        int24 expectedLongTick =
+            protocol.getEffectiveTickForPrice(protocol.i_getLiquidationPrice(_liqPrice, ordersLeverage));
+        uint256 expectedLongTickVersion = 0;
+        uint256 expectedLongIndex = 0;
+
         // Deposit more assets than necessary
         uint128 maxAmount = protocol.i_calcPositionAmount(
             _tickTotalExpo, _liqPrice, protocol.getEffectivePriceForTick(expectedLongTick)
@@ -103,7 +126,20 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
         uint256 protocolAssetsBefore = wstETH.balanceOf(address(protocol));
         uint256 orderManagerAssetsBefore = wstETH.balanceOf(address(orderManager));
 
-        protocol.i_saveOrderManagerPositionInTick(_liqPrice, _tickHash, _tickTotalExpo);
+        vm.expectEmit();
+        emit OrderManagerPositionOpened(
+            address(orderManager),
+            uint40(block.timestamp),
+            ordersLeverage,
+            maxAmount,
+            _liqPrice,
+            expectedLongTick,
+            expectedLongTickVersion,
+            expectedLongIndex
+        );
+        protocol.i_saveOrderManagerPositionInTick(
+            _liqPrice, _tickHash, _tickTotalExpo, int256(protocol.getBalanceLong())
+        );
 
         /* ------------------------------ Global checks ----------------------------- */
         assertEq(longPositionsCountBefore + 1, protocol.getTotalLongPositions(), "1 position should have been created");
@@ -144,7 +180,13 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
 
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
         uint256 protocolAssetsBefore = wstETH.balanceOf(address(protocol));
-        protocol.i_saveOrderManagerPositionInTick(_liqPrice, _tickHash, _tickTotalExpo);
+
+        vm.recordLogs();
+        protocol.i_saveOrderManagerPositionInTick(
+            _liqPrice, _tickHash, _tickTotalExpo, int256(protocol.getBalanceLong())
+        );
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        assertEq(logs.length, 0, "No logs should have been emitted");
 
         assertEq(
             longPositionsCountBefore,
@@ -170,7 +212,9 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
         uint256 protocolAssetsBefore = wstETH.balanceOf(address(protocol));
 
         bytes32 tickHash = protocol.tickHash(_tick - protocol.getTickSpacing(), 0);
-        protocol.i_saveOrderManagerPositionInTick(_liqPrice, tickHash, _tickTotalExpo);
+        protocol.i_saveOrderManagerPositionInTick(
+            _liqPrice, tickHash, _tickTotalExpo, int256(protocol.getBalanceLong())
+        );
 
         assertEq(
             longPositionsCountBefore,
