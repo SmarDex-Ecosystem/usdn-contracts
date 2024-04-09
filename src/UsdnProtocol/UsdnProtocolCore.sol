@@ -303,6 +303,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         pure
         returns (int256 pnl_)
     {
+        // in case of negative trading expo, we can't allow calculation of PnL because it would invert the sign of the
+        // calculated amount. We thus disable any balance update due to PnL in such a case.
+        if (balanceLong >= totalExpo) {
+            return 0;
+        }
         int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
         pnl_ = totalExpo.toInt256().safeSub(balanceLong.toInt256()).safeMul(priceDiff).safeDiv(_toInt256(newPrice));
     }
