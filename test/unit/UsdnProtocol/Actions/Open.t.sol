@@ -23,7 +23,10 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     uint128 internal constant CURRENT_PRICE = 2000 ether;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.flags.enableProtocolFees = false;
+        params.flags.enableFunding = false;
+        super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
     }
 
@@ -296,6 +299,71 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(pos.amount, tempPos.amount, "amount");
         assertLt(newTick, tick, "tick");
         assertGt(pos.totalExpo, tempPos.totalExpo, "totalExpo");
+    }
+
+    /**
+     * @custom:scenario The user validates an open position action with a price that increases the leverage above the
+     * max leverage, but the target tick's penalty makes it remain above the max leverage
+     * @custom:given The user will validate a position with a price that would increase the leverage above the max
+     * leverage, in a tick which has a liquidation penalty lower than the current setting
+     * @custom:when The user validates the open position with the new price
+     * @custom:then The protocol validates the position in a new tick, but the leverage remains above the max leverage
+     */
+    function test_validateOpenPositionAboveMaxLeverageDifferentPenalty() public {
+        uint128 desiredLiqPrice = CURRENT_PRICE * 9 / 10; // leverage approx 10x
+        uint8 originalLiqPenalty = protocol.getLiquidationPenalty();
+        uint8 storedLiqPenalty = originalLiqPenalty - 1;
+
+        // calculate the future expected tick for the position we will validate later
+        uint128 validatePrice = CURRENT_PRICE - 100 ether;
+        uint128 tempLiqPrice = protocol.i_getLiquidationPrice(validatePrice, uint128(protocol.getMaxLeverage()));
+        int24 validateTick = protocol.getEffectiveTickForPrice(tempLiqPrice)
+            + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+
+        // open another user position to set the tick's penalty to a lower value in storage
+        vm.prank(ADMIN);
+        protocol.setLiquidationPenalty(storedLiqPenalty);
+        (int24 otherTick,,) = setUpUserPositionInLong(
+            USER_1,
+            ProtocolAction.ValidateOpenPosition,
+            uint128(LONG_AMOUNT),
+            protocol.getEffectivePriceForTick(validateTick),
+            CURRENT_PRICE
+        );
+        assertEq(otherTick, validateTick, "both positions in same tick");
+
+        // restore liquidation penalty to original value
+        vm.prank(ADMIN);
+        protocol.setLiquidationPenalty(originalLiqPenalty);
+
+        // initiate deposit with leverage close to 10x
+        (int24 tempTick, uint256 tempTickVersion, uint256 tempIndex) = protocol.initiateOpenPosition(
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+
+        // expected values
+        uint256 validateTickVersion = protocol.getTickVersion(validateTick);
+        TickData memory tickData = protocol.getTickData(validateTick);
+        uint256 validateIndex = tickData.totalPos;
+        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
+            validateTick - int24(uint24(storedLiqPenalty)) * protocol.getTickSpacing()
+        );
+        uint128 expectedLeverage = protocol.i_getLeverage(validatePrice, expectedLiqPrice);
+        // final leverage should be above 10x because of the stored liquidation penalty of the target tick
+        assertGt(expectedLeverage, uint128(10 * 10 ** protocol.LEVERAGE_DECIMALS()), "final leverage");
+
+        // validate deposit with a lower entry price
+        vm.expectEmit();
+        emit LiquidationPriceUpdated(
+            tempTick, tempTickVersion, tempIndex, validateTick, validateTickVersion, validateIndex
+        );
+        vm.expectEmit();
+        emit ValidatedOpenPosition(
+            address(this), expectedLeverage, validatePrice, validateTick, validateTickVersion, validateIndex
+        );
+        protocol.validateOpenPosition(abi.encode(validatePrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
