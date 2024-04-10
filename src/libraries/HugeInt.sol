@@ -134,4 +134,26 @@ library HugeInt {
         }
         console2.log("remainder", r);
     }
+
+    function div(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
+        // if the numerator is smaller than the denominator, the result is zero
+        if (a.msb < b.msb || (a.msb == b.msb && a.lsb < b.lsb)) {
+            return Uint512(0, 0);
+        }
+        // if both operands fit inside a uint256, we can use the Solidity division operator
+        if (a.msb == 0 && b.msb == 0) {
+            return Uint512(a.lsb / b.lsb, 0);
+        }
+        // if the result fits inside a uint256, we can use the {div256} function
+        if (b.msb == 0 && b.lsb > a.msb) {
+            return Uint512(div256(a, b.lsb), 0);
+        }
+        // if the second operand fits inside a uint256, we can use the {_div_nx1} function
+        if (b.msb == 0) {
+            return _div_nx1(a, b.lsb);
+        }
+    }
+
+    /// @dev https://gmplib.org/~tege/division-paper.pdf https://github.com/recmo/uint
+    function _div_nx1(Uint512 memory a, uint256 b) internal pure returns (Uint512 memory res_) { }
 }
