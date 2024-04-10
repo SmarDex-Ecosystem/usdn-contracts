@@ -70,6 +70,12 @@ enum Commands {
         liq_price: String,
         amount: String,
     },
+    /// Compare different mint usdn calculation implementations
+    CalcMintUsdn {
+        amount: String,
+        vault_balance: String,
+        usdn_total_supply: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -134,6 +140,16 @@ fn main() -> Result<()> {
             total_expo.floor_mut();
             
             print_u256_hex(total_expo.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
+        }
+        Commands::CalcMintUsdn { amount, vault_balance, usdn_total_supply } => {
+            let amount: Integer = amount.parse()?;
+            let vault_balance: Integer = vault_balance.parse()?;
+            let usdn_total_supply: Integer = usdn_total_supply.parse()?;
+
+            let mut total_mint = Float::with_val(512, amount) * usdn_total_supply / vault_balance;
+            total_mint.floor_mut();
+            
+            print_u256_hex(total_mint.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
         }
     }
     Ok(())
