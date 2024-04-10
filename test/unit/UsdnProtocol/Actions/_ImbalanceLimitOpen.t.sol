@@ -54,7 +54,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitOpen` function is called with values above the open limit
      * @custom:then The transaction should revert
      */
-    function test_RevertWith_checkImbalanceLimitOpenOutLimit() public {
+    function test_RevertWhen_checkImbalanceLimitOpenOutLimit() public {
         (int256 openLimitBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, openLimitBps)
@@ -66,25 +66,18 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:scenario The `_checkImbalanceLimitOpen` function should revert when vault expo equal 0
      * @custom:given The protocol is balanced
      * @custom:and A long position is opened
-     * @custom:and Price crash below any liquidation prices
-     * @custom:and The first position is liquidated
-     * @custom:and The last liquidation isn't involved during a day which leads bad debt
+     * @custom:and The price crashes very hard and liquidates the existing positions
+     * @custom:and The vault balance/expo is 0
      * @custom:when The `_checkImbalanceLimitOpen` function is called
      * @custom:then The transaction should revert
      */
-    function test_RevertWith_checkImbalanceLimitOpenZeroVaultExpo() public {
+    function test_RevertWhen_checkImbalanceLimitOpenZeroVaultExpo() public {
         setUpUserPositionInLong(
             address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
         );
 
-        // new price below any position but only one will be liquidated
-        protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
-
-        // wait a day without liquidation
-        skip(1 days);
-
-        // liquidate the last position but leads bad debt
-        protocol.liquidate(abi.encode(params.initialPrice / 3), 1);
+        // liquidate everything with huge bad debt
+        protocol.liquidate(abi.encode(params.initialPrice / 100), 10);
 
         // vault expo should be zero
         assertEq(protocol.getBalanceVault(), 0, "vault expo isn't 0");
