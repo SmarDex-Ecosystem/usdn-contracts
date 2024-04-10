@@ -18,6 +18,7 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -338,5 +339,9 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint128 positionTotalExpo
     ) external {
         _createInitialPosition(amount, price, tick, leverage, positionTotalExpo);
+    }
+
+    function i_saveNewPosition(int24 tick, Position memory long) external {
+        _saveNewPosition(tick, long);
     }
 }
