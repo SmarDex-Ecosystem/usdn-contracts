@@ -321,6 +321,27 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
+     * @notice Liquidate the provided tick at the provided price and return the remaining collateral.
+     * @param tick the tick to liquidate.
+     * @param currentPrice the price to liquidate at.
+     * @return tickValue_ the amount of assets remaining on the tick at the provided price.
+     */
+    function _liquidateTick(int24 tick, bytes32 tickHash, uint256 currentPrice) internal returns (int256 tickValue_) {
+        uint256 tickTotalExpo = _totalExpoByTick[tickHash];
+        tickValue_ = _tickValue(currentPrice, tick, tickTotalExpo);
+
+        unchecked {
+            _totalExpo -= tickTotalExpo;
+            _totalLongPositions -= _positionsInTick[tickHash];
+            ++_tickVersion[tick];
+        }
+
+        _tickBitmap.unset(_tickToBitmapIndex(tick));
+
+        emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue_);
+    }
+
+    /**
      * @notice Liquidate positions which have a liquidation price lower than the current price
      * @param currentPrice The current price of the asset
      * @param iteration The maximum number of ticks to liquidate (minimum is 1)
@@ -328,7 +349,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param tempVaultBalance The temporary vault balance as calculated when applying PnL and funding
      * @return liquidatedPositions_ The number of positions that were liquidated
      * @return liquidatedTicks_ The number of ticks that were liquidated
-     * @return remainingCollateral_ The remaining collateral after handling of the liquidated positions
+     * @return remainingCollateral_ The remaining collateral after handling the liquidated positions
      * @return newLongBalance_ The new long balance after handling of the remaining collateral or bad debt
      * @return newVaultBalance_ The new vault balance after handling of the remaining collateral or bad debt
      */
@@ -358,45 +379,24 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int24 tick = _maxInitializedTick;
 
         do {
-            {
-                uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
-                if (index == LibBitmap.NOT_FOUND) {
-                    // no populated ticks left
-                    break;
-                }
+            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+            if (index == LibBitmap.NOT_FOUND) {
+                // no populated ticks left
+                break;
+            }
 
-                tick = _bitmapIndexToTick(index);
-                if (tick < currentTick) {
-                    break;
-                }
+            tick = _bitmapIndexToTick(index);
+            if (tick < currentTick) {
+                break;
             }
 
             // we have found a non-empty tick that needs to be liquidated
-            uint256 tickTotalExpo;
-            {
-                (bytes32 tickHash,) = _tickHash(tick);
-                tickTotalExpo = _totalExpoByTick[tickHash];
-                uint256 length = _positionsInTick[tickHash];
-                unchecked {
-                    _totalExpo -= tickTotalExpo;
+            (bytes32 tickHash,) = _tickHash(tick);
+            unchecked {
+                liquidatedPositions_ += _positionsInTick[tickHash];
+                remainingCollateral_ += _liquidateTick(tick, tickHash, currentPrice);
 
-                    _totalLongPositions -= length;
-                    liquidatedPositions_ += length;
-
-                    ++_tickVersion[tick];
-                    ++liquidatedTicks_;
-                }
-            }
-
-            {
-                int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
-                remainingCollateral_ += tickValue;
-
-                _tickBitmap.unset(_tickToBitmapIndex(tick));
-
-                emit LiquidatedTick(
-                    tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue
-                );
+                ++liquidatedTicks_;
             }
         } while (liquidatedTicks_ < iteration);
 
@@ -429,7 +429,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tempVaultBalance = 0;
         }
 
-        newLongBalance_ = tempLongBalance.toUint256();
+        newLongBalance_ += tempLongBalance.toUint256();
         newVaultBalance_ = tempVaultBalance.toUint256();
     }
 }
