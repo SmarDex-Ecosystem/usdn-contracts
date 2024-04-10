@@ -21,7 +21,7 @@
     "lint:test": "solhint -c test/.solhint.json 'test/**/*.sol'",
     "slither": "slither .",
     "natspec": "npx natspec-smells > natspec-smells.txt 2>&1",
-    "exportAbi": "forge build --ast && ts-node ./script/exportAbi.ts -g '{Usdn.sol,UsdnProtocol/UsdnProtocol.sol,OracleMiddleware/OracleMiddleware.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
+    "exportAbi": "forge build --ast && ts-node ./script/exportAbi.ts -g '{OrderManager.sol,Usdn.sol,UsdnProtocol/UsdnProtocol.sol,OracleMiddleware/LiquidationRewardsManager.sol,OracleMiddleware/OracleMiddleware.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
     "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf lib && forge clean && npm i && forge install"
   },
   "main": "dist/index.js",
