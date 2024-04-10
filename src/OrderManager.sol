@@ -155,7 +155,7 @@ contract OrderManager is Ownable, IOrderManager {
     }
 
     /// @inheritdoc IOrderManager
-    function fulfillOrdersInTick(uint128 currentPrice, bytes32 liquidatedTickHash)
+    function fulfillOrdersInTick(uint128 currentPrice, bytes32 liquidatedTickHash, uint128 rewards)
         external
         returns (int24 longPositionTick_, uint256 amount_)
     {
@@ -189,5 +189,6 @@ contract OrderManager is Ownable, IOrderManager {
         ordersData.longPositionTickVersion = _usdnProtocol.getTickVersion(longPositionTick_);
         // The expected index is the amount of positions currently in the tick
         ordersData.longPositionIndex = _usdnProtocol.getPositionsInTick(longPositionTick_);
+        ordersData.liquidationRewards = rewards;
     }
 }

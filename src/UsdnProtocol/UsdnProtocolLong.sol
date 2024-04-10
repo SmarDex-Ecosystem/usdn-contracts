@@ -367,34 +367,44 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param currentPrice The current price
      * @param liquidatedTickHash The tick hash of the liquidated tick
      * @param liquidatedTickTotalExpo The total expo of the liquidated tick
-     * @param tempLongBalance The temporary long balance as calculated when applying PnL and funding
-     * @return newTempLongBalance_ The new long balance after handling the order manager position
+     * @param tickValue The collateral remaining in the liquidated tick
+     * @return positionAmount_ The amount of assets in the position created from the available orders
      */
     function _saveOrderManagerPositionInTick(
         uint128 currentPrice,
         bytes32 liquidatedTickHash,
         uint128 liquidatedTickTotalExpo,
-        int256 tempLongBalance
-    ) internal returns (int256 newTempLongBalance_) {
+        int256 tickValue
+    ) internal returns (uint128 positionAmount_) {
         address orderManagerAddress = address(_orderManager);
         // If the order manager is not set, return;
         if (orderManagerAddress == address(0)) {
-            return tempLongBalance;
+            return positionAmount_;
         }
 
-        uint128 amountTaken;
+        // TODO take half and add it to the order manager position? Increase the amount saved in the position
+        // without increasing the asset transferred, check total expo with and without? No sure if that's right
+        // How do we make sure users will withdraw the amount + bonus relative to their share of the position?
+        // TODO prioritize the order manager or the vault? (order bonus vs liquidator rewards)
+        uint128 ordersRewards;
+        if (tickValue > 0) {
+            ordersRewards = (uint256(tickValue) / 2).toUint128();
+        }
+
         int24 liquidationTick;
         {
             uint256 amountAvailable;
-            // Get the amount available in orders in the tick
-            (liquidationTick, amountAvailable) = _orderManager.fulfillOrdersInTick(currentPrice, liquidatedTickHash);
+            // Signal to the order manager that a position will be created with the orders (if any)
+            // And get the amount of assets available in those orders
+            (liquidationTick, amountAvailable) =
+                _orderManager.fulfillOrdersInTick(currentPrice, liquidatedTickHash, ordersRewards);
 
             // If there are no orders for this tick, return
             if (amountAvailable == 0) {
-                return tempLongBalance;
+                return positionAmount_;
             }
 
-            amountTaken = amountAvailable.toUint128();
+            positionAmount_ = amountAvailable.toUint128() + ordersRewards;
         }
 
         // Calculate the total expo available to not imbalance the protocol
@@ -403,13 +413,13 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             // Calculate liquidation price without the liquidation penalty for the tick
             uint128 liqPriceWithoutPenalty =
                 getEffectivePriceForTick(liquidationTick - int24(_liquidationPenalty) * _tickSpacing);
-            posTotalExpo = _calculatePositionTotalExpo(amountTaken, currentPrice, liqPriceWithoutPenalty);
+            posTotalExpo = _calculatePositionTotalExpo(positionAmount_, currentPrice, liqPriceWithoutPenalty);
 
             // If the total expo of the liquidated tick is lower than the order manager's position total expo
             // Lower the position size to the liquidated tick's total expo
             if (liquidatedTickTotalExpo < posTotalExpo) {
                 posTotalExpo = liquidatedTickTotalExpo;
-                amountTaken = _calcPositionAmount(liquidatedTickTotalExpo, currentPrice, liqPriceWithoutPenalty);
+                positionAmount_ = _calcPositionAmount(liquidatedTickTotalExpo, currentPrice, liqPriceWithoutPenalty);
             }
         }
 
@@ -421,29 +431,54 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 timestamp: uint40(block.timestamp),
                 user: orderManagerAddress,
                 totalExpo: posTotalExpo,
-                amount: amountTaken
+                amount: positionAmount_
             });
 
             (tickVersion, index) = _saveNewPosition(liquidationTick, pos);
 
             // Transfer assets from the order manager to the protocol
-            _asset.safeTransferFrom(orderManagerAddress, address(this), amountTaken);
+            // TODO underflow check
+            _asset.safeTransferFrom(orderManagerAddress, address(this), positionAmount_ - ordersRewards);
         }
-
-        // Update the vault/long balances
-        // Safe cast as type(uint128).max is lower than type(int256).max
-        newTempLongBalance_ = tempLongBalance + int256(uint256(amountTaken));
 
         emit OrderManagerPositionOpened(
             orderManagerAddress,
             uint40(block.timestamp),
             _orderManager.getOrdersLeverage().toUint128(),
-            amountTaken,
+            positionAmount_,
             currentPrice,
             liquidationTick,
             tickVersion,
             index
         );
+    }
+
+    /// TODO NatSpec
+    function _liquidateTick(int24 tick, TickData memory tickData, uint256 currentPrice)
+        internal
+        returns (int256 tickValue_, uint256 newLongBalance_)
+    {
+        (bytes32 tickHash,) = _tickHash(tick);
+        tickValue_ = _tickValue(currentPrice, tick, tickData.totalExpo);
+
+        unchecked {
+            _totalExpo -= tickData.totalExpo;
+            _totalLongPositions -= tickData.totalPos;
+
+            ++_tickVersion[tick];
+        }
+
+        newLongBalance_ += _saveOrderManagerPositionInTick(
+            currentPrice.toUint128(),
+            tickHash,
+            tickData.totalExpo.toUint128(),
+            // stack too deep if we put that in the next scope
+            tickValue_
+        );
+
+        _tickBitmap.unset(_tickToBitmapIndex(tick));
+
+        emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue_);
     }
 
     /**
@@ -471,46 +506,27 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int24 tick = _maxInitializedTick;
 
         do {
-            {
-                uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
-                if (index == LibBitmap.NOT_FOUND) {
-                    // no populated ticks left
-                    break;
-                }
-
-                tick = _bitmapIndexToTick(index);
-                if (tick < currentTick) {
-                    break;
-                }
+            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+            if (index == LibBitmap.NOT_FOUND) {
+                // no populated ticks left
+                break;
             }
 
+            tick = _bitmapIndexToTick(index);
+            if (tick < currentTick) {
+                break;
+            }
+
+            bytes32 cachedTickHash = tickHash(tick, _tickVersion[tick]);
+            TickData memory tickData = _tickData[cachedTickHash];
             // we have found a non-empty tick that needs to be liquidated
-            TickData memory tickData;
-            {
-                (bytes32 tickHash,) = _tickHash(tick);
-                tickData = _tickData[tickHash];
-                _totalExpo -= tickData.totalExpo;
-                _totalLongPositions -= tickData.totalPos;
-                effects_.liquidatedPositions += tickData.totalPos;
+            (int256 tickValue, uint256 longBalance) = _liquidateTick(tick, tickData, currentPrice);
+            effects_.newLongBalance = longBalance;
+            effects_.remainingCollateral += tickValue;
 
-                ++_tickVersion[tick];
-                ++effects_.liquidatedTicks;
-
-                tempLongBalance = _saveOrderManagerPositionInTick(
-                    currentPrice.toUint128(), tickHash, tickTotalExpo.toUint128(), tempLongBalance
-                );
-            }
-
-            {
-                int256 tickValue = _tickValue(currentPrice, tick, tickData);
-                effects_.remainingCollateral += tickValue;
-
-                _tickBitmap.unset(_tickToBitmapIndex(tick));
-
-                emit LiquidatedTick(
-                    tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue
-                );
-            }
+            (bytes32 tickHash,) = _tickHash(tick);
+            effects_.liquidatedPositions += tickData.totalPos;
+            ++effects_.liquidatedTicks;
         } while (effects_.liquidatedTicks < iteration);
 
         if (effects_.liquidatedPositions != 0) {
@@ -542,7 +558,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tempVaultBalance = 0;
         }
 
-        effects_.newLongBalance = tempLongBalance.toUint256();
+        effects_.newLongBalance += tempLongBalance.toUint256();
         effects_.newVaultBalance = tempVaultBalance.toUint256();
     }
 }

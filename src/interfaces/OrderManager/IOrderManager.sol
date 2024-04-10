@@ -12,12 +12,14 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
      * @param longPositionTick The tick of the long position if created, otherwise equal to PENDING_ORDERS_TICK.
      * @param longPositionTickVersion The tick version of the long position.
      * @param longPositionIndex The index of the long position in the USDN protocol tick array.
+     * @param liquidationRewards Part of the collateral remaining when the orders' tick was liquidated given as a bonus.
      */
     struct OrdersDataInTick {
         uint232 amountOfAssets;
         int24 longPositionTick;
         uint256 longPositionTickVersion;
         uint256 longPositionIndex;
+        uint128 liquidationRewards;
     }
 
     /**
@@ -84,12 +86,13 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
      * @notice Remove the orders from the current tick, transfer them in the _positionsInTickHash mapping
      * and return the position size and liquidation price of the position.
      * @dev Can only be called by the USDN protocol.
-     * @param currentPrice The price at which the liquidation occured.
+     * @param currentPrice The price at which the liquidation occurred.
      * @param liquidatedTickHash The tick hash of the liquidated tick.
+     * @param rewards The rewards that were added to the position.
      * @return longPositionTick_ The liquidation tick of the long position to be created.
      * @return amount_ The amount of collateral for the position.
      */
-    function fulfillOrdersInTick(uint128 currentPrice, bytes32 liquidatedTickHash)
+    function fulfillOrdersInTick(uint128 currentPrice, bytes32 liquidatedTickHash, uint128 rewards)
         external
         returns (int24 longPositionTick_, uint256 amount_);
 }

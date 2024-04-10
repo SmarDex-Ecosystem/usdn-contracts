@@ -54,7 +54,7 @@ contract TestOrderManagerFulfillOrdersInTick is UsdnProtocolBaseFixture, IOrderM
      */
     function test_RevertWhen_fulfillOrdersInTickCallerNotUsdnProtocol() public {
         vm.expectRevert(abi.encodeWithSelector(OrderManagerCallerIsNotUSDNProtocol.selector, address(this)));
-        orderManager.fulfillOrdersInTick(_orderPrice, _orderTickHash);
+        orderManager.fulfillOrdersInTick(_orderPrice, _orderTickHash, 0);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -73,7 +73,7 @@ contract TestOrderManagerFulfillOrdersInTick is UsdnProtocolBaseFixture, IOrderM
         bytes32 tickHash = protocol.tickHash(liquidatedTick, 0);
 
         vm.prank(address(protocol));
-        (int24 longPositionTick, uint256 amount) = orderManager.fulfillOrdersInTick(currentPrice, tickHash);
+        (int24 longPositionTick, uint256 amount) = orderManager.fulfillOrdersInTick(currentPrice, tickHash, 0);
 
         assertEq(
             longPositionTick, orderManager.PENDING_ORDERS_TICK(), "Tick should be the PENDING_ORDERS_TICK constant"
@@ -110,12 +110,14 @@ contract TestOrderManagerFulfillOrdersInTick is UsdnProtocolBaseFixture, IOrderM
         int24 expectedLongTick = protocol.getEffectiveTickForPrice(expectedLiquidationPrice);
 
         vm.prank(address(protocol));
-        (int24 longPositionTick, uint256 amount) = orderManager.fulfillOrdersInTick(_orderPrice, _orderTickHash);
+        (int24 longPositionTick, uint256 amount) =
+            orderManager.fulfillOrdersInTick(_orderPrice, _orderTickHash, 0.5 ether);
 
         assertEq(expectedLongTick, longPositionTick, "Order has been created on the wrong tick");
         assertEq(amount, 1 ether, "Order has been created on the wrong tick");
 
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_orderTick, 0);
+        assertEq(ordersData.liquidationRewards, 0.5 ether, "The provided rewards amount should have been saved");
         assertEq(ordersData.amountOfAssets, 1 ether, "amount in orders data should not have changed");
         assertEq(ordersData.longPositionTick, expectedLongTick, "tick of the long position equal the expected one");
         assertEq(
@@ -143,7 +145,7 @@ contract TestOrderManagerFulfillOrdersInTick is UsdnProtocolBaseFixture, IOrderM
         vm.prank(address(protocol));
         vm.expectEmit();
         emit Approval(address(orderManager), address(protocol), type(uint256).max);
-        orderManager.fulfillOrdersInTick(_orderPrice, _orderTickHash);
+        orderManager.fulfillOrdersInTick(_orderPrice, _orderTickHash, 0);
 
         assertEq(
             wstETH.allowance(address(orderManager), address(protocol)),
@@ -154,7 +156,7 @@ contract TestOrderManagerFulfillOrdersInTick is UsdnProtocolBaseFixture, IOrderM
         // Now that the allowance is back to the max, make sure we don't re-increase the allowance unnecessarily
         vm.recordLogs();
         vm.prank(address(protocol));
-        orderManager.fulfillOrdersInTick(_orderPrice, _orderTickHash);
+        orderManager.fulfillOrdersInTick(_orderPrice, _orderTickHash, 0);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(logs.length, 0, "No events should have been emitted");

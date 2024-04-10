@@ -54,25 +54,26 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
         uint256 protocolAssetsBefore = wstETH.balanceOf(address(protocol));
         uint256 orderManagerAssetsBefore = wstETH.balanceOf(address(orderManager));
         uint128 ordersLeverage = uint128(orderManager.getOrdersLeverage());
-        uint256 balanceLongBefore = protocol.getBalanceLong();
         int24 expectedLongTick =
             protocol.getEffectiveTickForPrice(protocol.i_getLiquidationPrice(_liqPrice, ordersLeverage));
         uint256 expectedLongTickVersion = 0;
         uint256 expectedLongIndex = 0;
+        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, _tickTotalExpo);
+        uint128 expectedRewards = uint128(uint256(tickValue) / 2);
 
         vm.expectEmit();
         emit OrderManagerPositionOpened(
             address(orderManager),
             uint40(block.timestamp),
             ordersLeverage,
-            _orderAmount,
+            _orderAmount + expectedRewards,
             _liqPrice,
             expectedLongTick,
             expectedLongTickVersion,
             expectedLongIndex
         );
-        int256 tempLongBalance =
-            protocol.i_saveOrderManagerPositionInTick(_liqPrice, _tickHash, _tickTotalExpo, int256(balanceLongBefore));
+        uint128 positionSize =
+            protocol.i_saveOrderManagerPositionInTick(_liqPrice, _tickHash, _tickTotalExpo, tickValue);
 
         /* ------------------------------ Global checks ----------------------------- */
         assertEq(longPositionsCountBefore + 1, protocol.getTotalLongPositions(), "1 position should have been created");
@@ -87,9 +88,9 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
             "Assets from the orders in the tick should have been transferred out of the order manager"
         );
         assertEq(
-            balanceLongBefore + _orderAmount,
-            uint256(tempLongBalance),
-            "The returned long balance should be the balance long before + the amount in the position"
+            _orderAmount + expectedRewards,
+            positionSize,
+            "The returned position size should be the amount in the position"
         );
 
         /* ----------------------------- Position checks ---------------------------- */
@@ -102,11 +103,15 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
             expectedLongTick - protocol.getTickSpacing() * int24(protocol.getLiquidationPenalty())
         );
         uint256 ordersTotalExpo =
-            protocol.i_calculatePositionTotalExpo(_orderAmount, _liqPrice, posLiqPriceWithoutPenalty);
+            protocol.i_calculatePositionTotalExpo(_orderAmount + expectedRewards, _liqPrice, posLiqPriceWithoutPenalty);
         assertEq(pos.user, address(orderManager), "The position should belong to the order manager");
         assertEq(pos.timestamp, block.timestamp, "The timestamp should be now");
         assertEq(pos.totalExpo, ordersTotalExpo, "The total expo should be equal to the total expo of the orders");
-        assertEq(pos.amount, _orderAmount, "The amount should be equal to the amount of assets in the orders");
+        assertEq(
+            pos.amount,
+            _orderAmount + expectedRewards,
+            "The amount should be equal to the amount of assets in the orders"
+        );
     }
 
     /**
@@ -125,6 +130,8 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
         uint128 posLiqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
             expectedLongTick - protocol.getTickSpacing() * int24(protocol.getLiquidationPenalty())
         );
+        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, _tickTotalExpo);
+        uint256 expectedRewards = uint256(tickValue) / 2;
 
         // Deposit more assets than necessary
         uint128 maxAmount = protocol.i_calcPositionAmount(_tickTotalExpo, _liqPrice, posLiqPriceWithoutPenalty);
@@ -134,7 +141,6 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
         uint256 longPositionsCountBefore = protocol.getTotalLongPositions();
         uint256 protocolAssetsBefore = wstETH.balanceOf(address(protocol));
         uint256 orderManagerAssetsBefore = wstETH.balanceOf(address(orderManager));
-        uint256 balanceLongBefore = protocol.getBalanceLong();
 
         vm.expectEmit();
         emit OrderManagerPositionOpened(
@@ -147,26 +153,22 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
             expectedLongTickVersion,
             expectedLongIndex
         );
-        int256 tempLongBalance =
-            protocol.i_saveOrderManagerPositionInTick(_liqPrice, _tickHash, _tickTotalExpo, int256(balanceLongBefore));
+        uint128 positionSize =
+            protocol.i_saveOrderManagerPositionInTick(_liqPrice, _tickHash, _tickTotalExpo, tickValue);
 
         /* ------------------------------ Global checks ----------------------------- */
         assertEq(longPositionsCountBefore + 1, protocol.getTotalLongPositions(), "1 position should have been created");
         assertEq(
-            protocolAssetsBefore + maxAmount,
+            protocolAssetsBefore + maxAmount - expectedRewards,
             wstETH.balanceOf(address(protocol)),
             "The max amount available to open a position should have been transferred to the protocol"
         );
         assertEq(
-            orderManagerAssetsBefore - maxAmount,
+            orderManagerAssetsBefore - maxAmount + expectedRewards,
             wstETH.balanceOf(address(orderManager)),
             "The max amount available to open a position should have been transferred out of the order manager"
         );
-        assertEq(
-            balanceLongBefore + maxAmount,
-            uint256(tempLongBalance),
-            "The returned long balance should be the balance long before + the amount in the position"
-        );
+        assertEq(maxAmount, positionSize, "The returned position size should be the max possible amount");
 
         /* ----------------------------- Position checks ---------------------------- */
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_tick, _tickVersion);
@@ -196,9 +198,7 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
         uint256 protocolAssetsBefore = wstETH.balanceOf(address(protocol));
 
         vm.recordLogs();
-        int256 tempLongBalance = protocol.i_saveOrderManagerPositionInTick(
-            _liqPrice, _tickHash, _tickTotalExpo, int256(protocol.getBalanceLong())
-        );
+        uint128 positionSize = protocol.i_saveOrderManagerPositionInTick(_liqPrice, _tickHash, _tickTotalExpo, 0);
         Vm.Log[] memory logs = vm.getRecordedLogs();
         assertEq(logs.length, 0, "No logs should have been emitted");
 
@@ -214,11 +214,7 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
             "No assets should have been transferred to the protocol"
         );
 
-        assertEq(
-            tempLongBalance,
-            int256(protocol.getBalanceLong()),
-            "The protocol long balance should be equal to the returned long balance"
-        );
+        assertEq(positionSize, 0, "The position amount should be 0 as no position was created");
     }
 
     /**
@@ -232,9 +228,7 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
         uint256 protocolAssetsBefore = wstETH.balanceOf(address(protocol));
 
         bytes32 tickHash = protocol.tickHash(_tick - protocol.getTickSpacing(), 0);
-        protocol.i_saveOrderManagerPositionInTick(
-            _liqPrice, tickHash, _tickTotalExpo, int256(protocol.getBalanceLong())
-        );
+        protocol.i_saveOrderManagerPositionInTick(_liqPrice, tickHash, _tickTotalExpo, 0);
 
         assertEq(
             longPositionsCountBefore,

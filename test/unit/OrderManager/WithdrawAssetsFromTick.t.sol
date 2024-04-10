@@ -55,12 +55,12 @@ contract TestOrderManagerWithdrawAssetsFromTick is UsdnProtocolBaseFixture, IOrd
      * @custom:when withdrawAssetsFromTick is called for this tick
      * @custom:then the call reverts with a OrderManagerOrderNotPending error
      */
-    function test_RervertsWhen_orderIsNotPending() external {
+    function test_RevertWhen_orderIsNotPending() external {
         bytes32 tickHash = protocol.tickHash(_tick, _tickVersion);
 
         // Fulfill the order so it's not pending anymore
         vm.prank(address(protocol));
-        orderManager.fulfillOrdersInTick(2000 ether, tickHash);
+        orderManager.fulfillOrdersInTick(2000 ether, tickHash, 0);
 
         vm.expectRevert(abi.encodeWithSelector(OrderManagerOrderNotPending.selector, _tick, _tickVersion));
         orderManager.withdrawAssetsFromTick(_tick, _tickVersion, _amount);
