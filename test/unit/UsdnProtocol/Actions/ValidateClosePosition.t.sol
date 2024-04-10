@@ -169,18 +169,32 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:when The user validate the close of the position
      * @custom:then The state of the protocol is updated
      * @custom:and a ValidatedClosePosition event is emitted
-     * @custom:and the user receives half of the position amount
+     * @custom:and the user receives the position amount
      */
     function test_internalValidateClosePosition() external {
+        _internalValidateClosePositionScenario(address(this));
+    }
+
+    /**
+     * @custom:scenario The user validates a close position action for another recipient
+     * @custom:given A validated open position of 1 wsteth
+     * @custom:when The user validate the close of the position with another recipient
+     * @custom:then The state of the protocol is updated
+     * @custom:and a ValidatedClosePosition event is emitted
+     * @custom:and the recipient receives the position amount
+     */
+    function test_internalValidateClosePositionForAnotherUser() external {
+        _internalValidateClosePositionScenario(USER_1);
+    }
+
+    function _internalValidateClosePositionScenario(address to) internal {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
         /* ------------------------- Initiate Close Position ------------------------ */
         Position memory pos = protocol.getLongPosition(tick, tickVersion, index);
-        uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
-        protocol.initiateClosePosition(
-            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
-        );
+        uint256 assetBalanceBefore = protocol.getAsset().balanceOf(to);
+        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, to);
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
@@ -191,13 +205,13 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             protocol.i_assetToTransfer(price, tick, totalExpoToClose, liqMultiplier, action.closeTempTransfer);
 
         vm.expectEmit();
-        emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, expectedAmountReceived, -1);
+        emit ValidatedClosePosition(address(this), to, tick, tickVersion, index, expectedAmountReceived, -1);
         protocol.i_validateClosePosition(address(this), priceData);
 
         /* ----------------------------- User's Balance ----------------------------- */
         assertApproxEqAbs(
             assetBalanceBefore + positionAmount,
-            wstETH.balanceOf(address(this)),
+            wstETH.balanceOf(to),
             1,
             "User should have received the amount to close approximately"
         );
