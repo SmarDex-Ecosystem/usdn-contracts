@@ -158,6 +158,7 @@ contract BaseFixture is Test {
         uint8 usedParametersCount = 3;
         if (bytes(parameter2).length > 0) ++usedParametersCount;
         if (bytes(parameter3).length > 0) ++usedParametersCount;
+        if (bytes(parameter4).length > 0) ++usedParametersCount;
 
         result_ = _vmFFIRustCommand(cmds, usedParametersCount);
     }

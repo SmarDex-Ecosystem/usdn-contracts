@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { console2 } from "forge-std/Test.sol";
 
 /**
  * @custom:feature The _calcRebaseTotalSupply internal function of the UsdnProtocolVault contract.
  * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolCalcRebaseTotalSupply is UsdnProtocolBaseFixture {
+    using SafeCast for uint256;
+
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
     }
@@ -22,9 +27,9 @@ contract TestUsdnProtocolCalcRebaseTotalSupply is UsdnProtocolBaseFixture {
         uint8 assetDecimals
     ) public {
         vaultBalance = bound(vaultBalance, 1, type(uint256).max);
-        assetPrice = uint128(bound(assetPrice, 1, type(uint128).max));
-        targetPrice = uint128(bound(targetPrice, 1, type(uint128).max));
-        assetDecimals = uint8(bound(assetDecimals, 1, type(uint8).max));
+        assetPrice = bound(assetPrice, 1, type(uint128).max).toUint128();
+        targetPrice = bound(targetPrice, 1, type(uint128).max).toUint128();
+        assetDecimals = bound(assetDecimals, 1, 30).toUint8();
 
         bytes memory result = vmFFIRustCommand(
             "calc-rebase-total-supply",

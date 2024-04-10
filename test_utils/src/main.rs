@@ -70,6 +70,13 @@ enum Commands {
         liq_price: String,
         amount: String,
     },
+    /// Compare different rebase total supply calculation implementations
+    CalcRebaseTotalSupply {
+        vault_balance: String,
+        asset_price: String,
+        target_price: String,
+        asset_decimals: String
+    },
 }
 
 fn main() -> Result<()> {
@@ -135,6 +142,22 @@ fn main() -> Result<()> {
             
             print_u256_hex(total_expo.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
         }
+        Commands::CalcRebaseTotalSupply { vault_balance, asset_price, target_price, asset_decimals } => {
+            let vault_balance: Integer = vault_balance.parse()?;
+            let asset_price: Integer = asset_price.parse()?;
+            let target_price: Integer = target_price.parse()?;
+            let asset_decimals: u32 = asset_decimals.parse()?;
+        
+            let zero = Integer::from(10u128.pow(0));
+            let numerator = Integer::from(&vault_balance * &asset_price);
+            let denominator = Integer::from(&target_price);
+            
+            let mut total_supply= Float::with_val(512, numerator) * zero / denominator;
+            total_supply.floor_mut();
+        
+            print_u256_hex(total_supply.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
+        }
+        
     }
     Ok(())
 }
