@@ -77,6 +77,7 @@ library HugeInt {
     /**
      * @notice Calculate the division `floor(a / b)` of a 512-bit unsigned integer by a unsigned 256-bit integer.
      * @dev Credits Solady (MIT license): https://github.com/Vectorized/solady/
+     * The call will revert if the result doesn't fit inside a uint256 or if the denominator is zero.
      * @param a The numerator as a 512-bit unsigned integer
      * @param b The denominator as a 256-bit unsigned integer
      * @return res_ The division `floor(a / b)` of the operands as an unsigned 256-bit integer
