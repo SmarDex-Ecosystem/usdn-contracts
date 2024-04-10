@@ -429,7 +429,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tempVaultBalance = 0;
         }
 
-        newLongBalance_ += tempLongBalance.toUint256();
+        newLongBalance_ = tempLongBalance.toUint256();
         newVaultBalance_ = tempVaultBalance.toUint256();
     }
 }
