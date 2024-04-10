@@ -1,5 +1,4 @@
-use std::ops::DivAssign;
-use alloy_primitives::{Bytes, FixedBytes, I256, U256};
+use alloy_primitives::{Bytes, FixedBytes, I256, U256, U512};
 use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose::STANDARD, Engine as _};
@@ -10,6 +9,7 @@ use rug::{
     Float, Integer,
 };
 use serde::Deserialize;
+use std::ops::DivAssign;
 
 #[derive(Deserialize, Debug)]
 struct HermesResponse {
@@ -70,6 +70,34 @@ enum Commands {
         liq_price: String,
         amount: String,
     },
+    /// Uint512 addition
+    HugeIntAdd {
+        /// First operand bytes
+        a: String,
+        /// Second operand bytes
+        b: String,
+    },
+    /// Uint512 subtraction
+    HugeIntSub {
+        /// First operand bytes
+        a: String,
+        /// Second operand bytes
+        b: String,
+    },
+    /// Full multiplication of two uint256
+    HugeIntMul {
+        /// First operand as a uint256
+        a: String,
+        /// Second operand as a uint256
+        b: String,
+    },
+    /// Division of a uint512 by a uint256
+    HugeIntDiv256 {
+        /// First operand as a uint512
+        a: String,
+        /// Second operand as a uint256
+        b: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -124,7 +152,11 @@ fn main() -> Result<()> {
             let price: HermesResponse = response.json()?;
             print_pyth_response(price)?;
         }
-        Commands::CalcExpo { start_price, liq_price, amount } => {
+        Commands::CalcExpo {
+            start_price,
+            liq_price,
+            amount,
+        } => {
             let start_price: Integer = start_price.parse()?;
             let liq_price: Integer = liq_price.parse()?;
             let amount: Integer = amount.parse()?;
@@ -132,8 +164,45 @@ fn main() -> Result<()> {
             let price_diff = Integer::from(&start_price - &liq_price);
             let mut total_expo = Float::with_val(512, amount) * start_price / price_diff;
             total_expo.floor_mut();
-            
-            print_u256_hex(total_expo.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
+
+            print_u256_hex(
+                total_expo
+                    .to_integer()
+                    .ok_or_else(|| anyhow!("can't convert to integer"))?,
+            )?;
+        }
+        Commands::HugeIntAdd { a, b } => {
+            let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
+            let b = U512::from_be_bytes::<64>(const_hex::decode_to_array(b)?);
+            let res = a + b;
+            let lsb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[32..].try_into()?);
+            let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
+            print_u512_hex(lsb, msb);
+        }
+        Commands::HugeIntSub { a, b } => {
+            let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
+            let b = U512::from_be_bytes::<64>(const_hex::decode_to_array(b)?);
+            let res = a - b;
+            let lsb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[32..].try_into()?);
+            let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
+            print_u512_hex(lsb, msb);
+        }
+        Commands::HugeIntMul { a, b } => {
+            let a: U512 = a.parse()?;
+            let b: U512 = b.parse()?;
+            let res = a * b;
+            let lsb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[32..].try_into()?);
+            let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
+            print_u512_hex(lsb, msb);
+        }
+        Commands::HugeIntDiv256 { a, b } => {
+            let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
+            let b: U512 = b.parse()?;
+            let res = a / b;
+            assert!(res <= U512::from(U256::MAX));
+            let bytes: [u8; 32] = res.to_be_bytes::<64>()[32..].try_into()?;
+            let x_bytes: FixedBytes<32> = bytes.into();
+            print!("{x_bytes}");
         }
     }
     Ok(())
@@ -156,6 +225,13 @@ fn print_u256_hex(x: Integer) -> Result<()> {
     let x_bytes: FixedBytes<32> = bytes.into();
     print!("{x_bytes}");
     Ok(())
+}
+
+fn print_u512_hex(lsb: U256, msb: U256) {
+    let data = (lsb, msb);
+    let bytes = data.abi_encode_params();
+    let bytes: Bytes = bytes.into();
+    print!("{bytes}");
 }
 
 fn print_pyth_response(response: HermesResponse) -> Result<()> {
