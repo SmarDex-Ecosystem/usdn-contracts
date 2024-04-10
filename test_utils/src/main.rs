@@ -75,7 +75,8 @@ enum Commands {
         vault_balance: String,
         asset_price: String,
         target_price: String,
-        asset_decimals: String
+        asset_decimals: String,
+        token_decimals: String,
     },
 }
 
@@ -142,17 +143,19 @@ fn main() -> Result<()> {
             
             print_u256_hex(total_expo.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
         }
-        Commands::CalcRebaseTotalSupply { vault_balance, asset_price, target_price, asset_decimals } => {
+        Commands::CalcRebaseTotalSupply { vault_balance, asset_price, target_price, asset_decimals,token_decimals } => {
             let vault_balance: Integer = vault_balance.parse()?;
             let asset_price: Integer = asset_price.parse()?;
             let target_price: Integer = target_price.parse()?;
             let asset_decimals: u32 = asset_decimals.parse()?;
+            let token_decimals: u32 = token_decimals.parse()?;
         
-            let zero = Integer::from(10u128.pow(0));
+            let ten_power_asset_decimals = Integer::from(10u128.pow(asset_decimals));
+            let ten_power_token_decimals = Integer::from(10u128.pow(token_decimals));
             let numerator = Integer::from(&vault_balance * &asset_price);
             let denominator = Integer::from(&target_price);
             
-            let mut total_supply= Float::with_val(512, numerator) * zero / denominator;
+            let mut total_supply= Float::with_val(512, numerator) * ten_power_token_decimals / Float::with_val(512, denominator) * ten_power_asset_decimals;
             total_supply.floor_mut();
         
             print_u256_hex(total_supply.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;

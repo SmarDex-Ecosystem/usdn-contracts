@@ -26,17 +26,19 @@ contract TestUsdnProtocolCalcRebaseTotalSupply is UsdnProtocolBaseFixture {
         uint128 targetPrice,
         uint8 assetDecimals
     ) public {
-        vaultBalance = bound(vaultBalance, 1, type(uint256).max);
+        vaultBalance = bound(vaultBalance, 1, type(uint128).max).toUint128();
         assetPrice = bound(assetPrice, 1, type(uint128).max).toUint128();
         targetPrice = bound(targetPrice, 1, type(uint128).max).toUint128();
-        assetDecimals = bound(assetDecimals, 1, 30).toUint8();
+        assetDecimals = bound(assetDecimals, 1, type(uint8).max).toUint8();
+        uint8 tokenDecimals = protocol.TOKENS_DECIMALS();
 
         bytes memory result = vmFFIRustCommand(
             "calc-rebase-total-supply",
             vm.toString(vaultBalance),
             vm.toString(assetPrice),
             vm.toString(targetPrice),
-            vm.toString(assetDecimals)
+            vm.toString(assetDecimals),
+            vm.toString(tokenDecimals)
         );
 
         // Sanity check
