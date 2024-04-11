@@ -15,7 +15,7 @@ import {
     DepositPendingAction,
     WithdrawalPendingAction,
     LongPendingAction,
-    LiquidationData,
+    LiquidationsEffects,
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
@@ -1031,18 +1031,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
-        LiquidationData memory liquidationData =
+        LiquidationsEffects memory liquidationsEffects =
             _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
 
-        liquidatedPositions_ = liquidationData.liquidatedPositions;
-        _balanceLong = liquidationData.newLongBalance;
-        _balanceVault = liquidationData.newVaultBalance;
+        liquidatedPositions_ = liquidationsEffects.liquidatedPositions;
+        _balanceLong = liquidationsEffects.newLongBalance;
+        _balanceVault = liquidationsEffects.newVaultBalance;
 
         // Always perform the rebase check during liquidation
         bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
 
-        if (liquidationData.liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(liquidationData.liquidatedTicks, liquidationData.remainingCollateral, rebased);
+        if (liquidationsEffects.liquidatedTicks > 0) {
+            _sendRewardsToLiquidator(
+                liquidationsEffects.liquidatedTicks, liquidationsEffects.remainingCollateral, rebased
+            );
         }
     }
 
@@ -1160,11 +1162,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
         // liquidate if price is more recent than _lastPrice
         if (priceUpdated) {
-            LiquidationData memory liquidationData =
+            LiquidationsEffects memory liquidationsEffects =
                 _liquidatePositions(neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
 
-            _balanceLong = liquidationData.newLongBalance;
-            _balanceVault = liquidationData.newVaultBalance;
+            _balanceLong = liquidationsEffects.newLongBalance;
+            _balanceVault = liquidationsEffects.newVaultBalance;
 
             // rebase USDN if needed (interval has elapsed and price threshold was reached)
             _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier

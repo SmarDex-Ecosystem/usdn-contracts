@@ -18,7 +18,7 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { Position, LiquidationData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -123,7 +123,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint16 iteration,
         int256 tempLongBalance,
         int256 tempVaultBalance
-    ) external returns (LiquidationData memory liquidationData_) {
+    ) external returns (LiquidationsEffects memory liquidationData_) {
         return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 

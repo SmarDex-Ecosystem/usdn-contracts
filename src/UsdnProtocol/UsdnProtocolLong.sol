@@ -6,7 +6,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position, LiquidationData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
@@ -333,7 +333,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint16 iteration,
         int256 tempLongBalance,
         int256 tempVaultBalance
-    ) internal returns (LiquidationData memory liquidationData_) {
+    ) internal returns (LiquidationsEffects memory liquidationData_) {
         // max iteration limit
         if (iteration > MAX_LIQUIDATION_ITERATION) {
             iteration = MAX_LIQUIDATION_ITERATION;
