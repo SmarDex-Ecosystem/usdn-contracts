@@ -169,3 +169,19 @@ struct PreviousActionsData {
     bytes[] priceData;
     uint128[] rawIndices;
 }
+
+/**
+ * @notice Changes made by a liquidation to the protocol
+ * @param liquidatedPositions The amount of liquidated positions
+ * @param liquidatedTicks The amount of liquidated ticks
+ * @param remainingCollateral The collateral remaining after the liquidations
+ * @param newLongBalance The new balance of the long side
+ * @param newVaultBalance The new balance of the vault side
+ */
+struct LiquidationData {
+    uint256 liquidatedPositions;
+    uint16 liquidatedTicks;
+    int256 remainingCollateral;
+    uint256 newLongBalance;
+    uint256 newVaultBalance;
+}

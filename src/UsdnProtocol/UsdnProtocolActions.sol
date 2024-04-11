@@ -15,6 +15,7 @@ import {
     DepositPendingAction,
     WithdrawalPendingAction,
     LongPendingAction,
+    LiquidationData,
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
@@ -1030,16 +1031,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
-        uint16 liquidatedTicks;
-        int256 liquidatedCollateral;
-        (liquidatedPositions_, liquidatedTicks, liquidatedCollateral, _balanceLong, _balanceVault) =
+        LiquidationData memory liquidationData =
             _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
+
+        uint16 liquidatedTicks = liquidationData.liquidatedTicks;
+        int256 remainingCollateral = liquidationData.remainingCollateral;
+        liquidatedPositions_ = liquidationData.liquidatedPositions;
+        _balanceLong = liquidationData.newLongBalance;
+        _balanceVault = liquidationData.newVaultBalance;
 
         // Always perform the rebase check during liquidation
         bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
 
         if (liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
+            _sendRewardsToLiquidator(liquidatedTicks, remainingCollateral, rebased);
         }
     }
 
@@ -1157,8 +1162,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
         // liquidate if price is more recent than _lastPrice
         if (priceUpdated) {
-            (,,, _balanceLong, _balanceVault) =
+            LiquidationData memory liquidationData =
                 _liquidatePositions(neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
+
+            _balanceLong = liquidationData.newLongBalance;
+            _balanceVault = liquidationData.newVaultBalance;
+
             // rebase USDN if needed (interval has elapsed and price threshold was reached)
             _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
         }

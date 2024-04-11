@@ -6,7 +6,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, LiquidationData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
@@ -326,27 +326,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param iteration The maximum number of ticks to liquidate (minimum is 1)
      * @param tempLongBalance The temporary long balance as calculated when applying PnL and funding
      * @param tempVaultBalance The temporary vault balance as calculated when applying PnL and funding
-     * @return liquidatedPositions_ The number of positions that were liquidated
-     * @return liquidatedTicks_ The number of ticks that were liquidated
-     * @return remainingCollateral_ The remaining collateral after handling the liquidated positions
-     * @return newLongBalance_ The new long balance after handling of the remaining collateral or bad debt
-     * @return newVaultBalance_ The new vault balance after handling of the remaining collateral or bad debt
+     * @return liquidationData_ The effects of the liquidations on the protocol
      */
     function _liquidatePositions(
         uint256 currentPrice,
         uint16 iteration,
         int256 tempLongBalance,
         int256 tempVaultBalance
-    )
-        internal
-        returns (
-            uint256 liquidatedPositions_,
-            uint16 liquidatedTicks_,
-            int256 remainingCollateral_,
-            uint256 newLongBalance_,
-            uint256 newVaultBalance_
-        )
-    {
+    ) internal returns (LiquidationData memory liquidationData_) {
         // max iteration limit
         if (iteration > MAX_LIQUIDATION_ITERATION) {
             iteration = MAX_LIQUIDATION_ITERATION;
@@ -381,16 +368,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                     _totalExpo -= tickTotalExpo;
 
                     _totalLongPositions -= length;
-                    liquidatedPositions_ += length;
+                    liquidationData_.liquidatedPositions += length;
 
                     ++_tickVersion[tick];
-                    ++liquidatedTicks_;
+                    ++liquidationData_.liquidatedTicks;
                 }
             }
 
             {
                 int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
-                remainingCollateral_ += tickValue;
+                liquidationData_.remainingCollateral += tickValue;
 
                 _tickBitmap.unset(_tickToBitmapIndex(tick));
 
@@ -398,9 +385,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                     tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue
                 );
             }
-        } while (liquidatedTicks_ < iteration);
+        } while (liquidationData_.liquidatedTicks < iteration);
 
-        if (liquidatedPositions_ != 0) {
+        if (liquidationData_.liquidatedPositions != 0) {
             if (tick < currentTick) {
                 // all ticks above the current tick were liquidated
                 _maxInitializedTick = _findMaxInitializedTick(currentTick);
@@ -411,8 +398,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
 
         // Transfer remaining collateral to vault or pay bad debt
-        tempVaultBalance += remainingCollateral_;
-        tempLongBalance -= remainingCollateral_;
+        tempVaultBalance += liquidationData_.remainingCollateral;
+        tempLongBalance -= liquidationData_.remainingCollateral;
 
         // This can happen if the funding is larger than the remaining balance in the long side after applying PnL.
         // Test case: test_assetToTransferZeroBalance()
@@ -429,7 +416,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tempVaultBalance = 0;
         }
 
-        newLongBalance_ = tempLongBalance.toUint256();
-        newVaultBalance_ = tempVaultBalance.toUint256();
+        liquidationData_.newLongBalance = tempLongBalance.toUint256();
+        liquidationData_.newVaultBalance = tempVaultBalance.toUint256();
     }
 }
