@@ -73,7 +73,7 @@ contract TestHugeIntFuzzing is HugeIntFixture {
      * @custom:scenario Fuzzing the `div256` function
      * @custom:given A 512-bit unsigned integer and a 256-bit unsigned integer
      * @custom:and The divisor is greater than 0
-     * @custom:and The dividend is greater than the MSB of the 512-bit integer (to avoid overflowing a uint256)
+     * @custom:and The divisor is greater than the MSB of the 512-bit integer (to avoid overflowing a uint256)
      * @custom:when The `div256` function is called with the operands
      * @custom:then The result is equal to the division of the 512-bit integer by the 256-bit integer, as a uint256
      * @param a0 The LSB of the numerator
@@ -89,6 +89,24 @@ contract TestHugeIntFuzzing is HugeIntFixture {
         uint256 ref = abi.decode(result, (uint256));
         uint256 res = handler.div256(HugeInt.Uint512(a0, a1), b);
         assertEq(res, ref);
+    }
+
+    /**
+     * @custom:scenario Fuzzing the `div` function
+     * @custom:given Two 512-bit unsigned integers
+     * @custom:and The divisor is greater than 0
+     * @custom:when The `div` function is called with the operands
+     * @custom:then The result is equal to the division of the numerator by the denominator, as a uint256
+     */
+    function testFuzz_FFIDiv(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
+        vm.assume(b0 > 0 || b1 > 0);
+        b1 = bound(b1, 1, type(uint256).max);
+        bytes memory a = abi.encodePacked(a1, a0);
+        bytes memory b = abi.encodePacked(b1, b0);
+        bytes memory result = vmFFIRustCommand("huge-int-div", vm.toString(a), vm.toString(b));
+        uint256 ref = abi.decode(result, (uint256));
+        uint256 res = handler.div(HugeInt.Uint512(a0, a1), HugeInt.Uint512(b0, b1));
+        assertApproxEqAbs(res, ref, 1);
     }
 
     /**

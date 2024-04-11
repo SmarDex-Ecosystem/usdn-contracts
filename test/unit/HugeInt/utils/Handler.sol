@@ -12,19 +12,11 @@ contract HugeIntHandler {
         return HugeInt.wrap(x);
     }
 
-    function add(HugeInt.Uint512 memory a, HugeInt.Uint512 memory b)
-        external
-        pure
-        returns (HugeInt.Uint512 memory res_)
-    {
+    function add(HugeInt.Uint512 memory a, HugeInt.Uint512 memory b) external pure returns (HugeInt.Uint512 memory) {
         return HugeInt.add(a, b);
     }
 
-    function sub(HugeInt.Uint512 memory a, HugeInt.Uint512 memory b)
-        external
-        pure
-        returns (HugeInt.Uint512 memory res_)
-    {
+    function sub(HugeInt.Uint512 memory a, HugeInt.Uint512 memory b) external pure returns (HugeInt.Uint512 memory) {
         return HugeInt.sub(a, b);
     }
 
@@ -32,8 +24,12 @@ contract HugeIntHandler {
         return HugeInt.mul(a, b);
     }
 
-    function div256(HugeInt.Uint512 memory a, uint256 b) external pure returns (uint256 res_) {
+    function div256(HugeInt.Uint512 memory a, uint256 b) external pure returns (uint256) {
         return HugeInt.div256(a, b);
+    }
+
+    function div(HugeInt.Uint512 memory a, HugeInt.Uint512 memory b) external pure returns (uint256) {
+        return HugeInt.div(a, b);
     }
 
     function clz(uint256 x) external pure returns (uint256 n_) {

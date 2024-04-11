@@ -4,45 +4,47 @@ pragma solidity ^0.8.20;
 import { console2 } from "forge-std/console2.sol";
 
 library HugeInt {
+    /// @notice Indicates that the division failed because the divisor is zero or the result overflows a uint256.
     error HugeIntDivisionFailed();
 
+    /**
+     * @notice A 512-bit integer represented as two 256-bit limbs
+     * @dev The integer value can be reconstructed as `msb * 2^256 + lsb`
+     * @param lsb The least-significant bits (lower limb) of the integer
+     * @param msb The most-significant bits (higher limb) of the integer
+     */
     struct Uint512 {
         uint256 lsb;
         uint256 msb;
     }
 
+    /**
+     * @notice Wrap a uint256 into a Uint512 integer
+     * @param x A uint256 integer
+     * @return The same value as a 512-bit integer
+     */
     function wrap(uint256 x) internal pure returns (Uint512 memory) {
         return Uint512(x, 0);
     }
 
     /**
      * @notice Calculate the sum `a + b` of two 512-bit unsigned integers.
-     * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/512-bit-division/
-     * The result is not checked for overflow, the caller must ensure that the result is less than 2^512.
+     * @dev The result is not checked for overflow, the caller must ensure that the result is less than 2^512.
      * @param a The first operand
      * @param b The second operand
      */
-    function add(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
-        (uint256 a0, uint256 a1) = (a.lsb, a.msb);
-        (uint256 b0, uint256 b1) = (b.lsb, b.msb);
-        uint256 lsb;
-        uint256 msb;
-        assembly {
-            lsb := add(a0, b0)
-            msb := add(add(a1, b1), lt(lsb, a0))
-        }
-        return Uint512(lsb, msb);
+    function add(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
+        res_ = _add(a, b);
     }
 
     /**
      * @notice Calculate the difference `a - b` of two 512-bit unsigned integers.
-     * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/512-bit-division/
-     * The result is not checked for overflow, the caller must ensure that the second operand is less than or equal to
-     * the first operand.
+     * @dev The result is not checked for overflow, the caller must ensure that the second operand is less than or
+     * equal to the first operand.
      * @param a The first operand
      * @param b The second operand
      */
-    function sub(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
+    function sub(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
         (uint256 a0, uint256 a1) = (a.lsb, a.msb);
         (uint256 b0, uint256 b1) = (b.lsb, b.msb);
         uint256 lsb;
@@ -56,22 +58,12 @@ library HugeInt {
 
     /**
      * @notice Calculate the product `a * b` of two 256-bit unsigned integers using the chinese remainder theorem.
-     * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/chinese-remainder-theorem/
-     * and Solady (MIT license): https://github.com/Vectorized/solady/
-     * The result is not checked for overflow, the caller must ensure that the result is less than 2^512.
      * @param a The first operand
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
      */
-    function mul(uint256 a, uint256 b) internal pure returns (Uint512 memory) {
-        uint256 lsb;
-        uint256 msb;
-        assembly {
-            lsb := mul(a, b)
-            let mm := mulmod(a, b, not(0))
-            msb := sub(mm, add(lsb, lt(mm, lsb)))
-        }
-        return Uint512(lsb, msb);
+    function mul(uint256 a, uint256 b) external pure returns (Uint512 memory) {
+        return _mul(a, b);
     }
 
     /**
@@ -82,7 +74,7 @@ library HugeInt {
      * @param b The denominator as a 256-bit unsigned integer
      * @return res_ The division `floor(a / b)` of the operands as an unsigned 256-bit integer
      */
-    function div256(Uint512 memory a, uint256 b) internal pure returns (uint256 res_) {
+    function div256(Uint512 memory a, uint256 b) external pure returns (uint256 res_) {
         // make sure the output fits inside a uint256, also prevents b == 0
         if (b <= a.msb) {
             revert HugeIntDivisionFailed();
@@ -107,7 +99,7 @@ library HugeInt {
      * @param b The denominator as a 512-bit integer
      * @return res_ The quotient floor(a/b)
      */
-    function div(Uint512 memory a, Uint512 memory b) internal pure returns (uint256 res_) {
+    function div(Uint512 memory a, Uint512 memory b) external pure returns (uint256 res_) {
         // prevents b == 0
         if (b.msb == 0 && b.lsb == 0) {
             revert HugeIntDivisionFailed();
@@ -146,6 +138,64 @@ library HugeInt {
             uint256 v = _reciprocal_2(bn_lo, bn_hi);
             res_ = _div_2(a1 >> rsh, (a1 << lsh) | (a0 >> rsh), a0 << lsh, Uint512(bn_lo, bn_hi), v);
         }
+    }
+
+    /**
+     * @notice Calculate the sum `a + b` of two 512-bit unsigned integers.
+     * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/512-bit-division/
+     * The result is not checked for overflow, the caller must ensure that the result is less than 2^512.
+     * @param a The first operand
+     * @param b The second operand
+     */
+    function _add(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
+        (uint256 a0, uint256 a1) = (a.lsb, a.msb);
+        (uint256 b0, uint256 b1) = (b.lsb, b.msb);
+        uint256 lsb;
+        uint256 msb;
+        assembly {
+            lsb := add(a0, b0)
+            msb := add(add(a1, b1), lt(lsb, a0))
+        }
+        return Uint512(lsb, msb);
+    }
+
+    /**
+     * @notice Calculate the difference `a - b` of two 512-bit unsigned integers.
+     * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/512-bit-division/
+     * The result is not checked for overflow, the caller must ensure that the second operand is less than or equal to
+     * the first operand.
+     * @param a The first operand
+     * @param b The second operand
+     */
+    function _sub(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
+        (uint256 a0, uint256 a1) = (a.lsb, a.msb);
+        (uint256 b0, uint256 b1) = (b.lsb, b.msb);
+        uint256 lsb;
+        uint256 msb;
+        assembly {
+            lsb := sub(a0, b0)
+            msb := sub(sub(a1, b1), lt(a0, b0))
+        }
+        return Uint512(lsb, msb);
+    }
+
+    /**
+     * @notice Calculate the product `a * b` of two 256-bit unsigned integers using the chinese remainder theorem.
+     * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/chinese-remainder-theorem/
+     * and Solady (MIT license): https://github.com/Vectorized/solady/
+     * @param a The first operand
+     * @param b The second operand
+     * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
+     */
+    function _mul(uint256 a, uint256 b) internal pure returns (Uint512 memory) {
+        uint256 lsb;
+        uint256 msb;
+        assembly {
+            lsb := mul(a, b)
+            let mm := mulmod(a, b, not(0))
+            msb := sub(mm, add(lsb, lt(mm, lsb)))
+        }
+        return Uint512(lsb, msb);
     }
 
     /**
@@ -208,20 +258,20 @@ library HugeInt {
      */
     function _div_2(uint256 a2, uint256 a1, uint256 a0, Uint512 memory b, uint256 v) internal pure returns (uint256) {
         unchecked {
-            Uint512 memory q = mul(v, a2);
-            q = add(q, Uint512(a1, a2));
+            Uint512 memory q = _mul(v, a2);
+            q = _add(q, Uint512(a1, a2));
             uint256 r1 = a1 - q.msb * b.msb;
-            Uint512 memory t = mul(b.lsb, q.msb);
-            Uint512 memory r = sub(sub(Uint512(a0, r1), t), b);
+            Uint512 memory t = _mul(b.lsb, q.msb);
+            Uint512 memory r = _sub(_sub(Uint512(a0, r1), t), b);
             r1 = r.msb;
             q.msb++;
             if (r1 >= q.lsb) {
                 q.msb--;
-                r = add(r, b);
+                r = _add(r, b);
             }
             if (r1 > b.msb || (r1 == b.msb && r.lsb >= b.lsb)) {
                 q.msb++;
-                r = sub(r, b);
+                r = _sub(r, b);
             }
             return q.msb;
         }
@@ -233,7 +283,7 @@ library HugeInt {
      * @return v_ The reciprocal of d
      */
     function _reciprocal(uint256 d) internal pure returns (uint256 v_) {
-        v_ = _div256(Uint512(255, 255 - d), d);
+        v_ = _div256(Uint512(type(uint256).max, type(uint256).max - d), d);
     }
 
     /**
@@ -256,7 +306,7 @@ library HugeInt {
                 }
                 p -= d1;
             }
-            Uint512 memory t = mul(v_, d0);
+            Uint512 memory t = _mul(v_, d0);
             p += t.msb;
             if (p < t.msb) {
                 v_--;
