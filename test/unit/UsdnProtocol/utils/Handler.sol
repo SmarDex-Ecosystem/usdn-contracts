@@ -123,7 +123,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint16 iteration,
         int256 tempLongBalance,
         int256 tempVaultBalance
-    ) external returns (LiquidationsEffects memory liquidationData_) {
+    ) external returns (LiquidationsEffects memory liquidationsEffects_) {
         return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
