@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import { console2 } from "forge-std/console2.sol";
-
 /**
  * @notice A library for manipulating uint512 quantities.
  * The huge ints are represented as two uint256 "limbs", a `lsb` limb for the least-significant bits, and a `msb` limb
