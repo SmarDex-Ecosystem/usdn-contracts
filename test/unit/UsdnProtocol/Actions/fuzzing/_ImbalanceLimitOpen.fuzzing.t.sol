@@ -42,7 +42,6 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
         // initial open limit bps
         (int256 openLimit,,,) = protocol.getExpoImbalanceLimits();
 
-        // call `i_checkImbalanceLimitWithdrawal` with withdrawalAmount
         if (imbalanceBps >= openLimit) {
             // should revert with above open imbalance limit
             vm.expectRevert(

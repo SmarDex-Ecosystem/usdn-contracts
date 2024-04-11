@@ -6,7 +6,8 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import {
     PendingAction,
-    VaultPendingAction,
+    DepositPendingAction,
+    WithdrawalPendingAction,
     LongPendingAction,
     ProtocolAction,
     PreviousActionsData,
@@ -18,6 +19,7 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -134,20 +136,40 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
-    function i_toVaultPendingAction(PendingAction memory action) external pure returns (VaultPendingAction memory) {
-        return _toVaultPendingAction(action);
+    function i_toDepositPendingAction(PendingAction memory action)
+        external
+        pure
+        returns (DepositPendingAction memory)
+    {
+        return _toDepositPendingAction(action);
+    }
+
+    function i_toWithdrawalPendingAction(PendingAction memory action)
+        external
+        pure
+        returns (WithdrawalPendingAction memory)
+    {
+        return _toWithdrawalPendingAction(action);
     }
 
     function i_toLongPendingAction(PendingAction memory action) external pure returns (LongPendingAction memory) {
         return _toLongPendingAction(action);
     }
 
-    function i_convertVaultPendingAction(VaultPendingAction memory action)
+    function i_convertDepositPendingAction(DepositPendingAction memory action)
         external
         pure
         returns (PendingAction memory)
     {
-        return _convertVaultPendingAction(action);
+        return _convertDepositPendingAction(action);
+    }
+
+    function i_convertWithdrawalPendingAction(WithdrawalPendingAction memory action)
+        external
+        pure
+        returns (PendingAction memory)
+    {
+        return _convertWithdrawalPendingAction(action);
     }
 
     function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory) {
@@ -184,8 +206,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
     }
 
-    function i_calcSdexToBurn(uint256 usdnAmount) external view returns (uint256 toBurn_) {
-        return _calcSdexToBurn(usdnAmount);
+    function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external pure returns (uint256) {
+        return _calcSdexToBurn(usdnAmount, sdexBurnRatio);
     }
 
     function i_vaultAssetAvailable(
@@ -291,5 +313,35 @@ contract UsdnProtocolHandler is UsdnProtocol {
         payable
     {
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+    }
+
+    function i_mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB) external pure returns (uint256) {
+        return _mergeWithdrawalAmountParts(sharesLSB, sharesMSB);
+    }
+
+    function i_calcWithdrawalAmountLSB(uint152 usdnShares) external pure returns (uint24) {
+        return _calcWithdrawalAmountLSB(usdnShares);
+    }
+
+    function i_calcWithdrawalAmountMSB(uint152 usdnShares) external pure returns (uint128) {
+        return _calcWithdrawalAmountMSB(usdnShares);
+    }
+
+    function i_createInitialDeposit(uint128 amount, uint128 price) external {
+        _createInitialDeposit(amount, price);
+    }
+
+    function i_createInitialPosition(
+        uint128 amount,
+        uint128 price,
+        int24 tick,
+        uint128 leverage,
+        uint128 positionTotalExpo
+    ) external {
+        _createInitialPosition(amount, price, tick, leverage, positionTotalExpo);
+    }
+
+    function i_saveNewPosition(int24 tick, Position memory long) external {
+        _saveNewPosition(tick, long);
     }
 }

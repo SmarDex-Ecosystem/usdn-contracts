@@ -54,6 +54,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided collateral and liquidation price result in a leverage that is too high
     error UsdnProtocolLeverageTooHigh();
 
+    /// @dev Indicates that the long position is too small
+    error UsdnProtocolLongPositionTooSmall();
+
     /// @dev Indicates that the liquidation price is higher than or equal to the start price
     error UsdnProtocolInvalidLiquidationPrice(uint128 liquidationPrice, uint128 startPrice);
 
@@ -135,6 +138,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided target USDN price is invalid
     error UsdnProtocolInvalidTargetUsdnPrice();
 
+    /// @dev Indicates that the provided min long position is invalid
+    error UsdnProtocolInvalidMinLongPosition();
+
     /// @dev Indicates that the provided USDN rebase threshold is invalid
     error UsdnProtocolInvalidUsdnRebaseThreshold();
 
@@ -143,4 +149,7 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the amount to close in a position is 0.
     error UsdnProtocolAmountToCloseIsZero();
+
+    /// @dev Indicates that the deposit amount is too small, leading to no USDN minted or no SDEX burned
+    error UsdnProtocolDepositTooSmall();
 }

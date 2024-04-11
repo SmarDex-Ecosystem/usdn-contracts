@@ -7,7 +7,9 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN } from "test/utils/Constants.sol";
 
-import { PendingAction, ProtocolAction, VaultPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction, ProtocolAction, WithdrawalPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 import { USER_1 } from "test/utils/Constants.sol";
@@ -22,15 +24,19 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
     uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
     uint128 internal constant USDN_AMOUNT = 1000 ether;
+    uint152 internal withdrawShares;
     uint256 internal initialWstETHBalance;
     uint256 internal initialUsdnBalance;
+    uint256 internal initialUsdnShares;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
+        withdrawShares = USDN_AMOUNT * uint152(usdn.MAX_DIVISOR());
         usdn.approve(address(protocol), type(uint256).max);
         // user deposits wstETH at price $2000
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
         initialUsdnBalance = usdn.balanceOf(address(this));
+        initialUsdnShares = usdn.sharesOf(address(this));
         initialWstETHBalance = wstETH.balanceOf(address(this));
     }
 
@@ -43,15 +49,16 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     function test_withdrawSetUp() public {
         // Using the price computed with the default position fees
         assertEq(initialUsdnBalance, 2000 * DEPOSIT_AMOUNT, "initial usdn balance");
+        assertEq(initialUsdnShares, 2000 * DEPOSIT_AMOUNT * usdn.MAX_DIVISOR(), "initial usdn shares");
         assertEq(initialWstETHBalance, 0, "initial wstETH balance");
     }
 
     /**
      * @custom:scenario The user initiates a withdrawal for 1000 USDN
      * @custom:given The price of the asset is $3000
-     * @custom:when The user initiates a withdraw for 1000 USDN
-     * @custom:then The user's USDN balance decreases by 1000 USDN
-     * @custom:and The protocol's USDN balance increases by 1000 USDN
+     * @custom:when The user initiates a withdrawal for 1000e36 shares of USDN
+     * @custom:then The user's USDN shares balance decreases by 1000e36
+     * @custom:and The protocol's USDN shares balance increases by 1000e36
      * @custom:and The protocol emits an `InitiatedWithdrawal` event
      * @custom:and The USDN total supply does not change yet
      * @custom:and The protocol's wstETH balance does not change yet
@@ -77,13 +84,14 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     function _initiateWithdraw(address to) internal {
         skip(3600);
         bytes memory currentPrice = abi.encode(uint128(3000 ether));
+        uint256 protocolUsdnInitialShares = usdn.sharesOf(address(protocol));
 
         vm.expectEmit();
         emit InitiatedWithdrawal(address(this), to, USDN_AMOUNT, block.timestamp); // expected event
-        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA, to);
+        protocol.initiateWithdrawal(withdrawShares, currentPrice, EMPTY_PREVIOUS_DATA, to);
 
-        assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "usdn user balance");
-        assertEq(usdn.balanceOf(address(protocol)), USDN_AMOUNT, "usdn protocol balance");
+        assertEq(usdn.sharesOf(address(this)), initialUsdnShares - withdrawShares, "usdn user balance");
+        assertEq(usdn.sharesOf(address(protocol)), protocolUsdnInitialShares + withdrawShares, "usdn protocol balance");
         // no wstETH should be given to the user yet
         assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance, "wstETH user balance");
         // no USDN should be burned yet
@@ -92,12 +100,14 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no pending action");
 
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
+        WithdrawalPendingAction memory action =
+            protocol.i_toWithdrawalPendingAction(protocol.getUserPendingAction(address(this)));
         assertTrue(action.action == ProtocolAction.ValidateWithdrawal, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
         assertEq(action.to, to, "action to");
-        assertEq(action.amount, USDN_AMOUNT, "action amount");
+        uint256 shares = protocol.i_mergeWithdrawalAmountParts(action.sharesLSB, action.sharesMSB);
+        assertEq(shares, withdrawShares, "action shares");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
@@ -233,10 +243,10 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         protocol.setPositionFeeBps(0); // 0% fees
 
         bytes memory currentPrice = abi.encode(initialPrice);
-        protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA, to);
+        protocol.initiateWithdrawal(withdrawShares, currentPrice, EMPTY_PREVIOUS_DATA, to);
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        VaultPendingAction memory withdrawal = protocol.i_toVaultPendingAction(pending);
+        WithdrawalPendingAction memory withdrawal = protocol.i_toWithdrawalPendingAction(pending);
 
         uint256 vaultBalance = protocol.getBalanceVault(); // save for withdrawn amount calculation in case price
             // decreases
@@ -278,8 +288,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             available = available2;
         }
 
+        uint256 shares = protocol.i_mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
-        uint256 withdrawnAmount = FixedPointMathLib.fullMulDiv(withdrawal.amount, available, withdrawal.usdnTotalSupply);
+        uint256 withdrawnAmount = FixedPointMathLib.fullMulDiv(shares, available, withdrawal.usdnTotalShares);
         assertEq(withdrawnAmount, expectedAssetAmount, "asset amount");
 
         vm.expectEmit();

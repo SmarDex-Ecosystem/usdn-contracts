@@ -11,7 +11,8 @@ import { IUsdnProtocolCore } from "src/interfaces/UsdnProtocol/IUsdnProtocolCore
 import {
     ProtocolAction,
     PendingAction,
-    VaultPendingAction,
+    DepositPendingAction,
+    WithdrawalPendingAction,
     LongPendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
@@ -302,6 +303,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         pure
         returns (int256 pnl_)
     {
+        // in case of negative trading expo, we can't allow calculation of PnL because it would invert the sign of the
+        // calculated amount. We thus disable any balance update due to PnL in such a case.
+        if (balanceLong >= totalExpo) {
+            return 0;
+        }
         int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
         pnl_ = totalExpo.toInt256().safeSub(balanceLong.toInt256()).safeMul(priceDiff).safeDiv(_toInt256(newPrice));
     }
@@ -489,14 +495,29 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /* -------------------------- Pending actions queue ------------------------- */
 
     /**
-     * @notice Convert a `PendingAction` to a `VaultPendingAction`
+     * @notice Convert a `PendingAction` to a `DepositPendingAction`
      * @param action An untyped pending action
-     * @return vaultAction_ The converted vault pending action
+     * @return vaultAction_ The converted deposit pending action
      */
-    function _toVaultPendingAction(PendingAction memory action)
+    function _toDepositPendingAction(PendingAction memory action)
         internal
         pure
-        returns (VaultPendingAction memory vaultAction_)
+        returns (DepositPendingAction memory vaultAction_)
+    {
+        assembly {
+            vaultAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `PendingAction` to a `WithdrawalPendingAction`
+     * @param action An untyped pending action
+     * @return vaultAction_ The converted withdrawal pending action
+     */
+    function _toWithdrawalPendingAction(PendingAction memory action)
+        internal
+        pure
+        returns (WithdrawalPendingAction memory vaultAction_)
     {
         assembly {
             vaultAction_ := action
@@ -519,11 +540,26 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Convert a `VaultPendingAction` to a `PendingAction`
-     * @param action A vault pending action
+     * @notice Convert a `DepositPendingAction` to a `PendingAction`
+     * @param action A deposit pending action
      * @return pendingAction_ The converted untyped pending action
      */
-    function _convertVaultPendingAction(VaultPendingAction memory action)
+    function _convertDepositPendingAction(DepositPendingAction memory action)
+        internal
+        pure
+        returns (PendingAction memory pendingAction_)
+    {
+        assembly {
+            pendingAction_ := action
+        }
+    }
+
+    /**
+     * @notice Convert a `WithdrawalPendingAction` to a `PendingAction`
+     * @param action A withdrawal pending action
+     * @return pendingAction_ The converted untyped pending action
+     */
+    function _convertWithdrawalPendingAction(WithdrawalPendingAction memory action)
         internal
         pure
         returns (PendingAction memory pendingAction_)

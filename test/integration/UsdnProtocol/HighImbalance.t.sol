@@ -17,8 +17,8 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 1 ether;
-        params.initialLong = 1 ether;
+        params.initialDeposit = 150 ether;
+        params.initialLong = 150 ether;
         params.initialLiqPrice = 1 ether;
         params.initialPrice = 3290 ether;
         params.initialTimestamp = 1_708_088_866; // 16 February 2024 at 14:07 CET
@@ -48,7 +48,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
             + protocol.getSecurityDepositValue();
 
         protocol.initiateOpenPosition{ value: messageValue }(
-            0.5 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA, address(this)
+            3 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA, address(this)
         );
 
         vm.warp(1_708_090_246);
@@ -64,7 +64,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockChainlinkOnChain.setLastPrice(3290e8);
 
         protocol.initiateOpenPosition{ value: messageValue }(
-            0.01 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA, address(this)
+            3.01 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA, address(this)
         );
 
         vm.warp(1_708_090_438);
@@ -87,7 +87,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         wstETH.approve(address(protocol), type(uint256).max);
 
         protocol.initiateOpenPosition{ value: messageValue }(
-            0.0001 ether, 1684 ether, "", EMPTY_PREVIOUS_DATA, address(this)
+            4.0001 ether, 1684 ether, "", EMPTY_PREVIOUS_DATA, address(this)
         );
         vm.stopPrank();
 

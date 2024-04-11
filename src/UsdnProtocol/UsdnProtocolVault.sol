@@ -48,10 +48,11 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     /**
      * @notice Calculate the amount of sdex to burn when minting USDN tokens
      * @param usdnAmount The amount of usdn to be minted
+     * @param sdexBurnRatio The ratio of SDEX to burn for each minted USDN
      * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
      */
-    function _calcSdexToBurn(uint256 usdnAmount) internal view returns (uint256 sdexToBurn_) {
-        sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, _sdexBurnOnDepositRatio, SDEX_BURN_ON_DEPOSIT_DIVISOR);
+    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) internal pure returns (uint256 sdexToBurn_) {
+        sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, sdexBurnRatio, SDEX_BURN_ON_DEPOSIT_DIVISOR);
     }
 
     /**
@@ -127,5 +128,37 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
             );
         }
         toMint_ = FixedPointMathLib.fullMulDiv(amount, usdnTotalSupply, vaultBalance);
+    }
+
+    /**
+     * @notice Get the lower 24 bits of the withdrawal amount (USDN shares).
+     * @param usdnShares The amount of USDN shares
+     * @return sharesLSB_ The 24 least significant bits of the USDN shares
+     */
+    function _calcWithdrawalAmountLSB(uint152 usdnShares) internal pure returns (uint24 sharesLSB_) {
+        sharesLSB_ = uint24(usdnShares);
+    }
+
+    /**
+     * @notice Get the higher 128 bits of the withdrawal amount (USDN shares).
+     * @param usdnShares The amount of USDN shares
+     * @return sharesMSB_ The 128 most significant bits of the USDN shares
+     */
+    function _calcWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
+        sharesMSB_ = uint128(usdnShares >> 24);
+    }
+
+    /**
+     * @notice Merge the two parts of the withdrawal amount (USDN shares) stored in the `WithdrawalPendingAction`.
+     * @param sharesLSB The lower 24 bits of the USDN shares
+     * @param sharesMSB The higher bits of the USDN shares
+     * @return usdnShares_ The amount of USDN shares
+     */
+    function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB)
+        internal
+        pure
+        returns (uint256 usdnShares_)
+    {
+        usdnShares_ = sharesLSB | uint256(sharesMSB) << 24;
     }
 }

@@ -339,4 +339,10 @@ interface IUsdnProtocolEvents {
     event ImbalanceLimitsUpdated(
         uint256 newOpenLimitBps, uint256 newDepositLimitBps, uint256 newWithdrawalLimitBps, uint256 newCloseLimitBps
     );
+
+    /**
+     * @notice Emitted when the minimum long position is updated.
+     * @param minLongPosition The new minimum long position.
+     */
+    event MinLongPositionUpdated(uint256 minLongPosition);
 }

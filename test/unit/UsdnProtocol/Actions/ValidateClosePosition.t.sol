@@ -13,7 +13,7 @@ import {
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1, DEPLOYER, ADMIN } from "test/utils/Constants.sol";
+import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature The initiate close position functions of the USDN Protocol
@@ -31,9 +31,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.enableFunding = false;
-        params.enablePositionFees = false;
-        params.enableProtocolFees = false;
+        params.flags.enableFunding = false;
+        params.flags.enablePositionFees = false;
+        params.flags.enableProtocolFees = false;
 
         super._setUp(params);
 

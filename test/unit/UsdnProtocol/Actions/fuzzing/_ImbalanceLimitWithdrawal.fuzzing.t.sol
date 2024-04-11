@@ -30,17 +30,23 @@ contract TestImbalanceLimitWithdrawalFuzzing is UsdnProtocolBaseFixture {
         withdrawalAmount = bound(withdrawalAmount, 1, uint256(vaultExpo));
         // new vault expo
         uint256 newVaultExpo = vaultExpo - withdrawalAmount;
-        // expected imbalance bps
-        int256 imbalanceBps =
-            (currentLongExpo - int256(newVaultExpo)) * int256(protocol.BPS_DIVISOR()) / int256(vaultExpo);
+
+        int256 imbalanceBps;
+        if (newVaultExpo > 0) {
+            // expected imbalance bps
+            imbalanceBps =
+                (currentLongExpo - int256(newVaultExpo)) * int256(protocol.BPS_DIVISOR()) / int256(newVaultExpo);
+        }
 
         // initial withdrawal limit bps
         (,, int256 withdrawalLimit,) = protocol.getExpoImbalanceLimits();
 
         uint256 totalExpo = protocol.getTotalExpo();
-        // call `i_checkImbalanceLimitWithdrawal` with withdrawalAmount
-        if (imbalanceBps >= withdrawalLimit) {
-            // should revert with above withdrawal imbalance limit
+        if (newVaultExpo == 0) {
+            // should revert because calculation is not possible
+            vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidVaultExpo.selector);
+        } else if (imbalanceBps >= withdrawalLimit) {
+            // should revert with `imbalanceBps` withdrawal imbalance limit
             vm.expectRevert(
                 abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, imbalanceBps)
             );

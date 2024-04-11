@@ -12,7 +12,8 @@ import {
     Position,
     ProtocolAction,
     PendingAction,
-    VaultPendingAction,
+    DepositPendingAction,
+    WithdrawalPendingAction,
     LongPendingAction,
     PreviousActionsData,
     PositionId
@@ -72,7 +73,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /// @inheritdoc IUsdnProtocolActions
     function initiateWithdrawal(
-        uint128 usdnAmount,
+        uint152 usdnShares,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
         address to
@@ -84,7 +85,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund = _initiateWithdrawal(msg.sender, to, usdnAmount, currentPriceData);
+        uint256 amountToRefund = _initiateWithdrawal(msg.sender, to, usdnShares, currentPriceData);
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -255,7 +256,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         int256 imbalanceBps = ((_balanceVault + depositValue).toInt256().safeSub(currentLongExpo)).safeMul(
-            BPS_DIVISOR.toInt256()
+            int256(BPS_DIVISOR)
         ).safeDiv(currentLongExpo);
 
         if (imbalanceBps >= depositExpoImbalanceLimitBps) {
@@ -265,7 +266,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice The withdrawal imbalance limit state verification
-     * @dev This is to ensure that the protocol does not imbalance more than
+     * @dev To ensure that the protocol does not imbalance more than
      * the withdrawal limit on long side, otherwise revert
      * @param withdrawalValue The withdrawal value in asset
      * @param totalExpo The current total expo
@@ -278,18 +279,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 currentVaultExpo = _balanceVault.toInt256();
+        int256 newVaultExpo = _balanceVault.toInt256().safeSub(withdrawalValue.toInt256());
 
-        // cannot be calculated
-        if (currentVaultExpo == 0) {
+        // cannot be calculated if equal zero
+        if (newVaultExpo == 0) {
             revert UsdnProtocolInvalidVaultExpo();
         }
 
-        int256 imbalanceBps = (
-            (totalExpo.toInt256().safeSub(_balanceLong.toInt256())).safeSub(
-                currentVaultExpo.safeSub(withdrawalValue.toInt256())
-            )
-        ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentVaultExpo);
+        int256 imbalanceBps = ((totalExpo.toInt256().safeSub(_balanceLong.toInt256())).safeSub(newVaultExpo)).safeMul(
+            int256(BPS_DIVISOR)
+        ).safeDiv(newVaultExpo);
 
         if (imbalanceBps >= withdrawalExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -298,7 +297,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice The open long imbalance limit state verification. Revert
-     * @dev This is to ensure that the protocol does not imbalance more than
+     * @dev To ensure that the protocol does not imbalance more than
      * the open limit on long side, otherwise revert
      * @param openTotalExpoValue The open position expo value
      * @param openCollatValue The open position collateral value
@@ -313,7 +312,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         int256 currentVaultExpo = _balanceVault.toInt256();
 
-        // cannot be calculated
+        // cannot be calculated if equal zero
         if (currentVaultExpo == 0) {
             revert UsdnProtocolInvalidVaultExpo();
         }
@@ -322,7 +321,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             ((_totalExpo + openTotalExpoValue).toInt256().safeSub((_balanceLong + openCollatValue).toInt256())).safeSub(
                 currentVaultExpo
             )
-        ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentVaultExpo);
+        ).safeMul(int256(BPS_DIVISOR)).safeDiv(currentVaultExpo);
 
         if (imbalanceBps >= openExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -331,7 +330,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice The close vault imbalance limit state verification
-     * @dev This is to ensure that the protocol does not imbalance more than
+     * @dev To ensure that the protocol does not imbalance more than
      * the close limit on vault side, otherwise revert
      * @param closeTotalExpoValue The close position total expo value
      * @param closeCollatValue The close position collateral value
@@ -344,23 +343,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        int256 totalExpo = _totalExpo.toInt256();
-        int256 balanceLong = _balanceLong.toInt256();
+        int256 newLongExpo = (_totalExpo.toInt256().safeSub(closeTotalExpoValue.toInt256())).safeSub(
+            _balanceLong.toInt256().safeSub(closeCollatValue.toInt256())
+        );
 
-        int256 currentLongExpo = totalExpo.safeSub(balanceLong);
-
-        // cannot be calculated
-        if (currentLongExpo == 0) {
+        // cannot be calculated if equal or lower than zero
+        if (newLongExpo <= 0) {
             revert UsdnProtocolInvalidLongExpo();
         }
 
-        int256 imbalanceBps = (
-            _balanceVault.toInt256().safeSub(
-                totalExpo.safeSub(closeTotalExpoValue.toInt256()).safeSub(
-                    balanceLong.safeSub(closeCollatValue.toInt256())
-                )
-            )
-        ).safeMul(BPS_DIVISOR.toInt256()).safeDiv(currentLongExpo);
+        int256 imbalanceBps =
+            (_balanceVault.toInt256().safeSub(newLongExpo)).safeMul(int256(BPS_DIVISOR)).safeDiv(newLongExpo);
 
         if (imbalanceBps >= closeExpoImbalanceLimitBps) {
             revert UsdnProtocolImbalanceLimitReached(imbalanceBps);
@@ -429,13 +422,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 pendingActionPrice =
             (currentPrice.price - currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
-        VaultPendingAction memory pendingAction = VaultPendingAction({
+        DepositPendingAction memory pendingAction = DepositPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
             user: user,
             to: to,
-            _unused: 0,
             securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
+            _unused: 0,
             amount: amount,
             assetPrice: pendingActionPrice,
             totalExpo: _totalExpo,
@@ -445,16 +438,28 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             usdnTotalSupply: _usdn.totalSupply()
         });
 
-        securityDepositValue_ = _addPendingAction(user, _convertVaultPendingAction(pendingAction));
+        securityDepositValue_ = _addPendingAction(user, _convertDepositPendingAction(pendingAction));
 
         // Calculate the amount of SDEX tokens to burn
         uint256 usdnToMintEstimated = _calcMintUsdn(
             pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
         );
-        uint256 sdexToBurn = _calcSdexToBurn(usdnToMintEstimated);
+        uint32 burnRatio = _sdexBurnOnDepositRatio;
+        uint256 sdexToBurn = _calcSdexToBurn(usdnToMintEstimated, burnRatio);
+        // We want to at least mint 1 wei of USDN
+        if (usdnToMintEstimated == 0) {
+            revert UsdnProtocolDepositTooSmall();
+        }
+        // We want to at least burn 1 wei of SDEX if SDEX burning is enabled
+        if (burnRatio != 0 && sdexToBurn == 0) {
+            revert UsdnProtocolDepositTooSmall();
+        }
+        if (sdexToBurn > 0) {
+            // Send SDEX to the dead address
+            _sdex.safeTransferFrom(user, DEAD_ADDRESS, sdexToBurn);
+        }
 
         // Transfer assets
-        _sdex.safeTransferFrom(user, DEAD_ADDRESS, sdexToBurn);
         _asset.safeTransferFrom(user, address(this), amount);
 
         emit InitiatedDeposit(user, to, amount, block.timestamp);
@@ -483,7 +488,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         internal
         returns (PriceInfo memory depositPrice_)
     {
-        VaultPendingAction memory deposit = _toVaultPendingAction(pending);
+        DepositPendingAction memory deposit = _toDepositPendingAction(pending);
 
         depositPrice_ = _getOraclePrice(ProtocolAction.ValidateDeposit, deposit.timestamp, priceData);
 
@@ -530,18 +535,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
      * @param user The address of the user initiating the withdrawal.
-     * @param usdnAmount The amount of USDN to burn.
+     * @param usdnShares The amount of USDN shares to burn.
      * @param currentPriceData The current price data
      * @return securityDepositValue_ The security deposit value
      */
-    function _initiateWithdrawal(address user, address to, uint128 usdnAmount, bytes calldata currentPriceData)
+    function _initiateWithdrawal(address user, address to, uint152 usdnShares, bytes calldata currentPriceData)
         internal
         returns (uint256 securityDepositValue_)
     {
         if (to == address(0)) {
             revert UsdnProtocolZeroAddressTo();
         }
-        if (usdnAmount == 0) {
+        if (usdnShares == 0) {
             revert UsdnProtocolZeroAmount();
         }
 
@@ -557,33 +562,33 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 balanceLong = _balanceLong;
         uint256 balanceVault =
             _vaultAssetAvailable(totalExpo, _balanceVault, balanceLong, pendingActionPrice, _lastPrice).toUint256();
-        uint256 usdnTotalSupply = _usdn.totalSupply();
 
+        IUsdn usdn = _usdn;
         _checkImbalanceLimitWithdrawal(
-            FixedPointMathLib.fullMulDiv(usdnAmount, balanceVault, usdnTotalSupply), totalExpo
+            FixedPointMathLib.fullMulDiv(usdnShares, balanceVault, usdn.totalShares()), totalExpo
         );
 
-        VaultPendingAction memory pendingAction = VaultPendingAction({
+        WithdrawalPendingAction memory pendingAction = WithdrawalPendingAction({
             action: ProtocolAction.ValidateWithdrawal,
             timestamp: uint40(block.timestamp),
             user: user,
             to: to,
-            _unused: 0,
             securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
-            amount: usdnAmount,
+            sharesLSB: _calcWithdrawalAmountLSB(usdnShares),
+            sharesMSB: _calcWithdrawalAmountMSB(usdnShares),
             assetPrice: pendingActionPrice,
             totalExpo: totalExpo,
             balanceVault: balanceVault,
             balanceLong: balanceLong,
-            usdnTotalSupply: usdnTotalSupply
+            usdnTotalShares: usdn.totalShares()
         });
 
-        securityDepositValue_ = _addPendingAction(user, _convertVaultPendingAction(pendingAction));
+        securityDepositValue_ = _addPendingAction(user, _convertWithdrawalPendingAction(pendingAction));
 
         // retrieve the USDN tokens, checks that balance is sufficient
-        _usdn.safeTransferFrom(user, address(this), usdnAmount);
+        usdn.transferSharesFrom(user, address(this), usdnShares);
 
-        emit InitiatedWithdrawal(user, to, usdnAmount, block.timestamp);
+        emit InitiatedWithdrawal(user, to, usdn.convertToTokens(usdnShares), block.timestamp);
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData)
@@ -606,7 +611,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _validateWithdrawalWithAction(PendingAction memory pending, bytes calldata priceData) internal {
-        VaultPendingAction memory withdrawal = _toVaultPendingAction(pending);
+        WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
 
         PriceInfo memory withdrawalPrice =
             _getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, priceData);
@@ -635,11 +640,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             available = available2;
         }
 
+        uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
+
         // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
-        uint256 assetToTransfer = FixedPointMathLib.fullMulDiv(withdrawal.amount, available, withdrawal.usdnTotalSupply);
+        //                 = shares * assetAvailable / usdnTotalShares
+        uint256 assetToTransfer = FixedPointMathLib.fullMulDiv(shares, available, withdrawal.usdnTotalShares);
 
         // we have the USDN in the contract already
-        _usdn.burn(withdrawal.amount);
+        IUsdn usdn = _usdn;
+        usdn.burnShares(shares);
 
         // send the asset to the user
         if (assetToTransfer > 0) {
@@ -648,7 +657,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         emit ValidatedWithdrawal(
-            withdrawal.user, withdrawal.to, assetToTransfer, withdrawal.amount, withdrawal.timestamp
+            withdrawal.user, withdrawal.to, assetToTransfer, usdn.convertToTokens(shares), withdrawal.timestamp
         );
     }
 
@@ -693,6 +702,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             // Apply fees on price
             adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+            if (FixedPointMathLib.fullMulDiv(amount, adjustedPrice, 10 ** _assetDecimals) < _minLongPosition) {
+                revert UsdnProtocolLongPositionTooSmall();
+            }
 
             uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
 

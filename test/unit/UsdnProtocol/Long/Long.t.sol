@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { ADMIN } from "test/utils/Constants.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
@@ -243,7 +242,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint256 totalExpoForTick =
             protocol.getCurrentTotalExpoByTick(protocol.getEffectiveTickForPrice(desiredLiqPrice));
 
-        assertEq(totalExpoForTick, 0, "Total expo for future position's tick should be empty");
+        assertEq(totalExpoForTick, 0, "Total expo for future tick of position should be empty");
 
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
@@ -257,7 +256,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         assertEq(
             initialTotalExpo + position.totalExpo,
             protocol.getTotalExpo(),
-            "Total expo should have increased by the position's total expo"
+            "Total expo should have increased by the total expo of position"
         );
         assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
 
@@ -284,6 +283,62 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         );
 
         totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
+        assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
+    }
+
+    /**
+     * @custom:scenario Call `initiateOpenPosition` reverts when the assets price
+     * is lower than the minimum long price
+     * @custom:given A assets price lower than the minimum long price
+     * @custom:when initiateOpenPosition is called
+     * @custom:then The transaction reverts with a UsdnProtocolLongPositionTooSmall error
+     */
+    function test_RevertWhen_openNewPositionTooLow() public {
+        vm.prank(ADMIN);
+        protocol.setMinLongPosition(2001 ether);
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolLongPositionTooSmall.selector));
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), EMPTY_PREVIOUS_DATA, address(this));
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolLongPositionTooSmall.selector));
+        protocol.initiateOpenPosition(
+            2.0001 ether, 500 ether, abi.encode(1000 ether), EMPTY_PREVIOUS_DATA, address(this)
+        );
+    }
+
+    /**
+     * @custom:scenario Check that the position is correctly validated when its value
+     * is greater than the minimum long position value
+     * @custom:given A position value greater than the minimum long position value
+     * @custom:when initiateOpenPosition is called
+     * @custom:then The transaction was accepted with a expected position
+     */
+    function test_validateOpenNewPosition() public {
+        vm.prank(ADMIN);
+        protocol.setMinLongPosition(1999 ether);
+
+        uint128 desiredLiqPrice = 1000 ether;
+
+        uint256 initialTotalExpo = protocol.getTotalExpo();
+        uint256 totalExpoForTick =
+            protocol.getCurrentTotalExpoByTick(protocol.getEffectiveTickForPrice(desiredLiqPrice));
+
+        assertEq(totalExpoForTick, 0, "Total expo for future tick of position should be empty");
+
+        // Initiate a long position
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
+        );
+
+        totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
+        Position memory position = protocol.getLongPosition(tick, tickVersion, index);
+
+        // Calculate the total expo of the position after the initialization
+        assertEq(
+            initialTotalExpo + position.totalExpo,
+            protocol.getTotalExpo(),
+            "Total expo should have increased by the total expo of position"
+        );
         assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
     }
 }
