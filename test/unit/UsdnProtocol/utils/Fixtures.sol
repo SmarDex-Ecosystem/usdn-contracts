@@ -175,8 +175,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
         int24 firstPosTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
-        Position memory firstPos = protocol.getLongPosition(
-            firstPosTick + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(), 0, 0
+        (Position memory firstPos,) = protocol.getLongPosition(
+            firstPosTick + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(), 0, 0
         );
 
         assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");

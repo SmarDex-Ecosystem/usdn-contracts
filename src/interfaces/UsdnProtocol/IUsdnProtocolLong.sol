@@ -28,14 +28,13 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
      * @param tick The tick containing the long position
      * @param tickVersion The tick version
      * @param index The index of the long position inside the tick array
+     * @return The position data
+     * @return The liquidation penalty for that position (and associated tick)
      */
-    function getLongPosition(int24 tick, uint256 tickVersion, uint256 index) external view returns (Position memory);
-
-    /**
-     * @notice Get the number of positions in the last version of the given tick
-     * @param tick The tick number
-     */
-    function getPositionsInTick(int24 tick) external view returns (uint256);
+    function getLongPosition(int24 tick, uint256 tickVersion, uint256 index)
+        external
+        view
+        returns (Position memory, uint8);
 
     /**
      * @notice Get the minimum acceptable desired liquidation price for a new long position
@@ -90,4 +89,12 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
      * @param liqMultiplier The liquidation price multiplier
      */
     function getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external view returns (uint128);
+
+    /**
+     * @notice Retrieve the liquidation penalty assigned to `tick` if there are positions in it, otherwise retrieve the
+     * current setting value from storage.
+     * @param tick The tick number
+     * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
+     */
+    function getTickLiquidationPenalty(int24 tick) external view returns (uint8);
 }

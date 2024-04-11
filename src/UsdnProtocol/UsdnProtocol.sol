@@ -164,7 +164,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setLiquidationPenalty(uint24 newLiquidationPenalty) external onlyOwner {
+    function setLiquidationPenalty(uint8 newLiquidationPenalty) external onlyOwner {
         // liquidationPenalty greater than max 15
         if (newLiquidationPenalty > 15) {
             revert UsdnProtocolInvalidLiquidationPenalty();
@@ -385,7 +385,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
-        tick = tick + int24(_liquidationPenalty) * _tickSpacing;
+        uint8 liquidationPenalty = _liquidationPenalty;
+        tick = tick + int24(uint24(liquidationPenalty)) * _tickSpacing;
         Position memory long = Position({
             user: msg.sender,
             amount: amount,
@@ -393,7 +394,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             timestamp: uint40(block.timestamp)
         });
         // Save the position and update the state
-        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long);
+        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long, liquidationPenalty);
         emit InitiatedOpenPosition(msg.sender, long.timestamp, leverage, long.amount, price, tick, tickVersion, index);
         emit ValidatedOpenPosition(msg.sender, leverage, price, tick, tickVersion, index);
     }
