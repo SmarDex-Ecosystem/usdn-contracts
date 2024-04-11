@@ -342,7 +342,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _createInitialPosition(amount, price, tick, leverage, positionTotalExpo);
     }
 
-    function i_saveNewPosition(int24 tick, Position memory long) external {
-        _saveNewPosition(tick, long);
+    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty) external {
+        _saveNewPosition(tick, long, liquidationPenalty);
     }
 }
