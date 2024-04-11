@@ -1034,8 +1034,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         LiquidationData memory liquidationData =
             _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
 
-        uint16 liquidatedTicks = liquidationData.liquidatedTicks;
-        int256 remainingCollateral = liquidationData.remainingCollateral;
         liquidatedPositions_ = liquidationData.liquidatedPositions;
         _balanceLong = liquidationData.newLongBalance;
         _balanceVault = liquidationData.newVaultBalance;
@@ -1043,8 +1041,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Always perform the rebase check during liquidation
         bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
 
-        if (liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(liquidatedTicks, remainingCollateral, rebased);
+        if (liquidationData.liquidatedTicks > 0) {
+            _sendRewardsToLiquidator(liquidationData.liquidatedTicks, liquidationData.remainingCollateral, rebased);
         }
     }
 
