@@ -74,8 +74,7 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         uint256 tickBitmapIndexBefore = protocol.findLastSetInTickBitmap(expectedTick);
         int24 maxInitializedTickBefore = protocol.getMaxInitializedTick();
 
-        int24 tick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
-        protocol.i_saveNewPosition(tick, long, protocol.getTickLiquidationPenalty(tick));
+        protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
         uint256 tickBitmapIndexAfter = protocol.findLastSetInTickBitmap(expectedTick);
         int24 initializedTickAfter = protocol.getMaxInitializedTick();
 
@@ -83,7 +82,7 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         assertLt(tickBitmapIndexBefore, tickBitmapIndexAfter, "first position in this tick");
         assertLt(maxInitializedTickBefore, initializedTickAfter, "max initialized tick");
 
-        protocol.i_saveNewPosition(tick, long, protocol.getTickLiquidationPenalty(tick));
+        protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
 
         // state not modified by condition after opening the position
         assertEq(tickBitmapIndexAfter, protocol.findLastSetInTickBitmap(expectedTick), "second position in this tick");
