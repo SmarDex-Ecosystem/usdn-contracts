@@ -278,11 +278,15 @@ library HugeInt {
     }
 
     /**
-     * @notice Compute the reciprocal v = 1/d with fixed decimals
+     * @notice Compute the reciprocal `v = floor((2^512-1) / d) - 2^256`
+     * @dev The input must be normalized (d >= 2^255)
      * @param d The input value
      * @return v_ The reciprocal of d
      */
     function _reciprocal(uint256 d) internal pure returns (uint256 v_) {
+        if (d & 0x8000000000000000000000000000000000000000000000000000000000000000 == 0) {
+            revert HugeIntDivisionFailed();
+        }
         v_ = _div256(Uint512(type(uint256).max, type(uint256).max - d), d);
     }
 
