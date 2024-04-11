@@ -14,6 +14,8 @@ contract TestUsdnProtocolCalcRebaseTotalSupply is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Check calculation the required USDN total supply to reach `targetPrice`
+     * @custom:when The function "_calcRebaseTotalSupply" is called with some parameters
+     * @custom:then The total supply is calculated correctly
      */
     function test_calcRebaseTotalSupply() public {
         uint256 vaultBalance = 1000;
