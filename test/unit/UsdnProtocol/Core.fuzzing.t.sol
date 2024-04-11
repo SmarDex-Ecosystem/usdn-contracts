@@ -62,7 +62,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
                 user, ProtocolAction.ValidateOpenPosition, uint128(longAmount), uint128(longLiqPrice), currentPrice
             );
-            pos[i] = protocol.getLongPosition(tick, tickVersion, index);
+            (pos[i],) = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;
             indices[i] = index;
 
@@ -90,9 +90,9 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             );
         }
 
-        Position memory firstPos = protocol.getLongPosition(
+        (Position memory firstPos,) = protocol.getLongPosition(
             protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2)
-                + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing(),
+                + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
             0,
             0
         );

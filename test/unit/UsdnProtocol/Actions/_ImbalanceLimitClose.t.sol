@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
@@ -38,7 +39,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitClose` function is called with values above the close limit
      * @custom:then The transaction should revert
      */
-    function test_RevertWith_checkImbalanceLimitCloseOutLimit() public {
+    function test_RevertWhen_checkImbalanceLimitCloseOutLimit() public {
         (int256 closeLimitBps, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseLimitValues();
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolImbalanceLimitReached.selector, closeLimitBps)
@@ -69,7 +70,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitClose` function is called
      * @custom:then The transaction should revert
      */
-    function test_RevertWith_checkImbalanceLimitCloseZeroLongExpo() public {
+    function test_RevertWhen_checkImbalanceLimitCloseZeroLongExpo() public {
         // initial limit
         (,,, int256 initialCloseLimit) = protocol.getExpoImbalanceLimits();
 
@@ -124,14 +125,26 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
     {
         // current long expo
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
+
         // close limit bps
         (,,, closeLimitBps_) = protocol.getExpoImbalanceLimits();
-        // current vault expo value for imbalance
-        uint256 vaultExpoValueToLimit = longExpo * uint256(closeLimitBps_) / protocol.BPS_DIVISOR();
-        // long amount for vaultExpoValueToLimit and any leverage
+
+        // the imbalance ratio: must be scaled for calculation
+        uint256 scaledImbalanceRatio = FixedPointMathLib.divWad(uint256(closeLimitBps_), protocol.BPS_DIVISOR());
+
+        // long expo value limit from current vault expo: numerator and denominator
+        // are at the same scale and result is rounded up
+        uint256 longExpoLimit =
+            FixedPointMathLib.divWadUp(protocol.getBalanceVault(), FixedPointMathLib.WAD + scaledImbalanceRatio);
+
+        // the long expo value to reach limit from current long expo
+        uint256 longExpoValueToLimit = longExpo - longExpoLimit;
+
+        // long amount to reach limit from longExpoValueToLimit and any leverage
         longAmount_ =
-            vaultExpoValueToLimit * 10 ** protocol.LEVERAGE_DECIMALS() / protocol.i_getLeverage(2000 ether, 1500 ether);
-        // current total expo value to imbalance the protocol
-        totalExpoValueToLimit_ = vaultExpoValueToLimit + longAmount_;
+            longExpoValueToLimit * 10 ** protocol.LEVERAGE_DECIMALS() / protocol.i_getLeverage(2000 ether, 1500 ether);
+
+        // total expo value to reach limit
+        totalExpoValueToLimit_ = longExpoValueToLimit + longAmount_;
     }
 }

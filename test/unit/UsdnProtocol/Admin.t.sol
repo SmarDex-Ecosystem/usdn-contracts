@@ -272,7 +272,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      */
     function test_setLiquidationPenalty() external adminPrank {
         // cache the new liquidationPenalty value to assign
-        uint24 expectedNewValue = 0;
+        uint8 expectedNewValue = 0;
         // expected event
         vm.expectEmit();
         emit LiquidationPenaltyUpdated(expectedNewValue);

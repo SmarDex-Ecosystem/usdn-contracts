@@ -63,7 +63,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setValidationDeadline(uint256 newValidationDeadline) external;
 
     /// @notice Set the new liquidation penalty (in tick spacing units).
-    function setLiquidationPenalty(uint24 newLiquidationPenalty) external;
+    function setLiquidationPenalty(uint8 newLiquidationPenalty) external;
 
     /// @notice Set the new safety margin bps for the liquidation price of newly open positions.
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external;
