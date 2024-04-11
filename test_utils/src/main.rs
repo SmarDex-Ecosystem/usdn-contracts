@@ -76,7 +76,7 @@ enum Commands {
         vault_balance: String,
         usdn_total_supply: String,
     },
-    /// Compare different mint usdn (with vaultBalance equal to zero) calculation implementations
+    /// Compare different mint usdn calculation implementations (with vaultBalance equal to zero)
     CalcMintUsdnVaultBalanceZero {
         amount: String,
         price: String,
@@ -162,7 +162,7 @@ fn main() -> Result<()> {
             let price: Integer = price.parse()?;
             let decimals: u32 = decimals.parse()?;
 
-            let mut total_mint = Float::with_val(512, amount) * price / 10u64.pow(decimals);
+            let mut total_mint = Float::with_val(512, amount) * price / 10u128.pow(decimals);
             total_mint.floor_mut();
             
             print_u256_hex(total_mint.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;

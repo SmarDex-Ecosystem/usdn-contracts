@@ -11,10 +11,10 @@ contract TestUsdnProtocolCalcMintUsdn is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
     }
+
     /**
      * @custom:scenario Compare calculations of `_calcMintUsdn` with more precise values and vaultBalance equal to zero
      */
-
     function testFuzzFFI_calcMintUsdnVaultBalanceZero(uint256 amount, uint256 price) public {
         amount = bound(amount, 1, type(uint128).max);
         price = bound(price, 1, type(uint128).max);
