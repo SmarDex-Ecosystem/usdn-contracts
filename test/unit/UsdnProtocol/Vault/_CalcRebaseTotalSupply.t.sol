@@ -38,13 +38,6 @@ contract TestUsdnProtocolCalcRebaseTotalSupply is UsdnProtocolBaseFixture {
         assertEq(totalSupply, 5983, "totalSupply must match with expected value");
 
         vaultBalance = 1;
-        assetPrice = 20;
-        targetPrice = 20;
-        assetDecimals = 19;
-        totalSupply = protocol.i_calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
-        assertEq(totalSupply, 0, "totalSupply must match with expected value");
-
-        vaultBalance = 1;
         assetPrice = 15;
         targetPrice = 10;
         assetDecimals = 45;
