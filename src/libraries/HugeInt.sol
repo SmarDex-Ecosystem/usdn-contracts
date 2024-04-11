@@ -42,7 +42,7 @@ library HugeInt {
 
     /**
      * @notice Calculate the difference `a - b` of two 512-bit unsigned integers.
-     * @dev The result is not checked for overflow, the caller must ensure that the second operand is less than or
+     * @dev The result is not checked for underflow, the caller must ensure that the second operand is less than or
      * equal to the first operand.
      * @param a The first operand
      * @param b The second operand
@@ -165,7 +165,7 @@ library HugeInt {
     /**
      * @notice Calculate the difference `a - b` of two 512-bit unsigned integers.
      * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/512-bit-division/
-     * The result is not checked for overflow, the caller must ensure that the second operand is less than or equal to
+     * The result is not checked for underflow, the caller must ensure that the second operand is less than or equal to
      * the first operand.
      * @param a The first operand
      * @param b The second operand
