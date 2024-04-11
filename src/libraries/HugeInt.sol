@@ -93,9 +93,59 @@ library HugeInt {
         }
         // the first operand fits in 256 bits, we can use the Solidity division operator
         if (a.msb == 0) {
-            return a.lsb / b;
+            unchecked {
+                return a.lsb / b;
+            }
         }
         res_ = _div256(a, b);
+    }
+
+    /**
+     * @notice Compute the division floor(a/b) of two 512-bit integers, knowing the result fits inside a uint256.
+     * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
+     * @param a The numerator as a 512-bit integer
+     * @param b The denominator as a 512-bit integer
+     * @return res_ The quotient floor(a/b)
+     */
+    function div(Uint512 memory a, Uint512 memory b) internal pure returns (uint256 res_) {
+        // prevents b == 0
+        if (b.msb == 0 && b.lsb == 0) {
+            revert HugeIntDivisionFailed();
+        }
+        // if both operands fit inside a uint256, we can use the Solidity division operator
+        if (a.msb == 0 && b.msb == 0) {
+            unchecked {
+                return a.lsb / b.lsb;
+            }
+        }
+        // if the numerator is smaller than the denominator, the result is zero
+        if (a.msb < b.msb || (a.msb == b.msb && a.lsb < b.lsb)) {
+            return 0;
+        }
+        // if the divisor and result fit inside a uint256, we can use the {div256} function
+        if (b.msb == 0 && b.lsb > a.msb) {
+            return _div256(a, b.lsb);
+        }
+        // Division algo
+        (uint256 a0, uint256 a1) = (a.lsb, a.msb);
+        (uint256 b0, uint256 b1) = (b.lsb, b.msb);
+
+        uint256 lsh = _clz(b1);
+        if (lsh == 0) {
+            // numerator is equal or larger than the denominator, and denominator is at least 0b1000...
+            // the result is necessarily 1
+            return 1;
+        }
+
+        unchecked {
+            uint256 rsh = 256 - lsh;
+
+            uint256 bn_lo = b0 << lsh;
+            uint256 bn_hi = (b1 << lsh) | (b0 >> rsh);
+
+            uint256 v = _reciprocal_2(bn_lo, bn_hi);
+            res_ = _div_2(a1 >> rsh, (a1 << lsh) | (a0 >> rsh), a0 << lsh, Uint512(bn_lo, bn_hi), v);
+        }
     }
 
     /**
@@ -146,34 +196,81 @@ library HugeInt {
         }
     }
 
-    /// @dev https://2π.com/22/muldiv-512x512/
-    /// https://github.com/recmo/OpenZKP/blob/c28a5c66b6ee9b97bf177373ba148981df60b7fb/algebra/u256/src/arch/generic/knuth_division.rs#L51
-    /// https://ridiculousfish.com/blog/posts/labor-of-division-episode-iv.html
-    /// https://github.com/chfast/intx/blob/master/include/intx/intx.hpp
-    function div(Uint512 memory a, Uint512 memory b) internal pure returns (uint256 res_) {
-        // prevents b == 0
-        if (b.msb == 0 && b.lsb == 0) {
-            revert HugeIntDivisionFailed();
+    /**
+     * @notice Compute the division of a 768-bit integer `a` by a 512-bit integer `b`, knowing the reciprocal of `b`
+     * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
+     * @param a2 The MSB of the numerator
+     * @param a1 The middle limb of the numerator
+     * @param a0 The LSB of the numerator
+     * @param b The divisor as a 512-bit integer
+     * @param v The reciprocal `v = 1/b` as defined in `_reciprocal_2`
+     * @return The quotient floor(a/b)
+     */
+    function _div_2(uint256 a2, uint256 a1, uint256 a0, Uint512 memory b, uint256 v) internal pure returns (uint256) {
+        unchecked {
+            Uint512 memory q = mul(v, a2);
+            q = add(q, Uint512(a1, a2));
+            uint256 r1 = a1 - q.msb * b.msb;
+            Uint512 memory t = mul(b.lsb, q.msb);
+            Uint512 memory r = sub(sub(Uint512(a0, r1), t), b);
+            r1 = r.msb;
+            q.msb++;
+            if (r1 >= q.lsb) {
+                q.msb--;
+                r = add(r, b);
+            }
+            if (r1 > b.msb || (r1 == b.msb && r.lsb >= b.lsb)) {
+                q.msb++;
+                r = sub(r, b);
+            }
+            return q.msb;
         }
-        // if both operands fit inside a uint256, we can use the Solidity division operator
-        if (a.msb == 0 && b.msb == 0) {
-            return a.lsb / b.lsb;
-        }
-        // if the numerator is smaller than the denominator, the result is zero
-        if (a.msb < b.msb || (a.msb == b.msb && a.lsb < b.lsb)) {
-            return 0;
-        }
-        // if the divisor and result fit inside a uint256, we can use the {div256} function
-        if (b.msb == 0 && b.lsb > a.msb) {
-            return _div256(a, b.lsb);
-        }
-        // Division algo
-        (uint256 a0, uint256 a1) = (a.lsb, a.msb);
-        (uint256 b0, uint256 b1) = (b.lsb, b.msb);
     }
 
     /**
-     * @notice "count-left-zero": count the number of consecutive zero bits, starting from the left
+     * @notice Compute the reciprocal v = 1/d with fixed decimals
+     * @param d The input value
+     * @return v_ The reciprocal of d
+     */
+    function _reciprocal(uint256 d) internal pure returns (uint256 v_) {
+        v_ = _div256(Uint512(255, 255 - d), d);
+    }
+
+    /**
+     * @notice Compute the reciprocal v = 1/d with fixed decimals, where d is a uint512 integer
+     * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
+     * @param d0 LSB of the input
+     * @param d1 MSB of the input
+     * @return v_ The reciprocal of d
+     */
+    function _reciprocal_2(uint256 d0, uint256 d1) internal pure returns (uint256 v_) {
+        unchecked {
+            v_ = _reciprocal(d1);
+            uint256 p = d1 * v_;
+            p += d0;
+            if (p < d0) {
+                v_--;
+                if (p >= d1) {
+                    v_--;
+                    p -= d1;
+                }
+                p -= d1;
+            }
+            Uint512 memory t = mul(v_, d0);
+            p += t.msb;
+            if (p < t.msb) {
+                v_--;
+                if (p >= d1) {
+                    if (p > d1 || t.lsb >= d0) {
+                        v_--;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @notice Count the number of consecutive zero bits, starting from the left
      * @param x An unsigned integer
      * @return n_ The number of zeroes starting from the most significant bit
      */
