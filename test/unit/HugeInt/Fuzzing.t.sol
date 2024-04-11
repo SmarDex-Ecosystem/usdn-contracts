@@ -100,8 +100,27 @@ contract TestHugeIntFuzzing is HugeIntFixture {
      */
     function testFuzz_FFIDiv(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
         vm.assume(b0 > 0 || b1 > 0);
-        b1 = bound(b1, 1, type(uint256).max);
         bytes memory a = abi.encodePacked(a1, a0);
+        {
+            // define bMin
+            bytes memory uintMax = abi.encodePacked(uint256(0), type(uint256).max);
+            bytes memory temp = vmFFIRustCommand("div512", vm.toString(a), vm.toString(uintMax));
+            (uint256 bMin0, uint256 bMin1) = abi.decode(temp, (uint256, uint256));
+            // add 1 wei to make sure we account for rounding errors
+            if (bMin0 == type(uint256).max) {
+                if (bMin1 < type(uint256).max) {
+                    bMin1++;
+                }
+            } else {
+                bMin0++;
+            }
+            // bound b
+            b1 = bound(b1, bMin1, type(uint256).max);
+            if (b1 == bMin1) {
+                b0 = bound(b0, bMin0, type(uint256).max);
+            }
+        }
+        // compute divisions
         bytes memory b = abi.encodePacked(b1, b0);
         bytes memory result = vmFFIRustCommand("huge-int-div", vm.toString(a), vm.toString(b));
         uint256 ref = abi.decode(result, (uint256));
