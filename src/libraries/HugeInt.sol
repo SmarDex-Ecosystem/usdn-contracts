@@ -75,7 +75,7 @@ library HugeInt {
     }
 
     /**
-     * @notice Calculate the division `floor(a / b)` of a 512-bit unsigned integer by a unsigned 256-bit integer.
+     * @notice Calculate the division `floor(a / b)` of a 512-bit unsigned integer by an unsigned 256-bit integer.
      * @dev Credits Solady (MIT license): https://github.com/Vectorized/solady/
      * The call will revert if the result doesn't fit inside a uint256 or if the denominator is zero.
      * @param a The numerator as a 512-bit unsigned integer
@@ -95,6 +95,18 @@ library HugeInt {
         if (a.msb == 0) {
             return a.lsb / b;
         }
+        res_ = _div256(a, b);
+    }
+
+    /**
+     * @notice Calculate the division `floor(a / b)` of a 512-bit unsigned integer by an unsigned 256-bit integer.
+     * @dev The caller must ensure that the result fits inside a uint256 and that the division is non-zero.
+     * The caller must ensure that the numerator high limb (msb) is non-zero.
+     * @param a The numerator as a 512-bit unsigned integer
+     * @param b The denominator as a 256-bit unsigned integer
+     * @return res_ The division `floor(a / b)` of the operands as an unsigned 256-bit integer
+     */
+    function _div256(Uint512 memory a, uint256 b) internal pure returns (uint256 res_) {
         (uint256 a0, uint256 a1) = (a.lsb, a.msb);
         uint256 r;
         assembly {
@@ -132,28 +144,73 @@ library HugeInt {
                     mul(inv, sub(2, mul(b, inv)))
                 )
         }
-        console2.log("remainder", r);
     }
 
-    function div(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
-        // if the numerator is smaller than the denominator, the result is zero
-        if (a.msb < b.msb || (a.msb == b.msb && a.lsb < b.lsb)) {
-            return Uint512(0, 0);
+    /// @dev https://2π.com/22/muldiv-512x512/
+    /// https://github.com/recmo/OpenZKP/blob/c28a5c66b6ee9b97bf177373ba148981df60b7fb/algebra/u256/src/arch/generic/knuth_division.rs#L51
+    /// https://ridiculousfish.com/blog/posts/labor-of-division-episode-iv.html
+    /// https://github.com/chfast/intx/blob/master/include/intx/intx.hpp
+    function div(Uint512 memory a, Uint512 memory b) internal pure returns (uint256 res_) {
+        // prevents b == 0
+        if (b.msb == 0 && b.lsb == 0) {
+            revert HugeIntDivisionFailed();
         }
         // if both operands fit inside a uint256, we can use the Solidity division operator
         if (a.msb == 0 && b.msb == 0) {
-            return Uint512(a.lsb / b.lsb, 0);
+            return a.lsb / b.lsb;
         }
-        // if the result fits inside a uint256, we can use the {div256} function
+        // if the numerator is smaller than the denominator, the result is zero
+        if (a.msb < b.msb || (a.msb == b.msb && a.lsb < b.lsb)) {
+            return 0;
+        }
+        // if the divisor and result fit inside a uint256, we can use the {div256} function
         if (b.msb == 0 && b.lsb > a.msb) {
-            return Uint512(div256(a, b.lsb), 0);
+            return _div256(a, b.lsb);
         }
-        // if the second operand fits inside a uint256, we can use the {_div_nx1} function
-        if (b.msb == 0) {
-            return _div_nx1(a, b.lsb);
-        }
+        // Division algo
+        (uint256 a0, uint256 a1) = (a.lsb, a.msb);
+        (uint256 b0, uint256 b1) = (b.lsb, b.msb);
     }
 
-    /// @dev https://gmplib.org/~tege/division-paper.pdf https://github.com/recmo/uint
-    function _div_nx1(Uint512 memory a, uint256 b) internal pure returns (Uint512 memory res_) { }
+    /**
+     * @notice "count-left-zero": count the number of consecutive zero bits, starting from the left
+     * @param x An unsigned integer
+     * @return n_ The number of zeroes starting from the most significant bit
+     */
+    function _clz(uint256 x) internal pure returns (uint256 n_) {
+        if (x == 0) {
+            return 256;
+        }
+        assembly {
+            if iszero(and(x, 0xffffffffffffffffffffffffffffffff00000000000000000000000000000000)) {
+                n_ := add(n_, 128)
+                x := shl(128, x)
+            }
+            if iszero(and(x, 0xffffffffffffffff000000000000000000000000000000000000000000000000)) {
+                n_ := add(n_, 64)
+                x := shl(64, x)
+            }
+            if iszero(and(x, 0xffffffff00000000000000000000000000000000000000000000000000000000)) {
+                n_ := add(n_, 32)
+                x := shl(32, x)
+            }
+            if iszero(and(x, 0xffff000000000000000000000000000000000000000000000000000000000000)) {
+                n_ := add(n_, 16)
+                x := shl(16, x)
+            }
+            if iszero(and(x, 0xff00000000000000000000000000000000000000000000000000000000000000)) {
+                n_ := add(n_, 8)
+                x := shl(8, x)
+            }
+            if iszero(and(x, 0xf000000000000000000000000000000000000000000000000000000000000000)) {
+                n_ := add(n_, 4)
+                x := shl(4, x)
+            }
+            if iszero(and(x, 0xc000000000000000000000000000000000000000000000000000000000000000)) {
+                n_ := add(n_, 2)
+                x := shl(2, x)
+            }
+            if iszero(and(x, 0x8000000000000000000000000000000000000000000000000000000000000000)) { n_ := add(n_, 1) }
+        }
+    }
 }

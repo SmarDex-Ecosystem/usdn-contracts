@@ -76,6 +76,9 @@ contract TestHugeIntFuzzing is HugeIntFixture {
      * @custom:and The dividend is greater than the MSB of the 512-bit integer (to avoid overflowing a uint256)
      * @custom:when The `div256` function is called with the operands
      * @custom:then The result is equal to the division of the 512-bit integer by the 256-bit integer, as a uint256
+     * @param a0 The LSB of the numerator
+     * @param a1 The MSB of the numerator
+     * @param b The divisor
      */
     function testFuzz_FFIDiv256(uint256 a0, uint256 a1, uint256 b) public {
         vm.assume(b > 0);
@@ -85,6 +88,20 @@ contract TestHugeIntFuzzing is HugeIntFixture {
         bytes memory result = vmFFIRustCommand("huge-int-div256", vm.toString(a), vm.toString(b));
         uint256 ref = abi.decode(result, (uint256));
         uint256 res = handler.div256(HugeInt.Uint512(a0, a1), b);
+        assertEq(res, ref);
+    }
+
+    /**
+     * @custom:scenario Test the CLZ function
+     * @custom:given An unsigned integer
+     * @custom:when The CLZ function is applied to the integer
+     * @custom:then The number of consecutive zero most-significant bits is returned
+     * @param x An unsigned integer
+     */
+    function testFuzz_FFIClz(uint256 x) public {
+        bytes memory result = vmFFIRustCommand("huge-int-clz", vm.toString(x));
+        (uint256 ref) = abi.decode(result, (uint256));
+        uint256 res = handler.clz(x);
         assertEq(res, ref);
     }
 }

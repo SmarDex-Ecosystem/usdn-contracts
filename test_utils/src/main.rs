@@ -98,6 +98,11 @@ enum Commands {
         /// Second operand as a uint256
         b: String,
     },
+    /// Count-left-zeroes of a uint256
+    HugeIntClz {
+        /// An unsigned 256-bit integer
+        x: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -112,7 +117,7 @@ fn main() -> Result<()> {
             let mut res = value.exp();
             res.mul_assign_round(&wad, Round::Nearest);
             res.floor_mut();
-            print_i256_hex(res)?;
+            print_float_i256_hex(res)?;
         }
         Commands::LnWad { value } => {
             let mut value = Float::with_val(512, Float::parse(value)?);
@@ -120,7 +125,7 @@ fn main() -> Result<()> {
             let mut res = value.ln();
             res.mul_assign_round(&wad, Round::Nearest);
             res.round_mut();
-            print_i256_hex(res)?;
+            print_float_i256_hex(res)?;
         }
         Commands::PowWad { base, exp } => {
             let mut base = Float::with_val(512, Float::parse(base)?);
@@ -130,13 +135,13 @@ fn main() -> Result<()> {
             let mut res = base.pow(exp);
             res.mul_assign_round(&wad, Round::Nearest);
             res.round_mut();
-            print_i256_hex(res)?;
+            print_float_i256_hex(res)?;
         }
         Commands::DivUp { lhs, rhs } => {
             let lhs: Integer = lhs.parse()?;
             let rhs: Integer = rhs.parse()?;
             let res = lhs.div_ceil(rhs);
-            print_u256_hex(res)?;
+            print_int_u256_hex(res)?;
         }
         Commands::PythPrice { feed, publish_time } => {
             let mut hermes_api_url = std::env::var("HERMES_RA2_NODE_URL")?;
@@ -165,7 +170,7 @@ fn main() -> Result<()> {
             let mut total_expo = Float::with_val(512, amount) * start_price / price_diff;
             total_expo.floor_mut();
 
-            print_u256_hex(
+            print_int_u256_hex(
                 total_expo
                     .to_integer()
                     .ok_or_else(|| anyhow!("can't convert to integer"))?,
@@ -204,11 +209,21 @@ fn main() -> Result<()> {
             let x_bytes: FixedBytes<32> = bytes.into();
             print!("{x_bytes}");
         }
+        Commands::HugeIntClz { x } => {
+            let x: U256 = x.parse()?;
+            let bytes: [u8; 32] = x.to_be_bytes();
+            let clz = bytes.iter().position(|&b| b != 0).map_or(256, |n| {
+                let skipped = n * 8;
+                let top = bytes[n].leading_zeros() as usize;
+                skipped + top
+            });
+            print_u256_hex(U256::from(clz));
+        }
     }
     Ok(())
 }
 
-fn print_i256_hex(x: Float) -> Result<()> {
+fn print_float_i256_hex(x: Float) -> Result<()> {
     let x_wad = x
         .to_integer()
         .ok_or_else(|| anyhow!("can't convert to integer"))?;
@@ -219,12 +234,18 @@ fn print_i256_hex(x: Float) -> Result<()> {
     Ok(())
 }
 
-fn print_u256_hex(x: Integer) -> Result<()> {
+fn print_int_u256_hex(x: Integer) -> Result<()> {
     let x_hex: U256 = x.to_string().parse()?;
     let bytes: [u8; 32] = x_hex.to_be_bytes();
     let x_bytes: FixedBytes<32> = bytes.into();
     print!("{x_bytes}");
     Ok(())
+}
+
+fn print_u256_hex(x: U256) {
+    let bytes: [u8; 32] = x.to_be_bytes();
+    let x_bytes: FixedBytes<32> = bytes.into();
+    print!("{x_bytes}");
 }
 
 fn print_u512_hex(lsb: U256, msb: U256) {
