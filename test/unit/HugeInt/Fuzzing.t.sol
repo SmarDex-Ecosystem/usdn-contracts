@@ -94,12 +94,11 @@ contract TestHugeIntFuzzing is HugeIntFixture {
     /**
      * @custom:scenario Fuzzing the `div` function
      * @custom:given Two 512-bit unsigned integers
-     * @custom:and The divisor is greater than 0
+     * @custom:and The divisor is larger than `a / uint256.max` so as to fit the quotient inside a uint256
      * @custom:when The `div` function is called with the operands
      * @custom:then The result is equal to the division of the numerator by the denominator, as a uint256
      */
     function testFuzz_FFIDiv(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
-        vm.assume(b0 > 0 || b1 > 0);
         bytes memory a = abi.encodePacked(a1, a0);
         {
             // define bMin
