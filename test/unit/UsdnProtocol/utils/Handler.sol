@@ -10,7 +10,9 @@ import {
     WithdrawalPendingAction,
     LongPendingAction,
     ProtocolAction,
-    PreviousActionsData
+    PreviousActionsData,
+    TickData,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocol, Position } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -51,13 +53,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_initiateClosePosition(
         address user,
-        int24 tick,
-        uint256 tickVersion,
-        uint256 index,
+        PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) external returns (uint256 securityDepositValue_) {
-        return _initiateClosePosition(user, tick, tickVersion, index, amountToClose, currentPriceData);
+        return _initiateClosePosition(user, posId, amountToClose, currentPriceData);
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
@@ -179,15 +179,16 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_assetToTransfer(
         uint128 currentPrice,
         int24 tick,
+        uint8 liquidationPenalty,
         uint128 expo,
         uint256 liqMultiplier,
         uint256 tempTransferred
     ) external view returns (uint256, int256) {
-        return _assetToTransfer(currentPrice, tick, expo, liqMultiplier, tempTransferred);
+        return _assetToTransfer(currentPrice, tick, liquidationPenalty, expo, liqMultiplier, tempTransferred);
     }
 
-    function i_tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo) external view returns (int256) {
-        return _tickValue(currentPrice, tick, tickTotalExpo);
+    function i_tickValue(uint256 currentPrice, int24 tick, TickData memory tickData) external view returns (int256) {
+        return _tickValue(currentPrice, tick, tickData);
     }
 
     function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)

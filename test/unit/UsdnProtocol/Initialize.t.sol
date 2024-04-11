@@ -98,7 +98,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
      */
     function test_createInitialPosition() public {
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
-        int24 expectedTick = tickWithoutPenalty + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing();
+        int24 expectedTick =
+            tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
         uint128 leverage = uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS());
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
@@ -116,7 +117,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_POSITION, "protocol wstETH balance");
         assertEq(protocol.getBalanceLong(), INITIAL_POSITION, "protocol long balance");
 
-        Position memory pos = protocol.getLongPosition(expectedTick, 0, 0);
+        (Position memory pos,) = protocol.getLongPosition(expectedTick, 0, 0);
         assertEq(pos.user, address(this), "position user");
         assertEq(pos.amount, INITIAL_POSITION, "position amount");
         assertEq(pos.totalExpo, 2 * INITIAL_POSITION, "position total expo");
@@ -157,7 +158,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
                 / 10 ** (protocol.getAssetDecimals() + protocol.getPriceFeedDecimals() - protocol.TOKENS_DECIMALS())
         ) - protocol.MIN_USDN_SUPPLY();
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
-        int24 expectedTick = tickWithoutPenalty + int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing();
+        int24 expectedTick =
+            tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
         uint128 liquidationPriceWithoutPenalty = protocol.getEffectivePriceForTick(tickWithoutPenalty);
         uint128 leverage = protocol.i_getLeverage(INITIAL_PRICE, liquidationPriceWithoutPenalty);
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
@@ -185,7 +187,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         assertEq(usdn.balanceOf(address(this)), expectedUsdnMinted, "deployer USDN balance");
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "dead address USDN balance");
 
-        Position memory pos = protocol.getLongPosition(expectedTick, 0, 0);
+        (Position memory pos,) = protocol.getLongPosition(expectedTick, 0, 0);
         assertEq(pos.user, address(this), "position user");
         assertEq(pos.amount, INITIAL_POSITION, "position amount");
         assertEq(
