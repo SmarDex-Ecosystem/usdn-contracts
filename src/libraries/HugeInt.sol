@@ -256,7 +256,7 @@ library HugeInt {
      * @param a1 The middle limb of the numerator
      * @param a0 The LSB of the numerator
      * @param b The divisor as a 512-bit integer
-     * @param v The reciprocal `v = 1/b` as defined in `_reciprocal_2`
+     * @param v The reciprocal `v` as defined in `_reciprocal_2`
      * @return The quotient floor(a/b)
      */
     function _div_2(uint256 a2, uint256 a1, uint256 a0, Uint512 memory b, uint256 v) internal pure returns (uint256) {
@@ -294,7 +294,7 @@ library HugeInt {
     }
 
     /**
-     * @notice Compute the reciprocal v = 1/d with fixed decimals, where d is a uint512 integer
+     * @notice Compute the reciprocal `v = floor((2^768-1) / d) - 2^256`, where d is a uint512 integer
      * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
      * @param d0 LSB of the input
      * @param d1 MSB of the input
