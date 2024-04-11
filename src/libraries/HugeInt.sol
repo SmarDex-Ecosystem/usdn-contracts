@@ -3,6 +3,11 @@ pragma solidity ^0.8.20;
 
 import { console2 } from "forge-std/console2.sol";
 
+/**
+ * @notice A library for manipulating uint512 quantities.
+ * The huge ints are represented as two uint256 "limbs", a `lsb` limb for the least-significant bits, and a `msb` limb
+ * for the most significant bits. The result uint512 value is calculated as `msb * 2^256 + lsb`.
+ */
 library HugeInt {
     /// @notice Indicates that the division failed because the divisor is zero or the result overflows a uint256.
     error HugeIntDivisionFailed();
