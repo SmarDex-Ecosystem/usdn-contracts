@@ -18,8 +18,6 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 5 ether;
         params.initialLong = 10 ether;
-        params.flags.enablePositionFees = false;
-        params.flags.enableProtocolFees = false;
         params.flags.enableFunding = false;
         params.flags.enableUsdnRebase = true;
         super._setUp(params);
@@ -28,7 +26,6 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         protocol.setUsdnRebaseInterval(12 hours);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
-        usdn.approve(address(protocol), type(uint256).max);
     }
 
     /**
