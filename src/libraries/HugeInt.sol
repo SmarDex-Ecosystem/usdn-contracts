@@ -35,6 +35,7 @@ library HugeInt {
      * @dev The result is not checked for overflow, the caller must ensure that the result is less than 2^512.
      * @param a The first operand
      * @param b The second operand
+     * @return res_ The sum of `a` and `b`
      */
     function add(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
         res_ = _add(a, b);
@@ -46,6 +47,7 @@ library HugeInt {
      * equal to the first operand.
      * @param a The first operand
      * @param b The second operand
+     * @return res_ The difference `a - b`
      */
     function sub(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
         (uint256 a0, uint256 a1) = (a.lsb, a.msb);
@@ -149,6 +151,7 @@ library HugeInt {
      * The result is not checked for overflow, the caller must ensure that the result is less than 2^512.
      * @param a The first operand
      * @param b The second operand
+     * @return res_ The sum of `a` and `b`
      */
     function _add(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
         (uint256 a0, uint256 a1) = (a.lsb, a.msb);
@@ -169,6 +172,7 @@ library HugeInt {
      * the first operand.
      * @param a The first operand
      * @param b The second operand
+     * @return res_ The difference `a - b`
      */
     function _sub(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
         (uint256 a0, uint256 a1) = (a.lsb, a.msb);
