@@ -144,7 +144,8 @@ contract TestHugeIntFuzzing is HugeIntFixture {
         bytes memory result = vmFFIRustCommand("huge-int-div", vm.toString(a), vm.toString(b));
         uint256 ref = abi.decode(result, (uint256));
         uint256 res = handler.div(HugeInt.Uint512(a0, a1), HugeInt.Uint512(b0, b1));
-        assertApproxEqAbs(res, ref, 1);
+        // assertApproxEqAbs(res, ref, 1);
+        assertEq(res, ref);
     }
 
     /**

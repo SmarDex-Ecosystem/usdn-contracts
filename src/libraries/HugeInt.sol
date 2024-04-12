@@ -285,24 +285,32 @@ library HugeInt {
      * @return The quotient floor(a/b)
      */
     function _div_2(uint256 a2, uint256 a1, uint256 a0, Uint512 memory b, uint256 v) internal pure returns (uint256) {
-        unchecked {
-            Uint512 memory q = _mul256(v, a2);
-            q = _add(q, Uint512(a1, a2));
-            uint256 r1 = a1 - q.hi * b.hi;
-            Uint512 memory t = _mul256(b.lo, q.hi);
-            Uint512 memory r = _sub(_sub(Uint512(a0, r1), t), b);
-            r1 = r.hi;
-            q.hi++;
-            if (r1 >= q.lo) {
-                q.hi--;
-                r = _add(r, b);
-            }
-            if (r1 > b.hi || (r1 == b.hi && r.lo >= b.lo)) {
-                q.hi++;
-                r = _sub(r, b);
-            }
-            return q.hi;
+        Uint512 memory q = _mul256(v, a2);
+        q = _add(q, Uint512(a1, a2));
+        (uint256 q0, uint256 q1) = (q.lo, q.hi);
+        Uint512 memory t = _mul256(b.lo, q1);
+        uint256 b1 = b.hi;
+        uint256 r1;
+        assembly {
+            r1 := sub(a1, mul(q1, b1))
         }
+        Uint512 memory r = _sub(_sub(Uint512(a0, r1), t), b);
+        assembly {
+            q1 := add(q1, 1)
+        }
+        if (r.hi >= q0) {
+            assembly {
+                q1 := sub(q1, 1)
+            }
+            r = _add(r, b);
+        }
+        if (r.hi > b.hi || (r.hi == b.hi && r.lo >= b.lo)) {
+            assembly {
+                q1 := add(q1, 1)
+            }
+            // r = _sub(r, b);
+        }
+        return q1;
     }
 
     /**
