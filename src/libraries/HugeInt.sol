@@ -148,15 +148,21 @@ library HugeInt {
             return 1;
         }
 
-        unchecked {
-            uint256 rsh = 256 - lsh;
-
-            uint256 bn_lo = b0 << lsh;
-            uint256 bn_hi = (b1 << lsh) | (b0 >> rsh);
-
-            uint256 v = _reciprocal_2(bn_lo, bn_hi);
-            res_ = _div_2(a1 >> rsh, (a1 << lsh) | (a0 >> rsh), a0 << lsh, Uint512(bn_lo, bn_hi), v);
+        uint256 bn_lo;
+        uint256 bn_hi;
+        uint256 an_lo;
+        uint256 an_hi;
+        uint256 an_ex;
+        assembly {
+            let rsh := sub(256, lsh)
+            bn_lo := shl(lsh, b0)
+            bn_hi := or(shl(lsh, b1), shr(rsh, b0))
+            an_lo := shl(lsh, a0)
+            an_hi := or(shl(lsh, a1), shr(rsh, a0))
+            an_ex := shr(rsh, a1)
         }
+        uint256 v = _reciprocal_2(bn_lo, bn_hi);
+        res_ = _div_2(an_ex, an_hi, an_lo, Uint512(bn_lo, bn_hi), v);
     }
 
     /**
