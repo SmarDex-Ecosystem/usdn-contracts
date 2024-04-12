@@ -38,7 +38,7 @@ library HugeInt {
      * @return res_ The sum of `a` and `b`
      */
     function add(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
-        res_ = _add(a, b);
+        (res_.lo, res_.hi) = _add(a.lo, a.hi, b.lo, b.hi);
     }
 
     /**
@@ -67,8 +67,8 @@ library HugeInt {
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
      */
-    function mul256(uint256 a, uint256 b) external pure returns (Uint512 memory) {
-        return _mul256(a, b);
+    function mul256(uint256 a, uint256 b) external pure returns (Uint512 memory res_) {
+        (res_.lo, res_.hi) = _mul256(a, b);
     }
 
     /**
@@ -80,7 +80,7 @@ library HugeInt {
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
      */
     function mul(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
-        res_ = _mul256(a.lo, b.lo);
+        (res_.lo, res_.hi) = _mul256(a.lo, b.lo);
         unchecked {
             res_.hi += (a.lo * b.hi) + (a.hi * b.lo);
         }
@@ -108,7 +108,7 @@ library HugeInt {
                 return a.lo / b;
             }
         }
-        res_ = _div256(a, b);
+        res_ = _div256(a.lo, a.hi, b);
     }
 
     /**
@@ -135,7 +135,7 @@ library HugeInt {
         }
         // if the divisor and result fit inside a uint256, we can use the {div256} function
         if (b.hi == 0 && b.lo > a.hi) {
-            return _div256(a, b.lo);
+            return _div256(a.lo, a.hi, b.lo);
         }
         // Division algo
         (uint256 a0, uint256 a1) = (a.lo, a.hi);
@@ -162,27 +162,25 @@ library HugeInt {
             an_ex := shr(rsh, a1)
         }
         uint256 v = _reciprocal_2(bn_lo, bn_hi);
-        res_ = _div_2(an_ex, an_hi, an_lo, Uint512(bn_lo, bn_hi), v);
+        res_ = _div_2(an_lo, an_hi, an_ex, bn_lo, bn_hi, v);
     }
 
     /**
      * @notice Calculate the sum `a + b` of two 512-bit unsigned integers.
      * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/512-bit-division/
      * The result is not checked for overflow, the caller must ensure that the result is less than 2^512.
-     * @param a The first operand
-     * @param b The second operand
-     * @return res_ The sum of `a` and `b`
+     * @param a0 The low limb of the first operand
+     * @param a1 The high limb of the first operand
+     * @param b0 The low limb of the second operand
+     * @param b1 The high limb of the second operand
+     * @return lo_ The low limb of the result of `a + b`
+     * @return hi_ The high limb of the result of `a + b`
      */
-    function _add(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
-        (uint256 a0, uint256 a1) = (a.lo, a.hi);
-        (uint256 b0, uint256 b1) = (b.lo, b.hi);
-        uint256 lo;
-        uint256 hi;
+    function _add(uint256 a0, uint256 a1, uint256 b0, uint256 b1) internal pure returns (uint256 lo_, uint256 hi_) {
         assembly {
-            lo := add(a0, b0)
-            hi := add(add(a1, b1), lt(lo, a0))
+            lo_ := add(a0, b0)
+            hi_ := add(add(a1, b1), lt(lo_, a0))
         }
-        return Uint512(lo, hi);
     }
 
     /**
@@ -190,20 +188,18 @@ library HugeInt {
      * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/512-bit-division/
      * The result is not checked for underflow, the caller must ensure that the second operand is less than or equal to
      * the first operand.
-     * @param a The first operand
-     * @param b The second operand
-     * @return res_ The difference `a - b`
+     * @param a0 The low limb of the first operand
+     * @param a1 The high limb of the first operand
+     * @param b0 The low limb of the second operand
+     * @param b1 The high limb of the second operand
+     * @return lo_ The low limb of the result of `a - b`
+     * @return hi_ The high limb of the result of `a - b`
      */
-    function _sub(Uint512 memory a, Uint512 memory b) internal pure returns (Uint512 memory res_) {
-        (uint256 a0, uint256 a1) = (a.lo, a.hi);
-        (uint256 b0, uint256 b1) = (b.lo, b.hi);
-        uint256 lo;
-        uint256 hi;
+    function _sub(uint256 a0, uint256 a1, uint256 b0, uint256 b1) internal pure returns (uint256 lo_, uint256 hi_) {
         assembly {
-            lo := sub(a0, b0)
-            hi := sub(sub(a1, b1), lt(a0, b0))
+            lo_ := sub(a0, b0)
+            hi_ := sub(sub(a1, b1), lt(a0, b0))
         }
-        return Uint512(lo, hi);
     }
 
     /**
@@ -212,17 +208,15 @@ library HugeInt {
      * and Solady (MIT license): https://github.com/Vectorized/solady/
      * @param a The first operand
      * @param b The second operand
-     * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
+     * @return lo_ The low limb of the result of `a * b`
+     * @return hi_ The high limb of the result of `a * b`
      */
-    function _mul256(uint256 a, uint256 b) internal pure returns (Uint512 memory) {
-        uint256 lo;
-        uint256 hi;
+    function _mul256(uint256 a, uint256 b) internal pure returns (uint256 lo_, uint256 hi_) {
         assembly {
-            lo := mul(a, b)
+            lo_ := mul(a, b)
             let mm := mulmod(a, b, not(0))
-            hi := sub(mm, add(lo, lt(mm, lo)))
+            hi_ := sub(mm, add(lo_, lt(mm, lo_)))
         }
-        return Uint512(lo, hi);
     }
 
     /**
@@ -230,12 +224,12 @@ library HugeInt {
      * @dev Credits Solady (MIT license): https://github.com/Vectorized/solady/
      * The caller must ensure that the result fits inside a uint256 and that the division is non-zero.
      * For performance reasons, the caller should ensure that the numerator high limb (hi) is non-zero.
-     * @param a The numerator as a 512-bit unsigned integer
+     * @param a0 The low limb of the numerator
+     * @param a1 The high limb of the  numerator
      * @param b The denominator as a 256-bit unsigned integer
      * @return res_ The division `floor(a / b)` of the operands as an unsigned 256-bit integer
      */
-    function _div256(Uint512 memory a, uint256 b) internal pure returns (uint256 res_) {
-        (uint256 a0, uint256 a1) = (a.lo, a.hi);
+    function _div256(uint256 a0, uint256 a1, uint256 b) internal pure returns (uint256 res_) {
         uint256 r;
         assembly {
             // To make the division exact, we find out the remainder of the division of a by b
@@ -277,39 +271,44 @@ library HugeInt {
     /**
      * @notice Compute the division of a 768-bit integer `a` by a 512-bit integer `b`, knowing the reciprocal of `b`
      * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
-     * @param a2 The MSB of the numerator
-     * @param a1 The middle limb of the numerator
      * @param a0 The LSB of the numerator
-     * @param b The divisor as a 512-bit integer
+     * @param a1 The middle limb of the numerator
+     * @param a2 The MSB of the numerator
+     * @param b0 The low limb of the divisor
+     * @param b1 The high limb of the divisor
      * @param v The reciprocal `v` as defined in `_reciprocal_2`
      * @return The quotient floor(a/b)
      */
-    function _div_2(uint256 a2, uint256 a1, uint256 a0, Uint512 memory b, uint256 v) internal pure returns (uint256) {
-        Uint512 memory q = _mul256(v, a2);
-        q = _add(q, Uint512(a1, a2));
-        (uint256 q0, uint256 q1) = (q.lo, q.hi);
-        Uint512 memory t = _mul256(b.lo, q1);
-        uint256 b1 = b.hi;
+    function _div_2(uint256 a0, uint256 a1, uint256 a2, uint256 b0, uint256 b1, uint256 v)
+        internal
+        pure
+        returns (uint256)
+    {
+        (uint256 q0, uint256 q1) = _mul256(v, a2);
+        (q0, q1) = _add(q0, q1, a1, a2);
+        (uint256 t0, uint256 t1) = _mul256(b0, q1);
         uint256 r1;
         assembly {
             r1 := sub(a1, mul(q1, b1))
         }
-        Uint512 memory r = _sub(_sub(Uint512(a0, r1), t), b);
+        uint256 r0;
+        (r0, r1) = _sub(a0, r1, t0, t1);
+        (r0, r1) = _sub(r0, r1, b0, b1);
         assembly {
             q1 := add(q1, 1)
         }
-        if (r.hi >= q0) {
+        if (r1 >= q0) {
             assembly {
                 q1 := sub(q1, 1)
             }
-            r = _add(r, b);
+            (r0, r1) = _add(r0, r1, b0, b1);
         }
-        if (r.hi > b.hi || (r.hi == b.hi && r.lo >= b.lo)) {
+        if (r1 > b1 || (r1 == b1 && r0 >= b0)) {
             assembly {
                 q1 := add(q1, 1)
             }
             // we don't care about the remainder
-            // r = _sub(r, b);
+            // (r0, r1) = _sub(r0, r1, b0, b1);
         }
         return q1;
     }
@@ -324,7 +323,7 @@ library HugeInt {
         if (d & 0x8000000000000000000000000000000000000000000000000000000000000000 == 0) {
             revert HugeIntDivisionFailed();
         }
-        v_ = _div256(Uint512(type(uint256).max, type(uint256).max - d), d);
+        v_ = _div256(type(uint256).max, type(uint256).max - d, d);
     }
 
     /**
@@ -350,8 +349,7 @@ library HugeInt {
                 p := sub(p, d1)
             }
         }
-        Uint512 memory t = _mul256(v_, d0);
-        (uint256 t0, uint256 t1) = (t.lo, t.hi);
+        (uint256 t0, uint256 t1) = _mul256(v_, d0);
         assembly {
             p := add(p, t1)
             if lt(p, t1) {
