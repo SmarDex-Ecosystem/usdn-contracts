@@ -206,11 +206,13 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         // Calculate the collateral this position gives on liquidation
         int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTotalExpoByTick(desiredLiqTick));
+        uint128 ordersRewards = uint128(uint256(tickValue)) / 2;
+        int256 remainingCollateral = tickValue - int256(uint256(ordersRewards));
 
         vm.expectEmit(true, false, false, false, address(protocol));
         emit OrderManagerPositionOpened(address(orderManager), 0, 0, 0, 0, 0, 0, 0);
         vm.expectEmit();
-        emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
+        emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, remainingCollateral);
         (
             uint256 liquidatedPositions,
             uint16 liquidatedTicks,
@@ -221,14 +223,18 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
         assertEq(liquidatedTicks, 1, "Only one tick should have been liquidated");
-        assertEq(collateralLiquidated, tickValue, "Collateral liquidated should be equal to tickValue");
         assertEq(
-            newLongBalance,
-            100 ether - uint256(tickValue) + orderAmount,
-            "The long side should have paid tickValue to the vault side and received the collateral given by the order manager"
+            collateralLiquidated, remainingCollateral, "Collateral liquidated should be equal to remainingCollateral"
         );
         assertEq(
-            int256(newVaultBalance), 100 ether + tickValue, "The long side should have paid tickValue to the vault side"
+            newLongBalance,
+            100 ether - uint256(tickValue) + orderAmount + ordersRewards,
+            "The long side should have paid the remaining collateral to the vault side and received the collateral given by the order manager"
+        );
+        assertEq(
+            int256(newVaultBalance),
+            100 ether + collateralLiquidated,
+            "The long side should have paid the remaining collateral to the vault side"
         );
 
         assertLt(

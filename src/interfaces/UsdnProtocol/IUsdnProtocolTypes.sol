@@ -171,6 +171,7 @@ struct PreviousActionsData {
 }
 
 /**
+ * <<<<<<< HEAD
  * @notice The effects of executed liquidations on the protocol
  * @param liquidatedPositions The number of liquidated positions
  * @param liquidatedTicks The number of liquidated ticks
@@ -212,4 +213,16 @@ struct PositionId {
     int24 tick;
     uint256 tickVersion;
     uint256 index;
+}
+
+/**
+ * @notice Changes made to the protocol after the tick is liquidated.
+ * @param liquidatedPositions The amount of positions liquidated.
+ * @param amountAddedToLong The amount of assets added to the long side.
+ * @param remainingCollateral Remaining collateral in the tick after the liquidation.
+ */
+struct LiquidationEffects {
+    uint256 liquidatedPositions;
+    uint128 amountAddedToLong;
+    int256 remainingCollateral;
 }

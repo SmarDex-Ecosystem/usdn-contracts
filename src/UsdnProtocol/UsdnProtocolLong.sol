@@ -8,7 +8,12 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position, LiquidationsEffects, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    Position,
+    LiquidationEffects,
+    LiquidationsEffects,
+    TickData
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
@@ -367,28 +372,19 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param currentPrice The current price
      * @param liquidatedTickHash The tick hash of the liquidated tick
      * @param liquidatedTickTotalExpo The total expo of the liquidated tick
-     * @param tickValue The collateral remaining in the liquidated tick
+     * @param ordersRewards The rewards to be added to the order manager position
      * @return positionAmount_ The amount of assets in the position created from the available orders
      */
     function _saveOrderManagerPositionInTick(
         uint128 currentPrice,
         bytes32 liquidatedTickHash,
         uint128 liquidatedTickTotalExpo,
-        int256 tickValue
+        uint128 ordersRewards
     ) internal returns (uint128 positionAmount_) {
         address orderManagerAddress = address(_orderManager);
         // If the order manager is not set, return;
         if (orderManagerAddress == address(0)) {
             return positionAmount_;
-        }
-
-        // TODO take half and add it to the order manager position? Increase the amount saved in the position
-        // without increasing the asset transferred, check total expo with and without? No sure if that's right
-        // How do we make sure users will withdraw the amount + bonus relative to their share of the position?
-        // TODO prioritize the order manager or the vault? (order bonus vs liquidator rewards)
-        uint128 ordersRewards;
-        if (tickValue > 0) {
-            ordersRewards = (uint256(tickValue) / 2).toUint128();
         }
 
         int24 liquidationTick;
@@ -411,6 +407,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint128 posTotalExpo;
         {
             // Calculate liquidation price without the liquidation penalty for the tick
+            // TODO is that right?
             uint128 liqPriceWithoutPenalty =
                 getEffectivePriceForTick(liquidationTick - int24(_liquidationPenalty) * _tickSpacing);
             posTotalExpo = _calculatePositionTotalExpo(positionAmount_, currentPrice, liqPriceWithoutPenalty);
@@ -437,8 +434,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             (tickVersion, index) = _saveNewPosition(liquidationTick, pos);
 
             // Transfer assets from the order manager to the protocol
-            // TODO underflow check
-            _asset.safeTransferFrom(orderManagerAddress, address(this), positionAmount_ - ordersRewards);
+            uint256 amountToTransfer;
+            // Orders rewards are already in the contract, so we don't need to transfer them
+            // positionAmount_ cannot be lower than orders rewards so no underflow here
+            amountToTransfer = positionAmount_ - ordersRewards;
+            _asset.safeTransferFrom(orderManagerAddress, address(this), amountToTransfer);
         }
 
         emit OrderManagerPositionOpened(
@@ -453,32 +453,56 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         );
     }
 
-    /// TODO NatSpec
-    function _liquidateTick(int24 tick, TickData memory tickData, uint256 currentPrice)
+    /**
+     * @notice Liquidate the current tick at the current price
+     * @param tick The tick to liquidate
+     * @param tickHash The hash of the tick
+     * @param tickData The data of a tick
+     * @param currentPrice The current price
+     * @return effects_ The effects of the liquidation on the protocol
+     */
+    function _liquidateTick(int24 tick, bytes32 tickHash, TickData memory tickData, uint256 currentPrice)
         internal
-        returns (int256 tickValue_, uint256 newLongBalance_)
+        returns (LiquidationEffects memory effects_)
     {
-        (bytes32 tickHash,) = _tickHash(tick);
-        tickValue_ = _tickValue(currentPrice, tick, tickData.totalExpo);
+        effects_.remainingCollateral = _tickValue(currentPrice, tick, tickData.totalExpo);
+        effects_.liquidatedPositions = tickData.totalPos;
 
         unchecked {
             _totalExpo -= tickData.totalExpo;
             _totalLongPositions -= tickData.totalPos;
-
             ++_tickVersion[tick];
         }
 
-        newLongBalance_ += _saveOrderManagerPositionInTick(
-            currentPrice.toUint128(),
-            tickHash,
-            tickData.totalExpo.toUint128(),
-            // stack too deep if we put that in the next scope
-            tickValue_
-        );
+        {
+            uint128 ordersRewards;
+            if (effects_.remainingCollateral > 0) {
+                // cast to uint256 is safe as value is strictly positive
+                ordersRewards = (uint256(effects_.remainingCollateral) / 2).toUint128();
+                effects_.remainingCollateral -= _toInt256(ordersRewards);
+            }
+
+            effects_.amountAddedToLong = _saveOrderManagerPositionInTick(
+                currentPrice.toUint128(), tickHash, tickData.totalExpo.toUint128(), ordersRewards
+            );
+
+            // Check if we subtracted too much from the remaining collateral
+            if (effects_.amountAddedToLong <= ordersRewards) {
+                effects_.remainingCollateral += _toInt256(ordersRewards - effects_.amountAddedToLong);
+                // No position has been opened or
+                // The position has been opened solely with rewards, so nothing has been added to the long balance
+                effects_.amountAddedToLong = 0;
+            } else {
+                // the rewards were already in the long balance, so no need to add them again
+                effects_.amountAddedToLong -= ordersRewards;
+            }
+        }
 
         _tickBitmap.unset(_tickToBitmapIndex(tick));
 
-        emit LiquidatedTick(tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue_);
+        emit LiquidatedTick(
+            tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), effects_.remainingCollateral
+        );
     }
 
     /**
@@ -506,26 +530,27 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int24 tick = _maxInitializedTick;
 
         do {
-            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
-            if (index == LibBitmap.NOT_FOUND) {
-                // no populated ticks left
-                break;
-            }
+            {
+                uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+                if (index == LibBitmap.NOT_FOUND) {
+                    // no populated ticks left
+                    break;
+                }
 
-            tick = _bitmapIndexToTick(index);
-            if (tick < currentTick) {
-                break;
+                tick = _bitmapIndexToTick(index);
+                if (tick < currentTick) {
+                    break;
+                }
             }
-
-            bytes32 cachedTickHash = tickHash(tick, _tickVersion[tick]);
-            TickData memory tickData = _tickData[cachedTickHash];
-            // we have found a non-empty tick that needs to be liquidated
-            (int256 tickValue, uint256 longBalance) = _liquidateTick(tick, tickData, currentPrice);
-            effects_.newLongBalance = longBalance;
-            effects_.remainingCollateral += tickValue;
 
             (bytes32 tickHash,) = _tickHash(tick);
-            effects_.liquidatedPositions += tickData.totalPos;
+            TickData memory tickData = _tickData[tickHash];
+            // we have found a non-empty tick that needs to be liquidated
+            LiquidationEffects memory effects = _liquidateTick(tick, tickHash, currentPrice);
+
+            effects_.remainingCollateral += effects.remainingCollateral;
+            tempLongBalance += _toInt256(effects.amountAddedToLong);
+            effects_.liquidatedPositions += effects.liquidatedPositions;
             ++effects_.liquidatedTicks;
         } while (effects_.liquidatedTicks < iteration);
 
@@ -558,7 +583,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tempVaultBalance = 0;
         }
 
-        effects_.newLongBalance += tempLongBalance.toUint256();
+        effects_.newLongBalance = tempLongBalance.toUint256();
         effects_.newVaultBalance = tempVaultBalance.toUint256();
     }
 }
