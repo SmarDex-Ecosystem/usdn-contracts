@@ -320,26 +320,31 @@ library HugeInt {
      * @return v_ The reciprocal of d
      */
     function _reciprocal_2(uint256 d0, uint256 d1) internal pure returns (uint256 v_) {
-        unchecked {
-            v_ = _reciprocal(d1);
-            uint256 p = d1 * v_;
-            p += d0;
-            if (p < d0) {
-                v_--;
-                if (p >= d1) {
-                    v_--;
-                    p -= d1;
+        v_ = _reciprocal(d1);
+        uint256 p;
+        assembly {
+            p := mul(d1, v_)
+            p := add(p, d0)
+            if lt(p, d0) {
+                // carry out
+                v_ := sub(v_, 1)
+                if iszero(lt(p, d1)) {
+                    v_ := sub(v_, 1)
+                    p := sub(p, d1)
                 }
-                p -= d1;
+                p := sub(p, d1)
             }
-            Uint512 memory t = _mul256(v_, d0);
-            p += t.hi;
-            if (p < t.hi) {
-                v_--;
-                if (p >= d1) {
-                    if (p > d1 || t.lo >= d0) {
-                        v_--;
-                    }
+        }
+        Uint512 memory t = _mul256(v_, d0);
+        (uint256 t0, uint256 t1) = (t.lo, t.hi);
+        assembly {
+            p := add(p, t1)
+            if lt(p, t1) {
+                // carry out
+                v_ := sub(v_, 1)
+                if and(iszero(lt(p, d1)), or(gt(p, d1), iszero(lt(t0, d0)))) {
+                    // if (<p, t0> >= <d1, d0>)
+                    v_ := sub(v_, 1)
                 }
             }
         }
