@@ -73,7 +73,8 @@ library HugeInt {
 
     /**
      * @notice Calculate the product `a * b` of two 512-bit unsigned integers
-     * @dev This function does not check for overflows, the caller must ensure that the result fits inside a uint512.
+     * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
+     * This function does not check for overflows, the caller must ensure that the result fits inside a uint512.
      * @param a The first operand
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
