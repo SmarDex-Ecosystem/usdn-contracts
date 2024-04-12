@@ -296,14 +296,7 @@ fn main() -> Result<()> {
         }
         Commands::HugeIntReciprocal { d } => {
             let d: U256 = d.parse()?;
-            let n0 = U256::MAX;
-            let n1 = U256::MAX - d;
-            let n_bytes: [u8; 64] = [n1.to_be_bytes::<32>(), n0.to_be_bytes::<32>()]
-                .concat()
-                .try_into()
-                .unwrap();
-            let n = U512::from_be_bytes::<64>(n_bytes);
-            let res = n / U512::from(d);
+            let res = U512::MAX / U512::from(d) - (U512::from(U256::MAX) + U512::from(1));
             assert!(res <= U512::from(U256::MAX));
             let bytes: [u8; 32] = res.to_be_bytes::<64>()[32..].try_into()?;
             let x_bytes: FixedBytes<32> = bytes.into();
@@ -311,19 +304,7 @@ fn main() -> Result<()> {
         }
         Commands::HugeIntReciprocal2 { d } => {
             let d: U512 = d.parse()?;
-            let n0 = U256::MAX;
-            let n1 = U256::MAX;
-            let n2 = U256::MAX - U256::from(1);
-            let n_bytes: [u8; 96] = [
-                n2.to_be_bytes::<32>(),
-                n1.to_be_bytes::<32>(),
-                n0.to_be_bytes::<32>(),
-            ]
-            .concat()
-            .try_into()
-            .unwrap();
-            let n = U768::from_be_bytes::<96>(n_bytes);
-            let res = n / U768::from(d) - U768::from(U256::MAX);
+            let res = U768::MAX / U768::from(d) - (U768::from(U256::MAX) + U768::from(1));
             assert!(res <= U768::from(U256::MAX));
             let bytes: [u8; 32] = res.to_be_bytes::<96>()[64..].try_into()?;
             let x_bytes: FixedBytes<32> = bytes.into();
