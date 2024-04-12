@@ -8,6 +8,7 @@ import {
     PendingAction,
     DepositPendingAction,
     WithdrawalPendingAction,
+    LiquidationEffects,
     LongPendingAction,
     ProtocolAction,
     PreviousActionsData,
@@ -133,6 +134,13 @@ contract UsdnProtocolHandler is UsdnProtocol {
         int256 tempVaultBalance
     ) external returns (LiquidationsEffects memory effects_) {
         return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);
+    }
+
+    function i_liquidateTick(int24 tick, bytes32 tickHash, uint256 currentPrice)
+        external
+        returns (LiquidationEffects memory)
+    {
+        return _liquidateTick(tick, tickHash, currentPrice);
     }
 
     function i_toDepositPendingAction(PendingAction memory action)
