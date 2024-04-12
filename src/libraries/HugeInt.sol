@@ -308,6 +308,7 @@ library HugeInt {
             assembly {
                 q1 := add(q1, 1)
             }
+            // we don't care about the remainder
             // r = _sub(r, b);
         }
         return q1;
