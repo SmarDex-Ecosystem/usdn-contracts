@@ -92,10 +92,17 @@ enum Commands {
         b: String,
     },
     /// Full multiplication of two uint256
-    HugeIntMul {
+    HugeIntMul256 {
         /// First operand as a uint256
         a: String,
         /// Second operand as a uint256
+        b: String,
+    },
+    /// Full multiplication of two uint512
+    HugeIntMul {
+        /// First operand as a uint512
+        a: String,
+        /// Second operand as a uint512
         b: String,
     },
     /// Division of a uint512 by a uint256
@@ -221,9 +228,17 @@ fn main() -> Result<()> {
             let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
             print_u512_hex(lsb, msb);
         }
-        Commands::HugeIntMul { a, b } => {
+        Commands::HugeIntMul256 { a, b } => {
             let a: U512 = a.parse()?;
             let b: U512 = b.parse()?;
+            let res = a * b;
+            let lsb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[32..].try_into()?);
+            let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
+            print_u512_hex(lsb, msb);
+        }
+        Commands::HugeIntMul { a, b } => {
+            let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
+            let b = U512::from_be_bytes::<64>(const_hex::decode_to_array(b)?);
             let res = a * b;
             let lsb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[32..].try_into()?);
             let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);

@@ -54,17 +54,37 @@ contract TestHugeIntFuzzing is HugeIntFixture {
     }
 
     /**
-     * @custom:scenario Fuzzing the `mul` function
+     * @custom:scenario Fuzzing the `mul256` function
      * @custom:given Two 256-bit unsigned integers
-     * @custom:when The `mul` function is called with the two integers
+     * @custom:when The `mul256` function is called with the two integers
      * @custom:then The result is equal to the product of the two integers as a `Uint512`
      * @param a the first operand
      * @param b the second operand
      */
-    function testFuzz_FFIMul(uint256 a, uint256 b) public {
+    function testFuzz_FFIMul256(uint256 a, uint256 b) public {
+        bytes memory result = vmFFIRustCommand("huge-int-mul256", vm.toString(a), vm.toString(b));
+        (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
+        HugeInt.Uint512 memory res = handler.mul256(a, b);
+        assertEq(res.lsb, res0, "lsb");
+        assertEq(res.msb, res1, "msb");
+    }
+
+    /**
+     * @custom:scenario Fuzzing the `mul` function
+     * @custom:given Two 512-bit unsigned integers
+     * @custom:when The `mul` function is called with the two integers
+     * @custom:then The result is equal to the product of the two integers as a `Uint512`
+     * @param a0 least-significant bits of the first operand
+     * @param a1 most-significant bits of the first operand
+     * @param b0 least-significant bits of the second operand
+     * @param b1 most-significant bits of the second operand
+     */
+    function testFuzz_FFIMul(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
+        bytes memory a = abi.encodePacked(a1, a0);
+        bytes memory b = abi.encodePacked(b1, b0);
         bytes memory result = vmFFIRustCommand("huge-int-mul", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
-        HugeInt.Uint512 memory res = handler.mul(a, b);
+        HugeInt.Uint512 memory res = handler.mul(HugeInt.Uint512(a0, a1), HugeInt.Uint512(b0, b1));
         assertEq(res.lsb, res0, "lsb");
         assertEq(res.msb, res1, "msb");
     }

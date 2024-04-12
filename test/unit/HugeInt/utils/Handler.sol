@@ -20,7 +20,11 @@ contract HugeIntHandler {
         return HugeInt.sub(a, b);
     }
 
-    function mul(uint256 a, uint256 b) external pure returns (HugeInt.Uint512 memory) {
+    function mul256(uint256 a, uint256 b) external pure returns (HugeInt.Uint512 memory) {
+        return HugeInt.mul256(a, b);
+    }
+
+    function mul(HugeInt.Uint512 memory a, HugeInt.Uint512 memory b) external pure returns (HugeInt.Uint512 memory) {
         return HugeInt.mul(a, b);
     }
 

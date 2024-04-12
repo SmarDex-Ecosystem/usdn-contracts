@@ -67,14 +67,27 @@ library HugeInt {
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
      */
-    function mul(uint256 a, uint256 b) external pure returns (Uint512 memory) {
-        return _mul(a, b);
+    function mul256(uint256 a, uint256 b) external pure returns (Uint512 memory) {
+        return _mul256(a, b);
+    }
+
+    /**
+     * @notice Calculate the product `a * b` of two 512-bit unsigned integers
+     * @dev This function does not check for overflows, the caller must ensure that the result fits inside a uint512.
+     * @param a The first operand
+     * @param b The second operand
+     * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
+     */
+    function mul(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
+        res_ = _mul256(a.lsb, b.lsb);
+        unchecked {
+            res_.msb += (a.lsb * b.msb) + (a.msb * b.lsb);
+        }
     }
 
     /**
      * @notice Calculate the division `floor(a / b)` of a 512-bit unsigned integer by an unsigned 256-bit integer.
-     * @dev Credits Solady (MIT license): https://github.com/Vectorized/solady/
-     * The call will revert if the result doesn't fit inside a uint256 or if the denominator is zero.
+     * @dev The call will revert if the result doesn't fit inside a uint256 or if the denominator is zero.
      * @param a The numerator as a 512-bit unsigned integer
      * @param b The denominator as a 256-bit unsigned integer
      * @return res_ The division `floor(a / b)` of the operands as an unsigned 256-bit integer
@@ -194,7 +207,7 @@ library HugeInt {
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
      */
-    function _mul(uint256 a, uint256 b) internal pure returns (Uint512 memory) {
+    function _mul256(uint256 a, uint256 b) internal pure returns (Uint512 memory) {
         uint256 lsb;
         uint256 msb;
         assembly {
@@ -207,7 +220,8 @@ library HugeInt {
 
     /**
      * @notice Calculate the division `floor(a / b)` of a 512-bit unsigned integer by an unsigned 256-bit integer.
-     * @dev The caller must ensure that the result fits inside a uint256 and that the division is non-zero.
+     * @dev Credits Solady (MIT license): https://github.com/Vectorized/solady/
+     * The caller must ensure that the result fits inside a uint256 and that the division is non-zero.
      * The caller must ensure that the numerator high limb (msb) is non-zero.
      * @param a The numerator as a 512-bit unsigned integer
      * @param b The denominator as a 256-bit unsigned integer
@@ -265,10 +279,10 @@ library HugeInt {
      */
     function _div_2(uint256 a2, uint256 a1, uint256 a0, Uint512 memory b, uint256 v) internal pure returns (uint256) {
         unchecked {
-            Uint512 memory q = _mul(v, a2);
+            Uint512 memory q = _mul256(v, a2);
             q = _add(q, Uint512(a1, a2));
             uint256 r1 = a1 - q.msb * b.msb;
-            Uint512 memory t = _mul(b.lsb, q.msb);
+            Uint512 memory t = _mul256(b.lsb, q.msb);
             Uint512 memory r = _sub(_sub(Uint512(a0, r1), t), b);
             r1 = r.msb;
             q.msb++;
@@ -317,7 +331,7 @@ library HugeInt {
                 }
                 p -= d1;
             }
-            Uint512 memory t = _mul(v_, d0);
+            Uint512 memory t = _mul256(v_, d0);
             p += t.msb;
             if (p < t.msb) {
                 v_--;
