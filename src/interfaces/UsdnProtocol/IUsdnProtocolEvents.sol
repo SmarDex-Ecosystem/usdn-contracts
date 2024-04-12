@@ -221,7 +221,7 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when the liquidationPenalty is updated.
      * @param newLiquidationPenalty The new liquidationPenalty.
      */
-    event LiquidationPenaltyUpdated(uint24 newLiquidationPenalty);
+    event LiquidationPenaltyUpdated(uint8 newLiquidationPenalty);
 
     /**
      * @notice Emitted when the safetyMargin is updated.
@@ -259,6 +259,12 @@ interface IUsdnProtocolEvents {
      * @param newAddress The address of the new (current) contract.
      */
     event LiquidationRewardsManagerUpdated(address newAddress);
+
+    /**
+     * @notice Emitted when the OrderManager contract is updated.
+     * @param newAddress The address of the new (current) contract.
+     */
+    event OrderManagerUpdated(address newAddress);
 
     /**
      * @notice Emitted when the pending protocol fee is distributed.

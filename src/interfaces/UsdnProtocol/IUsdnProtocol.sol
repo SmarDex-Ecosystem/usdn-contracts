@@ -4,6 +4,7 @@ pragma solidity >=0.8.0;
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 
 /**
  * @title IUsdnProtocol
@@ -46,6 +47,12 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      */
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external;
 
+    /**
+     * @notice Replace the OrderManager contract with a new implementation.
+     * @param newOrderManager the address of the new contract.
+     */
+    function setOrderManager(IOrderManager newOrderManager) external;
+
     /// @notice Set the new minimum leverage for a position.
     function setMinLeverage(uint256 newMinLeverage) external;
 
@@ -56,7 +63,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setValidationDeadline(uint256 newValidationDeadline) external;
 
     /// @notice Set the new liquidation penalty (in tick spacing units).
-    function setLiquidationPenalty(uint24 newLiquidationPenalty) external;
+    function setLiquidationPenalty(uint8 newLiquidationPenalty) external;
 
     /// @notice Set the new safety margin bps for the liquidation price of newly open positions.
     function setSafetyMarginBps(uint256 newSafetyMarginBps) external;

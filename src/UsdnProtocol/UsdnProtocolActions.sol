@@ -16,7 +16,8 @@ import {
     WithdrawalPendingAction,
     LongPendingAction,
     LiquidationsEffects,
-    PreviousActionsData
+    PreviousActionsData,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -123,8 +124,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund;
 
-        (tick_, tickVersion_, index_, amountToRefund) =
-            _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
+        PositionId memory posId;
+        (posId, amountToRefund) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
+        tick_ = posId.tick;
+        tickVersion_ = posId.tickVersion;
+        index_ = posId.index;
+
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -164,8 +169,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund =
-            _initiateClosePosition(msg.sender, tick, tickVersion, index, amountToClose, currentPriceData);
+        uint256 amountToRefund = _initiateClosePosition(
+            msg.sender,
+            PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
+            amountToClose,
+            currentPriceData
+        );
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -660,9 +669,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty.
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
-     * @return tick_ The tick of the position
-     * @return tickVersion_ The tick version of the position
-     * @return index_ The index of the position inside the tick array
+     * @return posId_ The unique index of the opened position
      * @return securityDepositValue_ The security deposit value
      */
     function _initiateOpenPosition(
@@ -670,14 +677,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
-    ) internal returns (int24 tick_, uint256 tickVersion_, uint256 index_, uint256 securityDepositValue_) {
+    ) internal returns (PositionId memory posId_, uint256 securityDepositValue_) {
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
 
-        uint128 adjustedPrice; // the price returned by the oracle middleware, to be used for the user action
-        uint128 leverage;
-        uint128 positionTotalExpo;
+        uint128 adjustedPrice;
+        uint128 neutralPrice;
         {
             PriceInfo memory currentPrice =
                 _getOraclePrice(ProtocolAction.InitiateOpenPosition, block.timestamp, currentPriceData);
@@ -688,64 +694,63 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 revert UsdnProtocolLongPositionTooSmall();
             }
 
-            uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
+            neutralPrice = currentPrice.neutralPrice.toUint128();
 
             _applyPnlAndFundingAndLiquidate(neutralPrice, currentPrice.timestamp);
+        }
 
-            // we calculate the closest valid tick down for the desired liq price with liquidation penalty
-            tick_ = getEffectiveTickForPrice(desiredLiqPrice);
+        // we calculate the closest valid tick down for the desired liq price with liquidation penalty
+        posId_.tick = getEffectiveTickForPrice(desiredLiqPrice);
+        uint8 liquidationPenalty = getTickLiquidationPenalty(posId_.tick);
 
-            // remove liquidation penalty for leverage calculation
-            uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick_ - int24(_liquidationPenalty) * _tickSpacing);
-            positionTotalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
+        (uint128 leverage, uint128 positionTotalExpo) =
+            _getOpenPositionLeverage(posId_.tick, liquidationPenalty, adjustedPrice, amount);
+        _checkImbalanceLimitOpen(positionTotalExpo, amount);
 
-            _checkImbalanceLimitOpen(positionTotalExpo, amount);
-
-            // calculate position leverage
-            // reverts if liquidationPrice >= entryPrice
-            leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
-            if (leverage < _minLeverage) {
-                revert UsdnProtocolLeverageTooLow();
-            }
-            if (leverage > _maxLeverage) {
-                revert UsdnProtocolLeverageTooHigh();
-            }
-
+        {
             // Calculate effective liquidation price
-            uint128 liqPrice = getEffectivePriceForTick(tick_);
+            uint128 liqPrice = getEffectivePriceForTick(posId_.tick);
             // Liquidation price must be at least x% below current price
             _checkSafetyMargin(neutralPrice, liqPrice);
         }
 
-        // Register position and adjust contract state
         {
+            // Register position and adjust contract state
             Position memory long = Position({
                 user: user,
                 amount: amount,
                 totalExpo: positionTotalExpo,
                 timestamp: uint40(block.timestamp)
             });
-            (tickVersion_, index_) = _saveNewPosition(tick_, long);
-
-            // Register pending action
-            LongPendingAction memory pendingAction = LongPendingAction({
-                action: ProtocolAction.ValidateOpenPosition,
-                timestamp: uint40(block.timestamp),
-                user: user,
-                tick: tick_,
-                securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
-                closeAmount: 0,
-                closeTotalExpo: 0,
-                tickVersion: tickVersion_,
-                index: index_,
-                closeLiqMultiplier: 0,
-                closeTempTransfer: 0
-            });
-            securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(pendingAction));
-            emit InitiatedOpenPosition(
-                user, long.timestamp, leverage, long.amount, adjustedPrice, tick_, tickVersion_, index_
-            );
+            (posId_.tickVersion, posId_.index) = _saveNewPosition(posId_.tick, long, liquidationPenalty);
         }
+
+        // Register pending action
+        LongPendingAction memory pendingAction = LongPendingAction({
+            action: ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp),
+            user: user,
+            tick: posId_.tick,
+            securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
+            closeAmount: 0,
+            closeTotalExpo: 0,
+            tickVersion: posId_.tickVersion,
+            index: posId_.index,
+            closeLiqMultiplier: 0,
+            closeTempTransfer: 0
+        });
+        securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(pendingAction));
+        emit InitiatedOpenPosition(
+            user,
+            uint40(block.timestamp),
+            leverage,
+            amount,
+            adjustedPrice,
+            posId_.tick,
+            posId_.tickVersion,
+            posId_.index
+        );
+
         _asset.safeTransferFrom(user, address(this), amount);
     }
 
@@ -791,8 +796,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Get the position
         Position memory pos = _longPositions[tickHash][long.index];
+        int24 tickSpacing = _tickSpacing;
+
         // Re-calculate leverage
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(long.tick - int24(_liquidationPenalty) * _tickSpacing);
+        uint128 liqPriceWithoutPenalty =
+            getEffectivePriceForTick(long.tick - int24(uint24(_liquidationPenalty)) * tickSpacing);
         // reverts if liquidationPrice >= entryPrice
         uint128 leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
         // Leverage is always greater than 1 (liquidationPrice is positive).
@@ -806,16 +814,38 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             liqPriceWithoutPenalty = _getLiquidationPrice(startPrice, _maxLeverage.toUint128());
             // adjust to closest valid tick down
             int24 tickWithoutPenalty = getEffectiveTickForPrice(liqPriceWithoutPenalty);
-            // retrieve exact liquidation price without penalty
-            liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
+
+            // apply liquidation penalty with the current penalty setting
+            uint8 currentLiqPenalty = _liquidationPenalty;
+            int24 tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * tickSpacing;
+            // retrieve the actual penalty for this tick we want to use
+            uint8 liquidationPenalty = getTickLiquidationPenalty(tick);
+            // check if the penalty for that tick is different from the current setting
+            if (liquidationPenalty == currentLiqPenalty) {
+                // Since the tick's penalty is the same as what we assumed, we can use the `tickWithoutPenalty` from
+                // above.
+                // Retrieve exact liquidation price without penalty
+                liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
+            } else {
+                // The tick's imposed penalty is different from the current setting, so the `tickWithoutPenalty` we
+                // calculated above can't be used to calculate the leverage.
+                // We must instead use the tick's penalty to find the new `liqPriceWithoutPenalty` and calculate the
+                // leverage.
+
+                // Note: In case the tick liquidation penalty is lower than the current setting, it might lead to a
+                // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence.
+
+                // Retrieve exact liquidation price without penalty.
+                liqPriceWithoutPenalty =
+                    getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * tickSpacing);
+            }
             // recalculate the leverage with the new liquidation price
             leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
             // update position total expo
             pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
-            // apply liquidation penalty
-            int24 tick = tickWithoutPenalty + int24(_liquidationPenalty) * _tickSpacing;
+
             // insert position into new tick, update tickVersion and index
-            (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos);
+            (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos, liquidationPenalty);
             // emit LiquidationPriceUpdated
             emit LiquidationPriceUpdated(long.tick, long.tickVersion, long.index, tick, tickVersion, index);
             emit ValidatedOpenPosition(pos.user, leverage, startPrice, tick, tickVersion, index);
@@ -829,7 +859,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // Update the total expo by adding the position's new expo and removing the old one.
             // Do not use += or it will underflow
             _totalExpo = _totalExpo + expoAfter - expoBefore;
-            _totalExpoByTick[tickHash] = _totalExpoByTick[tickHash] + expoAfter - expoBefore;
+            _tickData[tickHash].totalExpo = _tickData[tickHash].totalExpo + expoAfter - expoBefore;
 
             emit ValidatedOpenPosition(long.user, leverage, startPrice, long.tick, long.tickVersion, long.index);
         }
@@ -847,24 +877,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
      * during the validate action.
      * @param user The address of the user initiating the close position.
-     * @param tick The tick containing the position to close
-     * @param tickVersion The tick version of the position to close
-     * @param index The index of the position inside the tick array
+     * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
      * @return securityDepositValue_ The security deposit value
      */
     function _initiateClosePosition(
         address user,
-        int24 tick,
-        uint256 tickVersion,
-        uint256 index,
+        PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (uint256 securityDepositValue_) {
         // check if the position belongs to the user
         // this reverts if the position was liquidated
-        Position memory pos = getLongPosition(tick, tickVersion, index);
+        (Position memory pos, uint8 liquidationPenalty) = getLongPosition(posId.tick, posId.tickVersion, posId.index);
         if (pos.user != user) {
             revert UsdnProtocolUnauthorized();
         }
@@ -893,18 +919,19 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         {
             uint256 liqMultiplier = _liquidationMultiplier;
-            (uint256 tempTransfer,) = _assetToTransfer(priceWithFees, tick, totalExpoToClose, liqMultiplier, 0);
+            (uint256 tempTransfer,) =
+                _assetToTransfer(priceWithFees, posId.tick, liquidationPenalty, totalExpoToClose, liqMultiplier, 0);
 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
                 timestamp: uint40(block.timestamp),
                 user: user,
-                tick: tick,
+                tick: posId.tick,
                 securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
                 closeAmount: amountToClose,
                 closeTotalExpo: totalExpoToClose,
-                tickVersion: tickVersion,
-                index: index,
+                tickVersion: posId.tickVersion,
+                index: posId.index,
                 closeLiqMultiplier: liqMultiplier,
                 closeTempTransfer: tempTransfer
             });
@@ -916,11 +943,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(pendingAction));
 
             // Remove the position if it's fully closed
-            _removeAmountFromPosition(tick, index, pos, amountToClose, totalExpoToClose);
+            _removeAmountFromPosition(posId.tick, posId.index, pos, amountToClose, totalExpoToClose);
         }
 
         emit InitiatedClosePosition(
-            user, tick, tickVersion, index, pos.amount - amountToClose, pos.totalExpo - totalExpoToClose
+            user,
+            posId.tick,
+            posId.tickVersion,
+            posId.index,
+            pos.amount - amountToClose,
+            pos.totalExpo - totalExpoToClose
         );
     }
 
@@ -954,7 +986,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 priceWithFees = (price.price - (price.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
         (uint256 assetToTransfer, int256 positionValue) = _assetToTransfer(
-            priceWithFees, long.tick, long.closeTotalExpo, long.closeLiqMultiplier, long.closeTempTransfer
+            priceWithFees,
+            long.tick,
+            getTickLiquidationPenalty(long.tick),
+            long.closeTotalExpo,
+            long.closeLiqMultiplier,
+            long.closeTempTransfer
         );
 
         // get liquidation price (with liq penalty) to check if position was valid at `timestamp + validationDelay`
@@ -1047,6 +1084,36 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
+     * @notice During creation of a new long position, calculate the leverage and total exposure of the position.
+     * @param tick The tick of the position.
+     * @param liquidationPenalty The liquidation penalty of the tick.
+     * @param adjustedPrice The adjusted price of the asset.
+     * @param amount The amount of collateral.
+     * @return leverage_ The leverage of the position.
+     * @return totalExpo_ The total exposure of the position.
+     */
+    function _getOpenPositionLeverage(int24 tick, uint8 liquidationPenalty, uint128 adjustedPrice, uint128 amount)
+        internal
+        view
+        returns (uint128 leverage_, uint128 totalExpo_)
+    {
+        // remove liquidation penalty for leverage calculation
+        uint128 liqPriceWithoutPenalty =
+            getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing);
+        totalExpo_ = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
+
+        // calculate position leverage
+        // reverts if liquidationPrice >= entryPrice
+        leverage_ = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+        if (leverage_ < _minLeverage) {
+            revert UsdnProtocolLeverageTooLow();
+        }
+        if (leverage_ > _maxLeverage) {
+            revert UsdnProtocolLeverageTooHigh();
+        }
+    }
+
+    /**
      * @notice Calculate how much wstETH must be transferred to a user to close a position.
      * @dev The amount is bound by the amount of wstETH available in the long side.
      * @param currentPrice The current price of the asset
@@ -1060,6 +1127,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function _assetToTransfer(
         uint128 currentPrice,
         int24 tick,
+        uint8 liquidationPenalty,
         uint128 posExpo,
         uint256 liqMultiplier,
         uint256 tempTransferred
@@ -1070,7 +1138,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Calculate position value
         positionValue_ = _positionValue(
             currentPrice,
-            getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liqMultiplier),
+            getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing, liqMultiplier),
             posExpo
         );
 
