@@ -160,4 +160,36 @@ contract TestHugeIntFuzzing is HugeIntFixture {
         uint256 res = handler.clz(x);
         assertEq(res, ref);
     }
+
+    /**
+     * @custom:scenario Test the `_reciprocal` function
+     * @custom:given An unsigned integer larger than or equal to 2^255
+     * @custom:when The reciprocal is computed
+     * @custom:then The result is as expected
+     * @param x An unsigned integer
+     */
+    function testFuzz_FFIReciprocal(uint256 x) public {
+        x = bound(x, 2 ** 255, type(uint256).max);
+        bytes memory result = vmFFIRustCommand("huge-int-reciprocal", vm.toString(x));
+        (uint256 ref) = abi.decode(result, (uint256));
+        uint256 res = HugeInt._reciprocal(x);
+        assertEq(res, ref);
+    }
+
+    /**
+     * @custom:scenario Test the `_reciprocal_2` function
+     * @custom:given A 512-bit unsigned integer with its high limb larger than or equal to 2^255
+     * @custom:when The reciprocal (3/2) is computed
+     * @custom:then The result is as expected
+     * @param x0 The lower limb of a 512-bit integer
+     * @param x1 The higher limb of a 512-bit integer
+     */
+    function testFuzz_FFIReciprocal2(uint256 x0, uint256 x1) public {
+        x1 = bound(x1, 2 ** 255, type(uint256).max);
+        bytes memory x = abi.encodePacked(x1, x0);
+        bytes memory result = vmFFIRustCommand("huge-int-reciprocal2", vm.toString(x));
+        (uint256 ref) = abi.decode(result, (uint256));
+        uint256 res = HugeInt._reciprocal_2(x0, x1);
+        assertApproxEqAbs(res, ref, 1);
+    }
 }

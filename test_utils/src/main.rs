@@ -1,4 +1,4 @@
-use alloy_primitives::{Bytes, FixedBytes, I256, U256, U512};
+use alloy_primitives::{ruint::aliases::U768, Bytes, FixedBytes, I256, U256, U512};
 use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose::STANDARD, Engine as _};
@@ -130,6 +130,16 @@ enum Commands {
     HugeIntClz {
         /// An unsigned 256-bit integer
         x: String,
+    },
+    /// Reciprocal `floor((2^512-1) / d) - 2^256`
+    HugeIntReciprocal {
+        /// A 256-bit unsigned integer at least equal to 2^255
+        d: String,
+    },
+    /// Reciprocal `floor((2^768-1) / d) - 2^256`
+    HugeIntReciprocal2 {
+        /// A 512-bit unsigned integer with its high limb at least equal to 2^255
+        d: String,
     },
 }
 
@@ -283,6 +293,41 @@ fn main() -> Result<()> {
                 skipped + top
             });
             print_u256_hex(U256::from(clz));
+        }
+        Commands::HugeIntReciprocal { d } => {
+            let d: U256 = d.parse()?;
+            let n0 = U256::MAX;
+            let n1 = U256::MAX - d;
+            let n_bytes: [u8; 64] = [n1.to_be_bytes::<32>(), n0.to_be_bytes::<32>()]
+                .concat()
+                .try_into()
+                .unwrap();
+            let n = U512::from_be_bytes::<64>(n_bytes);
+            let res = n / U512::from(d);
+            assert!(res <= U512::from(U256::MAX));
+            let bytes: [u8; 32] = res.to_be_bytes::<64>()[32..].try_into()?;
+            let x_bytes: FixedBytes<32> = bytes.into();
+            print!("{x_bytes}");
+        }
+        Commands::HugeIntReciprocal2 { d } => {
+            let d: U512 = d.parse()?;
+            let n0 = U256::MAX;
+            let n1 = U256::MAX;
+            let n2 = U256::MAX - U256::from(1);
+            let n_bytes: [u8; 96] = [
+                n2.to_be_bytes::<32>(),
+                n1.to_be_bytes::<32>(),
+                n0.to_be_bytes::<32>(),
+            ]
+            .concat()
+            .try_into()
+            .unwrap();
+            let n = U768::from_be_bytes::<96>(n_bytes);
+            let res = n / U768::from(d) - U768::from(U256::MAX);
+            assert!(res <= U768::from(U256::MAX));
+            let bytes: [u8; 32] = res.to_be_bytes::<96>()[64..].try_into()?;
+            let x_bytes: FixedBytes<32> = bytes.into();
+            print!("{x_bytes}");
         }
     }
     Ok(())
