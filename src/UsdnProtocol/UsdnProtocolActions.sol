@@ -1031,20 +1031,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
-        LiquidationsEffects memory liquidationsEffects =
+        LiquidationsEffects memory effects =
             _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
 
-        liquidatedPositions_ = liquidationsEffects.liquidatedPositions;
-        _balanceLong = liquidationsEffects.newLongBalance;
-        _balanceVault = liquidationsEffects.newVaultBalance;
+        liquidatedPositions_ = effects.liquidatedPositions;
+        _balanceLong = effects.newLongBalance;
+        _balanceVault = effects.newVaultBalance;
 
         // Always perform the rebase check during liquidation
         bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
 
-        if (liquidationsEffects.liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(
-                liquidationsEffects.liquidatedTicks, liquidationsEffects.remainingCollateral, rebased
-            );
+        if (effects.liquidatedTicks > 0) {
+            _sendRewardsToLiquidator(effects.liquidatedTicks, effects.remainingCollateral, rebased);
         }
     }
 
@@ -1162,11 +1160,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
         // liquidate if price is more recent than _lastPrice
         if (priceUpdated) {
-            LiquidationsEffects memory liquidationsEffects =
+            LiquidationsEffects memory liquidationEffects =
                 _liquidatePositions(neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
 
-            _balanceLong = liquidationsEffects.newLongBalance;
-            _balanceVault = liquidationsEffects.newVaultBalance;
+            _balanceLong = liquidationEffects.newLongBalance;
+            _balanceVault = liquidationEffects.newVaultBalance;
 
             // rebase USDN if needed (interval has elapsed and price threshold was reached)
             _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
