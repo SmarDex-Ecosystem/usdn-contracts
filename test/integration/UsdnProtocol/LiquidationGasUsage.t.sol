@@ -189,12 +189,12 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         // Check that the gas usage per tick matches the gasUsedPerTick parameter in the LiquidationRewardsManager
         uint256 gasUsedPerTick = rewardsParameters.gasUsedPerTick;
         if (withOrders) {
-            gasUsedPerTick += rewardsParameters.ordersGasUsed;
+            gasUsedPerTick += rewardsParameters.ordersGasUsedPerTick;
         }
         assertEq(
             averageGasUsedPerTick,
             gasUsedPerTick,
-            "The result should match the gasUsedPerTick(+ordersGasUsed) parameter set in LiquidationRewardsManager's constructor"
+            "The result should match the gasUsedPerTick(+ordersGasUsedPerTick) parameter set in LiquidationRewardsManager's constructor"
         );
 
         // Check that the other gas usage matches the otherGasUsed parameter in the LiquidationRewardsManager
@@ -204,7 +204,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         }
         if (withOrders) {
             // TODO why?
-            otherGasUsed += 32_232;
+            otherGasUsed += 31_918;
         }
         assertEq(
             averageOtherGasUsed,

@@ -38,6 +38,13 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
     function getUserAmountInTick(int24 tick, uint256 tickVersion, address user) external view returns (uint256);
 
     /**
+     * @notice Returns the amount of assets orders have in a tick.
+     * @param tickHash The tick hash the orders are for.
+     * @return The amount of assets for the tick hash.
+     */
+    function getAmountInTick(bytes32 tickHash) external view returns (uint256);
+
+    /**
      * @notice Returns the accumulated data of all the orders in a tick.
      * @param tick The tick the orders are in.
      * @param tickVersion The tick version.

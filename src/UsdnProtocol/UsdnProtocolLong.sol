@@ -474,7 +474,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             ++_tickVersion[tick];
         }
 
-        {
+        if (address(_orderManager) != address(0) && _orderManager.getAmountInTick(tickHash) > 0) {
             uint128 ordersRewards;
             if (effects_.remainingCollateral > 0) {
                 // cast to uint256 is safe as value is strictly positive

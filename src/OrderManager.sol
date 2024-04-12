@@ -62,6 +62,11 @@ contract OrderManager is Ownable, IOrderManager {
     }
 
     /// @inheritdoc IOrderManager
+    function getAmountInTick(bytes32 tickHash) external view returns (uint256) {
+        return uint256(_ordersDataInTick[tickHash].amountOfAssets);
+    }
+
+    /// @inheritdoc IOrderManager
     function getOrdersDataInTick(int24 tick, uint256 tickVersion)
         external
         view

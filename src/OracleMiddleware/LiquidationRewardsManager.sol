@@ -44,10 +44,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 37_144,
-            otherGasUsed: 388_732,
+            gasUsedPerTick: 35_681,
+            otherGasUsed: 389_042,
             rebaseGasUsed: 8897,
-            ordersGasUsed: 114_018,
+            ordersGasUsedPerTick: 116_623,
             gasPriceLimit: 1000 gwei,
             multiplierBps: 20_000
         });
@@ -90,7 +90,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         uint32 gasUsedPerTick,
         uint32 otherGasUsed,
         uint32 rebaseGasUsed,
-        uint32 ordersGasUsed,
+        uint32 ordersGasUsedPerTick,
         uint64 gasPriceLimit,
         uint32 multiplierBps
     ) external onlyOwner {
@@ -100,8 +100,8 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             revert LiquidationRewardsManagerOtherGasUsedTooHigh(otherGasUsed);
         } else if (rebaseGasUsed > 200_000) {
             revert LiquidationRewardsManagerRebaseGasUsedTooHigh(rebaseGasUsed);
-        } else if (ordersGasUsed > 400_000) {
-            revert LiquidationRewardsManagerOrdersGasUsedTooHigh(ordersGasUsed);
+        } else if (ordersGasUsedPerTick > 400_000) {
+            revert LiquidationRewardsManagerOrdersGasUsedTooHigh(ordersGasUsedPerTick);
         } else if (gasPriceLimit > 8000 gwei) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
         } else if (multiplierBps > 10 * REWARDS_MULTIPLIER_DENOMINATOR) {
@@ -112,7 +112,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             gasUsedPerTick: gasUsedPerTick,
             otherGasUsed: otherGasUsed,
             rebaseGasUsed: rebaseGasUsed,
-            ordersGasUsed: ordersGasUsed,
+            ordersGasUsedPerTick: ordersGasUsedPerTick,
             gasPriceLimit: gasPriceLimit,
             multiplierBps: multiplierBps
         });
