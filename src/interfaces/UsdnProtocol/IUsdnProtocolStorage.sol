@@ -7,9 +7,9 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 
 /**
  * @title IUsdnProtocolStorage
@@ -88,6 +88,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /// @notice The liquidation rewards manager contract
     function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager);
+
+    /**
+     * @notice The order manager contract
+     * @return The address of order manager
+     */
+    function getOrderManager() external view returns (IOrderManager);
 
     /// @notice The minimum leverage for a position
     function getMinLeverage() external view returns (uint256);
