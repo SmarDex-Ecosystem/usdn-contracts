@@ -27,6 +27,7 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
      * @param gasUsedPerTick Gas used per tick to liquidate.
      * @param otherGasUsed Gas used for the rest of the computation.
      * @param rebaseGasUsed Gas used for the optional USDN rebase.
+     * @param ordersGasUsed Gas used for the optional orders.
      * @param gasPriceLimit Upper limit for the gas price.
      * @param multiplierBps Multiplier basis points for the liquidator rewards.
      */
@@ -49,7 +50,10 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
     error LiquidationRewardsManagerOtherGasUsedTooHigh(uint256 value);
     /// @dev Indicates that the rebaseGasUsed parameter has been set to a value we consider too high.
     error LiquidationRewardsManagerRebaseGasUsedTooHigh(uint256 value);
-    /// @dev Indicates that the ordersGasUsed parameter has been set to a value we consider too high.
+    /**
+     * @dev Indicates that the ordersGasUsed parameter has been set to a value we consider too high.
+     * @param value The value provided.
+     */
     error LiquidationRewardsManagerOrdersGasUsedTooHigh(uint256 value);
     /// @dev Indicates that the gasPriceLimit parameter has been set to a value we consider too high.
     error LiquidationRewardsManagerGasPriceLimitTooHigh(uint256 value);

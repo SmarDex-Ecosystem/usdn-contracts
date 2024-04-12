@@ -54,7 +54,10 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents {
      */
     function getUsdnProtocol() external view returns (IUsdnProtocol);
 
-    /// @notice Returns the leverage for pending orders.
+    /**
+     * @notice Returns the leverage for pending orders.
+     * @return The leverage for orders.
+     */
     function getOrdersLeverage() external view returns (uint256);
 
     /**
