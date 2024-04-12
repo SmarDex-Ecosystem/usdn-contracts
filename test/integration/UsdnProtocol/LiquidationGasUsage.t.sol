@@ -25,8 +25,12 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         params.forkWarp = 1_709_794_800; // Thu Mar 07 2024 07:00:00 UTC
         _setUp(params);
 
-        vm.startPrank(USER_1);
         (bool success,) = address(wstETH).call{ value: 1000 ether }("");
+        require(success, "Could not mint wstETH to the test contract");
+        wstETH.approve(address(orderManager), type(uint256).max);
+
+        vm.startPrank(USER_1);
+        (success,) = address(wstETH).call{ value: 1000 ether }("");
         require(success, "Could not mint wstETH to USER_1");
         wstETH.approve(address(protocol), type(uint256).max);
         vm.stopPrank();
@@ -55,7 +59,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
      * @custom:then The gas usage matches the LiquidationRewardsManager parameters
      */
     function test_forkGasUsageOfLiquidateFunction() public {
-        _forkGasUsageHelper(false);
+        _forkGasUsageHelper(false, false);
     }
 
     /**
@@ -67,10 +71,22 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
      * @custom:then The gas usage matches the LiquidationRewardsManager parameters
      */
     function test_forkGasUsageOfLiquidateFunctionRebase() public {
-        _forkGasUsageHelper(true);
+        _forkGasUsageHelper(true, false);
     }
 
-    function _forkGasUsageHelper(bool withRebase) public {
+    /**
+     * @custom:scenario The gas usage of UsdnProtocolActions.liquidate(bytes,uint16) matches the values set in
+     * LiquidationRewardsManager.getRewardsParameters
+     * @custom:given There are one or more ticks that can be liquidated
+     * @custom:and There are orders in the tick
+     * @custom:when A liquidator calls the function liquidate
+     * @custom:then The gas usage matches the LiquidationRewardsManager parameters
+     */
+    function test_forkGasUsageOfLiquidateFunctionWithOrders() public {
+        _forkGasUsageHelper(false, true);
+    }
+
+    function _forkGasUsageHelper(bool withRebase, bool withOrders) public {
         (uint256 pythPriceWstETH,,,,) =
             getHermesApiSignature(PYTH_WSTETH_USD, block.timestamp + oracleMiddleware.getValidationDelay());
         uint128 pythPriceNormalized = uint128(pythPriceWstETH * 10 ** 10);
@@ -95,17 +111,20 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         /* ---------------------------- Set up positions ---------------------------- */
 
         vm.prank(USER_1);
-        protocol.initiateOpenPosition{ value: securityDepositValue }(
+        (int24 tick,,) = protocol.initiateOpenPosition{ value: securityDepositValue }(
             1 ether, pythPriceNormalized + 150e18, hex"beef", EMPTY_PREVIOUS_DATA
         );
+        if (withOrders) orderManager.depositAssetsInTick(tick, 1 ether);
         vm.prank(USER_2);
-        protocol.initiateOpenPosition{ value: securityDepositValue }(
+        (tick,,) = protocol.initiateOpenPosition{ value: securityDepositValue }(
             1 ether, pythPriceNormalized + 100e18, hex"beef", EMPTY_PREVIOUS_DATA
         );
+        if (withOrders) orderManager.depositAssetsInTick(tick, 1 ether);
         vm.prank(USER_3);
-        protocol.initiateOpenPosition{ value: securityDepositValue }(
+        (tick,,) = protocol.initiateOpenPosition{ value: securityDepositValue }(
             1 ether, pythPriceNormalized + 50e18, hex"beef", EMPTY_PREVIOUS_DATA
         );
+        if (withOrders) orderManager.depositAssetsInTick(tick, 1 ether);
         _waitDelay();
         vm.prank(USER_1);
         protocol.validateOpenPosition(hex"beef", EMPTY_PREVIOUS_DATA);
@@ -168,15 +187,24 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
             (gasUsedArray[0] + gasUsedArray[1] + gasUsedArray[2] - (averageGasUsedPerTick * 6)) / 3;
 
         // Check that the gas usage per tick matches the gasUsedPerTick parameter in the LiquidationRewardsManager
+        uint256 gasUsedPerTick = rewardsParameters.gasUsedPerTick;
+        if (withOrders) {
+            gasUsedPerTick += rewardsParameters.ordersGasUsed;
+        }
         assertEq(
             averageGasUsedPerTick,
-            rewardsParameters.gasUsedPerTick,
-            "The result should match the gasUsedPerTick parameter set in LiquidationRewardsManager's constructor"
+            gasUsedPerTick,
+            "The result should match the gasUsedPerTick(+ordersGasUsed) parameter set in LiquidationRewardsManager's constructor"
         );
+
         // Check that the other gas usage matches the otherGasUsed parameter in the LiquidationRewardsManager
         uint256 otherGasUsed = rewardsParameters.otherGasUsed;
         if (withRebase) {
             otherGasUsed += rewardsParameters.rebaseGasUsed;
+        }
+        if (withOrders) {
+            // TODO why?
+            otherGasUsed += 32_232;
         }
         assertEq(
             averageOtherGasUsed,

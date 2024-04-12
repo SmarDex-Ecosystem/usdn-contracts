@@ -345,7 +345,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
-        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 1000 gwei, 20_000);
+        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 10_000, 1000 gwei, 20_000);
 
         // Trigger PnL and funding calculations now to avoid having to predict them later
         protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
@@ -401,7 +401,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
         // Put incredibly high values to empty the vault
-        liquidationRewardsManager.setRewardsParameters(500_000, 1_000_000, 200_000, 8000 gwei, 20_000);
+        liquidationRewardsManager.setRewardsParameters(500_000, 1_000_000, 200_000, 400_000, 8000 gwei, 20_000);
 
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();

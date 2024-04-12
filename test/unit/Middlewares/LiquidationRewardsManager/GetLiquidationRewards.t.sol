@@ -12,7 +12,7 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
         mockChainlinkOnChain.setLastPublishTime(block.timestamp);
 
         // Change The rewards calculations parameters to not be dependent of the initial values
-        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 1000 gwei, 20_000);
+        liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 40_000, 1000 gwei, 20_000);
 
         // Puts the gas at 30 gwei
         mockChainlinkOnChain.setLatestRoundData(1, 30 gwei, block.timestamp, 1);

@@ -44,9 +44,10 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 35_706,
-            otherGasUsed: 388_988,
+            gasUsedPerTick: 37_144,
+            otherGasUsed: 388_732,
             rebaseGasUsed: 8897,
+            ordersGasUsed: 114_018,
             gasPriceLimit: 1000 gwei,
             multiplierBps: 20_000
         });
@@ -89,6 +90,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         uint32 gasUsedPerTick,
         uint32 otherGasUsed,
         uint32 rebaseGasUsed,
+        uint32 ordersGasUsed,
         uint64 gasPriceLimit,
         uint32 multiplierBps
     ) external onlyOwner {
@@ -98,6 +100,8 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             revert LiquidationRewardsManagerOtherGasUsedTooHigh(otherGasUsed);
         } else if (rebaseGasUsed > 200_000) {
             revert LiquidationRewardsManagerRebaseGasUsedTooHigh(rebaseGasUsed);
+        } else if (ordersGasUsed > 400_000) {
+            revert LiquidationRewardsManagerOrdersGasUsedTooHigh(ordersGasUsed);
         } else if (gasPriceLimit > 8000 gwei) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
         } else if (multiplierBps > 10 * REWARDS_MULTIPLIER_DENOMINATOR) {
@@ -108,6 +112,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             gasUsedPerTick: gasUsedPerTick,
             otherGasUsed: otherGasUsed,
             rebaseGasUsed: rebaseGasUsed,
+            ordersGasUsed: ordersGasUsed,
             gasPriceLimit: gasPriceLimit,
             multiplierBps: multiplierBps
         });

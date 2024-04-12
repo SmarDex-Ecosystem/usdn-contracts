@@ -34,6 +34,7 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
         uint32 gasUsedPerTick;
         uint32 otherGasUsed;
         uint32 rebaseGasUsed;
+        uint32 ordersGasUsed;
         uint64 gasPriceLimit;
         uint32 multiplierBps; // to be divided by REWARDS_MULTIPLIER_DENOMINATOR
     }
@@ -48,6 +49,8 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
     error LiquidationRewardsManagerOtherGasUsedTooHigh(uint256 value);
     /// @dev Indicates that the rebaseGasUsed parameter has been set to a value we consider too high.
     error LiquidationRewardsManagerRebaseGasUsedTooHigh(uint256 value);
+    /// @dev Indicates that the ordersGasUsed parameter has been set to a value we consider too high.
+    error LiquidationRewardsManagerOrdersGasUsedTooHigh(uint256 value);
     /// @dev Indicates that the gasPriceLimit parameter has been set to a value we consider too high.
     error LiquidationRewardsManagerGasPriceLimitTooHigh(uint256 value);
     /// @dev Indicates that the multiplierBps parameter has been set to a value we consider too high.
