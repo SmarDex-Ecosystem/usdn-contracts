@@ -29,8 +29,8 @@ contract TestHugeIntFuzzing is HugeIntFixture {
         bytes memory result = vmFFIRustCommand("huge-int-add", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
         HugeInt.Uint512 memory res = handler.add(HugeInt.Uint512(a0, a1), HugeInt.Uint512(b0, b1));
-        assertEq(res.lsb, res0, "lsb");
-        assertEq(res.msb, res1, "msb");
+        assertEq(res.lo, res0, "lo");
+        assertEq(res.hi, res1, "hi");
     }
 
     /**
@@ -49,8 +49,8 @@ contract TestHugeIntFuzzing is HugeIntFixture {
         bytes memory result = vmFFIRustCommand("huge-int-sub", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
         HugeInt.Uint512 memory res = handler.sub(HugeInt.Uint512(a0, a1), HugeInt.Uint512(b0, b1));
-        assertEq(res.lsb, res0, "lsb");
-        assertEq(res.msb, res1, "msb");
+        assertEq(res.lo, res0, "lo");
+        assertEq(res.hi, res1, "hi");
     }
 
     /**
@@ -65,8 +65,8 @@ contract TestHugeIntFuzzing is HugeIntFixture {
         bytes memory result = vmFFIRustCommand("huge-int-mul256", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
         HugeInt.Uint512 memory res = handler.mul256(a, b);
-        assertEq(res.lsb, res0, "lsb");
-        assertEq(res.msb, res1, "msb");
+        assertEq(res.lo, res0, "lo");
+        assertEq(res.hi, res1, "hi");
     }
 
     /**
@@ -85,8 +85,8 @@ contract TestHugeIntFuzzing is HugeIntFixture {
         bytes memory result = vmFFIRustCommand("huge-int-mul", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
         HugeInt.Uint512 memory res = handler.mul(HugeInt.Uint512(a0, a1), HugeInt.Uint512(b0, b1));
-        assertEq(res.lsb, res0, "lsb");
-        assertEq(res.msb, res1, "msb");
+        assertEq(res.lo, res0, "lo");
+        assertEq(res.hi, res1, "hi");
     }
 
     /**
