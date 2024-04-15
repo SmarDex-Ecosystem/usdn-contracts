@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { HugeIntFixture } from "test/unit/HugeInt/utils/Fixtures.sol";
+import { HugeUintFixture } from "test/unit/HugeUint/utils/Fixtures.sol";
 
-import { HugeInt } from "src/libraries/HugeInt.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
- * @custom:feature Unit tests for the `sub` function of the `HugeInt` uint512 library
+ * @custom:feature Unit tests for the `sub` function of the `HugeUint` uint512 library
  */
-contract TestHugeIntSub is HugeIntFixture {
+contract TestHugeUintSub is HugeUintFixture {
     function setUp() public override {
         super.setUp();
     }
@@ -26,27 +26,27 @@ contract TestHugeIntSub is HugeIntFixture {
      * @custom:then The result is equal to `uint512.max - 1`
      */
     function test_sub() public {
-        HugeInt.Uint512 memory a = HugeInt.Uint512(69, 0);
-        HugeInt.Uint512 memory b = HugeInt.Uint512(42, 0);
-        HugeInt.Uint512 memory res = HugeInt.sub(a, b);
+        HugeUint.Uint512 memory a = HugeUint.Uint512(69, 0);
+        HugeUint.Uint512 memory b = HugeUint.Uint512(42, 0);
+        HugeUint.Uint512 memory res = HugeUint.sub(a, b);
         assertEq(res.lo, 27, "69-42: lo");
         assertEq(res.hi, 0, "69-42: hi");
 
-        a = HugeInt.Uint512(1, 0);
-        b = HugeInt.Uint512(0, 0);
-        res = HugeInt.sub(a, b);
+        a = HugeUint.Uint512(1, 0);
+        b = HugeUint.Uint512(0, 0);
+        res = HugeUint.sub(a, b);
         assertEq(res.lo, 1, "1-0: lo");
         assertEq(res.hi, 0, "1-0: hi");
 
-        a = HugeInt.Uint512(type(uint256).max, type(uint256).max);
+        a = HugeUint.Uint512(type(uint256).max, type(uint256).max);
         b = a;
-        res = HugeInt.sub(a, b);
+        res = HugeUint.sub(a, b);
         assertEq(res.lo, 0, "max-max: lo");
         assertEq(res.hi, 0, "max-max: hi");
 
-        a = HugeInt.Uint512(type(uint256).max, type(uint256).max);
-        b = HugeInt.Uint512(1, 0);
-        res = HugeInt.sub(a, b);
+        a = HugeUint.Uint512(type(uint256).max, type(uint256).max);
+        b = HugeUint.Uint512(1, 0);
+        res = HugeUint.sub(a, b);
         assertEq(res.lo, type(uint256).max - 1, "max-1: lo");
         assertEq(res.hi, type(uint256).max, "max-1: hi");
     }
@@ -59,14 +59,14 @@ contract TestHugeIntSub is HugeIntFixture {
      * @custom:then The transaction reverts
      */
     function test_RevertWhen_subUnderflow() public {
-        HugeInt.Uint512 memory a = HugeInt.Uint512(0, 0);
-        HugeInt.Uint512 memory b = HugeInt.Uint512(1, 0);
-        vm.expectRevert(HugeInt.HugeIntSubUnderflow.selector);
+        HugeUint.Uint512 memory a = HugeUint.Uint512(0, 0);
+        HugeUint.Uint512 memory b = HugeUint.Uint512(1, 0);
+        vm.expectRevert(HugeUint.HugeUintSubUnderflow.selector);
         handler.sub(a, b);
 
-        a = HugeInt.Uint512(type(uint256).max - 1, type(uint256).max);
-        b = HugeInt.Uint512(type(uint256).max, type(uint256).max);
-        vm.expectRevert(HugeInt.HugeIntSubUnderflow.selector);
+        a = HugeUint.Uint512(type(uint256).max - 1, type(uint256).max);
+        b = HugeUint.Uint512(type(uint256).max, type(uint256).max);
+        vm.expectRevert(HugeUint.HugeUintSubUnderflow.selector);
         handler.sub(a, b);
     }
 }

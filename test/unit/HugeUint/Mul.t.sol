@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { HugeIntFixture } from "test/unit/HugeInt/utils/Fixtures.sol";
+import { HugeUintFixture } from "test/unit/HugeUint/utils/Fixtures.sol";
 
-import { HugeInt } from "src/libraries/HugeInt.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
- * @custom:feature Unit tests for the `mul(uint256,uint256)` function of the `HugeInt` uint512 library
+ * @custom:feature Unit tests for the `mul(uint256,uint256)` function of the `HugeUint` uint512 library
  */
-contract TestHugeIntMul is HugeIntFixture {
+contract TestHugeUintMul is HugeUintFixture {
     function setUp() public override {
         super.setUp();
     }
@@ -26,7 +26,7 @@ contract TestHugeIntMul is HugeIntFixture {
     function test_mul() public {
         uint256 a = 42;
         uint256 b = 420;
-        HugeInt.Uint512 memory res = handler.mul(a, b);
+        HugeUint.Uint512 memory res = handler.mul(a, b);
         assertEq(res.lo, 42 * 420, "42*420: lo");
         assertEq(res.hi, 0, "42*420: hi");
 

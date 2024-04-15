@@ -6,18 +6,18 @@ pragma solidity ^0.8.20;
  * The huge ints are represented as two uint256 "limbs", a `lo` limb for the least-significant bits, and a `hi` limb
  * for the most significant bits. The result uint512 value is calculated as `hi * 2^256 + lo`.
  */
-library HugeInt {
+library HugeUint {
     /// @notice Indicates that the division failed because the divisor is zero or the result overflows a uint256.
-    error HugeIntDivisionFailed();
+    error HugeUintDivisionFailed();
 
     /// @notice Indicates that the addition overflowed a uint512.
-    error HugeIntAddOverflow();
+    error HugeUintAddOverflow();
 
     /// @notice Indicates that the subtraction underflowed.
-    error HugeIntSubUnderflow();
+    error HugeUintSubUnderflow();
 
     /// @notice Indicates that the multiplication overflowed a uint512.
-    error HugeIntMulOverflow();
+    error HugeUintMulOverflow();
 
     /**
      * @notice A 512-bit integer represented as two 256-bit limbs
@@ -50,7 +50,7 @@ library HugeInt {
         (res_.lo, res_.hi) = _add(a.lo, a.hi, b.lo, b.hi);
         // check for overflow
         if (res_.hi < a.hi || res_.hi < b.hi) {
-            revert HugeIntAddOverflow();
+            revert HugeUintAddOverflow();
         }
     }
 
@@ -64,7 +64,7 @@ library HugeInt {
     function sub(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
         // check for underflow
         if (a.hi < b.hi || (a.hi == b.hi && a.lo < b.lo)) {
-            revert HugeIntSubUnderflow();
+            revert HugeUintSubUnderflow();
         }
         (res_.lo, res_.hi) = _sub(a.lo, a.hi, b.lo, b.hi);
     }
@@ -96,11 +96,11 @@ library HugeInt {
             res_.hi += (a.lo * b.hi) + (a.hi * b.lo);
             // check that res_ is greater than or equal to a, otherwise revert
             if (res_.hi < a.hi || (res_.hi == a.hi && res_.lo < a.lo)) {
-                revert HugeIntMulOverflow();
+                revert HugeUintMulOverflow();
             }
             // check that res_ is greater than or equal to b, otherwise revert
             if (res_.hi < b.hi || (res_.hi == b.hi && res_.lo < b.lo)) {
-                revert HugeIntMulOverflow();
+                revert HugeUintMulOverflow();
             }
         }
     }
@@ -115,7 +115,7 @@ library HugeInt {
     function div(Uint512 memory a, uint256 b) external pure returns (uint256 res_) {
         // make sure the output fits inside a uint256, also prevents b == 0
         if (b <= a.hi) {
-            revert HugeIntDivisionFailed();
+            revert HugeUintDivisionFailed();
         }
         // if the numerator is smaller than the denominator, the result is zero
         if (a.hi == 0 && a.lo < b) {
@@ -140,7 +140,7 @@ library HugeInt {
     function div(Uint512 memory a, Uint512 memory b) external pure returns (uint256 res_) {
         // prevents b == 0
         if (b.hi == 0 && b.lo == 0) {
-            revert HugeIntDivisionFailed();
+            revert HugeUintDivisionFailed();
         }
         // if both operands fit inside a uint256, we can use the Solidity division operator
         if (a.hi == 0 && b.hi == 0) {
@@ -340,7 +340,7 @@ library HugeInt {
      */
     function _reciprocal(uint256 d) internal pure returns (uint256 v_) {
         if (d & 0x8000000000000000000000000000000000000000000000000000000000000000 == 0) {
-            revert HugeIntDivisionFailed();
+            revert HugeUintDivisionFailed();
         }
         v_ = _div256(type(uint256).max, type(uint256).max - d, d);
     }

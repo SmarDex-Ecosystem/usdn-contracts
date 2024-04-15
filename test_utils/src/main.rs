@@ -80,59 +80,59 @@ enum Commands {
         b: String,
     },
     /// Uint512 addition
-    HugeIntAdd {
+    HugeUintAdd {
         /// First operand bytes
         a: String,
         /// Second operand bytes
         b: String,
     },
     /// Uint512 subtraction
-    HugeIntSub {
+    HugeUintSub {
         /// First operand bytes
         a: String,
         /// Second operand bytes
         b: String,
     },
     /// Full multiplication of two uint256
-    HugeIntMul256 {
+    HugeUintMul256 {
         /// First operand as a uint256
         a: U512,
         /// Second operand as a uint256
         b: U512,
     },
     /// Full multiplication of two uint512
-    HugeIntMul {
+    HugeUintMul {
         /// First operand as a uint512
         a: String,
         /// Second operand as a uint512
         b: String,
     },
     /// Division of a uint512 by a uint256
-    HugeIntDiv256 {
+    HugeUintDiv256 {
         /// First operand as a uint512
         a: String,
         /// Second operand as a uint256
         b: U512,
     },
     /// Division of a uint512 by a uint512
-    HugeIntDiv {
+    HugeUintDiv {
         /// First operand as a uint512
         a: String,
         /// Second operand as a uint512
         b: String,
     },
     /// Count-left-zeroes of a uint256
-    HugeIntClz {
+    HugeUintClz {
         /// An unsigned 256-bit integer
         x: U256,
     },
     /// Reciprocal `floor((2^512-1) / d) - 2^256`
-    HugeIntReciprocal {
+    HugeUintReciprocal {
         /// A 256-bit unsigned integer at least equal to 2^255
         d: U256,
     },
     /// Reciprocal `floor((2^768-1) / d) - 2^256`
-    HugeIntReciprocal2 {
+    HugeUintReciprocal2 {
         /// A 512-bit unsigned integer with its high limb at least equal to 2^255
         d: U512,
     },
@@ -211,7 +211,7 @@ fn main() -> Result<()> {
             let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
             print_u512_hex(lsb, msb);
         }
-        Commands::HugeIntAdd { a, b } => {
+        Commands::HugeUintAdd { a, b } => {
             let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
             let b = U512::from_be_bytes::<64>(const_hex::decode_to_array(b)?);
             let res = a + b;
@@ -219,7 +219,7 @@ fn main() -> Result<()> {
             let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
             print_u512_hex(lsb, msb);
         }
-        Commands::HugeIntSub { a, b } => {
+        Commands::HugeUintSub { a, b } => {
             let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
             let b = U512::from_be_bytes::<64>(const_hex::decode_to_array(b)?);
             let res = a - b;
@@ -227,13 +227,13 @@ fn main() -> Result<()> {
             let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
             print_u512_hex(lsb, msb);
         }
-        Commands::HugeIntMul256 { a, b } => {
+        Commands::HugeUintMul256 { a, b } => {
             let res = a * b;
             let lsb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[32..].try_into()?);
             let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
             print_u512_hex(lsb, msb);
         }
-        Commands::HugeIntMul { a, b } => {
+        Commands::HugeUintMul { a, b } => {
             let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
             let b = U512::from_be_bytes::<64>(const_hex::decode_to_array(b)?);
             let res = a * b;
@@ -241,7 +241,7 @@ fn main() -> Result<()> {
             let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
             print_u512_hex(lsb, msb);
         }
-        Commands::HugeIntDiv256 { a, b } => {
+        Commands::HugeUintDiv256 { a, b } => {
             let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
             let res = a / b;
             assert!(res <= U512::from(U256::MAX));
@@ -249,7 +249,7 @@ fn main() -> Result<()> {
             let x_bytes: FixedBytes<32> = bytes.into();
             print!("{x_bytes}");
         }
-        Commands::HugeIntDiv { a, b } => {
+        Commands::HugeUintDiv { a, b } => {
             let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
             let b = U512::from_be_bytes::<64>(const_hex::decode_to_array(b)?);
             let res = a / b;
@@ -258,7 +258,7 @@ fn main() -> Result<()> {
             let x_bytes: FixedBytes<32> = bytes.into();
             print!("{x_bytes}");
         }
-        Commands::HugeIntClz { x } => {
+        Commands::HugeUintClz { x } => {
             let bytes: [u8; 32] = x.to_be_bytes();
             let clz = bytes.iter().position(|&b| b != 0).map_or(256, |n| {
                 let skipped = n * 8;
@@ -267,14 +267,14 @@ fn main() -> Result<()> {
             });
             print_u256_hex(U256::from(clz));
         }
-        Commands::HugeIntReciprocal { d } => {
+        Commands::HugeUintReciprocal { d } => {
             let res = U512::MAX / U512::from(d) - (U512::from(U256::MAX) + U512::from(1));
             assert!(res <= U512::from(U256::MAX));
             let bytes: [u8; 32] = res.to_be_bytes::<64>()[32..].try_into()?;
             let x_bytes: FixedBytes<32> = bytes.into();
             print!("{x_bytes}");
         }
-        Commands::HugeIntReciprocal2 { d } => {
+        Commands::HugeUintReciprocal2 { d } => {
             let res = U768::MAX / U768::from(d) - (U768::from(U256::MAX) + U768::from(1));
             assert!(res <= U768::from(U256::MAX));
             let bytes: [u8; 32] = res.to_be_bytes::<96>()[64..].try_into()?;

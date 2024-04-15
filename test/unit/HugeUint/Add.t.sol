@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { HugeIntFixture } from "test/unit/HugeInt/utils/Fixtures.sol";
+import { HugeUintFixture } from "test/unit/HugeUint/utils/Fixtures.sol";
 
-import { HugeInt } from "src/libraries/HugeInt.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
- * @custom:feature Unit tests for the `add` function of the `HugeInt` uint512 library
+ * @custom:feature Unit tests for the `add` function of the `HugeUint` uint512 library
  */
-contract TestHugeIntAdd is HugeIntFixture {
+contract TestHugeUintAdd is HugeUintFixture {
     function setUp() public override {
         super.setUp();
     }
@@ -22,14 +22,14 @@ contract TestHugeIntAdd is HugeIntFixture {
      * @custom:then The result is equal to `uint512.max - 1`
      */
     function test_add() public {
-        HugeInt.Uint512 memory a = HugeInt.wrap(42);
-        HugeInt.Uint512 memory b = HugeInt.wrap(420);
-        HugeInt.Uint512 memory res = handler.add(a, b);
+        HugeUint.Uint512 memory a = HugeUint.wrap(42);
+        HugeUint.Uint512 memory b = HugeUint.wrap(420);
+        HugeUint.Uint512 memory res = handler.add(a, b);
         assertEq(res.lo, 462, "42+420: lo");
         assertEq(res.hi, 0, "42+420: hi");
 
-        a = HugeInt.Uint512(type(uint256).max, type(uint256).max / 2);
-        b = HugeInt.Uint512(type(uint256).max, type(uint256).max / 2);
+        a = HugeUint.Uint512(type(uint256).max, type(uint256).max / 2);
+        b = HugeUint.Uint512(type(uint256).max, type(uint256).max / 2);
         res = handler.add(a, b);
         assertEq(res.lo, type(uint256).max - 1, "uint256.max/2: lo");
         assertEq(res.hi, type(uint256).max, "uint256.max/2: hi");
@@ -43,14 +43,14 @@ contract TestHugeIntAdd is HugeIntFixture {
      * @custom:then The transaction reverts
      */
     function test_RevertWhen_addOverflow() public {
-        HugeInt.Uint512 memory a = HugeInt.Uint512(type(uint256).max, type(uint256).max);
-        HugeInt.Uint512 memory b = HugeInt.Uint512(0, 1);
-        vm.expectRevert(HugeInt.HugeIntAddOverflow.selector);
+        HugeUint.Uint512 memory a = HugeUint.Uint512(type(uint256).max, type(uint256).max);
+        HugeUint.Uint512 memory b = HugeUint.Uint512(0, 1);
+        vm.expectRevert(HugeUint.HugeUintAddOverflow.selector);
         handler.add(a, b);
 
-        a = HugeInt.Uint512(type(uint256).max, type(uint256).max / 2);
-        b = HugeInt.Uint512(type(uint256).max, type(uint256).max / 2 + 1);
-        vm.expectRevert(HugeInt.HugeIntAddOverflow.selector);
+        a = HugeUint.Uint512(type(uint256).max, type(uint256).max / 2);
+        b = HugeUint.Uint512(type(uint256).max, type(uint256).max / 2 + 1);
+        vm.expectRevert(HugeUint.HugeUintAddOverflow.selector);
         handler.add(a, b);
     }
 }
