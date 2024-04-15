@@ -7,7 +7,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  * @custom:feature The _calcRebaseTotalSupply internal function of the UsdnProtocolVault contract.
  * @custom:background Given a protocol instance that was initialized with default params
  */
-contract TestUsdnProtocolCalcRebaseTotalSupply is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolVaultCalcRebaseTotalSupply is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
     }
