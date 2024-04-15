@@ -4,9 +4,6 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1 } from "test/utils/Constants.sol";
-
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The _checkSafetyMargin internal function of the UsdnProtocolLong contract.
@@ -22,9 +19,9 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `_checkSafetyMargin` reverts when the liquidationPriceLimit is
-     * too high compare to currentPrice
-     * @custom:when The value of liquidationPriceLimit is bigger than the maxLiquidationPrice calculated
+     * @custom:scenario Call `_checkSafetyMargin` reverts when the liquidationPriceLimit is lower than the
+     * maxLiquidationPrice
+     * @custom:when The value of liquidationPriceLimit is lower than the maxLiquidationPrice calculated
      * @custom:then It reverts with a UsdnProtocolLiquidationPriceSafetyMargin error
      */
     function test_RevertWhen_setLiquidationPriceWithoutSafetyMarginBps() public {
@@ -41,25 +38,17 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
         );
         protocol.i_checkSafetyMargin(currentPrice, liquidationPriceLimit);
     }
+
     /**
-     * @custom:scenario Call `_checkSafetyMargin` reverts when the liquidationPriceLimit is
-     * too high compare to currentPrice
-     * @custom:when The value of liquidationPriceLimit is bigger than the maxLiquidationPrice calculated
-     * @custom:then It reverts with a UsdnProtocolLiquidationPriceSafetyMargin error
+     * @custom:scenario Call `_checkSafetyMargin` with a liquidationPriceLimit that is greater than the
+     * maxLiquidationPrice
+     * @custom:when The value of liquidationPriceLimit is greater than the maxLiquidationPrice calculated
+     * @custom:then It does not revert
      */
-
-    function test_setLiquidationPriceWithoutSafetyMarginBps() public {
+    function test_setLiquidationPriceOverTheLimit() public view {
         uint128 currentPrice = 100 ether;
-        uint128 liquidationPriceLimit = 98 ether;
-        uint128 bps_divisor = (protocol.BPS_DIVISOR()).toUint128();
-        uint128 maxLiquidationPrice =
-            (currentPrice * (bps_divisor - protocol.getSafetyMarginBps()) / bps_divisor).toUint128();
+        uint128 liquidationPriceLimit = 98 ether - 1;
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                UsdnProtocolLiquidationPriceSafetyMargin.selector, liquidationPriceLimit, maxLiquidationPrice
-            )
-        );
         protocol.i_checkSafetyMargin(currentPrice, liquidationPriceLimit);
     }
 }
