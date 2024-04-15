@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand};
 use rug::{
     float::Round,
     ops::{DivRounding, MulAssignRound, Pow},
-    Complete as _, Float, Integer,
+    Float, Integer,
 };
 use serde::Deserialize;
 use std::ops::DivAssign;
@@ -35,20 +35,22 @@ enum Commands {
     /// e^x in WAD denomination
     ExpWad {
         /// exponent
-        #[arg(allow_hyphen_values = true)]
-        value: String,
+        #[arg(allow_hyphen_values = true, value_parser = parse_float)]
+        value: Float,
     },
     /// ln(x) in WAD denomination
     LnWad {
         /// operand
-        #[arg(allow_hyphen_values = true)]
-        value: String,
+        #[arg(allow_hyphen_values = true, value_parser = parse_float)]
+        value: Float,
     },
     PowWad {
         /// Base
-        base: String,
+        #[arg(value_parser = parse_float)]
+        base: Float,
         /// Exponent
-        exp: String,
+        #[arg(value_parser = parse_float)]
+        exp: Float,
     },
     /// ceil(lhs / rhs)
     DivUp {
@@ -66,9 +68,9 @@ enum Commands {
     },
     /// Compare different total expo calculation implementations
     CalcExpo {
-        start_price: String,
-        liq_price: String,
-        amount: String,
+        start_price: Integer,
+        liq_price: Integer,
+        amount: Integer,
     },
     /// Perform a uint512 full division, yielding a uint512 output
     Div512 {
@@ -94,9 +96,9 @@ enum Commands {
     /// Full multiplication of two uint256
     HugeIntMul256 {
         /// First operand as a uint256
-        a: String,
+        a: U512,
         /// Second operand as a uint256
-        b: String,
+        b: U512,
     },
     /// Full multiplication of two uint512
     HugeIntMul {
@@ -110,7 +112,7 @@ enum Commands {
         /// First operand as a uint512
         a: String,
         /// Second operand as a uint256
-        b: String,
+        b: U512,
     },
     /// Division of a uint512 by a uint512
     HugeIntDiv {
@@ -122,17 +124,17 @@ enum Commands {
     /// Count-left-zeroes of a uint256
     HugeIntClz {
         /// An unsigned 256-bit integer
-        x: String,
+        x: U256,
     },
     /// Reciprocal `floor((2^512-1) / d) - 2^256`
     HugeIntReciprocal {
         /// A 256-bit unsigned integer at least equal to 2^255
-        d: String,
+        d: U256,
     },
     /// Reciprocal `floor((2^768-1) / d) - 2^256`
     HugeIntReciprocal2 {
         /// A 512-bit unsigned integer with its high limb at least equal to 2^255
-        d: String,
+        d: U512,
     },
 }
 
@@ -141,9 +143,9 @@ fn main() -> Result<()> {
 
     let wad: Integer = "1000000000000000000".parse().unwrap();
 
-    match &cli.command {
+    match cli.command {
         Commands::ExpWad { value } => {
-            let mut value = Float::with_val(512, Float::parse(value)?);
+            let mut value = value;
             value.div_assign(&wad);
             let mut res = value.exp();
             res.mul_assign_round(&wad, Round::Nearest);
@@ -151,7 +153,7 @@ fn main() -> Result<()> {
             print_float_i256_hex(res)?;
         }
         Commands::LnWad { value } => {
-            let mut value = Float::with_val(512, Float::parse(value)?);
+            let mut value = value;
             value.div_assign(&wad);
             let mut res = value.ln();
             res.mul_assign_round(&wad, Round::Nearest);
@@ -159,9 +161,9 @@ fn main() -> Result<()> {
             print_float_i256_hex(res)?;
         }
         Commands::PowWad { base, exp } => {
-            let mut base = Float::with_val(512, Float::parse(base)?);
+            let mut base = base;
             base.div_assign(&wad);
-            let mut exp = Float::with_val(512, Float::parse(exp)?);
+            let mut exp = exp;
             exp.div_assign(&wad);
             let mut res = base.pow(exp);
             res.mul_assign_round(&wad, Round::Nearest);
@@ -170,7 +172,7 @@ fn main() -> Result<()> {
         }
         Commands::DivUp { lhs, rhs } => {
             let res = lhs.div_ceil(rhs);
-            print_int_u256_hex(res.complete())?;
+            print_int_u256_hex(res)?;
         }
         Commands::PythPrice { feed, publish_time } => {
             let mut hermes_api_url = std::env::var("HERMES_RA2_NODE_URL")?;
@@ -191,10 +193,6 @@ fn main() -> Result<()> {
             liq_price,
             amount,
         } => {
-            let start_price: Integer = start_price.parse()?;
-            let liq_price: Integer = liq_price.parse()?;
-            let amount: Integer = amount.parse()?;
-
             let price_diff = Integer::from(&start_price - &liq_price);
             let mut total_expo = Float::with_val(512, amount) * start_price / price_diff;
             total_expo.floor_mut();
@@ -230,8 +228,6 @@ fn main() -> Result<()> {
             print_u512_hex(lsb, msb);
         }
         Commands::HugeIntMul256 { a, b } => {
-            let a: U512 = a.parse()?;
-            let b: U512 = b.parse()?;
             let res = a * b;
             let lsb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[32..].try_into()?);
             let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
@@ -247,7 +243,6 @@ fn main() -> Result<()> {
         }
         Commands::HugeIntDiv256 { a, b } => {
             let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
-            let b: U512 = b.parse()?;
             let res = a / b;
             assert!(res <= U512::from(U256::MAX));
             let bytes: [u8; 32] = res.to_be_bytes::<64>()[32..].try_into()?;
@@ -264,7 +259,6 @@ fn main() -> Result<()> {
             print!("{x_bytes}");
         }
         Commands::HugeIntClz { x } => {
-            let x: U256 = x.parse()?;
             let bytes: [u8; 32] = x.to_be_bytes();
             let clz = bytes.iter().position(|&b| b != 0).map_or(256, |n| {
                 let skipped = n * 8;
@@ -274,7 +268,6 @@ fn main() -> Result<()> {
             print_u256_hex(U256::from(clz));
         }
         Commands::HugeIntReciprocal { d } => {
-            let d: U256 = d.parse()?;
             let res = U512::MAX / U512::from(d) - (U512::from(U256::MAX) + U512::from(1));
             assert!(res <= U512::from(U256::MAX));
             let bytes: [u8; 32] = res.to_be_bytes::<64>()[32..].try_into()?;
@@ -282,7 +275,6 @@ fn main() -> Result<()> {
             print!("{x_bytes}");
         }
         Commands::HugeIntReciprocal2 { d } => {
-            let d: U512 = d.parse()?;
             let res = U768::MAX / U768::from(d) - (U768::from(U256::MAX) + U768::from(1));
             assert!(res <= U768::from(U256::MAX));
             let bytes: [u8; 32] = res.to_be_bytes::<96>()[64..].try_into()?;
@@ -343,4 +335,11 @@ fn print_pyth_response(response: HermesResponse) -> Result<()> {
     let bytes: Bytes = bytes.into();
     print!("{bytes}");
     Ok(())
+}
+
+fn parse_float(s: &str) -> Result<Float, String> {
+    Ok(Float::with_val(
+        512,
+        Float::parse(s).map_err(|e| e.to_string())?,
+    ))
 }
