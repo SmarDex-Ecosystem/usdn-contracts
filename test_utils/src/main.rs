@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand};
 use rug::{
     float::Round,
     ops::{DivRounding, MulAssignRound, Pow},
-    Complete, Float, Integer,
+    Float, Integer,
 };
 use serde::Deserialize;
 use std::ops::DivAssign;
