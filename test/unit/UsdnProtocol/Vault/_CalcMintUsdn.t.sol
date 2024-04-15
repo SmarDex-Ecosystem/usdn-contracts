@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 /**
@@ -24,8 +26,13 @@ contract TestUsdnProtocolCalcMintUsdn is UsdnProtocolBaseFixture {
      * @param price The price of the asset
      */
     function testFuzzFFI_calcMintUsdnVaultBalanceZero(uint256 amount, uint256 price) public {
-        amount = bound(amount, 1, type(uint128).max);
-        price = bound(price, 1, type(uint128).max);
+        amount = bound(amount, 0, type(uint256).max);
+        uint256 priceMax = type(uint256).max;
+        if (amount != 0) {
+            priceMax /= amount;
+        }
+        price = bound(price, 0, priceMax);
+
         uint8 assetDecimals = protocol.getAssetDecimals();
         uint8 priceFeedDecimals = protocol.getPriceFeedDecimals();
         uint8 tokensDecimals = protocol.TOKENS_DECIMALS();
@@ -59,9 +66,13 @@ contract TestUsdnProtocolCalcMintUsdn is UsdnProtocolBaseFixture {
      * @param usdnTotalSupply The total supply of USDN
      */
     function testFuzzFFI_calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply) public {
-        amount = bound(amount, 1, type(uint128).max);
-        vaultBalance = bound(vaultBalance, 1, type(uint128).max);
-        usdnTotalSupply = bound(usdnTotalSupply, 1, type(uint128).max);
+        amount = bound(amount, 0, type(uint256).max);
+        uint256 usdnTotalSupplyMax = type(uint256).max;
+        if (amount != 0) {
+            usdnTotalSupplyMax /= amount;
+        }
+        usdnTotalSupply = bound(usdnTotalSupply, 0, usdnTotalSupplyMax);
+        vaultBalance = bound(vaultBalance, 1, type(uint256).max);
 
         bytes memory result = vmFFIRustCommand(
             "calc-mint-usdn", vm.toString(amount), vm.toString(vaultBalance), vm.toString(usdnTotalSupply)
