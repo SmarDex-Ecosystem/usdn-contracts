@@ -210,7 +210,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         int256 remainingCollateral = tickValue - int256(uint256(ordersRewards));
 
         vm.expectEmit(true, false, false, false, address(protocol));
-        emit OrderManagerPositionOpened(address(orderManager), 0, 0, 0, 0, 0, 0, 0);
+        emit OrderManagerPositionOpened(address(orderManager), 0, 0, 0, 0, 0);
         vm.expectEmit();
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, remainingCollateral);
         (

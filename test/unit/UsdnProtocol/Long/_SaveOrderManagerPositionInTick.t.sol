@@ -64,12 +64,10 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
         vm.expectEmit();
         emit OrderManagerPositionOpened(
             address(orderManager),
-            uint40(block.timestamp),
-            ordersLeverage,
-            _orderAmount + ordersRewards,
-            _liqPrice,
             expectedLongTick,
             expectedLongTickVersion,
+            _orderAmount + ordersRewards,
+            _liqPrice,
             expectedLongIndex
         );
         uint128 positionSize =
@@ -142,14 +140,7 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
 
         vm.expectEmit();
         emit OrderManagerPositionOpened(
-            address(orderManager),
-            uint40(block.timestamp),
-            ordersLeverage,
-            maxAmount,
-            _liqPrice,
-            expectedLongTick,
-            expectedLongTickVersion,
-            expectedLongIndex
+            address(orderManager), expectedLongTick, expectedLongTickVersion, maxAmount, _liqPrice, expectedLongIndex
         );
         uint128 positionSize =
             protocol.i_saveOrderManagerPositionInTick(_liqPrice, _tickHash, _tickTotalExpo, ordersRewards);

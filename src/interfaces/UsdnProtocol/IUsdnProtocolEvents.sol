@@ -85,22 +85,18 @@ interface IUsdnProtocolEvents {
      * @dev The combination of the tick number, the tick version, and the index constitutes a unique identifier for the
      * position.
      * @param orderManager The address of the order manager.
-     * @param timestamp The timestamp of the action.
-     * @param leverage The initial leverage of the position (pending validation).
-     * @param amount The amount of asset that were deposited as collateral.
-     * @param startPrice The asset price at the moment of the position creation (pending validation).
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
+     * @param amount The amount of asset that were deposited as collateral.
+     * @param startPrice The asset price at the moment of the position creation (pending validation).
      * @param index The index of the position inside the tick array.
      */
     event OrderManagerPositionOpened(
         address indexed orderManager,
-        uint40 timestamp,
-        uint128 leverage,
+        int24 indexed tick,
+        uint256 indexed tickVersion,
         uint128 amount,
         uint128 startPrice,
-        int24 tick,
-        uint256 tickVersion,
         uint256 index
     );
 

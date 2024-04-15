@@ -442,14 +442,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
 
         emit OrderManagerPositionOpened(
-            orderManagerAddress,
-            uint40(block.timestamp),
-            _orderManager.getOrdersLeverage().toUint128(),
-            positionAmount_,
-            currentPrice,
-            liquidationTick,
-            tickVersion,
-            index
+            orderManagerAddress, liquidationTick, tickVersion, positionAmount_, currentPrice, index
         );
     }
 

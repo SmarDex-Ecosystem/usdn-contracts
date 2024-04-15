@@ -35,15 +35,71 @@ contract TestUsdnProtocolLongLiquidateTick is UsdnProtocolBaseFixture {
     }
 
     function test_liquidateTickWithOrderManagerNotSet() public {
+        // Unset the order manager
         vm.prank(ADMIN);
         protocol.setOrderManager(IOrderManager(address(0)));
 
         uint256 totalExpoInTick = protocol.getTotalExpoByTick(_tick);
         int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, totalExpoInTick);
-        LiquidationEffects memory effects = protocol.i_liquidateTick(_tick, _tickHash, _liqPrice);
+        uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(_tick);
+        uint256 bitmapLastSetBefore = protocol.findLastSetInTickBitmap(_tick);
 
+        vm.expectEmit();
+        emit LiquidatedTick(_tick, _tickVersion, _liqPrice, liqPriceAfterFundings, tickValue);
+        vm.recordLogs();
+        LiquidationEffects memory effects = protocol.i_liquidateTick(_tick, _tickHash, _liqPrice);
+        uint256 logsAmount = vm.getRecordedLogs().length;
+
+        assertEq(logsAmount, 1, "Only the LiquidatedTick event should have been emitted");
         assertEq(effects.liquidatedPositions, 1, "One position should have been liquidated");
         assertEq(effects.remainingCollateral, tickValue, "The collateral remaining should equal the tick value");
         assertEq(effects.amountAddedToLong, 0, "No amount should have been added to long as no orders was processed");
+        assertLt(
+            protocol.findLastSetInTickBitmap(_tick),
+            bitmapLastSetBefore,
+            "The last set should be lower than before the liquidation"
+        );
+    }
+
+    function test_liquidateTickWithNoOrders() public {
+        uint256 totalExpoInTick = protocol.getTotalExpoByTick(_tick);
+        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, totalExpoInTick);
+
+        vm.expectEmit(true, true, false, false);
+        emit LiquidatedTick(_tick, _tickVersion, 0, 0, 0);
+        vm.recordLogs();
+        LiquidationEffects memory effects = protocol.i_liquidateTick(_tick, _tickHash, _liqPrice);
+        uint256 logsAmount = vm.getRecordedLogs().length;
+
+        assertEq(logsAmount, 1, "Only the LiquidatedTick event should have been emitted");
+        assertEq(effects.remainingCollateral, tickValue, "The collateral remaining should equal the tick value");
+        assertEq(effects.amountAddedToLong, 0, "No amount should have been added to long as no orders was processed");
+    }
+
+    function test_liquidateTickWithOrders() public {
+        // Create an order in the tick to liquidate
+        uint128 orderAmount = 1 ether;
+        orderManager.depositAssetsInTick(_tick, orderAmount);
+
+        uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(_tick);
+
+        // Calculate the collateral this position gives on liquidation
+        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, protocol.getTotalExpoByTick(_tick));
+        uint128 ordersRewards = uint128(uint256(tickValue)) / 2;
+        int256 expectedRemainingCollateral = tickValue - int256(uint256(ordersRewards));
+
+        vm.expectEmit(true, false, false, false, address(protocol));
+        emit OrderManagerPositionOpened(address(orderManager), 0, 0, 0, 0, 0);
+        vm.expectEmit();
+        emit LiquidatedTick(_tick, _tickVersion, _liqPrice, liqPriceAfterFundings, expectedRemainingCollateral);
+        LiquidationEffects memory effects = protocol.i_liquidateTick(_tick, _tickHash, _liqPrice);
+
+        assertEq(effects.liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(
+            effects.remainingCollateral,
+            expectedRemainingCollateral,
+            "Collateral remaining should be equal to the expected value"
+        );
+        assertEq(effects.amountAddedToLong, orderAmount, "The amount in orders should have been added to the long side");
     }
 }
