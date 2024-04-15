@@ -89,7 +89,7 @@ fn main() -> Result<()> {
 
     let wad: Integer = "1000000000000000000".parse().unwrap();
 
-    match &cli.command {
+    match cli.command {
         Commands::ExpWad { value } => {
             let mut value = Float::with_val(512, Float::parse(value)?);
             value.div_assign(&wad);
@@ -118,7 +118,7 @@ fn main() -> Result<()> {
         }
         Commands::DivUp { lhs, rhs } => {
             let res = lhs.div_ceil(rhs);
-            print_u256_hex(res.complete())?;
+            print_u256_hex(res)?;
         }
         Commands::PythPrice { feed, publish_time } => {
             let mut hermes_api_url = std::env::var("HERMES_RA2_NODE_URL")?;
@@ -139,9 +139,9 @@ fn main() -> Result<()> {
             liq_price,
             amount,
         } => {
-            let price_diff = start_price - liq_price;
+            let price_diff = &start_price - liq_price;
             let numerator = amount * start_price;
-            let total_mint = numerator.complete() / price_diff.complete();
+            let total_mint = numerator / price_diff;
             print_u256_hex(total_mint)?;
         }
         Commands::CalcMintUsdn {
@@ -150,7 +150,7 @@ fn main() -> Result<()> {
             usdn_total_supply,
         } => {
             let numerator = amount * usdn_total_supply;
-            let total_mint = numerator.complete() / vault_balance;
+            let total_mint = numerator / vault_balance;
             print_u256_hex(total_mint)?;
         }
         Commands::CalcMintUsdnVaultBalanceZero {
@@ -159,7 +159,7 @@ fn main() -> Result<()> {
             decimals,
         } => {
             let numerator = amount * price;
-            let total_mint = numerator.complete() / 10u128.pow(*decimals);
+            let total_mint = numerator / 10u128.pow(decimals);
             print_u256_hex(total_mint)?;
         }
     }
