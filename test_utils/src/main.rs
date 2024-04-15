@@ -119,13 +119,6 @@ enum Commands {
         /// Second operand as a uint512
         b: String,
     },
-    /// Division of a uint512 by a uint512
-    HugeIntDiv2 {
-        /// First operand as a uint512
-        a: String,
-        /// Second operand as a uint512
-        b: String,
-    },
     /// Count-left-zeroes of a uint256
     HugeIntClz {
         /// An unsigned 256-bit integer
@@ -267,18 +260,6 @@ fn main() -> Result<()> {
             let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
             let b = U512::from_be_bytes::<64>(const_hex::decode_to_array(b)?);
             let res = a / b;
-            assert!(res <= U512::from(U256::MAX));
-            let bytes: [u8; 32] = res.to_be_bytes::<64>()[32..].try_into()?;
-            let x_bytes: FixedBytes<32> = bytes.into();
-            print!("{x_bytes}");
-        }
-        Commands::HugeIntDiv2 { a, b } => {
-            let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
-            let b = U512::from_be_bytes::<64>(const_hex::decode_to_array(b)?);
-            let a: Integer = a.to_string().parse()?;
-            let b: Integer = b.to_string().parse()?;
-            let res = a / b;
-            let res: U512 = res.to_string().parse()?;
             assert!(res <= U512::from(U256::MAX));
             let bytes: [u8; 32] = res.to_be_bytes::<64>()[32..].try_into()?;
             let x_bytes: FixedBytes<32> = bytes.into();
