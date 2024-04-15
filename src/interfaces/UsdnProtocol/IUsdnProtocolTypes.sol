@@ -172,8 +172,8 @@ struct PreviousActionsData {
 
 /**
  * @notice The effects of executed liquidations on the protocol
- * @param liquidatedPositions The amount of liquidated positions
- * @param liquidatedTicks The amount of liquidated ticks
+ * @param liquidatedPositions The number of liquidated positions
+ * @param liquidatedTicks The number of liquidated ticks
  * @param remainingCollateral The collateral remaining after the liquidations
  * @param newLongBalance The new balance of the long side
  * @param newVaultBalance The new balance of the vault side

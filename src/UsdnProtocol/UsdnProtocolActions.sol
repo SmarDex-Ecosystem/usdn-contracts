@@ -370,13 +370,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @dev Should still emit an event if liquidationRewards = 0 to better keep track of those anomalies as rewards for
      * those will be managed off-chain.
      * @param liquidatedTicks The number of ticks that were liquidated.
-     * @param liquidatedCollateral The amount of collateral lost due to the liquidations.
+     * @param remainingCollateral The amount of collateral remaining after liquidations.
      * @param rebased Whether a USDN rebase was performed.
      */
-    function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 liquidatedCollateral, bool rebased) internal {
+    function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 remainingCollateral, bool rebased) internal {
         // Get how much we should give to the liquidator as rewards
         uint256 liquidationRewards =
-            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, liquidatedCollateral, rebased);
+            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, remainingCollateral, rebased);
 
         // Avoid underflows in situation of extreme bad debt
         if (_balanceVault < liquidationRewards) {
