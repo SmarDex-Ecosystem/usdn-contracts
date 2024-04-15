@@ -64,7 +64,7 @@ contract TestHugeIntFuzzing is HugeIntFixture {
     function testFuzz_FFIMul256(uint256 a, uint256 b) public {
         bytes memory result = vmFFIRustCommand("huge-int-mul256", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
-        HugeInt.Uint512 memory res = handler.mul256(a, b);
+        HugeInt.Uint512 memory res = handler.mul(a, b);
         assertEq(res.lo, res0, "lo");
         assertEq(res.hi, res1, "hi");
     }
