@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand};
 use rug::{
     float::Round,
     ops::{DivRounding, MulAssignRound, Pow},
-    Float, Integer,
+    Complete as _, Float, Integer,
 };
 use serde::Deserialize;
 use std::ops::DivAssign;
@@ -53,9 +53,9 @@ enum Commands {
     /// ceil(lhs / rhs)
     DivUp {
         /// LHS
-        lhs: String,
+        lhs: Integer,
         /// RHS
-        rhs: String,
+        rhs: Integer,
     },
     /// Get price feed from Pyth hermes API
     PythPrice {
@@ -169,10 +169,8 @@ fn main() -> Result<()> {
             print_float_i256_hex(res)?;
         }
         Commands::DivUp { lhs, rhs } => {
-            let lhs: Integer = lhs.parse()?;
-            let rhs: Integer = rhs.parse()?;
             let res = lhs.div_ceil(rhs);
-            print_int_u256_hex(res)?;
+            print_int_u256_hex(res.complete())?;
         }
         Commands::PythPrice { feed, publish_time } => {
             let mut hermes_api_url = std::env::var("HERMES_RA2_NODE_URL")?;
