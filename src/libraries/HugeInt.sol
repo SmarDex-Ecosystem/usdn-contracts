@@ -50,15 +50,7 @@ library HugeInt {
      * @return res_ The difference `a - b`
      */
     function sub(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
-        (uint256 a0, uint256 a1) = (a.lo, a.hi);
-        (uint256 b0, uint256 b1) = (b.lo, b.hi);
-        uint256 lo;
-        uint256 hi;
-        assembly {
-            lo := sub(a0, b0)
-            hi := sub(sub(a1, b1), lt(a0, b0))
-        }
-        return Uint512(lo, hi);
+        (res_.lo, res_.hi) = _sub(a.lo, a.hi, b.lo, b.hi);
     }
 
     /**
