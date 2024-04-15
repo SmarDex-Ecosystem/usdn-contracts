@@ -155,7 +155,7 @@ contract TestHugeIntFuzzing is HugeIntFixture {
     function testFuzz_FFIClz(uint256 x) public {
         bytes memory result = vmFFIRustCommand("huge-int-clz", vm.toString(x));
         (uint256 ref) = abi.decode(result, (uint256));
-        uint256 res = handler.clz(x);
+        uint256 res = HugeInt._clz(x);
         assertEq(res, ref);
     }
 

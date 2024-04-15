@@ -35,8 +35,4 @@ contract HugeIntHandler {
     function div(HugeInt.Uint512 memory a, HugeInt.Uint512 memory b) external pure returns (uint256) {
         return HugeInt.div(a, b);
     }
-
-    function clz(uint256 x) external pure returns (uint256 n_) {
-        n_ = HugeInt._clz(x);
-    }
 }
