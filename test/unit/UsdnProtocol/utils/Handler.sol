@@ -344,4 +344,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_saveNewPosition(int24 tick, Position memory long) external {
         _saveNewPosition(tick, long);
     }
+
+    function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {
+        _checkSafetyMargin(currentPrice, liquidationPrice);
+    }
 }

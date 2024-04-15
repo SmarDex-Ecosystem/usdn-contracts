@@ -216,12 +216,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
     }
 
-    function _maxLiquidationPriceWithSafetyMargin(uint128 price) internal view returns (uint128 maxLiquidationPrice_) {
-        maxLiquidationPrice_ = (price * (BPS_DIVISOR - _safetyMarginBps) / BPS_DIVISOR).toUint128();
-    }
-
     function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {
-        uint128 maxLiquidationPrice = _maxLiquidationPriceWithSafetyMargin(currentPrice);
+        uint128 maxLiquidationPrice = (currentPrice * (BPS_DIVISOR - _safetyMarginBps) / BPS_DIVISOR).toUint128();
         if (liquidationPrice >= maxLiquidationPrice) {
             revert UsdnProtocolLiquidationPriceSafetyMargin(liquidationPrice, maxLiquidationPrice);
         }
