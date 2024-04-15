@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand};
 use rug::{
     float::Round,
     ops::{DivRounding, MulAssignRound, Pow},
-    Float, Integer,
+    Complete, Float, Integer,
 };
 use serde::Deserialize;
 use std::ops::DivAssign;
@@ -72,14 +72,14 @@ enum Commands {
     },
     /// Compare different mint usdn calculation implementations
     CalcMintUsdn {
-        amount: String,
-        vault_balance: String,
-        usdn_total_supply: String,
+        amount: Integer,
+        vault_balance: Integer,
+        usdn_total_supply: Integer,
     },
     /// Compare different mint usdn calculation implementations (with vaultBalance equal to zero)
     CalcMintUsdnVaultBalanceZero {
-        amount: String,
-        price: String,
+        amount: Integer,
+        price: Integer,
         decimals: u32,
     },
 }
@@ -160,36 +160,18 @@ fn main() -> Result<()> {
             vault_balance,
             usdn_total_supply,
         } => {
-            let amount: Integer = amount.parse()?;
-            let vault_balance: Integer = vault_balance.parse()?;
-            let usdn_total_supply: Integer = usdn_total_supply.parse()?;
-
-            let mut total_mint = Float::with_val(512, amount) * usdn_total_supply / vault_balance;
-            total_mint.floor_mut();
-
-            print_u256_hex(
-                total_mint
-                    .to_integer()
-                    .ok_or_else(|| anyhow!("can't convert to integer"))?,
-            )?;
+            let numerator = amount * usdn_total_supply;
+            let total_mint = numerator.complete() / vault_balance;
+            print_u256_hex(total_mint)?;
         }
         Commands::CalcMintUsdnVaultBalanceZero {
             amount,
             price,
             decimals,
         } => {
-            let amount: Integer = amount.parse()?;
-            let price: Integer = price.parse()?;
-            let decimals: u32 = *decimals;
-
-            let mut total_mint = Float::with_val(512, amount) * price / 10u128.pow(decimals);
-            total_mint.floor_mut();
-
-            print_u256_hex(
-                total_mint
-                    .to_integer()
-                    .ok_or_else(|| anyhow!("can't convert to integer"))?,
-            )?;
+            let numerator = amount * price;
+            let total_mint = numerator.complete() / 10u128.pow(*decimals);
+            print_u256_hex(total_mint)?;
         }
     }
     Ok(())
