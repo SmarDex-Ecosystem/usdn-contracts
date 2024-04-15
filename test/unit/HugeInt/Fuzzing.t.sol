@@ -51,6 +51,10 @@ contract TestHugeIntFuzzing is HugeIntFixture {
      */
     function testFuzz_FFISub(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
         bytes memory a = abi.encodePacked(a1, a0);
+        b1 = bound(b1, 0, a1);
+        if (b1 == a1) {
+            b0 = bound(b0, 0, a0);
+        }
         bytes memory b = abi.encodePacked(b1, b0);
         bytes memory result = vmFFIRustCommand("huge-int-sub", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));

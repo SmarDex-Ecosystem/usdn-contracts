@@ -13,6 +13,9 @@ library HugeInt {
     /// @notice Indicates that the addition overflowed a uint512.
     error HugeIntAddOverflow();
 
+    /// @notice Indicates that the subtraction underflowed.
+    error HugeIntSubUnderflow();
+
     /**
      * @notice A 512-bit integer represented as two 256-bit limbs
      * @dev The integer value can be reconstructed as `hi * 2^256 + lo`
@@ -50,13 +53,16 @@ library HugeInt {
 
     /**
      * @notice Calculate the difference `a - b` of two 512-bit unsigned integers.
-     * @dev The result is not checked for underflow, the caller must ensure that the second operand is less than or
-     * equal to the first operand.
+     * @dev This function will revert if `b > a`.
      * @param a The first operand
      * @param b The second operand
      * @return res_ The difference `a - b`
      */
     function sub(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
+        // check for underflow
+        if (a.hi < b.hi || (a.hi == b.hi && a.lo < b.lo)) {
+            revert HugeIntSubUnderflow();
+        }
         (res_.lo, res_.hi) = _sub(a.lo, a.hi, b.lo, b.hi);
     }
 
@@ -167,6 +173,7 @@ library HugeInt {
     /**
      * @notice Calculate the sum `a + b` of two 512-bit unsigned integers.
      * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/512-bit-division/
+     * The result is not checked for overflow, the caller must ensure that the result fits inside a uint512.
      * @param a0 The low limb of the first operand
      * @param a1 The high limb of the first operand
      * @param b0 The low limb of the second operand

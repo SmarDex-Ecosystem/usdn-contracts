@@ -13,6 +13,14 @@ contract TestHugeIntAdd is HugeIntFixture {
         super.setUp();
     }
 
+    /**
+     * @custom:scenario Testing the `add` function
+     * @custom:given Two 512-bit unsigned integers, the sum of which does not overflow 512 bits
+     * @custom:when The `add` function is called with the 42 and 420
+     * @custom:then The result is equal to 462
+     * @custom:when The `add` function is called with `uint512.max/2` and `uint512.max/2`
+     * @custom:then The result is equal to `uint512.max - 1`
+     */
     function test_add() public {
         HugeInt.Uint512 memory a = HugeInt.wrap(42);
         HugeInt.Uint512 memory b = HugeInt.wrap(420);
@@ -27,6 +35,14 @@ contract TestHugeIntAdd is HugeIntFixture {
         assertEq(res.hi, type(uint256).max, "uint256.max/2: hi");
     }
 
+    /**
+     * @custom:scenario Reverting when overflow occurs
+     * @custom:given Two 512-bit unsigned integers, the sum of which overflows 512 bits
+     * @custom:when The `add` function is called with `uint512.max` and 1
+     * @custom:then The transaction reverts
+     * @custom:when The `add` function is called with `uint512.max/2` and `uint512.max/2 + 1`
+     * @custom:then The transaction reverts
+     */
     function test_RevertWhen_addOverflow() public {
         HugeInt.Uint512 memory a = HugeInt.Uint512(type(uint256).max, type(uint256).max);
         HugeInt.Uint512 memory b = HugeInt.Uint512(0, 1);
