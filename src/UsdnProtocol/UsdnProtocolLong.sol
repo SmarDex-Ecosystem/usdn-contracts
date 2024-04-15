@@ -386,14 +386,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             {
                 (bytes32 tickHash,) = _tickHash(tick);
                 tickData = _tickData[tickHash];
-                unchecked {
-                    _totalExpo -= tickData.totalExpo;
-                    _totalLongPositions -= tickData.totalPos;
-                    effects_.liquidatedPositions += tickData.totalPos;
+                _totalExpo -= tickData.totalExpo;
+                _totalLongPositions -= tickData.totalPos;
+                effects_.liquidatedPositions += tickData.totalPos;
 
-                    ++_tickVersion[tick];
-                    ++effects_.liquidatedTicks;
-                }
+                ++_tickVersion[tick];
+                ++effects_.liquidatedTicks;
             }
 
             {
