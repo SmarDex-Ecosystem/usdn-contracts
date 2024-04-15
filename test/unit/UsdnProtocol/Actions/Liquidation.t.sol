@@ -5,7 +5,7 @@ import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
@@ -378,7 +378,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Get the proper liquidation price for the tick
         price = protocol.getEffectivePriceForTick(tick);
-        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTotalExpoByTick(tick));
+        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTickData(tick));
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
@@ -439,7 +439,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Get the proper liquidation price for the tick
         price = protocol.getEffectivePriceForTick(tick);
-        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTotalExpoByTick(tick));
+        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTickData(tick));
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(

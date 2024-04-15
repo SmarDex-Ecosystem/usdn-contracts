@@ -2,12 +2,11 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { USER_1 } from "test/utils/Constants.sol";
+import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The getter functions of the USDN Protocol
@@ -209,19 +208,21 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     function test_tickValue() public {
         int24 tick = protocol.getEffectiveTickForPrice(500 ether);
         uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            tick - int24(protocol.getLiquidationPenalty()) * protocol.getTickSpacing()
+            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
         );
+        TickData memory tickData =
+            TickData({ totalExpo: 10 ether, totalPos: 1, liquidationPenalty: protocol.getLiquidationPenalty() });
 
-        int256 value = protocol.i_tickValue(liqPriceWithoutPenalty, tick, 10 ether);
+        int256 value = protocol.i_tickValue(liqPriceWithoutPenalty, tick, tickData);
         assertEq(value, 0, "current price = liq price");
 
-        value = protocol.i_tickValue(liqPriceWithoutPenalty * 2, tick, 10 ether);
+        value = protocol.i_tickValue(liqPriceWithoutPenalty * 2, tick, tickData);
         assertEq(value, 5 ether, "current price = 2x liq price");
 
-        value = protocol.i_tickValue(liqPriceWithoutPenalty / 2, tick, 10 ether);
+        value = protocol.i_tickValue(liqPriceWithoutPenalty / 2, tick, tickData);
         assertEq(value, -10 ether, "current price = 0.5x liq price");
 
-        value = protocol.i_tickValue(protocol.getEffectivePriceForTick(tick), tick, 10 ether);
+        value = protocol.i_tickValue(protocol.getEffectivePriceForTick(tick), tick, tickData);
         assertEq(value, 0.198003465594229687 ether, "current price = liq price with penalty");
     }
 
@@ -239,18 +240,17 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 1700 ether;
 
         uint256 initialTotalExpo = protocol.getTotalExpo();
-        uint256 totalExpoForTick =
-            protocol.getCurrentTotalExpoByTick(protocol.getEffectiveTickForPrice(desiredLiqPrice));
+        TickData memory tickData = protocol.getTickData(protocol.getEffectiveTickForPrice(desiredLiqPrice));
 
-        assertEq(totalExpoForTick, 0, "Total expo for future tick of position should be empty");
+        assertEq(tickData.totalExpo, 0, "Total expo for future tick of position should be empty");
 
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
             OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
         );
 
-        totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
-        Position memory position = protocol.getLongPosition(tick, tickVersion, index);
+        tickData = protocol.getTickData(tick);
+        (Position memory position,) = protocol.getLongPosition(tick, tickVersion, index);
 
         // Calculate the total expo of the position after the initialization
         assertEq(
@@ -258,7 +258,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             protocol.getTotalExpo(),
             "Total expo should have increased by the total expo of position"
         );
-        assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
+        assertEq(tickData.totalExpo, position.totalExpo, "Total expo on tick is not the expected value");
 
         _waitDelay();
 
@@ -269,7 +269,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         uint256 previousExpo = position.totalExpo;
         // Get the updated position
-        position = protocol.getLongPosition(tick, tickVersion, index);
+        (position,) = protocol.getLongPosition(tick, tickVersion, index);
         uint256 newExpo = position.totalExpo;
 
         // Sanity check
@@ -282,8 +282,8 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             "Total expo should have increased by the position's new total expo"
         );
 
-        totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
-        assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
+        tickData = protocol.getTickData(tick);
+        assertEq(tickData.totalExpo, position.totalExpo, "Total expo on tick is not the expected value");
     }
 
     /**
@@ -320,18 +320,17 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 1000 ether;
 
         uint256 initialTotalExpo = protocol.getTotalExpo();
-        uint256 totalExpoForTick =
-            protocol.getCurrentTotalExpoByTick(protocol.getEffectiveTickForPrice(desiredLiqPrice));
+        TickData memory tickData = protocol.getTickData(protocol.getEffectiveTickForPrice(desiredLiqPrice));
 
-        assertEq(totalExpoForTick, 0, "Total expo for future tick of position should be empty");
+        assertEq(tickData.totalExpo, 0, "Total expo for future tick of position should be empty");
 
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
             OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
         );
 
-        totalExpoForTick = protocol.getCurrentTotalExpoByTick(tick);
-        Position memory position = protocol.getLongPosition(tick, tickVersion, index);
+        tickData = protocol.getTickData(tick);
+        (Position memory position,) = protocol.getLongPosition(tick, tickVersion, index);
 
         // Calculate the total expo of the position after the initialization
         assertEq(
@@ -339,6 +338,6 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             protocol.getTotalExpo(),
             "Total expo should have increased by the total expo of position"
         );
-        assertEq(totalExpoForTick, position.totalExpo, "Total expo on tick is not the expected value");
+        assertEq(tickData.totalExpo, position.totalExpo, "Total expo on tick is not the expected value");
     }
 }

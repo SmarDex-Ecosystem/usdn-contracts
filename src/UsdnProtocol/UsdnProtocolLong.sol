@@ -6,7 +6,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
@@ -31,19 +31,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     function getLongPosition(int24 tick, uint256 tickVersion, uint256 index)
         public
         view
-        returns (Position memory pos_)
+        returns (Position memory pos_, uint8 liquidationPenalty_)
     {
         (bytes32 tickHash, uint256 version) = _tickHash(tick);
         if (tickVersion != version) {
             revert UsdnProtocolOutdatedTick(version, tickVersion);
         }
         pos_ = _longPositions[tickHash][index];
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function getPositionsInTick(int24 tick) external view returns (uint256 len_) {
-        (bytes32 tickHash,) = _tickHash(tick);
-        len_ = _positionsInTick[tickHash];
+        liquidationPenalty_ = _tickData[tickHash].liquidationPenalty;
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -60,10 +55,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         view
         returns (int256 value_)
     {
-        Position memory pos = getLongPosition(tick, tickVersion, index);
+        (Position memory pos, uint8 liquidationPenalty) = getLongPosition(tick, tickVersion, index);
         uint256 liquidationMultiplier = getLiquidationMultiplier(timestamp);
         uint128 liqPrice =
-            getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing, liquidationMultiplier);
+            getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing, liquidationMultiplier);
         value_ = _positionValue(price, liqPrice, pos.totalExpo);
     }
 
@@ -165,23 +160,27 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @notice Calculate the value of a tick, knowing its contained total expo and the current asset price
      * @param currentPrice The current price of the asset
      * @param tick The tick number
-     * @param tickTotalExpo The total expo of the positions in the tick
+     * @param tickData The aggregate data for the tick
      */
-    function _tickValue(uint256 currentPrice, int24 tick, uint256 tickTotalExpo)
+    function _tickValue(uint256 currentPrice, int24 tick, TickData memory tickData)
         internal
         view
         returns (int256 value_)
     {
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(tick - int24(_liquidationPenalty) * _tickSpacing);
+        uint128 liqPriceWithoutPenalty =
+            getEffectivePriceForTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
 
         // if the current price is lower than the liquidation price, we have effectively a negative value
         if (currentPrice <= liqPriceWithoutPenalty) {
             // we calculate the inverse and then change the sign
-            value_ = -int256(FixedPointMathLib.fullMulDiv(tickTotalExpo, liqPriceWithoutPenalty - currentPrice, currentPrice));
+            value_ = -int256(
+                FixedPointMathLib.fullMulDiv(tickData.totalExpo, liqPriceWithoutPenalty - currentPrice, currentPrice)
+            );
         } else {
-            value_ =
-                int256(FixedPointMathLib.fullMulDiv(tickTotalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice));
+            value_ = int256(
+                FixedPointMathLib.fullMulDiv(tickData.totalExpo, currentPrice - liqPriceWithoutPenalty, currentPrice)
+            );
         }
     }
 
@@ -227,32 +226,39 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
     }
 
-    function _saveNewPosition(int24 tick, Position memory long)
+    function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
         internal
         returns (uint256 tickVersion_, uint256 index_)
     {
         bytes32 tickHash;
         (tickHash, tickVersion_) = _tickHash(tick);
 
-        // Adjust state
-        _balanceLong += long.amount;
-        _totalExpo += long.totalExpo;
-        _totalExpoByTick[tickHash] += long.totalExpo;
-        ++_positionsInTick[tickHash];
-        ++_totalLongPositions;
-
         // Add to tick array
         Position[] storage tickArray = _longPositions[tickHash];
         index_ = tickArray.length;
-        if (_positionsInTick[tickHash] == 1) {
-            // first position in this tick, we need to reflect that it is populated
-            _tickBitmap.set(_tickToBitmapIndex(tick));
-        }
         if (tick > _maxInitializedTick) {
             // keep track of max initialized tick
             _maxInitializedTick = tick;
         }
         tickArray.push(long);
+
+        // Adjust state
+        _balanceLong += long.amount;
+        _totalExpo += long.totalExpo;
+        ++_totalLongPositions;
+        TickData storage tickData = _tickData[tickHash];
+        if (tickData.totalPos == 0) {
+            // first position in this tick, we need to reflect that it is populated
+            _tickBitmap.set(_tickToBitmapIndex(tick));
+            // we store the data for this tick
+            tickData.totalExpo = long.totalExpo;
+            tickData.totalPos = 1;
+            tickData.liquidationPenalty = liquidationPenalty;
+        } else {
+            tickData.totalExpo += long.totalExpo;
+            tickData.totalPos += 1;
+            // we do not need to adjust the tick's liquidationPenalty since it remains constant
+        }
     }
 
     /**
@@ -272,6 +278,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint128 totalExpoToRemove
     ) internal {
         (bytes32 tickHash,) = _tickHash(tick);
+        TickData storage tickData = _tickData[tickHash];
         if (amountToRemove < pos.amount) {
             Position storage position = _longPositions[tickHash][index];
             position.totalExpo = pos.totalExpo - totalExpoToRemove;
@@ -281,21 +288,37 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             }
         } else {
             totalExpoToRemove = pos.totalExpo;
-            unchecked {
-                --_positionsInTick[tickHash];
-                --_totalLongPositions;
-            }
+            tickData.totalPos -= 1;
+            --_totalLongPositions;
 
             // Remove from tick array (set to zero to avoid shifting indices)
             delete _longPositions[tickHash][index];
-            if (_positionsInTick[tickHash] == 0) {
+            if (tickData.totalPos == 0) {
                 // we removed the last position in the tick
                 _tickBitmap.unset(_tickToBitmapIndex(tick));
             }
         }
 
         _totalExpo -= totalExpoToRemove;
-        _totalExpoByTick[tickHash] -= totalExpoToRemove;
+        tickData.totalExpo -= totalExpoToRemove;
+    }
+
+    /// @inheritdoc IUsdnProtocolLong
+    function getTickLiquidationPenalty(int24 tick) public view returns (uint8 liquidationPenalty_) {
+        (bytes32 tickHash,) = _tickHash(tick);
+        liquidationPenalty_ = _getTickLiquidationPenalty(tickHash);
+    }
+
+    /**
+     * @notice Retrieve the liquidation penalty assigned to the tick and version corresponding to `tickHash`, if there
+     * are positions in it, otherwise retrieve the current setting value from storage.
+     * @dev This method allows to re-use a pre-computed tickHash if available
+     * @param tickHash The tick hash
+     * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
+     */
+    function _getTickLiquidationPenalty(bytes32 tickHash) internal view returns (uint8 liquidationPenalty_) {
+        TickData storage tickData = _tickData[tickHash];
+        liquidationPenalty_ = tickData.totalPos != 0 ? tickData.liquidationPenalty : _liquidationPenalty;
     }
 
     /**
@@ -372,24 +395,21 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             }
 
             // we have found a non-empty tick that needs to be liquidated
-            uint256 tickTotalExpo;
+            TickData memory tickData;
             {
                 (bytes32 tickHash,) = _tickHash(tick);
-                tickTotalExpo = _totalExpoByTick[tickHash];
-                uint256 length = _positionsInTick[tickHash];
-                unchecked {
-                    _totalExpo -= tickTotalExpo;
-
-                    _totalLongPositions -= length;
-                    liquidatedPositions_ += length;
-
+                tickData = _tickData[tickHash];
+                _totalExpo -= tickData.totalExpo;
+                _totalLongPositions -= tickData.totalPos;
+                {
+                    liquidatedPositions_ += tickData.totalPos;
                     ++_tickVersion[tick];
                     ++liquidatedTicks_;
                 }
             }
 
             {
-                int256 tickValue = _tickValue(currentPrice, tick, tickTotalExpo);
+                int256 tickValue = _tickValue(currentPrice, tick, tickData);
                 remainingCollateral_ += tickValue;
 
                 _tickBitmap.unset(_tickToBitmapIndex(tick));

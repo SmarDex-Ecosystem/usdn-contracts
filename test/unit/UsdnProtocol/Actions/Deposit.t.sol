@@ -114,7 +114,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user initiates a deposit with parameter to defined at zero
      * @custom:then The protocol reverts with `UsdnProtocolZeroAddressTo`
      */
-    function test_RevertWhen_zeroAddressTo() public {
+    function test_RevertWhen_ZeroAddressTo() public {
         vm.expectRevert(UsdnProtocolZeroAddressTo.selector);
         protocol.initiateDeposit(1 ether, abi.encode(uint128(2000 ether)), EMPTY_PREVIOUS_DATA, address(0));
     }

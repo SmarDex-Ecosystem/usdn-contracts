@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The _saveNewPosition internal function of the UsdnProtocolLong contract.
@@ -37,23 +37,19 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         // state before opening the position
         uint256 balanceLongBefore = uint256(protocol.i_longAssetAvailable(CURRENT_PRICE));
         uint256 totalExpoBefore = protocol.getTotalExpo();
-        uint256 totalExpoInTickBefore = protocol.getCurrentTotalExpoByTick(expectedTick);
-        uint256 positionsInTickBefore = protocol.getCurrentPositionsInTick(expectedTick);
+        TickData memory tickDataBefore = protocol.getTickData(expectedTick);
         uint256 totalPositionsBefore = protocol.getTotalLongPositions();
 
-        protocol.i_saveNewPosition(expectedTick, long);
+        protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
 
-        Position memory positionInTick = protocol.getLongPosition(expectedTick, 0, positionsInTickBefore);
+        (Position memory positionInTick,) = protocol.getLongPosition(expectedTick, 0, tickDataBefore.totalPos);
 
         // state after opening the position
         assertEq(balanceLongBefore + LONG_AMOUNT, protocol.getBalanceLong(), "balance of long side");
         assertEq(totalExpoBefore + LONG_AMOUNT * 3, protocol.getTotalExpo(), "total expo");
-        assertEq(
-            totalExpoInTickBefore + LONG_AMOUNT * 3,
-            protocol.getCurrentTotalExpoByTick(expectedTick),
-            "total expo in tick"
-        );
-        assertEq(positionsInTickBefore + 1, protocol.getPositionsInTick(expectedTick), "positions in tick");
+        TickData memory tickDataAfter = protocol.getTickData(expectedTick);
+        assertEq(tickDataBefore.totalExpo + LONG_AMOUNT * 3, tickDataAfter.totalExpo, "total expo in tick");
+        assertEq(tickDataBefore.totalPos + 1, tickDataAfter.totalPos, "positions in tick");
         assertEq(totalPositionsBefore + 1, protocol.getTotalLongPositions(), "total long positions");
 
         // check the last position in the tick
@@ -78,7 +74,7 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         uint256 tickBitmapIndexBefore = protocol.findLastSetInTickBitmap(expectedTick);
         int24 maxInitializedTickBefore = protocol.getMaxInitializedTick();
 
-        protocol.i_saveNewPosition(protocol.getEffectiveTickForPrice(desiredLiqPrice), long);
+        protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
         uint256 tickBitmapIndexAfter = protocol.findLastSetInTickBitmap(expectedTick);
         int24 initializedTickAfter = protocol.getMaxInitializedTick();
 
@@ -86,7 +82,7 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
         assertLt(tickBitmapIndexBefore, tickBitmapIndexAfter, "first position in this tick");
         assertLt(maxInitializedTickBefore, initializedTickAfter, "max initialized tick");
 
-        protocol.i_saveNewPosition(protocol.getEffectiveTickForPrice(desiredLiqPrice), long);
+        protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
 
         // state not modified by condition after opening the position
         assertEq(tickBitmapIndexAfter, protocol.findLastSetInTickBitmap(expectedTick), "second position in this tick");
