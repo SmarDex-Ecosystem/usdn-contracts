@@ -8,7 +8,7 @@ import { HugeUint } from "src/libraries/HugeUint.sol";
 /**
  * @custom:feature Unit tests for the `mul(uint256,uint256)` function of the `HugeUint` uint512 library
  */
-contract TestHugeUintMul is HugeUintFixture {
+contract TestHugeUintMul256 is HugeUintFixture {
     function setUp() public override {
         super.setUp();
     }
