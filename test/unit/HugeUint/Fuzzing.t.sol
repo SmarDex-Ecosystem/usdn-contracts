@@ -32,7 +32,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
             b0 = bound(b0, 0, bMax.lo);
         }
         bytes memory b = abi.encodePacked(b1, b0);
-        bytes memory result = vmFFIRustCommand("huge-int-add", vm.toString(a), vm.toString(b));
+        bytes memory result = vmFFIRustCommand("huge-uint-add", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
         HugeUint.Uint512 memory res = handler.add(HugeUint.Uint512(a0, a1), HugeUint.Uint512(b0, b1));
         assertEq(res.lo, res0, "lo");
@@ -56,7 +56,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
             b0 = bound(b0, 0, a0);
         }
         bytes memory b = abi.encodePacked(b1, b0);
-        bytes memory result = vmFFIRustCommand("huge-int-sub", vm.toString(a), vm.toString(b));
+        bytes memory result = vmFFIRustCommand("huge-uint-sub", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
         HugeUint.Uint512 memory res = handler.sub(HugeUint.Uint512(a0, a1), HugeUint.Uint512(b0, b1));
         assertEq(res.lo, res0, "lo");
@@ -72,7 +72,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      * @param b the second operand
      */
     function testFuzz_FFIMul256(uint256 a, uint256 b) public {
-        bytes memory result = vmFFIRustCommand("huge-int-mul256", vm.toString(a), vm.toString(b));
+        bytes memory result = vmFFIRustCommand("huge-uint-mul256", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
         HugeUint.Uint512 memory res = handler.mul(a, b);
         assertEq(res.lo, res0, "lo");
@@ -103,7 +103,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
             }
         }
         bytes memory b = abi.encodePacked(b1, b0);
-        bytes memory result = vmFFIRustCommand("huge-int-mul", vm.toString(a), vm.toString(b));
+        bytes memory result = vmFFIRustCommand("huge-uint-mul", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
         HugeUint.Uint512 memory res = handler.mul(HugeUint.Uint512(a0, a1), HugeUint.Uint512(b0, b1));
         assertEq(res.lo, res0, "lo");
@@ -126,7 +126,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         vm.assume(a1 < type(uint256).max);
         b = bound(b, a1 + 1, type(uint256).max);
         bytes memory a = abi.encodePacked(a1, a0);
-        bytes memory result = vmFFIRustCommand("huge-int-div256", vm.toString(a), vm.toString(b));
+        bytes memory result = vmFFIRustCommand("huge-uint-div256", vm.toString(a), vm.toString(b));
         uint256 ref = abi.decode(result, (uint256));
         uint256 res = handler.div(HugeUint.Uint512(a0, a1), b);
         assertEq(res, ref);
@@ -160,7 +160,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         }
         // compute divisions
         bytes memory b = abi.encodePacked(b1, b0);
-        bytes memory result = vmFFIRustCommand("huge-int-div", vm.toString(a), vm.toString(b));
+        bytes memory result = vmFFIRustCommand("huge-uint-div", vm.toString(a), vm.toString(b));
         uint256 ref = abi.decode(result, (uint256));
         uint256 res = handler.div(HugeUint.Uint512(a0, a1), HugeUint.Uint512(b0, b1));
         assertEq(res, ref);
@@ -174,7 +174,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      * @param x An unsigned integer
      */
     function testFuzz_FFIClz(uint256 x) public {
-        bytes memory result = vmFFIRustCommand("huge-int-clz", vm.toString(x));
+        bytes memory result = vmFFIRustCommand("huge-uint-clz", vm.toString(x));
         (uint256 ref) = abi.decode(result, (uint256));
         uint256 res = HugeUint._clz(x);
         assertEq(res, ref);
@@ -189,7 +189,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      */
     function testFuzz_FFIReciprocal(uint256 x) public {
         x = bound(x, 2 ** 255, type(uint256).max);
-        bytes memory result = vmFFIRustCommand("huge-int-reciprocal", vm.toString(x));
+        bytes memory result = vmFFIRustCommand("huge-uint-reciprocal", vm.toString(x));
         (uint256 ref) = abi.decode(result, (uint256));
         uint256 res = HugeUint._reciprocal(x);
         assertEq(res, ref);
@@ -206,7 +206,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
     function testFuzz_FFIReciprocal2(uint256 x0, uint256 x1) public {
         x1 = bound(x1, 2 ** 255, type(uint256).max);
         bytes memory x = abi.encodePacked(x1, x0);
-        bytes memory result = vmFFIRustCommand("huge-int-reciprocal2", vm.toString(x));
+        bytes memory result = vmFFIRustCommand("huge-uint-reciprocal2", vm.toString(x));
         (uint256 ref) = abi.decode(result, (uint256));
         uint256 res = HugeUint._reciprocal_2(x0, x1);
         assertEq(res, ref);
