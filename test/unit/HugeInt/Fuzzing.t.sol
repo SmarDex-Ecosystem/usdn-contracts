@@ -15,7 +15,7 @@ contract TestHugeIntFuzzing is HugeIntFixture {
 
     /**
      * @custom:scenario Fuzzing the `add` function
-     * @custom:given Two 512-bit unsigned integers
+     * @custom:given Two 512-bit unsigned integers, the sum of which does not overflow 512 bits
      * @custom:when The `add` function is called with the two integers
      * @custom:then The result is equal to the sum of the two integers
      * @param a0 least-significant bits of the first operand
@@ -25,6 +25,12 @@ contract TestHugeIntFuzzing is HugeIntFixture {
      */
     function testFuzz_FFIAdd(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
         bytes memory a = abi.encodePacked(a1, a0);
+        HugeInt.Uint512 memory bMax =
+            handler.sub(HugeInt.Uint512(type(uint256).max, type(uint256).max), HugeInt.Uint512(a0, a1));
+        b1 = bound(b1, 0, bMax.hi);
+        if (b1 == bMax.hi) {
+            b0 = bound(b0, 0, bMax.lo);
+        }
         bytes memory b = abi.encodePacked(b1, b0);
         bytes memory result = vmFFIRustCommand("huge-int-add", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));

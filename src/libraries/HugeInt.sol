@@ -10,6 +10,9 @@ library HugeInt {
     /// @notice Indicates that the division failed because the divisor is zero or the result overflows a uint256.
     error HugeIntDivisionFailed();
 
+    /// @notice Indicates that the addition overflowed a uint512.
+    error HugeIntAddOverflow();
+
     /**
      * @notice A 512-bit integer represented as two 256-bit limbs
      * @dev The integer value can be reconstructed as `hi * 2^256 + lo`
@@ -32,13 +35,17 @@ library HugeInt {
 
     /**
      * @notice Calculate the sum `a + b` of two 512-bit unsigned integers.
-     * @dev The result is not checked for overflow, the caller must ensure that the result is less than 2^512.
+     * @dev This function will revert if the result overflows a uint512.
      * @param a The first operand
      * @param b The second operand
      * @return res_ The sum of `a` and `b`
      */
     function add(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
         (res_.lo, res_.hi) = _add(a.lo, a.hi, b.lo, b.hi);
+        // check for overflow
+        if (res_.hi < a.hi || res_.hi < b.hi) {
+            revert HugeIntAddOverflow();
+        }
     }
 
     /**
@@ -160,7 +167,6 @@ library HugeInt {
     /**
      * @notice Calculate the sum `a + b` of two 512-bit unsigned integers.
      * @dev Credits Remco Bloemen (MIT license): https://2π.com/17/512-bit-division/
-     * The result is not checked for overflow, the caller must ensure that the result is less than 2^512.
      * @param a0 The low limb of the first operand
      * @param a1 The high limb of the first operand
      * @param b0 The low limb of the second operand
