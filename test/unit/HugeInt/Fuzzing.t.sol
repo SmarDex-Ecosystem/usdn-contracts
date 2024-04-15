@@ -91,6 +91,17 @@ contract TestHugeIntFuzzing is HugeIntFixture {
      */
     function testFuzz_FFIMul(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
         bytes memory a = abi.encodePacked(a1, a0);
+        if (a0 > 0 || a1 > 0) {
+            // determine the maximum value of b
+            bytes memory uintMax = abi.encodePacked(type(uint256).max, type(uint256).max);
+            bytes memory temp = vmFFIRustCommand("div512", vm.toString(uintMax), vm.toString(a));
+            (uint256 bMax0, uint256 bMax1) = abi.decode(temp, (uint256, uint256));
+            // bound b
+            b1 = bound(b1, 0, bMax1);
+            if (b1 == bMax1) {
+                b0 = bound(b0, 0, bMax0);
+            }
+        }
         bytes memory b = abi.encodePacked(b1, b0);
         bytes memory result = vmFFIRustCommand("huge-int-mul", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));

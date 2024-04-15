@@ -29,20 +29,20 @@ contract TestHugeIntSub is HugeIntFixture {
         HugeInt.Uint512 memory a = HugeInt.Uint512(69, 0);
         HugeInt.Uint512 memory b = HugeInt.Uint512(42, 0);
         HugeInt.Uint512 memory res = HugeInt.sub(a, b);
-        assertEq(res.lo, 27, "27: lo");
-        assertEq(res.hi, 0, "27: hi");
+        assertEq(res.lo, 27, "69-42: lo");
+        assertEq(res.hi, 0, "69-42: hi");
 
         a = HugeInt.Uint512(1, 0);
         b = HugeInt.Uint512(0, 0);
         res = HugeInt.sub(a, b);
-        assertEq(res.lo, 1, "one: lo");
-        assertEq(res.hi, 0, "one: hi");
+        assertEq(res.lo, 1, "1-0: lo");
+        assertEq(res.hi, 0, "1-0: hi");
 
         a = HugeInt.Uint512(type(uint256).max, type(uint256).max);
         b = a;
         res = HugeInt.sub(a, b);
-        assertEq(res.lo, 0, "zero: lo");
-        assertEq(res.hi, 0, "zero: hi");
+        assertEq(res.lo, 0, "max-max: lo");
+        assertEq(res.hi, 0, "max-max: hi");
 
         a = HugeInt.Uint512(type(uint256).max, type(uint256).max);
         b = HugeInt.Uint512(1, 0);
@@ -55,8 +55,7 @@ contract TestHugeIntSub is HugeIntFixture {
      * @custom:scenario Reverting when underflow occurs
      * @custom:given Two 512-bit unsigned integers, the difference of which underflows
      * @custom:when The `sub` function is called with 0 and 1
-     * @custom:then The transaction reverts
-     * @custom:when The `sub` function is called with `uint512.max - 1` and `uint512.max`
+     * @custom:or The `sub` function is called with `uint512.max - 1` and `uint512.max`
      * @custom:then The transaction reverts
      */
     function test_RevertWhen_subUnderflow() public {

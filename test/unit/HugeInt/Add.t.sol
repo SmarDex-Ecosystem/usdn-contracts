@@ -39,8 +39,7 @@ contract TestHugeIntAdd is HugeIntFixture {
      * @custom:scenario Reverting when overflow occurs
      * @custom:given Two 512-bit unsigned integers, the sum of which overflows 512 bits
      * @custom:when The `add` function is called with `uint512.max` and 1
-     * @custom:then The transaction reverts
-     * @custom:when The `add` function is called with `uint512.max/2` and `uint512.max/2 + 1`
+     * @custom:or The `add` function is called with `uint512.max/2` and `uint512.max/2 + 1`
      * @custom:then The transaction reverts
      */
     function test_RevertWhen_addOverflow() public {

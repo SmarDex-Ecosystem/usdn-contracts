@@ -16,6 +16,9 @@ library HugeInt {
     /// @notice Indicates that the subtraction underflowed.
     error HugeIntSubUnderflow();
 
+    /// @notice Indicates that the multiplication overflowed a uint512.
+    error HugeIntMulOverflow();
+
     /**
      * @notice A 512-bit integer represented as two 256-bit limbs
      * @dev The integer value can be reconstructed as `hi * 2^256 + lo`
@@ -79,15 +82,26 @@ library HugeInt {
     /**
      * @notice Calculate the product `a * b` of two 512-bit unsigned integers
      * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
-     * This function does not check for overflows, the caller must ensure that the result fits inside a uint512.
+     * This function will revert if the result overflows a uint512.
      * @param a The first operand
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
      */
     function mul(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
+        if ((a.hi == 0 && a.lo == 0) || (b.hi == 0 && b.lo == 0)) {
+            return res_;
+        }
         (res_.lo, res_.hi) = _mul256(a.lo, b.lo);
         unchecked {
             res_.hi += (a.lo * b.hi) + (a.hi * b.lo);
+            // check that res_ is greater than or equal to a, otherwise revert
+            if (res_.hi < a.hi || (res_.hi == a.hi && res_.lo < a.lo)) {
+                revert HugeIntMulOverflow();
+            }
+            // check that res_ is greater than or equal to b, otherwise revert
+            if (res_.hi < b.hi || (res_.hi == b.hi && res_.lo < b.lo)) {
+                revert HugeIntMulOverflow();
+            }
         }
     }
 
@@ -219,7 +233,7 @@ library HugeInt {
     function _mul256(uint256 a, uint256 b) internal pure returns (uint256 lo_, uint256 hi_) {
         assembly {
             lo_ := mul(a, b)
-            let mm := mulmod(a, b, not(0))
+            let mm := mulmod(a, b, not(0)) // (a * b) % uint256.max
             hi_ := sub(mm, add(lo_, lt(mm, lo_)))
         }
     }
