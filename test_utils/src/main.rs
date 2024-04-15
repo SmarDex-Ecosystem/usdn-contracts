@@ -53,9 +53,9 @@ enum Commands {
     /// ceil(lhs / rhs)
     DivUp {
         /// LHS
-        lhs: String,
+        lhs: Integer,
         /// RHS
-        rhs: String,
+        rhs: Integer,
     },
     /// Get price feed from Pyth hermes API
     PythPrice {
@@ -66,9 +66,9 @@ enum Commands {
     },
     /// Compare different total expo calculation implementations
     CalcExpo {
-        start_price: String,
-        liq_price: String,
-        amount: String,
+        start_price: Integer,
+        liq_price: Integer,
+        amount: Integer,
     },
     /// Compare different mint usdn calculation implementations
     CalcMintUsdn {
@@ -117,10 +117,8 @@ fn main() -> Result<()> {
             print_i256_hex(res)?;
         }
         Commands::DivUp { lhs, rhs } => {
-            let lhs: Integer = lhs.parse()?;
-            let rhs: Integer = rhs.parse()?;
             let res = lhs.div_ceil(rhs);
-            print_u256_hex(res)?;
+            print_u256_hex(res.complete())?;
         }
         Commands::PythPrice { feed, publish_time } => {
             let mut hermes_api_url = std::env::var("HERMES_RA2_NODE_URL")?;
@@ -141,19 +139,10 @@ fn main() -> Result<()> {
             liq_price,
             amount,
         } => {
-            let start_price: Integer = start_price.parse()?;
-            let liq_price: Integer = liq_price.parse()?;
-            let amount: Integer = amount.parse()?;
-
-            let price_diff = Integer::from(&start_price - &liq_price);
-            let mut total_expo = Float::with_val(512, amount) * start_price / price_diff;
-            total_expo.floor_mut();
-
-            print_u256_hex(
-                total_expo
-                    .to_integer()
-                    .ok_or_else(|| anyhow!("can't convert to integer"))?,
-            )?;
+            let price_diff = start_price - liq_price;
+            let numerator = amount * start_price;
+            let total_mint = numerator.complete() / price_diff.complete();
+            print_u256_hex(total_mint)?;
         }
         Commands::CalcMintUsdn {
             amount,
