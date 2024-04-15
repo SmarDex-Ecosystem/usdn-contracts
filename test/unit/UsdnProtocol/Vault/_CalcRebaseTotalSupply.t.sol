@@ -24,6 +24,8 @@ contract TestUsdnProtocolVaultCalcRebaseTotalSupply is UsdnProtocolBaseFixture {
         uint8 assetDecimals = 18;
         uint256 totalSupply = protocol.i_calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
         assertEq(totalSupply, 2000, "totalSupply must match with expected value");
+        uint256 newPrice = protocol.i_calcUsdnPrice(vaultBalance, assetPrice, totalSupply, assetDecimals);
+        assertApproxEqRel(newPrice, targetPrice, 0.0002 ether, "final price");
 
         vaultBalance = 524_896;
         assetPrice = 7_868_645;
@@ -31,6 +33,8 @@ contract TestUsdnProtocolVaultCalcRebaseTotalSupply is UsdnProtocolBaseFixture {
         assetDecimals = 2;
         totalSupply = protocol.i_calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
         assertEq(totalSupply, 860_462_559_566_666_666_666_666_666, "totalSupply must match with expected value");
+        newPrice = protocol.i_calcUsdnPrice(vaultBalance, assetPrice, totalSupply, assetDecimals);
+        assertApproxEqRel(newPrice, targetPrice, 0.0002 ether, "final price");
 
         vaultBalance = 58_734;
         assetPrice = 58_926_485_247;
@@ -38,6 +42,8 @@ contract TestUsdnProtocolVaultCalcRebaseTotalSupply is UsdnProtocolBaseFixture {
         assetDecimals = 23;
         totalSupply = protocol.i_calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
         assertEq(totalSupply, 5983, "totalSupply must match with expected value");
+        newPrice = protocol.i_calcUsdnPrice(vaultBalance, assetPrice, totalSupply, assetDecimals);
+        assertApproxEqRel(newPrice, targetPrice, 0.0002 ether, "final price");
 
         vaultBalance = 1;
         assetPrice = 15;
