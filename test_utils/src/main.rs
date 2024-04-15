@@ -1,4 +1,3 @@
-use std::ops::DivAssign;
 use alloy_primitives::{Bytes, FixedBytes, I256, U256};
 use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Result};
@@ -10,6 +9,7 @@ use rug::{
     Float, Integer,
 };
 use serde::Deserialize;
+use std::ops::DivAssign;
 
 #[derive(Deserialize, Debug)]
 struct HermesResponse {
@@ -136,7 +136,11 @@ fn main() -> Result<()> {
             let price: HermesResponse = response.json()?;
             print_pyth_response(price)?;
         }
-        Commands::CalcExpo { start_price, liq_price, amount } => {
+        Commands::CalcExpo {
+            start_price,
+            liq_price,
+            amount,
+        } => {
             let start_price: Integer = start_price.parse()?;
             let liq_price: Integer = liq_price.parse()?;
             let amount: Integer = amount.parse()?;
@@ -144,28 +148,48 @@ fn main() -> Result<()> {
             let price_diff = Integer::from(&start_price - &liq_price);
             let mut total_expo = Float::with_val(512, amount) * start_price / price_diff;
             total_expo.floor_mut();
-            
-            print_u256_hex(total_expo.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
+
+            print_u256_hex(
+                total_expo
+                    .to_integer()
+                    .ok_or_else(|| anyhow!("can't convert to integer"))?,
+            )?;
         }
-        Commands::CalcMintUsdn { amount, vault_balance, usdn_total_supply } => {
+        Commands::CalcMintUsdn {
+            amount,
+            vault_balance,
+            usdn_total_supply,
+        } => {
             let amount: Integer = amount.parse()?;
             let vault_balance: Integer = vault_balance.parse()?;
             let usdn_total_supply: Integer = usdn_total_supply.parse()?;
 
             let mut total_mint = Float::with_val(512, amount) * usdn_total_supply / vault_balance;
             total_mint.floor_mut();
-            
-            print_u256_hex(total_mint.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
+
+            print_u256_hex(
+                total_mint
+                    .to_integer()
+                    .ok_or_else(|| anyhow!("can't convert to integer"))?,
+            )?;
         }
-        Commands::CalcMintUsdnVaultBalanceZero { amount, price, decimals } => {
+        Commands::CalcMintUsdnVaultBalanceZero {
+            amount,
+            price,
+            decimals,
+        } => {
             let amount: Integer = amount.parse()?;
             let price: Integer = price.parse()?;
             let decimals: u32 = decimals.parse()?;
 
             let mut total_mint = Float::with_val(512, amount) * price / 10u128.pow(decimals);
             total_mint.floor_mut();
-            
-            print_u256_hex(total_mint.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
+
+            print_u256_hex(
+                total_mint
+                    .to_integer()
+                    .ok_or_else(|| anyhow!("can't convert to integer"))?,
+            )?;
         }
     }
     Ok(())
