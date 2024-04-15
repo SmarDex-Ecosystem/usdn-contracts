@@ -126,10 +126,8 @@ contract TestHugeIntFuzzing is HugeIntFixture {
             bytes memory temp = vmFFIRustCommand("div512", vm.toString(a), vm.toString(uintMax));
             (uint256 bMin0, uint256 bMin1) = abi.decode(temp, (uint256, uint256));
             // add 1 wei to make sure we account for rounding errors
-            if (bMin0 == type(uint256).max) {
-                if (bMin1 < type(uint256).max) {
-                    bMin1++;
-                }
+            if (bMin0 == type(uint256).max && bMin1 < type(uint256).max) {
+                bMin1++;
             } else {
                 bMin0++;
             }
