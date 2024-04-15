@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 /**
  * @notice A library for manipulating uint512 quantities.
- * The huge ints are represented as two uint256 "limbs", a `lo` limb for the least-significant bits, and a `hi` limb
- * for the most significant bits. The result uint512 value is calculated as `hi * 2^256 + lo`.
+ * The 512-bit unsigned integers are represented as two uint256 "limbs", a `lo` limb for the least-significant bits,
+ * and a `hi` limb for the most significant bits. The result uint512 quantity is obtained with `hi * 2^256 + lo`.
  */
 library HugeUint {
     /// @notice Indicates that the division failed because the divisor is zero or the result overflows a uint256.
