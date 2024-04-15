@@ -59,7 +59,7 @@ library HugeInt {
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
      */
-    function mul256(uint256 a, uint256 b) external pure returns (Uint512 memory res_) {
+    function mul(uint256 a, uint256 b) external pure returns (Uint512 memory res_) {
         (res_.lo, res_.hi) = _mul256(a, b);
     }
 
@@ -85,7 +85,7 @@ library HugeInt {
      * @param b The denominator as a 256-bit unsigned integer
      * @return res_ The division `floor(a / b)` of the operands as an unsigned 256-bit integer
      */
-    function div256(Uint512 memory a, uint256 b) external pure returns (uint256 res_) {
+    function div(Uint512 memory a, uint256 b) external pure returns (uint256 res_) {
         // make sure the output fits inside a uint256, also prevents b == 0
         if (b <= a.hi) {
             revert HugeIntDivisionFailed();
