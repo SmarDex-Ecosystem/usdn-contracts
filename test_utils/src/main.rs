@@ -80,7 +80,7 @@ enum Commands {
     CalcMintUsdnVaultBalanceZero {
         amount: String,
         price: String,
-        decimals: String,
+        decimals: u32,
     },
 }
 
@@ -180,7 +180,7 @@ fn main() -> Result<()> {
         } => {
             let amount: Integer = amount.parse()?;
             let price: Integer = price.parse()?;
-            let decimals: u32 = decimals.parse()?;
+            let decimals: u32 = *decimals;
 
             let mut total_mint = Float::with_val(512, amount) * price / 10u128.pow(decimals);
             total_mint.floor_mut();
