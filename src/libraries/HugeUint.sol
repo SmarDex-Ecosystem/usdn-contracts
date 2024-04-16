@@ -80,28 +80,24 @@ library HugeUint {
     }
 
     /**
-     * @notice Calculate the product `a * b` of two 512-bit unsigned integers
-     * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
-     * This function will revert if the result overflows a uint512.
+     * @notice Calculate the product `a * b` of a 512-bit unsigned integer and a 256-bit unsigned integer.
+     * @dev This function reverts if the result overflows a uint512.
      * @param a The first operand
      * @param b The second operand
      * @return res_ The product `a * b` of the operands as an unsigned 512-bit integer
      */
-    function mul(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
-        if ((a.hi == 0 && a.lo == 0) || (b.hi == 0 && b.lo == 0)) {
+    function mul(Uint512 memory a, uint256 b) external pure returns (Uint512 memory res_) {
+        if ((a.hi == 0 && a.lo == 0) || b == 0) {
             return res_;
         }
-        (res_.lo, res_.hi) = _mul256(a.lo, b.lo);
+        (res_.lo, res_.hi) = _mul256(a.lo, b);
         unchecked {
-            res_.hi += (a.lo * b.hi) + (a.hi * b.lo);
-            // check that res_ is greater than or equal to a, otherwise revert
-            if (res_.hi < a.hi || (res_.hi == a.hi && res_.lo < a.lo)) {
-                revert HugeUintMulOverflow();
-            }
-            // check that res_ is greater than or equal to b, otherwise revert
-            if (res_.hi < b.hi || (res_.hi == b.hi && res_.lo < b.lo)) {
-                revert HugeUintMulOverflow();
-            }
+            res_.hi += a.hi * b;
+        }
+        // check for overflow
+        uint256 d = _div(res_.lo, res_.hi, a.lo, a.hi);
+        if (d != b) {
+            revert HugeUintMulOverflow();
         }
     }
 
@@ -133,60 +129,13 @@ library HugeUint {
     /**
      * @notice Compute the division floor(a/b) of two 512-bit integers, knowing the result fits inside a uint256.
      * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
+     * This function will revert if the second operand is zero or if the result doesn't fit inside a uint256.
      * @param a The numerator as a 512-bit integer
      * @param b The denominator as a 512-bit integer
      * @return res_ The quotient floor(a/b)
      */
     function div(Uint512 memory a, Uint512 memory b) external pure returns (uint256 res_) {
-        if (b.hi == 0) {
-            // prevent division by zero
-            if (b.lo == 0) {
-                revert HugeUintDivisionFailed();
-            }
-            // if both operands fit inside a uint256, we can use the Solidity division operator
-            if (a.hi == 0) {
-                unchecked {
-                    return a.lo / b.lo;
-                }
-            }
-            // if the result fits inside a uint256, we can use the `div(Uint512,uint256)` function
-            if (b.lo > a.hi) {
-                return _div256(a.lo, a.hi, b.lo);
-            }
-            revert HugeUintDivisionFailed();
-        }
-
-        // if the numerator is smaller than the denominator, the result is zero
-        if (a.hi < b.hi || (a.hi == b.hi && a.lo < b.lo)) {
-            return 0;
-        }
-
-        // Division algo
-        (uint256 a0, uint256 a1) = (a.lo, a.hi);
-        (uint256 b0, uint256 b1) = (b.lo, b.hi);
-
-        uint256 lsh = _clz(b1);
-        if (lsh == 0) {
-            // numerator is equal or larger than the denominator, and denominator is at least 0b1000...
-            // the result is necessarily 1
-            return 1;
-        }
-
-        uint256 bn_lo;
-        uint256 bn_hi;
-        uint256 an_lo;
-        uint256 an_hi;
-        uint256 an_ex;
-        assembly {
-            let rsh := sub(256, lsh)
-            bn_lo := shl(lsh, b0)
-            bn_hi := or(shl(lsh, b1), shr(rsh, b0))
-            an_lo := shl(lsh, a0)
-            an_hi := or(shl(lsh, a1), shr(rsh, a0))
-            an_ex := shr(rsh, a1)
-        }
-        uint256 v = _reciprocal_2(bn_lo, bn_hi);
-        res_ = _div_2(an_lo, an_hi, an_ex, bn_lo, bn_hi, v);
+        res_ = _div(a.lo, a.hi, b.lo, b.hi);
     }
 
     /**
@@ -335,6 +284,64 @@ library HugeUint {
             // (r0, r1) = _sub(r0, r1, b0, b1);
         }
         return q1;
+    }
+
+    /**
+     * @notice Compute the division floor(a/b) of two 512-bit integers, knowing the result fits inside a uint256.
+     * @dev Credits chfast (Apache 2.0 License): https://github.com/chfast/intx
+     * @param a0 LSB of the numerator
+     * @param a1 MSB of the numerator
+     * @param b0 LSB of the divisor
+     * @param b1 MSB of the divisor
+     * @return res_ The quotient floor(a/b)
+     */
+    function _div(uint256 a0, uint256 a1, uint256 b0, uint256 b1) internal pure returns (uint256 res_) {
+        if (b1 == 0) {
+            // prevent division by zero
+            if (b0 == 0) {
+                revert HugeUintDivisionFailed();
+            }
+            // if both operands fit inside a uint256, we can use the Solidity division operator
+            if (a1 == 0) {
+                unchecked {
+                    return a0 / b0;
+                }
+            }
+            // if the result fits inside a uint256, we can use the `div(Uint512,uint256)` function
+            if (b0 > a1) {
+                return _div256(a0, a1, b0);
+            }
+            revert HugeUintDivisionFailed();
+        }
+
+        // if the numerator is smaller than the denominator, the result is zero
+        if (a1 < b1 || (a1 == b1 && a0 < b0)) {
+            return 0;
+        }
+
+        // Division algo
+        uint256 lsh = _clz(b1);
+        if (lsh == 0) {
+            // numerator is equal or larger than the denominator, and denominator is at least 0b1000...
+            // the result is necessarily 1
+            return 1;
+        }
+
+        uint256 bn_lo;
+        uint256 bn_hi;
+        uint256 an_lo;
+        uint256 an_hi;
+        uint256 an_ex;
+        assembly {
+            let rsh := sub(256, lsh)
+            bn_lo := shl(lsh, b0)
+            bn_hi := or(shl(lsh, b1), shr(rsh, b0))
+            an_lo := shl(lsh, a0)
+            an_hi := or(shl(lsh, a1), shr(rsh, a0))
+            an_ex := shr(rsh, a1)
+        }
+        uint256 v = _reciprocal_2(bn_lo, bn_hi);
+        res_ = _div_2(an_lo, an_hi, an_ex, bn_lo, bn_hi, v);
     }
 
     /**

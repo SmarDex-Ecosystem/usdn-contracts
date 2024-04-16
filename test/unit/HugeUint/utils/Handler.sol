@@ -32,11 +32,7 @@ contract HugeUintHandler {
         return HugeUint.mul(a, b);
     }
 
-    function mul(HugeUint.Uint512 memory a, HugeUint.Uint512 memory b)
-        external
-        pure
-        returns (HugeUint.Uint512 memory)
-    {
+    function mul(HugeUint.Uint512 memory a, uint256 b) external pure returns (HugeUint.Uint512 memory) {
         return HugeUint.mul(a, b);
     }
 
