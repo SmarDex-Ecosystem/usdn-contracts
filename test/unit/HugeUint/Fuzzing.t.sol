@@ -283,6 +283,16 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         handler.div(HugeUint.Uint512(a0, a1), HugeUint.Uint512(0, 0));
     }
 
+    /**
+     * @custom:scenario Reverting when the division overflows 256 bits
+     * @custom:given Two 512-bit unsigned integers, the division of which overflows 256 bits
+     * @custom:when The `div` function is called with the operands
+     * @custom:then The transaction reverts with `HugeUintDivisionFailed`
+     * @param a0 The LSB of the 512-bit numerator
+     * @param a1 The MSB of the 512-bit numerator
+     * @param b0 The LSB of the 512-bit denominator
+     * @param b1 The MSB of the 512-bit denominator
+     */
     function testFuzz_RevertWhen_FFIDiv512Overflow(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
         bytes memory a = abi.encodePacked(a1, a0);
         // define bLimit
