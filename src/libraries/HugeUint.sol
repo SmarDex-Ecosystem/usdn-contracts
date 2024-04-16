@@ -48,8 +48,8 @@ library HugeUint {
      */
     function add(Uint512 memory a, Uint512 memory b) external pure returns (Uint512 memory res_) {
         (res_.lo, res_.hi) = _add(a.lo, a.hi, b.lo, b.hi);
-        // check for overflow
-        if (res_.hi < a.hi || res_.hi < b.hi) {
+        // check for overflow, i.e. if the result is less than b
+        if (res_.hi < b.hi || (res_.hi == b.hi && res_.lo < b.lo)) {
             revert HugeUintAddOverflow();
         }
     }
