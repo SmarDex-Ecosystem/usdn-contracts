@@ -204,6 +204,37 @@ contract TestHugeUintFuzzing is HugeUintFixture {
     }
 
     /**
+     * @custom:scenario Reverting when division by zero occurs during `div`
+     * @custom:given A 512-bit unsigned integer
+     * @custom:when The `div` function is called with the integer and 0
+     * @custom:then The transaction reverts with `HugeUintDivisionFailed`
+     * @param a0 The LSB of the 512-bit integer
+     * @param a1 The MSB of the 512-bit integer
+     */
+    function testFuzz_RevertWhen_div256ByZero(uint256 a0, uint256 a1) public {
+        // division by zero always fails
+        vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
+        handler.div(HugeUint.Uint512(a0, a1), 0);
+    }
+
+    /**
+     * @custom:scenario Reverting when the division overflows 256 bits
+     * @custom:given A 512-bit unsigned integer larger than uint256.max
+     * @custom:and a divisor which is larger than 0 but smaller than the MSB of the 512-bit integer
+     * @custom:when The `div` function is called with the operands
+     * @custom:then The transaction reverts with `HugeUintDivisionFailed`
+     * @param a0 The LSB of the 512-bit numerator
+     * @param a1 The MSB of the 512-bit numerator
+     * @param b The divisor
+     */
+    function testFuzz_RevertWhen_div256Overflow(uint256 a0, uint256 a1, uint256 b) public {
+        vm.assume(b > 0 && a1 > 0); // we can't overflow if a1 is zero
+        b = bound(b, 1, a1);
+        vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
+        handler.div(HugeUint.Uint512(a0, a1), b);
+    }
+
+    /**
      * @custom:scenario Fuzzing the `div` function
      * @custom:given Two 512-bit unsigned integers
      * @custom:and The divisor is larger than `a / uint256.max` so as to fit the quotient inside a uint256
