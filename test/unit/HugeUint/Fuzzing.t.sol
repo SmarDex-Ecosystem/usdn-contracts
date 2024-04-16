@@ -138,6 +138,10 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      * @custom:and The divisor is larger than `a / uint256.max` so as to fit the quotient inside a uint256
      * @custom:when The `div` function is called with the operands
      * @custom:then The result is equal to the division of the numerator by the denominator, as a uint256
+     * @param a0 The LSB of the numerator
+     * @param a1 The MSB of the numerator
+     * @param b0 The LSB of the denominator
+     * @param b1 The MSB of the denominator
      */
     function testFuzz_FFIDiv512(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
         bytes memory a = abi.encodePacked(a1, a0);
@@ -161,6 +165,66 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         uint256 ref = abi.decode(result, (uint256));
         uint256 res = handler.div(HugeUint.Uint512(a0, a1), HugeUint.Uint512(b0, b1));
         assertEq(res, ref);
+    }
+
+    /**
+     * @custom:scenario Fuzzing the reciprocity of the `mul` and `div` functions
+     * @custom:given Two 256-bit unsigned integers
+     * @custom:when The `mul` function is called with the two integers
+     * @custom:and The `div` function is called with the product and one of the integers
+     * @custom:then The result of the `div` function is equal to the other integer
+     * @param a the first operand
+     * @param b the second operand
+     */
+    function testFuzz_mulThenDiv(uint256 a, uint256 b) public {
+        vm.assume(a > 0 && b > 0);
+        HugeUint.Uint512 memory m = handler.mul(a, b);
+        uint256 res = handler.div(m, b);
+        assertEq(res, a, "res");
+        uint256 res2 = handler.div(m, a);
+        assertEq(res2, b, "res2");
+    }
+
+    /**
+     * @custom:scenario Fuzzing the reciprocity of the `div` and `mul` functions
+     * @custom:given Two 512-bit unsigned integers which division does not overflow 256 bits
+     * @custom:when The `div` function is called with the numerator and the divisor
+     * @custom:and The `mul` function is called with the quotient and the divisor
+     * @custom:then The result of the `mul` function is lower than or equal to the difference between the numerator and
+     * the divisor (due to rounding errors, the result may not be exactly equal to the numerator)
+     * @custom:and The result of the `mul` function is lower than or equal to the numerator
+     * @param a0 The LSB of the numerator
+     * @param a1 The MSB of the numerator
+     * @param b0 The LSB of the divisor
+     * @param b1 The MSB of the divisor
+     */
+    function testFuzz_divThenMul(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
+        {
+            // define bMin
+            bytes memory uintMax = abi.encodePacked(uint256(0), type(uint256).max);
+            bytes memory temp =
+                vmFFIRustCommand("div-up512", vm.toString(abi.encodePacked(a1, a0)), vm.toString(uintMax));
+            (uint256 bMin0, uint256 bMin1) = abi.decode(temp, (uint256, uint256));
+            // bound b
+            b1 = bound(b1, bMin1, type(uint256).max);
+            if (b1 == bMin1) {
+                b0 = bound(b0, bMin0, type(uint256).max);
+            }
+            if (b1 == 0 && b0 == 0) {
+                b0 = 1;
+            }
+        }
+        HugeUint.Uint512 memory a = HugeUint.Uint512(a0, a1);
+        HugeUint.Uint512 memory b = HugeUint.Uint512(b0, b1);
+        uint256 d = handler.div(a, b);
+        // if b > a, then the result is 0 and we don't need to test further
+        if (d == 0) {
+            return;
+        }
+        HugeUint.Uint512 memory res = handler.mul(handler.wrap(d), b);
+        HugeUint.Uint512 memory aMinusB = handler.sub(a, b);
+        assertTrue(res.hi > aMinusB.hi || (res.hi == aMinusB.hi && res.lo > aMinusB.lo), "res > a - b");
+        assertTrue(res.hi < a.hi || (res.hi == a.hi && res.lo <= a.lo), "res <= a");
     }
 
     /**
