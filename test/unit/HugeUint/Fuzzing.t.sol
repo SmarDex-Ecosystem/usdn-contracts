@@ -153,11 +153,24 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         assertEq(res.hi, res1, "hi");
     }
 
+    /**
+     * @custom:scenario Reverting when overflow occurs during `mul`
+     * @custom:given A 512-bit unsigned integer and a 256-bit unsigned integer, the product of which exceeds uint512.max
+     * @custom:when The `mul` function is called with the two integers
+     * @custom:then The transaction reverts with `HugeUintMulOverflow`
+     * @param a0 The LSB of the first operand
+     * @param a1 The MSB of the first operand
+     * @param b The second operand
+     */
     function testFuzz_RevertWhen_FFIMulOverflow(uint256 a0, uint256 a1, uint256 b) public {
-        vm.assume((a1 == 0 && a0 > 1) || a1 > 0);
+        vm.assume(a0 > 0 || a1 > 0);
         bytes memory uintMax = abi.encodePacked(type(uint256).max, type(uint256).max);
         bytes memory temp = vmFFIRustCommand("div512", vm.toString(uintMax), vm.toString(abi.encodePacked(a1, a0)));
         (uint256 bLimit0, uint256 bLimit1) = abi.decode(temp, (uint256, uint256));
+        if (bLimit1 == type(uint256).max && bLimit0 == type(uint256).max) {
+            // we can't overflow the multiplication in this case
+            return;
+        }
         HugeUint.Uint512 memory bLimit = handler.add(HugeUint.Uint512(bLimit0, bLimit1), HugeUint.Uint512(1, 0));
         if (bLimit.hi > 0) {
             // we can't overflow the multiplication in this case
