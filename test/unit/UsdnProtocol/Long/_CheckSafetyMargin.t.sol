@@ -27,9 +27,9 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
     function test_RevertWhen_setLiquidationPriceWithoutSafetyMarginBps() public {
         uint128 currentPrice = 100 ether;
         uint128 liquidationPrice = 98 ether;
-        uint128 bps_divisor = (protocol.BPS_DIVISOR()).toUint128();
+        uint128 bpsDivisor = (protocol.BPS_DIVISOR()).toUint128();
         uint128 maxLiquidationPrice =
-            (currentPrice * (bps_divisor - protocol.getSafetyMarginBps()) / bps_divisor).toUint128();
+            (currentPrice * (bpsDivisor - protocol.getSafetyMarginBps()) / bpsDivisor).toUint128();
 
         vm.expectRevert(
             abi.encodeWithSelector(
