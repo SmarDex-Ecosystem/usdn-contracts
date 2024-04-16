@@ -41,7 +41,7 @@ contract TestUsdnProtocolLongBitmapIndexToTick is UsdnProtocolBaseFixture {
         uint256 maxIndex = uint256(int256(_maxTick - _minTick) / _tickSpacing);
         int24 tick = protocol.i_bitmapIndexToTick(maxIndex, _tickSpacing);
 
-        assertEq(tick, _maxTick, "The result should be the minimum usable tick");
+        assertEq(tick, _maxTick, "The result should be the maximum usable tick");
     }
 
     /**
@@ -52,7 +52,7 @@ contract TestUsdnProtocolLongBitmapIndexToTick is UsdnProtocolBaseFixture {
      * @custom:then The expected tick is returned
      * @custom:and The returned tick can be transformed back into the original index
      * @custom:and The returned ticks are unique and sequential (separated by the tick spacing)
-     * @param index The index to find the tick from
+     * @param index The index of the tick in the bitmap
      * @param tickSpacing The tick spacing to use for the calculations
      */
     function testFuzz_bitmapIndexToTick(uint256 index, int24 tickSpacing) public {
