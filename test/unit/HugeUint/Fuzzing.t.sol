@@ -152,7 +152,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
                 b0 = bound(b0, bMin0, type(uint256).max);
             }
             if (b1 == 0 && b0 == 0) {
-                b1 = 1;
+                b0 = 1;
             }
         }
         // compute divisions
