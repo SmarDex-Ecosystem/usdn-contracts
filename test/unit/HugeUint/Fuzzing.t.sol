@@ -235,7 +235,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
     }
 
     /**
-     * @custom:scenario Fuzzing the `div` function
+     * @custom:scenario Fuzzing the `div(Uint512,uint512)` function
      * @custom:given Two 512-bit unsigned integers
      * @custom:and The divisor is larger than `a / uint256.max` so as to fit the quotient inside a uint256
      * @custom:when The `div` function is called with the operands
@@ -267,6 +267,54 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         uint256 ref = abi.decode(result, (uint256));
         uint256 res = handler.div(HugeUint.Uint512(a0, a1), HugeUint.Uint512(b0, b1));
         assertEq(res, ref);
+    }
+
+    /**
+     * @custom:scenario Reverting when division by zero occurs during `div(Uint512,Uint512)`
+     * @custom:given A 512-bit unsigned integer
+     * @custom:when The `div` function is called with the integer and 0
+     * @custom:then The transaction reverts with `HugeUintDivisionFailed`
+     * @param a0 The LSB of the 512-bit integer
+     * @param a1 The MSB of the 512-bit integer
+     */
+    function testFuzz_RevertWhen_div512ByZero(uint256 a0, uint256 a1) public {
+        // division by zero always fails
+        vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
+        handler.div(HugeUint.Uint512(a0, a1), HugeUint.Uint512(0, 0));
+    }
+
+    function testFuzz_RevertWhen_FFIDiv512Overflow(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
+        bytes memory a = abi.encodePacked(a1, a0);
+        // define bLimit
+        bytes memory temp =
+            vmFFIRustCommand("div512", vm.toString(a), vm.toString(abi.encodePacked(uint256(0), type(uint256).max)));
+        (uint256 bLimit0, uint256 bLimit1) = abi.decode(temp, (uint256, uint256));
+        if (bLimit0 == 0 && bLimit1 == 0) {
+            // we can't overflow in this case
+            return;
+        }
+        HugeUint.Uint512 memory bLimit = HugeUint.Uint512(bLimit0, bLimit1);
+        if (bLimit0 == 1 && bLimit1 == 1) {
+            // Special case: `a = uint512.max`. The division of `a` by `uint256.max` gives `bLimit = uint256.max+2`.
+            // If we were to subtract 1 to enter the range that should overflow, we get `b = uint256.max+1`. However,
+            // the division `uint512.max / (uint256.max+1)` does not overflow due to the rounding.
+            // To ensure the overflow, we subtract 2 instead.
+            // We test this case in unit tests.
+            bLimit = handler.sub(bLimit, HugeUint.Uint512(2, 0));
+        } else {
+            bLimit = handler.sub(bLimit, HugeUint.Uint512(1, 0));
+        }
+        // bound b
+        b1 = bound(b1, 0, bLimit.hi);
+        if (b1 == bLimit.hi) {
+            b0 = bound(b0, 0, bLimit.lo);
+        }
+        if (b1 == 0 && b0 == 0) {
+            return;
+        }
+
+        vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
+        handler.div(HugeUint.Uint512(a0, a1), HugeUint.Uint512(b0, b1));
     }
 
     /**

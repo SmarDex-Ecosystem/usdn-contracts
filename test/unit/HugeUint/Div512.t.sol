@@ -23,7 +23,8 @@ contract TestHugeUintDiv512 is HugeUintFixture {
      * @custom:when The `div` function is called with `2*uint256.max` and 2
      * @custom:then The result is equal to `uint256.max`
      * @custom:when The `div` function is called with `uint512.max` and `2^256`
-     * @custom:then The result is equal to `uint256.max`
+     * @custom:then The result is equal to `uint256.max` (note that this is larger than uint256.max, but does not
+     * overflow due to rounding down)
      */
     function test_div() public {
         HugeUint.Uint512 memory a = HugeUint.Uint512(69, 0);
