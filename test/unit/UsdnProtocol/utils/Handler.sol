@@ -57,7 +57,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) external returns (uint256 securityDepositValue_) {
-        return _initiateClosePosition(user, posId, amountToClose, currentPriceData);
+        return _initiateClosePosition(user, posId, amountToClose, currentPriceData, 0);
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
@@ -130,7 +130,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
             uint16 liquidatedTicks_,
             int256 remainingCollateral_,
             uint256 newLongBalance_,
-            uint256 newVaultBalance_
+            uint256 newVaultBalance_,
+            int24 currentTick_
         )
     {
         return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);

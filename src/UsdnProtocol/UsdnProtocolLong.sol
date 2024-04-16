@@ -367,7 +367,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             uint16 liquidatedTicks_,
             int256 remainingCollateral_,
             uint256 newLongBalance_,
-            uint256 newVaultBalance_
+            uint256 newVaultBalance_,
+            int24 currentTick_
         )
     {
         // max iteration limit
@@ -375,7 +376,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             iteration = MAX_LIQUIDATION_ITERATION;
         }
 
-        int24 currentTick = TickMath.getClosestTickAtPrice(
+        currentTick_ = TickMath.getClosestTickAtPrice(
             FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier)
         );
         int24 tick = _maxInitializedTick;
@@ -389,7 +390,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 }
 
                 tick = _bitmapIndexToTick(index);
-                if (tick < currentTick) {
+                if (tick < currentTick_) {
                     break;
                 }
             }
@@ -421,9 +422,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         } while (liquidatedTicks_ < iteration);
 
         if (liquidatedPositions_ != 0) {
-            if (tick < currentTick) {
+            if (tick < currentTick_) {
                 // all ticks above the current tick were liquidated
-                _maxInitializedTick = _findMaxInitializedTick(currentTick);
+                _maxInitializedTick = _findMaxInitializedTick(currentTick_);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
                 _maxInitializedTick = _findMaxInitializedTick(tick);
@@ -451,5 +452,30 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         newLongBalance_ = tempLongBalance.toUint256();
         newVaultBalance_ = tempVaultBalance.toUint256();
+    }
+
+    /**
+     * @notice Check if there are still pending liquidations or not
+     * @param currentTick The current tick
+     * @param currentPrice The current price of the asset
+     * @return pendingLiquidations_ Whether or not pending liquidations
+     */
+    function _checkForPendingLiquidations(int24 currentTick, uint256 currentPrice)
+        internal
+        view
+        returns (bool pendingLiquidations_)
+    {
+        // case price is not updated
+        if (currentTick == type(int24).max) {
+            currentTick = TickMath.getClosestTickAtPrice(
+                FixedPointMathLib.fullMulDiv(
+                    currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier
+                )
+            );
+        }
+
+        if (currentTick <= _maxInitializedTick) {
+            pendingLiquidations_ = true;
+        }
     }
 }
