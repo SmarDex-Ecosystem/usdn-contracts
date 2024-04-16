@@ -17,8 +17,8 @@ contract TestUsdnProtocolCalcMintUsdn is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Compare calculations of `_calcMintUsdn` with more precise
      * values and vaultBalance equal to zero
-     * @custom:given An amount between 1 and `type(uint128).max`
-     * @custom:and A price between 1 and `type(uint128).max`
+     * @custom:given An amount between 0 and `type(uint256).max`
+     * @custom:and A price between 0 and `type(uint128).max/amount` or `type(uint128).max`
      * @custom:and A decimals value calculated from the protocol
      * @custom:when The `_calcMintUsdn` function is called with the value
      * @custom:then The result is equal to the result of the Rust implementation
@@ -56,9 +56,9 @@ contract TestUsdnProtocolCalcMintUsdn is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Compare calculations of `_calcMintUsdn` with more precise values
-     * @custom:given An amount between 1 and `type(uint128).max`
+     * @custom:given An amount between 0 and `type(uint256).max`
+     * @custom:and A usdnTotalSupply 0 and `type(uint128).max/amount` or `type(uint128).max`
      * @custom:and A vaultBalance between 1 and `type(uint128).max`
-     * @custom:and A usdnTotalSupply between 1 and `type(uint128).max`
      * @custom:when The `_calcMintUsdn` function is called with the value
      * @custom:then The result is equal to the result of the Rust implementation
      * @param amount The amount of asset to be converted into USDN
