@@ -138,24 +138,29 @@ library HugeUint {
      * @return res_ The quotient floor(a/b)
      */
     function div(Uint512 memory a, Uint512 memory b) external pure returns (uint256 res_) {
-        // prevents b == 0
-        if (b.hi == 0 && b.lo == 0) {
+        if (b.hi == 0) {
+            // prevent division by zero
+            if (b.lo == 0) {
+                revert HugeUintDivisionFailed();
+            }
+            // if both operands fit inside a uint256, we can use the Solidity division operator
+            if (a.hi == 0) {
+                unchecked {
+                    return a.lo / b.lo;
+                }
+            }
+            // if the result fits inside a uint256, we can use the `div(Uint512,uint256)` function
+            if (b.lo > a.hi) {
+                return _div256(a.lo, a.hi, b.lo);
+            }
             revert HugeUintDivisionFailed();
         }
-        // if both operands fit inside a uint256, we can use the Solidity division operator
-        if (a.hi == 0 && b.hi == 0) {
-            unchecked {
-                return a.lo / b.lo;
-            }
-        }
+
         // if the numerator is smaller than the denominator, the result is zero
         if (a.hi < b.hi || (a.hi == b.hi && a.lo < b.lo)) {
             return 0;
         }
-        // if the divisor and result fit inside a uint256, we can use the {div256} function
-        if (b.hi == 0 && b.lo > a.hi) {
-            return _div256(a.lo, a.hi, b.lo);
-        }
+
         // Division algo
         (uint256 a0, uint256 a1) = (a.lo, a.hi);
         (uint256 b0, uint256 b1) = (b.lo, b.hi);
