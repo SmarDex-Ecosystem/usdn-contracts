@@ -139,23 +139,20 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      * @custom:when The `div` function is called with the operands
      * @custom:then The result is equal to the division of the numerator by the denominator, as a uint256
      */
-    function testFuzz_FFIDiv(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
+    function testFuzz_FFIDiv512(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
         bytes memory a = abi.encodePacked(a1, a0);
         {
             // define bMin
             bytes memory uintMax = abi.encodePacked(uint256(0), type(uint256).max);
-            bytes memory temp = vmFFIRustCommand("div512", vm.toString(a), vm.toString(uintMax));
+            bytes memory temp = vmFFIRustCommand("div-up512", vm.toString(a), vm.toString(uintMax));
             (uint256 bMin0, uint256 bMin1) = abi.decode(temp, (uint256, uint256));
-            // add 1 wei to make sure we account for rounding errors
-            if (bMin0 == type(uint256).max && bMin1 < type(uint256).max) {
-                bMin1++;
-            } else {
-                bMin0++;
-            }
             // bound b
             b1 = bound(b1, bMin1, type(uint256).max);
             if (b1 == bMin1) {
                 b0 = bound(b0, bMin0, type(uint256).max);
+            }
+            if (b1 == 0 && b0 == 0) {
+                b1 = 1;
             }
         }
         // compute divisions

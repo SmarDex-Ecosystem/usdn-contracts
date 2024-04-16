@@ -79,6 +79,13 @@ enum Commands {
         /// Denominator bytes
         b: String,
     },
+    /// Perform a uint512 full division, yielding a uint512 output, rounding upwards
+    DivUp512 {
+        /// Numerator bytes
+        a: String,
+        /// Denominator bytes
+        b: String,
+    },
     /// Uint512 addition
     HugeUintAdd {
         /// First operand bytes
@@ -207,6 +214,14 @@ fn main() -> Result<()> {
             let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
             let b = U512::from_be_bytes::<64>(const_hex::decode_to_array(b)?);
             let res = a / b;
+            let lsb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[32..].try_into()?);
+            let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
+            print_u512_hex(lsb, msb);
+        }
+        Commands::DivUp512 { a, b } => {
+            let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
+            let b = U512::from_be_bytes::<64>(const_hex::decode_to_array(b)?);
+            let res = a.div_ceil(b);
             let lsb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[32..].try_into()?);
             let msb = U256::from_be_bytes::<32>(res.to_be_bytes::<64>()[..32].try_into()?);
             print_u512_hex(lsb, msb);
