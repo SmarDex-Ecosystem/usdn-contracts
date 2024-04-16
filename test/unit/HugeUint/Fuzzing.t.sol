@@ -40,6 +40,29 @@ contract TestHugeUintFuzzing is HugeUintFixture {
     }
 
     /**
+     * @custom:scenario Reverting when overflow occurs during `add`
+     * @custom:given Two 512-bit unsigned integers, the sum of which overflows 512 bits
+     * @custom:when The `add` function is called with `a` as the first operand and `b` as the second operand
+     * @custom:then The transaction reverts with `HugeUintAddOverflow`
+     * @param a0 The LSB of the first operand
+     * @param a1 The MSB of the first operand
+     * @param b0 The LSB of the second operand
+     * @param b1 The MSB of the second operand
+     */
+    function testFuzz_RevertWhen_addOverflow(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
+        vm.assume(a0 > 0 || a1 > 0);
+        HugeUint.Uint512 memory a = HugeUint.Uint512(a0, a1);
+        HugeUint.Uint512 memory bMax = handler.sub(HugeUint.Uint512(type(uint256).max, type(uint256).max), a);
+        bMax = handler.add(bMax, HugeUint.Uint512(1, 0));
+        b1 = bound(b1, bMax.hi, type(uint256).max);
+        if (b1 == bMax.hi) {
+            b0 = bound(b0, bMax.lo, type(uint256).max);
+        }
+        vm.expectRevert(HugeUint.HugeUintAddOverflow.selector);
+        handler.add(a, HugeUint.Uint512(b0, b1));
+    }
+
+    /**
      * @custom:scenario Fuzzing the `sub` function
      * @custom:given Two 512-bit unsigned integers
      * @custom:when The `sub` function is called with the two integers
