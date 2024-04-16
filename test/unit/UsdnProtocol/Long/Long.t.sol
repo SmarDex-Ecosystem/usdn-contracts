@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN, USER_1 } from "test/utils/Constants.sol";
+import { ADMIN } from "test/utils/Constants.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
@@ -13,11 +13,6 @@ import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProto
  * @custom:background Given a protocol initialized at equilibrium
  */
 contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
-    uint96 internal constant LONG_POSITION_AMOUNT = 5 ether;
-    uint256 internal initialWstETHBalance;
-    uint256 internal initialUsdnBalance;
-    uint256 internal initialWstETHBalanceProtocol;
-
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo

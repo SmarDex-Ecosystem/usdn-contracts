@@ -129,8 +129,8 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiate a withdrawal for 0 USDN
-     * @custom:when The user initiate a withdrawal with the to address set to 0
+     * @custom:scenario The user initiates a deposit with parameter to defined at zero
+     * @custom:when The user initiate a withdrawal with parameter to address defined at 0
      * @custom:then The protocol reverts with `UsdnProtocolZeroAddressTo`
      */
     function test_RevertWhen_zeroAddressTo() public {
@@ -216,8 +216,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user validates a withdrawal for 1000 USDN with another address as the beneficiary
      * @custom:given The user initiated a withdrawal for 1000 USDN
-     * @custom:and The price of the asset is $2000 at the moment of initiation
-     * @custom:and The price of the asset is $2000 at the moment of validation
+     * @custom:and The price of the asset is $2000 at the moment of initiation and validation
      * @custom:when The user validates the withdrawal with another address as the beneficiary
      * @custom:then The protocol emits a `ValidatedWithdrawal` event with the right beneficiary
      */
