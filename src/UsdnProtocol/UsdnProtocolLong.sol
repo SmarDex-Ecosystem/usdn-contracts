@@ -322,25 +322,50 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @dev Convert a signed tick to an unsigned index into the Bitmap
-     * @param tick The tick to convert, a multiple of `tickSpacing`
+     * @dev Convert a signed tick to an unsigned index into the Bitmap using the tick spacing in storage
+     * @param tick The tick to convert, a multiple of the tick spacing
      * @return index_ The index into the Bitmap
      */
     function _tickToBitmapIndex(int24 tick) internal view returns (uint256 index_) {
-        int24 compactTick = tick / _tickSpacing;
-        // shift into positive and cast to uint256
-        index_ = uint256(int256(compactTick) - int256(type(int24).min));
+        index_ = _tickToBitmapIndex(tick, _tickSpacing);
     }
 
     /**
-     * @dev Convert a Bitmap index to a signed tick
+     * @dev Convert a signed tick to an unsigned index into the Bitmap using the provided tick spacing
+     * @param tick The tick to convert, a multiple of `tickSpacing`
+     * @param tickSpacing The tick spacing to use
+     * @return index_ The index into the Bitmap
+     */
+    function _tickToBitmapIndex(int24 tick, int24 tickSpacing) internal pure returns (uint256 index_) {
+        index_ = uint256( // cast is safe as the min tick is always above TickMath.MIN_TICK
+            (int256(tick) - TickMath.MIN_TICK) // shift into positive
+                / tickSpacing
+        );
+    }
+
+    /**
+     * @dev Convert a Bitmap index to a signed tick using the tick spacing in storage
      * @param index The index into the Bitmap
-     * @return tick_ The tick corresponding to the index, a multiple of `tickSpacing`
+     * @return tick_ The tick corresponding to the index, a multiple of the tick spacing
      */
     function _bitmapIndexToTick(uint256 index) internal view returns (int24 tick_) {
-        // cast to int256 and shift into negative
-        int24 compactTick = (int256(index) + int256(type(int24).min)).toInt24();
-        tick_ = compactTick * _tickSpacing;
+        tick_ = _bitmapIndexToTick(index, _tickSpacing);
+    }
+
+    /**
+     * @dev Convert a Bitmap index to a signed tick using the provided tick spacing
+     * @param index The index into the Bitmap
+     * @param tickSpacing The tick spacing to use
+     * @return tick_ The tick corresponding to the index, a multiple of `tickSpacing`
+     */
+    function _bitmapIndexToTick(uint256 index, int24 tickSpacing) internal pure returns (int24 tick_) {
+        tick_ = int24( // cast to int24 is safe as index + TickMath.MIN_TICK cannot be above or below int24 limits
+            (
+                int256(index) // cast to int256 is safe as the index is lower than type(int24).max
+                    + TickMath.MIN_TICK // shift into negative
+                        / tickSpacing
+            ) * tickSpacing
+        );
     }
 
     /**
