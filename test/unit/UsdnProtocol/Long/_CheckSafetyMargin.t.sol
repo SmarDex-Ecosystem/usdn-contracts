@@ -21,6 +21,8 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call `_checkSafetyMargin` reverts when the liquidationPrice is greater than the
      * maxLiquidationPrice
+     * @custom:given The current price is 100 ether
+     * @custom:and The liquidationPrice is 98 ether
      * @custom:when The value of liquidationPrice is greater than the maxLiquidationPrice calculated
      * @custom:then It reverts with a UsdnProtocolLiquidationPriceSafetyMargin error
      */
@@ -42,6 +44,8 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call `_checkSafetyMargin` with a liquidationPrice that is lower than the
      * maxLiquidationPrice
+     * @custom:given The current price is 100 ether
+     * @custom:and The liquidationPrice is 98 ether - 1
      * @custom:when The value of liquidationPrice is lower than the maxLiquidationPrice calculated
      * @custom:then It does not revert
      */
