@@ -1,4 +1,5 @@
 use std::ops::DivAssign;
+
 use alloy_primitives::{Bytes, FixedBytes, I256, U256};
 use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Result};
@@ -53,9 +54,9 @@ enum Commands {
     /// ceil(lhs / rhs)
     DivUp {
         /// LHS
-        lhs: String,
+        lhs: Integer,
         /// RHS
-        rhs: String,
+        rhs: Integer,
     },
     /// Get price feed from Pyth hermes API
     PythPrice {
@@ -66,9 +67,21 @@ enum Commands {
     },
     /// Compare different total expo calculation implementations
     CalcExpo {
-        start_price: String,
-        liq_price: String,
-        amount: String,
+        start_price: Integer,
+        liq_price: Integer,
+        amount: Integer,
+    },
+    /// Compare different mint usdn calculation implementations
+    CalcMintUsdn {
+        amount: Integer,
+        vault_balance: Integer,
+        usdn_total_supply: Integer,
+    },
+    /// Compare different mint usdn calculation implementations (with vaultBalance equal to zero)
+    CalcMintUsdnVaultBalanceZero {
+        amount: Integer,
+        price: Integer,
+        decimals: u32,
     },
 }
 
@@ -77,7 +90,7 @@ fn main() -> Result<()> {
 
     let wad: Integer = "1000000000000000000".parse().unwrap();
 
-    match &cli.command {
+    match cli.command {
         Commands::ExpWad { value } => {
             let mut value = Float::with_val(512, Float::parse(value)?);
             value.div_assign(&wad);
@@ -105,8 +118,6 @@ fn main() -> Result<()> {
             print_i256_hex(res)?;
         }
         Commands::DivUp { lhs, rhs } => {
-            let lhs: Integer = lhs.parse()?;
-            let rhs: Integer = rhs.parse()?;
             let res = lhs.div_ceil(rhs);
             print_u256_hex(res)?;
         }
@@ -124,16 +135,33 @@ fn main() -> Result<()> {
             let price: HermesResponse = response.json()?;
             print_pyth_response(price)?;
         }
-        Commands::CalcExpo { start_price, liq_price, amount } => {
-            let start_price: Integer = start_price.parse()?;
-            let liq_price: Integer = liq_price.parse()?;
-            let amount: Integer = amount.parse()?;
-
-            let price_diff = Integer::from(&start_price - &liq_price);
-            let mut total_expo = Float::with_val(512, amount) * start_price / price_diff;
-            total_expo.floor_mut();
-            
-            print_u256_hex(total_expo.to_integer().ok_or_else(|| anyhow!("can't convert to integer"))?)?;
+        Commands::CalcExpo {
+            start_price,
+            liq_price,
+            amount,
+        } => {
+            let price_diff = &start_price - liq_price;
+            let numerator = amount * start_price;
+            let total_mint = numerator / price_diff;
+            print_u256_hex(total_mint)?;
+        }
+        Commands::CalcMintUsdn {
+            amount,
+            vault_balance,
+            usdn_total_supply,
+        } => {
+            let numerator = amount * usdn_total_supply;
+            let total_mint = numerator / vault_balance;
+            print_u256_hex(total_mint)?;
+        }
+        Commands::CalcMintUsdnVaultBalanceZero {
+            amount,
+            price,
+            decimals,
+        } => {
+            let numerator = amount * price;
+            let total_mint = numerator / 10u128.pow(decimals);
+            print_u256_hex(total_mint)?;
         }
     }
     Ok(())
