@@ -464,14 +464,14 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // price drops
         skip(1 hours);
-        currentPrice = 1000 ether;
-        priceData = abi.encode(currentPrice);
+        priceData = abi.encode(1000 ether);
 
         // liquidate
         uint256 balanceBefore = address(this).balance;
         uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation);
+        _waitDelay();
         protocol.liquidate{ value: 0.5 ether }(priceData, 1);
-        assertEq(protocol.getTotalLongPositions(), initialTotalPos, "total positions after liquidate");
+        assertEq(protocol.getTotalLongPositions(), 0, "total positions after liquidate");
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
