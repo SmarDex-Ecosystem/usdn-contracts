@@ -1,3 +1,5 @@
+use std::ops::DivAssign;
+
 use alloy_primitives::{Bytes, FixedBytes, I256, U256};
 use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Result};
@@ -9,7 +11,6 @@ use rug::{
     Float, Integer,
 };
 use serde::Deserialize;
-use std::ops::DivAssign;
 
 #[derive(Deserialize, Debug)]
 struct HermesResponse {
