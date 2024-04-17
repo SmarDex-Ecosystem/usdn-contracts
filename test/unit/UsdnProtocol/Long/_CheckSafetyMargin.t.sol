@@ -15,7 +15,6 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
-        wstETH.mintAndApprove(address(this), 10 ether, address(protocol), type(uint256).max);
     }
 
     /**
