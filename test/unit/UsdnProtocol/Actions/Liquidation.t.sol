@@ -5,7 +5,7 @@ import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
@@ -361,12 +361,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         price = protocol.getEffectivePriceForTick(tick);
         int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTickData(tick));
 
+        // we have to wait for the price to be updated
+        skip(oracleMiddleware.getValidationDelay() * 2);
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        uint256 liquidatedPositions = protocol.liquidate(abi.encode(price), 1);
-
-        // Check that the right number of positions have been liquidated
-        assertEq(liquidatedPositions, 1, "One position should have been liquidated");
+        protocol.liquidate(abi.encode(price), 1);
 
         // Check that the liquidator received its rewards
         assertEq(
@@ -375,6 +374,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             "The liquidator did not receive the right amount of rewards"
         );
 
+        emit log_named_decimal_uint("vaultBalanceBeforeRewards", vaultBalanceBeforeRewards, 18);
+        emit log_named_decimal_uint("uint256(collateralLiquidated)", uint256(collateralLiquidated), 18);
+        emit log_named_decimal_uint(" protocol.getBalanceVault()", protocol.getBalanceVault(), 18);
         // Check that the vault balance got updated
         assertEq(
             vaultBalanceBeforeRewards + uint256(collateralLiquidated) - protocol.getBalanceVault(),

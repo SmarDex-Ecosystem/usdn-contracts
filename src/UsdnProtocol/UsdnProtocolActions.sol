@@ -206,7 +206,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         uint256 balanceBefore = address(this).balance;
 
-        liquidatedPositions_ = _liquidate(currentPriceData, iterations);
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, block.timestamp, currentPriceData);
+
+        (uint16 liquidatedTicks, int256 liquidatedCollateral) =
+            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, iterations);
+
+        bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
+
+        if (liquidatedTicks > 0) {
+            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
+        }
+
         _refundExcessEther(0, 0, balanceBefore);
         _checkPendingFee();
     }
@@ -1119,6 +1129,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param iterations The maximum number of ticks to liquidate
      * @return liquidatedPositions_ The number of positions that were liquidated
      */
+    // TO DO : delete this function
     function _liquidate(bytes calldata currentPriceData, uint16 iterations)
         internal
         returns (uint256 liquidatedPositions_)
@@ -1295,9 +1306,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         (, liquidatedTicks_, liquidatedCollateral_, _balanceLong, _balanceVault) =
             _liquidatePositions(priceForLiquidation, iterations, tempLongBalance, tempVaultBalance);
-
-        // rebase USDN if needed (interval has elapsed and price threshold was reached)
-        // _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
     }
 
     /**

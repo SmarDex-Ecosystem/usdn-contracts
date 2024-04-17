@@ -68,6 +68,8 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
             address(this), ProtocolAction.ValidateOpenPosition, 10 ether, params.initialPrice / 2, params.initialPrice
         );
         assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty, "tick value");
+        // we have to wait for the price to be updated
+        _waitDelay();
         protocol.liquidate(abi.encode(params.initialPrice / 3), 10);
 
         // change the penalty setting

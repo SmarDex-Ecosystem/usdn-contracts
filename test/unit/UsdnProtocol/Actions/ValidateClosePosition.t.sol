@@ -472,9 +472,12 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the vault balance falls to zero
      */
     function test_internalValidateCloseLiquidatePositionZeroVaultBalance() public {
+        // we have to wait for the price to be updated
+        _waitDelay();
         // liquidate the position in setup, leaving only the deployer position
-        uint256 liquidated = protocol.liquidate(abi.encode(7 * params.initialPrice / 10), 10);
-        assertEq(liquidated, 1, "liquidated");
+        vm.expectEmit(true, false, false, false);
+        emit LiquidatedTick(tick, 0, 0, 0, 0);
+        protocol.liquidate(abi.encode(7 * params.initialPrice / 10), 10);
 
         bytes memory priceData = abi.encode(params.initialPrice);
 
@@ -520,9 +523,12 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the long balance falls to zero
      */
     function test_internalValidateCloseLiquidatePositionZeroLongBalance() public {
+        // we have to wait for the price to be updated
+        _waitDelay();
         // liquidate the position in setup, leaving only the deployer position
-        uint256 liquidated = protocol.liquidate(abi.encode(7 * params.initialPrice / 10), 10);
-        assertEq(liquidated, 1, "liquidated");
+        vm.expectEmit(true, false, false, false);
+        emit LiquidatedTick(tick, 0, 0, 0, 0);
+        protocol.liquidate(abi.encode(7 * params.initialPrice / 10), 10);
 
         // we initiate the close with a price that leaves little remaining collateral
         tick = protocol.getEffectiveTickForPrice(params.initialPrice / 2)
