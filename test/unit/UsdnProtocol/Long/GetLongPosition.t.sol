@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
 import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
@@ -32,6 +34,18 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
 
         (Position memory position, uint8 liquidationPenalty) = protocol.getLongPosition(tick, tickVersion, index);
 
+        uint128 adjustedPrice =
+            uint128(params.initialPrice + (params.initialPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR());
+        int24 effectiveTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
+        uint8 effectiveLiquidationPenalty = protocol.getTickLiquidationPenalty(effectiveTick);
+
+        uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
+            effectiveTick - int24(uint24(effectiveLiquidationPenalty)) * protocol.getTickSpacing()
+        );
+
+        uint128 positionTotalExpo =
+            uint128(FixedPointMathLib.fullMulDiv(OPEN_AMOUNT, adjustedPrice, adjustedPrice - liqPriceWithoutPenalty));
+
         assertEq(
             position.timestamp + 2 * (oracleMiddleware.getValidationDelay() + 1),
             block.timestamp,
@@ -39,9 +53,9 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
         );
 
         assertEq(position.user, USER_1, "wrong position user");
-        assertEq(position.totalExpo, 19_466_359_632_272_617_650, "wrong position totalExpo");
+        assertEq(position.totalExpo, positionTotalExpo, "wrong position totalExpo");
         assertEq(position.amount, OPEN_AMOUNT, "wrong position amount");
-        assertEq(liquidationPenalty, 2, "wrong liquidationPenalty");
+        assertEq(liquidationPenalty, effectiveLiquidationPenalty, "wrong liquidationPenalty");
     }
 
     /**
