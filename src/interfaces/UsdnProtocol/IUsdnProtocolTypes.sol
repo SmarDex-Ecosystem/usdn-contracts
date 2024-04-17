@@ -171,6 +171,22 @@ struct PreviousActionsData {
 }
 
 /**
+ * @notice The effects of executed liquidations on the protocol
+ * @param liquidatedPositions The number of liquidated positions
+ * @param liquidatedTicks The number of liquidated ticks
+ * @param remainingCollateral The collateral remaining after the liquidations
+ * @param newLongBalance The new balance of the long side
+ * @param newVaultBalance The new balance of the vault side
+ */
+struct LiquidationsEffects {
+    uint256 liquidatedPositions;
+    uint16 liquidatedTicks;
+    int256 remainingCollateral;
+    uint256 newLongBalance;
+    uint256 newVaultBalance;
+}
+
+/**
  * @notice Accumulator for tick data
  * @param totalExpo The sum of the total expo of each position in the tick
  * @param totalPos The number of positions in the tick
