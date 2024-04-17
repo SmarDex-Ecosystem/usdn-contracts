@@ -257,16 +257,16 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getLeverage(price, liqPrice);
     }
 
-    function i_bitmapIndexToTick(uint256 index, int24 tickSpacing) external pure returns (int24) {
-        return _bitmapIndexToTick(index, tickSpacing);
+    function i_calcBitmapIndexToTick(uint256 index, int24 tickSpacing) external pure returns (int24) {
+        return _calcBitmapIndexToTick(index, tickSpacing);
     }
 
-    function i_tickToBitmapIndex(int24 tick, int24 tickSpacing) external pure returns (uint256) {
-        return _tickToBitmapIndex(tick, tickSpacing);
+    function i_calcTickToBitmapIndex(int24 tick, int24 tickSpacing) external pure returns (uint256) {
+        return _calcTickToBitmapIndex(tick, tickSpacing);
     }
 
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
-        return _tickBitmap.findLastSet(_tickToBitmapIndex(searchFrom));
+        return _tickBitmap.findLastSet(_calcTickToBitmapIndex(searchFrom));
     }
 
     function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
