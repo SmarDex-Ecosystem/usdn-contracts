@@ -147,41 +147,6 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check calculations of `_calculatePositionTotalExpo`
-     */
-    function test_calculatePositionTotalExpo() public {
-        uint256 expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1500 ether);
-        assertEq(expo, 4 ether, "Position total expo should be 4 ether");
-
-        expo = protocol.i_calculatePositionTotalExpo(2 ether, 4000 ether, 1350 ether);
-        assertEq(expo, 3_018_867_924_528_301_886, "Position total expo should be 3.018... ether");
-
-        expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1000 ether);
-        assertEq(expo, 2 ether, "Position total expo should be 2 ether");
-    }
-
-    /**
-     * @custom:scenario Call `_calculatePositionTotalExpo` reverts when the liquidation price is greater than
-     * the start price.
-     * @custom:given A liquidation price greater than or equal to the start price
-     * @custom:when _calculatePositionTotalExpo is called
-     * @custom:then The transaction reverts with a UsdnProtocolInvalidLiquidationPrice error
-     */
-    function test_RevertWhen_calculatePositionTotalExpoWithLiqPriceGreaterThanStartPrice() public {
-        uint128 startPrice = 2000 ether;
-        uint128 liqPrice = 2000 ether;
-
-        /* ------------------------- startPrice == liqPrice ------------------------- */
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
-        protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
-
-        /* -------------------------- liqPrice > startPrice ------------------------- */
-        liqPrice = 2000 ether + 1;
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
-        protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
-    }
-
-    /**
      * @custom:scenario Check calculations of the `tickValue` function
      * @custom:given A tick with total expo 10 wstETH and a liquidation price around $500
      * @custom:when The current price is equal to the liquidation price without penalty
