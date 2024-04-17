@@ -23,6 +23,8 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 
+import { console2 } from "./../../lib/forge-std/src/console2.sol";
+
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
@@ -206,17 +208,30 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         uint256 balanceBefore = address(this).balance;
 
-        // PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, block.timestamp,
-        // currentPriceData);
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, block.timestamp, currentPriceData);
 
-        // (uint16 liquidatedTicks, int256 liquidatedCollateral) =
-        //     _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, iterations);
-        // bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
-        // if (liquidatedTicks > 0) {
-        //     _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
-        // }
+        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
+            _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+        if (!priceUpdated) {
+            console2.log("_lastPrice", _lastPrice);
+            console2.log("currentPrice.neutralPrice", currentPrice.neutralPrice);
+            console2.log("currentPrice.timestamp", currentPrice.timestamp);
+            console2.log("_lastUpdateTimestamp", _lastUpdateTimestamp);
+        }
 
-        liquidatedPositions_ = _liquidate(currentPriceData, iterations);
+        uint16 liquidatedTicks;
+        int256 liquidatedCollateral;
+        (liquidatedPositions_, liquidatedTicks, liquidatedCollateral, _balanceLong, _balanceVault) =
+            _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
+
+        // Always perform the rebase check during liquidation
+        bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
+
+        if (liquidatedTicks > 0) {
+            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
+        }
+
+        // liquidatedPositions_ = _liquidate(currentPriceData, iterations);
         _refundExcessEther(0, 0, balanceBefore);
         _checkPendingFee();
     }

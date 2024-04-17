@@ -464,7 +464,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // price drops
         skip(1 hours);
-        priceData = abi.encode(1000 ether);
+        priceData = abi.encode(900 ether);
 
         // liquidate
         uint256 balanceBefore = address(this).balance;
