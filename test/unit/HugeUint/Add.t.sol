@@ -44,7 +44,7 @@ contract TestHugeUintAdd is HugeUintFixture {
      */
     function test_RevertWhen_addOverflow() public {
         HugeUint.Uint512 memory a = HugeUint.Uint512(type(uint256).max, type(uint256).max);
-        HugeUint.Uint512 memory b = HugeUint.Uint512(1, 0);
+        HugeUint.Uint512 memory b = HugeUint.Uint512(0, 1);
         vm.expectRevert(HugeUint.HugeUintAddOverflow.selector);
         handler.add(a, b);
 
