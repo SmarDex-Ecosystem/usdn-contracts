@@ -113,7 +113,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Find the largest tick which contains at least one position
+     * @dev If there are no tick with a position left, returns minTick()
      * @param searchStart The tick from which to start searching
+     * @return tick_ The next highest tick below `searchStart`
      */
     function _findMaxInitializedTick(int24 searchStart) internal view returns (int24 tick_) {
         uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(searchStart));
