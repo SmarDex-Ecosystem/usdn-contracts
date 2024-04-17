@@ -30,7 +30,7 @@ contract TestHugeUintMul512 is HugeUintFixture {
      * @custom:then The result is equal to `uint512.max`
      */
     function test_mul() public {
-        HugeUint.Uint512 memory a = HugeUint.Uint512(69, 0);
+        HugeUint.Uint512 memory a = HugeUint.Uint512(0, 69);
         uint256 b = 42;
         HugeUint.Uint512 memory res = handler.mul(a, b);
         assertEq(res.lo, 2898, "69*42: lo");
@@ -48,7 +48,7 @@ contract TestHugeUintMul512 is HugeUintFixture {
         assertEq(res.lo, 0, "0*uint256.max: lo");
         assertEq(res.hi, 0, "0*uint256.max: hi");
 
-        a = HugeUint.Uint512(type(uint256).max, 0);
+        a = HugeUint.Uint512(0, type(uint256).max);
         b = 1;
         res = handler.mul(a, b);
         assertEq(res.lo, type(uint256).max, "uint256.max*1: lo");
@@ -60,7 +60,7 @@ contract TestHugeUintMul512 is HugeUintFixture {
         assertEq(res.lo, type(uint256).max, "uint512.max*1: lo");
         assertEq(res.hi, type(uint256).max, "uint512.max*1: hi");
 
-        a = HugeUint.Uint512(1, 0);
+        a = HugeUint.Uint512(0, 1);
         b = type(uint256).max;
         res = handler.mul(a, b);
         assertEq(res.lo, type(uint256).max, "1*uint256.max: lo");
@@ -86,7 +86,7 @@ contract TestHugeUintMul512 is HugeUintFixture {
         vm.expectRevert(HugeUint.HugeUintMulOverflow.selector);
         handler.mul(a, b);
 
-        a = HugeUint.Uint512(2, 1);
+        a = HugeUint.Uint512(1, 2);
         b = type(uint256).max;
         vm.expectRevert(HugeUint.HugeUintMulOverflow.selector);
         handler.mul(a, b);

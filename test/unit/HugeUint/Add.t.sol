@@ -28,8 +28,8 @@ contract TestHugeUintAdd is HugeUintFixture {
         assertEq(res.lo, 462, "42+420: lo");
         assertEq(res.hi, 0, "42+420: hi");
 
-        a = HugeUint.Uint512(type(uint256).max, type(uint256).max / 2);
-        b = HugeUint.Uint512(type(uint256).max, type(uint256).max / 2);
+        a = HugeUint.Uint512(type(uint256).max / 2, type(uint256).max);
+        b = HugeUint.Uint512(type(uint256).max / 2, type(uint256).max);
         res = handler.add(a, b);
         assertEq(res.lo, type(uint256).max - 1, "uint256.max/2: lo");
         assertEq(res.hi, type(uint256).max, "uint256.max/2: hi");
@@ -44,12 +44,12 @@ contract TestHugeUintAdd is HugeUintFixture {
      */
     function test_RevertWhen_addOverflow() public {
         HugeUint.Uint512 memory a = HugeUint.Uint512(type(uint256).max, type(uint256).max);
-        HugeUint.Uint512 memory b = HugeUint.Uint512(0, 1);
+        HugeUint.Uint512 memory b = HugeUint.Uint512(1, 0);
         vm.expectRevert(HugeUint.HugeUintAddOverflow.selector);
         handler.add(a, b);
 
-        a = HugeUint.Uint512(type(uint256).max, type(uint256).max / 2);
-        b = HugeUint.Uint512(type(uint256).max, type(uint256).max / 2 + 1);
+        a = HugeUint.Uint512(type(uint256).max / 2, type(uint256).max);
+        b = HugeUint.Uint512(type(uint256).max / 2 + 1, type(uint256).max);
         vm.expectRevert(HugeUint.HugeUintAddOverflow.selector);
         handler.add(a, b);
     }

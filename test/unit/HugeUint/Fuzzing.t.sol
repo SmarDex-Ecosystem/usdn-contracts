@@ -26,7 +26,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
     function testFuzz_FFIAdd(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
         bytes memory a = abi.encodePacked(a1, a0);
         HugeUint.Uint512 memory bMax =
-            handler.sub(HugeUint.Uint512(type(uint256).max, type(uint256).max), HugeUint.Uint512(a0, a1));
+            handler.sub(HugeUint.Uint512(type(uint256).max, type(uint256).max), HugeUint.Uint512(a1, a0));
         b1 = bound(b1, 0, bMax.hi);
         if (b1 == bMax.hi) {
             b0 = bound(b0, 0, bMax.lo);
@@ -34,7 +34,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         bytes memory b = abi.encodePacked(b1, b0);
         bytes memory result = vmFFIRustCommand("huge-uint-add", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
-        HugeUint.Uint512 memory res = handler.add(HugeUint.Uint512(a0, a1), HugeUint.Uint512(b0, b1));
+        HugeUint.Uint512 memory res = handler.add(HugeUint.Uint512(a1, a0), HugeUint.Uint512(b1, b0));
         assertEq(res.lo, res0, "lo");
         assertEq(res.hi, res1, "hi");
     }
@@ -51,15 +51,15 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      */
     function testFuzz_RevertWhen_addOverflow(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
         vm.assume(a0 > 0 || a1 > 0);
-        HugeUint.Uint512 memory a = HugeUint.Uint512(a0, a1);
+        HugeUint.Uint512 memory a = HugeUint.Uint512(a1, a0);
         HugeUint.Uint512 memory bLimit = handler.sub(HugeUint.Uint512(type(uint256).max, type(uint256).max), a);
-        bLimit = handler.add(bLimit, HugeUint.Uint512(1, 0));
+        bLimit = handler.add(bLimit, HugeUint.Uint512(0, 1));
         b1 = bound(b1, bLimit.hi, type(uint256).max);
         if (b1 == bLimit.hi) {
             b0 = bound(b0, bLimit.lo, type(uint256).max);
         }
         vm.expectRevert(HugeUint.HugeUintAddOverflow.selector);
-        handler.add(a, HugeUint.Uint512(b0, b1));
+        handler.add(a, HugeUint.Uint512(b1, b0));
     }
 
     /**
@@ -81,7 +81,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         bytes memory b = abi.encodePacked(b1, b0);
         bytes memory result = vmFFIRustCommand("huge-uint-sub", vm.toString(a), vm.toString(b));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
-        HugeUint.Uint512 memory res = handler.sub(HugeUint.Uint512(a0, a1), HugeUint.Uint512(b0, b1));
+        HugeUint.Uint512 memory res = handler.sub(HugeUint.Uint512(a1, a0), HugeUint.Uint512(b1, b0));
         assertEq(res.lo, res0, "lo");
         assertEq(res.hi, res1, "hi");
     }
@@ -98,14 +98,14 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      */
     function testFuzz_RevertWhen_subUnderflow(uint256 a0, uint256 a1, uint256 b0, uint256 b1) public {
         vm.assume(a0 < type(uint256).max || a1 < type(uint256).max);
-        HugeUint.Uint512 memory a = HugeUint.Uint512(a0, a1);
-        HugeUint.Uint512 memory bLimit = handler.add(a, HugeUint.Uint512(1, 0));
+        HugeUint.Uint512 memory a = HugeUint.Uint512(a1, a0);
+        HugeUint.Uint512 memory bLimit = handler.add(a, HugeUint.Uint512(0, 1));
         b1 = bound(b1, bLimit.hi, type(uint256).max);
         if (b1 == bLimit.hi) {
             b0 = bound(b0, bLimit.lo, type(uint256).max);
         }
         vm.expectRevert(HugeUint.HugeUintSubUnderflow.selector);
-        handler.sub(a, HugeUint.Uint512(b0, b1));
+        handler.sub(a, HugeUint.Uint512(b1, b0));
     }
 
     /**
@@ -148,7 +148,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         bytes memory bBytes = abi.encodePacked(uint256(0), b);
         bytes memory result = vmFFIRustCommand("huge-uint-mul", vm.toString(a), vm.toString(bBytes));
         (uint256 res0, uint256 res1) = abi.decode(result, (uint256, uint256));
-        HugeUint.Uint512 memory res = handler.mul(HugeUint.Uint512(a0, a1), b);
+        HugeUint.Uint512 memory res = handler.mul(HugeUint.Uint512(a1, a0), b);
         assertEq(res.lo, res0, "lo");
         assertEq(res.hi, res1, "hi");
     }
@@ -171,14 +171,14 @@ contract TestHugeUintFuzzing is HugeUintFixture {
             // we can't overflow the multiplication in this case
             return;
         }
-        HugeUint.Uint512 memory bLimit = handler.add(HugeUint.Uint512(bLimit0, bLimit1), HugeUint.Uint512(1, 0));
+        HugeUint.Uint512 memory bLimit = handler.add(HugeUint.Uint512(bLimit1, bLimit0), HugeUint.Uint512(0, 1));
         if (bLimit.hi > 0) {
             // we can't overflow the multiplication in this case
             return;
         }
         b = bound(b, bLimit.lo, type(uint256).max);
         vm.expectRevert(HugeUint.HugeUintMulOverflow.selector);
-        handler.mul(HugeUint.Uint512(a0, a1), b);
+        handler.mul(HugeUint.Uint512(a1, a0), b);
     }
 
     /**
@@ -199,7 +199,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         bytes memory a = abi.encodePacked(a1, a0);
         bytes memory result = vmFFIRustCommand("huge-uint-div256", vm.toString(a), vm.toString(b));
         uint256 ref = abi.decode(result, (uint256));
-        uint256 res = handler.div(HugeUint.Uint512(a0, a1), b);
+        uint256 res = handler.div(HugeUint.Uint512(a1, a0), b);
         assertEq(res, ref);
     }
 
@@ -214,7 +214,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
     function testFuzz_RevertWhen_div256ByZero(uint256 a0, uint256 a1) public {
         // division by zero always fails
         vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
-        handler.div(HugeUint.Uint512(a0, a1), 0);
+        handler.div(HugeUint.Uint512(a1, a0), 0);
     }
 
     /**
@@ -231,7 +231,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         vm.assume(b > 0 && a1 > 0); // we can't overflow if a1 is zero
         b = bound(b, 1, a1);
         vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
-        handler.div(HugeUint.Uint512(a0, a1), b);
+        handler.div(HugeUint.Uint512(a1, a0), b);
     }
 
     /**
@@ -265,7 +265,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         bytes memory b = abi.encodePacked(b1, b0);
         bytes memory result = vmFFIRustCommand("huge-uint-div", vm.toString(a), vm.toString(b));
         uint256 ref = abi.decode(result, (uint256));
-        uint256 res = handler.div(HugeUint.Uint512(a0, a1), HugeUint.Uint512(b0, b1));
+        uint256 res = handler.div(HugeUint.Uint512(a1, a0), HugeUint.Uint512(b1, b0));
         assertEq(res, ref);
     }
 
@@ -280,7 +280,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
     function testFuzz_RevertWhen_div512ByZero(uint256 a0, uint256 a1) public {
         // division by zero always fails
         vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
-        handler.div(HugeUint.Uint512(a0, a1), HugeUint.Uint512(0, 0));
+        handler.div(HugeUint.Uint512(a1, a0), HugeUint.Uint512(0, 0));
     }
 
     /**
@@ -303,16 +303,16 @@ contract TestHugeUintFuzzing is HugeUintFixture {
             // we can't overflow in this case
             return;
         }
-        HugeUint.Uint512 memory bLimit = HugeUint.Uint512(bLimit0, bLimit1);
+        HugeUint.Uint512 memory bLimit = HugeUint.Uint512(bLimit1, bLimit0);
         if (bLimit0 == 1 && bLimit1 == 1) {
             // Special case: `a = uint512.max`. The division of `a` by `uint256.max` gives `bLimit = uint256.max+2`.
             // If we were to subtract 1 to enter the range that should overflow, we get `b = uint256.max+1`. However,
             // the division `uint512.max / (uint256.max+1)` does not overflow due to the rounding.
             // To ensure the overflow, we subtract 2 instead.
             // We test this case in unit tests.
-            bLimit = handler.sub(bLimit, HugeUint.Uint512(2, 0));
+            bLimit = handler.sub(bLimit, HugeUint.Uint512(0, 2));
         } else {
-            bLimit = handler.sub(bLimit, HugeUint.Uint512(1, 0));
+            bLimit = handler.sub(bLimit, HugeUint.Uint512(0, 1));
         }
         // bound b
         b1 = bound(b1, 0, bLimit.hi);
@@ -324,7 +324,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
         }
 
         vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
-        handler.div(HugeUint.Uint512(a0, a1), HugeUint.Uint512(b0, b1));
+        handler.div(HugeUint.Uint512(a1, a0), HugeUint.Uint512(b1, b0));
     }
 
     /**
@@ -374,8 +374,8 @@ contract TestHugeUintFuzzing is HugeUintFixture {
                 b0 = 1;
             }
         }
-        HugeUint.Uint512 memory a = HugeUint.Uint512(a0, a1);
-        HugeUint.Uint512 memory b = HugeUint.Uint512(b0, b1);
+        HugeUint.Uint512 memory a = HugeUint.Uint512(a1, a0);
+        HugeUint.Uint512 memory b = HugeUint.Uint512(b1, b0);
         uint256 d = handler.div(a, b);
         // if b > a, then the result is 0 and we don't need to test further
         if (d == 0) {

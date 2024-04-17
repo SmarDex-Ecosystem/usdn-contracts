@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 /**
  * @notice A library for manipulating uint512 quantities.
- * The 512-bit unsigned integers are represented as two uint256 "limbs", a `lo` limb for the least-significant bits,
- * and a `hi` limb for the most significant bits. The resulting uint512 quantity is obtained with `hi * 2^256 + lo`.
+ * The 512-bit unsigned integers are represented as two uint256 "limbs", a `hi` limb for the most significant bits,
+ * and a `lo` limb for the least-significant bits. The resulting uint512 quantity is obtained with `hi * 2^256 + lo`.
  */
 library HugeUint {
     /// @notice Indicates that the division failed because the divisor is zero or the result overflows a uint256.
@@ -22,12 +22,12 @@ library HugeUint {
     /**
      * @notice A 512-bit integer represented as two 256-bit limbs
      * @dev The integer value can be reconstructed as `hi * 2^256 + lo`
-     * @param lo The least-significant bits (lower limb) of the integer
      * @param hi The most-significant bits (higher limb) of the integer
+     * @param lo The least-significant bits (lower limb) of the integer
      */
     struct Uint512 {
-        uint256 lo;
         uint256 hi;
+        uint256 lo;
     }
 
     /**
@@ -36,7 +36,7 @@ library HugeUint {
      * @return The same value as a 512-bit integer
      */
     function wrap(uint256 x) internal pure returns (Uint512 memory) {
-        return Uint512(x, 0);
+        return Uint512({ hi: 0, lo: x });
     }
 
     /**

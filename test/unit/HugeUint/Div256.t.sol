@@ -25,17 +25,17 @@ contract TestHugeUintDiv256 is HugeUintFixture {
      * @custom:then The result is equal to `uint256.max`
      */
     function test_div() public {
-        HugeUint.Uint512 memory a = HugeUint.Uint512(1, 0);
+        HugeUint.Uint512 memory a = HugeUint.Uint512(0, 1);
         uint256 b = 10;
         uint256 res = handler.div(a, b);
         assertEq(res, 0, "1/10");
 
-        a = HugeUint.Uint512(type(uint256).max, 0);
+        a = HugeUint.Uint512(0, type(uint256).max);
         b = 1;
         res = handler.div(a, b);
         assertEq(res, type(uint256).max, "uint256.max/1");
 
-        a = HugeUint.Uint512(type(uint256).max, type(uint256).max - 1);
+        a = HugeUint.Uint512(type(uint256).max - 1, type(uint256).max);
         b = type(uint256).max;
         res = handler.div(a, b);
         assertEq(res, type(uint256).max, "0xfff...e|fff...fff/uint256.max");
@@ -60,12 +60,12 @@ contract TestHugeUintDiv256 is HugeUintFixture {
         vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
         handler.div(a, b);
 
-        a = HugeUint.Uint512(1, type(uint256).max);
+        a = HugeUint.Uint512(type(uint256).max, 1);
         b = 0;
         vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
         handler.div(a, b);
 
-        a = HugeUint.Uint512(1, 0);
+        a = HugeUint.Uint512(0, 1);
         b = 0;
         vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
         handler.div(a, b);

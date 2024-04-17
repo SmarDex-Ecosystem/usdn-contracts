@@ -26,13 +26,13 @@ contract TestHugeUintSub is HugeUintFixture {
      * @custom:then The result is equal to `uint512.max - 1`
      */
     function test_sub() public {
-        HugeUint.Uint512 memory a = HugeUint.Uint512(69, 0);
-        HugeUint.Uint512 memory b = HugeUint.Uint512(42, 0);
+        HugeUint.Uint512 memory a = HugeUint.Uint512(0, 69);
+        HugeUint.Uint512 memory b = HugeUint.Uint512(0, 42);
         HugeUint.Uint512 memory res = HugeUint.sub(a, b);
         assertEq(res.lo, 27, "69-42: lo");
         assertEq(res.hi, 0, "69-42: hi");
 
-        a = HugeUint.Uint512(1, 0);
+        a = HugeUint.Uint512(0, 1);
         b = HugeUint.Uint512(0, 0);
         res = HugeUint.sub(a, b);
         assertEq(res.lo, 1, "1-0: lo");
@@ -45,7 +45,7 @@ contract TestHugeUintSub is HugeUintFixture {
         assertEq(res.hi, 0, "max-max: hi");
 
         a = HugeUint.Uint512(type(uint256).max, type(uint256).max);
-        b = HugeUint.Uint512(1, 0);
+        b = HugeUint.Uint512(0, 1);
         res = HugeUint.sub(a, b);
         assertEq(res.lo, type(uint256).max - 1, "max-1: lo");
         assertEq(res.hi, type(uint256).max, "max-1: hi");
@@ -60,11 +60,11 @@ contract TestHugeUintSub is HugeUintFixture {
      */
     function test_RevertWhen_subUnderflow() public {
         HugeUint.Uint512 memory a = HugeUint.Uint512(0, 0);
-        HugeUint.Uint512 memory b = HugeUint.Uint512(1, 0);
+        HugeUint.Uint512 memory b = HugeUint.Uint512(0, 1);
         vm.expectRevert(HugeUint.HugeUintSubUnderflow.selector);
         handler.sub(a, b);
 
-        a = HugeUint.Uint512(type(uint256).max - 1, type(uint256).max);
+        a = HugeUint.Uint512(type(uint256).max, type(uint256).max - 1);
         b = HugeUint.Uint512(type(uint256).max, type(uint256).max);
         vm.expectRevert(HugeUint.HugeUintSubUnderflow.selector);
         handler.sub(a, b);

@@ -27,23 +27,23 @@ contract TestHugeUintDiv512 is HugeUintFixture {
      * overflow due to rounding down)
      */
     function test_div() public {
-        HugeUint.Uint512 memory a = HugeUint.Uint512(69, 0);
-        HugeUint.Uint512 memory b = HugeUint.Uint512(42, 0);
+        HugeUint.Uint512 memory a = HugeUint.Uint512(0, 69);
+        HugeUint.Uint512 memory b = HugeUint.Uint512(0, 42);
         uint256 res = HugeUint.div(a, b);
         assertEq(res, 1, "69/42");
 
-        a = HugeUint.Uint512(1, 0);
-        b = HugeUint.Uint512(type(uint256).max, 1);
+        a = HugeUint.Uint512(0, 1);
+        b = HugeUint.Uint512(1, type(uint256).max);
         res = HugeUint.div(a, b);
         assertEq(res, 0, "1/(uint256.max*2)");
 
-        a = HugeUint.Uint512(type(uint256).max, 1);
-        b = HugeUint.Uint512(2, 0);
+        a = HugeUint.Uint512(1, type(uint256).max);
+        b = HugeUint.Uint512(0, 2);
         res = HugeUint.div(a, b);
         assertEq(res, type(uint256).max, "uint256.max*2/2");
 
         a = HugeUint.Uint512(type(uint256).max, type(uint256).max);
-        b = HugeUint.Uint512(0, 1);
+        b = HugeUint.Uint512(1, 0);
         res = handler.div(a, b);
         assertEq(res, type(uint256).max, "uint512.max/2^256");
     }
@@ -57,7 +57,7 @@ contract TestHugeUintDiv512 is HugeUintFixture {
      * @custom:then The function reverts with `HugeUintDivisionFailed`
      */
     function test_RevertWhen_div() public {
-        HugeUint.Uint512 memory a = HugeUint.Uint512(69, 0);
+        HugeUint.Uint512 memory a = HugeUint.Uint512(0, 69);
         HugeUint.Uint512 memory b = HugeUint.Uint512(0, 0);
         vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
         HugeUint.div(a, b);
@@ -68,7 +68,7 @@ contract TestHugeUintDiv512 is HugeUintFixture {
         HugeUint.div(a, b);
 
         a = HugeUint.Uint512(type(uint256).max, type(uint256).max);
-        b = HugeUint.Uint512(type(uint256).max, 0);
+        b = HugeUint.Uint512(0, type(uint256).max);
         vm.expectRevert(HugeUint.HugeUintDivisionFailed.selector);
         HugeUint.div(a, b);
     }
