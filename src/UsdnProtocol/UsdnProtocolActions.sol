@@ -206,14 +206,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         uint256 balanceBefore = address(this).balance;
 
-        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, block.timestamp, currentPriceData);
+        // PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, block.timestamp,
+        // currentPriceData);
 
-        (uint16 liquidatedTicks, int256 liquidatedCollateral) =
-            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, iterations);
-        bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
-        if (liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
-        }
+        // (uint16 liquidatedTicks, int256 liquidatedCollateral) =
+        //     _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, iterations);
+        // bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
+        // if (liquidatedTicks > 0) {
+        //     _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
+        // }
 
         liquidatedPositions_ = _liquidate(currentPriceData, iterations);
         _refundExcessEther(0, 0, balanceBefore);
