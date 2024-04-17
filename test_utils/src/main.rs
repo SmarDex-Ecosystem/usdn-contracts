@@ -1,3 +1,5 @@
+use std::ops::DivAssign;
+
 use alloy_primitives::{ruint::aliases::U768, Bytes, FixedBytes, I256, U256, U512};
 use alloy_sol_types::SolValue;
 use anyhow::{anyhow, Result};
@@ -9,7 +11,6 @@ use rug::{
     Float, Integer,
 };
 use serde::Deserialize;
-use std::ops::DivAssign;
 
 #[derive(Deserialize, Debug)]
 struct HermesResponse {
@@ -143,6 +144,18 @@ enum Commands {
         /// A 512-bit unsigned integer with its high limb at least equal to 2^255
         d: U512,
     },
+    /// Compare different mint usdn calculation implementations
+    CalcMintUsdn {
+        amount: Integer,
+        vault_balance: Integer,
+        usdn_total_supply: Integer,
+    },
+    /// Compare different mint usdn calculation implementations (with vaultBalance equal to zero)
+    CalcMintUsdnVaultBalanceZero {
+        amount: Integer,
+        price: Integer,
+        decimals: u32,
+    },
 }
 
 fn main() -> Result<()> {
@@ -200,15 +213,10 @@ fn main() -> Result<()> {
             liq_price,
             amount,
         } => {
-            let price_diff = Integer::from(&start_price - &liq_price);
-            let mut total_expo = Float::with_val(512, amount) * start_price / price_diff;
-            total_expo.floor_mut();
-
-            print_int_u256_hex(
-                total_expo
-                    .to_integer()
-                    .ok_or_else(|| anyhow!("can't convert to integer"))?,
-            )?;
+            let price_diff = &start_price - liq_price;
+            let numerator = amount * start_price;
+            let total_mint = numerator / price_diff;
+            print_int_u256_hex(total_mint)?;
         }
         Commands::Div512 { a, b } => {
             let a = U512::from_be_bytes::<64>(const_hex::decode_to_array(a)?);
@@ -295,6 +303,24 @@ fn main() -> Result<()> {
             let bytes: [u8; 32] = res.to_be_bytes::<96>()[64..].try_into()?;
             let x_bytes: FixedBytes<32> = bytes.into();
             print!("{x_bytes}");
+        }
+        Commands::CalcMintUsdn {
+            amount,
+            vault_balance,
+            usdn_total_supply,
+        } => {
+            let numerator = amount * usdn_total_supply;
+            let total_mint = numerator / vault_balance;
+            print_int_u256_hex(total_mint)?;
+        }
+        Commands::CalcMintUsdnVaultBalanceZero {
+            amount,
+            price,
+            decimals,
+        } => {
+            let numerator = amount * price;
+            let total_mint = numerator / 10u128.pow(decimals);
+            print_int_u256_hex(total_mint)?;
         }
     }
     Ok(())

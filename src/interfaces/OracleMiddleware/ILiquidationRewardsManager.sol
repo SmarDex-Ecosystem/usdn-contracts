@@ -25,12 +25,12 @@ interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTy
     /**
      * @notice Returns the amount of wstETH that needs to be sent to the liquidator.
      * @param tickAmount The amount of tick to liquidate.
-     * @param amountLiquidated The amount of collateral that got liquidated, if negative it means there was not enough
-     * collateral to cover the losses caused by the liquidations (can happen during heavy price fluctuations).
+     * @param remainingCollateral The amount of collateral remaining after liquidations. If negative, it means there was
+     * not enough collateral to cover the losses caused by the liquidations (can happen during heavy price fluctuations)
      * @param rebased Whether an optional USDN rebase was performed.
      * @return wstETHRewards_ The wstETH to send to the liquidator as rewards (in wei).
      */
-    function getLiquidationRewards(uint16 tickAmount, int256 amountLiquidated, bool rebased)
+    function getLiquidationRewards(uint16 tickAmount, int256 remainingCollateral, bool rebased)
         external
         view
         returns (uint256 wstETHRewards_);
