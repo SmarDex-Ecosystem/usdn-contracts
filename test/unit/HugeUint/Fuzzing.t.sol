@@ -133,7 +133,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      * @param a1 most-significant bits of the first operand
      * @param b the second operand
      */
-    function testFuzz_FFIMul(uint256 a0, uint256 a1, uint256 b) public {
+    function testFuzz_FFIMul512(uint256 a0, uint256 a1, uint256 b) public {
         bytes memory a = abi.encodePacked(a1, a0);
         if (a0 > 0 || a1 > 0) {
             // determine the maximum value of b
@@ -162,7 +162,7 @@ contract TestHugeUintFuzzing is HugeUintFixture {
      * @param a1 The MSB of the first operand
      * @param b The second operand
      */
-    function testFuzz_RevertWhen_FFIMulOverflow(uint256 a0, uint256 a1, uint256 b) public {
+    function testFuzz_RevertWhen_FFIMul512Overflow(uint256 a0, uint256 a1, uint256 b) public {
         vm.assume(a0 > 0 || a1 > 0);
         bytes memory uintMax = abi.encodePacked(type(uint256).max, type(uint256).max);
         bytes memory temp = vmFFIRustCommand("div512", vm.toString(uintMax), vm.toString(abi.encodePacked(a1, a0)));

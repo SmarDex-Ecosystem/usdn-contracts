@@ -92,12 +92,14 @@ library HugeUint {
         }
         (res_.lo, res_.hi) = _mul256(a.lo, b);
         unchecked {
-            res_.hi += a.hi * b;
-        }
-        // check for overflow
-        uint256 d = _div(res_.lo, res_.hi, a.lo, a.hi);
-        if (d != b) {
-            revert HugeUintMulOverflow();
+            uint256 p = a.hi * b;
+            if (p / b != a.hi) {
+                revert HugeUintMulOverflow();
+            }
+            res_.hi += p;
+            if (res_.hi < p) {
+                revert HugeUintMulOverflow();
+            }
         }
     }
 
