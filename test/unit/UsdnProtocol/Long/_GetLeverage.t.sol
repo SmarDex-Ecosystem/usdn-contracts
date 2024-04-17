@@ -14,14 +14,24 @@ contract TestUsdnProtocolLongGetLeverage is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Call the `_getLeverage` function
-     * @custom:given StartPrice equal to 100 and liquidationPrice equal to 100
-     * @custom:when The function is called
+     * @custom:scenario Call `_getLeverage` reverts when the liquidation price is equal or greater than
+     * the start price.
+     * @custom:given A liquidationPrice price greater than or equal to the StartPrice
+     * @custom:when _getLeverage is called
      * @custom:then The transaction reverts with the `UsdnProtocolInvalidLiquidationPrice` error
      */
-    function test_RevertWhen_getLeverage() public {
-        uint128 startPrice = 100;
-        uint128 liquidationPrice = 100;
+    function test_RevertWhen_getLeverageWithLiquidationPriceGreaterThanStartPrice() public {
+        uint128 startPrice = 1000;
+        uint128 liquidationPrice = 1000;
+
+        /* ------------------------- startPrice == liquidationPrice ------------------------- */
+        vm.expectRevert(
+            abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liquidationPrice, startPrice)
+        );
+        protocol.i_getLeverage(startPrice, liquidationPrice);
+
+        /* -------------------------- liquidationPrice > startPrice ------------------------- */
+        liquidationPrice += 1;
         vm.expectRevert(
             abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liquidationPrice, startPrice)
         );
@@ -29,16 +39,16 @@ contract TestUsdnProtocolLongGetLeverage is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario GetLeverage returns the correct value
-     * @custom:given StartPrice equal to 101 and liquidationPrice equal to 100
-     * @custom:when The function is called
-     * @custom:then The transaction successfully completes
-     * @custom:and The leverage is calculated correctly
+     * @custom:scenario Check calculations of `_getLeverage`
      */
     function test_getLeverageWithExpectedValue() public {
-        uint128 startPrice = 101;
-        uint128 liquidationPrice = 100;
-        uint128 leverage = protocol.i_getLeverage(startPrice, liquidationPrice);
-        assertEq(leverage, 101e21, "Leverage is incorrect");
+        uint128 leverage = protocol.i_getLeverage(1000, 1000 - 1);
+        assertEq(leverage, 1000e21, "Position total expo should be 1000e21");
+
+        leverage = protocol.i_getLeverage(10_389 ether, 10_158 ether);
+        assertEq(leverage, 44_974_025_974_025_974_025_974, "Position total expo should be 44_974...");
+
+        leverage = protocol.i_getLeverage(2000 ether, 1000 ether);
+        assertEq(leverage, 2e21, "Position total expo should be 2e21");
     }
 }
