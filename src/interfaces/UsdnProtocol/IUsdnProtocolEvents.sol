@@ -77,7 +77,7 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user validates the opening of a long position.
      * @param user The user address.
-     * @param user The address that will be the owner of the position.
+     * @param to The address that will be the owner of the position.
      * @param newLeverage The initial leverage of the position (final).
      * @param newStartPrice The asset price at the moment of the position creation (final).
      * @param tick The tick containing the position.
