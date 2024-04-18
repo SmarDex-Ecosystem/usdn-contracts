@@ -117,7 +117,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param searchStart The tick from which to start searching
      * @return tick_ The next highest tick below `searchStart`
      */
-    function _findMaxInitializedTick(int24 searchStart) internal view returns (int24 tick_) {
+    function _findHighestPopulatedTick(int24 searchStart) internal view returns (int24 tick_) {
         uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(searchStart));
         if (index == LibBitmap.NOT_FOUND) {
             tick_ = minTick();
@@ -411,10 +411,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         if (effects_.liquidatedPositions != 0) {
             if (tick < currentTick) {
                 // all ticks above the current tick were liquidated
-                _maxInitializedTick = _findMaxInitializedTick(currentTick);
+                _maxInitializedTick = _findHighestPopulatedTick(currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                _maxInitializedTick = _findMaxInitializedTick(tick);
+                _maxInitializedTick = _findHighestPopulatedTick(tick);
             }
         }
 

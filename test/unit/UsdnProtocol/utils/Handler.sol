@@ -256,8 +256,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _tickToBitmapIndex(tick);
     }
 
-    function i_findMaxInitializedTick(int24 searchStart) external view returns (int24 tick_) {
-        return _findMaxInitializedTick(searchStart);
+    function i_findHighestPopulatedTick(int24 searchStart) external view returns (int24 tick_) {
+        return _findHighestPopulatedTick(searchStart);
     }
 
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
