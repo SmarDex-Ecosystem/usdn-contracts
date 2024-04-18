@@ -99,9 +99,9 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(pendingActions.length, 0, "no pending action");
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
-        assertTrue(action.action == ProtocolAction.ValidateOpenPosition, "action type");
-        assertEq(action.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.user, address(this), "action user");
+        assertTrue(action.common.action == ProtocolAction.ValidateOpenPosition, "action type");
+        assertEq(action.common.timestamp, block.timestamp, "action timestamp");
+        assertEq(action.common.user, address(this), "action user");
         assertEq(action.tick, expectedTick, "action tick");
         assertEq(action.tickVersion, 0, "action tickVersion");
         assertEq(action.index, 0, "action index");
@@ -110,7 +110,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
         (pendingActions,) = protocol.getActionablePendingActions(address(0));
         action = protocol.i_toLongPendingAction(pendingActions[0]);
-        assertEq(action.user, address(this), "pending action user");
+        assertEq(action.common.user, address(this), "pending action user");
         vm.stopPrank();
     }
 
@@ -209,8 +209,8 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         uint128 expectedMaxLiqPrice =
             uint128(CURRENT_PRICE * (protocol.BPS_DIVISOR() - protocol.getSafetyMarginBps()) / protocol.BPS_DIVISOR());
 
-        int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE, protocol.getLiquidationMultiplier());
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick, protocol.getLiquidationMultiplier());
+        int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE);
+        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick);
 
         vm.expectRevert(
             abi.encodeWithSelector(

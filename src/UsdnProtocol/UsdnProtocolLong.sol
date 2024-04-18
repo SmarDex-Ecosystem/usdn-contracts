@@ -58,19 +58,72 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         returns (int256 value_)
     {
         (Position memory pos, uint8 liquidationPenalty) = getLongPosition(tick, tickVersion, index);
-        uint256 liquidationMultiplier = getLiquidationMultiplier(timestamp);
-        uint128 liqPrice =
-            getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing, liquidationMultiplier);
+        int256 longTradingExpo = longTradingExpoWithFunding(price, timestamp);
+        if (longTradingExpo < 0) {
+            longTradingExpo = 0;
+        }
+        uint128 liqPrice = getEffectivePriceForTick(
+            tick - int24(uint24(liquidationPenalty)) * _tickSpacing,
+            price,
+            uint256(longTradingExpo),
+            _liqMultiplierAccumulator
+        );
         value_ = _positionValue(price, liqPrice, pos.totalExpo);
     }
 
     /// @inheritdoc IUsdnProtocolLong
     function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
-        tick_ = getEffectiveTickForPrice(price, _liquidationMultiplier);
+        tick_ = getEffectiveTickForPrice(
+            price, _lastPrice, _totalExpo - _balanceLong, _liqMultiplierAccumulator, _tickSpacing
+        );
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier) public view returns (int24 tick_) {
+    function getEffectiveTickForPrice(
+        uint128 price,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
+        int24 tickSpacing
+    ) public pure returns (int24 tick_) {
+        // unadjust price with liquidation multiplier
+        uint256 unadjustedPrice;
+        if (accumulator.hi == 0 && accumulator.lo == 0) {
+            // no position in long, we assume a liquidation multiplier of 1.0
+            unadjustedPrice = price;
+        } else {
+            // M = assetPrice * (totalExpo - balanceLong) / accumulator
+            // unadjustedPrice = price / M
+            // unadjustedPrice = price * accumulator / (assetPrice * (totalExpo - balanceLong))
+            HugeUint.Uint512 memory numerator = accumulator.mul(price);
+            unadjustedPrice = HugeUint.div(numerator, HugeUint.wrap(assetPrice * longTradingExpo));
+        }
+
+        if (unadjustedPrice < TickMath.MIN_PRICE) {
+            return TickMath.minUsableTick(tickSpacing);
+        }
+
+        tick_ = TickMath.getTickAtPrice(unadjustedPrice);
+
+        // round down to the next valid tick according to _tickSpacing (towards negative infinity)
+        if (tick_ < 0) {
+            // we round up the inverse number (positive) then invert it -> round towards negative infinity
+            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(tickSpacing)))))
+                * tickSpacing;
+            // avoid invalid ticks
+            int24 minUsableTick = TickMath.minUsableTick(tickSpacing);
+            if (tick_ < minUsableTick) {
+                tick_ = minUsableTick;
+            }
+        } else {
+            // rounding is desirable here
+            // slither-disable-next-line divide-before-multiply
+            tick_ = (tick_ / tickSpacing) * tickSpacing;
+        }
+    }
+
+    /// @inheritdoc IUsdnProtocolLong
+    function oldGetEffectiveTickForPrice(uint128 price, uint256 liqMultiplier) public view returns (int24 tick_) {
         // adjusted price with liquidation multiplier
         uint256 priceWithMultiplier =
             FixedPointMathLib.fullMulDiv(price, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, liqMultiplier);
@@ -101,12 +154,31 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /// @inheritdoc IUsdnProtocolLong
     function getEffectivePriceForTick(int24 tick) public view returns (uint128 price_) {
-        // adjusted price with liquidation multiplier
-        price_ = getEffectivePriceForTick(tick, _liquidationMultiplier);
+        price_ = getEffectivePriceForTick(tick, _lastPrice, _totalExpo - _balanceLong, _liqMultiplierAccumulator);
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public pure returns (uint128 price_) {
+    function getEffectivePriceForTick(
+        int24 tick,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) public pure returns (uint128 price_) {
+        // adjusted price with liquidation multiplier
+        if (accumulator.hi == 0 && accumulator.lo == 0) {
+            // no position in long, we assume a liquidation multiplier of 1.0
+            return TickMath.getPriceAtTick(tick).toUint128();
+        }
+        // M = assetPrice * (totalExpo - balanceLong) / accumulator
+        // price = getPriceAtTick(tick) * M
+        // price = getPriceAtTick(tick) * assetPrice * (totalExpo - balanceLong) / accumulator
+        uint256 unadjustedPrice = TickMath.getPriceAtTick(tick);
+        HugeUint.Uint512 memory numerator = HugeUint.mul(unadjustedPrice, assetPrice * longTradingExpo);
+        price_ = HugeUint.div(numerator, accumulator).toUint128();
+    }
+
+    /// @inheritdoc IUsdnProtocolLong
+    function oldGetEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public pure returns (uint128 price_) {
         // adjusted price with liquidation multiplier
         price_ = FixedPointMathLib.fullMulDiv(
             TickMath.getPriceAtTick(tick), liqMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
@@ -169,6 +241,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         view
         returns (int256 value_)
     {
+        // TODO: getEffectivePriceForTick uses _lastPrice. Maybe we should also use _lastPrice instead of currentPrice
+        // for the value calculation
+
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
         uint128 liqPriceWithoutPenalty =
             getEffectivePriceForTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
@@ -374,10 +449,15 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             iteration = MAX_LIQUIDATION_ITERATION;
         }
 
+        // TODO: update this to not rely on the liquidation multiplier
         int24 currentTick = TickMath.getClosestTickAtPrice(
             FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier)
         );
         int24 tick = _maxInitializedTick;
+        // we can't mutate totalExpo and the liquidation multiplier accumulator until we have calculated all prices
+        // during the liquidation process
+        uint256 totalExpoToRemove;
+        uint256 accumulatorValueToRemove;
 
         do {
             {
@@ -397,17 +477,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             TickData memory tickData;
             {
                 (bytes32 tickHash,) = _tickHash(tick);
-                // Update tick data and accumulator
+
                 tickData = _tickData[tickHash];
+
+                totalExpoToRemove += tickData.totalExpo;
+                effects_.liquidatedPositions += tickData.totalPos;
                 uint256 unadjustedTickPrice =
                     TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
-                _liqMultiplierAccumulator =
-                    _liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * tickData.totalExpo));
-
-                // Update global state
-                _totalExpo -= tickData.totalExpo;
-                _totalLongPositions -= tickData.totalPos;
-                effects_.liquidatedPositions += tickData.totalPos;
+                accumulatorValueToRemove += unadjustedTickPrice * tickData.totalExpo;
 
                 // Reset tick by incrementing the tick version
                 ++_tickVersion[tick];
@@ -426,6 +503,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 );
             }
         } while (effects_.liquidatedTicks < iteration);
+
+        // update the state
+        _totalLongPositions -= effects_.liquidatedPositions;
+        _totalExpo -= totalExpoToRemove;
+        _liqMultiplierAccumulator = _liqMultiplierAccumulator.sub(HugeUint.wrap(accumulatorValueToRemove));
 
         if (effects_.liquidatedPositions != 0) {
             if (tick < currentTick) {

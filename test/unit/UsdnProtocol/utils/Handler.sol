@@ -20,6 +20,7 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -48,7 +49,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
     /// @dev Push a pending item to the front of the pending actions queue
     function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
         rawIndex_ = _pendingActionsQueue.pushFront(action);
-        _pendingActions[action.user] = uint256(rawIndex_) + 1;
+        _pendingActions[action.common.user] = uint256(rawIndex_) + 1;
     }
 
     function i_initiateClosePosition(
@@ -168,14 +169,25 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     function i_assetToTransfer(
-        uint128 currentPrice,
+        uint128 priceWithFees,
+        uint256 neutralPrice,
         int24 tick,
         uint8 liquidationPenalty,
-        uint128 expo,
-        uint256 liqMultiplier,
+        uint128 posExpo,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
         uint256 tempTransferred
     ) external view returns (uint256, int256) {
-        return _assetToTransfer(currentPrice, tick, liquidationPenalty, expo, liqMultiplier, tempTransferred);
+        return _assetToTransfer(
+            priceWithFees,
+            neutralPrice,
+            tick,
+            liquidationPenalty,
+            posExpo,
+            longTradingExpo,
+            accumulator,
+            tempTransferred
+        );
     }
 
     function i_tickValue(uint256 currentPrice, int24 tick, TickData memory tickData) external view returns (int256) {

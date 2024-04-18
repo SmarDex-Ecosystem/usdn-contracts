@@ -51,8 +51,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         // Create a long position to liquidate
         setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
 
-        uint128 liqPriceAfterFundings =
-            protocol.getEffectivePriceForTick(desiredLiqTick, protocol.getLiquidationMultiplier());
+        uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Calculate the collateral this position gives on liquidation
         int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTickData(desiredLiqTick));
@@ -107,8 +106,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         skip(34 days);
         protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
 
-        uint128 liqPriceAfterFundings =
-            protocol.getEffectivePriceForTick(desiredLiqTick, protocol.getLiquidationMultiplier());
+        uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
         assertGt(
             liqPriceAfterFundings, price, "The fundings did not push the liquidation price above the current price"
         );
