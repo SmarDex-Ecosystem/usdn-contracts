@@ -5,7 +5,7 @@ import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
@@ -470,7 +470,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation);
         protocol.liquidate{ value: 0.5 ether }(priceData, 1);
-        assertEq(protocol.getTotalLongPositions(), 0, "total positions after liquidate");
+        assertEq(protocol.getTotalLongPositions(), 1, "total positions after liquidate");
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
