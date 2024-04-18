@@ -108,8 +108,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_RevertWhen_closePartialPositionWithAnOutdatedTick() external {
         bytes memory priceData = abi.encode(protocol.getEffectivePriceForTick(tick));
 
-        // we need to wait for the price to be updated
-        _waitDelay();
         // Liquidate the position
         protocol.liquidate(priceData, 1);
         (, uint256 version) = protocol.i_tickHash(tick);

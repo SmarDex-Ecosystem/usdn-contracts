@@ -11,8 +11,6 @@ import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 
-import { console2 } from "forge-std/Test.sol";
-
 abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;

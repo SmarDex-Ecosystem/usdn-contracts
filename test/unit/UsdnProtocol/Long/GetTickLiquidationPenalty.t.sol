@@ -69,8 +69,6 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
         );
         assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty, "tick value");
 
-        // we need to wait for the price to be updated
-        _waitDelay();
         protocol.liquidate(abi.encode(params.initialPrice / 3), 10);
 
         // change the penalty setting

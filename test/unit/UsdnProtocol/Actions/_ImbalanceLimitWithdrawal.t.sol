@@ -46,8 +46,6 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
             address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
         );
 
-        // we need to wait for the price to be updated
-        // _waitDelay();
         // liquidate everything with huge bad debt
         protocol.liquidate(abi.encode(params.initialPrice / 100), 1);
 
