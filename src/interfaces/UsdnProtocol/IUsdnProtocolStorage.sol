@@ -237,8 +237,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      */
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory);
 
-    /// @notice The maximum initialized tick
-    function getMaxInitializedTick() external view returns (int24);
+    /// @notice The highest tick with a position
+    function getHighestPopulatedTick() external view returns (int24);
 
     /// @notice Total long positions count
     function getTotalLongPositions() external view returns (uint256);

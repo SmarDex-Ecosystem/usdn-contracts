@@ -238,9 +238,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // Add to tick array
         Position[] storage tickArray = _longPositions[tickHash];
         index_ = tickArray.length;
-        if (tick > _maxInitializedTick) {
-            // keep track of max initialized tick
-            _maxInitializedTick = tick;
+        if (tick > _highestPopulatedTick) {
+            // keep track of the highest populated tick
+            _highestPopulatedTick = tick;
         }
         tickArray.push(long);
 
@@ -367,7 +367,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int24 currentTick = TickMath.getClosestTickAtPrice(
             FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier)
         );
-        int24 tick = _maxInitializedTick;
+        int24 tick = _highestPopulatedTick;
 
         do {
             {
@@ -411,10 +411,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         if (effects_.liquidatedPositions != 0) {
             if (tick < currentTick) {
                 // all ticks above the current tick were liquidated
-                _maxInitializedTick = _findHighestPopulatedTick(currentTick);
+                _highestPopulatedTick = _findHighestPopulatedTick(currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                _maxInitializedTick = _findHighestPopulatedTick(tick);
+                _highestPopulatedTick = _findHighestPopulatedTick(tick);
             }
         }
 
