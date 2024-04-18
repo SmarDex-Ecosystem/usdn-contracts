@@ -77,13 +77,9 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @notice Check if a USDN rebase is required and adjust divisor if needed.
      * @dev Note: only call this function after `_applyPnlAndFunding` has been called to update the balances.
      * @param assetPrice The current price of the underlying asset
-     * @param ignoreInterval If true, then the price check will be performed regardless of when the last check happened
      * @return rebased_ Whether a rebase was performed
      */
-    function _usdnRebase(uint128 assetPrice, bool ignoreInterval) internal returns (bool rebased_) {
-        if (!ignoreInterval && block.timestamp - _lastRebaseCheck < _usdnRebaseInterval) {
-            return false;
-        }
+    function _usdnRebase(uint128 assetPrice) internal returns (bool rebased_) {
         _lastRebaseCheck = block.timestamp;
         IUsdn usdn = _usdn;
         uint256 divisor = usdn.divisor();

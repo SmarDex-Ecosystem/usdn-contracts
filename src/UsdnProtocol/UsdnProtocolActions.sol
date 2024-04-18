@@ -1084,7 +1084,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _balanceVault = effects.newVaultBalance;
 
         // Always perform the rebase check during liquidation
-        bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
+        bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice)); // SafeCast not needed since done above
 
         if (effects.liquidatedTicks > 0) {
             _sendRewardsToLiquidator(effects.liquidatedTicks, effects.remainingCollateral, rebased);
@@ -1230,26 +1230,25 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(uint128(timestamp), action, priceData);
     }
 
-    function _applyPnlAndFundingAndLiquidate(uint256 neutralPrice, uint256 timestamp, uint16 iterations)
-        internal
-        returns (uint16 liquidatedTicks_, int256 liquidatedCollateral_)
-    {
+    function _applyPnlAndFundingAndLiquidate(uint256 neutralPrice, uint256 timestamp, uint16 iterations) internal {
         // adjust balances
         (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
 
-        uint256 priceForLiquidation = neutralPrice;
-
         // liquidate if price is more recent than _lastPrice
         if (priceUpdated) {
             LiquidationsEffects memory liquidationEffects =
-                _liquidatePositions(neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
+                _liquidatePositions(neutralPrice, iterations, tempLongBalance, tempVaultBalance);
 
             _balanceLong = liquidationEffects.newLongBalance;
             _balanceVault = liquidationEffects.newVaultBalance;
 
             // rebase USDN if needed (interval has elapsed and price threshold was reached)
-            bool rebased = _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
+            bool rebased;
+            if (block.timestamp - _lastRebaseCheck >= _usdnRebaseInterval) {
+                rebased = _usdnRebase(uint128(neutralPrice)); // safecast not needed since already done earlier
+            }
+
             if (liquidationEffects.liquidatedTicks > 0) {
                 _sendRewardsToLiquidator(
                     liquidationEffects.liquidatedTicks, liquidationEffects.remainingCollateral, rebased

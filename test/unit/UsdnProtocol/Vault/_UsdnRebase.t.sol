@@ -38,7 +38,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         skip(1 hours);
 
         // initialize _lastRebaseCheck
-        protocol.i_usdnRebase(params.initialPrice, true);
+        protocol.i_usdnRebase(params.initialPrice);
         assertGt(protocol.getLastRebaseCheck(), 0, "last rebase check");
         uint256 usdnPrice = protocol.usdnPrice(params.initialPrice);
         assertEq(usdnPrice, 1 ether, "initial price");
@@ -52,7 +52,9 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         protocol.i_applyPnlAndFunding(newPrice, uint128(block.timestamp));
         // since we checked more recently than `_usdnRebaseInterval`, we do not rebase
         vm.recordLogs();
-        protocol.i_usdnRebase(newPrice, false);
+        if (block.timestamp - protocol.getLastRebaseCheck() >= protocol.getUsdnRebaseInterval()) {
+            protocol.i_usdnRebase(newPrice);
+        }
         Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i; i < logs.length; i++) {
             // no log is a rebase log
@@ -73,7 +75,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         usdn.rebase(usdn.MIN_DIVISOR());
 
         vm.recordLogs();
-        protocol.i_usdnRebase(params.initialPrice, true);
+        protocol.i_usdnRebase(params.initialPrice);
         Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i; i < logs.length; i++) {
             // no log is a rebase log
@@ -90,7 +92,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_rebasePriceLowerThanThreshold() public {
         // initialize _lastRebaseCheck
-        protocol.i_usdnRebase(params.initialPrice, true);
+        protocol.i_usdnRebase(params.initialPrice);
         assertGt(protocol.getLastRebaseCheck(), 0, "last rebase check");
         uint256 usdnPrice = protocol.usdnPrice(params.initialPrice);
         assertEq(usdnPrice, 1 ether, "initial price");
@@ -110,7 +112,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
 
         // since the price of USDN didn't reach the threshold, we do not rebase
         vm.recordLogs();
-        protocol.i_usdnRebase(newPrice, true);
+        protocol.i_usdnRebase(newPrice);
         Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i; i < logs.length; i++) {
             // no log is a rebase log

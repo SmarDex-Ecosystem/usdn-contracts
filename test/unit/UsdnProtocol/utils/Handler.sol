@@ -264,8 +264,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _updateEMA(secondsElapsed);
     }
 
-    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool) {
-        return _usdnRebase(assetPrice, ignoreInterval);
+    function i_usdnRebase(uint128 assetPrice) external returns (bool) {
+        return _usdnRebase(assetPrice);
     }
 
     function i_calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
