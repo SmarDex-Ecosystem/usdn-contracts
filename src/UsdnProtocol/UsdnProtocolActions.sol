@@ -17,12 +17,15 @@ import {
     LongPendingAction,
     LiquidationsEffects,
     PreviousActionsData,
-    PositionId
+    PositionId,
+    TickData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -31,6 +34,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     using SafeCast for int256;
     using LibBitmap for LibBitmap.Bitmap;
     using SignedMath for int256;
+    using HugeUint for HugeUint.Uint512;
 
     /// @inheritdoc IUsdnProtocolActions
     uint256 public constant MIN_USDN_SUPPLY = 1000;
@@ -859,7 +863,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // Update the total expo by adding the position's new expo and removing the old one.
             // Do not use += or it will underflow
             _totalExpo = _totalExpo + expoAfter - expoBefore;
-            _tickData[tickHash].totalExpo = _tickData[tickHash].totalExpo + expoAfter - expoBefore;
+
+            // update the tick data and the liqMultiplierAccumulator
+            {
+                TickData storage tickData = _tickData[tickHash];
+                uint256 unadjustedTickPrice =
+                    TickMath.getPriceAtTick(long.tick - int24(uint24(tickData.liquidationPenalty)) * tickSpacing);
+                tickData.totalExpo = tickData.totalExpo + expoAfter - expoBefore;
+                _liqMultiplierAccumulator = _liqMultiplierAccumulator.add(
+                    HugeUint.wrap(expoAfter * unadjustedTickPrice)
+                ).sub(HugeUint.wrap(expoBefore * unadjustedTickPrice));
+            }
 
             emit ValidatedOpenPosition(long.user, leverage, startPrice, long.tick, long.tickVersion, long.index);
         }

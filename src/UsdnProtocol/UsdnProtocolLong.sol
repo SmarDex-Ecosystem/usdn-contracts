@@ -10,12 +10,14 @@ import { Position, LiquidationsEffects, TickData } from "src/interfaces/UsdnProt
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
     using SignedMath for int256;
+    using HugeUint for HugeUint.Uint512;
 
     /// @inheritdoc IUsdnProtocolLong
     function minTick() public view returns (int24 tick_) {
@@ -242,7 +244,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         _balanceLong += long.amount;
         _totalExpo += long.totalExpo;
         ++_totalLongPositions;
+
+        // Update tick data
         TickData storage tickData = _tickData[tickHash];
+        // The unadjusted tick price for the accumulator might be different depending if we already have positions in
+        // the tick or not
+        uint256 unadjustedTickPrice;
         if (tickData.totalPos == 0) {
             // first position in this tick, we need to reflect that it is populated
             _tickBitmap.set(_tickToBitmapIndex(tick));
@@ -250,11 +257,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tickData.totalExpo = long.totalExpo;
             tickData.totalPos = 1;
             tickData.liquidationPenalty = liquidationPenalty;
+            unadjustedTickPrice = TickMath.getPriceAtTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing);
         } else {
             tickData.totalExpo += long.totalExpo;
             tickData.totalPos += 1;
             // we do not need to adjust the tick's liquidationPenalty since it remains constant
+            unadjustedTickPrice =
+                TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
         }
+        // Update the accumulator with the correct tick price (depending on the liquidation penalty value)
+        _liqMultiplierAccumulator = _liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
     }
 
     /**
@@ -275,6 +287,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     ) internal {
         (bytes32 tickHash,) = _tickHash(tick);
         TickData storage tickData = _tickData[tickHash];
+        uint256 unadjustedTickPrice =
+            TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
         if (amountToRemove < pos.amount) {
             Position storage position = _longPositions[tickHash][index];
             position.totalExpo = pos.totalExpo - totalExpoToRemove;
@@ -297,6 +311,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         _totalExpo -= totalExpoToRemove;
         tickData.totalExpo -= totalExpoToRemove;
+        _liqMultiplierAccumulator =
+            _liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * totalExpoToRemove));
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -381,12 +397,21 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             TickData memory tickData;
             {
                 (bytes32 tickHash,) = _tickHash(tick);
+                // Update tick data and accumulator
                 tickData = _tickData[tickHash];
+                uint256 unadjustedTickPrice =
+                    TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
+                _liqMultiplierAccumulator =
+                    _liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * tickData.totalExpo));
+
+                // Update global state
                 _totalExpo -= tickData.totalExpo;
                 _totalLongPositions -= tickData.totalPos;
                 effects_.liquidatedPositions += tickData.totalPos;
 
+                // Reset tick by incrementing the tick version
                 ++_tickVersion[tick];
+
                 ++effects_.liquidatedTicks;
             }
 
