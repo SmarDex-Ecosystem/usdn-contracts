@@ -951,7 +951,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             posId.tick,
             posId.tickVersion,
             posId.index,
-            pos.amount - amountToClose,
+            pos.amount,
+            amountToClose,
             pos.totalExpo - totalExpoToClose
         );
     }
