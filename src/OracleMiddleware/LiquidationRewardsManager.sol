@@ -54,7 +54,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
     /**
      * @inheritdoc ILiquidationRewardsManager
-     * @dev In the current implementation, the `int256 amountLiquidated` parameter is not used
+     * @dev In the current implementation, the `int256 remainingCollateral` parameter is not used
      */
     function getLiquidationRewards(uint16 tickAmount, int256, bool rebased)
         external
