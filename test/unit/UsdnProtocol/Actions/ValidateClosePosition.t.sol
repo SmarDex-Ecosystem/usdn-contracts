@@ -536,7 +536,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         vm.prank(DEPLOYER);
         protocol.initiateClosePosition(tick, 0, 0, pos.amount, priceData, EMPTY_PREVIOUS_DATA);
 
-        /* ---- Validate close position with a large enough remaining collateral ---- */
+        // /* ---- Validate close position with a large enough remaining collateral ---- */
 
         _waitDelay();
         priceData = abi.encode(liquidationPrice - 1);

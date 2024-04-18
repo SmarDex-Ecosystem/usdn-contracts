@@ -13,6 +13,7 @@ import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 
 abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReentrancyGuard {
     using LibBitmap for LibBitmap.Bitmap;
@@ -240,7 +241,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     mapping(bytes32 => TickData) internal _tickData;
 
     /// @notice Cached value of the maximum initialized tick
-    int24 internal _maxInitializedTick;
+    int24 internal _maxInitializedTick = TickMath.MIN_TICK;
 
     /// @notice Cache of the total long positions count
     uint256 internal _totalLongPositions;

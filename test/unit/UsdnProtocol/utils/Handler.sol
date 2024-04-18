@@ -20,7 +20,7 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -123,17 +123,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         uint16 iteration,
         int256 tempLongBalance,
         int256 tempVaultBalance
-    )
-        external
-        returns (
-            uint256 liquidatedPositions_,
-            uint16 liquidatedTicks_,
-            int256 remainingCollateral_,
-            uint256 newLongBalance_,
-            uint256 newVaultBalance_,
-            int24 currentTick_
-        )
-    {
+    ) external returns (LiquidationsEffects memory effects_) {
         return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
@@ -345,5 +335,33 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty) external {
         _saveNewPosition(tick, long, liquidationPenalty);
+    }
+
+    function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {
+        _checkSafetyMargin(currentPrice, liquidationPrice);
+    }
+
+    function i_getTickToLiquidate(int24 startTick) external view returns (uint256 tickToLiquidate_) {
+        int24 tick = _maxInitializedTick;
+
+        do {
+            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
+            if (index == LibBitmap.NOT_FOUND) {
+                // no populated ticks left
+                break;
+            }
+
+            tick = _bitmapIndexToTick(index);
+            if (tick < startTick) {
+                break;
+            }
+
+            ++tickToLiquidate_;
+            tick -= _tickSpacing;
+        } while (true);
+    }
+
+    function i_checkForPendingLiquidations(int24 tick, uint128 price) external view returns (bool) {
+        return _checkForPendingLiquidations(tick, price);
     }
 }
