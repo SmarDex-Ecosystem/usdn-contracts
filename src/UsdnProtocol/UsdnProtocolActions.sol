@@ -24,8 +24,6 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 
-import { console2 } from "./../../lib/forge-std/src/console2.sol";
-
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
@@ -418,13 +416,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
 
-        (uint16 liquidatedTicks, int256 liquidatedCollateral) =
-            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
-
-        bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), false);
-        if (liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
-        }
+        _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
 
         _checkImbalanceLimitDeposit(amount);
 
@@ -499,13 +491,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.ValidateDeposit, deposit.timestamp, priceData);
 
         // adjust balances
-        (uint16 liquidatedTicks, int256 liquidatedCollateral) =
-            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
-
-        bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), false);
-        if (liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
-        }
+        _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
 
         // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
         // action, or the current price provided for validation. We will use the lower of the two amounts to mint.
@@ -561,16 +547,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.InitiateWithdrawal, block.timestamp, currentPriceData);
 
-        {
-            (uint16 liquidatedTicks, int256 liquidatedCollateral) = _applyPnlAndFundingAndLiquidate(
-                currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration
-            );
-
-            bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), false);
-            if (liquidatedTicks > 0) {
-                _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
-            }
-        }
+        _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
 
         // Apply fees on price
         uint128 pendingActionPrice =
@@ -632,13 +609,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, priceData);
 
-        (uint16 liquidatedTicks, int256 liquidatedCollateral) =
-            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
+        _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
 
-        bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), false);
-        if (liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
-        }
         // Apply fees on price
         uint128 withdrawalPriceWithFees =
             (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
@@ -720,14 +692,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             neutralPrice = currentPrice.neutralPrice.toUint128();
 
-            (uint16 liquidatedTicks, int256 liquidatedCollateral) = _applyPnlAndFundingAndLiquidate(
-                currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration
-            );
-
-            bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), false);
-            if (liquidatedTicks > 0) {
-                _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
-            }
+            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
         }
 
         // we calculate the closest valid tick down for the desired liq price with liquidation penalty
@@ -815,14 +780,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // Apply fees on price
             startPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
-            (uint16 liquidatedTicks, int256 liquidatedCollateral) = _applyPnlAndFundingAndLiquidate(
-                currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration
-            );
-
-            bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), false);
-            if (liquidatedTicks > 0) {
-                _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
-            }
+            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
         }
 
         (bytes32 tickHash, uint256 version) = _tickHash(long.tick);
@@ -941,14 +899,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             PriceInfo memory currentPrice =
                 _getOraclePrice(ProtocolAction.InitiateClosePosition, block.timestamp, currentPriceData);
 
-            (uint16 liquidatedTicks, int256 liquidatedCollateral) = _applyPnlAndFundingAndLiquidate(
-                currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration
-            );
-
-            bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), false);
-            if (liquidatedTicks > 0) {
-                _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
-            }
+            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
 
             priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
         }
@@ -1037,13 +988,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.ValidateClosePosition, long.timestamp, priceData);
 
-        (uint16 liquidatedTicks, int256 liquidatedCollateral) =
-            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
-
-        bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), false);
-        if (liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
-        }
+        _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration);
 
         // Apply fees on price
         uint128 priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
@@ -1304,7 +1249,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _balanceVault = liquidationEffects.newVaultBalance;
 
             // rebase USDN if needed (interval has elapsed and price threshold was reached)
-            _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
+            bool rebased = _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
+            if (liquidationEffects.liquidatedTicks > 0) {
+                _sendRewardsToLiquidator(
+                    liquidationEffects.liquidatedTicks, liquidationEffects.remainingCollateral, rebased
+                );
+            }
         }
     }
 
