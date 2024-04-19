@@ -42,13 +42,14 @@ contract TestUsdnProtocolLongGetLeverage is UsdnProtocolBaseFixture {
      * @custom:scenario Check calculations of `_getLeverage`
      */
     function test_getLeverageWithExpectedValue() public {
+        uint8 leverageDecimals = protocol.LEVERAGE_DECIMALS();
         uint128 leverage = protocol.i_getLeverage(1000, 1000 - 1);
-        assertEq(leverage, 1000e21, "Position total expo should be 1000e21");
+        assertEq(leverage, 1000 * 10 ** leverageDecimals, "Position total expo should be 1000e21");
 
         leverage = protocol.i_getLeverage(10_389 ether, 10_158 ether);
         assertEq(leverage, 44_974_025_974_025_974_025_974, "Position total expo should be 44_974...");
 
         leverage = protocol.i_getLeverage(2000 ether, 1000 ether);
-        assertEq(leverage, 2e21, "Position total expo should be 2e21");
+        assertEq(leverage, 2 * 10 ** leverageDecimals, "Position total expo should be 2e21");
     }
 }
