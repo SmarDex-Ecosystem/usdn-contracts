@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+
+import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import {
     LongPendingAction,
@@ -30,7 +30,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     int24 private tick;
     uint256 private tickVersion;
     uint256 private index;
-
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
 
@@ -383,7 +382,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         // test reentrancy
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.initiateClosePosition{ value: 1 }(
+            protocol.initiateClosePosition(
                 tick, tickVersion, index, positionAmount, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
             );
         }

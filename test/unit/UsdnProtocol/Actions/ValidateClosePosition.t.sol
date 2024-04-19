@@ -4,6 +4,9 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
+import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
+
 import {
     LongPendingAction,
     PendingAction,
@@ -11,9 +14,7 @@ import {
     ProtocolAction,
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The initiate close position functions of the USDN Protocol
@@ -28,6 +29,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     int24 private tick;
     uint256 private tickVersion;
     uint256 private index;
+    /// @notice Trigger a reentrancy after receiving ether
+    bool internal _reenter;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -559,6 +562,35 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         assertEq(protocol.getBalanceLong(), 0, "final long balance");
     }
 
+    /**
+     * @custom:scenario The user validates a close position action with a reentrancy attempt
+     * @custom:given A validated open position with an initiated close action done
+     * @custom:and a user being a smart contract that calls validateClosePosition when receiving ether
+     * @custom:and a receive() function that calls validateClosePosition again
+     * @custom:when The user calls validateClosePosition with some ether to trigger a refund
+     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     */
+    function test_RevertWhen_validateClosePositionCalledWithReentrancy() public {
+        _reenter = true;
+
+        setUpUserPositionInLong(
+            address(this),
+            ProtocolAction.InitiateClosePosition,
+            positionAmount,
+            params.initialPrice - (params.initialPrice / 5),
+            params.initialPrice
+        );
+
+        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        protocol.validateClosePosition{ value: 1 }(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+    }
+
     /// @dev Allow refund tests
-    receive() external payable { }
+    receive() external payable {
+        // test reentrancy
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.validateClosePosition(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+        }
+    }
 }
