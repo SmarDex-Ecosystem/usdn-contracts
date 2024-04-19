@@ -21,6 +21,8 @@ contract TestUsdnProtocolLongCalculatePositionTotalExpo is UsdnProtocolBaseFixtu
 
     /**
      * @custom:scenario Compare calculations of `_calculatePositionTotalExpo` with more precise values
+     * @custom:when The function "_calculatePositionTotalExpo" is called with some parameters
+     * @custom:then The result is equal to the result of the Rust implementation
      */
     function testFuzzFFI_calculatePositionTotalExpo(uint128 amount, uint256 startPrice, uint256 liqPrice) public {
         uint256 levDecimals = 10 ** protocol.LEVERAGE_DECIMALS();
@@ -69,6 +71,8 @@ contract TestUsdnProtocolLongCalculatePositionTotalExpo is UsdnProtocolBaseFixtu
 
     /**
      * @custom:scenario Check calculations of `_calculatePositionTotalExpo`
+     * @custom:when The function "_calculatePositionTotalExpo" is called with some parameters
+     * @custom:then Expo is calculated correctly
      */
     function test_calculatePositionTotalExpo() public {
         uint256 expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1500 ether);
