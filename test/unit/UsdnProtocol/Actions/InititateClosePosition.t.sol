@@ -39,13 +39,13 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         super._setUp(params);
 
         (tick, tickVersion, index) = setUpUserPositionInLong(
-            OpenParams(
-                address(this),
-                ProtocolAction.ValidateOpenPosition,
-                positionAmount,
-                params.initialPrice - (params.initialPrice / 5),
-                params.initialPrice
-            )
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: positionAmount,
+                desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
+                price: params.initialPrice
+            })
         );
     }
 
@@ -189,13 +189,13 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
         // Initiate an open position action for another user
         setUpUserPositionInLong(
-            OpenParams(
-                USER_1,
-                ProtocolAction.InitiateOpenPosition,
-                positionAmount,
-                params.initialPrice - (params.initialPrice / 5),
-                params.initialPrice
-            )
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: positionAmount,
+                desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
+                price: params.initialPrice
+            })
         );
 
         skip(protocol.getValidationDeadline());

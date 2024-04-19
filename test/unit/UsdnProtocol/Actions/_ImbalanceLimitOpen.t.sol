@@ -73,13 +73,13 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_checkImbalanceLimitOpenZeroVaultExpo() public {
         setUpUserPositionInLong(
-            OpenParams(
-                address(this),
-                ProtocolAction.ValidateOpenPosition,
-                0.1 ether,
-                params.initialPrice / 2,
-                params.initialPrice
-            )
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 0.1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
 
         // liquidate everything with huge bad debt

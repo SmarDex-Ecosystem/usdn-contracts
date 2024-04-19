@@ -165,9 +165,13 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         protocol.setLiquidationPenalty(storedLiqPenalty); // set a different liquidation penalty
         // this position is opened to set the liquidation penalty of the tick
         (int24 tick,,) = setUpUserPositionInLong(
-            OpenParams(
-                USER_1, ProtocolAction.ValidateOpenPosition, uint128(LONG_AMOUNT), desiredLiqPrice, CURRENT_PRICE
-            )
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: uint128(LONG_AMOUNT),
+                desiredLiqPrice: desiredLiqPrice,
+                price: CURRENT_PRICE
+            })
         );
 
         vm.prank(ADMIN);
@@ -389,13 +393,13 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(storedLiqPenalty);
         (int24 otherTick,,) = setUpUserPositionInLong(
-            OpenParams(
-                USER_1,
-                ProtocolAction.ValidateOpenPosition,
-                uint128(LONG_AMOUNT),
-                protocol.getEffectivePriceForTick(validateTick),
-                CURRENT_PRICE
-            )
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: uint128(LONG_AMOUNT),
+                desiredLiqPrice: protocol.getEffectivePriceForTick(validateTick),
+                price: CURRENT_PRICE
+            })
         );
         assertEq(otherTick, validateTick, "both positions in same tick");
 

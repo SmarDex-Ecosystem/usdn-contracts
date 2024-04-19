@@ -59,9 +59,13 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
                 require(success, "wstETH mint failed");
             }
             (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-                OpenParams(
-                    user, ProtocolAction.ValidateOpenPosition, uint128(longAmount), uint128(longLiqPrice), currentPrice
-                )
+                OpenParams({
+                    user: user,
+                    untilAction: ProtocolAction.ValidateOpenPosition,
+                    positionSize: uint128(longAmount),
+                    desiredLiqPrice: uint128(longLiqPrice),
+                    price: currentPrice
+                })
             );
             (pos[i],) = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;

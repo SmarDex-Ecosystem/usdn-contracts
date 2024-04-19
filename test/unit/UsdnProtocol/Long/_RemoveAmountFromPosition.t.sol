@@ -22,13 +22,13 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
         (_tick, _tickVersion, _index) = setUpUserPositionInLong(
-            OpenParams(
-                address(this),
-                ProtocolAction.ValidateOpenPosition,
-                _positionAmount,
-                params.initialPrice - (params.initialPrice / 5),
-                params.initialPrice
-            )
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: _positionAmount,
+                desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
+                price: params.initialPrice
+            })
         );
     }
 

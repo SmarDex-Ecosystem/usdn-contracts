@@ -50,13 +50,13 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
 
         bytes memory priceData = abi.encode(params.initialPrice);
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            OpenParams(
-                address(this),
-                ProtocolAction.ValidateOpenPosition,
-                uint128(amountToOpen),
-                params.initialPrice - (params.initialPrice / 5),
-                params.initialPrice
-            )
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: uint128(amountToOpen),
+                desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
+                price: params.initialPrice
+            })
         );
 
         uint256 amountClosed;

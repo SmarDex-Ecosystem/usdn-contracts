@@ -49,13 +49,13 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
      */
     function test_getMinLiquidationPrice_multiplierGtOne() public {
         setUpUserPositionInLong(
-            OpenParams(
-                address(this),
-                ProtocolAction.ValidateOpenPosition,
-                500 ether,
-                params.initialPrice / 2,
-                params.initialPrice
-            )
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 500 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
         skip(1 days);
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
@@ -241,7 +241,13 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
         );
 
         tickData = protocol.getTickData(tick);
@@ -321,7 +327,13 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
         );
 
         tickData = protocol.getTickData(tick);

@@ -80,15 +80,32 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     function _setupSparsePendingActionsQueue() internal {
         // Setup 3 pending actions
         setUpUserPositionInLong(
-            OpenParams(USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether)
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: 2000 ether
+            })
         );
         setUpUserPositionInLong(
-            OpenParams(USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether)
+            OpenParams({
+                user: USER_2,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: 2000 ether
+            })
         );
         setUpUserPositionInLong(
-            OpenParams(USER_3, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether)
+            OpenParams({
+                user: USER_3,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: 2000 ether
+            })
         );
-
         // Simulate the second item in the queue being empty (sets it to zero values)
         protocol.i_removePendingAction(1, USER_2);
         // Simulate the first item in the queue being empty
@@ -170,7 +187,13 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     function test_getActionablePendingActionSameUser() public {
         // initiate long
         setUpUserPositionInLong(
-            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether)
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: 2000 ether
+            })
         );
         // the pending action is actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
@@ -195,8 +218,24 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         uint128 price1 = 2000 ether;
         uint128 price2 = 2100 ether;
         // Setup 2 pending actions
-        setUpUserPositionInLong(OpenParams(USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, price1));
-        setUpUserPositionInLong(OpenParams(USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, price2));
+        setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: price1
+            })
+        );
+        setUpUserPositionInLong(
+            OpenParams({
+                user: USER_2,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: price2
+            })
+        );
 
         // Wait
         skip(protocol.getValidationDeadline() + 1);

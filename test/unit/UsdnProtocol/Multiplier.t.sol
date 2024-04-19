@@ -29,13 +29,13 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(params.initialPrice);
         // create a long position to have positive funding
         setUpUserPositionInLong(
-            OpenParams(
-                address(this),
-                ProtocolAction.ValidateOpenPosition,
-                10 ether,
-                params.initialPrice / 2,
-                params.initialPrice
-            )
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 10 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
         assertGt(protocol.i_longTradingExpo(params.initialPrice), protocol.i_vaultTradingExpo(params.initialPrice));
 

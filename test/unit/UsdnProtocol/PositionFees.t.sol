@@ -80,7 +80,13 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(2000 ether);
 
         setUpUserPositionInLong(
-            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
         );
 
         // Wait at least 30 seconds additionally to make sure liquidate updates the state
@@ -127,7 +133,13 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(2000 ether);
 
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            OpenParams(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
         );
         skip(1 hours);
 
@@ -171,7 +183,13 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         bytes memory priceData = abi.encode(2000 ether);
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            OpenParams(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
         );
         skip(1 hours);
 
@@ -461,7 +479,13 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         skip(1 hours);
 
         setUpUserPositionInLong(
-            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
         );
 
         vm.recordLogs();
@@ -481,7 +505,13 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         skip(1 hours);
 
         setUpUserPositionInLong(
-            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
         );
 
         vm.recordLogs();
@@ -516,7 +546,13 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.setPositionFeeBps(0); // 0% fees
 
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            OpenParams(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
         );
 
         skip(1 hours);
@@ -544,7 +580,13 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.setPositionFeeBps(100); // 1% fees
 
         (tick, tickVersion, index) = setUpUserPositionInLong(
-            OpenParams(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether)
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
         );
         skip(1 hours);
 

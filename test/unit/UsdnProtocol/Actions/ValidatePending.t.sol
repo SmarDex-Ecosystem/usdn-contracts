@@ -171,14 +171,22 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
      */
     function _setUpFourPendingActions() internal returns (PreviousActionsData memory previousActionsData_) {
         setUpUserPositionInLong(
-            OpenParams(
-                USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
-            )
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
         setUpUserPositionInLong(
-            OpenParams(
-                USER_2, ProtocolAction.InitiateClosePosition, 1 ether, params.initialPrice / 2, params.initialPrice
-            )
+            OpenParams({
+                user: USER_2,
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
         setUpUserPositionInVault(USER_3, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
         setUpUserPositionInVault(USER_4, ProtocolAction.InitiateWithdrawal, 1 ether, params.initialPrice);
