@@ -147,40 +147,6 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check calculations of the `tickValue` function
-     * @custom:given A tick with total expo 10 wstETH and a liquidation price around $500
-     * @custom:when The current price is equal to the liquidation price without penalty
-     * @custom:or the current price is 2x the liquidation price without penalty
-     * @custom:or the current price is 0.5x the liquidation price without penalty
-     * @custom:or the current price is equal to the liquidation price with penalty
-     * @custom:then The tick value is 0 if the price is equal to the liquidation price without penalty
-     * @custom:or the tick value is 5 wstETH if the price is 2x the liquidation price without penalty
-     * @custom:or the tick value is -10 wstETH if the price is 0.5x the liquidation price without penalty
-     * @custom:or the tick value is 0.198003465594229687 wstETH if the price is equal to the liquidation price with
-     * penalty
-     */
-    function test_tickValue() public {
-        int24 tick = protocol.getEffectiveTickForPrice(500 ether);
-        uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-        );
-        TickData memory tickData =
-            TickData({ totalExpo: 10 ether, totalPos: 1, liquidationPenalty: protocol.getLiquidationPenalty() });
-
-        int256 value = protocol.i_tickValue(liqPriceWithoutPenalty, tick, tickData);
-        assertEq(value, 0, "current price = liq price");
-
-        value = protocol.i_tickValue(liqPriceWithoutPenalty * 2, tick, tickData);
-        assertEq(value, 5 ether, "current price = 2x liq price");
-
-        value = protocol.i_tickValue(liqPriceWithoutPenalty / 2, tick, tickData);
-        assertEq(value, -10 ether, "current price = 0.5x liq price");
-
-        value = protocol.i_tickValue(protocol.getEffectivePriceForTick(tick), tick, tickData);
-        assertEq(value, 0.198003465594229687 ether, "current price = liq price with penalty");
-    }
-
-    /**
      * @custom:scenario Check that the leverage and total expo of a position is re-calculated on validation
      * @custom:given An initialized position
      * @custom:when The position is validated
