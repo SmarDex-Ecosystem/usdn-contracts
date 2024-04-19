@@ -4,7 +4,6 @@ pragma solidity 0.8.20;
 import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import {
     ProtocolAction,
     LongPendingAction,
@@ -12,6 +11,7 @@ import {
     PendingAction,
     TickData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The validateOpenPosition function of the UsdnProtocolActions contract

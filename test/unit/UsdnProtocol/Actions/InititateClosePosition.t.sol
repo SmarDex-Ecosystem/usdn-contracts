@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -12,8 +14,7 @@ import {
     TickData,
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 
 /**
@@ -29,6 +30,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     int24 private tick;
     uint256 private tickVersion;
     uint256 private index;
+
+    /// @notice Trigger a reentrancy after receiving ether
+    bool internal _reenter;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -350,6 +354,38 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
     }
 
+    /**
+     * @custom:scenario The user initiates a close position action with a reentrancy attempt
+     * @custom:given A user being a smart contract that calls initiateClosePosition when receiving ether
+     * @custom:and A receive() function that calls initiateClosePosition again
+     * @custom:when The user calls initiateClosePosition with some ether to trigger a refund
+     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     */
+    function test_RevertWhen_initiateClosePositionCalledWithReentrancy() public {
+        _reenter = true;
+
+        setUpUserPositionInLong(
+            address(this),
+            ProtocolAction.ValidateOpenPosition,
+            positionAmount,
+            params.initialPrice - (params.initialPrice / 5),
+            params.initialPrice
+        );
+
+        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        protocol.initiateClosePosition{ value: 1 }(
+            tick, tickVersion, index, positionAmount, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+        );
+    }
+
     /// @dev Allow refund tests
-    receive() external payable { }
+    receive() external payable {
+        // test reentrancy
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.initiateClosePosition{ value: 1 }(
+                tick, tickVersion, index, positionAmount, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+            );
+        }
+    }
 }
