@@ -413,13 +413,13 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
 
         // Transfer remaining collateral to vault or pay bad debt
-        tempVaultBalance += effects_.remainingCollateral; // -> 108.565872882334353773
-        tempLongBalance -= effects_.remainingCollateral; //  -> -9.266170185299722211
+        tempVaultBalance += effects_.remainingCollateral;
+        tempLongBalance -= effects_.remainingCollateral;
 
         // This can happen if the funding is larger than the remaining balance in the long side after applying PnL.
         // Test case: test_assetToTransferZeroBalance()
         if (tempLongBalance < 0) {
-            tempVaultBalance += tempLongBalance; // -> 99.299702697034631562
+            tempVaultBalance += tempLongBalance;
             tempLongBalance = 0;
         }
 

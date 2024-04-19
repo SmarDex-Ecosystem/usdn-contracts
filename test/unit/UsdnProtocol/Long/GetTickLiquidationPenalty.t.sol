@@ -77,7 +77,6 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(startPenalty - 1);
 
-        // TO DO : this assert doesn't work
         // the tick has now the new value
         assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty - 1, "new value");
     }
