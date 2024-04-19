@@ -14,6 +14,7 @@ import { ADMIN } from "test/utils/Constants.sol";
 contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     function setUp() public {
         SetUpParams memory params = DEFAULT_PARAMS;
+        params.flags.enableFunding = false;
         params.flags.enableLimits = true;
         params.initialDeposit = 49.199702697034631562 ether;
         params.initialLong = 50 ether;
@@ -42,12 +43,15 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_checkImbalanceLimitWithdrawalZeroVaultExpo() public {
-        setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, 0.5 ether, params.initialPrice / 2, params.initialPrice
         );
 
-        // liquidate everything with huge bad debt
-        protocol.liquidate(abi.encode(params.initialPrice / 100), 1);
+        protocol.initiateClosePosition(
+            tick, tickVersion, index, 0.5 ether, abi.encode(params.initialPrice * 10_000), EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        protocol.validateClosePosition(abi.encode(params.initialPrice * 10_000), EMPTY_PREVIOUS_DATA);
 
         // vault expo should be zero
         assertEq(protocol.getBalanceVault(), 0, "vault expo isn't 0");

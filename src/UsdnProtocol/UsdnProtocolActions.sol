@@ -24,6 +24,8 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 
+// import { console2 } from "forge-std/Test.sol";
+
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
@@ -206,8 +208,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (uint256 liquidatedPositions_)
     {
         uint256 balanceBefore = address(this).balance;
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, block.timestamp, currentPriceData);
+        liquidatedPositions_ =
+            _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp, iterations);
 
-        liquidatedPositions_ = _liquidate(currentPriceData, iterations);
+        // liquidatedPositions_ = _liquidate(currentPriceData, iterations);
         _refundExcessEther(0, 0, balanceBefore);
         _checkPendingFee();
     }
@@ -1073,8 +1078,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, block.timestamp, currentPriceData);
 
-        (, int256 tempLongBalance, int256 tempVaultBalance) =
+        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
+
+        // console2.log("--- _liquidate ---");
+        // console2.log("priceUpdated", priceUpdated);
+        // emit log_named_decimal_uint("neutralPrice", currentPrice.neutralPrice, 18);
+        // emit log_named_uint("timestamp", currentPrice.timestamp);
+        // emit log_named_uint("_lastUpdateTimestamp", _lastUpdateTimestamp);
 
         LiquidationsEffects memory effects =
             _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
@@ -1230,7 +1241,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(uint128(timestamp), action, priceData);
     }
 
-    function _applyPnlAndFundingAndLiquidate(uint256 neutralPrice, uint256 timestamp, uint16 iterations) internal {
+    function _applyPnlAndFundingAndLiquidate(uint256 neutralPrice, uint256 timestamp, uint16 iterations)
+        internal
+        returns (uint256 liquidatedPositions_)
+    {
         // adjust balances
         (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
@@ -1254,6 +1268,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                     liquidationEffects.liquidatedTicks, liquidationEffects.remainingCollateral, rebased
                 );
             }
+
+            liquidatedPositions_ = liquidationEffects.liquidatedPositions;
         }
     }
 

@@ -72,12 +72,15 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_checkImbalanceLimitOpenZeroVaultExpo() public {
-        setUpUserPositionInLong(
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
             address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
         );
 
-        // liquidate everything with huge bad debt
-        protocol.liquidate(abi.encode(params.initialPrice / 100), 10);
+        protocol.initiateClosePosition(
+            tick, tickVersion, index, 0.1 ether, abi.encode(params.initialPrice * 10_000), EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        protocol.validateClosePosition(abi.encode(params.initialPrice * 10_000), EMPTY_PREVIOUS_DATA);
 
         // vault expo should be zero
         assertEq(protocol.getBalanceVault(), 0, "vault expo isn't 0");

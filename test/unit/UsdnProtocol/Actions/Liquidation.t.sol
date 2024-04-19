@@ -10,7 +10,9 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        SetUpParams memory params = DEFAULT_PARAMS;
+        params.flags.enableFunding = false;
+        super._setUp(params);
 
         usdn.approve(address(protocol), type(uint256).max);
 
@@ -361,9 +363,13 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         price = protocol.getEffectivePriceForTick(tick);
         int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTickData(tick));
 
+        // we need to skip 1 minute to make the new price data fresh
+        skip(1 minutes);
+
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         uint256 liquidatedPositions = protocol.liquidate(abi.encode(price), 1);
+        int256 vaultAssetAvailable = protocol.i_vaultAssetAvailable(price);
 
         // Check that the right number of positions have been liquidated
         assertEq(liquidatedPositions, 1, "One position should have been liquidated");
@@ -377,8 +383,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Check that the vault balance got updated
         assertEq(
-            vaultBalanceBeforeRewards + uint256(collateralLiquidated) - protocol.getBalanceVault(),
-            expectedLiquidatorRewards,
+            protocol.getBalanceVault(),
+            uint256(vaultAssetAvailable) + uint256(collateralLiquidated) - expectedLiquidatorRewards,
             "The vault does not contain the right amount of funds"
         );
     }
@@ -392,11 +398,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and The protocol send rewards for the liquidation based on what's left in the vault
      */
     function test_canLiquidateAndReceiveRewardsUpToTheVaultBalance() public {
-        uint128 price = 2000 ether;
+        uint128 initialPrice = params.initialPrice;
+        uint128 endPrice = 1700 ether;
 
         // Setup a long position from another user
         (int24 tick,,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, price);
+            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, endPrice, initialPrice);
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
@@ -419,13 +426,17 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         );
 
         // Get the proper liquidation price for the tick
-        price = protocol.getEffectivePriceForTick(tick);
+        uint128 price = protocol.getEffectivePriceForTick(tick);
+        // Calculate the rewards that the liquidator should receive (collateral liquidated + vault balance)
         int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTickData(tick));
+        int256 vaultAssetAvailable = protocol.i_vaultAssetAvailable(price);
+        uint256 expectedRewards = uint256(vaultAssetAvailable + collateralLiquidated);
+
+        // we need to skip 1 minute to make the new price data fresh
+        skip(1 minutes);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatorRewarded(
-            address(this), vaultBalanceBeforeRewards + uint256(collateralLiquidated)
-        );
+        emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedRewards);
         uint256 liquidatedPositions = protocol.liquidate(abi.encode(price), 1);
 
         // Check that the right number of positions have been liquidated
@@ -433,7 +444,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         assertEq(
             wstETH.balanceOf(address(this)) - wstETHBalanceBeforeRewards,
-            vaultBalanceBeforeRewards + uint256(collateralLiquidated),
+            expectedRewards,
             "The liquidator did not receive the right amount of rewards"
         );
         assertEq(protocol.getBalanceVault(), 0, "The vault should have given what was left");

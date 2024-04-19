@@ -67,6 +67,9 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
         (int24 tick,,) = setUpUserPositionInLong(
             address(this), ProtocolAction.ValidateOpenPosition, 10 ether, params.initialPrice / 2, params.initialPrice
         );
+
+        // we need to skip 1 minute to make the new price data fresh
+        skip(1 minutes);
         assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty, "tick value");
         protocol.liquidate(abi.encode(params.initialPrice / 3), 10);
 
@@ -74,6 +77,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(startPenalty - 1);
 
+        // TO DO : this assert doesn't work
         // the tick has now the new value
         assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty - 1, "new value");
     }

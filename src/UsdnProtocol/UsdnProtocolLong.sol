@@ -11,7 +11,10 @@ import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 
-abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
+import { console2 } from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
+
+abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault, Test {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -412,14 +415,25 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             }
         }
 
+        // console2.log("--- _liquidatePositions ---");
+        // emit log_named_decimal_int("remainingCollateral", effects_.remainingCollateral, 18);
+        // emit log_named_decimal_int("tempVaultBalance", tempVaultBalance, 18);
+        // emit log_named_decimal_int("tempLongBalance", tempLongBalance, 18);
+        // emit log_named_decimal_uint("_balanceVault", _balanceVault, 18);
+        // console2.log("--- ------- ---");
+
         // Transfer remaining collateral to vault or pay bad debt
-        tempVaultBalance += effects_.remainingCollateral;
-        tempLongBalance -= effects_.remainingCollateral;
+        tempVaultBalance += effects_.remainingCollateral; // -> 108.565872882334353773
+        tempLongBalance -= effects_.remainingCollateral; //  -> -9.266170185299722211
+
+        // emit log_named_decimal_int("tempVaultBalance", tempVaultBalance, 18);
+        // emit log_named_decimal_int("tempLongBalance", tempLongBalance, 18);
+        // console2.log("--- ------- ---");
 
         // This can happen if the funding is larger than the remaining balance in the long side after applying PnL.
         // Test case: test_assetToTransferZeroBalance()
         if (tempLongBalance < 0) {
-            tempVaultBalance += tempLongBalance;
+            tempVaultBalance += tempLongBalance; // -> 99.299702697034631562
             tempLongBalance = 0;
         }
 
@@ -430,7 +444,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tempLongBalance += tempVaultBalance;
             tempVaultBalance = 0;
         }
-
+        // emit log_named_decimal_int("tempVaultBalance", tempVaultBalance, 18);
+        // emit log_named_decimal_int("tempLongBalance", tempLongBalance, 18);
         effects_.newLongBalance = tempLongBalance.toUint256();
         effects_.newVaultBalance = tempVaultBalance.toUint256();
     }
