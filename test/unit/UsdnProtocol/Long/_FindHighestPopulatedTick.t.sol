@@ -5,7 +5,10 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-/// @custom:feature Test the _findHighestPopulatedTick internal function of the long layer
+/**
+ * @custom:feature Test the _findHighestPopulatedTick internal function of the UsdnProtocolLong contract
+ * @custom:background Given an initialized USDN Protocol with default parameters
+ */
 contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture {
     int24 _tick;
 
