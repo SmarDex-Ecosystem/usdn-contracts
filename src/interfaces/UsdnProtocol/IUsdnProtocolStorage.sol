@@ -100,14 +100,14 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getSdex() external view returns (IERC20Metadata);
 
     /**
-     * @notice Get the amount of decimals the price feed for the asset has
-     * @return The amount of decimals of the price feed
+     * @notice Get the number of decimals the price feed for the asset has
+     * @return The number of decimals of the price feed
      */
     function getPriceFeedDecimals() external view returns (uint8);
 
     /**
-     * @notice Get the amount of decimals the asset ERC20 token has
-     * @return The amount of decimals for the asset
+     * @notice Get the number of decimals the asset ERC20 token has
+     * @return The number of decimals for the asset
      */
     function getAssetDecimals() external view returns (uint8);
 
@@ -299,7 +299,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Get the timestamp of the last time we updated the vault and long balances according to the PnL and the
-     * fundings
+     * funding
      * @return The timestamp of the last update
      */
     function getLastUpdateTimestamp() external view returns (uint128);
@@ -386,7 +386,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory);
 
     /**
-     * @notice Get the highest tick that has an opened position
+     * @notice Get the highest tick that has an open position
      * @return The highest populated tick
      */
     function getMaxInitializedTick() external view returns (int24);
