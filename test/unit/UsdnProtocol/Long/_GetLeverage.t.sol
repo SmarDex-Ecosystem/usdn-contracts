@@ -40,6 +40,8 @@ contract TestUsdnProtocolLongGetLeverage is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Check calculations of `_getLeverage`
+     * @custom:when The function "_getLeverage" is called with some parameters
+     * @custom:then The leverage is calculated correctly
      */
     function test_getLeverageWithExpectedValue() public {
         uint8 leverageDecimals = protocol.LEVERAGE_DECIMALS();
