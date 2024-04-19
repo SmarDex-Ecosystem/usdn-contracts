@@ -360,8 +360,4 @@ contract UsdnProtocolHandler is UsdnProtocol {
             tick -= _tickSpacing;
         } while (true);
     }
-
-    function i_checkForPendingLiquidations(int24 tick, uint128 price) external view returns (bool) {
-        return _checkForPendingLiquidations(tick, price);
-    }
 }

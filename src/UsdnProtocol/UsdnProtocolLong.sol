@@ -358,7 +358,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             iteration = MAX_LIQUIDATION_ITERATION;
         }
 
-        effects_.currentTick = TickMath.getClosestTickAtPrice(
+        int24 currentTick = TickMath.getClosestTickAtPrice(
             FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier)
         );
 
@@ -373,7 +373,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 }
 
                 tick = _bitmapIndexToTick(index);
-                if (tick < effects_.currentTick) {
+                if (tick < currentTick) {
                     break;
                 }
             }
@@ -404,12 +404,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         } while (effects_.liquidatedTicks < iteration);
 
         if (effects_.liquidatedPositions != 0) {
-            if (tick < effects_.currentTick) {
+            if (tick < currentTick) {
                 // all ticks above the current tick were liquidated
-                _maxInitializedTick = _findMaxInitializedTick(effects_.currentTick);
+                _maxInitializedTick = _findMaxInitializedTick(currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                _maxInitializedTick = _findMaxInitializedTick(tick);
+                int24 maxInitializedTick = _findMaxInitializedTick(tick);
+                _maxInitializedTick = maxInitializedTick;
+                effects_.isLiquidationPending = true;
             }
         }
 
@@ -434,30 +436,5 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         effects_.newLongBalance = tempLongBalance.toUint256();
         effects_.newVaultBalance = tempVaultBalance.toUint256();
-    }
-
-    /**
-     * @notice Check if there are still pending liquidations or not
-     * @param currentTick The current tick
-     * @param currentPrice The current price of the asset
-     * @return pendingLiquidations_ Whether or not pending liquidations
-     */
-    function _checkForPendingLiquidations(int24 currentTick, uint256 currentPrice)
-        internal
-        view
-        returns (bool pendingLiquidations_)
-    {
-        // case price is not updated
-        if (currentTick == type(int24).max) {
-            currentTick = TickMath.getClosestTickAtPrice(
-                FixedPointMathLib.fullMulDiv(
-                    currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier
-                )
-            );
-        }
-
-        if (currentTick < _maxInitializedTick) {
-            pendingLiquidations_ = true;
-        }
     }
 }

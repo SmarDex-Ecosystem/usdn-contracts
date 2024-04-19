@@ -185,7 +185,7 @@ struct LiquidationsEffects {
     int256 remainingCollateral;
     uint256 newLongBalance;
     uint256 newVaultBalance;
-    int24 currentTick;
+    bool isLiquidationPending;
 }
 
 /**

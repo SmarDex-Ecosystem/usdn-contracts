@@ -418,12 +418,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
 
-        int24 currentTick = _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
-
-        bool stillPendingLiquidations = _checkForPendingLiquidations(currentTick, currentPrice.neutralPrice);
+        bool isLiquidationPending = _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
         // early return in case there are still pending liquidations
-        if (stillPendingLiquidations) {
+        if (isLiquidationPending) {
             // deduct possible oracle price validation cost
             return msg.value - (balanceBefore - address(this).balance);
         }
@@ -563,12 +561,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _getOraclePrice(ProtocolAction.InitiateWithdrawal, block.timestamp, currentPriceData);
 
         {
-            int24 currentTick = _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
-
-            bool stillPendingLiquidations = _checkForPendingLiquidations(currentTick, currentPrice.neutralPrice);
+            bool isLiquidationPending =
+                _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
             // early return in case there are still pending liquidations
-            if (stillPendingLiquidations) {
+            if (isLiquidationPending) {
                 // deduct possible oracle price validation cost
                 return msg.value - (balanceBefore - address(this).balance);
             }
@@ -718,10 +715,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             neutralPrice = currentPrice.neutralPrice.toUint128();
 
-            int24 currentTick = _applyPnlAndFundingAndLiquidate(neutralPrice, currentPrice.timestamp);
+            bool isLiquidationPending = _applyPnlAndFundingAndLiquidate(neutralPrice, currentPrice.timestamp);
 
             // early return in case there are still pending liquidations
-            if (_checkForPendingLiquidations(currentTick, neutralPrice)) {
+            if (isLiquidationPending) {
                 // deduct possible oracle price validation cost
                 return (posId_, msg.value - (balanceBefore - address(this).balance));
             }
@@ -940,12 +937,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             PriceInfo memory currentPrice =
                 _getOraclePrice(ProtocolAction.InitiateClosePosition, block.timestamp, currentPriceData);
 
-            int24 currentTick = _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
-
-            bool stillPendingLiquidations = _checkForPendingLiquidations(currentTick, currentPrice.neutralPrice);
+            bool isLiquidationPending =
+                _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
             // early return in case there are still pending liquidations
-            if (stillPendingLiquidations) {
+            if (isLiquidationPending) {
                 // deduct possible oracle price validation cost
                 return (msg.value - (balanceBefore - address(this).balance));
             }
@@ -1264,25 +1260,26 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     function _applyPnlAndFundingAndLiquidate(uint256 neutralPrice, uint256 timestamp)
         internal
-        returns (int24 currentTick_)
+        returns (bool isLiquidationPending_)
     {
         // adjust balances
         (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
+
         // liquidate if price is more recent than _lastPrice
-        if (priceUpdated) {
-            LiquidationsEffects memory liquidationEffects =
-                _liquidatePositions(neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
-
-            currentTick_ = liquidationEffects.currentTick;
-            _balanceLong = liquidationEffects.newLongBalance;
-            _balanceVault = liquidationEffects.newVaultBalance;
-
-            // rebase USDN if needed (interval has elapsed and price threshold was reached)
-            _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
-        } else {
-            currentTick_ = type(int24).max;
+        if (!priceUpdated) {
+            return false;
         }
+
+        LiquidationsEffects memory liquidationEffects =
+            _liquidatePositions(neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
+
+        isLiquidationPending_ = liquidationEffects.isLiquidationPending;
+        _balanceLong = liquidationEffects.newLongBalance;
+        _balanceVault = liquidationEffects.newVaultBalance;
+
+        // rebase USDN if needed (interval has elapsed and price threshold was reached)
+        _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
     }
 
     /**
