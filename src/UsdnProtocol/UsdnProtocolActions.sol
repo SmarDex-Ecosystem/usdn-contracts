@@ -1203,6 +1203,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         price_ = _oracleMiddleware.parseAndValidatePrice{ value: validationCost }(uint128(timestamp), action, priceData);
     }
 
+    /**
+     * @notice Applies PnL, funding, and liquidates positions if necessary.
+     * @param neutralPrice The neutral price for the asset.
+     * @param timestamp The timestamp at which the operation is performed.
+     * @param iterations The number of iterations for the liquidation process.
+     * @param ignoreInterval A boolean indicating whether to ignore the interval for USDN rebase.
+     * @return liquidatedPositions_ The number of positions that were liquidated.
+     * @dev If there were any liquidated positions, it sends rewards to the msg.sender.
+     */
     function _applyPnlAndFundingAndLiquidate(
         uint256 neutralPrice,
         uint256 timestamp,
