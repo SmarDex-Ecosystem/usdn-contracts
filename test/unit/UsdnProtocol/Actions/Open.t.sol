@@ -4,6 +4,8 @@ pragma solidity 0.8.20;
 import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+
 import {
     ProtocolAction,
     LongPendingAction,
@@ -21,6 +23,9 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     uint256 internal constant LONG_AMOUNT = 1 ether;
     uint128 internal constant CURRENT_PRICE = 2000 ether;
+
+    /// @notice Trigger a reentrancy after receiving ether
+    bool internal _reenter;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -162,6 +167,20 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     function test_RevertWhen_initiateOpenPositionZeroAmount() public {
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
         protocol.initiateOpenPosition(0, 2000 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario The user initiates an open position action with a zero amount
+     * @custom:given A user being a smart contract that calls initiateOpenPosition when receiving ether
+     * @custom:and A receive() function that calls initiateOpenPosition again
+     * @custom:when The user calls initiateOpenPosition with some ether to trigger a refund
+     * @custom:then The protocol reverts with UsdnProtocolZeroAmount
+     */
+    function test_RevertWhen_initiateOpenPositionCalledWithReentrancy() public {
+        _reenter = true;
+
+        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        protocol.initiateOpenPosition{ value: 1 }(1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -443,5 +462,12 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     }
 
     // test refunds
-    receive() external payable { }
+    receive() external payable {
+        // test reentrancy
+        if (_reenter) {
+            emit log("reentrancy triggered");
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.initiateOpenPosition(1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
+        }
+    }
 }
