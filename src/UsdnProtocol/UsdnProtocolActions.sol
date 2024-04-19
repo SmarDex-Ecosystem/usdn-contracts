@@ -544,6 +544,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
      * @param user The address of the user initiating the withdrawal.
+     * @param to The address that will receive the assets
      * @param usdnShares The amount of USDN shares to burn.
      * @param currentPriceData The current price data
      * @return securityDepositValue_ The security deposit value
@@ -679,6 +680,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data.
      * @param user The address of the user initiating the open position.
+     * @param to The address that will be the owner of the position
      * @param amount The amount of wstETH to deposit.
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty.
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
@@ -898,6 +900,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
      * during the validate action.
      * @param user The address of the user initiating the close position.
+     * @param to The address that will receive the assets
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
