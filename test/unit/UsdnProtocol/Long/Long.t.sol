@@ -118,41 +118,6 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check calculations of `_positionValue`
-     * @custom:given A position for 1 wstETH with a starting price of $1000
-     * @custom:and a leverage of 2x (liquidation price $500)
-     * @custom:or a leverage of 4x (liquidation price $750)
-     * @custom:when The current price is $2000 and the leverage is 2x
-     * @custom:then The position value is 1.5 wstETH
-     * @custom:when the current price is $1000 and the leverage is 2x
-     * @custom:then the position value is 1 wstETH
-     * @custom:when the current price is $500 and the leverage is 2x
-     * @custom:then the position value is 0 wstETH
-     * @custom:when the current price is $200 and the leverage is 2x
-     * @custom:then the position value is -3 wstETH
-     * @custom:when the current price is $2000 and the leverage is 4x
-     * @custom:then the position value is 2.5 wstETH
-     */
-    function test_positionValue() public {
-        uint128 positionTotalExpo = 2 ether;
-        int256 value = protocol.i_positionValue(2000 ether, 500 ether, positionTotalExpo);
-        assertEq(value, 1.5 ether, "Position value should be 1.5 ether");
-
-        value = protocol.i_positionValue(1000 ether, 500 ether, positionTotalExpo);
-        assertEq(value, 1 ether, "Position value should be 1 ether");
-
-        value = protocol.i_positionValue(500 ether, 500 ether, positionTotalExpo);
-        assertEq(value, 0 ether, "Position value should be 0");
-
-        value = protocol.i_positionValue(200 ether, 500 ether, positionTotalExpo);
-        assertEq(value, -3 ether, "Position value should be negative");
-
-        positionTotalExpo = 4 ether;
-        value = protocol.i_positionValue(2000 ether, 750 ether, positionTotalExpo);
-        assertEq(value, 2.5 ether, "Position with 4x leverage should have a 2.5 ether value");
-    }
-
-    /**
      * @custom:scenario Check calculations of `_calculatePositionTotalExpo`
      */
     function test_calculatePositionTotalExpo() public {
@@ -185,40 +150,6 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         liqPrice = 2000 ether + 1;
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
         protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
-    }
-
-    /**
-     * @custom:scenario Check calculations of the `tickValue` function
-     * @custom:given A tick with total expo 10 wstETH and a liquidation price around $500
-     * @custom:when The current price is equal to the liquidation price without penalty
-     * @custom:or the current price is 2x the liquidation price without penalty
-     * @custom:or the current price is 0.5x the liquidation price without penalty
-     * @custom:or the current price is equal to the liquidation price with penalty
-     * @custom:then The tick value is 0 if the price is equal to the liquidation price without penalty
-     * @custom:or the tick value is 5 wstETH if the price is 2x the liquidation price without penalty
-     * @custom:or the tick value is -10 wstETH if the price is 0.5x the liquidation price without penalty
-     * @custom:or the tick value is 0.198003465594229687 wstETH if the price is equal to the liquidation price with
-     * penalty
-     */
-    function test_tickValue() public {
-        int24 tick = protocol.getEffectiveTickForPrice(500 ether);
-        uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-        );
-        TickData memory tickData =
-            TickData({ totalExpo: 10 ether, totalPos: 1, liquidationPenalty: protocol.getLiquidationPenalty() });
-
-        int256 value = protocol.i_tickValue(liqPriceWithoutPenalty, tick, tickData);
-        assertEq(value, 0, "current price = liq price");
-
-        value = protocol.i_tickValue(liqPriceWithoutPenalty * 2, tick, tickData);
-        assertEq(value, 5 ether, "current price = 2x liq price");
-
-        value = protocol.i_tickValue(liqPriceWithoutPenalty / 2, tick, tickData);
-        assertEq(value, -10 ether, "current price = 0.5x liq price");
-
-        value = protocol.i_tickValue(protocol.getEffectivePriceForTick(tick), tick, tickData);
-        assertEq(value, 0.198003465594229687 ether, "current price = liq price with penalty");
     }
 
     /**

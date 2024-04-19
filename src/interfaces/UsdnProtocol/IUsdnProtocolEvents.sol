@@ -122,8 +122,9 @@ interface IUsdnProtocolEvents {
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
-     * @param amountRemaining The amount of collateral remaining in the position.
-     * If the entirety of the position is being closed, this value is zero.
+     * @param originalAmount The amount of collateral originally on the position.
+     * @param amountToClose The amount of collateral to close from the position.
+     * If the entirety of the position is being closed, this value equals originalAmount.
      * @param totalExpoRemaining The total expo remaining in the position.
      * If the entirety of the position is being closed, this value is zero.
      */
@@ -133,7 +134,8 @@ interface IUsdnProtocolEvents {
         int24 tick,
         uint256 tickVersion,
         uint256 index,
-        uint128 amountRemaining,
+        uint128 originalAmount,
+        uint128 amountToClose,
         uint128 totalExpoRemaining
     );
 

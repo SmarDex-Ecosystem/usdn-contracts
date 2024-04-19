@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _liquidatePositions internal function of the long layer
@@ -21,21 +21,20 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      */
     function test_nothingHappensWhenThereIsNothingToLiquidate() external {
         vm.recordLogs();
-        (
-            uint256 liquidatedPositions,
-            uint16 liquidatedTicks,
-            int256 remainingCollateral,
-            uint256 newLongBalance,
-            uint256 newVaultBalance
-        ) = protocol.i_liquidatePositions(2000 ether, 1, 100 ether, 100 ether);
+        LiquidationsEffects memory liquidationsEffects =
+            protocol.i_liquidatePositions(2000 ether, 1, 100 ether, 100 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 0, "No event should have been emitted");
-        assertEq(liquidatedPositions, 0, "No position should have been liquidated at the given price");
-        assertEq(liquidatedTicks, 0, "No tick should have been liquidated at this price");
-        assertEq(remainingCollateral, 0, "There should have been no changes to the collateral");
-        assertEq(newLongBalance, 100 ether, "There should have been no changes to the long balance");
-        assertEq(newVaultBalance, 100 ether, "There should have been no changes to the vault balance");
+        assertEq(
+            liquidationsEffects.liquidatedPositions, 0, "No position should have been liquidated at the given price"
+        );
+        assertEq(liquidationsEffects.liquidatedTicks, 0, "No tick should have been liquidated at this price");
+        assertEq(liquidationsEffects.remainingCollateral, 0, "There should have been no changes to the collateral");
+        assertEq(liquidationsEffects.newLongBalance, 100 ether, "There should have been no changes to the long balance");
+        assertEq(
+            liquidationsEffects.newVaultBalance, 100 ether, "There should have been no changes to the vault balance"
+        );
     }
 
     /**
@@ -70,24 +69,25 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
 
         vm.recordLogs();
-        (
-            uint256 liquidatedPositions,
-            uint16 liquidatedTicks,
-            int256 collateralLiquidated,
-            uint256 newLongBalance,
-            uint256 newVaultBalance
-        ) = protocol.i_liquidatePositions(uint256(liqPrice), 1, 100 ether, 100 ether);
+        LiquidationsEffects memory liquidationsEffects =
+            protocol.i_liquidatePositions(uint256(liqPrice), 1, 100 ether, 100 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 1, "Only one log should have been emitted");
-        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidatedTicks, 1, "Only one tick should have been liquidated");
-        assertEq(collateralLiquidated, tickValue, "Collateral liquidated should be equal to tickValue");
+        assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
         assertEq(
-            int256(newLongBalance), 100 ether - tickValue, "The long side should have paid tickValue to the vault side"
+            liquidationsEffects.remainingCollateral, tickValue, "Remaining collateral should be equal to tickValue"
         );
         assertEq(
-            int256(newVaultBalance), 100 ether + tickValue, "The long side should have paid tickValue to the vault side"
+            int256(liquidationsEffects.newLongBalance),
+            100 ether - tickValue,
+            "The long side should have paid tickValue to the vault side"
+        );
+        assertEq(
+            int256(liquidationsEffects.newVaultBalance),
+            100 ether + tickValue,
+            "The long side should have paid tickValue to the vault side"
         );
 
         assertLt(
@@ -137,22 +137,22 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit LiquidatedTick(desiredLiqTick, 0, price, liqPriceAfterFundings, tickValue);
-        (
-            uint256 liquidatedPositions,
-            uint16 liquidatedTicks,
-            int256 collateralLiquidated,
-            uint256 newLongBalance,
-            uint256 newVaultBalance
-        ) = protocol.i_liquidatePositions(price, 1, 100 ether, 100 ether);
+        LiquidationsEffects memory liquidationsEffects = protocol.i_liquidatePositions(price, 1, 100 ether, 100 ether);
 
-        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidatedTicks, 1, "Only one tick should have been liquidated");
-        assertEq(collateralLiquidated, tickValue, "Collateral liquidated should be equal to tickValue");
+        assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
         assertEq(
-            int256(newLongBalance), 100 ether - tickValue, "The long side should have paid tickValue to the vault side"
+            liquidationsEffects.remainingCollateral, tickValue, "Collateral liquidated should be equal to tickValue"
         );
         assertEq(
-            int256(newVaultBalance), 100 ether + tickValue, "The long side should have paid tickValue to the vault side"
+            int256(liquidationsEffects.newLongBalance),
+            100 ether - tickValue,
+            "The long side should have paid tickValue to the vault side"
+        );
+        assertEq(
+            int256(liquidationsEffects.newVaultBalance),
+            100 ether + tickValue,
+            "The long side should have paid tickValue to the vault side"
         );
     }
 
@@ -176,11 +176,12 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         vm.recordLogs();
         // 2 Iterations to make sure we break the loop when there are no ticks to be found
-        (uint256 liquidatedPositions,,,,) = protocol.i_liquidatePositions(uint256(liqPrice), 2, 100 ether, 100 ether);
+        LiquidationsEffects memory liquidationsEffects =
+            protocol.i_liquidatePositions(uint256(liqPrice), 2, 100 ether, 100 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 1, "Only one log should have been emitted");
-        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
         assertEq(
             protocol.getMaxInitializedTick(),
             TickMath.minUsableTick(protocol.getTickSpacing()),
@@ -236,7 +237,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         // Make sure no more than MAX_LIQUIDATION_ITERATION events have been emitted
         vm.recordLogs();
-        (, uint256 liquidatedTicks,,,) =
+        LiquidationsEffects memory liquidationsEffects =
             protocol.i_liquidatePositions(uint256(liqPrice), maxIterations + 1, 100 ether, 100 ether);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
@@ -245,7 +246,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
 
         assertEq(
-            liquidatedTicks,
+            liquidationsEffects.liquidatedTicks,
             maxIterations,
             "The amount of ticks liquidated should be equal to MAX_LIQUIDATION_ITERATION"
         );
@@ -292,20 +293,19 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
 
         // Set the tempVaultBalance parameter to less than tickValue to make sure it sends what it can
-        (
-            uint256 liquidatedPositions,
-            uint16 liquidatedTicks,
-            int256 collateralLiquidated,
-            uint256 newLongBalance,
-            uint256 newVaultBalance
-        ) = protocol.i_liquidatePositions(uint256(liqPrice), 1, tickValue - 1, 100 ether);
+        LiquidationsEffects memory liquidationsEffects =
+            protocol.i_liquidatePositions(uint256(liqPrice), 1, tickValue - 1, 100 ether);
 
-        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidatedTicks, 1, "Only one tick should have been liquidated");
-        assertEq(collateralLiquidated, tickValue, "The value of the tick should be the collateral liquidated");
-        assertEq(newLongBalance, 0, "New long balance should be 0");
+        assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
         assertEq(
-            newVaultBalance,
+            liquidationsEffects.remainingCollateral,
+            tickValue,
+            "The value of the tick should be the collateral liquidated"
+        );
+        assertEq(liquidationsEffects.newLongBalance, 0, "New long balance should be 0");
+        assertEq(
+            liquidationsEffects.newVaultBalance,
             100 ether + uint256(tickValue - 1),
             "New vault balance should be what was left in the longs"
         );
@@ -350,18 +350,21 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         emit LiquidatedTick(positionTick, 0, price, liqPriceAfterFundings, tickValue);
 
         // Set the tempVaultBalance parameter to less than tickValue to make sure it sends what it can
-        (
-            uint256 liquidatedPositions,
-            uint16 liquidatedTicks,
-            int256 collateralLiquidated,
-            uint256 newLongBalance,
-            uint256 newVaultBalance
-        ) = protocol.i_liquidatePositions(uint256(price), 1, 100 ether, tickValue);
+        LiquidationsEffects memory liquidationsEffects =
+            protocol.i_liquidatePositions(uint256(price), 1, 100 ether, tickValue);
 
-        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidatedTicks, 1, "Only one tick should have been liquidated");
-        assertEq(collateralLiquidated, tickValue, "The value of the tick should be the collateral liquidated");
-        assertEq(int256(newLongBalance), 100 ether + tickValue, "New long balance should be what was left in the vault");
-        assertEq(newVaultBalance, 0, "New vault balance should be 0");
+        assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(liquidationsEffects.liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(
+            liquidationsEffects.remainingCollateral,
+            tickValue,
+            "The value of the tick should be the collateral liquidated"
+        );
+        assertEq(
+            int256(liquidationsEffects.newLongBalance),
+            100 ether + tickValue,
+            "New long balance should be what was left in the vault"
+        );
+        assertEq(liquidationsEffects.newVaultBalance, 0, "New vault balance should be 0");
     }
 }

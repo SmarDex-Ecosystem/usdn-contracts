@@ -15,6 +15,7 @@ import {
     DepositPendingAction,
     WithdrawalPendingAction,
     LongPendingAction,
+    LiquidationsEffects,
     PreviousActionsData,
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -373,13 +374,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @dev Should still emit an event if liquidationRewards = 0 to better keep track of those anomalies as rewards for
      * those will be managed off-chain.
      * @param liquidatedTicks The number of ticks that were liquidated.
-     * @param liquidatedCollateral The amount of collateral lost due to the liquidations.
+     * @param remainingCollateral The amount of collateral remaining after liquidations.
      * @param rebased Whether a USDN rebase was performed.
      */
-    function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 liquidatedCollateral, bool rebased) internal {
+    function _sendRewardsToLiquidator(uint16 liquidatedTicks, int256 remainingCollateral, bool rebased) internal {
         // Get how much we should give to the liquidator as rewards
         uint256 liquidationRewards =
-            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, liquidatedCollateral, rebased);
+            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, remainingCollateral, rebased);
 
         // Avoid underflows in situation of extreme bad debt
         if (_balanceVault < liquidationRewards) {
@@ -982,7 +983,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             posId.tick,
             posId.tickVersion,
             posId.index,
-            pos.amount - amountToClose,
+            pos.amount,
+            amountToClose,
             pos.totalExpo - totalExpoToClose
         );
     }
@@ -1100,16 +1102,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
-        uint16 liquidatedTicks;
-        int256 liquidatedCollateral;
-        (liquidatedPositions_, liquidatedTicks, liquidatedCollateral, _balanceLong, _balanceVault) =
+        LiquidationsEffects memory effects =
             _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
+
+        liquidatedPositions_ = effects.liquidatedPositions;
+        _balanceLong = effects.newLongBalance;
+        _balanceVault = effects.newVaultBalance;
 
         // Always perform the rebase check during liquidation
         bool rebased = _usdnRebase(uint128(currentPrice.neutralPrice), true); // SafeCast not needed since done above
 
-        if (liquidatedTicks > 0) {
-            _sendRewardsToLiquidator(liquidatedTicks, liquidatedCollateral, rebased);
+        if (effects.liquidatedTicks > 0) {
+            _sendRewardsToLiquidator(effects.liquidatedTicks, effects.remainingCollateral, rebased);
         }
     }
 
@@ -1258,8 +1262,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
         // liquidate if price is more recent than _lastPrice
         if (priceUpdated) {
-            (,,, _balanceLong, _balanceVault) =
+            LiquidationsEffects memory liquidationEffects =
                 _liquidatePositions(neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
+
+            _balanceLong = liquidationEffects.newLongBalance;
+            _balanceVault = liquidationEffects.newVaultBalance;
+
             // rebase USDN if needed (interval has elapsed and price threshold was reached)
             _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
         }
