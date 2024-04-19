@@ -17,7 +17,7 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
      * @custom:when getEffectiveTickForPrice is called
      * @custom:then The function should return expected minTick
      */
-    function test_getEffectiveTickForPrice() external {
+    function test_getEffectiveTickForPriceExpectedMinTick() external {
         int24 expectedMinTick = protocol.minTick();
 
         /* ---------------- priceWithMultiplier = TickMath.MIN_PRICE ---------------- */
@@ -33,5 +33,33 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
         price = 199_998_000;
         minTick = protocol.getEffectiveTickForPrice(price, liqMultiplier);
         assertEq(minTick, expectedMinTick, "wrong value of minTick");
+    }
+
+    /**
+     * @custom:scenario Call `getEffectiveTickForPrice` and return expected tick_ >= 0
+     * @custom:given A price and liqMultiplier
+     * @custom:when getEffectiveTickForPrice is called
+     * @custom:then The function should return expected tick_
+     */
+    function test_getEffectiveTickForPriceTickGreaterThanOrEqualZero() external {
+        /* ---------------- tick_ = 0 ---------------- */
+        uint256 liqMultiplier = 1999 * 10e25;
+        // price = 9999 * liqMultiplier / 10e38 = 199998000
+        uint128 price = 1_999_980_000;
+        int24 tick = protocol.getEffectiveTickForPrice(price, liqMultiplier);
+        assertEq(tick, 0, "tick should be 0 with liqMultiplier 1999 * 10e25");
+
+        liqMultiplier = 1981 * 10e25;
+        // price = 9999 * liqMultiplier / 10e38 = 199998000
+        price = 1_999_980_000;
+        tick = protocol.getEffectiveTickForPrice(price, liqMultiplier);
+        assertEq(tick, 0, "tick should be 0 with liqMultiplier 1981 * 10e25");
+
+        /* ---------------- tick_ > 0 ---------------- */
+        liqMultiplier = 2000 * 10e10;
+        // price = 10000 * liqMultiplier / 10e38 = 20000000
+        price = 2_000_000_000;
+        tick = protocol.getEffectiveTickForPrice(price, liqMultiplier);
+        assertEq(tick, 345_400, "tick should be 345400");
     }
 }
