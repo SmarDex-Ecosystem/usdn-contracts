@@ -79,7 +79,10 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param assetPrice The current price of the underlying asset
      * @return rebased_ Whether a rebase was performed
      */
-    function _usdnRebase(uint128 assetPrice) internal returns (bool rebased_) {
+    function _usdnRebase(uint128 assetPrice, bool ignoreInterval) internal returns (bool rebased_) {
+        if (!ignoreInterval && block.timestamp - _lastRebaseCheck < _usdnRebaseInterval) {
+            return false;
+        }
         _lastRebaseCheck = block.timestamp;
         IUsdn usdn = _usdn;
         uint256 divisor = usdn.divisor();

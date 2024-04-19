@@ -196,7 +196,6 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         (,,, uint256 assetToTransfer,) = abi.decode(logs[1].data, (int24, uint256, uint256, uint256, int256));
-
         assertEq(logs[1].topics[0], ValidatedClosePosition.selector);
         assertEq(wstETH.balanceOf(address(this)) - balanceBefore, expectedTransfer, "wstETH balance");
         assertEq(assetToTransfer, expectedTransfer, "Computed asset to transfer");
