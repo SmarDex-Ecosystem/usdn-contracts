@@ -23,7 +23,7 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
     uint128 desiredLiqPrice;
     uint256 balanceSenderBefore;
     uint256 balanceProtocolBefore;
-    uint256 liquidationPrice;
+    uint128 liquidationPrice;
     uint256 expectedLiquidatorRewards;
     uint128 depositAmount = 1 ether;
     bytes initialPriceData;
@@ -132,5 +132,78 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         assertEq(
             balanceProtocolAfter, balanceProtocolBefore + depositAmount - expectedLiquidatorRewards, "protocol balance"
         );
+    }
+
+    function test_liquidationRewards_validateOpenPosition() public {
+        protocol.initiateOpenPosition(depositAmount, initialPrice / 2, initialPriceData, EMPTY_PREVIOUS_DATA);
+        _waitDelay();
+
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
+        protocol.validateOpenPosition(liquidationPriceData, EMPTY_PREVIOUS_DATA);
+
+        uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
+        uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
+        assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards - depositAmount, "sender balance");
+        assertEq(
+            balanceProtocolAfter, balanceProtocolBefore + depositAmount - expectedLiquidatorRewards, "protocol balance"
+        );
+    }
+
+    function test_liquidationRewards_initiateClosePosition() public {
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            address(this), ProtocolAction.ValidateOpenPosition, depositAmount, initialPrice / 2, initialPrice
+        );
+
+        skip(1 hours);
+
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
+        protocol.initiateClosePosition(
+            tick, tickVersion, index, depositAmount, liquidationPriceData, EMPTY_PREVIOUS_DATA
+        );
+
+        uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
+        uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
+        assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards, "sender balance");
+        assertEq(
+            balanceProtocolAfter, balanceProtocolBefore + depositAmount - expectedLiquidatorRewards, "protocol balance"
+        );
+    }
+
+    function test_liquidationRewards_validateClosePosition() public {
+        // TO DO
+        vm.skip(true);
+        (int24 tick,,) = setUpUserPositionInLong(
+            address(this), ProtocolAction.InitiateClosePosition, depositAmount, initialPrice / 2, initialPrice
+        );
+
+        skip(1 hours);
+
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
+        protocol.validateClosePosition(liquidationPriceData, EMPTY_PREVIOUS_DATA);
+
+        uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
+        uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
+        (PendingAction memory action,) = protocol.i_getPendingAction(address(this));
+        uint256 priceWithFees =
+            liquidationPrice - (liquidationPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
+
+        int256 positionValue = protocol.i_positionValue(
+            uint128(priceWithFees),
+            protocol.getEffectivePriceForTick(
+                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
+                protocol.getLiquidationMultiplier()
+            ),
+            protocol.i_toLongPendingAction(action).closeTotalExpo
+        );
+
+        assertEq(
+            balanceSenderAfter,
+            balanceSenderBefore + expectedLiquidatorRewards + uint256(positionValue),
+            "sender balance"
+        );
+        assertEq(balanceProtocolAfter, balanceProtocolBefore - expectedLiquidatorRewards, "protocol balance");
     }
 }
