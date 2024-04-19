@@ -13,7 +13,7 @@ import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 
 /**
  * @title IUsdnProtocolStorage
- * @notice Interface for the storage layer of the USDN protocol.
+ * @notice Interface for the storage layer of the USDN protocol
  */
 interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
@@ -70,8 +70,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function BPS_DIVISOR() external pure returns (uint256);
 
     /**
-     * @notice Get the maximum number of liquidations that can be done per call.
-     * @return The maximum number of iterations.
+     * @notice Get the maximum number of liquidations that can be done per call
+     * @return The maximum number of iterations
      */
     function MAX_LIQUIDATION_ITERATION() external pure returns (uint16);
 
@@ -80,7 +80,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice The liquidation tick spacing for storing long positions.
+     * @notice The liquidation tick spacing for storing long positions
      * @dev A tick spacing of 1 is equivalent to a 0.01% increase in liquidation price between ticks. A tick spacing of
      * 100 is equivalent to a 1% increase in liquidation price between ticks.
      * @return The tick spacing
@@ -88,13 +88,13 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getTickSpacing() external view returns (int24);
 
     /**
-     * @notice Get the asset ERC20 token contract.
+     * @notice Get the asset ERC20 token contract
      * @return The asset ERC20 token contract
      */
     function getAsset() external view returns (IERC20Metadata);
 
     /**
-     * @notice Get the SDEX ERC20 token contract.
+     * @notice Get the SDEX ERC20 token contract
      * @return The SDEX ERC20 token contract
      */
     function getSdex() external view returns (IERC20Metadata);
@@ -112,13 +112,13 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getAssetDecimals() external view returns (uint8);
 
     /**
-     * @notice Get the USDN ERC20 token contract.
+     * @notice Get the USDN ERC20 token contract
      * @return The USDN ERC20 token contract
      */
     function getUsdn() external view returns (IUsdn);
 
     /**
-     * @notice Get the MIN_DIVISOR constant of the USDN token.
+     * @notice Get the MIN_DIVISOR constant of the USDN token
      * @return The MIN_DIVISOR constant of the USDN token
      */
     function getUsdnMinDivisor() external view returns (uint256);
@@ -235,7 +235,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Returns the delay between the moment an action is initiated and
-     * the timestamp of the price data used to validate that action.
+     * the timestamp of the price data used to validate that action
      * @return The delay (in seconds)
      */
     function getMiddlewareValidationDelay() external view returns (uint256);
@@ -318,17 +318,17 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getPendingProtocolFee() external view returns (uint256);
 
     /**
-     * @notice Get the pending action of the user (1 per user max).
+     * @notice Get the pending action of the user (1 per user max)
      * @dev The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
      * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one.
-     * @param user The user address.
-     * @return The pending action of the user (if there is one).
+     * @param user The user address
+     * @return The pending action of the user (if there is one)
      */
     function getPendingAction(address user) external view returns (uint256);
 
     /**
      * @notice Get the pending action at the provided index of the pending queue
-     * @param index The index in the queue.
+     * @param index The index in the queue
      * @return The pending action
      */
     function getPendingActionAt(uint256 index) external view returns (PendingAction memory);
@@ -364,8 +364,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getTotalExpo() external view returns (uint256);
 
     /**
-     * @notice Get the current version of the tick.
-     * @param tick The tick.
+     * @notice Get the current version of the tick
+     * @param tick The tick
      * @return The version of the tick
      */
     function getTickVersion(int24 tick) external view returns (uint256);
@@ -379,8 +379,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Get the long position at the provided tick, in the provided index
-     * @param tick The tick.
-     * @param index The position index.
+     * @param tick The tick
+     * @param index The position index
      * @return The long position
      */
     function getCurrentLongPosition(int24 tick, uint256 index) external view returns (Position memory);
@@ -399,8 +399,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Get the hash generated from the tick and a version
-     * @param tick The tick number.
-     * @param version The tick version.
+     * @param tick The tick number
+     * @param version The tick version
      * @return The hash of the tick and version
      */
     function tickHash(int24 tick, uint256 version) external pure returns (bytes32);
