@@ -11,6 +11,7 @@ import {
     PendingAction, ProtocolAction, WithdrawalPendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The withdraw function of the USDN Protocol
@@ -26,6 +27,8 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     uint256 internal initialWstETHBalance;
     uint256 internal initialUsdnBalance;
     uint256 internal initialUsdnShares;
+    /// @notice Trigger a reentrancy after receiving ether
+    bool internal _reenter;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -247,6 +250,36 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance + withdrawnAmount, "final wstETH balance");
     }
 
+    /**
+     * @custom:scenario The user initiates a withdrawal action with a reentrancy attempt
+     * @custom:given A user being a smart contract that calls initiateWithdrawal when receiving ether
+     * @custom:and A receive() function that calls initiateWithdrawal again
+     * @custom:when The user calls initiateWithdrawal with some ether to trigger a refund
+     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     */
+    function test_RevertWhen_initiateWithdrawalCalledWithReentrancy() public {
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA);
+            return;
+        }
+
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
+
+        _reenter = true;
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateWithdrawal.selector), 2);
+        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        protocol.initiateWithdrawal{ value: 1 }(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA);
+    }
+
     // test refunds
-    receive() external payable { }
+    receive() external payable {
+        // test reentrancy
+        if (_reenter) {
+            test_RevertWhen_initiateWithdrawalCalledWithReentrancy();
+        }
+    }
 }
