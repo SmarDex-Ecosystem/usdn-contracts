@@ -18,7 +18,6 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 5 ether;
         params.initialLong = 10 ether;
-        params.flags.enableFunding = false;
         params.flags.enableUsdnRebase = true;
         super._setUp(params);
 

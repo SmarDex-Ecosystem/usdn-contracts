@@ -57,7 +57,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         flags: Flags({
             enablePositionFees: false,
             enableProtocolFees: true,
-            enableFunding: true,
+            enableFunding: false,
             enableLimits: false,
             enableUsdnRebase: false,
             enableSecurityDeposit: false,

@@ -14,7 +14,6 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableProtocolFees = false;
-        params.flags.enableFunding = false;
         _setUp(params);
     }
 
