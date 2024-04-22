@@ -15,6 +15,7 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableFunding = true;
+        params.flags.enableProtocolFees = true;
         super._setUp(params);
     }
 

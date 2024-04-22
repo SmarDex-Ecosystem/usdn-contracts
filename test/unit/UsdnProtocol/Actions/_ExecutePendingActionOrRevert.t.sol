@@ -12,9 +12,7 @@ import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfac
  */
 contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableProtocolFees = false;
-        _setUp(params);
+        _setUp(DEFAULT_PARAMS);
     }
 
     /**

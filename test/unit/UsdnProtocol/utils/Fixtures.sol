@@ -56,7 +56,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         initialBlock: block.number,
         flags: Flags({
             enablePositionFees: false,
-            enableProtocolFees: true,
+            enableProtocolFees: false,
             enableFunding: false,
             enableLimits: false,
             enableUsdnRebase: false,

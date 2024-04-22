@@ -30,6 +30,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableFunding = true;
+        params.flags.enableProtocolFees = true;
         super._setUp(params);
         withdrawShares = USDN_AMOUNT * uint152(usdn.MAX_DIVISOR());
         usdn.approve(address(protocol), type(uint256).max);
