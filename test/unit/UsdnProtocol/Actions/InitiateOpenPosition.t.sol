@@ -169,20 +169,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     }
 
     /**
-     * @custom:scenario The user initiates an open position action with a reentrancy attempt
-     * @custom:given A user being a smart contract that calls initiateOpenPosition when receiving ether
-     * @custom:and A receive() function that calls initiateOpenPosition again
-     * @custom:when The user calls initiateOpenPosition with some ether to trigger a refund
-     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
-     */
-    function test_RevertWhen_initiateOpenPositionCalledWithReentrancy() public {
-        _reenter = true;
-
-        // The value sent will cause a refund, which will trigger the receive() function of this contract
-        protocol.initiateOpenPosition{ value: 1 }(1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
-    }
-
-    /**
      * @custom:scenario The user initiates an open position action with a leverage that's too low
      * @custom:when The user initiates an open position with a desired liquidation price of $0.0000000000001
      * @custom:then The protocol reverts with UsdnProtocolLeverageTooLow
@@ -276,12 +262,32 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
+    /**
+     * @custom:scenario The user initiates an open position action with a reentrancy attempt
+     * @custom:given A user being a smart contract that calls initiateOpenPosition when receiving ether
+     * @custom:and A receive() function that calls initiateOpenPosition again
+     * @custom:when The user calls initiateOpenPosition with some ether to trigger a refund
+     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     */
+    function test_RevertWhen_initiateOpenPositionCalledWithReentrancy() public {
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.initiateOpenPosition(1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
+            return;
+        }
+
+        _reenter = true;
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateOpenPosition.selector), 2);
+        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        protocol.initiateOpenPosition{ value: 1 }(1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
+    }
+
     // test refunds
     receive() external payable {
         // test reentrancy
         if (_reenter) {
-            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.initiateOpenPosition(1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
+            test_RevertWhen_initiateOpenPositionCalledWithReentrancy();
         }
     }
 }

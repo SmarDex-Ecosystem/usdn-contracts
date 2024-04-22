@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Vm } from "forge-std/Vm.sol";
+import { console2 } from "./../../../../lib/forge-std/src/console2.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -361,7 +363,14 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
      */
     function test_RevertWhen_initiateClosePositionCalledWithReentrancy() public {
-        _reenter = true;
+        // If we are currently in a reentrancy
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.initiateClosePosition(
+                tick, tickVersion, index, positionAmount, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+            );
+            return;
+        }
 
         setUpUserPositionInLong(
             address(this),
@@ -371,6 +380,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             params.initialPrice
         );
 
+        _reenter = true;
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateClosePosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateClosePosition{ value: 1 }(
             tick, tickVersion, index, positionAmount, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
@@ -381,10 +393,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     receive() external payable {
         // test reentrancy
         if (_reenter) {
-            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.initiateClosePosition(
-                tick, tickVersion, index, positionAmount, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
-            );
+            test_RevertWhen_initiateClosePositionCalledWithReentrancy();
         }
     }
 }

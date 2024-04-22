@@ -226,14 +226,23 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
      */
     function test_RevertWhen_validateOpenPositionCalledWithReentrancy() public {
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.validateOpenPosition(abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
+            return;
+        }
+
+        setUpUserPositionInLong(
+            address(this),
+            ProtocolAction.InitiateOpenPosition,
+            uint128(LONG_AMOUNT),
+            CURRENT_PRICE * 2 / 3,
+            CURRENT_PRICE
+        );
+
         _reenter = true;
-
-        bytes memory priceData = abi.encode(CURRENT_PRICE);
-        uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
-        protocol.initiateOpenPosition(uint128(LONG_AMOUNT), desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA);
-
-        _waitDelay();
-
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateOpenPosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.validateOpenPosition{ value: 1 }(abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
     }
@@ -242,8 +251,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     receive() external payable {
         // test reentrancy
         if (_reenter) {
-            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.validateOpenPosition(abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
+            test_RevertWhen_validateOpenPositionCalledWithReentrancy();
         }
     }
 }

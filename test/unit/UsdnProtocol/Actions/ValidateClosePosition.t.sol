@@ -571,7 +571,11 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
      */
     function test_RevertWhen_validateClosePositionCalledWithReentrancy() public {
-        _reenter = true;
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.validateClosePosition(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+            return;
+        }
 
         setUpUserPositionInLong(
             address(this),
@@ -581,6 +585,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             params.initialPrice
         );
 
+        _reenter = true;
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateClosePosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.validateClosePosition{ value: 1 }(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
     }
@@ -589,8 +596,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     receive() external payable {
         // test reentrancy
         if (_reenter) {
-            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.validateClosePosition(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+            test_RevertWhen_validateClosePositionCalledWithReentrancy();
         }
     }
 }
