@@ -21,6 +21,7 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -339,5 +340,9 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {
         _checkSafetyMargin(currentPrice, liquidationPrice);
+    }
+
+    function i_minPrice() external pure returns (uint256) {
+        return TickMath.MIN_PRICE;
     }
 }

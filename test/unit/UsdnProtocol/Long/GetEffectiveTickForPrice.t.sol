@@ -47,6 +47,13 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
         uint128 price = 1_999_980_000;
         int24 tick = protocol.getEffectiveTickForPrice(price, liqMultiplier);
         assertEq(tick, -161_200, "tick should be -161200");
+
+        /* -------------------------- tick_ < minUsableTick ------------------------- */
+        int24 expectedMinTick = protocol.minTick();
+        liqMultiplier = 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS();
+        price = uint128(protocol.i_minPrice()) + 1;
+        tick = protocol.getEffectiveTickForPrice(price, liqMultiplier);
+        assertEq(tick, expectedMinTick, "tick should be equal to minTick");
     }
 
     /**
