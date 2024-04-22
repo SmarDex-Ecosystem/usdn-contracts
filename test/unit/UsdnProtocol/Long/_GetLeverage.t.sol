@@ -40,6 +40,7 @@ contract TestUsdnProtocolLongGetLeverage is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Check calculations of `_getLeverage`
+     * @custom:given A startPrice and a liquidationPrice
      * @custom:when The function "_getLeverage" is called with some parameters
      * @custom:then The leverage is calculated correctly
      */
