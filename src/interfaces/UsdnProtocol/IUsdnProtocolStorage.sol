@@ -21,7 +21,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Get the number of decimals of the leverage of a position
+     * @notice Get the number of decimals of a position's leverage
      * @return The leverage's number of decimals
      */
     function LEVERAGE_DECIMALS() external pure returns (uint8);
@@ -34,7 +34,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Get the number of decimals of tokens used in the protocol (except the asset)
-     * @return The tokens' amount of decimals
+     * @return The tokens' number of decimals
      */
     function TOKENS_DECIMALS() external pure returns (uint8);
 
@@ -45,7 +45,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8);
 
     /**
-     * @notice Get the number of decimals of the scaling factor of the funding rate
+     * @notice Get the number of decimals in the scaling factor of the funding rate
      * @return The scaling factor's number of decimals
      */
     function FUNDING_SF_DECIMALS() external pure returns (uint8);
@@ -70,7 +70,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function BPS_DIVISOR() external pure returns (uint256);
 
     /**
-     * @notice Get the maximum number of liquidations that can be done per call
+     * @notice Get the maximum number of tick liquidations that can be done per call
      * @return The maximum number of iterations
      */
     function MAX_LIQUIDATION_ITERATION() external pure returns (uint16);
@@ -119,6 +119,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Get the MIN_DIVISOR constant of the USDN token
+     * @dev Check the USDN contract for more information
      * @return The MIN_DIVISOR constant of the USDN token
      */
     function getUsdnMinDivisor() external view returns (uint256);
@@ -146,13 +147,13 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getOrderManager() external view returns (IOrderManager);
 
     /**
-     * @notice Get the minimum leverage an opened position can have
+     * @notice Get the lowest leverage used to open a position
      * @return The minimum leverage (with LEVERAGE_DECIMALS decimals)
      */
     function getMinLeverage() external view returns (uint256);
 
     /**
-     * @notice Get the maximum leverage an opened position can have
+     * @notice Get the highest leverage used to open a position
      * @dev A position can have a leverage a bit higher than this value under specific conditions involving
      * a change to the liquidation penalty setting
      * @return The maximum leverage value (with LEVERAGE_DECIMALS decimals)
@@ -179,14 +180,14 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getSafetyMarginBps() external view returns (uint256);
 
     /**
-     * @notice Get the number of iterations to do when attempting to liquidate positions during user actions
+     * @notice Get the number of tick liquidations to do when attempting to liquidate positions during user actions
      * @return The number of iterations
      */
     function getLiquidationIteration() external view returns (uint16);
 
     /**
-     * @notice Get the amount of time elapsed after which the EMA is set to the
-     * last funding rate during a balance update
+     * @notice The time frame for the EMA calculations
+     * @dev The EMA is set to the last funding rate when the time elapsed between 2 actions is greater than this value
      * @return The time elapsed (in seconds)
      */
     function getEMAPeriod() external view returns (uint128);
@@ -198,7 +199,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getFundingSF() external view returns (uint256);
 
     /**
-     * @notice Get the fee the protocol takes during the application of funding rates
+     * @notice Get the fee taken by the protocol during the application of funding rates
      * @return The fee (in basis points)
      */
     function getProtocolFeeBps() external view returns (uint16);
@@ -216,14 +217,14 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getSdexBurnOnDepositRatio() external view returns (uint32);
 
     /**
-     * @notice Get the security deposit required for the open a new position
+     * @notice Get the security deposit required to open a new position
      * @return The amount of assets to use as a security deposit (in ether)
      */
     function getSecurityDepositValue() external view returns (uint256);
 
     /**
      * @notice Get the threshold before fees are sent to the fee collector
-     * @return The amount of fees to be accumulated (in assets decimals)
+     * @return The amount of fees to be accumulated (in _assetDecimals)
      */
     function getFeeThreshold() external view returns (uint256);
 
@@ -259,13 +260,13 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Get the nominal (target) price of USDN
-     * @return The price of the USDN token after a rebase (with _priceFeedDecimals)
+     * @return The price of the USDN token after a rebase (in _priceFeedDecimals)
      */
     function getTargetUsdnPrice() external view returns (uint128);
 
     /**
      * @notice Get the USDN token price at which a rebase should occur
-     * @return The rebase threshold (with _priceFeedDecimals)
+     * @return The rebase threshold (in _priceFeedDecimals)
      */
     function getUsdnRebaseThreshold() external view returns (uint128);
 
@@ -276,8 +277,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getUsdnRebaseInterval() external view returns (uint256);
 
     /**
-     * @notice Get the minimum value of a long position to be opened's collateral (in USD)
-     * @return The minimum value (with _priceFeedDecimals)
+     * @notice Get the minimum collateral value when opening a long position (in USD)
+     * @return The minimum value (in _priceFeedDecimals)
      */
     function getMinLongPosition() external view returns (uint256);
 
@@ -286,20 +287,19 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Get the funding rate the last time it was calculated (getLastUpdateTimestamp)
+     * @notice Get last value of the funding rate at last timestamp (getLastUpdateTimestamp)
      * @return The last value of the funding rate
      */
     function getLastFunding() external view returns (int256);
 
     /**
      * @notice Get the price of the asset during the last update of the vault and long balances
-     * @return The price of the asset (with price feed decimals)
+     * @return The price of the asset (in _priceFeedDecimals)
      */
     function getLastPrice() external view returns (uint128);
 
     /**
-     * @notice Get the timestamp of the last time we updated the vault and long balances according to the PnL and the
-     * funding
+     * @notice Get the timestamp of the last time a fresh price was provided
      * @return The timestamp of the last update
      */
     function getLastUpdateTimestamp() external view returns (uint128);
@@ -312,7 +312,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Get the fees that were accumulated by the contract and are yet to be sent to the fee collector
-     * (in assets decimals)
+     * (in _assetDecimals)
      * @return The amount of assets accumulated as fees still in the contract
      */
     function getPendingProtocolFee() external view returns (uint256);
@@ -321,7 +321,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @notice Get the pending action of the user (1 per user max)
      * @dev The value stored is an index into the `pendingActionsQueue` deque, shifted by one. A value of 0 means no
      * pending action. Since the deque uses uint128 indices, the highest index will not overflow when adding one.
-     * @param user The user address
+     * @param user The user's address
      * @return The pending action of the user (if there is one)
      */
     function getPendingAction(address user) external view returns (uint256);
@@ -358,14 +358,14 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getBalanceLong() external view returns (uint256);
 
     /**
-     * @notice Get the total exposure of all the currently open long positions
+     * @notice Get the total exposure of all currently open long positions
      * @return The total exposure of the longs (with asset decimals)
      */
     function getTotalExpo() external view returns (uint256);
 
     /**
      * @notice Get the current version of the tick
-     * @param tick The tick
+     * @param tick The tick number
      * @return The version of the tick
      */
     function getTickVersion(int24 tick) external view returns (uint256);
@@ -379,7 +379,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Get the long position at the provided tick, in the provided index
-     * @param tick The tick
+     * @param tick The tick number
      * @param index The position index
      * @return The long position
      */
