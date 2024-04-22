@@ -20,14 +20,16 @@ import {
  * 90% of the initial price
  */
 contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
-    uint128 initialPrice;
-    uint256 balanceSenderBefore;
-    uint256 balanceProtocolBefore;
-    uint128 liquidationPrice;
-    uint256 expectedLiquidatorRewards;
-    uint128 depositAmount = 1 ether;
     bytes initialPriceData;
     bytes liquidationPriceData;
+
+    uint128 initialPrice;
+    uint128 liquidationPrice;
+    uint128 depositAmount = 1 ether;
+
+    uint256 balanceSenderBefore;
+    uint256 balanceProtocolBefore;
+    uint256 expectedLiquidatorRewards;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -71,6 +73,10 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
+
+        assertEq(
+            balanceSenderBefore + balanceProtocolBefore, balanceSenderAfter + balanceProtocolAfter, "total balance"
+        );
         assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards - depositAmount, "sender balance");
         assertEq(
             balanceProtocolAfter, balanceProtocolBefore + depositAmount - expectedLiquidatorRewards, "protocol balance"
@@ -93,6 +99,10 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
+
+        assertEq(
+            balanceSenderBefore + balanceProtocolBefore, balanceSenderAfter + balanceProtocolAfter, "total balance"
+        );
         assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards - depositAmount, "sender balance");
         assertEq(
             balanceProtocolAfter, balanceProtocolBefore + depositAmount - expectedLiquidatorRewards, "protocol balance"
@@ -106,16 +116,23 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_initiateWithdrawal() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, initialPrice);
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, depositAmount, initialPrice);
 
         skip(1 hours);
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.initiateWithdrawal(1 ether, liquidationPriceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(uint152(usdn.balanceOf(address(this))), liquidationPriceData, EMPTY_PREVIOUS_DATA);
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
+
+        assertEq(
+            // we have to add the deposit amount of the new position
+            balanceSenderBefore + balanceProtocolBefore + depositAmount,
+            balanceSenderAfter + balanceProtocolAfter,
+            "total balance"
+        );
         assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards, "sender balance");
         assertEq(
             balanceProtocolAfter, balanceProtocolBefore + depositAmount - expectedLiquidatorRewards, "protocol balance"
@@ -129,7 +146,7 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_validateWithdrawal() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 1 ether, initialPrice);
+        setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, depositAmount, initialPrice);
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
@@ -137,6 +154,13 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
+
+        assertEq(
+            // we have to add the deposit amount of the new position
+            balanceSenderBefore + balanceProtocolBefore + depositAmount,
+            balanceSenderAfter + balanceProtocolAfter,
+            "total balance"
+        );
         // TODO view function to have the amount of wsETH to be withdrawn (remove +/- 1)
         assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards + 1, "sender balance");
         assertEq(
@@ -162,6 +186,10 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
+
+        assertEq(
+            balanceSenderBefore + balanceProtocolBefore, balanceSenderAfter + balanceProtocolAfter, "total balance"
+        );
         assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards - depositAmount, "sender balance");
         assertEq(
             balanceProtocolAfter, balanceProtocolBefore + depositAmount - expectedLiquidatorRewards, "protocol balance"
@@ -185,6 +213,10 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
+
+        assertEq(
+            balanceSenderBefore + balanceProtocolBefore, balanceSenderAfter + balanceProtocolAfter, "total balance"
+        );
         assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards - depositAmount, "sender balance");
         assertEq(
             balanceProtocolAfter, balanceProtocolBefore + depositAmount - expectedLiquidatorRewards, "protocol balance"
@@ -213,6 +245,13 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
+
+        assertEq(
+            // we have to add the deposit amount of the new position
+            balanceSenderBefore + balanceProtocolBefore + depositAmount,
+            balanceSenderAfter + balanceProtocolAfter,
+            "total balance"
+        );
         assertEq(balanceSenderAfter, balanceSenderBefore + expectedLiquidatorRewards, "sender balance");
         assertEq(
             balanceProtocolAfter, balanceProtocolBefore + depositAmount - expectedLiquidatorRewards, "protocol balance"
@@ -227,20 +266,12 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_validateClosePosition() public {
-        // TO DO
-        vm.skip(true);
         (int24 tick,,) = setUpUserPositionInLong(
             address(this), ProtocolAction.InitiateClosePosition, depositAmount, initialPrice / 2, initialPrice
         );
 
         skip(1 hours);
 
-        vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.validateClosePosition(liquidationPriceData, EMPTY_PREVIOUS_DATA);
-
-        uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
-        uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
         (PendingAction memory action,) = protocol.i_getPendingAction(address(this));
         uint256 priceWithFees =
             liquidationPrice - (liquidationPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
@@ -254,11 +285,28 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
             protocol.i_toLongPendingAction(action).closeTotalExpo
         );
 
+        uint256 vaultProfit = depositAmount - uint256(positionValue);
+
+        vm.expectEmit();
+        emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
+        protocol.validateClosePosition(liquidationPriceData, EMPTY_PREVIOUS_DATA);
+
+        uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
+        uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
+
+        assertEq(
+            // we have to add the deposit amount of the new position
+            balanceSenderBefore + balanceProtocolBefore + depositAmount,
+            balanceSenderAfter + balanceProtocolAfter,
+            "total balance"
+        );
         assertEq(
             balanceSenderAfter,
             balanceSenderBefore + expectedLiquidatorRewards + uint256(positionValue),
             "sender balance"
         );
-        assertEq(balanceProtocolAfter, balanceProtocolBefore - expectedLiquidatorRewards, "protocol balance");
+        assertEq(
+            balanceProtocolAfter, balanceProtocolBefore - expectedLiquidatorRewards + vaultProfit, "protocol balance"
+        );
     }
 }
