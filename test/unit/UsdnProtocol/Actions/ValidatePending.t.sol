@@ -5,12 +5,16 @@ import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The validateActionablePendingActions function of the USDN Protocol
  * @custom:given A protocol with all fees, rebase and funding disabled
  */
 contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
+    /// @notice Trigger a reentrancy after receiving ether
+    bool internal _reenter;
+
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableProtocolFees = false;
@@ -194,6 +198,37 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
         previousActionsData_ = PreviousActionsData({ priceData: priceData, rawIndices: rawIndices });
     }
 
-    // test refunds
-    receive() external payable { }
+    /**
+     * @custom:scenario The user validates pending actions with a reentrancy attempt
+     * @custom:given A user being a smart contract that calls validateActionablePendingActions when receiving ether
+     * @custom:and A receive() function that calls validateActionablePendingActions again
+     * @custom:when The user calls validateActionablePendingActions with some ether to trigger a refund
+     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     */
+    function test_RevertWhen_validateActionablePendingActionsCalledWithReentrancy() public {
+        // If we are currently in a reentrancy
+        PreviousActionsData memory previousActionsData;
+        if (_reenter) {
+            previousActionsData = PreviousActionsData({ priceData: new bytes[](1), rawIndices: new uint128[](1) });
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.validateActionablePendingActions(previousActionsData, 2);
+            return;
+        }
+
+        previousActionsData = _setUpFourPendingActions();
+
+        _reenter = true;
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateActionablePendingActions.selector), 2);
+        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        protocol.validateActionablePendingActions{ value: 1 }(previousActionsData, 4);
+    }
+
+    /// @dev Allow refund tests
+    receive() external payable {
+        // test reentrancy
+        if (_reenter) {
+            test_RevertWhen_validateActionablePendingActionsCalledWithReentrancy();
+        }
+    }
 }
