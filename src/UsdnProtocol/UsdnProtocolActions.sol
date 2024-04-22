@@ -876,7 +876,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
      * If the current tick version is greater than the tick version of the position (when it was opened), then the
-     * position has been liquidated and the transaction will revert.
+     * position has been liquidated and this function will return 0.
      * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
      * during the validate action.

@@ -15,12 +15,12 @@ import {
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @custom:feature The reward when a user action performs a liquidation
- * @custom:background Given a protocol initialized with default params
+ * @custom:feature The reward when a user action performs a liquidation during an action
+ * @custom:background Given a protocol initialized with default params with a user position with a liquidation price at
+ * 90% of the initial price
  */
 contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
     uint128 initialPrice;
-    uint128 desiredLiqPrice;
     uint256 balanceSenderBefore;
     uint256 balanceProtocolBefore;
     uint128 liquidationPrice;
@@ -33,28 +33,37 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         params = DEFAULT_PARAMS;
         params.flags.enableFunding = false;
         super._setUp(params);
-        wstETH.mintAndApprove(address(this), 1000 ether, address(protocol), type(uint256).max);
+
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         usdn.approve(address(protocol), type(uint256).max);
 
         chainlinkGasPriceFeed.setLatestRoundData(1, 30 gwei, block.timestamp, 1);
         vm.txGasPrice(30 gwei);
+
         initialPrice = params.initialPrice;
-        initialPriceData = abi.encode(initialPrice);
-        desiredLiqPrice = uint128(initialPrice) * 9 / 10;
+        uint128 desiredLiqPrice = uint128(initialPrice) * 9 / 10;
         (int24 tick,,) = setUpUserPositionInLong(
             USER_1, ProtocolAction.ValidateOpenPosition, 0.1 ether, desiredLiqPrice, initialPrice
         );
 
         skip(1 hours);
+
         balanceSenderBefore = wstETH.balanceOf(address(this));
         balanceProtocolBefore = wstETH.balanceOf(address(protocol));
         liquidationPrice = protocol.getEffectivePriceForTick(tick);
         liquidationPriceData = abi.encode(liquidationPrice);
+        initialPriceData = abi.encode(initialPrice);
         expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
+
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
     }
 
+    /**
+     * @custom:scenario The sender should receive the liquidation rewards when performing an initiate deposit action
+     * @custom:given A user position at a liquidation price of 90% of the initial price
+     * @custom:when The `initiateDeposit` function is called
+     * @custom:then The sender should receive the liquidation rewards
+     */
     function test_liquidationRewards_initiateDeposit() public {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
@@ -68,6 +77,12 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario The sender should receive the liquidation rewards when performing an validate deposit action
+     * @custom:given A user position at a liquidation price of 90% of the initial price
+     * @custom:when The `validateDeposit` function is called
+     * @custom:then The sender should receive the liquidation rewards
+     */
     function test_liquidationRewards_validateDeposit() public {
         protocol.initiateDeposit(depositAmount, initialPriceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
@@ -84,6 +99,12 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario The sender should receive the liquidation rewards when performing an initiate withdrawal action
+     * @custom:given A user position at a liquidation price of 90% of the initial price
+     * @custom:when The `initiateWithdrawal` function is called
+     * @custom:then The sender should receive the liquidation rewards
+     */
     function test_liquidationRewards_initiateWithdrawal() public {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, initialPrice);
 
@@ -101,6 +122,12 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario The sender should receive the liquidation rewards when performing an validate withdrawal action
+     * @custom:given A user position at a liquidation price of 90% of the initial price
+     * @custom:when The `validateWithdrawal` function is called
+     * @custom:then The sender should receive the liquidation rewards
+     */
     function test_liquidationRewards_validateWithdrawal() public {
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 1 ether, initialPrice);
 
@@ -119,6 +146,13 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario The sender should receive the liquidation rewards when performing an initiate open position
+     * action
+     * @custom:given A user position at a liquidation price of 90% of the initial price
+     * @custom:when The `initiateOpenPosition` function is called
+     * @custom:then The sender should receive the liquidation rewards
+     */
     function test_liquidationRewards_initiateOpenPosition() public {
         skip(1 hours);
 
@@ -134,6 +168,13 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario The sender should receive the liquidation rewards when performing an validate open position
+     * action
+     * @custom:given A user position at a liquidation price of 90% of the initial price
+     * @custom:when The `validateOpenPosition` function is called
+     * @custom:then The sender should receive the liquidation rewards
+     */
     function test_liquidationRewards_validateOpenPosition() public {
         protocol.initiateOpenPosition(depositAmount, initialPrice / 2, initialPriceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
@@ -150,6 +191,13 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario The sender should receive the liquidation rewards when performing an initiate close position
+     * action
+     * @custom:given A user position at a liquidation price of 90% of the initial price
+     * @custom:when The `initiateClosePosition` function is called
+     * @custom:then The sender should receive the liquidation rewards
+     */
     function test_liquidationRewards_initiateClosePosition() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
             address(this), ProtocolAction.ValidateOpenPosition, depositAmount, initialPrice / 2, initialPrice
@@ -171,6 +219,13 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         );
     }
 
+    /**
+     * @custom:scenario The sender should receive the liquidation rewards when performing an validate close position
+     * action
+     * @custom:given A user position at a liquidation price of 90% of the initial price
+     * @custom:when The `validateClosePosition` function is called
+     * @custom:then The sender should receive the liquidation rewards
+     */
     function test_liquidationRewards_validateClosePosition() public {
         // TO DO
         vm.skip(true);

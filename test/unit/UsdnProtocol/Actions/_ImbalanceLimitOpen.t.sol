@@ -66,7 +66,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:scenario The `_checkImbalanceLimitOpen` function should revert when vault expo equal 0
      * @custom:given The protocol is balanced
      * @custom:and A long position is opened
-     * @custom:and The price crashes very hard and liquidates the existing positions
+     * @custom:and The price is increased and profit exeeds the vault balance
      * @custom:and The vault balance/expo is 0
      * @custom:when The `_checkImbalanceLimitOpen` function is called
      * @custom:then The transaction should revert
