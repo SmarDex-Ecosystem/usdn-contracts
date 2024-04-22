@@ -33,7 +33,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enablePositionFees = false;
-
         super._setUp(params);
 
         (tick, tickVersion, index) = setUpUserPositionInLong(
