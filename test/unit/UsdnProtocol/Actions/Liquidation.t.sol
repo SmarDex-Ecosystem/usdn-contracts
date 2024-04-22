@@ -5,10 +5,14 @@ import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
+    /// @notice Trigger a reentrancy after receiving ether
+    bool internal _reenter;
+
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
 
@@ -475,6 +479,36 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
+    /**
+     * @custom:scenario The user liquidates with a reentrancy attempt
+     * @custom:given A user being a smart contract that calls liquidate when receiving ether
+     * @custom:and A receive() function that calls liquidate again
+     * @custom:when The user calls liquidate with some ether to trigger a refund
+     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     */
+    function test_RevertWhen_liquidateCalledWithReentrancy() public {
+        uint128 price = 2000 ether;
+        bytes memory priceData = abi.encode(price);
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.liquidate(priceData, 1);
+            return;
+        }
+
+        setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, price);
+
+        _reenter = true;
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.liquidate.selector), 2);
+        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        protocol.liquidate{ value: 1 }(priceData, 1);
+    }
+
     // test refunds
-    receive() external payable { }
+    receive() external payable {
+        // test reentrancy
+        if (_reenter) {
+            test_RevertWhen_liquidateCalledWithReentrancy();
+        }
+    }
 }
