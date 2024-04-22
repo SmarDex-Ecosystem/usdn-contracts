@@ -7,14 +7,12 @@ import { TickMath } from "src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _calcBitmapIndexFromTick internal function of the long layer
 contract TestUsdnProtocolLongCalcBitmapIndexFromTick is UsdnProtocolBaseFixture {
-    int24 _tickSpacing;
     int24 _minTick;
     int24 _maxTick;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
 
-        _tickSpacing = protocol.getTickSpacing();
         _minTick = protocol.minTick();
         _maxTick = protocol.maxTick();
     }
@@ -26,7 +24,7 @@ contract TestUsdnProtocolLongCalcBitmapIndexFromTick is UsdnProtocolBaseFixture 
      * @custom:then The index 0 is returned
      */
     function test_calcBitmapIndexFromTickWithMinTick() public {
-        uint256 result = protocol.i_calcBitmapIndexFromTick(_minTick, _tickSpacing);
+        uint256 result = protocol.i_calcBitmapIndexFromTick(_minTick);
 
         assertEq(result, 0, "The result should be 0 (lowest possible index)");
     }
@@ -38,8 +36,8 @@ contract TestUsdnProtocolLongCalcBitmapIndexFromTick is UsdnProtocolBaseFixture 
      * @custom:then The max index is returned
      */
     function test_calcBitmapIndexFromTickWithMaxTick() public {
-        uint256 maxIndex = uint256(int256(_maxTick - _minTick) / _tickSpacing);
-        uint256 result = protocol.i_calcBitmapIndexFromTick(_maxTick, _tickSpacing);
+        uint256 maxIndex = uint256(int256(_maxTick - _minTick) / protocol.getTickSpacing());
+        uint256 result = protocol.i_calcBitmapIndexFromTick(_maxTick);
 
         assertEq(result, maxIndex, "The result should be the highest calculable index");
     }

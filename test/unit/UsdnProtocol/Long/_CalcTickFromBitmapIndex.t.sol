@@ -7,14 +7,12 @@ import { TickMath } from "src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _calcTickFromBitmapIndex internal function of the long layer
 contract TestUsdnProtocolLongCalcTickFromBitmapIndex is UsdnProtocolBaseFixture {
-    int24 _tickSpacing;
     int24 _minTick;
     int24 _maxTick;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
 
-        _tickSpacing = protocol.getTickSpacing();
         _minTick = protocol.minTick();
         _maxTick = protocol.maxTick();
     }
@@ -26,7 +24,7 @@ contract TestUsdnProtocolLongCalcTickFromBitmapIndex is UsdnProtocolBaseFixture 
      * @custom:then The minimum usable tick is returned
      */
     function test_calcTickFromBitmapIndexWithMinIndex() public {
-        int24 tick = protocol.i_calcTickFromBitmapIndex(0, _tickSpacing);
+        int24 tick = protocol.i_calcTickFromBitmapIndex(0);
 
         assertEq(tick, _minTick, "The result should be the minimum usable tick");
     }
@@ -38,8 +36,8 @@ contract TestUsdnProtocolLongCalcTickFromBitmapIndex is UsdnProtocolBaseFixture 
      * @custom:then The maximum usable tick is returned
      */
     function test_calcTickFromBitmapIndexWithMaxIndex() public {
-        uint256 maxIndex = uint256(int256(_maxTick - _minTick) / _tickSpacing);
-        int24 tick = protocol.i_calcTickFromBitmapIndex(maxIndex, _tickSpacing);
+        uint256 maxIndex = uint256(int256(_maxTick - _minTick) / protocol.getTickSpacing());
+        int24 tick = protocol.i_calcTickFromBitmapIndex(maxIndex);
 
         assertEq(tick, _maxTick, "The result should be the maximum usable tick");
     }
