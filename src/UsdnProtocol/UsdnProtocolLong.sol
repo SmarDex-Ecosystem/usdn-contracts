@@ -112,8 +112,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @notice Find the largest tick which contains at least one position
-     * @dev If there are no tick with a position left, returns minTick()
+     * @notice Find the highest tick that contains at least one position
+     * @dev If there are no ticks with a position left, returns minTick()
      * @param searchStart The tick from which to start searching
      * @return tick_ The next highest tick below `searchStart`
      */

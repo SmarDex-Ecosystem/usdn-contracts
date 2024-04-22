@@ -10,26 +10,26 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * @custom:background Given an initialized USDN Protocol with default parameters
  */
 contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture {
-    int24 _tick;
+    int24 _initialTick;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
 
         // Tick of the position created by the initialization of the protocol
-        _tick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2)
+        _initialTick = protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2)
             + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
     }
 
     /**
      * @custom:scenario Find the highest populated tick
-     * @custom:given The initialization position
+     * @custom:given The initial position
      * @custom:and a position in a higher tick
      * @custom:when we call _findHighestPopulatedTick
      * @custom:then we get the highest populated tick from the tick provided
      */
     function test_findHighestPopulatedTick() public {
-        int24 maxInitializedTick = protocol.i_findHighestPopulatedTick(type(int24).max);
-        assertEq(maxInitializedTick, _tick, "The tick of protocol initialization should have been found");
+        int24 highestPopulatedTick = protocol.i_findHighestPopulatedTick(type(int24).max);
+        assertEq(highestPopulatedTick, _initialTick, "The tick of protocol initialization should have been found");
 
         (int24 higherTick,,) = setUpUserPositionInLong(
             address(this),
@@ -40,12 +40,14 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
         );
 
         // Add a position in a higher liquidation tick to check the result changes
-        maxInitializedTick = protocol.i_findHighestPopulatedTick(type(int24).max);
-        assertEq(maxInitializedTick, higherTick, "The tick of the newly created position should have been found");
+        highestPopulatedTick = protocol.i_findHighestPopulatedTick(type(int24).max);
+        assertEq(highestPopulatedTick, higherTick, "The tick of the newly created position should have been found");
 
         // Search from lower than the higher tick previously populated
-        maxInitializedTick = protocol.i_findHighestPopulatedTick(higherTick - 1);
-        assertEq(maxInitializedTick, _tick, "The tick lower than the newly created position should have been found");
+        highestPopulatedTick = protocol.i_findHighestPopulatedTick(higherTick - 1);
+        assertEq(
+            highestPopulatedTick, _initialTick, "The tick lower than the newly created position should have been found"
+        );
     }
 
     /**
@@ -55,7 +57,7 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
      * @custom:then the minimum usable tick is returned
      */
     function test_findHighestPopulatedTickWhenNothingFound() public {
-        int24 result = protocol.i_findHighestPopulatedTick(_tick - 1);
+        int24 result = protocol.i_findHighestPopulatedTick(_initialTick - 1);
         assertEq(result, protocol.minTick(), "No tick should have been found (min usable tick returned)");
     }
 }
