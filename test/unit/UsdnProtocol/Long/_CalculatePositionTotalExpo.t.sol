@@ -71,6 +71,7 @@ contract TestUsdnProtocolLongCalculatePositionTotalExpo is UsdnProtocolBaseFixtu
 
     /**
      * @custom:scenario Check calculations of `_calculatePositionTotalExpo`
+     * @custom:given An amount, a startPrice and a liquidationPrice
      * @custom:when The function "_calculatePositionTotalExpo" is called with some parameters
      * @custom:then Expo is calculated correctly
      */
