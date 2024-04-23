@@ -411,7 +411,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 // unsure if all ticks above the current tick were liquidated, but some were
                 int24 maxInitializedTick = _findMaxInitializedTick(tick);
                 _maxInitializedTick = maxInitializedTick;
-                effects_.isLiquidationPending = true;
+                effects_.isLiquidationPending = currentTick < maxInitializedTick;
             }
         }
 

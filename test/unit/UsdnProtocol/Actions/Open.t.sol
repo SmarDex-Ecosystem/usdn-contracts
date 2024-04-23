@@ -155,6 +155,90 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The initial open position and a user open position are opened. The price drop and all positions
+     * can be liquidated.
+     * The first `initiateOpenPosition` liquidate the initial open position but isn't validated as a position must
+     * always be liquidated.
+     * The second `initiateWOpenPosition` liquidate the remaining user open position and can be validated
+     * @custom:given The initial open position
+     * @custom:and A first user open position
+     * @custom:and The price drop below all position liquidation price
+     * @custom:when The first `initiateOpenPosition` is called
+     * @custom:and The initial open position is liquidated
+     * @custom:and The first user open position still need to be liquidated
+     * @custom:and The new user open position isn't validated
+     * @custom:then The transaction is completed
+     * @custom:when The second `initiateOpenPosition` is called
+     * @custom:and The remaining user open position is liquidated
+     * @custom:and No more position needs to be liquidated
+     * @custom:and The new user open position is validated
+     * @custom:then The transaction is completed
+     */
+    function test_initiateOpenPositionIsPendingLiquidation() public {
+        uint128 openAmount = 10 ether;
+
+        // initial position tick
+        uint128 initialLiqPriceWithoutPenalty = (params.initialPrice / 2)
+            + params.initialPrice / 2 * uint128(protocol.getProtocolFeeBps()) / uint128(protocol.BPS_DIVISOR());
+        int24 initialPosTick = protocol.getEffectiveTickForPrice(initialLiqPriceWithoutPenalty)
+            + int24(int8(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        uint256 initialPosTickVersion = protocol.getTickVersion(initialPosTick);
+
+        // user position
+        (int24 userPosTick, uint256 userPosTickVersion,) = setUpUserPositionInLong(
+            USER_1, ProtocolAction.ValidateOpenPosition, openAmount, params.initialPrice / 4, params.initialPrice
+        );
+
+        assertTrue(initialPosTick != userPosTick, "same tick");
+
+        skip(30 minutes - oracleMiddleware.getValidationDelay());
+
+        {
+            uint256 wstethBalanceBefore = wstETH.balanceOf(USER_1);
+            uint256 balanceETHBefore = USER_1.balance;
+
+            setUpUserPositionInLong(
+                USER_1,
+                ProtocolAction.InitiateOpenPosition,
+                openAmount,
+                params.initialPrice / 10,
+                params.initialPrice / 6
+            );
+
+            assertEq(balanceETHBefore, USER_1.balance, "wrong balance");
+            assertEq(wstethBalanceBefore + openAmount, wstETH.balanceOf(USER_1), "user loss wsteth");
+            assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
+            assertEq(wstethBalanceBefore, wstETH.balanceOf(USER_1) - openAmount, "user loss wsteth");
+            assertEq(
+                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
+            );
+            assertEq(userPosTickVersion, protocol.getTickVersion(userPosTick), "user position is liquidated");
+        }
+
+        // assertTrue()
+        skip(30 minutes - oracleMiddleware.getValidationDelay());
+
+        {
+            // should initiate the position and return a filled user position
+            (int24 filledUserPosTick, uint256 filledTickVersion,) = setUpUserPositionInLong(
+                USER_1,
+                ProtocolAction.InitiateOpenPosition,
+                openAmount,
+                params.initialPrice / 10,
+                params.initialPrice / 6
+            );
+
+            uint128 liqPriceWithoutPenalty = (params.initialPrice / 10)
+                + params.initialPrice / 10 * uint128(protocol.getProtocolFeeBps()) / uint128(protocol.BPS_DIVISOR());
+            int24 posTick = protocol.getEffectiveTickForPrice(liqPriceWithoutPenalty);
+
+            assertEq(filledUserPosTick, posTick, "wrong position tick");
+            assertEq(filledTickVersion, protocol.getTickVersion(posTick), "wrong position tick version");
+            assertEq(userPosTickVersion + 1, protocol.getTickVersion(userPosTick), "user position is not liquidated");
+        }
+    }
+
+    /**
      * @custom:scenario The user initiates an open position action with a zero amount
      * @custom:when The user initiates an open position with 0 wstETH
      * @custom:then The protocol reverts with UsdnProtocolZeroAmount

@@ -1266,20 +1266,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
 
-        // liquidate if price is more recent than _lastPrice
-        if (!priceUpdated) {
-            return false;
+        // liquidate if price is more recent or equal than _lastPrice
+        if (priceUpdated) {
+            LiquidationsEffects memory liquidationEffects =
+                _liquidatePositions(_lastPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
+
+            isLiquidationPending_ = liquidationEffects.isLiquidationPending;
+            _balanceLong = liquidationEffects.newLongBalance;
+            _balanceVault = liquidationEffects.newVaultBalance;
+
+            // rebase USDN if needed (interval has elapsed and price threshold was reached)
+            _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
         }
-
-        LiquidationsEffects memory liquidationEffects =
-            _liquidatePositions(neutralPrice, _liquidationIteration, tempLongBalance, tempVaultBalance);
-
-        isLiquidationPending_ = liquidationEffects.isLiquidationPending;
-        _balanceLong = liquidationEffects.newLongBalance;
-        _balanceVault = liquidationEffects.newVaultBalance;
-
-        // rebase USDN if needed (interval has elapsed and price threshold was reached)
-        _usdnRebase(uint128(neutralPrice), false); // safecast not needed since already done earlier
     }
 
     /**

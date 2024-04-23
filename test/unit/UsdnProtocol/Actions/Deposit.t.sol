@@ -2,9 +2,14 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 
-import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction,
+    ProtocolAction,
+    Position,
+    DepositPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The deposit function of the USDN Protocol
@@ -244,6 +249,210 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         protocol.validateDeposit{ value: 0.5 ether }(currentPrice, EMPTY_PREVIOUS_DATA);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario The initial open position and a user open position are opened. The price drop and all positions
+     * can be liquidated.
+     * The first `initiateDeposit` liquidate the initial open position but isn't validated as a position must always be
+     * liquidated.
+     * The second `initiateDeposit` liquidate the remaining user open position and can be validated
+     * @custom:given The initial open position
+     * @custom:and A user open position
+     * @custom:and The price drop below all position liquidation price
+     * @custom:when The first `initiateDeposit` is called
+     * @custom:and The initial open position is liquidated
+     * @custom:and The user open position still need to be liquidated
+     * @custom:and The user deposit isn't validated
+     * @custom:then The transaction is completed
+     * @custom:when The second `initiateDeposit` is called
+     * @custom:and The remaining user open position is liquidated
+     * @custom:and No more position needs to be liquidated
+     * @custom:and The user deposit is validated
+     * @custom:then The transaction is completed
+     */
+    function test_depositIsPendingLiquidation() public {
+        uint128 amount = 10 ether;
+
+        // initial open position
+        uint128 initialLiqPriceWithoutPenalty = (params.initialPrice / 2)
+            + params.initialPrice / 2 * uint128(protocol.getProtocolFeeBps()) / uint128(protocol.BPS_DIVISOR());
+        int24 initialPosTick = protocol.getEffectiveTickForPrice(initialLiqPriceWithoutPenalty)
+            + int24(int8(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        uint256 initialPosTickVersion = protocol.getTickVersion(initialPosTick);
+
+        // user open position
+        (int24 userPosTick, uint256 userPosTickVersion,) = setUpUserPositionInLong(
+            USER_1, ProtocolAction.ValidateOpenPosition, amount, params.initialPrice / 4, params.initialPrice
+        );
+
+        assertTrue(initialPosTick != userPosTick, "same tick");
+
+        skip(30 minutes - oracleMiddleware.getValidationDelay());
+
+        {
+            uint256 wstethBalanceBefore = wstETH.balanceOf(USER_1);
+            uint256 balanceUSDNBefore = usdn.balanceOf(USER_1);
+            uint256 balanceETHBefore = USER_1.balance;
+
+            // should liquidate initial position
+            // should not being validated because a position still need to be liquidated
+            // should not revert
+            vm.prank(USER_1);
+            protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
+                amount, abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+            );
+
+            assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
+            assertEq(wstethBalanceBefore, wstETH.balanceOf(USER_1), "user loss wsteth");
+            assertEq(balanceUSDNBefore, usdn.balanceOf(USER_1), "user received usdn");
+            assertEq(
+                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
+            );
+            assertEq(userPosTickVersion, protocol.getTickVersion(userPosTick), "user position is liquidated");
+        }
+
+        skip(30 minutes - oracleMiddleware.getValidationDelay());
+
+        {
+            uint256 wstethBalanceBefore = wstETH.balanceOf(USER_1);
+            uint256 balanceUSDNBefore = usdn.balanceOf(USER_1);
+
+            // mint more sdex to user
+            sdex.mintAndApprove(USER_1, 1_000_000 ether, address(protocol), type(uint256).max);
+
+            // should liquidate user position
+            // should be validated because no more position need to be liquidated
+            // should not revert
+            PendingAction memory pendingAction =
+                setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, amount, params.initialPrice / 10);
+
+            DepositPendingAction memory depositPendingAction = protocol.i_toDepositPendingAction(pendingAction);
+
+            uint256 expectedUSDN = protocol.i_calcMintUsdn(
+                depositPendingAction.amount,
+                uint256(
+                    protocol.i_vaultAssetAvailable(
+                        depositPendingAction.totalExpo,
+                        depositPendingAction.balanceVault,
+                        depositPendingAction.balanceLong,
+                        uint128(
+                            params.initialPrice / 10
+                                - (params.initialPrice / 10 * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()
+                        ),
+                        depositPendingAction.assetPrice
+                    )
+                ),
+                depositPendingAction.usdnTotalSupply,
+                uint128(
+                    params.initialPrice / 10
+                        - (params.initialPrice / 10 * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()
+                )
+            );
+
+            assertEq(wstethBalanceBefore, wstETH.balanceOf(USER_1), "user kept wsteth");
+            assertEq(balanceUSDNBefore + expectedUSDN, usdn.balanceOf(USER_1), "wrong usdn amount received");
+            assertEq(userPosTickVersion + 1, protocol.getTickVersion(userPosTick), "user position is not liquidated");
+        }
+    }
+
+    /**
+     * @custom:scenario The initial open position and a user open position are opened. The price drop and all positions
+     * can be liquidated.
+     * The first `initiateDeposit` liquidate the initial open position but isn't validated as a position must always be
+     * liquidated.
+     * The second `initiateDeposit` liquidate the remaining user open position and can be validated
+     * @custom:given The initial open position
+     * @custom:and A user open position
+     * @custom:and The price drop below all position liquidation price
+     * @custom:when The first `initiateDeposit` is called
+     * @custom:and The initial open position is liquidated
+     * @custom:and The user open position still need to be liquidated
+     * @custom:and The user deposit isn't validated
+     * @custom:then The transaction is completed
+     * @custom:when The second `initiateDeposit` is called
+     * @custom:and The remaining user open position is liquidated
+     * @custom:and No more position needs to be liquidated
+     * @custom:and The user deposit is validated
+     * @custom:then The transaction is completed
+     */
+    function test_depositSameBlockIsPendingLiquidation() public {
+        uint128 amount = 10 ether;
+
+        // initial open position
+        uint128 initialLiqPriceWithoutPenalty = (params.initialPrice / 2)
+            + params.initialPrice / 2 * uint128(protocol.getProtocolFeeBps()) / uint128(protocol.BPS_DIVISOR());
+        int24 initialPosTick = protocol.getEffectiveTickForPrice(initialLiqPriceWithoutPenalty)
+            + int24(int8(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        uint256 initialPosTickVersion = protocol.getTickVersion(initialPosTick);
+
+        // user open position
+        (int24 userPosTick, uint256 userPosTickVersion,) = setUpUserPositionInLong(
+            USER_1, ProtocolAction.ValidateOpenPosition, amount, params.initialPrice / 4, params.initialPrice
+        );
+
+        assertTrue(initialPosTick != userPosTick, "same tick");
+
+        skip(30 minutes - oracleMiddleware.getValidationDelay());
+
+        {
+            uint256 wstethBalanceBefore = wstETH.balanceOf(USER_1);
+            uint256 balanceUSDNBefore = usdn.balanceOf(USER_1);
+            uint256 balanceETHBefore = USER_1.balance;
+
+            vm.prank(USER_1);
+            protocol.initiateDeposit{ value: protocol.getSecurityDepositValue() }(
+                amount, abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+            );
+
+            assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
+            assertEq(wstethBalanceBefore, wstETH.balanceOf(USER_1), "user loss wsteth");
+            assertEq(balanceUSDNBefore, usdn.balanceOf(USER_1), "user received usdn");
+            assertEq(
+                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
+            );
+            assertEq(userPosTickVersion, protocol.getTickVersion(userPosTick), "user position is liquidated");
+        }
+
+        {
+            uint256 wstethBalanceBefore = wstETH.balanceOf(USER_1);
+            uint256 balanceUSDNBefore = usdn.balanceOf(USER_1);
+
+            // mint more sdex to user
+            sdex.mintAndApprove(USER_1, 1_000_000 ether, address(protocol), type(uint256).max);
+
+            // should liquidate user position
+            // should be validated because no more position need to be liquidated
+            // should not revert
+            PendingAction memory pendingAction =
+                setUpUserPositionInVault(USER_1, ProtocolAction.ValidateDeposit, amount, params.initialPrice);
+
+            DepositPendingAction memory depositPendingAction = protocol.i_toDepositPendingAction(pendingAction);
+
+            uint256 expectedUSDN = protocol.i_calcMintUsdn(
+                depositPendingAction.amount,
+                uint256(
+                    protocol.i_vaultAssetAvailable(
+                        depositPendingAction.totalExpo,
+                        depositPendingAction.balanceVault,
+                        depositPendingAction.balanceLong,
+                        uint128(
+                            params.initialPrice
+                                - (params.initialPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()
+                        ),
+                        depositPendingAction.assetPrice
+                    )
+                ),
+                depositPendingAction.usdnTotalSupply,
+                uint128(
+                    params.initialPrice - (params.initialPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()
+                )
+            );
+
+            assertEq(userPosTickVersion + 1, protocol.getTickVersion(userPosTick), "user position is not liquidated");
+            assertEq(wstethBalanceBefore, wstETH.balanceOf(USER_1), "user kept wsteth");
+            assertEq(balanceUSDNBefore + expectedUSDN, usdn.balanceOf(USER_1), "wrong usdn amount received");
+        }
     }
 
     /**

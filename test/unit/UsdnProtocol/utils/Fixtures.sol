@@ -200,6 +200,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
     function setUpUserPositionInVault(address user, ProtocolAction untilAction, uint128 positionSize, uint256 price)
         public
         prankUser(user)
+        returns (PendingAction memory pendingAction_)
     {
         sdex.mintAndApprove(
             user,
@@ -215,19 +216,21 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit{ value: securityDepositValue }(positionSize, priceData, EMPTY_PREVIOUS_DATA);
+        pendingAction_ = protocol.getUserPendingAction(user);
         _waitDelay();
-        if (untilAction == ProtocolAction.InitiateDeposit) return;
+        if (untilAction == ProtocolAction.InitiateDeposit) return pendingAction_;
 
         protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        if (untilAction == ProtocolAction.ValidateDeposit) return;
+        if (untilAction == ProtocolAction.ValidateDeposit) return pendingAction_;
 
         uint256 balanceOf = usdn.balanceOf(user);
         usdn.approve(address(protocol), balanceOf);
         protocol.initiateWithdrawal{ value: securityDepositValue }(uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA);
+        pendingAction_ = protocol.getUserPendingAction(user);
         _waitDelay();
 
-        if (untilAction == ProtocolAction.InitiateWithdrawal) return;
+        if (untilAction == ProtocolAction.InitiateWithdrawal) return pendingAction_;
 
         protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();

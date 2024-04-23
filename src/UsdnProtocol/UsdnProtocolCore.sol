@@ -401,9 +401,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     {
         // cache variable for optimization
         uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
-        // If the price is not fresh, do nothing
+        // If the price is not fresh, do not apply funding
         if (timestamp <= lastUpdateTimestamp) {
-            return (false, _balanceLong.toInt256(), _balanceVault.toInt256());
+            return (timestamp == lastUpdateTimestamp, _balanceLong.toInt256(), _balanceVault.toInt256());
         }
 
         // Update the funding EMA
