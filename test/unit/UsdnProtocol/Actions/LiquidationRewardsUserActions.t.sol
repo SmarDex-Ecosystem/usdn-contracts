@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { USER_1 } from "test/utils/Constants.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -178,8 +177,6 @@ contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_initiateOpenPosition() public {
-        skip(1 hours);
-
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateOpenPosition(depositAmount, initialPrice / 2, liquidationPriceData, EMPTY_PREVIOUS_DATA);
