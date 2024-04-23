@@ -190,7 +190,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
      * @return price_ The adjusted price for the tick
      */
-    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public view returns (uint128 price_) {
+    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public pure returns (uint128 price_) {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), liqMultiplier);
     }
 
@@ -536,23 +536,20 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Liquidate positions which have a liquidation price lower than the current price
-     * @param currentPrice The current price of the asset
      * @param iteration The maximum number of ticks to liquidate (minimum is 1)
      * @param tempLongBalance The temporary long balance as calculated when applying PnL and funding
      * @param tempVaultBalance The temporary vault balance as calculated when applying PnL and funding
      * @return effects_ The effects of the liquidations on the protocol
      */
-    function _liquidatePositions(
-        uint256 currentPrice,
-        uint16 iteration,
-        int256 tempLongBalance,
-        int256 tempVaultBalance
-    ) internal returns (LiquidationsEffects memory effects_) {
+    function _liquidatePositions(uint256, uint16 iteration, int256 tempLongBalance, int256 tempVaultBalance)
+        internal
+        returns (LiquidationsEffects memory effects_)
+    {
         LiquidationData memory data;
         data.tempLongBalance = tempLongBalance;
         data.tempVaultBalance = tempVaultBalance;
         data.balanceLong = tempLongBalance.toUint256();
-        data.currentPrice = _lastPrice;
+        data.currentPrice = _lastPrice; // TODO: do we want to do this?
         data.totalExpo = _totalExpo;
         data.accumulator = _liqMultiplierAccumulator;
 
@@ -660,6 +657,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      */
     function _handleNegativeBalances(int256 tempLongBalance, int256 tempVaultBalance)
         internal
+        pure
         returns (uint256 longBalance_, uint256 vaultBalance_)
     {
         // This can happen if the funding is larger than the remaining balance in the long side after applying PnL.

@@ -465,9 +465,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             balanceVault: _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
                 .toUint256(),
             balanceLong: _balanceLong,
-            usdnTotalSupply: _usdn.totalSupply(),
-            _unused2: 0,
-            _unused3: 0
+            usdnTotalSupply: _usdn.totalSupply()
         });
 
         securityDepositValue_ = _addPendingAction(user, _convertDepositPendingAction(pendingAction));
@@ -610,9 +608,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             totalExpo: totalExpo,
             balanceVault: balanceVault,
             balanceLong: balanceLong,
-            usdnTotalShares: usdn.totalShares(),
-            _unused: 0,
-            _unused2: 0
+            usdnTotalShares: usdn.totalShares()
         });
 
         securityDepositValue_ = _addPendingAction(user, _convertWithdrawalPendingAction(pendingAction));
@@ -791,9 +787,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 tickVersion: posId_.tickVersion,
                 index: posId_.index,
                 closeLiqMultiplier: 0,
-                closeTempTransfer: 0,
-                liqMulAccumulatorHi: 0,
-                liqMulAccumulatorLo: 0
+                closeTempTransfer: 0
             });
             securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(pendingAction));
         }
@@ -1024,9 +1018,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 tickVersion: posId.tickVersion,
                 index: posId.index,
                 closeLiqMultiplier: _calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
-                closeTempTransfer: data.tempTransfer,
-                liqMulAccumulatorHi: 0,
-                liqMulAccumulatorLo: 0
+                closeTempTransfer: data.tempTransfer
             })
         );
     }
@@ -1104,7 +1096,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Apply fees on price
         uint128 priceWithFees = (price.price - (price.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
-        (uint256 assetToTransfer, int256 positionValue) = _assetToTransfer(
+        (uint256 assetToTransfer,) = _assetToTransfer(
             priceWithFees,
             _getEffectivePriceForTick(
                 long.tick - int24(uint24(getTickLiquidationPenalty(long.tick))) * _tickSpacing, long.closeLiqMultiplier
@@ -1222,50 +1214,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Calculate how much wstETH must be transferred to a user to close a position.
      * @dev The amount is bound by the amount of wstETH available in the long side.
      * @param priceWithFees The current price of the asset, adjusted with fees
-     * @param neutralPrice The neutral price of the asset
-     * @param tick The tick of the position
-     * @param posExpo The total expo of the position
-     * @param longTradingExpo The trading expo of the long side at the moment of closing the position
-     * @param accumulator The liquidation multiplier accumulator at the moment of closing the position
-     * @param tempTransferred An amount that was already subtracted from the long balance
-     * @return assetToTransfer_ The amount of assets to transfer to the user, bound by zero and the available balance
-     * @return positionValue_ The position value, which can be negative in case of bad debt
-     */
-    /* function _assetToTransfer(
-        uint128 priceWithFees,
-        uint256 neutralPrice,
-        int24 tick,
-        uint8 liquidationPenalty,
-        uint128 posExpo,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator,
-        uint256 tempTransferred
-    ) internal view returns (uint256 assetToTransfer_, int256 positionValue_) {
-        // The available amount of asset on the long side (with the current balance)
-        uint256 available = _balanceLong + tempTransferred;
-
-        // Calculate position value
-        positionValue_ = _positionValue(
-            priceWithFees,
-            getEffectivePriceForTick(
-                tick - int24(uint24(liquidationPenalty)) * _tickSpacing, neutralPrice, longTradingExpo, accumulator
-            ),
-            posExpo
-        );
-
-        if (positionValue_ <= 0) {
-            assetToTransfer_ = 0;
-        } else if (positionValue_ > available.toInt256()) {
-            assetToTransfer_ = available;
-        } else {
-            assetToTransfer_ = uint256(positionValue_);
-        }
-    } */
-
-    /**
-     * @notice Calculate how much wstETH must be transferred to a user to close a position.
-     * @dev The amount is bound by the amount of wstETH available in the long side.
-     * @param priceWithFees The current price of the asset, adjusted with fees
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      * @param posExpo The total expo of the position
      * @param tempTransferred An amount that was already subtracted from the long balance
@@ -1283,6 +1231,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Calculate position value
         positionValue_ = _positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
+        // TODO: maybe we don't need to return this value anymore
 
         if (positionValue_ <= 0) {
             assetToTransfer_ = 0;

@@ -276,10 +276,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             var4: 420,
             var5: 1337,
             var6: 9000,
-            var7: 23,
-            var8: 0, // must be zero because unused
-            var9: 0 // must be zero because unused
-         });
+            var7: 23
+        });
         DepositPendingAction memory depositAction = protocol.i_toDepositPendingAction(action);
         assertTrue(depositAction.common.action == action.common.action, "action action");
         assertEq(depositAction.common.timestamp, action.common.timestamp, "action timestamp");
@@ -296,8 +294,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(depositAction.balanceVault, action.var5, "action balance vault");
         assertEq(depositAction.balanceLong, action.var6, "action balance long");
         assertEq(depositAction.usdnTotalSupply, action.var7, "action total supply");
-        assertEq(depositAction._unused2, action.var8, "action unused 1");
-        assertEq(depositAction._unused3, action.var9, "action unused 2");
         PendingAction memory result = protocol.i_convertDepositPendingAction(depositAction);
         _assertActionsEqual(action, result, "deposit pending action conversion");
     }
@@ -322,10 +318,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             var4: 420,
             var5: 1337,
             var6: 9000,
-            var7: 23,
-            var8: 0, // must be zero because unused
-            var9: 0 // must be zero because unused
-         });
+            var7: 23
+        });
         WithdrawalPendingAction memory withdrawalAction = protocol.i_toWithdrawalPendingAction(action);
         assertTrue(withdrawalAction.common.action == action.common.action, "action action");
         assertEq(withdrawalAction.common.timestamp, action.common.timestamp, "action timestamp");
@@ -342,8 +336,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(withdrawalAction.balanceVault, action.var5, "action balance vault");
         assertEq(withdrawalAction.balanceLong, action.var6, "action balance long");
         assertEq(withdrawalAction.usdnTotalShares, action.var7, "action total supply");
-        assertEq(withdrawalAction._unused, action.var8, "action unused");
-        assertEq(withdrawalAction._unused2, action.var9, "action unused2");
         PendingAction memory result = protocol.i_convertWithdrawalPendingAction(withdrawalAction);
         _assertActionsEqual(action, result, "withdrawal pending action conversion");
     }
@@ -368,9 +360,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             var4: 420,
             var5: 1337,
             var6: 9000,
-            var7: 23,
-            var8: 33,
-            var9: 44
+            var7: 23
         });
         LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
         assertTrue(longAction.common.action == action.common.action, "action action");
@@ -386,8 +376,6 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(longAction.index, action.var5, "action index");
         assertEq(longAction.closeLiqMultiplier, action.var6, "action liq multiplier");
         assertEq(longAction.closeTempTransfer, action.var7, "action transfer");
-        assertEq(longAction.liqMulAccumulatorHi, action.var8, "action liq mul hi");
-        assertEq(longAction.liqMulAccumulatorLo, action.var9, "action liq mul lo");
         PendingAction memory result = protocol.i_convertLongPendingAction(longAction);
         _assertActionsEqual(action, result, "long pending action conversion");
     }

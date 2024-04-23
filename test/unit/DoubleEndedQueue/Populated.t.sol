@@ -20,9 +20,7 @@ contract TestDequePopulated is DequeFixture {
         12 ether,
         3 ether,
         4 ether,
-        42_000 ether,
-        33,
-        44
+        42_000 ether
     );
     PendingAction public action2 = PendingAction(
         PendingActionCommonData(ProtocolAction.ValidateDeposit, 420, USER_1, 1),
@@ -32,13 +30,10 @@ contract TestDequePopulated is DequeFixture {
         120 ether,
         30 ether,
         40 ether,
-        420_000 ether,
-        330,
-        440
+        420_000 ether
     );
-    PendingAction public action3 = PendingAction(
-        PendingActionCommonData(ProtocolAction.ValidateOpenPosition, 42, USER_1, 0), 1, 10, 0, 0, 0, 0, 0, 0, 0
-    );
+    PendingAction public action3 =
+        PendingAction(PendingActionCommonData(ProtocolAction.ValidateOpenPosition, 42, USER_1, 0), 1, 10, 0, 0, 0, 0, 0);
     uint128 public rawIndex1;
     uint128 public rawIndex2;
     uint128 public rawIndex3;
@@ -134,7 +129,7 @@ contract TestDequePopulated is DequeFixture {
      */
     function test_pushFront() public {
         PendingAction memory action = PendingAction(
-            PendingActionCommonData(ProtocolAction.ValidateClosePosition, 1, USER_1, 1), 1, 1, 1, 1, 1, 1, 1, 1, 1
+            PendingActionCommonData(ProtocolAction.ValidateClosePosition, 1, USER_1, 1), 1, 1, 1, 1, 1, 1, 1
         );
         uint128 rawIndex = handler.pushFront(action);
         uint128 expectedRawIndex;
@@ -169,7 +164,7 @@ contract TestDequePopulated is DequeFixture {
      */
     function test_pushBack() public {
         PendingAction memory action = PendingAction(
-            PendingActionCommonData(ProtocolAction.ValidateClosePosition, 1, USER_1, 1), 1, 1, 1, 1, 1, 1, 1, 1, 1
+            PendingActionCommonData(ProtocolAction.ValidateClosePosition, 1, USER_1, 1), 1, 1, 1, 1, 1, 1, 1
         );
         uint128 rawIndex = handler.pushBack(action);
         uint128 expectedRawIndex;

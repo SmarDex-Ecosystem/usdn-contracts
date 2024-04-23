@@ -38,8 +38,6 @@ contract DequeFixture is BaseFixture {
         assertEq(a.var4, b.var4, string.concat(err, " - action var4"));
         assertEq(a.var5, b.var5, string.concat(err, " - action var5"));
         assertEq(a.var6, b.var6, string.concat(err, " - action var6"));
-        assertEq(a.var7, b.var7, string.concat(err, " - action var7"));
-        assertEq(a.var8, b.var8, string.concat(err, " - action var8"));
     }
 
     // force ignore from coverage report

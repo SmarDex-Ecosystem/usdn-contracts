@@ -68,8 +68,6 @@ struct PendingActionCommonData {
  * @param var5 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param var6 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param var7 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
- * @param var8 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
- * @param var9 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  */
 struct PendingAction {
     PendingActionCommonData common; // 39 bytes
@@ -80,8 +78,6 @@ struct PendingAction {
     uint256 var5; // 32 bytes
     uint256 var6; // 32 bytes
     uint256 var7; // 32 bytes
-    uint256 var8; // 32 bytes
-    uint256 var9; // 32 bytes
 }
 
 /**
@@ -94,8 +90,6 @@ struct PendingAction {
  * @param balanceVault The balance of the vault at the time of last update.
  * @param balanceLong The balance of the long position at the time of last update.
  * @param usdnTotalSupply The total supply of USDN at the time of the action.
- * @param _unused2 Unused field to align the struct to `PendingAction`.
- * @param _unused3 Unused field to align the struct to `PendingAction`.
  */
 struct DepositPendingAction {
     PendingActionCommonData common; // 39 bytes
@@ -106,8 +100,6 @@ struct DepositPendingAction {
     uint256 balanceVault; // 32 bytes
     uint256 balanceLong; // 32 bytes
     uint256 usdnTotalSupply; // 32 bytes
-    uint256 _unused2; // 32 bytes
-    uint256 _unused3; // 32 bytes
 }
 
 /**
@@ -120,8 +112,6 @@ struct DepositPendingAction {
  * @param balanceVault The balance of the vault at the time of last update.
  * @param balanceLong The balance of the long position at the time of last update.
  * @param usdnTotalShares The total shares supply of USDN at the time of the action.
- * @param _unused Unused field to align the struct to `PendingAction`.
- * @param _unused2 Unused field to align the struct to `PendingAction`.
  */
 struct WithdrawalPendingAction {
     PendingActionCommonData common; // 39 bytes
@@ -132,8 +122,6 @@ struct WithdrawalPendingAction {
     uint256 balanceVault; // 32 bytes
     uint256 balanceLong; // 32 bytes
     uint256 usdnTotalShares; // 32 bytes
-    uint256 _unused; // 32 bytes
-    uint256 _unused2; // 32 bytes
 }
 
 /**
@@ -149,8 +137,6 @@ struct WithdrawalPendingAction {
  * when closing a position).
  * @param closeTempTransfer The amount that was optimistically removed on `initiateClosePosition` (only used when
  * closing a position).
- * @param liqMulAccumulatorHi The high limb of the liquidation multiplier accumulator.
- * @param liqMulAccumulatorLo The low limb of the liquidation multiplier accumulator.
  */
 struct LongPendingAction {
     PendingActionCommonData common; // 39 bytes
@@ -161,8 +147,6 @@ struct LongPendingAction {
     uint256 index; // 32 bytes
     uint256 closeLiqMultiplier; // 32 bytes
     uint256 closeTempTransfer; // 32 bytes
-    uint256 liqMulAccumulatorHi; // 32 bytes
-    uint256 liqMulAccumulatorLo; // 32 bytes
 }
 
 /**

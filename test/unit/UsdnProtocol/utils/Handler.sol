@@ -358,7 +358,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _checkSafetyMargin(currentPrice, liquidationPrice);
     }
 
-    function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external view returns (uint128) {
+    function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external pure returns (uint128) {
         return _getEffectivePriceForTick(tick, liqMultiplier);
     }
 }
