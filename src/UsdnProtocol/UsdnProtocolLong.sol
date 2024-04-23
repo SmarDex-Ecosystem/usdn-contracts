@@ -12,12 +12,28 @@ import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
+
+    struct LiquidationData {
+        int256 tempLongBalance;
+        int256 tempVaultBalance;
+        int24 currentTick;
+        int24 lastCheckedTick;
+        uint256 totalExpoToRemove;
+        uint256 accumulatorValueToRemove;
+        uint256 balanceLong;
+        uint256 currentPrice;
+        uint256 totalExpo;
+        HugeUint.Uint512 accumulator;
+        int24 tickSpacing;
+    }
 
     /// @inheritdoc IUsdnProtocolLong
     function minTick() public view returns (int24 tick_) {
@@ -87,17 +103,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int24 tickSpacing
     ) public pure returns (int24 tick_) {
         // unadjust price with liquidation multiplier
-        uint256 unadjustedPrice;
-        if (accumulator.hi == 0 && accumulator.lo == 0) {
-            // no position in long, we assume a liquidation multiplier of 1.0
-            unadjustedPrice = price;
-        } else {
-            // M = assetPrice * (totalExpo - balanceLong) / accumulator
-            // unadjustedPrice = price / M
-            // unadjustedPrice = price * accumulator / (assetPrice * (totalExpo - balanceLong))
-            HugeUint.Uint512 memory numerator = accumulator.mul(price);
-            unadjustedPrice = HugeUint.div(numerator, HugeUint.wrap(assetPrice * longTradingExpo));
-        }
+        uint256 unadjustedPrice = _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
 
         if (unadjustedPrice < TickMath.MIN_PRICE) {
             return TickMath.minUsableTick(tickSpacing);
@@ -164,17 +170,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
     ) public pure returns (uint128 price_) {
-        // adjusted price with liquidation multiplier
-        if (accumulator.hi == 0 && accumulator.lo == 0) {
-            // no position in long, we assume a liquidation multiplier of 1.0
-            return TickMath.getPriceAtTick(tick).toUint128();
-        }
-        // M = assetPrice * (totalExpo - balanceLong) / accumulator
-        // price = getPriceAtTick(tick) * M
-        // price = getPriceAtTick(tick) * assetPrice * (totalExpo - balanceLong) / accumulator
-        uint256 unadjustedPrice = TickMath.getPriceAtTick(tick);
-        HugeUint.Uint512 memory numerator = HugeUint.mul(unadjustedPrice, assetPrice * longTradingExpo);
-        price_ = HugeUint.div(numerator, accumulator).toUint128();
+        price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -183,6 +179,63 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         price_ = FixedPointMathLib.fullMulDiv(
             TickMath.getPriceAtTick(tick), liqMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
         ).toUint128();
+    }
+
+    /**
+     * @notice Knowing the liquidation price of a position, get the corresponding unadjusted price, which can be used
+     * to find the corresponding tick.
+     * @param price An adjusted liquidation price (taking into account the effects of funding)
+     * @param assetPrice The current price of the asset
+     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
+     * @param accumulator The liquidation multiplier accumulator
+     * @return unadjustedPrice_ The unadjusted price for the liquidation price
+     */
+    function _unadjustPrice(
+        uint256 price,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) public pure returns (uint256 unadjustedPrice_) {
+        if (accumulator.hi == 0 && accumulator.lo == 0) {
+            // no position in long, we assume a liquidation multiplier of 1.0
+            console2.log("multiplier", uint256(1));
+            return price;
+        }
+        // M = assetPrice * (totalExpo - balanceLong) / accumulator
+        // unadjustedPrice = price / M
+        // unadjustedPrice = price * accumulator / (assetPrice * (totalExpo - balanceLong))
+        HugeUint.Uint512 memory numerator = accumulator.mul(price);
+        unadjustedPrice_ = HugeUint.div(numerator, HugeUint.wrap(assetPrice * longTradingExpo));
+        console2.log("multiplier", price * 1e18 / unadjustedPrice_);
+    }
+
+    /**
+     * @notice Knowing the unadjusted price for a tick, get the adjusted price taking into account the effects of the
+     * funding.
+     * @param unadjustedPrice The unadjusted price for the tick
+     * @param assetPrice The current price of the asset
+     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
+     * @param accumulator The liquidation multiplier accumulator
+     * @return price_ The adjusted price for the tick
+     */
+    function _adjustPrice(
+        uint256 unadjustedPrice,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) public pure returns (uint128 price_) {
+        if (accumulator.hi == 0 && accumulator.lo == 0) {
+            // no position in long, we assume a liquidation multiplier of 1.0
+            console2.log("multiplier", uint256(1));
+            return unadjustedPrice.toUint128();
+        }
+
+        // M = assetPrice * (totalExpo - balanceLong) / accumulator
+        // price = unadjustedPrice * M
+        // price = unadjustedPrice * assetPrice * (totalExpo - balanceLong) / accumulator
+        HugeUint.Uint512 memory numerator = HugeUint.mul(unadjustedPrice, assetPrice * longTradingExpo);
+        price_ = HugeUint.div(numerator, accumulator).toUint128();
+        console2.log("multiplier", uint256(price_) * 1e18 / unadjustedPrice);
     }
 
     /**
@@ -232,22 +285,29 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Calculate the value of a tick, knowing its contained total expo and the current asset price
-     * @param currentPrice The current price of the asset
      * @param tick The tick number
+     * @param currentPrice The current price of the asset
+     * @param totalExpo The total expo of the long side
+     * @param balanceLong The balance of the long side
+     * @param accumulator The liquidation multiplier accumulator
      * @param tickData The aggregate data for the tick
      */
-    function _tickValue(uint256 currentPrice, int24 tick, TickData memory tickData)
-        internal
-        view
-        returns (int256 value_)
-    {
-        // TODO: getEffectivePriceForTick uses _lastPrice. Maybe we should also use _lastPrice instead of currentPrice
-        // for the value calculation
+    function _tickValue(
+        int24 tick,
+        uint256 currentPrice,
+        uint256 totalExpo,
+        uint256 balanceLong,
+        HugeUint.Uint512 memory accumulator,
+        TickData memory tickData
+    ) internal view returns (int256 value_) {
+        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(
+            tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing,
+            currentPrice,
+            totalExpo - balanceLong,
+            accumulator
+        );
 
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
-        uint128 liqPriceWithoutPenalty =
-            getEffectivePriceForTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
-
         // if the current price is lower than the liquidation price, we have effectively a negative value
         if (currentPrice <= liqPriceWithoutPenalty) {
             // we calculate the inverse and then change the sign
@@ -444,85 +504,121 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int256 tempLongBalance,
         int256 tempVaultBalance
     ) internal returns (LiquidationsEffects memory effects_) {
+        LiquidationData memory data;
+        data.tempLongBalance = tempLongBalance;
+        data.tempVaultBalance = tempVaultBalance;
+        data.balanceLong = tempLongBalance.toUint256();
+        data.currentPrice = _lastPrice;
+        data.totalExpo = _totalExpo;
+        data.accumulator = _liqMultiplierAccumulator;
+        data.tickSpacing = _tickSpacing;
+
         // max iteration limit
         if (iteration > MAX_LIQUIDATION_ITERATION) {
             iteration = MAX_LIQUIDATION_ITERATION;
         }
 
-        // TODO: update this to not rely on the liquidation multiplier
-        int24 currentTick = TickMath.getClosestTickAtPrice(
-            FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier)
-        );
-        int24 tick = _maxInitializedTick;
-        // we can't mutate totalExpo and the liquidation multiplier accumulator until we have calculated all prices
-        // during the liquidation process
-        uint256 totalExpoToRemove;
-        uint256 accumulatorValueToRemove;
+        uint256 unadjustedPrice =
+            _unadjustPrice(data.currentPrice, data.currentPrice, data.totalExpo - data.balanceLong, data.accumulator);
+        data.currentTick = TickMath.getClosestTickAtPrice(unadjustedPrice);
+        data.lastCheckedTick = _maxInitializedTick;
 
         do {
-            {
-                uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(tick));
-                if (index == LibBitmap.NOT_FOUND) {
-                    // no populated ticks left
-                    break;
-                }
+            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(data.lastCheckedTick));
+            if (index == LibBitmap.NOT_FOUND) {
+                // no populated ticks left
+                break;
+            }
 
-                tick = _bitmapIndexToTick(index);
-                if (tick < currentTick) {
-                    break;
-                }
+            data.lastCheckedTick = _bitmapIndexToTick(index);
+            if (data.lastCheckedTick < data.currentTick) {
+                break;
             }
 
             // we have found a non-empty tick that needs to be liquidated
-            TickData memory tickData;
-            {
-                (bytes32 tickHash,) = _tickHash(tick);
+            (bytes32 tickHash,) = _tickHash(data.lastCheckedTick);
 
-                tickData = _tickData[tickHash];
+            TickData memory tickData = _tickData[tickHash];
 
-                totalExpoToRemove += tickData.totalExpo;
-                effects_.liquidatedPositions += tickData.totalPos;
-                uint256 unadjustedTickPrice =
-                    TickMath.getPriceAtTick(tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
-                accumulatorValueToRemove += unadjustedTickPrice * tickData.totalExpo;
+            data.totalExpoToRemove += tickData.totalExpo;
+            effects_.liquidatedPositions += tickData.totalPos;
+            uint256 unadjustedTickPrice = TickMath.getPriceAtTick(
+                data.lastCheckedTick - int24(uint24(tickData.liquidationPenalty)) * data.tickSpacing
+            );
+            data.accumulatorValueToRemove += unadjustedTickPrice * tickData.totalExpo;
 
-                // Reset tick by incrementing the tick version
-                ++_tickVersion[tick];
+            // Reset tick by incrementing the tick version
+            ++_tickVersion[data.lastCheckedTick];
 
-                ++effects_.liquidatedTicks;
-            }
+            ++effects_.liquidatedTicks;
 
-            {
-                int256 tickValue = _tickValue(currentPrice, tick, tickData);
-                effects_.remainingCollateral += tickValue;
+            int256 tickValue = _tickValue(
+                data.lastCheckedTick, data.currentPrice, data.totalExpo, data.balanceLong, data.accumulator, tickData
+            );
+            effects_.remainingCollateral += tickValue;
 
-                _tickBitmap.unset(_tickToBitmapIndex(tick));
+            _tickBitmap.unset(_tickToBitmapIndex(data.lastCheckedTick));
 
-                emit LiquidatedTick(
-                    tick, _tickVersion[tick] - 1, currentPrice, getEffectivePriceForTick(tick), tickValue
-                );
-            }
+            emit LiquidatedTick(
+                data.lastCheckedTick,
+                _tickVersion[data.lastCheckedTick] - 1,
+                data.currentPrice,
+                getEffectivePriceForTick(
+                    data.lastCheckedTick, data.currentPrice, data.totalExpo - data.balanceLong, data.accumulator
+                ),
+                tickValue
+            );
         } while (effects_.liquidatedTicks < iteration);
 
-        // update the state
-        _totalLongPositions -= effects_.liquidatedPositions;
-        _totalExpo -= totalExpoToRemove;
-        _liqMultiplierAccumulator = _liqMultiplierAccumulator.sub(HugeUint.wrap(accumulatorValueToRemove));
+        data = _updateStateAfterLiquidation(data, effects_);
 
-        if (effects_.liquidatedPositions != 0) {
-            if (tick < currentTick) {
+        (effects_.newLongBalance, effects_.newVaultBalance) =
+            _handleNegativeBalances(data.tempLongBalance, data.tempVaultBalance);
+    }
+
+    /**
+     * @notice Update the state of the contract according to the liquidation effects
+     * @param data The liquidation data
+     * @param effects The effects of the liquidations
+     * @return data The updated liquidation data
+     */
+    function _updateStateAfterLiquidation(LiquidationData memory data, LiquidationsEffects memory effects)
+        internal
+        returns (LiquidationData memory)
+    {
+        // update the state
+        _totalLongPositions -= effects.liquidatedPositions;
+        _totalExpo -= data.totalExpoToRemove;
+        _liqMultiplierAccumulator = _liqMultiplierAccumulator.sub(HugeUint.wrap(data.accumulatorValueToRemove));
+
+        if (effects.liquidatedPositions != 0) {
+            if (data.lastCheckedTick < data.currentTick) {
                 // all ticks above the current tick were liquidated
-                _maxInitializedTick = _findMaxInitializedTick(currentTick);
+                _maxInitializedTick = _findMaxInitializedTick(data.currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                _maxInitializedTick = _findMaxInitializedTick(tick);
+                _maxInitializedTick = _findMaxInitializedTick(data.lastCheckedTick);
             }
         }
 
         // Transfer remaining collateral to vault or pay bad debt
-        tempVaultBalance += effects_.remainingCollateral;
-        tempLongBalance -= effects_.remainingCollateral;
+        data.tempLongBalance -= effects.remainingCollateral;
+        data.tempVaultBalance += effects.remainingCollateral;
 
+        return data;
+    }
+
+    /**
+     * @notice Handle negative balances by transferring assets from one side to the other
+     * @param tempLongBalance The temporary long balance after liquidations
+     * @param tempVaultBalance The temporary vault balance after liquidations
+     * @return longBalance_ The new long balance after rebalancing
+     * @return vaultBalance_ The new vault balance after rebalancing
+     */
+    function _handleNegativeBalances(int256 tempLongBalance, int256 tempVaultBalance)
+        internal
+        returns (uint256 longBalance_, uint256 vaultBalance_)
+    {
         // This can happen if the funding is larger than the remaining balance in the long side after applying PnL.
         // Test case: test_assetToTransferZeroBalance()
         if (tempLongBalance < 0) {
@@ -538,7 +634,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tempVaultBalance = 0;
         }
 
-        effects_.newLongBalance = tempLongBalance.toUint256();
-        effects_.newVaultBalance = tempVaultBalance.toUint256();
+        longBalance_ = tempLongBalance.toUint256();
+        vaultBalance_ = tempVaultBalance.toUint256();
     }
 }

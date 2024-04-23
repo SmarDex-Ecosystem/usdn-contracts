@@ -552,14 +552,13 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         emit log_named_decimal_uint("acc", protocol.getLiqMultiplierAccumulator().lo, 36);
         emit log_named_decimal_uint("deployer liquidationPrice", protocol.getEffectivePriceForTick(deployerTick), 18);
         emit log_named_decimal_uint("price", protocol.getLastPrice(), 18);
+        emit log_named_uint("last update", protocol.getLastUpdateTimestamp());
+        emit log_named_uint("timestamp", block.timestamp);
 
         // liquidate the position in setup, leaving only the deployer position
         uint128 liquidationPrice = protocol.getEffectivePriceForTick(tick);
-        emit log_named_decimal_int(
-            "tick value",
-            protocol.i_tickValue(liquidationPrice - 1, deployerTick, protocol.getTickData(deployerTick)),
-            18
-        );
+        emit log_named_decimal_uint("setup pos liq price", liquidationPrice, 18);
+        emit log_named_int("setup tick", tick);
         uint256 liquidated = protocol.liquidate(abi.encode(liquidationPrice - 1), 10);
         assertEq(liquidated, 1, "liquidated");
 

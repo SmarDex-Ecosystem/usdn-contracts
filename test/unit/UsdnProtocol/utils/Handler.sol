@@ -52,6 +52,17 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _pendingActions[action.common.user] = uint256(rawIndex_) + 1;
     }
 
+    function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {
+        return _tickValue(
+            tick,
+            currentPrice,
+            _totalExpo,
+            _balanceLong,
+            _liqMultiplierAccumulator,
+            _tickData[tickHash(tick, _tickVersion[tick])]
+        );
+    }
+
     function i_initiateClosePosition(
         address user,
         PositionId memory posId,
@@ -190,8 +201,15 @@ contract UsdnProtocolHandler is UsdnProtocol {
         );
     }
 
-    function i_tickValue(uint256 currentPrice, int24 tick, TickData memory tickData) external view returns (int256) {
-        return _tickValue(currentPrice, tick, tickData);
+    function i_tickValue(
+        int24 tick,
+        uint256 currentPrice,
+        uint256 totalExpo,
+        uint256 balanceLong,
+        HugeUint.Uint512 memory accumulator,
+        TickData memory tickData
+    ) external view returns (int256) {
+        return _tickValue(tick, currentPrice, totalExpo, balanceLong, accumulator, tickData);
     }
 
     function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)

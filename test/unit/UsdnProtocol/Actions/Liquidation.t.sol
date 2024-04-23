@@ -359,7 +359,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Get the proper liquidation price for the tick
         price = protocol.getEffectivePriceForTick(tick);
-        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTickData(tick));
+        int256 collateralLiquidated = protocol.tickValue(tick, price);
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
@@ -420,7 +420,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Get the proper liquidation price for the tick
         price = protocol.getEffectivePriceForTick(tick);
-        int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTickData(tick));
+        int256 collateralLiquidated = protocol.tickValue(tick, price);
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(

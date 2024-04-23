@@ -54,7 +54,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTickData(desiredLiqTick));
+        int256 tickValue = protocol.tickValue(desiredLiqTick, liqPrice);
 
         vm.expectEmit();
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
@@ -112,7 +112,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
 
         // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.i_tickValue(price, desiredLiqTick, protocol.getTickData(desiredLiqTick));
+        int256 tickValue = protocol.tickValue(desiredLiqTick, price);
         // Sanity check
         // Make sure we do not end up in a bad debt situation because of fundings
         assertGt(tickValue, 1, "Waited too long before liquidation, lower the skipped time");
@@ -151,7 +151,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTickData(desiredLiqTick));
+        int256 tickValue = protocol.tickValue(desiredLiqTick, liqPrice);
 
         vm.expectEmit();
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
@@ -253,7 +253,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTickData(desiredLiqTick));
+        int256 tickValue = protocol.tickValue(desiredLiqTick, liqPrice);
 
         vm.expectEmit();
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, tickValue);
@@ -303,7 +303,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         price = protocol.getEffectivePriceForTick(liqTick);
 
         // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.i_tickValue(price, positionTick, protocol.getTickData(positionTick));
+        int256 tickValue = protocol.tickValue(positionTick, price);
 
         vm.expectEmit();
         emit LiquidatedTick(positionTick, 0, price, liqPriceAfterFundings, tickValue);
