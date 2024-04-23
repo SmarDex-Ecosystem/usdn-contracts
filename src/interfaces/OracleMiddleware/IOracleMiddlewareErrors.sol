@@ -18,8 +18,8 @@ interface IOracleMiddlewareErrors {
     /// @notice the confidence ratio is too high
     error OracleMiddlewareConfRatioTooHigh();
 
-    /// @notice Not enough ether was provided to cover the cost of price validation
-    error OracleMiddlewareInsufficientFee();
+    /// @notice An incorrect amount of ether was provided to cover the cost of price validation
+    error OracleMiddlewareIncorrectFee();
 
     /// @notice The sender could not accept the ether refund
     error OracleMiddlewareEtherRefundFailed();

@@ -487,34 +487,23 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     }
 
     /**
-     * @custom:scenario The user sends too much ether when validating a price
-     * @custom:given The user validates a price that requires 1 wei of ether
-     * @custom:when The user sends 0.5 ether as value in the `parseAndValidatePrice` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - getValidationCost)
-     */
-    function test_parseAndValidatePriceRefundEther() public {
-        uint256 balanceBefore = address(this).balance;
-        bytes memory priceData = abi.encode("data");
-        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateDeposit);
-        oracleMiddleware.parseAndValidatePrice{ value: 0.5 ether }(
-            uint128(block.timestamp), ProtocolAction.ValidateDeposit, priceData
-        );
-        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
-    }
-
-    /**
-     * @custom:scenario The user doesn't send enough ether when validating a price
+     * @custom:scenario The user doesn't send the right amount of ether when validating a price
      * @custom:given The user validates a price that requires 1 wei of ether
      * @custom:when The user sends 0 ether as value in the `parseAndValidatePrice` call
-     * @custom:then The function reverts with `OracleMiddlewareInsufficientFee`
+     * @custom:or The user sends 2 wei as value in the `parseAndValidatePrice` call
+     * @custom:then The function reverts with `OracleMiddlewareIncorrectFee`
      */
-    function test_RevertWhen_parseAndValidatePriceInsufficientFee() public {
-        vm.expectRevert(OracleMiddlewareInsufficientFee.selector);
+    function test_RevertWhen_parseAndValidatePriceIncorrectFee() public {
+        // Fee too low
+        vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
         oracleMiddleware.parseAndValidatePrice(
             uint128(block.timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
         );
-    }
 
-    // test refunds
-    receive() external payable { }
+        // Fee too high
+        vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
+        oracleMiddleware.parseAndValidatePrice{ value: 2 }(
+            uint128(block.timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
+        );
+    }
 }

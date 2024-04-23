@@ -19,6 +19,7 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
     /**
      * @notice Parses and validates price data.
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
+     * A fee amounting to exactly validationCost(data, action) must be sent or the transaction will revert.
      * @param targetTimestamp The target timestamp for validating the price data. For validation actions, this is the
      * timestamp of the initiation.
      * @param action Type of action for which the price is requested. The middleware may use this to alter the
