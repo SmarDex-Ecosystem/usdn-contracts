@@ -115,6 +115,8 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
 
     function withdrawEther() external {
         (bool success,) = payable(msg.sender).call{ value: address(this).balance }("");
-        if (!success) { }
+        if (!success) {
+            revert OracleMiddlewareTransferFailed();
+        }
     }
 }
