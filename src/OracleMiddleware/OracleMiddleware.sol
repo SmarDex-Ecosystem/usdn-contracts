@@ -180,6 +180,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             return _getLowLatencyPrice(data, 0, dir);
         }
 
+        // Chainlink calls do not require a fee
+        if (msg.value > 0) {
+            revert OracleMiddlewareIncorrectFee();
+        }
+
         ChainlinkPriceInfo memory chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS);
 
         // check if the cached pyth price is more recent and return it instead

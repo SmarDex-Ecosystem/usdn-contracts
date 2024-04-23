@@ -491,6 +491,7 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
      * @custom:given The user validates a price that requires 1 wei of ether
      * @custom:when The user sends 0 ether as value in the `parseAndValidatePrice` call
      * @custom:or The user sends 2 wei as value in the `parseAndValidatePrice` call
+     * @custom:or The user sends 1 wei as value with empty data in the `parseAndValidatePrice` call
      * @custom:then The function reverts with `OracleMiddlewareIncorrectFee`
      */
     function test_RevertWhen_parseAndValidatePriceIncorrectFee() public {
@@ -505,5 +506,9 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
         oracleMiddleware.parseAndValidatePrice{ value: 2 }(
             uint128(block.timestamp), ProtocolAction.ValidateDeposit, abi.encode("data")
         );
+
+        // No fee required if there's no data
+        vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
+        oracleMiddleware.parseAndValidatePrice{ value: 1 }(uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
     }
 }
