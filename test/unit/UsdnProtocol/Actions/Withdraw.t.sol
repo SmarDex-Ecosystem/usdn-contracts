@@ -131,11 +131,11 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user initiates a deposit with parameter to defined at zero
      * @custom:when The user initiate a withdrawal with parameter to address defined at 0
-     * @custom:then The protocol reverts with `UsdnProtocolZeroAddressTo`
+     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressTo`
      */
     function test_RevertWhen_zeroAddressTo() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        vm.expectRevert(UsdnProtocolZeroAddressTo.selector);
+        vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.initiateWithdrawal(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(0));
     }
 

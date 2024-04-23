@@ -97,11 +97,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario The user initiates a close position with parameter to defined at zero
      * @custom:when The user initiates a close position with parameter to defined at zero
-     * @custom:then The protocol reverts with `UsdnProtocolZeroAddressTo`
+     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressTo`
      */
     function test_RevertWhen_zeroAddressTo() public {
         bytes memory priceData = abi.encode(params.initialPrice);
-        vm.expectRevert(UsdnProtocolZeroAddressTo.selector);
+        vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.i_initiateClosePosition(
             USER_1, address(0), PositionId(tick, tickVersion, index), positionAmount, priceData
         );

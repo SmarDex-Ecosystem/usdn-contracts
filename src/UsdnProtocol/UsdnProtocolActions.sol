@@ -415,7 +415,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (uint256 securityDepositValue_)
     {
         if (to == address(0)) {
-            revert UsdnProtocolZeroAddressTo();
+            revert UsdnProtocolInvalidAddressTo();
         }
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
@@ -555,7 +555,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (uint256 securityDepositValue_)
     {
         if (to == address(0)) {
-            revert UsdnProtocolZeroAddressTo();
+            revert UsdnProtocolInvalidAddressTo();
         }
         if (usdnShares == 0) {
             revert UsdnProtocolZeroAmount();
@@ -697,7 +697,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData
     ) internal returns (PositionId memory posId_, uint256 securityDepositValue_) {
         if (to == address(0)) {
-            revert UsdnProtocolZeroAddressTo();
+            revert UsdnProtocolInvalidAddressTo();
         }
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
@@ -915,7 +915,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData
     ) internal returns (uint256 securityDepositValue_) {
         if (to == address(0)) {
-            revert UsdnProtocolZeroAddressTo();
+            revert UsdnProtocolInvalidAddressTo();
         }
 
         // check if the position belongs to the user
