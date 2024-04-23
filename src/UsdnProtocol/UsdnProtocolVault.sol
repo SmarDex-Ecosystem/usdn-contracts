@@ -7,9 +7,13 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { UsdnProtocolCore } from "src/UsdnProtocol/UsdnProtocolCore.sol";
 import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import {
+    PendingAction, WithdrawalPendingAction, ProtocolAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     using SafeCast for int256;
+    using SafeCast for uint256;
 
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
@@ -24,6 +28,48 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
         price_ = usdnPrice(currentPrice, uint128(block.timestamp));
+    }
+
+    /**
+     * @notice Calculate the amount of asset to be transferred when withdrawing USDN shares.
+     * @param user The address of the user
+     * @param usdnShares The amount of USDN shares to be withdrawn
+     * @param price The price of the asset
+     * @return assetToTransfer_ The amount of asset to be transferred
+     */
+    function calculateAssetTransferredForWithdraw(address user, uint152 usdnShares, uint256 price)
+        external
+        view
+        returns (uint256 assetToTransfer_)
+    {
+        if (usdnShares == 0) {
+            revert UsdnProtocolZeroAmount();
+        }
+
+        // Apply fees on price
+        uint128 withdrawalPriceWithFees = (price + price * _positionFeeBps / BPS_DIVISOR).toUint128();
+        uint256 totalExpo = _totalExpo;
+        uint256 balanceLong = _balanceLong;
+        uint256 balanceVault =
+            _vaultAssetAvailable(totalExpo, _balanceVault, balanceLong, withdrawalPriceWithFees, _lastPrice).toUint256();
+
+        // We calculate the available balance of the vault side, either considering the asset price at the time of the
+        // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
+        // redeem the underlying asset share.
+        uint256 available1 = balanceVault;
+        uint256 available2 = _vaultAssetAvailable(
+            totalExpo, balanceVault, balanceLong, withdrawalPriceWithFees, withdrawalPriceWithFees
+        ).toUint256();
+        uint256 available;
+        if (available1 <= available2) {
+            available = available1;
+        } else {
+            available = available2;
+        }
+
+        // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
+        //                 = shares * assetAvailable / usdnTotalShares
+        assetToTransfer_ = FixedPointMathLib.fullMulDiv(usdnShares, available, _usdn.totalShares());
     }
 
     /**
