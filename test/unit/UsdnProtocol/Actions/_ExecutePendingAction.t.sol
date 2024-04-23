@@ -27,7 +27,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
     function test_executePendingAction() public {
         PreviousActionsData memory previousActionsData = _setUpPendingAction();
 
-        vm.expectEmit(true, false, false, false);
+        vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
         (bool success, bool executed,) = protocol.i_executePendingAction(previousActionsData);
 

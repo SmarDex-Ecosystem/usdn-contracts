@@ -207,6 +207,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user initiates an open position action with no recipient
+     * @custom:given An initialized USDN protocol
      * @custom:when The user initiates an open position with the address to at 0
      * @custom:then The protocol reverts with UsdnProtocolInvalidAddressTo
      */
@@ -313,7 +314,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
         uint128 newPrice = CURRENT_PRICE + 100 ether;
 
-        vm.expectEmit(true, false, false, false);
+        vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(address(this), to, 0, newPrice, tick, tickVersion, index);
         protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 

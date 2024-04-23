@@ -29,13 +29,13 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
     function test_validateActionablePendingActions() public {
         PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
 
-        vm.expectEmit(true, false, false, false);
+        vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
-        vm.expectEmit(true, false, false, false);
+        vm.expectEmit(true, true, false, false);
         emit ValidatedClosePosition(USER_2, USER_2, 0, 0, 0, 0, 0);
-        vm.expectEmit(true, false, false, false);
+        vm.expectEmit(true, true, false, false);
         emit ValidatedDeposit(USER_3, USER_3, 0, 0, 0);
-        vm.expectEmit(true, false, false, false);
+        vm.expectEmit(true, true, false, false);
         emit ValidatedWithdrawal(USER_4, USER_4, 0, 0, 0);
         uint256 validated = protocol.validateActionablePendingActions(previousActionsData, 10);
 

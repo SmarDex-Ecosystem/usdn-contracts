@@ -5,14 +5,12 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 
 import {
     PendingAction, ProtocolAction, WithdrawalPendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-
-import { USER_1 } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature The withdraw function of the USDN Protocol
@@ -118,8 +116,8 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiate a withdrawal for 0 USDN
-     * @custom:when The user initiate a withdrawal for 0 USDN
+     * @custom:scenario The user initiates a withdrawal for 0 USDN
+     * @custom:when The user initiates a withdrawal for 0 USDN
      * @custom:then The protocol reverts with `UsdnProtocolZeroAmount`
      */
     function test_RevertWhen_zeroAmount() public {
@@ -130,6 +128,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user initiates a deposit with parameter to defined at zero
+     * @custom:given An initialized USDN protocol
      * @custom:when The user initiate a withdrawal with parameter to address defined at 0
      * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressTo`
      */

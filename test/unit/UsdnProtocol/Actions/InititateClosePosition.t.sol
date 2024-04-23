@@ -96,6 +96,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario The user initiates a close position with parameter to defined at zero
+     * @custom:given An initialized USDN protocol
      * @custom:when The user initiates a close position with parameter to defined at zero
      * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressTo`
      */
@@ -205,7 +206,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint128[] memory rawIndices = new uint128[](1);
         rawIndices[0] = 1;
 
-        vm.expectEmit(true, false, false, false);
+        vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
         protocol.initiateClosePosition(
             tick, tickVersion, index, positionAmount, priceData, PreviousActionsData(previousData, rawIndices), USER_1

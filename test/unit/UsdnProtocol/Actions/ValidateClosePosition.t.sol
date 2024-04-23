@@ -154,7 +154,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
         _waitDelay();
 
-        vm.expectEmit(true, false, false, false);
+        vm.expectEmit(true, true, false, false);
         emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, positionAmount, -1);
         protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
     }

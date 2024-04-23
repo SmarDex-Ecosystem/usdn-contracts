@@ -2,11 +2,9 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
-import { USER_1 } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature The deposit function of the USDN Protocol
@@ -111,6 +109,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user initiates a deposit with parameter to defined at zero
+     * @custom:given An initialized USDN protocol
      * @custom:when The user initiates a deposit with parameter to defined at zero
      * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressTo`
      */
@@ -245,7 +244,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @custom:and The USDN balance increases by 2000 USDN for the address to
      * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
      */
-    function test_validateDepositAddressToDifferent() public {
+    function test_validateDepositForAnotherUser() public {
         _checkValidateDepositWithPrice(2000 ether, 2000 ether, 2000 ether, USER_1);
     }
 
@@ -293,7 +292,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      * @param initialPrice price of the asset at the time of deposit initiation
      * @param assetPrice price of the asset at the time of deposit validation
      * @param expectedUsdnAmount expected amount of USDN minted
-     * @param to expected address with the minted USDN
+     * @param to address the minted USDN will be sent to
      */
     function _checkValidateDepositWithPrice(
         uint128 initialPrice,
