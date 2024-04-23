@@ -109,7 +109,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
      * @custom:then The price retrieved by the oracle middleware is the same as the one from the chainlink onchain data
      * by applying Steth/Wsteth onchain price ratio.
      */
-    function test_ForkWstethParseAndValidatePriceFornInitiateDepositWithChainlink() public ethMainnetFork reSetUp {
+    function test_ForkWstethParseAndValidatePriceForInitiateDepositWithChainlink() public ethMainnetFork reSetUp {
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type

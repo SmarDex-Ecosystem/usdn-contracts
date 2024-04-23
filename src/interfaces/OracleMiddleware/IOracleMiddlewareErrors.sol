@@ -21,6 +21,9 @@ interface IOracleMiddlewareErrors {
     /// @notice An incorrect amount of ether was provided to cover the cost of price validation
     error OracleMiddlewareIncorrectFee();
 
+    /// @notice The withdrawal of the ether in the contract failed
+    error OracleMiddlewareTransferFailed();
+
     /// @notice The sender could not accept the ether refund
     error OracleMiddlewareEtherRefundFailed();
 

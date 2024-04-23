@@ -95,4 +95,11 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
      * @param newValidationDelay The new validation delay
      */
     function setValidationDelay(uint256 newValidationDelay) external;
+
+    /**
+     * @notice Withdraw the ether balance of this contract
+     * @dev This contract can receive funds but is not designed to hold them
+     * So this function can be used if there's an error and funds remain after a call
+     */
+    function withdrawEther() external;
 }
