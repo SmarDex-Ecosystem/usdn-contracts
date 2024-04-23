@@ -231,7 +231,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The total exposure (with asset decimals)
     uint256 internal _totalExpo;
 
-    /* 
+    /*
      * @notice The accumulator used to calculate the liquidation multiplier
      * @dev This is the sum, for all ticks, of the total expo of positions inside the tick, multiplied by the
      * unadjusted price of the tick which is `_tickData[tickHash].liquidationPenalty * _tickSpacing` below.

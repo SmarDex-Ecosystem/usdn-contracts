@@ -32,12 +32,10 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
         (uint256 toTransfer, int256 value) = protocol.i_assetToTransfer(
             params.initialPrice,
-            params.initialPrice,
-            tick,
-            protocol.getLiquidationPenalty(),
+            protocol.getEffectivePriceForTick(
+                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
+            ),
             2 ether,
-            protocol.getTotalExpo() - protocol.getBalanceLong(),
-            protocol.getLiqMultiplierAccumulator(),
             0
         );
         assertEq(toTransfer, uint256(value), "to transfer vs pos value");
@@ -59,12 +57,10 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
         uint256 longAvailable = uint256(protocol.i_longAssetAvailable(params.initialPrice)); // 5 ether
         (uint256 toTransfer, int256 value) = protocol.i_assetToTransfer(
             params.initialPrice,
-            params.initialPrice,
-            tick,
-            protocol.getLiquidationPenalty(),
+            protocol.getEffectivePriceForTick(
+                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
+            ),
             200 ether,
-            protocol.getTotalExpo() - protocol.getBalanceLong(),
-            protocol.getLiqMultiplierAccumulator(),
             0
         );
         assertGt(uint256(value), toTransfer, "value vs asset to transfer");
@@ -91,12 +87,10 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
         int24 tick = protocol.getEffectiveTickForPrice(price);
         (uint256 toTransfer,) = protocol.i_assetToTransfer(
             params.initialPrice,
-            params.initialPrice,
-            tick,
-            protocol.getLiquidationPenalty(),
+            protocol.getEffectivePriceForTick(
+                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
+            ),
             100 ether,
-            protocol.getTotalExpo() - protocol.getBalanceLong(),
-            protocol.getLiqMultiplierAccumulator(),
             0
         );
         assertEq(toTransfer, 0, "asset to transfer");

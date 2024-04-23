@@ -18,8 +18,6 @@ import {
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
@@ -405,11 +403,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
         // If the price is not fresh, do nothing
         if (timestamp <= lastUpdateTimestamp) {
-            console2.log("Apply PNL skipped");
             return (false, _balanceLong.toInt256(), _balanceVault.toInt256());
         }
-
-        console2.log("Apply PNL and funding done");
 
         // Update the funding EMA
         int256 ema = _updateEMA(timestamp - lastUpdateTimestamp);

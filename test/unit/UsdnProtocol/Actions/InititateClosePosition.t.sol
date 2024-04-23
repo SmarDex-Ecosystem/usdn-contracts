@@ -292,12 +292,13 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         HugeUint.Uint512 memory accumulator = protocol.getLiqMultiplierAccumulator();
         (uint256 assetToTransfer,) = protocol.i_assetToTransfer(
             params.initialPrice,
-            params.initialPrice,
-            tick,
-            protocol.getLiquidationPenalty(),
+            protocol.getEffectivePriceForTick(
+                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
+                params.initialPrice,
+                totalExpoBefore - balanceLongBefore,
+                accumulator
+            ),
             totalExpoToClose,
-            totalExpoBefore - balanceLongBefore,
-            accumulator,
             0
         );
 

@@ -12,8 +12,6 @@ import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
@@ -21,6 +19,20 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
 
+    /**
+     * @notice Structure to hold the transient data during liquidation
+     * @param tempLongBalance The temporary long balance
+     * @param tempVaultBalance The temporary vault balance
+     * @param currentTick The current tick (tick corresponding to the current asset price)
+     * @param lastCheckedTick Tick iterator index
+     * @param totalExpoToRemove The total expo to remove due to the liquidation of some ticks
+     * @param accumulatorValueToRemove The value to remove from the liquidation multiplier accumulator, due to the
+     * liquidation of some ticks
+     * @param balanceLong The balance of the long side (initial tempLongBalance value, cast to uint256)
+     * @param currentPrice The current price of the asset
+     * @param totalExpo The total expo of the long side before liquidation
+     * @param accumulator The liquidation multiplier accumulator before the liquidation
+     */
     struct LiquidationData {
         int256 tempLongBalance;
         int256 tempVaultBalance;
@@ -32,7 +44,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 currentPrice;
         uint256 totalExpo;
         HugeUint.Uint512 accumulator;
-        int24 tickSpacing;
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -138,14 +149,13 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             return minTick();
         }
 
-        int24 tickSpacing = _tickSpacing;
         tick_ = TickMath.getTickAtPrice(priceWithMultiplier);
 
         // round down to the next valid tick according to _tickSpacing (towards negative infinity)
         if (tick_ < 0) {
             // we round up the inverse number (positive) then invert it -> round towards negative infinity
-            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(tickSpacing)))))
-                * tickSpacing;
+            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(_tickSpacing)))))
+                * _tickSpacing;
             // avoid invalid ticks
             int24 minUsableTick = minTick();
             if (tick_ < minUsableTick) {
@@ -154,7 +164,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         } else {
             // rounding is desirable here
             // slither-disable-next-line divide-before-multiply
-            tick_ = (tick_ / tickSpacing) * tickSpacing;
+            tick_ = (tick_ / _tickSpacing) * _tickSpacing;
         }
     }
 
@@ -171,6 +181,17 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         HugeUint.Uint512 memory accumulator
     ) public pure returns (uint128 price_) {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
+    }
+
+    /**
+     * @notice Variant of `getEffectivePriceForTick` when a fixed precision representation of the liquidation multiplier
+     * is known
+     * @param tick The tick number
+     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     * @return price_ The adjusted price for the tick
+     */
+    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public view returns (uint128 price_) {
+        price_ = _adjustPrice(TickMath.getPriceAtTick(tick), liqMultiplier);
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -198,7 +219,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     ) public pure returns (uint256 unadjustedPrice_) {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
-            console2.log("multiplier", uint256(1));
             return price;
         }
         // M = assetPrice * (totalExpo - balanceLong) / accumulator
@@ -206,7 +226,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // unadjustedPrice = price * accumulator / (assetPrice * (totalExpo - balanceLong))
         HugeUint.Uint512 memory numerator = accumulator.mul(price);
         unadjustedPrice_ = HugeUint.div(numerator, HugeUint.wrap(assetPrice * longTradingExpo));
-        console2.log("multiplier", price * 1e18 / unadjustedPrice_);
     }
 
     /**
@@ -226,7 +245,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     ) public pure returns (uint128 price_) {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
-            console2.log("multiplier", uint256(1));
             return unadjustedPrice.toUint128();
         }
 
@@ -235,7 +253,33 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // price = unadjustedPrice * assetPrice * (totalExpo - balanceLong) / accumulator
         HugeUint.Uint512 memory numerator = HugeUint.mul(unadjustedPrice, assetPrice * longTradingExpo);
         price_ = HugeUint.div(numerator, accumulator).toUint128();
-        console2.log("multiplier", uint256(price_) * 1e18 / unadjustedPrice);
+    }
+
+    /**
+     * @notice Variant of _adjustPrice when a fixed precision representation of the liquidation multiplier is known
+     * @param unadjustedPrice The unadjusted price for the tick
+     * @param liqMultiplier The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     * @return price_ The adjusted price for the tick
+     */
+    function _adjustPrice(uint256 unadjustedPrice, uint256 liqMultiplier) public pure returns (uint128 price_) {
+        // price = unadjustedPrice * M
+        price_ = FixedPointMathLib.fullMulDiv(unadjustedPrice, liqMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS)
+            .toUint128();
+    }
+
+    function _calcFixedPrecisionMultiplier(
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) public pure returns (uint256 multiplier_) {
+        if (accumulator.hi == 0 && accumulator.lo == 0) {
+            // no position in long, we assume a liquidation multiplier of 1.0
+            return 10 ** LIQUIDATION_MULTIPLIER_DECIMALS;
+        }
+        // M = assetPrice * (totalExpo - balanceLong) / accumulator
+        HugeUint.Uint512 memory numerator =
+            HugeUint.mul(10 ** LIQUIDATION_MULTIPLIER_DECIMALS, assetPrice * longTradingExpo);
+        multiplier_ = HugeUint.div(numerator, accumulator);
     }
 
     /**
@@ -511,7 +555,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         data.currentPrice = _lastPrice;
         data.totalExpo = _totalExpo;
         data.accumulator = _liqMultiplierAccumulator;
-        data.tickSpacing = _tickSpacing;
 
         // max iteration limit
         if (iteration > MAX_LIQUIDATION_ITERATION) {
@@ -543,7 +586,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             data.totalExpoToRemove += tickData.totalExpo;
             effects_.liquidatedPositions += tickData.totalPos;
             uint256 unadjustedTickPrice = TickMath.getPriceAtTick(
-                data.lastCheckedTick - int24(uint24(tickData.liquidationPenalty)) * data.tickSpacing
+                data.lastCheckedTick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing
             );
             data.accumulatorValueToRemove += unadjustedTickPrice * tickData.totalExpo;
 

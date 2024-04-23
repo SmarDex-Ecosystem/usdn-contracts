@@ -144,8 +144,9 @@ struct WithdrawalPendingAction {
  * @param closePosTotalExpo The total expo of the position (only used when closing a position).
  * @param tickVersion The version of the tick.
  * @param index The index of the position in the tick list.
- * @param closeLongTradingExpo The trading expo of the long side at the time of the last update (total expo - balance)
- * (only used when closing a position).
+ * @param closeLiqMultiplier A fixed precision representation of the liquidation multiplier (with
+ * LIQUIDATION_MULTIPLIER_DECIMALS decimals) used to calculate the effective price for a given tick number (only used
+ * when closing a position).
  * @param closeTempTransfer The amount that was optimistically removed on `initiateClosePosition` (only used when
  * closing a position).
  * @param liqMulAccumulatorHi The high limb of the liquidation multiplier accumulator.
@@ -158,7 +159,7 @@ struct LongPendingAction {
     uint128 closePosTotalExpo; // 16 bytes
     uint256 tickVersion; // 32 bytes
     uint256 index; // 32 bytes
-    uint256 closeLongTradingExpo; // 32 bytes
+    uint256 closeLiqMultiplier; // 32 bytes
     uint256 closeTempTransfer; // 32 bytes
     uint256 liqMulAccumulatorHi; // 32 bytes
     uint256 liqMulAccumulatorLo; // 32 bytes

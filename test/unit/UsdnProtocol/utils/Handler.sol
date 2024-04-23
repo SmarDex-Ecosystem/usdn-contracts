@@ -181,24 +181,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_assetToTransfer(
         uint128 priceWithFees,
-        uint256 neutralPrice,
-        int24 tick,
-        uint8 liquidationPenalty,
+        uint128 liqPriceWithoutPenalty,
         uint128 posExpo,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator,
         uint256 tempTransferred
     ) external view returns (uint256, int256) {
-        return _assetToTransfer(
-            priceWithFees,
-            neutralPrice,
-            tick,
-            liquidationPenalty,
-            posExpo,
-            longTradingExpo,
-            accumulator,
-            tempTransferred
-        );
+        return _assetToTransfer(priceWithFees, liqPriceWithoutPenalty, posExpo, tempTransferred);
     }
 
     function i_tickValue(
@@ -369,5 +356,9 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {
         _checkSafetyMargin(currentPrice, liquidationPrice);
+    }
+
+    function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external view returns (uint128) {
+        return _getEffectivePriceForTick(tick, liqMultiplier);
     }
 }

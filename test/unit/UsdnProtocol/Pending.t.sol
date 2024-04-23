@@ -384,7 +384,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertEq(longAction.closePosTotalExpo, action.var3, "action pos total expo");
         assertEq(longAction.tickVersion, action.var4, "action version");
         assertEq(longAction.index, action.var5, "action index");
-        assertEq(longAction.closeLongTradingExpo, action.var6, "action trading expo");
+        assertEq(longAction.closeLiqMultiplier, action.var6, "action liq multiplier");
         assertEq(longAction.closeTempTransfer, action.var7, "action transfer");
         assertEq(longAction.liqMulAccumulatorHi, action.var8, "action liq mul hi");
         assertEq(longAction.liqMulAccumulatorLo, action.var9, "action liq mul lo");
