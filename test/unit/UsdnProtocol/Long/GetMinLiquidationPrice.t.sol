@@ -47,7 +47,13 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
      */
     function test_getMinLiquidationPrice_multiplierGtOne() public {
         setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 500 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams(
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                500 ether,
+                params.initialPrice / 2,
+                params.initialPrice
+            )
         );
         skip(1 days);
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
