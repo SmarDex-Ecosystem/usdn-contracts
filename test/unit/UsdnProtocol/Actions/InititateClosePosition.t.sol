@@ -105,7 +105,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.i_initiateClosePosition(
-            USER_1, address(0), PositionId(tick, tickVersion, index), positionAmount, priceData
+            address(this), address(0), PositionId(tick, tickVersion, index), positionAmount, priceData
         );
     }
 
