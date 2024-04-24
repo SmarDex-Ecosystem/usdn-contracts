@@ -80,10 +80,33 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function _setupSparsePendingActionsQueue() internal {
         // Setup 3 pending actions
-        setUpUserPositionInLong(USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
-        setUpUserPositionInLong(USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
-        setUpUserPositionInLong(USER_3, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
-
+        setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: 2000 ether
+            })
+        );
+        setUpUserPositionInLong(
+            OpenParams({
+                user: USER_2,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: 2000 ether
+            })
+        );
+        setUpUserPositionInLong(
+            OpenParams({
+                user: USER_3,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: 2000 ether
+            })
+        );
         // Simulate the second item in the queue being empty (sets it to zero values)
         protocol.i_removePendingAction(1, USER_2);
         // Simulate the first item in the queue being empty
@@ -164,7 +187,15 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_getActionablePendingActionSameUser() public {
         // initiate long
-        setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, 2000 ether);
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: 2000 ether
+            })
+        );
         // the pending action is actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
@@ -188,8 +219,24 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         uint128 price1 = 2000 ether;
         uint128 price2 = 2100 ether;
         // Setup 2 pending actions
-        setUpUserPositionInLong(USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, price1);
-        setUpUserPositionInLong(USER_2, ProtocolAction.InitiateOpenPosition, 1 ether, 1000 ether, price2);
+        setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: price1
+            })
+        );
+        setUpUserPositionInLong(
+            OpenParams({
+                user: USER_2,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 1000 ether,
+                price: price2
+            })
+        );
 
         // Wait
         skip(protocol.getValidationDeadline() + 1);
@@ -241,9 +288,9 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
         vm.prank(USER_3);
-        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData);
+        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData, USER_3);
         vm.prank(USER_4);
-        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData);
+        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData, USER_4);
 
         // They should have validated both pending actions
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
@@ -268,6 +315,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
                 action: ProtocolAction.ValidateDeposit,
                 timestamp: uint40(block.timestamp),
                 user: address(this),
+                to: address(this),
                 securityDepositValue: 2424
             }),
             var1: 0, // must be zero because unused
@@ -310,6 +358,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
                 action: ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),
                 user: address(this),
+                to: address(this),
                 securityDepositValue: 2424
             }),
             var1: 125,
@@ -324,6 +373,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertTrue(withdrawalAction.common.action == action.common.action, "action action");
         assertEq(withdrawalAction.common.timestamp, action.common.timestamp, "action timestamp");
         assertEq(withdrawalAction.common.user, action.common.user, "action user");
+        assertEq(withdrawalAction.common.to, action.common.to, "action to");
         assertEq(
             withdrawalAction.common.securityDepositValue,
             action.common.securityDepositValue,
@@ -352,6 +402,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
                 action: ProtocolAction.ValidateOpenPosition,
                 timestamp: uint40(block.timestamp),
                 user: address(this),
+                to: address(this),
                 securityDepositValue: 2424
             }),
             var1: 2398,
@@ -366,6 +417,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         assertTrue(longAction.common.action == action.common.action, "action action");
         assertEq(longAction.common.timestamp, action.common.timestamp, "action timestamp");
         assertEq(longAction.common.user, action.common.user, "action user");
+        assertEq(longAction.common.to, action.common.to, "action to");
         assertEq(
             longAction.common.securityDepositValue, action.common.securityDepositValue, "action security deposit value"
         );

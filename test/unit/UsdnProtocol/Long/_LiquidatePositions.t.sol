@@ -49,7 +49,15 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Create a long position to liquidate
-        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: liqPrice,
+                price: price
+            })
+        );
 
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
 
@@ -101,7 +109,15 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Create a long position to liquidate
-        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: liqPrice,
+                price: price
+            })
+        );
 
         skip(34 days);
         protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
@@ -194,7 +210,15 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick + 1);
 
             // Create a long position to liquidate
-            setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
+            setUpUserPositionInLong(
+                OpenParams({
+                    user: address(this),
+                    untilAction: ProtocolAction.ValidateOpenPosition,
+                    positionSize: 1 ether,
+                    desiredLiqPrice: liqPrice,
+                    price: price
+                })
+            );
 
             // Save the tick for future checks
             ticksToLiquidate[i] = desiredLiqTick;
@@ -248,7 +272,15 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Create a long position to liquidate
-        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: liqPrice,
+                price: price
+            })
+        );
 
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
 
@@ -293,8 +325,15 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Create a long position to liquidate
-        (int24 positionTick,,) =
-            setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, liqPrice, price);
+        (int24 positionTick,,) = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: liqPrice,
+                price: price
+            })
+        );
 
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(positionTick);
 

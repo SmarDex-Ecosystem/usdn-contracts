@@ -6,7 +6,7 @@
   "author": "RA2 Tech",
   "license": "BUSL-1.1",
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "husky",
     "snapshot": "FOUNDRY_PROFILE=ci forge clean && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --offline",
     "snapshot:check": "FOUNDRY_PROFILE=ci forge build && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --check --offline",
     "coverage": "FOUNDRY_PROFILE=ci forge coverage --report lcov --no-match-test \"(FFI|Fork|Fuzz|invariant)\"",

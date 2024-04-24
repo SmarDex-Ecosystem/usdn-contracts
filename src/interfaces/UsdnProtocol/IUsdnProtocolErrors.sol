@@ -15,6 +15,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();
 
+    /// @dev Indicates that the provided to address is invalid
+    error UsdnProtocolInvalidAddressTo();
+
     /// @dev Indicates that the initialization deposit is too low
     error UsdnProtocolMinInitAmount(uint256 minInitAmount);
 
