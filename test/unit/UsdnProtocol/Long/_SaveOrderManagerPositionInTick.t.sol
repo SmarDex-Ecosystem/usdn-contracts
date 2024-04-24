@@ -6,7 +6,7 @@ import { Vm } from "forge-std/Vm.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN } from "test/utils/Constants.sol";
 
-import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 
 /**
@@ -20,6 +20,7 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
     uint256 private _tickVersion;
     bytes32 private _tickHash;
     uint128 private _tickTotalExpo;
+    TickData private _tickData;
     uint128 private _positionAmount = 1 ether;
     uint128 private _orderAmount = 1 ether;
 
@@ -36,9 +37,10 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
             address(this), ProtocolAction.ValidateOpenPosition, _positionAmount, liquidationPrice, params.initialPrice
         );
 
+        _tickData = protocol.getTickData(_tick);
         _liqPrice = protocol.getEffectivePriceForTick(_tick);
         _tickHash = protocol.tickHash(_tick, _tickVersion);
-        _tickTotalExpo = uint128(protocol.getTotalExpoByTick(_tick));
+        _tickTotalExpo = uint128(_tickData.totalExpo);
 
         orderManager.depositAssetsInTick(_tick, _orderAmount);
     }
@@ -58,7 +60,7 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
             protocol.getEffectiveTickForPrice(protocol.i_getLiquidationPrice(_liqPrice, ordersLeverage));
         uint256 expectedLongTickVersion = 0;
         uint256 expectedLongIndex = 0;
-        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, _tickTotalExpo);
+        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, _tickData);
         uint128 ordersRewards = uint128(uint256(tickValue) / 2);
 
         vm.expectEmit();
@@ -93,12 +95,12 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
 
         /* ----------------------------- Position checks ---------------------------- */
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_tick, _tickVersion);
-        Position memory pos = protocol.getLongPosition(
+        (Position memory pos,) = protocol.getLongPosition(
             ordersData.longPositionTick, ordersData.longPositionTickVersion, ordersData.longPositionIndex
         );
 
         uint128 posLiqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            expectedLongTick - protocol.getTickSpacing() * int24(protocol.getLiquidationPenalty())
+            expectedLongTick - protocol.getTickSpacing() * int24(uint24(protocol.getLiquidationPenalty()))
         );
         uint256 ordersTotalExpo =
             protocol.i_calculatePositionTotalExpo(_orderAmount + ordersRewards, _liqPrice, posLiqPriceWithoutPenalty);
@@ -124,9 +126,9 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
         uint256 expectedLongTickVersion = 0;
         uint256 expectedLongIndex = 0;
         uint128 posLiqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            expectedLongTick - protocol.getTickSpacing() * int24(protocol.getLiquidationPenalty())
+            expectedLongTick - protocol.getTickSpacing() * int24(uint24(protocol.getLiquidationPenalty()))
         );
-        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, _tickTotalExpo);
+        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, _tickData);
         uint128 ordersRewards = uint128(uint256(tickValue)) / 2;
 
         // Deposit more assets than necessary
@@ -161,7 +163,7 @@ contract TestUsdnProtocolLongSaveOrderManagerPositionInTick is UsdnProtocolBaseF
 
         /* ----------------------------- Position checks ---------------------------- */
         IOrderManager.OrdersDataInTick memory ordersData = orderManager.getOrdersDataInTick(_tick, _tickVersion);
-        Position memory pos = protocol.getLongPosition(
+        (Position memory pos,) = protocol.getLongPosition(
             ordersData.longPositionTick, ordersData.longPositionTickVersion, ordersData.longPositionIndex
         );
 

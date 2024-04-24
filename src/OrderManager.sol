@@ -6,6 +6,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
@@ -191,9 +192,11 @@ contract OrderManager is Ownable, IOrderManager {
 
         // Update the orders data with the long position information
         ordersData.longPositionTick = longPositionTick_;
+        // TODO This reads the tick version 2 times, maybe add a get getTickData(tick, version)
+        TickData memory longPositionTickData = _usdnProtocol.getTickData(longPositionTick_);
         ordersData.longPositionTickVersion = _usdnProtocol.getTickVersion(longPositionTick_);
         // The expected index is the amount of positions currently in the tick
-        ordersData.longPositionIndex = _usdnProtocol.getPositionsInTick(longPositionTick_);
+        ordersData.longPositionIndex = longPositionTickData.totalPos;
         ordersData.liquidationRewards = rewards;
     }
 }

@@ -405,11 +405,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
         // Calculate the total expo available to not imbalance the protocol
         uint128 posTotalExpo;
+        uint8 liquidationPenalty = getTickLiquidationPenalty(liquidationTick);
         {
             // Calculate liquidation price without the liquidation penalty for the tick
             // TODO is that right?
             uint128 liqPriceWithoutPenalty =
-                getEffectivePriceForTick(liquidationTick - int24(_liquidationPenalty) * _tickSpacing);
+                getEffectivePriceForTick(liquidationTick - int24(uint24(liquidationPenalty)) * _tickSpacing);
             posTotalExpo = _calculatePositionTotalExpo(positionAmount_, currentPrice, liqPriceWithoutPenalty);
 
             // If the total expo of the liquidated tick is lower than the order manager's position total expo
@@ -431,7 +432,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 amount: positionAmount_
             });
 
-            (tickVersion, index) = _saveNewPosition(liquidationTick, pos);
+            (tickVersion, index) = _saveNewPosition(liquidationTick, pos, liquidationPenalty);
 
             // Transfer assets from the order manager to the protocol
             uint256 amountToTransfer;
@@ -458,7 +459,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         internal
         returns (LiquidationEffects memory effects_)
     {
-        effects_.remainingCollateral = _tickValue(currentPrice, tick, tickData.totalExpo);
+        effects_.remainingCollateral = _tickValue(currentPrice, tick, tickData);
         effects_.liquidatedPositions = tickData.totalPos;
 
         unchecked {
@@ -539,7 +540,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             (bytes32 tickHash,) = _tickHash(tick);
             TickData memory tickData = _tickData[tickHash];
             // we have found a non-empty tick that needs to be liquidated
-            LiquidationEffects memory effects = _liquidateTick(tick, tickHash, currentPrice);
+            LiquidationEffects memory effects = _liquidateTick(tick, tickHash, tickData, currentPrice);
 
             effects_.remainingCollateral += effects.remainingCollateral;
             tempLongBalance += _toInt256(effects.amountAddedToLong);

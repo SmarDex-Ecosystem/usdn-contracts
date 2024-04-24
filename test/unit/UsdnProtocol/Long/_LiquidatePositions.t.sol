@@ -3,7 +3,12 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    ProtocolAction,
+    LiquidationEffects,
+    LiquidationsEffects,
+    TickData
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
@@ -205,7 +210,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             protocol.getEffectivePriceForTick(desiredLiqTick, protocol.getLiquidationMultiplier());
 
         // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTotalExpoByTick(desiredLiqTick));
+        int256 tickValue = protocol.i_tickValue(liqPrice, desiredLiqTick, protocol.getTickData(desiredLiqTick));
         uint128 ordersRewards = uint128(uint256(tickValue)) / 2;
         int256 remainingCollateral = tickValue - int256(uint256(ordersRewards));
 
@@ -213,27 +218,23 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         emit OrderManagerPositionOpened(address(orderManager), 0, 0, 0, 0, 0);
         vm.expectEmit();
         emit LiquidatedTick(desiredLiqTick, 0, liqPrice, liqPriceAfterFundings, remainingCollateral);
-        (
-            uint256 liquidatedPositions,
-            uint16 liquidatedTicks,
-            int256 collateralLiquidated,
-            uint256 newLongBalance,
-            uint256 newVaultBalance
-        ) = protocol.i_liquidatePositions(uint256(liqPrice), 1, 100 ether, 100 ether);
+        LiquidationsEffects memory effects = protocol.i_liquidatePositions(uint256(liqPrice), 1, 100 ether, 100 ether);
 
-        assertEq(liquidatedPositions, 1, "Only one position should have been liquidated");
-        assertEq(liquidatedTicks, 1, "Only one tick should have been liquidated");
+        assertEq(effects.liquidatedPositions, 1, "Only one position should have been liquidated");
+        assertEq(effects.liquidatedTicks, 1, "Only one tick should have been liquidated");
         assertEq(
-            collateralLiquidated, remainingCollateral, "Collateral liquidated should be equal to remainingCollateral"
+            effects.remainingCollateral,
+            remainingCollateral,
+            "Collateral liquidated should be equal to remainingCollateral"
         );
         assertEq(
-            newLongBalance,
+            effects.newLongBalance,
             100 ether - uint256(tickValue) + orderAmount + ordersRewards,
             "The long side should have paid the remaining collateral to the vault side and received the collateral given by the order manager"
         );
         assertEq(
-            int256(newVaultBalance),
-            100 ether + collateralLiquidated,
+            int256(effects.newVaultBalance),
+            100 ether + effects.remainingCollateral,
             "The long side should have paid the remaining collateral to the vault side"
         );
 

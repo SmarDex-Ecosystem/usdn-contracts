@@ -136,11 +136,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _liquidatePositions(currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
-    function i_liquidateTick(int24 tick, bytes32 tickHash, uint256 currentPrice)
+    function i_liquidateTick(int24 tick, bytes32 tickHash, TickData memory tickData, uint256 currentPrice)
         external
         returns (LiquidationEffects memory)
     {
-        return _liquidateTick(tick, tickHash, currentPrice);
+        return _liquidateTick(tick, tickHash, tickData, currentPrice);
     }
 
     function i_toDepositPendingAction(PendingAction memory action)

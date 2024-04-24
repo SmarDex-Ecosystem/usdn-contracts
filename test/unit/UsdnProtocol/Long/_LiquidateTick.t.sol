@@ -5,7 +5,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { ADMIN } from "test/utils/Constants.sol";
 
 import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
-import { ProtocolAction, LiquidationEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, LiquidationEffects, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the _liquidateTick internal function of the long layer
@@ -39,15 +39,15 @@ contract TestUsdnProtocolLongLiquidateTick is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setOrderManager(IOrderManager(address(0)));
 
-        uint256 totalExpoInTick = protocol.getTotalExpoByTick(_tick);
-        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, totalExpoInTick);
+        TickData memory tickData = protocol.getTickData(_tick);
+        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, tickData);
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(_tick);
         uint256 bitmapLastSetBefore = protocol.findLastSetInTickBitmap(_tick);
 
         vm.expectEmit();
         emit LiquidatedTick(_tick, _tickVersion, _liqPrice, liqPriceAfterFundings, tickValue);
         vm.recordLogs();
-        LiquidationEffects memory effects = protocol.i_liquidateTick(_tick, _tickHash, _liqPrice);
+        LiquidationEffects memory effects = protocol.i_liquidateTick(_tick, _tickHash, tickData, _liqPrice);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 1, "Only the LiquidatedTick event should have been emitted");
@@ -62,13 +62,13 @@ contract TestUsdnProtocolLongLiquidateTick is UsdnProtocolBaseFixture {
     }
 
     function test_liquidateTickWithNoOrders() public {
-        uint256 totalExpoInTick = protocol.getTotalExpoByTick(_tick);
-        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, totalExpoInTick);
+        TickData memory tickData = protocol.getTickData(_tick);
+        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, tickData);
 
         vm.expectEmit(true, true, false, false);
         emit LiquidatedTick(_tick, _tickVersion, 0, 0, 0);
         vm.recordLogs();
-        LiquidationEffects memory effects = protocol.i_liquidateTick(_tick, _tickHash, _liqPrice);
+        LiquidationEffects memory effects = protocol.i_liquidateTick(_tick, _tickHash, tickData, _liqPrice);
         uint256 logsAmount = vm.getRecordedLogs().length;
 
         assertEq(logsAmount, 1, "Only the LiquidatedTick event should have been emitted");
@@ -84,7 +84,8 @@ contract TestUsdnProtocolLongLiquidateTick is UsdnProtocolBaseFixture {
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(_tick);
 
         // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, protocol.getTotalExpoByTick(_tick));
+        TickData memory tickData = protocol.getTickData(_tick);
+        int256 tickValue = protocol.i_tickValue(_liqPrice, _tick, tickData);
         uint128 ordersRewards = uint128(uint256(tickValue)) / 2;
         int256 expectedRemainingCollateral = tickValue - int256(uint256(ordersRewards));
 
@@ -92,7 +93,7 @@ contract TestUsdnProtocolLongLiquidateTick is UsdnProtocolBaseFixture {
         emit OrderManagerPositionOpened(address(orderManager), 0, 0, 0, 0, 0);
         vm.expectEmit();
         emit LiquidatedTick(_tick, _tickVersion, _liqPrice, liqPriceAfterFundings, expectedRemainingCollateral);
-        LiquidationEffects memory effects = protocol.i_liquidateTick(_tick, _tickHash, _liqPrice);
+        LiquidationEffects memory effects = protocol.i_liquidateTick(_tick, _tickHash, tickData, _liqPrice);
 
         assertEq(effects.liquidatedPositions, 1, "Only one position should have been liquidated");
         assertEq(
