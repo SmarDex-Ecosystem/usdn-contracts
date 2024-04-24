@@ -358,10 +358,17 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         HugeUint.Uint512 memory accumulator,
         TickData memory tickData
     ) internal view returns (int256 value_) {
+        int256 longTradingExpo = totalExpo.toInt256() - balanceLong.toInt256();
+        if (longTradingExpo < 0) {
+            // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero.
+            // In this case, the liquidation price will fall to zero, and the tick value will be equal to its
+            // total expo.
+            longTradingExpo = 0;
+        }
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(
             tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing,
             currentPrice,
-            totalExpo - balanceLong,
+            uint256(longTradingExpo),
             accumulator
         );
 
