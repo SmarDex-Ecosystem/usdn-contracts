@@ -70,7 +70,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param liquidationPenalty The liquidation penalty
      * @param leverage The leverage
      * @param positionTotalExpo The total expo of the position
-     * @param long The long position object
      */
     struct OpenPositionData {
         address user;
@@ -82,7 +81,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint8 liquidationPenalty;
         uint128 leverage;
         uint128 positionTotalExpo;
-        Position long;
     }
 
     /**
