@@ -38,6 +38,28 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     using HugeUint for HugeUint.Uint512;
 
     /**
+     * @dev Structure to hold the transient data during `_initiateWithdrawal`
+     * @param user The user initiating the withdrawal
+     * @param to The address to receive the assets
+     * @param usdnShares The amount of USDN shares to burn
+     * @param pendingActionPrice The adjusted price with position fees applied
+     * @param totalExpo The current total expo
+     * @param balanceLong The current long balance
+     * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
+     * @param usdn The USDN token
+     */
+    struct WithdrawalData {
+        address user;
+        address to;
+        uint152 usdnShares;
+        uint128 pendingActionPrice;
+        uint256 totalExpo;
+        uint256 balanceLong;
+        uint256 balanceVault;
+        IUsdn usdn;
+    }
+
+    /**
      * @dev Structure to hold the transient data during `_initiateClosePosition`
      * @param pos The position to close
      * @param liquidationPenalty The liquidation penalty
@@ -570,6 +592,63 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
+     * @notice Prepare the data struct for the initiate withdrawal action.
+     * @param user The address of the user initiating the withdrawal.
+     * @param to The address that will receive the assets
+     * @param usdnShares The amount of USDN shares to burn.
+     * @param price The current price of the asset
+     * @return data_ The withdrawal data struct
+     */
+    function _prepareWithdrawalData(address user, address to, uint152 usdnShares, uint256 price)
+        internal
+        returns (WithdrawalData memory data_)
+    {
+        data_.user = user;
+        data_.to = to;
+        data_.usdnShares = usdnShares;
+
+        // Apply fees on price
+        data_.pendingActionPrice = (price + price * _positionFeeBps / BPS_DIVISOR).toUint128();
+
+        data_.totalExpo = _totalExpo;
+        data_.balanceLong = _balanceLong;
+        data_.balanceVault = _vaultAssetAvailable(
+            data_.totalExpo, _balanceVault, data_.balanceLong, data_.pendingActionPrice, _lastPrice
+        ).toUint256();
+        data_.usdn = _usdn;
+    }
+
+    /**
+     * @notice Prepare the pending action struct for a withdrawal and add it to the queue.
+     * @param data The withdrawal action data
+     * @return securityDepositValue_ The security deposit value
+     */
+    function _createWithdrawalPendingAction(WithdrawalData memory data)
+        internal
+        returns (uint256 securityDepositValue_)
+    {
+        PendingAction memory action = _convertWithdrawalPendingAction(
+            WithdrawalPendingAction({
+                common: PendingActionCommonData({
+                    action: ProtocolAction.ValidateWithdrawal,
+                    timestamp: uint40(block.timestamp),
+                    user: data.user,
+                    to: data.to,
+                    securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24()
+                }),
+                sharesLSB: _calcWithdrawalAmountLSB(data.usdnShares),
+                sharesMSB: _calcWithdrawalAmountMSB(data.usdnShares),
+                assetPrice: data.pendingActionPrice,
+                totalExpo: data.totalExpo,
+                balanceVault: data.balanceVault,
+                balanceLong: data.balanceLong,
+                usdnTotalShares: data.usdn.totalShares()
+            })
+        );
+        securityDepositValue_ = _addPendingAction(data.user, action);
+    }
+
+    /**
      * @notice Initiate a withdrawal of assets from the vault by providing USDN tokens.
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
      * the `ProtocolAction.InitiateWithdrawal` action.
@@ -597,42 +676,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _applyPnlAndFundingAndLiquidate(currentPrice.neutralPrice, currentPrice.timestamp);
 
-        // Apply fees on price
-        uint128 pendingActionPrice =
-            (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
-        uint256 totalExpo = _totalExpo;
-        uint256 balanceLong = _balanceLong;
-        uint256 balanceVault =
-            _vaultAssetAvailable(totalExpo, _balanceVault, balanceLong, pendingActionPrice, _lastPrice).toUint256();
+        WithdrawalData memory data = _prepareWithdrawalData(user, to, usdnShares, currentPrice.price);
 
-        IUsdn usdn = _usdn;
         _checkImbalanceLimitWithdrawal(
-            FixedPointMathLib.fullMulDiv(usdnShares, balanceVault, usdn.totalShares()), totalExpo
+            FixedPointMathLib.fullMulDiv(data.usdnShares, data.balanceVault, data.usdn.totalShares()), data.totalExpo
         );
 
-        WithdrawalPendingAction memory pendingAction = WithdrawalPendingAction({
-            common: PendingActionCommonData({
-                action: ProtocolAction.ValidateWithdrawal,
-                timestamp: uint40(block.timestamp),
-                user: user,
-                to: to,
-                securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24()
-            }),
-            sharesLSB: _calcWithdrawalAmountLSB(usdnShares),
-            sharesMSB: _calcWithdrawalAmountMSB(usdnShares),
-            assetPrice: pendingActionPrice,
-            totalExpo: totalExpo,
-            balanceVault: balanceVault,
-            balanceLong: balanceLong,
-            usdnTotalShares: usdn.totalShares()
-        });
-
-        securityDepositValue_ = _addPendingAction(user, _convertWithdrawalPendingAction(pendingAction));
+        securityDepositValue_ = _createWithdrawalPendingAction(data);
 
         // retrieve the USDN tokens, checks that balance is sufficient
-        usdn.transferSharesFrom(user, address(this), usdnShares);
+        data.usdn.transferSharesFrom(data.user, address(this), data.usdnShares);
 
-        emit InitiatedWithdrawal(user, to, usdn.convertToTokens(usdnShares), block.timestamp);
+        emit InitiatedWithdrawal(data.user, data.to, data.usdn.convertToTokens(data.usdnShares), block.timestamp);
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData)
