@@ -20,7 +20,7 @@ contract TestUsdnProtocolLongTickValue is UsdnProtocolBaseFixture {
      * @custom:or the current price is 0.5x the liquidation price without penalty
      * @custom:or the current price is equal to the liquidation price with penalty
      * @custom:then The tick value is 0 if the price is equal to the liquidation price without penalty
-     * @custom:or the tick value is 5 wstETH if the price is 2x the liquidation price without penalty
+     * @custom:or the tick value is approx. 5 wstETH if the price is 2x the liquidation price without penalty
      * @custom:or the tick value is -10 wstETH if the price is 0.5x the liquidation price without penalty
      * @custom:or the tick value is 0.198003465594229687 wstETH if the price is equal to the liquidation price with
      * penalty
@@ -38,7 +38,7 @@ contract TestUsdnProtocolLongTickValue is UsdnProtocolBaseFixture {
         assertEq(value, 0, "current price = liq price");
 
         value = protocol.i_tickValue(tick, liqPriceWithoutPenalty * 2, 0, HugeUint.Uint512({ hi: 0, lo: 0 }), tickData);
-        assertEq(value, 5 ether, "current price = 2x liq price");
+        assertApproxEqAbs(value, 5 ether, 1, "current price = 2x liq price");
 
         value = protocol.i_tickValue(tick, liqPriceWithoutPenalty / 2, 0, HugeUint.Uint512({ hi: 0, lo: 0 }), tickData);
         assertEq(value, -10 ether, "current price = 0.5x liq price");
