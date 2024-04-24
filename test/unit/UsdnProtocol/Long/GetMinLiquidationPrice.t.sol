@@ -7,7 +7,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @custom:feature The getter functions of the USDN Protocol
+ * @custom:feature The `getMinLiquidationPrice` function of the USDN Protocol
  * @custom:background Given a protocol initialized at equilibrium
  */
 contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
