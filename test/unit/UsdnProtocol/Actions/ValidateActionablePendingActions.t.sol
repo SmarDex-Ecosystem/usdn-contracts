@@ -11,7 +11,7 @@ import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyG
  * @custom:feature The validateActionablePendingActions function of the USDN Protocol
  * @custom:given A protocol with all fees, rebase and funding disabled
  */
-contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFixture {
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
 

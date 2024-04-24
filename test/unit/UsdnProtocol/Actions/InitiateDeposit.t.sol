@@ -11,7 +11,7 @@ import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyG
  * @custom:background Given a protocol initialized at equilibrium.
  * @custom:and A user with 10 wstETH in their wallet
  */
-contract TestUsdnProtocolInitiateDeposit is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;

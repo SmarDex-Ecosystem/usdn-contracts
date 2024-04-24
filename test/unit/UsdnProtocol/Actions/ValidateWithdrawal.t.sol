@@ -18,7 +18,7 @@ import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyG
  * @custom:background Given a protocol initialized with default params
  * @custom:and A user who deposited 1 wstETH at price $2000 to get 2000 USDN
  */
-contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
 
     uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
