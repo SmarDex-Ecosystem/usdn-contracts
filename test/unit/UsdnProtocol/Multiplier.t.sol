@@ -37,7 +37,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         skip(10 days);
 
         // We need to call liquidate to trigger the refresh of the multiplier
-        protocol.liquidate(priceData, 0);
+        protocol.testLiquidate(priceData, 0);
         assertGt(protocol.getLiquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
     }
 
@@ -58,7 +58,7 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
         skip(10 days);
 
         // We need to call liquidate to trigger the refresh of the multiplier
-        protocol.liquidate(priceData, 0);
+        protocol.testLiquidate(priceData, 0);
         assertLt(protocol.getLiquidationMultiplier(), 10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS());
     }
 }

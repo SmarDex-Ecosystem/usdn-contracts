@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Test } from "forge-std/Test.sol";
+
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
@@ -27,7 +29,7 @@ import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdn
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol
  */
-contract UsdnProtocolHandler is UsdnProtocol {
+contract UsdnProtocolHandler is UsdnProtocol, Test {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
 
@@ -50,6 +52,28 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
         rawIndex_ = _pendingActionsQueue.pushFront(action);
         _pendingActions[action.common.user] = uint256(rawIndex_) + 1;
+    }
+
+    /**
+     * @dev Use this function in unit tests to make sure we provide a fresh price that updates the balances
+     * Call `_waitBeforeLiquidation()` before calling this function to ensure the price returned by the mock oracle
+     * middleware is fresh.
+     */
+    function testLiquidate(bytes calldata currentPriceData, uint16 iterations)
+        external
+        payable
+        returns (uint256 liquidatedPositions_)
+    {
+        uint256 lastUpdateTimestampBefore = _lastUpdateTimestamp;
+        vm.prank(msg.sender);
+        liquidatedPositions_ = this.liquidate{ value: 0 }(currentPriceData, iterations);
+        require(_lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
+        // work around a bug whereby the prank doesn't handle the refund to the correct address, but refunds ether
+        // into this handler contract instead.
+        if (address(this).balance > 0) {
+            (bool success,) = payable(msg.sender).call{ value: address(this).balance }("");
+            require(success, "UsdnProtocolHandler: testLiquidate refund failed");
+        }
     }
 
     function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {

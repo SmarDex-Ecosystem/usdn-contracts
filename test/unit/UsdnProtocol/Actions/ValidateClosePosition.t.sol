@@ -474,7 +474,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      */
     function test_internalValidateCloseLiquidatePositionZeroVaultBalance() public {
         // liquidate the position in setup, leaving only the deployer position
-        uint256 liquidated = protocol.liquidate(abi.encode(7 * params.initialPrice / 10), 10);
+        _waitBeforeLiquidation();
+        uint256 liquidated = protocol.testLiquidate(abi.encode(7 * params.initialPrice / 10), 10);
         assertEq(liquidated, 1, "liquidated");
 
         bytes memory priceData = abi.encode(params.initialPrice);
@@ -530,7 +531,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         // liquidate the position in setup, leaving only the deployer position
         uint128 liquidationPrice = protocol.getEffectivePriceForTick(tick);
-        uint256 liquidated = protocol.liquidate(abi.encode(liquidationPrice - 1), 10);
+        uint256 liquidated = protocol.testLiquidate(abi.encode(liquidationPrice - 1), 10);
         assertEq(liquidated, 1, "liquidated");
 
         // we initiate the close with a price that leaves little remaining collateral

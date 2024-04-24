@@ -292,7 +292,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         // the price drops to $1500 and the position gets liquidated
         skip(30);
-        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
+        protocol.testLiquidate(abi.encode(uint128(1500 ether)), 10);
 
         // the pending action is stale
         uint256 currentTickVersion = protocol.getTickVersion(tick_);
@@ -326,6 +326,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
     function _waitDelay() internal {
         skip(oracleMiddleware.getValidationDelay() + 1);
+    }
+
+    function _waitBeforeLiquidation() internal {
+        skip(31);
     }
 
     /// @dev Calculate proper initial values from randoms to initiate a balanced protocol

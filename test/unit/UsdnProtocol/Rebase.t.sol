@@ -97,7 +97,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase (no liquidation happens)
         vm.expectEmit();
         emit Rebase(usdn.MAX_DIVISOR(), expectedDivisor);
-        protocol.liquidate(abi.encode(newPrice), 0);
+        protocol.testLiquidate(abi.encode(newPrice), 0);
 
         assertApproxEqAbs(
             protocol.usdnPrice(newPrice, uint128(block.timestamp - 30)),

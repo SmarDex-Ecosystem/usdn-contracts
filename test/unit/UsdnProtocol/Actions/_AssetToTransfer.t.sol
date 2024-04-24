@@ -77,7 +77,7 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
         uint128 price = 1000 ether;
         skip(1 weeks);
         // liquidate the default position
-        protocol.liquidate(abi.encode(price), 10);
+        protocol.testLiquidate(abi.encode(price), 10);
 
         assertEq(protocol.getTotalLongPositions(), 0, "total long positions");
         assertEq(protocol.i_longTradingExpo(price), 0, "long trading expo with funding");

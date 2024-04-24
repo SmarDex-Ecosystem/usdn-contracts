@@ -107,10 +107,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The call reverts because the position is not valid anymore
      */
     function test_RevertWhen_closePartialPositionWithAnOutdatedTick() external {
+        _waitBeforeLiquidation();
         bytes memory priceData = abi.encode(protocol.getEffectivePriceForTick(tick));
 
         // Liquidate the position
-        protocol.liquidate(priceData, 1);
+        protocol.testLiquidate(priceData, 1);
         (, uint256 version) = protocol.i_tickHash(tick);
         assertGt(version, tickVersion, "The tick should have been liquidated");
 

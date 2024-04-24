@@ -73,7 +73,8 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
             USER_1, ProtocolAction.ValidateOpenPosition, OPEN_AMOUNT, params.initialPrice / 2, params.initialPrice
         );
 
-        protocol.liquidate(abi.encode(params.initialPrice / 3), 10);
+        _waitBeforeLiquidation();
+        protocol.testLiquidate(abi.encode(params.initialPrice / 3), 10);
 
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion)

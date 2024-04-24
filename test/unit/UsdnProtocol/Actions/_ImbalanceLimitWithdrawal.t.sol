@@ -47,7 +47,8 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         );
 
         // liquidate everything with huge bad debt
-        protocol.liquidate(abi.encode(params.initialPrice / 100), 1);
+        _waitBeforeLiquidation();
+        protocol.testLiquidate(abi.encode(params.initialPrice / 100), 1);
 
         // vault expo should be zero
         assertEq(protocol.getBalanceVault(), 0, "vault expo isn't 0");

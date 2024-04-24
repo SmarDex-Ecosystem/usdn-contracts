@@ -88,7 +88,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         skip(30);
 
         // Call liquidate to trigger liquidation multiplier update
-        protocol.liquidate(priceData, 0);
+        protocol.testLiquidate(priceData, 0);
 
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
         uint256 expectedLeverage = protocol.i_getLeverage(
@@ -133,7 +133,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         skip(1 hours);
 
         // Call liquidate to trigger balance update
-        protocol.liquidate(priceData, 0);
+        protocol.testLiquidate(priceData, 0);
 
         uint256 storageBalanceBefore = protocol.getBalanceLong();
 
