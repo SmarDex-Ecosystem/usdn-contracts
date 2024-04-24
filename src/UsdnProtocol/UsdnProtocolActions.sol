@@ -38,7 +38,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     using HugeUint for HugeUint.Uint512;
 
     /**
-     * @dev The data structure to help during `_initiateClosePosition`
+     * @dev Structure to hold the transient data during `_initiateClosePosition`
      * @param pos The position to close
      * @param liquidationPenalty The liquidation penalty
      * @param securityDepositValue The security deposit value
