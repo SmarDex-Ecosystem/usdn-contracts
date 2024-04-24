@@ -120,8 +120,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         }
         if (!params.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
-            protocol.setUsdnRebaseThreshold(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
-            protocol.setTargetUsdnPrice(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
+            protocol.setUsdnRebaseThreshold(type(uint128).max);
+            protocol.setTargetUsdnPrice(type(uint128).max);
         }
         if (!params.flags.enableSecurityDeposit) {
             protocol.setSecurityDepositValue(0);
@@ -291,8 +291,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
             setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1700 ether, 2000 ether);
 
         // the price drops to $1500 and the position gets liquidated
-        skip(30);
-        protocol.testLiquidate(abi.encode(uint128(1500 ether)), 10);
+        _waitBeforeLiquidation();
+        protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
 
         // the pending action is stale
         uint256 currentTickVersion = protocol.getTickVersion(tick_);

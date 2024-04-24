@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN } from "test/utils/Constants.sol";
+import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
+
+import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
  * @custom:feature Test of the protocol expo limit for `_checkImbalanceLimitOpen` function in balanced state
@@ -64,24 +63,12 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The `_checkImbalanceLimitOpen` function should revert when vault expo equal 0
-     * @custom:given The protocol is balanced
-     * @custom:and A long position is opened
-     * @custom:and The price crashes very hard and liquidates the existing positions
-     * @custom:and The vault balance/expo is 0
+     * @custom:given The vault has zero balance / expo
      * @custom:when The `_checkImbalanceLimitOpen` function is called
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_checkImbalanceLimitOpenZeroVaultExpo() public {
-        setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
-        );
-
-        // liquidate everything with huge bad debt
-        _waitBeforeLiquidation();
-        protocol.testLiquidate(abi.encode(params.initialPrice / 100), 10);
-
-        // vault expo should be zero
-        assertEq(protocol.getBalanceVault(), 0, "vault expo isn't 0");
+        protocol.emptyVault();
 
         // should revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidVaultExpo.selector);

@@ -56,8 +56,9 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     /**
      * @dev Use this function in unit tests to make sure we provide a fresh price that updates the balances
-     * Call `_waitBeforeLiquidation()` before calling this function to ensure the price returned by the mock oracle
-     * middleware is fresh.
+     * The function reverts the price given by the mock oracle middleware is not fresh enough to trigger a balance
+     * update. Call `_waitBeforeLiquidation()` before calling this function to make sure enough time has passed.
+     * Do not use this function in contexts where ether needs to be refunded.
      */
     function testLiquidate(bytes calldata currentPriceData, uint16 iterations)
         external
@@ -66,14 +67,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     {
         uint256 lastUpdateTimestampBefore = _lastUpdateTimestamp;
         vm.prank(msg.sender);
-        liquidatedPositions_ = this.liquidate{ value: 0 }(currentPriceData, iterations);
+        liquidatedPositions_ = this.liquidate(currentPriceData, iterations);
         require(_lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
-        // work around a bug whereby the prank doesn't handle the refund to the correct address, but refunds ether
-        // into this handler contract instead.
-        if (address(this).balance > 0) {
-            (bool success,) = payable(msg.sender).call{ value: address(this).balance }("");
-            require(success, "UsdnProtocolHandler: testLiquidate refund failed");
-        }
     }
 
     function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {
@@ -88,6 +83,15 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
             _liqMultiplierAccumulator,
             _tickData[tickHash(tick, _tickVersion[tick])]
         );
+    }
+
+    /**
+     * @dev Helper function to simulate a situation where the vault would be empty. In practice, it's not possible to
+     * achieve.
+     */
+    function emptyVault() external {
+        _balanceLong += _balanceVault;
+        _balanceVault = 0;
     }
 
     function i_initiateClosePosition(
