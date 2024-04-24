@@ -34,19 +34,17 @@ contract TestUsdnProtocolLongTickValue is UsdnProtocolBaseFixture {
             TickData({ totalExpo: 10 ether, totalPos: 1, liquidationPenalty: protocol.getLiquidationPenalty() });
 
         int256 value =
-            protocol.i_tickValue(tick, liqPriceWithoutPenalty, 0, 0, HugeUint.Uint512({ hi: 0, lo: 0 }), tickData);
+            protocol.i_tickValue(tick, liqPriceWithoutPenalty, 0, HugeUint.Uint512({ hi: 0, lo: 0 }), tickData);
         assertEq(value, 0, "current price = liq price");
 
-        value =
-            protocol.i_tickValue(tick, liqPriceWithoutPenalty * 2, 0, 0, HugeUint.Uint512({ hi: 0, lo: 0 }), tickData);
+        value = protocol.i_tickValue(tick, liqPriceWithoutPenalty * 2, 0, HugeUint.Uint512({ hi: 0, lo: 0 }), tickData);
         assertEq(value, 5 ether, "current price = 2x liq price");
 
-        value =
-            protocol.i_tickValue(tick, liqPriceWithoutPenalty / 2, 0, 0, HugeUint.Uint512({ hi: 0, lo: 0 }), tickData);
+        value = protocol.i_tickValue(tick, liqPriceWithoutPenalty / 2, 0, HugeUint.Uint512({ hi: 0, lo: 0 }), tickData);
         assertEq(value, -10 ether, "current price = 0.5x liq price");
 
         value = protocol.i_tickValue(
-            tick, protocol.getEffectivePriceForTick(tick), 0, 0, HugeUint.Uint512({ hi: 0, lo: 0 }), tickData
+            tick, protocol.getEffectivePriceForTick(tick), 0, HugeUint.Uint512({ hi: 0, lo: 0 }), tickData
         );
         assertEq(value, 0.198003465594229687 ether, "current price = liq price with penalty");
     }

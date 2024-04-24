@@ -24,25 +24,23 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param tempLongBalance The temporary long balance
      * @param tempVaultBalance The temporary vault balance
      * @param currentTick The current tick (tick corresponding to the current asset price)
-     * @param lastCheckedTick Tick iterator index
+     * @param iTick Tick iterator index
      * @param totalExpoToRemove The total expo to remove due to the liquidation of some ticks
      * @param accumulatorValueToRemove The value to remove from the liquidation multiplier accumulator, due to the
      * liquidation of some ticks
-     * @param balanceLong The balance of the long side (initial tempLongBalance value, cast to uint256)
+     * @param longTradingExpo The long trading expo
      * @param currentPrice The current price of the asset
-     * @param totalExpo The total expo of the long side before liquidation
      * @param accumulator The liquidation multiplier accumulator before the liquidation
      */
     struct LiquidationData {
         int256 tempLongBalance;
         int256 tempVaultBalance;
         int24 currentTick;
-        int24 lastCheckedTick;
+        int24 iTick;
         uint256 totalExpoToRemove;
         uint256 accumulatorValueToRemove;
-        uint256 balanceLong;
+        uint256 longTradingExpo;
         uint256 currentPrice;
-        uint256 totalExpo;
         HugeUint.Uint512 accumulator;
     }
 
@@ -345,31 +343,19 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @notice Calculate the value of a tick, knowing its contained total expo and the current asset price
      * @param tick The tick number
      * @param currentPrice The current price of the asset
-     * @param totalExpo The total expo of the long side
-     * @param balanceLong The balance of the long side
+     * @param longTradingExpo The trading expo of the long side
      * @param accumulator The liquidation multiplier accumulator
      * @param tickData The aggregate data for the tick
      */
     function _tickValue(
         int24 tick,
         uint256 currentPrice,
-        uint256 totalExpo,
-        uint256 balanceLong,
+        uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
         TickData memory tickData
     ) internal view returns (int256 value_) {
-        int256 longTradingExpo = totalExpo.toInt256() - balanceLong.toInt256();
-        if (longTradingExpo < 0) {
-            // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero.
-            // In this case, the liquidation price will fall to zero, and the tick value will be equal to its
-            // total expo.
-            longTradingExpo = 0;
-        }
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(
-            tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing,
-            currentPrice,
-            uint256(longTradingExpo),
-            accumulator
+            tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing, currentPrice, longTradingExpo, accumulator
         );
 
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
@@ -569,12 +555,20 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int256 tempLongBalance,
         int256 tempVaultBalance
     ) internal returns (LiquidationsEffects memory effects_) {
+        int256 longTradingExpo = _totalExpo.toInt256() - tempLongBalance;
+        if (longTradingExpo <= 0) {
+            // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero.
+            // In this case, it's not possible to calculate the current tick, so we can't perform any liquidations.
+            (effects_.newLongBalance, effects_.newVaultBalance) =
+                _handleNegativeBalances(tempLongBalance, tempVaultBalance);
+            return effects_;
+        }
+
         LiquidationData memory data;
         data.tempLongBalance = tempLongBalance;
         data.tempVaultBalance = tempVaultBalance;
-        data.balanceLong = tempLongBalance.toUint256();
+        data.longTradingExpo = uint256(longTradingExpo);
         data.currentPrice = currentPrice;
-        data.totalExpo = _totalExpo;
         data.accumulator = _liqMultiplierAccumulator;
 
         // max iteration limit
@@ -582,62 +576,50 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             iteration = MAX_LIQUIDATION_ITERATION;
         }
 
-        int256 longTradingExpo = data.totalExpo.toInt256() - data.balanceLong.toInt256();
-        if (longTradingExpo <= 0) {
-            // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero.
-            // In this case, it's not possible to calculate the current tick, so we can't perform any liquidations.
-            (effects_.newLongBalance, effects_.newVaultBalance) =
-                _handleNegativeBalances(data.tempLongBalance, data.tempVaultBalance);
-            return effects_;
-        }
         uint256 unadjustedPrice =
-            _unadjustPrice(data.currentPrice, data.currentPrice, uint256(longTradingExpo), data.accumulator);
+            _unadjustPrice(data.currentPrice, data.currentPrice, data.longTradingExpo, data.accumulator);
         data.currentTick = TickMath.getClosestTickAtPrice(unadjustedPrice);
-        data.lastCheckedTick = _maxInitializedTick;
+        data.iTick = _maxInitializedTick;
 
         do {
-            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(data.lastCheckedTick));
+            uint256 index = _tickBitmap.findLastSet(_tickToBitmapIndex(data.iTick));
             if (index == LibBitmap.NOT_FOUND) {
                 // no populated ticks left
                 break;
             }
 
-            data.lastCheckedTick = _bitmapIndexToTick(index);
-            if (data.lastCheckedTick < data.currentTick) {
+            data.iTick = _bitmapIndexToTick(index);
+            if (data.iTick < data.currentTick) {
+                // all underwater ticks have been processed
                 break;
             }
 
             // we have found a non-empty tick that needs to be liquidated
-            (bytes32 tickHash,) = _tickHash(data.lastCheckedTick);
+            (bytes32 tickHash,) = _tickHash(data.iTick);
 
             TickData memory tickData = _tickData[tickHash];
-
+            // Update transient data
             data.totalExpoToRemove += tickData.totalExpo;
-            effects_.liquidatedPositions += tickData.totalPos;
-            uint256 unadjustedTickPrice = TickMath.getPriceAtTick(
-                data.lastCheckedTick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing
-            );
+            uint256 unadjustedTickPrice =
+                TickMath.getPriceAtTick(data.iTick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing);
             data.accumulatorValueToRemove += unadjustedTickPrice * tickData.totalExpo;
-
-            // Reset tick by incrementing the tick version
-            ++_tickVersion[data.lastCheckedTick];
-
+            // Update return values
+            effects_.liquidatedPositions += tickData.totalPos;
             ++effects_.liquidatedTicks;
-
-            int256 tickValue = _tickValue(
-                data.lastCheckedTick, data.currentPrice, data.totalExpo, data.balanceLong, data.accumulator, tickData
-            );
+            int256 tickValue =
+                _tickValue(data.iTick, data.currentPrice, data.longTradingExpo, data.accumulator, tickData);
             effects_.remainingCollateral += tickValue;
 
-            _tickBitmap.unset(_tickToBitmapIndex(data.lastCheckedTick));
+            // Reset tick by incrementing the tick version
+            ++_tickVersion[data.iTick];
+            // Update bitmap to reflect that the tick is empty
+            _tickBitmap.unset(index);
 
             emit LiquidatedTick(
-                data.lastCheckedTick,
-                _tickVersion[data.lastCheckedTick] - 1,
+                data.iTick,
+                _tickVersion[data.iTick] - 1,
                 data.currentPrice,
-                getEffectivePriceForTick(
-                    data.lastCheckedTick, data.currentPrice, data.totalExpo - data.balanceLong, data.accumulator
-                ),
+                getEffectivePriceForTick(data.iTick, data.currentPrice, data.longTradingExpo, data.accumulator),
                 tickValue
             );
         } while (effects_.liquidatedTicks < iteration);
@@ -663,13 +645,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         _totalExpo -= data.totalExpoToRemove;
         _liqMultiplierAccumulator = _liqMultiplierAccumulator.sub(HugeUint.wrap(data.accumulatorValueToRemove));
 
+        // keep track of the max initialized tick
         if (effects.liquidatedPositions != 0) {
-            if (data.lastCheckedTick < data.currentTick) {
+            if (data.iTick < data.currentTick) {
                 // all ticks above the current tick were liquidated
                 _maxInitializedTick = _findMaxInitializedTick(data.currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                _maxInitializedTick = _findMaxInitializedTick(data.lastCheckedTick);
+                _maxInitializedTick = _findMaxInitializedTick(data.iTick);
             }
         }
 
@@ -682,6 +665,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Handle negative balances by transferring assets from one side to the other
+     * @dev Balances are unsigned integers and can't be negative
      * @param tempLongBalance The temporary long balance after liquidations
      * @param tempVaultBalance The temporary vault balance after liquidations
      * @return longBalance_ The new long balance after rebalancing
@@ -707,6 +691,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             tempVaultBalance = 0;
         }
 
+        // TODO: remove safe cast once we're sure we can never have negative balances
         longBalance_ = tempLongBalance.toUint256();
         vaultBalance_ = tempVaultBalance.toUint256();
     }

@@ -53,11 +53,14 @@ contract UsdnProtocolHandler is UsdnProtocol {
     }
 
     function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {
+        int256 longTradingExpo = int256(_totalExpo) - int256(_balanceVault);
+        if (longTradingExpo < 0) {
+            longTradingExpo = 0;
+        }
         return _tickValue(
             tick,
             currentPrice,
-            _totalExpo,
-            _balanceLong,
+            uint256(longTradingExpo),
             _liqMultiplierAccumulator,
             _tickData[tickHash(tick, _tickVersion[tick])]
         );
@@ -191,12 +194,11 @@ contract UsdnProtocolHandler is UsdnProtocol {
     function i_tickValue(
         int24 tick,
         uint256 currentPrice,
-        uint256 totalExpo,
-        uint256 balanceLong,
+        uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
         TickData memory tickData
     ) external view returns (int256) {
-        return _tickValue(tick, currentPrice, totalExpo, balanceLong, accumulator, tickData);
+        return _tickValue(tick, currentPrice, longTradingExpo, accumulator, tickData);
     }
 
     function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
