@@ -274,6 +274,13 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             .toUint128();
     }
 
+    /**
+     * @notice Calculate a fixed-precision representation of the liquidation price multiplier
+     * @param assetPrice The current price of the asset
+     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
+     * @param accumulator The liquidation multiplier accumulator
+     * @return multiplier_ The liquidation price multiplier, with LIQUIDATION_MULTIPLIER_DECIMALS decimals
+     */
     function _calcFixedPrecisionMultiplier(
         uint256 assetPrice,
         uint256 longTradingExpo,
