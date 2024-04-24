@@ -18,7 +18,7 @@ import {
  * @custom:background Given a protocol initialized with default params with a user position with a liquidation price at
  * 90% of the initial price
  */
-contract LiquidationRewardsUserActions is UsdnProtocolBaseFixture {
+contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
     bytes initialPriceData;
     bytes liquidationPriceData;
 
