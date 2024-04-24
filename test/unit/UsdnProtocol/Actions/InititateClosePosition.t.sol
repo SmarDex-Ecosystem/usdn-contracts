@@ -337,7 +337,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @param amountToClose Amount of the position to close
      */
     function _initiateCloseAPositionHelper(uint128 amountToClose, address to) internal {
-        uint256 liquidationMultiplier = protocol.getLiquidationMultiplier();
+        //uint256 liquidationMultiplier = protocol.getLiquidationMultiplier();
 
         (Position memory posBefore,) = protocol.getLongPosition(tick, tickVersion, index);
         uint128 totalExpoToClose =
