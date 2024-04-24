@@ -1166,7 +1166,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _applyPnlAndFunding(currentPrice.neutralPrice.toUint128(), currentPrice.timestamp.toUint128());
 
         LiquidationsEffects memory effects =
-            _liquidatePositions(currentPrice.neutralPrice, iterations, tempLongBalance, tempVaultBalance);
+            _liquidatePositions(_lastPrice, iterations, tempLongBalance, tempVaultBalance);
 
         liquidatedPositions_ = effects.liquidatedPositions;
         _balanceLong = effects.newLongBalance;

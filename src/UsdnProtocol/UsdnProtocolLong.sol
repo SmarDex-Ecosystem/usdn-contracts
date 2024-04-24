@@ -557,20 +557,23 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Liquidate positions which have a liquidation price lower than the current price
+     * @param currentPrice The current price of the asset
      * @param iteration The maximum number of ticks to liquidate (minimum is 1)
      * @param tempLongBalance The temporary long balance as calculated when applying PnL and funding
      * @param tempVaultBalance The temporary vault balance as calculated when applying PnL and funding
      * @return effects_ The effects of the liquidations on the protocol
      */
-    function _liquidatePositions(uint256, uint16 iteration, int256 tempLongBalance, int256 tempVaultBalance)
-        internal
-        returns (LiquidationsEffects memory effects_)
-    {
+    function _liquidatePositions(
+        uint256 currentPrice,
+        uint16 iteration,
+        int256 tempLongBalance,
+        int256 tempVaultBalance
+    ) internal returns (LiquidationsEffects memory effects_) {
         LiquidationData memory data;
         data.tempLongBalance = tempLongBalance;
         data.tempVaultBalance = tempVaultBalance;
         data.balanceLong = tempLongBalance.toUint256();
-        data.currentPrice = _lastPrice; // TODO: do we want to do this?
+        data.currentPrice = currentPrice;
         data.totalExpo = _totalExpo;
         data.accumulator = _liqMultiplierAccumulator;
 
@@ -579,8 +582,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             iteration = MAX_LIQUIDATION_ITERATION;
         }
 
+        int256 longTradingExpo = data.totalExpo.toInt256() - data.balanceLong.toInt256();
+        if (longTradingExpo <= 0) {
+            // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero.
+            // In this case, it's not possible to calculate the current tick, so we can't perform any liquidations.
+            (effects_.newLongBalance, effects_.newVaultBalance) =
+                _handleNegativeBalances(data.tempLongBalance, data.tempVaultBalance);
+            return effects_;
+        }
         uint256 unadjustedPrice =
-            _unadjustPrice(data.currentPrice, data.currentPrice, data.totalExpo - data.balanceLong, data.accumulator);
+            _unadjustPrice(data.currentPrice, data.currentPrice, uint256(longTradingExpo), data.accumulator);
         data.currentTick = TickMath.getClosestTickAtPrice(unadjustedPrice);
         data.lastCheckedTick = _maxInitializedTick;
 
