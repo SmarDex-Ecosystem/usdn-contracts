@@ -7,9 +7,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { UsdnProtocolCore } from "src/UsdnProtocol/UsdnProtocolCore.sol";
 import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import {
-    PendingAction, WithdrawalPendingAction, ProtocolAction
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { WithdrawalPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     using SafeCast for int256;
