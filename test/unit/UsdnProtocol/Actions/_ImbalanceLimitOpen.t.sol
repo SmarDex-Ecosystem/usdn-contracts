@@ -73,11 +73,23 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_checkImbalanceLimitOpenZeroVaultExpo() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 0.1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
 
         protocol.initiateClosePosition(
-            tick, tickVersion, index, 0.1 ether, abi.encode(params.initialPrice * 10_000), EMPTY_PREVIOUS_DATA
+            tick,
+            tickVersion,
+            index,
+            0.1 ether,
+            abi.encode(params.initialPrice * 10_000),
+            EMPTY_PREVIOUS_DATA,
+            address(this)
         );
         _waitDelay();
         protocol.validateClosePosition(abi.encode(params.initialPrice * 10_000), EMPTY_PREVIOUS_DATA);

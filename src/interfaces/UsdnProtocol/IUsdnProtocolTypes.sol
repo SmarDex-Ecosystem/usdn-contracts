@@ -49,6 +49,7 @@ enum ProtocolAction {
  * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
+ * @param to The to address.
  * @param securityDepositValue The security deposit of the pending action.
  * @param var1 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param amount The amount of the pending action.
@@ -62,6 +63,7 @@ struct PendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
     address user; // 20 bytes
+    address to; // 20 bytes
     uint24 securityDepositValue; // 3 bytes
     int24 var1; // 3 bytes
     uint128 amount; // 16 bytes
@@ -77,6 +79,7 @@ struct PendingAction {
  * @param action The action type (`ValidateDeposit`).
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
+ * @param to The to address.
  * @param securityDepositValue The security deposit of the pending action.
  * @param _unused Unused field to align the struct to `PendingAction`.
  * @param amount The amount of assets of the pending deposit.
@@ -90,6 +93,7 @@ struct DepositPendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
     address user; // 20 bytes
+    address to; // 20 bytes
     uint24 securityDepositValue; // 3 bytes
     int24 _unused; // 3 bytes
     uint128 amount; // 16 bytes
@@ -105,6 +109,7 @@ struct DepositPendingAction {
  * @param action The action type (`ValidateWithdrawal`).
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
+ * @param to The to address.
  * @param securityDepositValue The security deposit of the pending action.
  * @param sharesLSB 3 least significant bytes of the withdrawal shares amount (uint152).
  * @param sharesMSB 16 most significant bytes of the withdrawal shares amount (uint152).
@@ -118,6 +123,7 @@ struct WithdrawalPendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
     address user; // 20 bytes
+    address to; // 20 bytes
     uint24 securityDepositValue; // 3 bytes
     uint24 sharesLSB; // 3 bytes
     uint128 sharesMSB; // 16 bytes
@@ -133,6 +139,7 @@ struct WithdrawalPendingAction {
  * @param action The action type (`ValidateOpenPosition` or `ValidateClosePosition`).
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
+ * @param to The to address.
  * @param securityDepositValue The security deposit of the pending action.
  * @param tick The tick of the position.
  * @param closeAmount The amount of the pending action (only used when closing a position).
@@ -148,6 +155,7 @@ struct LongPendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
     address user; // 20 bytes
+    address to; // 20 bytes
     uint24 securityDepositValue; // 3 bytes
     int24 tick; // 3 bytes
     uint128 closeAmount; // 16 bytes

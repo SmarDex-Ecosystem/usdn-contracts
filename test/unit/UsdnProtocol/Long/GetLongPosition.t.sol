@@ -31,7 +31,13 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
      */
     function test_getLongPosition() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            USER_1, ProtocolAction.ValidateOpenPosition, OPEN_AMOUNT, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: OPEN_AMOUNT,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
 
         (Position memory position, uint8 liquidationPenalty) = protocol.getLongPosition(tick, tickVersion, index);
@@ -72,7 +78,13 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_getLongPositionOutdatedTick() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            USER_1, ProtocolAction.ValidateOpenPosition, OPEN_AMOUNT, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: OPEN_AMOUNT,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
 
         // we need to skip 1 minute to make the new price data fresh

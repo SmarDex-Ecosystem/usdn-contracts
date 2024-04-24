@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.12.1](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.12.0...v0.12.1) (2024-04-18)
+
+
+### Features
+
+* **deposit:** minimum deposit amount ([#177](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/177)) ([5679c96](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/5679c965f85c0c6ee3ae1a0c34154a2fa8ad07b3))
+* library for uint512 math ([#193](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/193)) ([b6dd164](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/b6dd1648d1f161550fe4c17b90abbcb6a7adcbde))
+* **order-manager:** add a contract to manage orders in tick ([#170](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/170)) ([90d756a](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/90d756a7eaf31adc383373d0e961420c50a3e52c))
+* **order-manager:** add the order manager to the USDN protocol and the deployment script ([#188](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/188)) ([ed0d4d6](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/ed0d4d6e0946ea65021470ca0e023d62207207f6))
+
+
+### Bug Fixes
+
+* **core:** edge case of PnL calculation with negative trading expo ([#181](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/181)) ([132cb9d](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/132cb9d6b778c951d2a32b70b49ca155bbe4677f))
+* **limits:** limits-denominator ([3ea4a14](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/3ea4a146e84e5f21fe5e0c9e956ae7a8a1742ee9))
+
 ## [0.12.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.11.1...v0.12.0) (2024-04-04)
 
 

@@ -44,9 +44,14 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         initialPrice = params.initialPrice;
         uint128 desiredLiqPrice = uint128(initialPrice) * 9 / 10;
         (int24 tick,,) = setUpUserPositionInLong(
-            USER_1, ProtocolAction.ValidateOpenPosition, 0.1 ether, desiredLiqPrice, initialPrice
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 0.1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: initialPrice
+            })
         );
-
         skip(1 hours);
 
         balanceSenderBefore = wstETH.balanceOf(address(this));
@@ -68,7 +73,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
     function test_liquidationRewards_initiateDeposit() public {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.initiateDeposit(depositAmount, liquidationPriceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit(depositAmount, liquidationPriceData, EMPTY_PREVIOUS_DATA, address(this));
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
@@ -89,7 +94,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_validateDeposit() public {
-        protocol.initiateDeposit(depositAmount, initialPriceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit(depositAmount, initialPriceData, EMPTY_PREVIOUS_DATA, address(this));
         _waitDelay();
 
         vm.expectEmit();
@@ -121,7 +126,9 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.initiateWithdrawal(uint152(usdn.balanceOf(address(this))), liquidationPriceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(
+            uint152(usdn.balanceOf(address(this))), liquidationPriceData, EMPTY_PREVIOUS_DATA, address(this)
+        );
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
@@ -179,7 +186,9 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
     function test_liquidationRewards_initiateOpenPosition() public {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.initiateOpenPosition(depositAmount, initialPrice / 2, liquidationPriceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition(
+            depositAmount, initialPrice / 2, liquidationPriceData, EMPTY_PREVIOUS_DATA, address(this)
+        );
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
@@ -201,7 +210,9 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_validateOpenPosition() public {
-        protocol.initiateOpenPosition(depositAmount, initialPrice / 2, initialPriceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition(
+            depositAmount, initialPrice / 2, initialPriceData, EMPTY_PREVIOUS_DATA, address(this)
+        );
         _waitDelay();
 
         vm.expectEmit();
@@ -229,7 +240,13 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      */
     function test_liquidationRewards_initiateClosePosition() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, depositAmount, initialPrice / 2, initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: depositAmount,
+                desiredLiqPrice: initialPrice / 2,
+                price: initialPrice
+            })
         );
 
         skip(1 hours);
@@ -237,7 +254,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
         protocol.initiateClosePosition(
-            tick, tickVersion, index, depositAmount, liquidationPriceData, EMPTY_PREVIOUS_DATA
+            tick, tickVersion, index, depositAmount, liquidationPriceData, EMPTY_PREVIOUS_DATA, address(this)
         );
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
@@ -264,7 +281,13 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      */
     function test_liquidationRewards_validateClosePosition() public {
         (int24 tick,,) = setUpUserPositionInLong(
-            address(this), ProtocolAction.InitiateClosePosition, depositAmount, initialPrice / 2, initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: depositAmount,
+                desiredLiqPrice: initialPrice / 2,
+                price: initialPrice
+            })
         );
 
         skip(1 hours);

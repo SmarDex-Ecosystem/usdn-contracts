@@ -39,16 +39,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function initiateDeposit(
         uint128 amount,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData,
+        address to
     ) external payable initializedAndNonReentrant {
         uint256 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
-
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund = _initiateDeposit(msg.sender, amount, currentPriceData);
+        uint256 amountToRefund = _initiateDeposit(msg.sender, to, amount, currentPriceData);
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -76,7 +76,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function initiateWithdrawal(
         uint152 usdnShares,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData,
+        address to
     ) external payable initializedAndNonReentrant {
         uint256 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
@@ -85,7 +86,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund = _initiateWithdrawal(msg.sender, usdnShares, currentPriceData);
+        uint256 amountToRefund = _initiateWithdrawal(msg.sender, to, usdnShares, currentPriceData);
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -114,7 +115,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData,
+        address to
     ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         uint256 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
@@ -125,7 +127,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 amountToRefund;
 
         PositionId memory posId;
-        (posId, amountToRefund) = _initiateOpenPosition(msg.sender, amount, desiredLiqPrice, currentPriceData);
+        (posId, amountToRefund) = _initiateOpenPosition(msg.sender, to, amount, desiredLiqPrice, currentPriceData);
         tick_ = posId.tick;
         tickVersion_ = posId.tickVersion;
         index_ = posId.index;
@@ -160,7 +162,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 index,
         uint128 amountToClose,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData,
+        address to
     ) external payable initializedAndNonReentrant {
         uint256 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
@@ -171,6 +174,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 amountToRefund = _initiateClosePosition(
             msg.sender,
+            to,
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
             amountToClose,
             currentPriceData
@@ -404,14 +408,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
      * @param user The address of the user initiating the deposit.
+     * @param to The address to receive the USDN tokens.
      * @param amount The amount of wstETH to deposit.
      * @param currentPriceData The current price data
      * @return securityDepositValue_ The security deposit value
      */
-    function _initiateDeposit(address user, uint128 amount, bytes calldata currentPriceData)
+    function _initiateDeposit(address user, address to, uint128 amount, bytes calldata currentPriceData)
         internal
         returns (uint256 securityDepositValue_)
     {
+        if (to == address(0)) {
+            revert UsdnProtocolInvalidAddressTo();
+        }
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -431,6 +439,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
             user: user,
+            to: to,
             securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
             _unused: 0,
             amount: amount,
@@ -466,7 +475,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Transfer assets
         _asset.safeTransferFrom(user, address(this), amount);
 
-        emit InitiatedDeposit(user, amount, block.timestamp);
+        emit InitiatedDeposit(user, to, amount, block.timestamp);
     }
 
     function _validateDeposit(address user, bytes calldata priceData)
@@ -524,8 +533,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _balanceVault += deposit.amount;
 
-        _usdn.mint(deposit.user, usdnToMint);
-        emit ValidatedDeposit(deposit.user, deposit.amount, usdnToMint, deposit.timestamp);
+        _usdn.mint(deposit.to, usdnToMint);
+        emit ValidatedDeposit(deposit.user, deposit.to, deposit.amount, usdnToMint, deposit.timestamp);
     }
 
     /**
@@ -535,14 +544,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware.
      * @param user The address of the user initiating the withdrawal.
+     * @param to The address that will receive the assets
      * @param usdnShares The amount of USDN shares to burn.
      * @param currentPriceData The current price data
      * @return securityDepositValue_ The security deposit value
      */
-    function _initiateWithdrawal(address user, uint152 usdnShares, bytes calldata currentPriceData)
+    function _initiateWithdrawal(address user, address to, uint152 usdnShares, bytes calldata currentPriceData)
         internal
         returns (uint256 securityDepositValue_)
     {
+        if (to == address(0)) {
+            revert UsdnProtocolInvalidAddressTo();
+        }
         if (usdnShares == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -569,6 +582,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             action: ProtocolAction.ValidateWithdrawal,
             timestamp: uint40(block.timestamp),
             user: user,
+            to: to,
             securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
             sharesLSB: _calcWithdrawalAmountLSB(usdnShares),
             sharesMSB: _calcWithdrawalAmountMSB(usdnShares),
@@ -584,7 +598,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // retrieve the USDN tokens, checks that balance is sufficient
         usdn.transferSharesFrom(user, address(this), usdnShares);
 
-        emit InitiatedWithdrawal(user, usdn.convertToTokens(usdnShares), block.timestamp);
+        emit InitiatedWithdrawal(user, to, usdn.convertToTokens(usdnShares), block.timestamp);
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData)
@@ -649,10 +663,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // send the asset to the user
         if (assetToTransfer > 0) {
             _balanceVault -= assetToTransfer;
-            _asset.safeTransfer(withdrawal.user, assetToTransfer);
+            _asset.safeTransfer(withdrawal.to, assetToTransfer);
         }
 
-        emit ValidatedWithdrawal(withdrawal.user, assetToTransfer, usdn.convertToTokens(shares), withdrawal.timestamp);
+        emit ValidatedWithdrawal(
+            withdrawal.user, withdrawal.to, assetToTransfer, usdn.convertToTokens(shares), withdrawal.timestamp
+        );
     }
 
     /**
@@ -664,6 +680,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data.
      * @param user The address of the user initiating the open position.
+     * @param to The address that will be the owner of the position
      * @param amount The amount of wstETH to deposit.
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty.
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
@@ -673,10 +690,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      */
     function _initiateOpenPosition(
         address user,
+        address to,
         uint128 amount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData
     ) internal returns (PositionId memory posId_, uint256 securityDepositValue_) {
+        if (to == address(0)) {
+            revert UsdnProtocolInvalidAddressTo();
+        }
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -717,32 +738,33 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         {
             // Register position and adjust contract state
-            Position memory long = Position({
-                user: user,
-                amount: amount,
-                totalExpo: positionTotalExpo,
-                timestamp: uint40(block.timestamp)
-            });
+            Position memory long =
+                Position({ user: to, amount: amount, totalExpo: positionTotalExpo, timestamp: uint40(block.timestamp) });
             (posId_.tickVersion, posId_.index) = _saveNewPosition(posId_.tick, long, liquidationPenalty);
         }
 
-        // Register pending action
-        LongPendingAction memory pendingAction = LongPendingAction({
-            action: ProtocolAction.ValidateOpenPosition,
-            timestamp: uint40(block.timestamp),
-            user: user,
-            tick: posId_.tick,
-            securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
-            closeAmount: 0,
-            closeTotalExpo: 0,
-            tickVersion: posId_.tickVersion,
-            index: posId_.index,
-            closeLiqMultiplier: 0,
-            closeTempTransfer: 0
-        });
-        securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(pendingAction));
+        {
+            // Register pending action
+            LongPendingAction memory pendingAction = LongPendingAction({
+                action: ProtocolAction.ValidateOpenPosition,
+                timestamp: uint40(block.timestamp),
+                user: user,
+                to: to,
+                tick: posId_.tick,
+                securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
+                closeAmount: 0,
+                closeTotalExpo: 0,
+                tickVersion: posId_.tickVersion,
+                index: posId_.index,
+                closeLiqMultiplier: 0,
+                closeTempTransfer: 0
+            });
+            securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(pendingAction));
+        }
+
         emit InitiatedOpenPosition(
             user,
+            to,
             uint40(block.timestamp),
             leverage,
             amount,
@@ -800,11 +822,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Get the position
         Position memory pos = _longPositions[tickHash][long.index];
-        int24 tickSpacing = _tickSpacing;
 
         // Re-calculate leverage
         uint128 liqPriceWithoutPenalty =
-            getEffectivePriceForTick(long.tick - int24(uint24(_liquidationPenalty)) * tickSpacing);
+            getEffectivePriceForTick(long.tick - int24(uint24(_liquidationPenalty)) * _tickSpacing);
         // reverts if liquidationPrice >= entryPrice
         uint128 leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
         // Leverage is always greater than 1 (liquidationPrice is positive).
@@ -821,7 +842,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             // apply liquidation penalty with the current penalty setting
             uint8 currentLiqPenalty = _liquidationPenalty;
-            int24 tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * tickSpacing;
+            int24 tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * _tickSpacing;
             // retrieve the actual penalty for this tick we want to use
             uint8 liquidationPenalty = getTickLiquidationPenalty(tick);
             // check if the penalty for that tick is different from the current setting
@@ -841,7 +862,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
                 // Retrieve exact liquidation price without penalty.
                 liqPriceWithoutPenalty =
-                    getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * tickSpacing);
+                    getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing);
             }
             // recalculate the leverage with the new liquidation price
             leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
@@ -852,20 +873,23 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos, liquidationPenalty);
             // emit LiquidationPriceUpdated
             emit LiquidationPriceUpdated(long.tick, long.tickVersion, long.index, tick, tickVersion, index);
-            emit ValidatedOpenPosition(pos.user, leverage, startPrice, tick, tickVersion, index);
+            emit ValidatedOpenPosition(long.user, long.to, leverage, startPrice, tick, tickVersion, index);
         } else {
             // Calculate the new total expo
-            uint128 expoBefore = pos.totalExpo;
-            uint128 expoAfter = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
+            {
+                uint128 expoBefore = pos.totalExpo;
+                uint128 expoAfter = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
 
-            // Update the total expo of the position
-            _longPositions[tickHash][long.index].totalExpo = expoAfter;
-            // Update the total expo by adding the position's new expo and removing the old one.
-            // Do not use += or it will underflow
-            _totalExpo = _totalExpo + expoAfter - expoBefore;
-            _tickData[tickHash].totalExpo = _tickData[tickHash].totalExpo + expoAfter - expoBefore;
-
-            emit ValidatedOpenPosition(long.user, leverage, startPrice, long.tick, long.tickVersion, long.index);
+                // Update the total expo of the position
+                _longPositions[tickHash][long.index].totalExpo = expoAfter;
+                // Update the total expo by adding the position's new expo and removing the old one.
+                // Do not use += or it will underflow
+                _totalExpo = _totalExpo + expoAfter - expoBefore;
+                _tickData[tickHash].totalExpo = _tickData[tickHash].totalExpo + expoAfter - expoBefore;
+            }
+            emit ValidatedOpenPosition(
+                long.user, long.to, leverage, startPrice, long.tick, long.tickVersion, long.index
+            );
         }
     }
 
@@ -881,6 +905,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
      * during the validate action.
      * @param user The address of the user initiating the close position.
+     * @param to The address that will receive the assets
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
@@ -888,10 +913,27 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      */
     function _initiateClosePosition(
         address user,
+        address to,
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (uint256 securityDepositValue_) {
+        if (to == address(0)) {
+            revert UsdnProtocolInvalidAddressTo();
+        }
+
+        // check if the position belongs to the user
+        // this reverts if the position was liquidated
+        (Position memory pos, uint8 liquidationPenalty) = getLongPosition(posId.tick, posId.tickVersion, posId.index);
+
+        if (pos.user != user) {
+            revert UsdnProtocolUnauthorized();
+        }
+
+        if (amountToClose > pos.amount) {
+            revert UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
+        }
+
         if (amountToClose == 0) {
             revert UsdnProtocolAmountToCloseIsZero();
         }
@@ -920,16 +962,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return 0;
         }
 
-        (Position memory pos, uint8 liquidationPenalty) = getLongPosition(posId.tick, posId.tickVersion, posId.index);
-        // check if the position belongs to the user
-        if (pos.user != user) {
-            revert UsdnProtocolUnauthorized();
-        }
-
-        if (amountToClose > pos.amount) {
-            revert UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
-        }
-
         uint128 totalExpoToClose = (uint256(pos.totalExpo) * amountToClose / pos.amount).toUint128();
 
         _checkImbalanceLimitClose(totalExpoToClose, amountToClose);
@@ -943,6 +975,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 action: ProtocolAction.ValidateClosePosition,
                 timestamp: uint40(block.timestamp),
                 user: user,
+                to: to,
                 tick: posId.tick,
                 securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
                 closeAmount: amountToClose,
@@ -965,10 +998,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         emit InitiatedClosePosition(
             user,
+            to,
             posId.tick,
             posId.tickVersion,
             posId.index,
-            pos.amount - amountToClose,
+            pos.amount,
+            amountToClose,
             pos.totalExpo - totalExpoToClose
         );
     }
@@ -1051,11 +1086,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // send the asset to the user
         if (assetToTransfer > 0) {
-            _asset.safeTransfer(long.user, assetToTransfer);
+            _asset.safeTransfer(long.to, assetToTransfer);
         }
 
         emit ValidatedClosePosition(
             long.user,
+            long.to,
             long.tick,
             long.tickVersion,
             long.index,
