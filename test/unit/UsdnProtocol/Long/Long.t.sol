@@ -73,7 +73,13 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
         );
 
         tickData = protocol.getTickData(tick);
@@ -125,10 +131,12 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         protocol.setMinLongPosition(2001 ether);
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolLongPositionTooSmall.selector));
-        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition(1 ether, 1000 ether, abi.encode(2000 ether), EMPTY_PREVIOUS_DATA, address(this));
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolLongPositionTooSmall.selector));
-        protocol.initiateOpenPosition(2.0001 ether, 500 ether, abi.encode(1000 ether), EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition(
+            2.0001 ether, 500 ether, abi.encode(1000 ether), EMPTY_PREVIOUS_DATA, address(this)
+        );
     }
 
     /**
@@ -151,7 +159,13 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
 
         // Initiate a long position
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
         );
 
         tickData = protocol.getTickData(tick);
