@@ -509,6 +509,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // test reentrancy
         if (_reenter) {
             test_RevertWhen_liquidateCalledWithReentrancy();
+            _reenter = false;
         }
     }
 }

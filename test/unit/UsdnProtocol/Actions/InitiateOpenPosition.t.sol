@@ -288,6 +288,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         // test reentrancy
         if (_reenter) {
             test_RevertWhen_initiateOpenPositionCalledWithReentrancy();
+            _reenter = false;
         }
     }
 }

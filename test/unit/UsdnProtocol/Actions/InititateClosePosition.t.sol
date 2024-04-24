@@ -392,6 +392,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         // test reentrancy
         if (_reenter) {
             test_RevertWhen_initiateClosePositionCalledWithReentrancy();
+            _reenter = false;
         }
     }
 }

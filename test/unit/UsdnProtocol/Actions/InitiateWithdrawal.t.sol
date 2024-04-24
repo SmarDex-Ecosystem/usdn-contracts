@@ -280,6 +280,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         // test reentrancy
         if (_reenter) {
             test_RevertWhen_initiateWithdrawalCalledWithReentrancy();
+            _reenter = false;
         }
     }
 }

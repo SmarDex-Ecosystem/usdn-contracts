@@ -225,6 +225,7 @@ contract TestUsdnProtocolInitiateDeposit is UsdnProtocolBaseFixture {
         // test reentrancy
         if (_reenter) {
             test_RevertWhen_initiateDepositCalledWithReentrancy();
+            _reenter = false;
         }
     }
 }

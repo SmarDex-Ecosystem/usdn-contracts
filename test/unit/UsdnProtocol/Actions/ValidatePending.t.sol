@@ -229,6 +229,7 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
         // test reentrancy
         if (_reenter) {
             test_RevertWhen_validateActionablePendingActionsCalledWithReentrancy();
+            _reenter = false;
         }
     }
 }
