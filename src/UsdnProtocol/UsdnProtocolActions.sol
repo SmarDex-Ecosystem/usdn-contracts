@@ -849,8 +849,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // However, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
         // of _maxLeverage
         if (leverage > _maxLeverage) {
-            // remove the position
-            _removeAmountFromPosition(long.tick, long.index, pos, pos.amount, pos.totalExpo);
             // theoretical liquidation price for _maxLeverage
             liqPriceWithoutPenalty = _getLiquidationPrice(startPrice, _maxLeverage.toUint128());
             // adjust to closest valid tick down
@@ -882,11 +880,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             }
             // recalculate the leverage with the new liquidation price
             leverage = _getLeverage(startPrice, liqPriceWithoutPenalty);
+
+            // remove the position from the old tick
+            _removeAmountFromPosition(long.tick, long.index, pos, pos.amount, pos.totalExpo);
+
             // update position total expo
             pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
 
             // insert position into new tick, update tickVersion and index
             (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, pos, liquidationPenalty);
+
             // emit LiquidationPriceUpdated
             emit LiquidationPriceUpdated(long.tick, long.tickVersion, long.index, tick, tickVersion, index);
             emit ValidatedOpenPosition(pos.user, leverage, startPrice, tick, tickVersion, index);

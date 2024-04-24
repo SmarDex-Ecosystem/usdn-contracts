@@ -303,7 +303,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         priceData = abi.encode(1950 ether);
 
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
-        uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
+        uint256 balanceBeforeRewards = protocol.getBalanceVault() + protocol.getBalanceLong();
         uint256 longPositionsBeforeLiquidation = protocol.getTotalLongPositions();
 
         _waitBeforeLiquidation();
@@ -318,11 +318,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             "The liquidator should not receive rewards if there were no liquidations"
         );
 
-        // Check that the vault balance did not change
+        // Check that the total balance did not change
         assertEq(
-            vaultBalanceBeforeRewards,
-            protocol.getBalanceVault(),
-            "The vault balance should not change if there were no liquidations"
+            balanceBeforeRewards,
+            protocol.getBalanceVault() + protocol.getBalanceLong(),
+            "The total balance should not change if there were no liquidations"
         );
 
         // Check if first total long positions match initial value
@@ -359,7 +359,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
 
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
-        uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
 
         // Get the proper liquidation price for the tick
         price = protocol.getEffectivePriceForTick(tick);
