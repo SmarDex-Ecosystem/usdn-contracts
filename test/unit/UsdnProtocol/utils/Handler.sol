@@ -66,8 +66,9 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         returns (uint256 liquidatedPositions_)
     {
         uint256 lastUpdateTimestampBefore = _lastUpdateTimestamp;
-        vm.prank(msg.sender);
+        vm.startPrank(msg.sender);
         liquidatedPositions_ = this.liquidate(currentPriceData, iterations);
+        vm.stopPrank();
         require(_lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
     }
 

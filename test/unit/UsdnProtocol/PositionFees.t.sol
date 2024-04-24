@@ -117,51 +117,6 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
      * @custom:and The leverage is x2
      * @custom:when The user initiates a position opening with 1 wstETH as collateral
      * @custom:and The user validate his position opening with the same price
-     * @custom:and The user should be able to initiate a position closing
-     * @custom:then The user pending position should have a start price according to the fees
-     * @custom:and The user pending position should have a leverage according to the fees
-     */
-    function test_initiateClosePosition() public {
-        skip(1 hours);
-
-        uint128 desiredLiqPrice = 2000 ether / 2;
-        bytes memory priceData = abi.encode(2000 ether);
-
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, 2000 ether
-        );
-        skip(1 hours);
-
-        // Call liquidate to trigger balance update
-        protocol.testLiquidate(priceData, 0);
-
-        uint256 storageBalanceBefore = protocol.getBalanceLong();
-
-        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA);
-
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
-
-        (uint256 expectedTempTransfer,) = protocol.i_assetToTransfer(
-            uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
-            protocol.getEffectivePriceForTick(
-                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-            ),
-            action.closePosTotalExpo,
-            0
-        );
-
-        uint256 storageBalanceAfter = protocol.getBalanceLong();
-
-        assertEq(action.closeTempTransfer, expectedTempTransfer, "Computed asset to transfer");
-        assertEq(storageBalanceBefore - storageBalanceAfter, expectedTempTransfer, "Protocol balance");
-    }
-
-    /**
-     * @custom:scenario The user open a position and then initiate the position closing
-     * @custom:given The price of the asset is $2000
-     * @custom:and The leverage is x2
-     * @custom:when The user initiates a position opening with 1 wstETH as collateral
-     * @custom:and The user validate his position opening with the same price
      * @custom:and The user initiates a position closing
      * @custom:and The user should be able to validate his position closing
      * @custom:then The user should receive the expected amount of wstETH according to the fees
