@@ -87,6 +87,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         (Position memory pos, uint8 liquidationPenalty) = getLongPosition(tick, tickVersion, index);
         int256 longTradingExpo = longTradingExpoWithFunding(price, timestamp);
         if (longTradingExpo < 0) {
+            // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero.
+            // In this case, the liquidation price will fall to zero, and the position value will be equal to its
+            // total expo (initial collateral * initial leverage).
             longTradingExpo = 0;
         }
         uint128 liqPrice = getEffectivePriceForTick(
@@ -220,6 +223,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
             return price;
+        }
+        if (longTradingExpo == 0) {
+            // it is not possible to calculate the unadjusted price when the trading expo is zero
+            revert UsdnProtocolZeroLongTradingExpo();
         }
         // M = assetPrice * (totalExpo - balanceLong) / accumulator
         // unadjustedPrice = price / M
