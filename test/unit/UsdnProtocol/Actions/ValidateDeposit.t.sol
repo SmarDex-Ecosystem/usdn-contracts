@@ -128,10 +128,10 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user validates a deposit action with a reentrancy attempt
-     * @custom:given A user being a smart contract that calls validateDeposit when receiving ether
+     * @custom:given A user being a smart contract that calls validateDeposit with too much ether
      * @custom:and A receive() function that calls validateDeposit again
-     * @custom:when The user calls validateDeposit with some ether to trigger a refund
-     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:when The user calls validateDeposit again from the callback
+     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
      */
     function test_RevertWhen_validateDepositCalledWithReentrancy() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));

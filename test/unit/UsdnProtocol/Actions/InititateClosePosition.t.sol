@@ -355,10 +355,10 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario The user initiates a close position action with a reentrancy attempt
-     * @custom:given A user being a smart contract that calls initiateClosePosition when receiving ether
+     * @custom:given A user being a smart contract that calls initiateClosePosition with too much ether
      * @custom:and A receive() function that calls initiateClosePosition again
-     * @custom:when The user calls initiateClosePosition with some ether to trigger a refund
-     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:when The user calls initiateClosePosition again from the callback
+     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
      */
     function test_RevertWhen_initiateClosePositionCalledWithReentrancy() public {
         // If we are currently in a reentrancy

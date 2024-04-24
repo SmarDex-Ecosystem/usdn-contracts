@@ -200,10 +200,10 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
 
     /**
      * @custom:scenario The user validates pending actions with a reentrancy attempt
-     * @custom:given A user being a smart contract that calls validateActionablePendingActions when receiving ether
+     * @custom:given A user being a smart contract that calls validateActionablePendingActions with too much ether
      * @custom:and A receive() function that calls validateActionablePendingActions again
-     * @custom:when The user calls validateActionablePendingActions with some ether to trigger a refund
-     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:when The user calls validateActionablePendingActions again from the callback
+     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
      */
     function test_RevertWhen_validateActionablePendingActionsCalledWithReentrancy() public {
         // If we are currently in a reentrancy

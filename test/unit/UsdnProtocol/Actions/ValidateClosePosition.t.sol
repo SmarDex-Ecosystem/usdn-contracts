@@ -565,10 +565,10 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario The user validates a close position action with a reentrancy attempt
      * @custom:given A validated open position with an initiated close action done
-     * @custom:and a user being a smart contract that calls validateClosePosition when receiving ether
+     * @custom:and a user being a smart contract that calls validateClosePosition with too much ether
      * @custom:and a receive() function that calls validateClosePosition again
-     * @custom:when The user calls validateClosePosition with some ether to trigger a refund
-     * @custom:then The protocol reverts with InitializableReentrancyGuardReentrantCall
+     * @custom:when The user calls validateClosePosition again from the callback
+     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
      */
     function test_RevertWhen_validateClosePositionCalledWithReentrancy() public {
         if (_reenter) {
