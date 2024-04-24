@@ -31,21 +31,21 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     }
 
     /**
-     * @notice Calculate an estimation of asset to be transferred when withdrawing USDN shares
+     * @notice Calculate an estimation of asset received when withdraw
      * @param usdnShares The amount of USDN shares
      * @param price The price of the asset
-     * @return assetToTransfer_ The approximate amount of asset(funding not considered)
+     * @return assetExpected_ The amount of asset expected to be received
      */
-    function calcAssetToWithdraw(uint152 usdnShares, uint256 price) external view returns (uint256 assetToTransfer_) {
+    function calcAssetToWithdraw(uint152 usdnShares, uint256 price) external view returns (uint256 assetExpected_) {
         // Apply fees on price
         uint128 withdrawalPriceWithFees = (price + price * _positionFeeBps / BPS_DIVISOR).toUint128();
         uint256 balanceVault = _vaultAssetAvailable(
             _totalExpo, _balanceVault, _balanceLong, withdrawalPriceWithFees, uint128(price)
         ).toUint256();
 
-        // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
+        // assetExpected = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         //                 = shares * assetAvailable / usdnTotalShares
-        assetToTransfer_ = FixedPointMathLib.fullMulDiv(usdnShares, balanceVault, _usdn.totalShares());
+        assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, balanceVault, _usdn.totalShares());
     }
 
     /**
