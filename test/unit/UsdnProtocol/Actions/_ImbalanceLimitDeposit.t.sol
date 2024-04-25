@@ -45,7 +45,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         protocol.setExpoImbalanceLimits(200, 200, 600, 0);
 
         // the initial tick
-        int24 tick = protocol.getMaxInitializedTick();
+        int24 tick = protocol.getHighestPopulatedTick();
 
         vm.startPrank(DEPLOYER);
 
