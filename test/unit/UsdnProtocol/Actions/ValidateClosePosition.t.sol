@@ -14,7 +14,6 @@ import {
     ProtocolAction,
     PreviousActionsData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature The initiate close position functions of the USDN Protocol
@@ -204,7 +203,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         (uint256 expectedAmountReceived,) = protocol.i_assetToTransfer(
             price,
-            protocol.getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing()),
+            protocol.i_getEffectivePriceForTick(
+                tick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing(), action.closeLiqMultiplier
+            ),
             totalExpoToClose,
             action.closeTempTransfer
         );
@@ -437,6 +438,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:when The owner of the position validates the close position action
      * @custom:then The state of the protocol is updated
      * @custom:and a LiquidatedPosition event is emitted
+     * @custom:and a LiquidatedTick event is emitted
      * @custom:and the user doesn't receive his funds back
      */
     function test_internalValidatePartialCloseLiquidatePosition() external {
@@ -445,6 +447,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------- Initiate Close Position ------------------------ */
         (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(tick, tickVersion, index);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
+        uint256 longBalanceStart = protocol.getBalanceLong();
 
         uint128 amountToClose = pos.amount / 2;
         protocol.initiateClosePosition(
@@ -452,24 +455,38 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
         _waitDelay();
 
-        /* ------------------------- Validate Close Position ------------------------ */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        assertEq(
+            protocol.getBalanceLong(),
+            longBalanceStart - action.closeTempTransfer,
+            "long balance decreased during initiate"
+        );
+
+        /* ------------------------- Validate Close Position ------------------------ */
         // we have no funding, the liq price should not change with time
         uint128 liquidationPrice = protocol.getEffectivePriceForTick(tick);
-        uint256 vaultBalanceBefore =
-            uint256(protocol.vaultAssetAvailableWithFunding(liquidationPrice, uint128(block.timestamp)));
-        uint256 longBalanceBefore =
-            uint256(protocol.longAssetAvailableWithFunding(liquidationPrice, uint128(block.timestamp)));
-        (uint256 assetToTransfer, int256 positionValue) = protocol.i_assetToTransfer(
+        uint256 vaultBalanceBefore = uint256(
+            protocol.vaultAssetAvailableWithFunding(
+                liquidationPrice, uint128(block.timestamp - oracleMiddleware.getValidationDelay())
+            )
+        );
+        uint256 longBalanceBefore = uint256(
+            protocol.longAssetAvailableWithFunding(
+                liquidationPrice, uint128(block.timestamp - oracleMiddleware.getValidationDelay())
+            )
+        );
+        // value of the remaining part of the position (not being closed, but will be liquidated)
+        (uint256 remainingToTransfer, int256 remainingValue) = protocol.i_assetToTransfer(
             liquidationPrice,
-            protocol.i_getEffectivePriceForTick(
-                action.tick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing(), action.closeLiqMultiplier
+            protocol.getEffectivePriceForTick(
+                action.tick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing()
             ),
-            action.closePosTotalExpo,
+            pos.totalExpo - action.closePosTotalExpo,
             action.closeTempTransfer
         );
-        assertGt(positionValue, 0, "position value should be positive");
-        assertEq(assetToTransfer, uint256(positionValue), "asset to transfer vs position value");
+
+        assertGt(remainingValue, 0, "remaining position value should be positive");
+        assertEq(remainingToTransfer, uint256(remainingValue), "asset to transfer vs position value");
         uint256 totalPositionsBefore = protocol.getTotalLongPositions();
         priceData = abi.encode(liquidationPrice);
 
@@ -486,14 +503,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         /* -------------------------- Balance Vault & Long -------------------------- */
         assertEq(
-            vaultBalanceBefore + uint256(positionValue) + assetToTransfer,
             protocol.getBalanceVault(),
-            "Collateral of the position should have been transferred to the vault"
+            vaultBalanceBefore + action.closeTempTransfer + remainingToTransfer,
+            "Full value of the position should have been transferred to the vault"
         );
         assertEq(
-            longBalanceBefore - uint256(positionValue) + action.closeTempTransfer - assetToTransfer,
             protocol.getBalanceLong(),
-            "Collateral of the position should have been removed from the long side"
+            longBalanceBefore - remainingToTransfer,
+            "Full value of the position should have been removed from the long side"
         );
         assertEq(protocol.getTotalLongPositions(), totalPositionsBefore - 1, "The position should have been removed");
     }
