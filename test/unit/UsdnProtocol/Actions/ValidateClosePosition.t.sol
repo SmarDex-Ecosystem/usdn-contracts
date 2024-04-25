@@ -387,29 +387,28 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             action.closeTempTransfer
         );
         priceData = abi.encode(priceAfterInit);
-        int256 losses = int256(assetToTransfer) - int256(uint256(action.closeAmount));
+        int256 profit = int256(assetToTransfer) - int256(uint256(action.closeAmount));
 
-        assertLt(losses, 0, "User should have lost money on his position");
+        assertLt(profit, 0, "User should have lost money on his position");
 
         vm.expectEmit();
-        emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, assetToTransfer, losses);
+        emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, assetToTransfer, profit);
         protocol.i_validateClosePosition(address(this), priceData);
 
         assertEq(
             protocol.getAsset().balanceOf(address(this)),
-            // Losses is a negative value
-            assetBalanceBefore + uint256(int128(action.closeAmount) + losses),
+            // profit is a negative value
+            assetBalanceBefore + uint256(int128(action.closeAmount) + profit),
             "User should have received his assets minus his losses"
         );
 
         /* -------------------------- Balance Vault & Long -------------------------- */
-        assertEq(vaultBalanceBefore, protocol.getBalanceVault(), "Balance of the vault should not have changed");
-        assertApproxEqAbs(
-            uint256(int256(longBalanceBefore) - losses),
-            protocol.getBalanceLong(),
-            1,
-            "Profits should have been subtracted from the long's balance"
+        assertEq(
+            protocol.getBalanceVault(),
+            vaultBalanceBefore + (action.closeTempTransfer - assetToTransfer),
+            "Vault gets the difference"
         );
+        assertEq(protocol.getBalanceLong(), longBalanceBefore, "Long balance doesn't change");
     }
 
     /**

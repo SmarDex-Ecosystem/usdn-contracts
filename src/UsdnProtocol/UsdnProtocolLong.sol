@@ -590,7 +590,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
             data.iTick = _bitmapIndexToTick(index);
             if (data.iTick < data.currentTick) {
-                // all underwater ticks have been processed
+                // all ticks that can be liquidated have been processed
                 break;
             }
 
