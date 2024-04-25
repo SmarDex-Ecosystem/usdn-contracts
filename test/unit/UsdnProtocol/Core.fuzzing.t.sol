@@ -97,7 +97,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         // Bound the final price between the highest position start price and 10000 dollars
         finalPrice = uint128(bound(uint256(finalPrice), data.currentPrice, 10_000 ether));
 
-        // calculate the value of all new long positions (simulating taking the low bound of the confidence interval)
+        // calculate the value of all new long positions
         uint256 longPosValue;
         for (uint256 i = 0; i < 10; i++) {
             longPosValue +=
