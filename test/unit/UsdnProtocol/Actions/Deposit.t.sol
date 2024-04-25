@@ -94,7 +94,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no pending action");
 
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
+        PendingAction memory action = protocol.getUserPendingAction(to);
         assertTrue(action.action == ProtocolAction.ValidateDeposit, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
@@ -282,7 +282,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
         assertEq(validationCost, 1);
         uint256 balanceBefore = address(this).balance;
-        protocol.validateDeposit{ value: 0.5 ether }(currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: 0.5 ether }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -330,7 +330,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit ValidatedDeposit(address(this), to, depositAmount, mintedAmount, initiateDepositTimestamp); // expected
             // event
-        protocol.validateDeposit(currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(to, currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(usdn.balanceOf(to), mintedAmount, "USDN to balance");
         if (address(this) != to) {

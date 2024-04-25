@@ -90,7 +90,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
 
-        protocol.validateDeposit(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(address(this), abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -170,7 +170,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
 
-        protocol.validateWithdrawal(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(address(this), abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -258,7 +258,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
-        protocol.validateOpenPosition(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -362,7 +362,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tickToLiquidate, tickVersionToLiquidate, 0, 0, 0);
 
-        protocol.validateClosePosition(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(address(this), abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -564,7 +564,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         _waitDelay();
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
-        }(priceData, EMPTY_PREVIOUS_DATA);
+        }(address(this), priceData, EMPTY_PREVIOUS_DATA);
         assertEq(protocol.getTotalLongPositions(), initialTotalPos + 1, "total positions after create");
 
         // price drops

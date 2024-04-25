@@ -108,11 +108,11 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
         );
         _waitDelay();
         vm.prank(USER_1);
-        protocol.validateOpenPosition(hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), hex"beef", EMPTY_PREVIOUS_DATA);
         vm.prank(USER_2);
-        protocol.validateOpenPosition(hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), hex"beef", EMPTY_PREVIOUS_DATA);
         vm.prank(USER_3);
-        protocol.validateOpenPosition(hex"beef", EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), hex"beef", EMPTY_PREVIOUS_DATA);
 
         /* ---------------------------- Start the checks ---------------------------- */
         // Put the original oracle back

@@ -74,7 +74,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         // Try to validate a close position action with a pending action other than ValidateClosePosition
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidPendingAction.selector));
-        protocol.i_validateClosePosition(address(this), priceData);
+        protocol.i_validateClosePosition(address(this), address(this), priceData);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -96,7 +96,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
         );
         _waitDelay();
-        protocol.validateClosePosition{ value: 1 ether }(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition{ value: 1 ether }(address(this), priceData, EMPTY_PREVIOUS_DATA);
 
         assertEq(
             etherBalanceBefore,
@@ -138,7 +138,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
-        protocol.validateClosePosition(priceData, PreviousActionsData(previousData, rawIndices));
+        protocol.validateClosePosition(address(this), priceData, PreviousActionsData(previousData, rawIndices));
     }
 
     /**
@@ -156,7 +156,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit(true, true, false, false);
         emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, positionAmount, -1);
-        protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -207,7 +207,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit ValidatedClosePosition(address(this), to, tick, tickVersion, index, expectedAmountReceived, -1);
-        protocol.i_validateClosePosition(address(this), priceData);
+        protocol.i_validateClosePosition(address(this), to, priceData);
 
         /* ----------------------------- User's Balance ----------------------------- */
         assertApproxEqAbs(
@@ -258,7 +258,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, expectedAmountReceived, -1);
-        protocol.i_validateClosePosition(address(this), priceData);
+        protocol.i_validateClosePosition(address(this), address(this), priceData);
 
         /* ---------------------------- Position's state ---------------------------- */
         (Position memory posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
@@ -292,7 +292,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, expectedAmountReceived, -1);
-        protocol.i_validateClosePosition(address(this), priceData);
+        protocol.i_validateClosePosition(address(this), address(this), priceData);
 
         (posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
         assertEq(posAfter.user, address(0), "The address should be 0x0 (position deleted)");
@@ -349,7 +349,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, assetToTransfer, losses);
-        protocol.i_validateClosePosition(address(this), priceData);
+        protocol.i_validateClosePosition(address(this), address(this), priceData);
 
         assertEq(
             protocol.getAsset().balanceOf(address(this)),
@@ -411,7 +411,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, assetToTransfer, profits);
-        protocol.i_validateClosePosition(address(this), priceData);
+        protocol.i_validateClosePosition(address(this), address(this), priceData);
 
         assertEq(
             protocol.getAsset().balanceOf(address(this)),
@@ -477,7 +477,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         emit LiquidatedTick(tick, tickVersion, 0, 0, 0);
         vm.expectEmit(true, false, false, false);
         emit LiquidatedPosition(address(this), 0, 0, 0, 0, 0);
-        protocol.i_validateClosePosition(address(this), priceData);
+        protocol.i_validateClosePosition(address(this), address(this), priceData);
 
         assertEq(
             protocol.getAsset().balanceOf(address(this)), assetBalanceBefore, "User should not have received any asset"
@@ -539,7 +539,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         // Make sure we liquidate the position
         vm.expectEmit(true, false, false, false);
         emit LiquidatedPosition(DEPLOYER, 0, 0, 0, 0, 0);
-        protocol.i_validateClosePosition(DEPLOYER, priceData);
+        protocol.i_validateClosePosition(DEPLOYER, address(this), priceData);
 
         assertEq(protocol.getBalanceVault(), 0, "final vault balance");
     }
@@ -590,7 +590,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         // Make sure we liquidate the position
         vm.expectEmit(true, false, false, false);
         emit LiquidatedPosition(DEPLOYER, 0, 0, 0, 0, 0);
-        protocol.i_validateClosePosition(DEPLOYER, priceData);
+        protocol.i_validateClosePosition(DEPLOYER, DEPLOYER, priceData);
 
         assertEq(protocol.getBalanceLong(), 0, "final long balance");
     }

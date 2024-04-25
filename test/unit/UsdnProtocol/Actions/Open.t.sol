@@ -316,7 +316,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
         vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(address(this), to, 0, newPrice, tick, tickVersion, index);
-        protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(to, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
         (Position memory pos,) = protocol.getLongPosition(tick, tickVersion, index);
         assertEq(pos.user, tempPos.user, "user");
@@ -361,7 +361,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         emit LiquidationPriceUpdated(tick, tickVersion, index, newTick, newTickVersion, newIndex);
         vm.expectEmit(true, false, false, false);
         emit ValidatedOpenPosition(address(this), address(this), 0, newPrice, newTick, newTickVersion, newIndex);
-        protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
         (Position memory pos,) = protocol.getLongPosition(newTick, newTickVersion, newIndex);
         assertEq(pos.user, tempPos.user, "user");
@@ -441,7 +441,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             validateTickVersion,
             validateIndex
         );
-        protocol.validateOpenPosition(abi.encode(validatePrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), abi.encode(validatePrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -478,7 +478,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         // validating the action emits the proper event
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -515,7 +515,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         _waitDelay();
         uint256 balanceBefore = address(this).balance;
         uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: 0.5 ether }(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition{ value: 0.5 ether }(address(this), priceData, EMPTY_PREVIOUS_DATA);
 
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }

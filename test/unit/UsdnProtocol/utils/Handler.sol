@@ -61,8 +61,8 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _initiateClosePosition(user, to, posId, amountToClose, currentPriceData);
     }
 
-    function i_validateClosePosition(address user, bytes calldata priceData) external {
-        _validateClosePosition(user, priceData);
+    function i_validateClosePosition(address user, address to, bytes calldata priceData) external {
+        _validateClosePosition(user, to, priceData);
     }
 
     function i_removeAmountFromPosition(

@@ -69,7 +69,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
                 tick, tickVersion, index, uint128(amountToClose), priceData, EMPTY_PREVIOUS_DATA, address(this)
             );
             _waitDelay();
-            protocol.i_validateClosePosition(address(this), priceData);
+            protocol.i_validateClosePosition(address(this), address(this), priceData);
 
             (Position memory posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
             assertEq(
@@ -95,7 +95,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
                 address(this)
             );
             _waitDelay();
-            protocol.i_validateClosePosition(address(this), priceData);
+            protocol.i_validateClosePosition(address(this), address(this), priceData);
         }
 
         (Position memory pos,) = protocol.getLongPosition(tick, tickVersion, index);

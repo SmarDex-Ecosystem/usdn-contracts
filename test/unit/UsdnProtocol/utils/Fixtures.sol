@@ -226,7 +226,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
-        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
@@ -239,7 +239,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
 
-        protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
     }
 
@@ -267,7 +267,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
 
-        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(openParams.user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
 
@@ -277,7 +277,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
 
-        protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(openParams.user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
 
         return (tick_, tickVersion_, index_);

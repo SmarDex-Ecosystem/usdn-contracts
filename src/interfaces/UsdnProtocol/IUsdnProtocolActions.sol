@@ -39,12 +39,15 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * The security deposit will be returned to the sender.
+     * @param to The address register in the deposit action
      * @param depositPriceData The price data corresponding to the sender's pending deposit action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
-    function validateDeposit(bytes calldata depositPriceData, PreviousActionsData calldata previousActionsData)
-        external
-        payable;
+    function validateDeposit(
+        address to,
+        bytes calldata depositPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable;
 
     /**
      * @notice Initiate a withdrawal of assets from the vault by providing USDN tokens.
@@ -75,12 +78,15 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * The security deposit will be returned to the sender.
+     * @param to The address register in the withdrawal action
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
-    function validateWithdrawal(bytes calldata withdrawalPriceData, PreviousActionsData calldata previousActionsData)
-        external
-        payable;
+    function validateWithdrawal(
+        address to,
+        bytes calldata withdrawalPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable;
 
     /**
      * @notice Initiate an open position action.
@@ -121,12 +127,15 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * It is also possible for this operation to change the tick, tickVersion and index of the position, in which case
      * we emit the `LiquidationPriceUpdated` event.
      * The security deposit will be returned to the sender.
+     * @param to The address register in the open position action
      * @param openPriceData The price data corresponding to the sender's pending open position action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
-    function validateOpenPosition(bytes calldata openPriceData, PreviousActionsData calldata previousActionsData)
-        external
-        payable;
+    function validateOpenPosition(
+        address to,
+        bytes calldata openPriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable;
 
     /**
      * @notice Initiate a close position action.
@@ -169,12 +178,15 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * (from the oracle middleware) to the timestamp of the initiate action.
      * This operation calculates the final exit price and profit of the long position and performs the payout.
      * The security deposit will be returned to the sender.
+     * @param to The address register in the close position action
      * @param closePriceData The price data corresponding to the sender's pending close position action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
-    function validateClosePosition(bytes calldata closePriceData, PreviousActionsData calldata previousActionsData)
-        external
-        payable;
+    function validateClosePosition(
+        address to,
+        bytes calldata closePriceData,
+        PreviousActionsData calldata previousActionsData
+    ) external payable;
 
     /**
      * @notice Liquidate positions according to the current asset price, limited to a maximum of `iterations` ticks.

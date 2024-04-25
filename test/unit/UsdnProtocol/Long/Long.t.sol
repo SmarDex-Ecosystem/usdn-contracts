@@ -197,7 +197,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         // Change the price
         price = 1999 ether;
         // Validate the position with the new price
-        protocol.validateOpenPosition(abi.encode(price), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), abi.encode(price), EMPTY_PREVIOUS_DATA);
 
         uint256 previousExpo = position.totalExpo;
         // Get the updated position

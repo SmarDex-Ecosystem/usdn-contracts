@@ -246,7 +246,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         previousData[0] = abi.encode(price1);
         uint128[] memory rawIndices = new uint128[](1);
         rawIndices[0] = 0;
-        protocol.validateOpenPosition(abi.encode(price2), PreviousActionsData(previousData, rawIndices));
+        protocol.validateOpenPosition(USER_2, abi.encode(price2), PreviousActionsData(previousData, rawIndices));
         // No more pending action
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no action");

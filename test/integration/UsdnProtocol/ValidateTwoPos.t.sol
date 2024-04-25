@@ -59,7 +59,7 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         rawIndices[0] = 0;
         vm.prank(USER_2);
         protocol.validateOpenPosition{ value: data1Fee + data2Fee }(
-            data2, PreviousActionsData(previousData, rawIndices)
+            address(this), data2, PreviousActionsData(previousData, rawIndices)
         );
         // No more pending action
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));

@@ -208,7 +208,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateWithdrawal);
         uint256 balanceBefore = address(this).balance;
-        protocol.validateWithdrawal{ value: 0.5 ether }(currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal{ value: 0.5 ether }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -294,7 +294,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit ValidatedWithdrawal(address(this), to, withdrawnAmount, USDN_AMOUNT, withdrawal.timestamp); // expected
             // event
-        protocol.validateWithdrawal(currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(to, currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");
         if (to == address(this)) {

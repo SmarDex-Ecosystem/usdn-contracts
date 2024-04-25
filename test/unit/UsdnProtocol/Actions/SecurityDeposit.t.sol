@@ -53,7 +53,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
 
-        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(address(this), priceData, EMPTY_PREVIOUS_DATA);
 
         assertBalancesEnd(balanceSenderBefore, balanceProtocolBefore);
     }
@@ -77,7 +77,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
 
-        protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(address(this), priceData, EMPTY_PREVIOUS_DATA);
 
         assertBalancesEnd(balanceSenderBefore, balanceProtocolBefore);
     }
@@ -109,7 +109,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
 
-        protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
 
         assertBalancesEnd(balanceSenderBefore, balanceProtocolBefore);
     }
@@ -131,7 +131,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
 
-        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
 
         assertBalancesEnd(balanceSenderBefore, balanceProtocolBefore);
     }
@@ -394,7 +394,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertRefundEthToUser1(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
 
         vm.prank(USER_1);
-        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(USER_1, priceData, EMPTY_PREVIOUS_DATA);
 
         assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
 
@@ -437,7 +437,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
         vm.prank(USER_1);
-        protocol.validateDeposit(priceData, previousActionsData);
+        protocol.validateDeposit(USER_1, priceData, previousActionsData);
 
         assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
 
@@ -487,7 +487,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         assertRefundEthToUser1(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
 
-        protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(USER_1, priceData, EMPTY_PREVIOUS_DATA);
         vm.stopPrank();
 
         assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
@@ -538,7 +538,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
-        protocol.validateWithdrawal(priceData, previousActionsData);
+        protocol.validateWithdrawal(USER_1, priceData, previousActionsData);
         vm.stopPrank();
 
         assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
@@ -584,7 +584,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertRefundEthToUser1(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
 
         vm.prank(USER_1);
-        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(USER_1, priceData, EMPTY_PREVIOUS_DATA);
 
         assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
     }
@@ -624,7 +624,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
         vm.prank(USER_1);
-        protocol.validateOpenPosition(priceData, previousActionsData);
+        protocol.validateOpenPosition(address(this), priceData, previousActionsData);
 
         assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
     }
@@ -683,7 +683,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         assertRefundEthToUser1(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
 
         vm.prank(USER_1);
-        protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(USER_1, priceData, EMPTY_PREVIOUS_DATA);
 
         assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
     }
@@ -741,7 +741,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
-        protocol.validateClosePosition(priceData, previousActionsData);
+        protocol.validateClosePosition(USER_1, priceData, previousActionsData);
         vm.stopPrank();
 
         assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
@@ -779,7 +779,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             "the security deposit value should have changed"
         );
 
-        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(address(this), priceData, EMPTY_PREVIOUS_DATA);
 
         assertEq(
             address(this).balance,
@@ -807,7 +807,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             "the protocol should have the user's new security deposit value"
         );
 
-        protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(address(this), priceData, EMPTY_PREVIOUS_DATA);
 
         assertEq(
             address(this).balance,
@@ -881,7 +881,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
 
         vm.prank(USER_1);
-        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(USER_1, priceData, EMPTY_PREVIOUS_DATA);
 
         assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
 
@@ -927,7 +927,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             "the balance of the protocol after the second initialization should have only one security deposit"
         );
 
-        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(address(this), priceData, EMPTY_PREVIOUS_DATA);
 
         assertBalancesEnd(balanceSenderBefore, balanceProtocolBefore);
     }
