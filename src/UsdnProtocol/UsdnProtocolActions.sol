@@ -893,6 +893,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
     }
 
+    struct ClosePositionData {
+        uint128 totalExpoToClose;
+        uint256 tempTransfer;
+        uint256 liqMultiplier;
+    }
+
     /**
      * @notice Initiate a close position action.
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
@@ -918,6 +924,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (uint256 securityDepositValue_) {
+        ClosePositionData memory closeData;
+
         if (to == address(0)) {
             revert UsdnProtocolInvalidAddressTo();
         }
@@ -962,14 +970,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return 0;
         }
 
-        uint128 totalExpoToClose = (uint256(pos.totalExpo) * amountToClose / pos.amount).toUint128();
+        closeData.totalExpoToClose = (uint256(pos.totalExpo) * amountToClose / pos.amount).toUint128();
 
-        _checkImbalanceLimitClose(totalExpoToClose, amountToClose);
+        _checkImbalanceLimitClose(closeData.totalExpoToClose, amountToClose);
 
         {
-            uint256 liqMultiplier = _liquidationMultiplier;
-            (uint256 tempTransfer,) =
-                _assetToTransfer(priceWithFees, posId.tick, liquidationPenalty, totalExpoToClose, liqMultiplier, 0);
+            closeData.liqMultiplier = _liquidationMultiplier;
+            (closeData.tempTransfer,) = _assetToTransfer(
+                priceWithFees, posId.tick, liquidationPenalty, closeData.totalExpoToClose, closeData.liqMultiplier, 0
+            );
 
             LongPendingAction memory pendingAction = LongPendingAction({
                 action: ProtocolAction.ValidateClosePosition,
@@ -979,21 +988,21 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 tick: posId.tick,
                 securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24(),
                 closeAmount: amountToClose,
-                closeTotalExpo: totalExpoToClose,
+                closeTotalExpo: closeData.totalExpoToClose,
                 tickVersion: posId.tickVersion,
                 index: posId.index,
-                closeLiqMultiplier: liqMultiplier,
-                closeTempTransfer: tempTransfer
+                closeLiqMultiplier: closeData.liqMultiplier,
+                closeTempTransfer: closeData.tempTransfer
             });
 
             // decrease balance optimistically (exact amount will be recalculated during validation)
             // transfer will be done after validation
-            _balanceLong -= tempTransfer;
+            _balanceLong -= closeData.tempTransfer;
 
             securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(pendingAction));
 
             // Remove the position if it's fully closed
-            _removeAmountFromPosition(posId.tick, posId.index, pos, amountToClose, totalExpoToClose);
+            _removeAmountFromPosition(posId.tick, posId.index, pos, amountToClose, closeData.totalExpoToClose);
         }
 
         emit InitiatedClosePosition(
@@ -1004,7 +1013,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             posId.index,
             pos.amount,
             amountToClose,
-            pos.totalExpo - totalExpoToClose
+            pos.totalExpo - closeData.totalExpoToClose
         );
     }
 
