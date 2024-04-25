@@ -45,7 +45,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
         protocol.setExpoImbalanceLimits(200, 200, 600, 0);
 
         // the initial tick
-        int24 tick = protocol.getMaxInitializedTick();
+        int24 tick = protocol.getHighestPopulatedTick();
 
         vm.startPrank(DEPLOYER);
 
@@ -61,7 +61,8 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
             0, // unique long
             params.initialLong,
             abi.encode(params.initialPrice),
-            data
+            data,
+            DEPLOYER
         );
 
         // wait more than 2 blocks

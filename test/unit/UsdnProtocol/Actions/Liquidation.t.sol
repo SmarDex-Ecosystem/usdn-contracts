@@ -14,7 +14,9 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     bool internal _reenter;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        SetUpParams memory params = DEFAULT_PARAMS;
+        params.flags.enableFunding = false;
+        super._setUp(params);
 
         usdn.approve(address(protocol), type(uint256).max);
 
@@ -38,8 +40,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: price
+            })
+        );
 
         // TODO remove when the MockOracleMiddleware is fixed
         skip(31 minutes);
@@ -51,7 +60,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
-        protocol.initiateDeposit(1 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit(1 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA, address(this));
     }
 
     /**
@@ -67,8 +76,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: price
+            })
+        );
 
         // Initiates the deposit for the other user
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, price);
@@ -96,8 +112,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: price
+            })
+        );
 
         // Initiate and validate the deposit for the other user
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, price);
@@ -113,7 +136,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
 
         protocol.initiateWithdrawal(
-            uint128(usdn.balanceOf(address(this))), abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA
+            uint128(usdn.balanceOf(address(this))),
+            abi.encode(effectivePriceForTick),
+            EMPTY_PREVIOUS_DATA,
+            address(this)
         );
     }
 
@@ -130,8 +156,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: price
+            })
+        );
 
         // Initiate and validate the deposit, then initiate the withdrawal for the other user
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 1 ether, price);
@@ -163,8 +196,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: price
+            })
+        );
 
         // TODO remove when the MockOracleMiddleware is fixed
         skip(31 minutes);
@@ -177,7 +217,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
         protocol.initiateOpenPosition(
-            1 ether, desiredLiqPrice - 200 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA
+            1 ether, desiredLiqPrice - 200 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA, address(this)
         );
     }
 
@@ -195,13 +235,28 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: price
+            })
+        );
 
         // Initiates the position for the other user
         price -= 200 ether;
         desiredLiqPrice -= 200 ether;
-        setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, desiredLiqPrice, price);
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: price
+            })
+        );
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
@@ -226,13 +281,27 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: price
+            })
+        );
 
         // Initiates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
-        (int24 tickToClose, uint256 tickVersionToClose, uint256 indexToClose) =
-            setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 1 ether, desiredLiqPrice, price);
+        (int24 tickToClose, uint256 tickVersionToClose, uint256 indexToClose) = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: price
+            })
+        );
 
         // TODO remove when the MockOracleMiddleware is fixed
         skip(31 minutes);
@@ -250,7 +319,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             indexToClose,
             1 ether,
             abi.encode(effectivePriceForTick),
-            EMPTY_PREVIOUS_DATA
+            EMPTY_PREVIOUS_DATA,
+            address(this)
         );
     }
 
@@ -269,12 +339,27 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, desiredLiqPrice, price);
+        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: price
+            })
+        );
 
         // Initiates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
-        setUpUserPositionInLong(address(this), ProtocolAction.InitiateClosePosition, 1 ether, desiredLiqPrice, price);
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: price
+            })
+        );
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
         uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tickToLiquidate);
@@ -299,7 +384,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function test_nothingHappensIfNoTicksCanBeLiquidated() public {
         bytes memory priceData = abi.encode(2000 ether);
 
-        setUpUserPositionInLong(address(this), ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, 2000 ether);
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: 1700 ether,
+                price: 2000 ether
+            })
+        );
 
         priceData = abi.encode(1950 ether);
 
@@ -344,26 +437,32 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 price = 2000 ether;
 
         // Setup a long position from another user
-        (int24 tick,,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, price);
+        (int24 tick,,) = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: 1700 ether,
+                price: price
+            })
+        );
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
         liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 1000 gwei, 20_000);
-
-        // Trigger PnL and funding calculations now to avoid having to predict them later
-        protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
 
         uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
         // Sanity check
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
 
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
-        uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
-
         // Get the proper liquidation price for the tick
         price = protocol.getEffectivePriceForTick(tick);
         int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTickData(tick));
+        int256 vaultAssetAvailable = protocol.i_vaultAssetAvailable(price);
+
+        // we need to skip 1 minute to make the new price data fresh
+        skip(1 minutes);
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
@@ -381,8 +480,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Check that the vault balance got updated
         assertEq(
-            vaultBalanceBeforeRewards + uint256(collateralLiquidated) - protocol.getBalanceVault(),
-            expectedLiquidatorRewards,
+            protocol.getBalanceVault(),
+            uint256(vaultAssetAvailable) + uint256(collateralLiquidated) - expectedLiquidatorRewards,
             "The vault does not contain the right amount of funds"
         );
     }
@@ -396,11 +495,19 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and The protocol send rewards for the liquidation based on what's left in the vault
      */
     function test_canLiquidateAndReceiveRewardsUpToTheVaultBalance() public {
-        uint128 price = 2000 ether;
+        uint128 initialPrice = params.initialPrice;
+        uint128 endPrice = 1700 ether;
 
         // Setup a long position from another user
-        (int24 tick,,) =
-            setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, price);
+        (int24 tick,,) = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: endPrice,
+                price: initialPrice
+            })
+        );
 
         // Change The rewards calculations parameters to not be dependent of the initial values
         vm.prank(DEPLOYER);
@@ -423,13 +530,17 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         );
 
         // Get the proper liquidation price for the tick
-        price = protocol.getEffectivePriceForTick(tick);
+        uint128 price = protocol.getEffectivePriceForTick(tick);
+        // Calculate the rewards that the liquidator should receive (collateral liquidated + vault balance)
         int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTickData(tick));
+        int256 vaultAssetAvailable = protocol.i_vaultAssetAvailable(price);
+        uint256 expectedRewards = uint256(vaultAssetAvailable + collateralLiquidated);
+
+        // we need to skip 1 minute to make the new price data fresh
+        skip(1 minutes);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatorRewarded(
-            address(this), vaultBalanceBeforeRewards + uint256(collateralLiquidated)
-        );
+        emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedRewards);
         uint256 liquidatedPositions = protocol.liquidate(abi.encode(price), 1);
 
         // Check that the right number of positions have been liquidated
@@ -437,7 +548,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         assertEq(
             wstETH.balanceOf(address(this)) - wstETHBalanceBeforeRewards,
-            vaultBalanceBeforeRewards + uint256(collateralLiquidated),
+            expectedRewards,
             "The liquidator did not receive the right amount of rewards"
         );
         assertEq(protocol.getBalanceVault(), 0, "The vault should have given what was left");
@@ -459,7 +570,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // create high risk position
         protocol.initiateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(5 ether, 9 * currentPrice / 10, priceData, EMPTY_PREVIOUS_DATA);
+        }(5 ether, 9 * currentPrice / 10, priceData, EMPTY_PREVIOUS_DATA, address(this));
         _waitDelay();
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)
@@ -468,8 +579,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // price drops
         skip(1 hours);
-        currentPrice = 1000 ether;
-        priceData = abi.encode(currentPrice);
+        priceData = abi.encode(1000 ether);
 
         // liquidate
         uint256 balanceBefore = address(this).balance;
@@ -495,7 +605,15 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
             return;
         }
 
-        setUpUserPositionInLong(USER_1, ProtocolAction.ValidateOpenPosition, 5 ether, 1700 ether, price);
+        setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5 ether,
+                desiredLiqPrice: 1700 ether,
+                price: price
+            })
+        );
 
         _reenter = true;
         // If a reentrancy occurred, the function should have been called 2 times

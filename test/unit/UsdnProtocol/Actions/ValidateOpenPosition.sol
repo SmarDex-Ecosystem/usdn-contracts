@@ -45,10 +45,26 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:and the rest of the state changes as expected
      */
     function test_validateOpenPosition() public {
+        _validateOpenPositionScenario(address(this));
+    }
+
+    /**
+     * @custom:scenario The user validates an open position action for another user
+     * @custom:given The user has initiated an open position with 1 wstETH and a desired liquidation price of ~1333$
+     * @custom:and the price was 2000$ at the moment of initiation
+     * @custom:and the price has increased to 2100$
+     * @custom:when The user validates the open position with the new price
+     * @custom:then The owner of the position is the previously defined user
+     */
+    function test_validateOpenPositionForAnotherUser() public {
+        _validateOpenPositionScenario(USER_1);
+    }
+
+    function _validateOpenPositionScenario(address to) internal {
         uint256 initialTotalExpo = protocol.getTotalExpo();
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
         );
         (Position memory tempPos,) = protocol.getLongPosition(tick, tickVersion, index);
 
@@ -56,8 +72,8 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         uint128 newPrice = CURRENT_PRICE + 100 ether;
 
-        vm.expectEmit(true, false, false, false);
-        emit ValidatedOpenPosition(address(this), 0, newPrice, tick, tickVersion, index);
+        vm.expectEmit(true, true, false, false);
+        emit ValidatedOpenPosition(address(this), to, 0, newPrice, tick, tickVersion, index);
         protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
         (Position memory pos,) = protocol.getLongPosition(tick, tickVersion, index);
@@ -85,7 +101,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     function test_validateOpenPositionAboveMaxLeverage() public {
         uint128 desiredLiqPrice = CURRENT_PRICE * 9 / 10; // leverage approx 10x
         (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
         );
         (Position memory tempPos,) = protocol.getLongPosition(tick, tickVersion, index);
 
@@ -102,7 +118,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         vm.expectEmit();
         emit LiquidationPriceUpdated(tick, tickVersion, index, newTick, newTickVersion, newIndex);
         vm.expectEmit(true, false, false, false);
-        emit ValidatedOpenPosition(address(this), 0, newPrice, newTick, newTickVersion, newIndex);
+        emit ValidatedOpenPosition(address(this), address(this), 0, newPrice, newTick, newTickVersion, newIndex);
         protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
         (Position memory pos,) = protocol.getLongPosition(newTick, newTickVersion, newIndex);
@@ -136,11 +152,13 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(storedLiqPenalty);
         (int24 otherTick,,) = setUpUserPositionInLong(
-            USER_1,
-            ProtocolAction.ValidateOpenPosition,
-            uint128(LONG_AMOUNT),
-            protocol.getEffectivePriceForTick(validateTick),
-            CURRENT_PRICE
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: uint128(LONG_AMOUNT),
+                desiredLiqPrice: protocol.getEffectivePriceForTick(validateTick),
+                price: CURRENT_PRICE
+            })
         );
         assertEq(otherTick, validateTick, "both positions in same tick");
 
@@ -150,7 +168,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         // initiate deposit with leverage close to 10x
         (int24 tempTick, uint256 tempTickVersion, uint256 tempIndex) = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
         );
 
         _waitDelay();
@@ -173,49 +191,15 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         );
         vm.expectEmit();
         emit ValidatedOpenPosition(
-            address(this), expectedLeverage, validatePrice, validateTick, validateTickVersion, validateIndex
+            address(this),
+            address(this),
+            expectedLeverage,
+            validatePrice,
+            validateTick,
+            validateTickVersion,
+            validateIndex
         );
         protocol.validateOpenPosition(abi.encode(validatePrice), EMPTY_PREVIOUS_DATA);
-    }
-
-    /**
-     * @custom:scenario A pending new long position gets liquidated and then validated
-     * @custom:given A pending new position was liquidated before being validated
-     * @custom:and The pending action is stale (tick version mismatch)
-     * @custom:when The user tries to validate the pending action
-     * @custom:then The protocol emits a `StalePendingActionRemoved` event
-     * @custom:and The transaction does not revert
-     */
-    function test_validateOpenPositionWithStalePendingAction() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
-
-        bytes memory priceData = abi.encode(uint128(1500 ether));
-        // validating the action emits the proper event
-        vm.expectEmit();
-        emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
-        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
-    }
-
-    /**
-     * @custom:scenario The user sends too much ether when validate a position opening
-     * @custom:given The user has initiated an open position
-     * @custom:when The user sends 0.5 ether as value in the `validateOpenPosition` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
-     */
-    function test_validateOpenPositionEtherRefund() public {
-        oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
-
-        bytes memory priceData = abi.encode(CURRENT_PRICE);
-        uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(uint128(LONG_AMOUNT), desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA);
-        _waitDelay();
-        uint256 balanceBefore = address(this).balance;
-        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: 0.5 ether }(priceData, EMPTY_PREVIOUS_DATA);
-
-        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
     /**
@@ -233,11 +217,13 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         }
 
         setUpUserPositionInLong(
-            address(this),
-            ProtocolAction.InitiateOpenPosition,
-            uint128(LONG_AMOUNT),
-            CURRENT_PRICE * 2 / 3,
-            CURRENT_PRICE
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: uint128(LONG_AMOUNT),
+                desiredLiqPrice: CURRENT_PRICE * 2 / 3,
+                price: CURRENT_PRICE
+            })
         );
 
         _reenter = true;

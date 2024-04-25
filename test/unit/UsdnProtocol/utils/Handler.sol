@@ -53,11 +53,12 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_initiateClosePosition(
         address user,
+        address to,
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) external returns (uint256 securityDepositValue_) {
-        return _initiateClosePosition(user, posId, amountToClose, currentPriceData);
+        return _initiateClosePosition(user, to, posId, amountToClose, currentPriceData);
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
@@ -248,16 +249,28 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getLeverage(price, liqPrice);
     }
 
-    function i_bitmapIndexToTick(uint256 index) external view returns (int24) {
-        return _bitmapIndexToTick(index);
+    function i_calcTickFromBitmapIndex(uint256 index) external view returns (int24) {
+        return _calcTickFromBitmapIndex(index);
     }
 
-    function i_tickToBitmapIndex(int24 tick) external view returns (uint256) {
-        return _tickToBitmapIndex(tick);
+    function i_calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) external pure returns (int24) {
+        return _calcTickFromBitmapIndex(index, tickSpacing);
+    }
+
+    function i_calcBitmapIndexFromTick(int24 tick) external view returns (uint256) {
+        return _calcBitmapIndexFromTick(tick);
+    }
+
+    function i_calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) external pure returns (uint256) {
+        return _calcBitmapIndexFromTick(tick, tickSpacing);
+    }
+
+    function i_findHighestPopulatedTick(int24 searchStart) external view returns (int24 tick_) {
+        return _findHighestPopulatedTick(searchStart);
     }
 
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
-        return _tickBitmap.findLastSet(_tickToBitmapIndex(searchFrom));
+        return _tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchFrom));
     }
 
     function i_updateEMA(uint128 secondsElapsed) external returns (int256) {

@@ -104,7 +104,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _safetyMarginBps = 200; // 2%
 
     /// @notice User current liquidation iteration in tick.
-    uint16 internal _liquidationIteration = 3;
+    uint16 internal _liquidationIteration = 1;
 
     /// @notice The protocol fee percentage (in bps)
     uint16 internal _protocolFeeBps = 10;
@@ -239,8 +239,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice Accumulated data for a given tick and tick version
     mapping(bytes32 => TickData) internal _tickData;
 
-    /// @notice Cached value of the maximum initialized tick
-    int24 internal _maxInitializedTick;
+    /// @notice The highest tick with a position
+    int24 internal _highestPopulatedTick;
 
     /// @notice Cache of the total long positions count
     uint256 internal _totalLongPositions;
@@ -536,8 +536,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getMaxInitializedTick() external view returns (int24) {
-        return _maxInitializedTick;
+    function getHighestPopulatedTick() external view returns (int24) {
+        return _highestPopulatedTick;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

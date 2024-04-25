@@ -79,7 +79,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         protocol.setExpoImbalanceLimits(0, 0, 0, 0);
 
         // the initialized tick
-        int24 tick = protocol.getMaxInitializedTick();
+        int24 tick = protocol.getHighestPopulatedTick();
 
         vm.startPrank(DEPLOYER);
 
@@ -95,7 +95,8 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
             0, // unique long
             params.initialLong,
             abi.encode(params.initialPrice),
-            data
+            data,
+            DEPLOYER
         );
 
         // wait more than 2 blocks
