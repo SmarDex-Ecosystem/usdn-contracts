@@ -13,10 +13,14 @@ abstract contract InitializableReentrancyGuard {
     // slot's contents, replace the bits taken up by the boolean, and then write
     // back. This is the compiler's defense against contract upgrades and
     // pointer aliasing, and it cannot be disabled.
-    uint256 private constant UNINITIALIZED = 0;
-    uint256 private constant NOT_ENTERED = 1;
-    uint256 private constant ENTERED = 2;
 
+    /// @notice The uninitialized state of the contract
+    uint256 private constant UNINITIALIZED = 0;
+    /// @notice The state of the contract before entering a function
+    uint256 private constant NOT_ENTERED = 1;
+    /// @notice The state of the contract after entering a function
+    uint256 private constant ENTERED = 2;
+    /// @notice The state of the contract
     uint256 private _status;
 
     /// @dev Unauthorized reentrant call.
@@ -33,6 +37,7 @@ abstract contract InitializableReentrancyGuard {
     }
 
     /**
+     * @notice Reverts if the contract is not initialized or in case of a reentrancy
      * @dev Prevents a contract from calling itself, directly or indirectly, or using it in an uninitialized state.
      * Calling a `initializedAndNonReentrant` function before the `initialize` function was called will revert.
      * Calling a `initializedAndNonReentrant` function from another `initializedAndNonReentrant`
@@ -45,24 +50,28 @@ abstract contract InitializableReentrancyGuard {
         _nonReentrantAfter();
     }
 
+    /// @notice Reverts if the contract is initialized, or set it as initialized
     modifier initializer() {
         _checkUninitialized();
         _;
         _status = NOT_ENTERED; // mark initialized
     }
 
+    /// @notice Reverts if the contract is not initialized
     function _checkInitialized() private view {
         if (_status == UNINITIALIZED) {
             revert InitializableReentrancyGuardUninitialized();
         }
     }
 
+    /// @notice Reverts if the contract is initialized
     function _checkUninitialized() internal view {
         if (_status != UNINITIALIZED) {
             revert InitializableReentrancyGuardInvalidInitialization();
         }
     }
 
+    /// @dev Reverts if _status is ENTERED, or set _status to ENTERED
     function _nonReentrantBefore() private {
         // On the first call to nonReentrant, _status will be NOT_ENTERED
         if (_status == ENTERED) {
@@ -73,6 +82,7 @@ abstract contract InitializableReentrancyGuard {
         _status = ENTERED;
     }
 
+    /// @dev Set _status to NOT_ENTERED
     function _nonReentrantAfter() private {
         // By storing the original value once again, a refund is triggered (see
         // https://eips.ethereum.org/EIPS/eip-2200)
