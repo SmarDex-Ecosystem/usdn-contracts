@@ -508,6 +508,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the vault balance falls to zero
      */
     function test_internalValidateCloseLiquidatePositionZeroVaultBalance() public {
+        // we need to skip 1 minute to make the new price data fresh
+        skip(1 minutes);
         // liquidate the position in setup, leaving only the deployer position
         uint256 liquidated = protocol.liquidate(abi.encode(7 * params.initialPrice / 10), 10);
         assertEq(liquidated, 1, "liquidated");
@@ -556,6 +558,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the long balance falls to zero
      */
     function test_internalValidateCloseLiquidatePositionZeroLongBalance() public {
+        // we need to skip 1 minute to make the new price data fresh
+        skip(1 minutes);
         // liquidate the position in setup, leaving only the deployer position
         uint256 liquidated = protocol.liquidate(abi.encode(7 * params.initialPrice / 10), 10);
         assertEq(liquidated, 1, "liquidated");
