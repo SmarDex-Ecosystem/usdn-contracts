@@ -508,16 +508,10 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------- Validate Close Position ------------------------ */
         // we have no funding, the liq price should not change with time
         uint128 liquidationPrice = protocol.getEffectivePriceForTick(tick);
-        uint256 vaultBalanceBefore = uint256(
-            protocol.vaultAssetAvailableWithFunding(
-                liquidationPrice, uint128(block.timestamp - oracleMiddleware.getValidationDelay())
-            )
-        );
-        uint256 longBalanceBefore = uint256(
-            protocol.longAssetAvailableWithFunding(
-                liquidationPrice, uint128(block.timestamp - oracleMiddleware.getValidationDelay())
-            )
-        );
+        uint256 vaultBalanceBefore =
+            uint256(protocol.vaultAssetAvailableWithFunding(liquidationPrice, uint128(block.timestamp)));
+        uint256 longBalanceBefore =
+            uint256(protocol.longAssetAvailableWithFunding(liquidationPrice, uint128(block.timestamp)));
         // value of the remaining part of the position (not being closed, but will be liquidated)
         (uint256 remainingToTransfer, int256 remainingValue) = protocol.i_assetToTransfer(
             liquidationPrice,
