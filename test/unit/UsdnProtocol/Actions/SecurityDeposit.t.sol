@@ -611,7 +611,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
-            1 ether, params.initialPrice / 2, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            1 ether, params.initialPrice / 2, priceData, EMPTY_PREVIOUS_DATA, USER_1
         );
         skip(protocol.getValidationDeadline() + 1);
 
@@ -624,7 +624,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
         vm.prank(USER_1);
-        protocol.validateOpenPosition(address(this), priceData, previousActionsData);
+        protocol.validateOpenPosition(USER_1, priceData, previousActionsData);
 
         assertBalancesEndTwoUsers(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
     }
