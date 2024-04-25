@@ -449,9 +449,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.prank(DEPLOYER);
         liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 1000 gwei, 20_000);
 
-        // Trigger PnL and funding calculations now to avoid having to predict them later
-        protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
-
         uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
         // Sanity check
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
@@ -587,8 +584,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // price drops
         skip(1 hours);
-        currentPrice = 1000 ether;
-        priceData = abi.encode(currentPrice);
+        priceData = abi.encode(1000 ether);
 
         // disable rewards
         vm.prank(DEPLOYER);

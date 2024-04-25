@@ -15,6 +15,7 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 5 ether;
+        params.flags.enableFunding = true;
         super._setUp(params);
     }
 

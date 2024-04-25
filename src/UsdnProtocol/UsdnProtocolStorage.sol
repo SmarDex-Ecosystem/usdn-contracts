@@ -105,7 +105,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _safetyMarginBps = 200; // 2%
 
     /// @notice User current liquidation iteration in tick.
-    uint16 internal _liquidationIteration = 3;
+    uint16 internal _liquidationIteration = 1;
 
     /// @notice The protocol fee percentage (in bps)
     uint16 internal _protocolFeeBps = 10;

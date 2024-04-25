@@ -5,7 +5,6 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { ADMIN } from "test/utils/Constants.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
 import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -18,142 +17,9 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         params.flags.enableFunding = true;
         params.flags.enableProtocolFees = false;
         params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
+        params.flags.enableFunding = true;
+        params.flags.enableProtocolFees = true;
         super._setUp(params);
-    }
-
-    /**
-     * @custom:scenario Check value of the `getMinLiquidationPrice` function
-     * @custom:when The minimum leverage is 1.000000001
-     * @custom:and The multiplier is 1x.
-     */
-    function test_getMinLiquidationPrice_multiplierEqOne() public {
-        /**
-         * 5000 - 5000 / 1.000000001 = 0.000004999999995001
-         * tick(0.000004999999995001) = -122100 => + tickSpacing = -122000
-         */
-        assertEq(
-            protocol.getMinLiquidationPrice(5000 ether), protocol.getEffectivePriceForTick(-122_000), "for price = 5000"
-        );
-
-        /**
-         * 10^12 - 10^12 / 1.000000001 < MINIMUM_PRICE
-         * => minLiquidationPrice = getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
-         */
-        assertEq(
-            protocol.getMinLiquidationPrice(10 ** 12),
-            protocol.getEffectivePriceForTick(protocol.minTick() + protocol.getTickSpacing()),
-            "for price = 1 * 10^12 wei"
-        );
-    }
-
-    /**
-     * @custom:scenario Check value of the `getMinLiquidationPrice` function
-     * @custom:when The minimum leverage is 1.000000001
-     * @custom:and The multiplier is > 1.
-     */
-    function test_getMinLiquidationPrice_multiplierGtOne() public {
-        setUpUserPositionInLong(
-            OpenParams({
-                user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: 500 ether,
-                desiredLiqPrice: params.initialPrice / 2,
-                price: params.initialPrice
-            })
-        );
-        skip(1 days);
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
-
-        assertGt(
-            protocol.getLiquidationMultiplier(),
-            10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
-            "liquidation multiplier <= 1"
-        );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_043_690_835_384, "wrong minimum liquidation price");
-    }
-
-    /**
-     * @custom:scenario Check value of the `getMinLiquidationPrice` function
-     * @custom:when The minimum leverage is 1.000000001
-     * @custom:and The multiplier is < 1.
-     */
-    function test_getMinLiquidationPrice_multiplierLtOne() public {
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 5000 ether, params.initialPrice);
-        skip(6 days);
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
-
-        assertLt(
-            protocol.getLiquidationMultiplier(),
-            10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
-            "liquidation multiplier >= 1"
-        );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_032_680_073_587, "wrong minimum liquidation price");
-    }
-
-    /**
-     * @custom:scenario Check value of the `getMinLiquidationPrice` function
-     * @custom:when The minimum leverage is 1
-     * @custom:and The multiplier is 1x.
-     */
-    function test_getMinLiquidationPrice_minLeverageEqOne() public adminPrank {
-        /**
-         * 5000 - 5000 / 1 = 0
-         * => minLiquidationPrice = getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
-         */
-        protocol.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS() + 1);
-        assertEq(
-            protocol.getMinLiquidationPrice(5000 ether),
-            protocol.getEffectivePriceForTick(protocol.minTick() + protocol.getTickSpacing())
-        );
-    }
-
-    /**
-     * @custom:scenario Check value of the `getMinLiquidationPrice` function
-     * @custom:when The minimum leverage is 1.1
-     * @custom:and The multiplier is 1x.
-     */
-    function test_getMinLiquidationPrice_minLeverageEq1_1() public adminPrank {
-        /**
-         * 5000 - 5000 / 1.1 = 454.545454545454545455
-         * tick(454.545454545454545455) = 61_100 => + tickSpacing = 61_200
-         */
-        protocol.setMinLeverage(11 * 10 ** (protocol.LEVERAGE_DECIMALS() - 1)); // = x1.1
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), protocol.getEffectivePriceForTick(61_200));
-    }
-
-    /**
-     * @custom:scenario Check calculations of `_calculatePositionTotalExpo`
-     */
-    function test_calculatePositionTotalExpo() public {
-        uint256 expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1500 ether);
-        assertEq(expo, 4 ether, "Position total expo should be 4 ether");
-
-        expo = protocol.i_calculatePositionTotalExpo(2 ether, 4000 ether, 1350 ether);
-        assertEq(expo, 3_018_867_924_528_301_886, "Position total expo should be 3.018... ether");
-
-        expo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, 1000 ether);
-        assertEq(expo, 2 ether, "Position total expo should be 2 ether");
-    }
-
-    /**
-     * @custom:scenario Call `_calculatePositionTotalExpo` reverts when the liquidation price is greater than
-     * the start price.
-     * @custom:given A liquidation price greater than or equal to the start price
-     * @custom:when _calculatePositionTotalExpo is called
-     * @custom:then The transaction reverts with a UsdnProtocolInvalidLiquidationPrice error
-     */
-    function test_RevertWhen_calculatePositionTotalExpoWithLiqPriceGreaterThanStartPrice() public {
-        uint128 startPrice = 2000 ether;
-        uint128 liqPrice = 2000 ether;
-
-        /* ------------------------- startPrice == liqPrice ------------------------- */
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
-        protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
-
-        /* -------------------------- liqPrice > startPrice ------------------------- */
-        liqPrice = 2000 ether + 1;
-        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidLiquidationPrice.selector, liqPrice, startPrice));
-        protocol.i_calculatePositionTotalExpo(1 ether, startPrice, liqPrice);
     }
 
     /**

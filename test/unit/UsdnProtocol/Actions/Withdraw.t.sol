@@ -28,7 +28,10 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     uint256 internal initialUsdnShares;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.flags.enableFunding = true;
+        params.flags.enableProtocolFees = true;
+        super._setUp(params);
         withdrawShares = USDN_AMOUNT * uint152(usdn.MAX_DIVISOR());
         usdn.approve(address(protocol), type(uint256).max);
         // user deposits wstETH at price $2000
