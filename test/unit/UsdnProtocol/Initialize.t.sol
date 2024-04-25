@@ -60,11 +60,13 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), INITIAL_DEPOSIT, block.timestamp);
+        emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, block.timestamp);
         vm.expectEmit();
-        emit ValidatedDeposit(protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp);
+        emit ValidatedDeposit(
+            protocol.DEAD_ADDRESS(), protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp
+        );
         vm.expectEmit();
-        emit ValidatedDeposit(address(this), INITIAL_DEPOSIT, expectedUsdnMinted, block.timestamp);
+        emit ValidatedDeposit(address(this), address(this), INITIAL_DEPOSIT, expectedUsdnMinted, block.timestamp);
         protocol.i_createInitialDeposit(INITIAL_DEPOSIT, INITIAL_PRICE);
 
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore - INITIAL_DEPOSIT, "deployer wstETH balance");
@@ -105,10 +107,18 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit InitiatedOpenPosition(
-            address(this), uint40(block.timestamp), leverage, INITIAL_POSITION, INITIAL_PRICE, expectedTick, 0, 0
+            address(this),
+            address(this),
+            uint40(block.timestamp),
+            leverage,
+            INITIAL_POSITION,
+            INITIAL_PRICE,
+            expectedTick,
+            0,
+            0
         );
         vm.expectEmit();
-        emit ValidatedOpenPosition(address(this), leverage, INITIAL_PRICE, expectedTick, 0, 0);
+        emit ValidatedOpenPosition(address(this), address(this), leverage, INITIAL_PRICE, expectedTick, 0, 0);
         protocol.i_createInitialPosition(
             INITIAL_POSITION, INITIAL_PRICE, tickWithoutPenalty, leverage, 2 * INITIAL_POSITION
         );
@@ -165,17 +175,27 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), INITIAL_DEPOSIT, block.timestamp);
+        emit InitiatedDeposit(address(this), address(this), INITIAL_DEPOSIT, block.timestamp);
         vm.expectEmit();
-        emit ValidatedDeposit(protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp);
-        vm.expectEmit();
-        emit ValidatedDeposit(address(this), INITIAL_DEPOSIT, expectedUsdnMinted, block.timestamp);
-        vm.expectEmit();
-        emit InitiatedOpenPosition(
-            address(this), uint40(block.timestamp), leverage, INITIAL_POSITION, INITIAL_PRICE, expectedTick, 0, 0
+        emit ValidatedDeposit(
+            protocol.DEAD_ADDRESS(), protocol.DEAD_ADDRESS(), 0, protocol.MIN_USDN_SUPPLY(), block.timestamp
         );
         vm.expectEmit();
-        emit ValidatedOpenPosition(address(this), leverage, INITIAL_PRICE, expectedTick, 0, 0);
+        emit ValidatedDeposit(address(this), address(this), INITIAL_DEPOSIT, expectedUsdnMinted, block.timestamp);
+        vm.expectEmit();
+        emit InitiatedOpenPosition(
+            address(this),
+            address(this),
+            uint40(block.timestamp),
+            leverage,
+            INITIAL_POSITION,
+            INITIAL_PRICE,
+            expectedTick,
+            0,
+            0
+        );
+        vm.expectEmit();
+        emit ValidatedOpenPosition(address(this), address(this), leverage, INITIAL_PRICE, expectedTick, 0, 0);
         protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
 
         assertEq(

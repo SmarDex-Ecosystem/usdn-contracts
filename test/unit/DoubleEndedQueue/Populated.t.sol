@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { USER_1 } from "test/utils/Constants.sol";
+import { USER_1, USER_2 } from "test/utils/Constants.sol";
 import { DequeFixture } from "test/unit/DoubleEndedQueue/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -13,12 +13,24 @@ import { DoubleEndedQueue, PendingAction } from "src/libraries/DoubleEndedQueue.
  */
 contract TestDequePopulated is DequeFixture {
     PendingAction public action1 = PendingAction(
-        ProtocolAction.ValidateWithdrawal, 69, USER_1, 0, 1, 1 ether, 2 ether, 12 ether, 3 ether, 4 ether, 42_000 ether
+        ProtocolAction.ValidateWithdrawal,
+        69,
+        USER_1,
+        USER_2,
+        0,
+        1,
+        1 ether,
+        2 ether,
+        12 ether,
+        3 ether,
+        4 ether,
+        42_000 ether
     );
     PendingAction public action2 = PendingAction(
         ProtocolAction.ValidateDeposit,
         420,
         USER_1,
+        USER_2,
         1,
         -42,
         1000 ether,
@@ -29,7 +41,7 @@ contract TestDequePopulated is DequeFixture {
         420_000 ether
     );
     PendingAction public action3 =
-        PendingAction(ProtocolAction.ValidateOpenPosition, 42, USER_1, 0, 1, 10, 0, 0, 0, 0, 0);
+        PendingAction(ProtocolAction.ValidateOpenPosition, 42, USER_1, USER_2, 0, 1, 10, 0, 0, 0, 0, 0);
     uint128 public rawIndex1;
     uint128 public rawIndex2;
     uint128 public rawIndex3;
@@ -125,7 +137,7 @@ contract TestDequePopulated is DequeFixture {
      */
     function test_pushFront() public {
         PendingAction memory action =
-            PendingAction(ProtocolAction.ValidateClosePosition, 1, USER_1, 1, 1, 1, 1, 1, 1, 1, 1);
+            PendingAction(ProtocolAction.ValidateClosePosition, 1, USER_1, USER_2, 1, 1, 1, 1, 1, 1, 1, 1);
         uint128 rawIndex = handler.pushFront(action);
         uint128 expectedRawIndex;
         unchecked {
@@ -159,7 +171,7 @@ contract TestDequePopulated is DequeFixture {
      */
     function test_pushBack() public {
         PendingAction memory action =
-            PendingAction(ProtocolAction.ValidateClosePosition, 1, USER_1, 1, 1, 1, 1, 1, 1, 1, 1);
+            PendingAction(ProtocolAction.ValidateClosePosition, 1, USER_1, USER_2, 1, 1, 1, 1, 1, 1, 1, 1);
         uint128 rawIndex = handler.pushBack(action);
         uint128 expectedRawIndex;
         unchecked {

@@ -44,7 +44,13 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
     function test_getTickLiquidationPenaltyPopulated() public {
         uint8 startPenalty = protocol.getLiquidationPenalty();
         (int24 tick,,) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 10 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 10 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
         assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty, "tick value");
 
@@ -65,7 +71,13 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
     function test_getTickLiquidationPenaltyLiquidated() public {
         uint8 startPenalty = protocol.getLiquidationPenalty();
         (int24 tick,,) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 10 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 10 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
         assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty, "tick value");
         protocol.liquidate(abi.encode(params.initialPrice / 3), 10);
@@ -87,7 +99,13 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
     function test_getTickLiquidationPenaltyWasPopulatedNowEmpty() public {
         uint8 startPenalty = protocol.getLiquidationPenalty();
         (int24 tick,,) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateClosePosition, 10 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateClosePosition,
+                positionSize: 10 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
         // change the penalty setting
         vm.prank(ADMIN);

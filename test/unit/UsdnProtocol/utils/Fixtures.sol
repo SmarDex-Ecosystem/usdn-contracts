@@ -66,6 +66,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         })
     });
 
+    struct OpenParams {
+        address user;
+        ProtocolAction untilAction;
+        uint128 positionSize;
+        uint128 desiredLiqPrice;
+        uint256 price;
+    }
+
     Usdn public usdn;
     Sdex public sdex;
     WstETH public wstETH;
@@ -215,8 +223,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateDeposit{ value: securityDepositValue }(positionSize, priceData, EMPTY_PREVIOUS_DATA);
-        pendingAction_ = protocol.getUserPendingAction(user);
+        protocol.initiateDeposit{ value: securityDepositValue }(positionSize, priceData, EMPTY_PREVIOUS_DATA, user);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return pendingAction_;
 
@@ -226,8 +233,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         uint256 balanceOf = usdn.balanceOf(user);
         usdn.approve(address(protocol), balanceOf);
-        protocol.initiateWithdrawal{ value: securityDepositValue }(uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA);
-        pendingAction_ = protocol.getUserPendingAction(user);
+        protocol.initiateWithdrawal{ value: securityDepositValue }(
+            uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA, user
+        );
         _waitDelay();
 
         if (untilAction == ProtocolAction.InitiateWithdrawal) return pendingAction_;
@@ -240,41 +248,35 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
      * @notice Create user positions on the long side (open and close a position)
      * @dev The order in which the actions are performed are defined as followed:
      * @dev InitiateOpenPosition -> ValidateOpenPosition -> InitiateClosePosition -> ValidateWithdrawal
-     * @param user User that performs the actions
-     * @param untilAction Action after which the function returns
-     * @param positionSize Amount of wstEth to deposit
-     * @param desiredLiqPrice Price at which the position should be liquidated
-     * @param price Current price
+     * @param openParams open position params
      * @return tick_ The tick at which the position was opened
      * @return tickVersion_ The tick version of the price tick
      * @return index_ The index of the new position inside the tick array
      */
-    function setUpUserPositionInLong(
-        address user,
-        ProtocolAction untilAction,
-        uint128 positionSize,
-        uint128 desiredLiqPrice,
-        uint256 price
-    ) public prankUser(user) returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+    function setUpUserPositionInLong(OpenParams memory openParams)
+        public
+        prankUser(openParams.user)
+        returns (int24 tick_, uint256 tickVersion_, uint256 index_)
+    {
         uint256 securityDepositValue = protocol.getSecurityDepositValue();
-        wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
-        bytes memory priceData = abi.encode(price);
+        wstETH.mintAndApprove(openParams.user, openParams.positionSize, address(protocol), openParams.positionSize);
+        bytes memory priceData = abi.encode(openParams.price);
 
         (tick_, tickVersion_, index_) = protocol.initiateOpenPosition{ value: securityDepositValue }(
-            positionSize, desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA
+            openParams.positionSize, openParams.desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA, openParams.user
         );
         _waitDelay();
-        if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
+        if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
 
         protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
+        if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            tick_, tickVersion_, index_, positionSize, priceData, EMPTY_PREVIOUS_DATA
+            tick_, tickVersion_, index_, openParams.positionSize, priceData, EMPTY_PREVIOUS_DATA, openParams.user
         );
         _waitDelay();
-        if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
+        if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
 
         protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
@@ -290,8 +292,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
      */
     function _createStalePendingActionHelper() internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         // create a pending action with a liquidation price around $1700
-        (tick_, tickVersion_, index_) =
-            setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1700 ether, 2000 ether);
+        (tick_, tickVersion_, index_) = setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1700 ether, 2000 ether)
+        );
 
         // the price drops to $1500 and the position gets liquidated
         skip(30);
