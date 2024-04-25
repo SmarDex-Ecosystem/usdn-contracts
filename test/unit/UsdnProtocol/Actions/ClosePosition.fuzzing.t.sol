@@ -23,8 +23,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
     }
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**

@@ -11,10 +11,7 @@ import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolEr
  */
 contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
     function setUp() public {
-        SetUpParams memory params = DEFAULT_PARAMS;
-        params.initialDeposit = 49.199702697034631562 ether;
-        params.initialLong = 50 ether;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
 
         // we enable only open limit
         vm.prank(ADMIN);

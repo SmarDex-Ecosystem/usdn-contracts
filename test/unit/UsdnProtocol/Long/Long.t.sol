@@ -13,13 +13,7 @@ import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProto
  */
 contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableFunding = true;
-        params.flags.enableProtocolFees = false;
-        params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
-        params.flags.enableFunding = true;
-        params.flags.enableProtocolFees = true;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**

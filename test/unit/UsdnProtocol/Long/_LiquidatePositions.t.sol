@@ -9,10 +9,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 /// @custom:feature Test the _liquidatePositions internal function of the long layer
 contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableFunding = true;
-        params.flags.enableProtocolFees = false;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**
@@ -114,6 +111,9 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         vm.skip(true); // TODO: rewrite this test to use the external function, as now `i_applyPnlAndFunding` does not
         // mutate the balances and the test doesn't pass anymore. The fundings now only have effect through their effect
         // on the long balance.
+        params = DEFAULT_PARAMS;
+        params.flags.enableFunding = true;
+        super._setUp(params);
 
         uint128 price = 2000 ether;
         int24 desiredLiqTick = protocol.getEffectiveTickForPrice(price - 200 ether);
@@ -130,7 +130,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             })
         );
 
-        skip(34 days);
+        skip(3 days);
         protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
 
         uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(desiredLiqTick);
