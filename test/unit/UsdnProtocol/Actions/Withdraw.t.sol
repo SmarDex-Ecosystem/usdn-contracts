@@ -80,7 +80,6 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     }
 
     function _initiateWithdraw(address to) internal {
-        skip(3600);
         bytes memory currentPrice = abi.encode(uint128(3000 ether));
         uint256 protocolUsdnInitialShares = usdn.sharesOf(address(protocol));
 
@@ -218,7 +217,6 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:then The protocol emits a `ValidatedWithdrawal` event with the right beneficiary
      */
     function test_validateWithdrawDifferentToAddress() public {
-        skip(3600);
         _checkValidateWithdrawWithPrice(uint128(2000 ether), uint128(2000 ether), 0.5 ether, USER_1);
     }
 
