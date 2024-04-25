@@ -12,10 +12,7 @@ import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfac
  */
 contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableProtocolFees = false;
-        params.flags.enableFunding = false;
-        _setUp(params);
+        _setUp(DEFAULT_PARAMS);
     }
 
     /**
@@ -27,8 +24,8 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
     function test_executePendingAction() public {
         PreviousActionsData memory previousActionsData = _setUpPendingAction();
 
-        vm.expectEmit(true, false, false, false);
-        emit ValidatedOpenPosition(USER_1, 0, 0, 0, 0, 0);
+        vm.expectEmit(true, true, false, false);
+        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
         (bool success, bool executed,) = protocol.i_executePendingAction(previousActionsData);
 
         assertTrue(success, "success");
@@ -104,7 +101,13 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
      */
     function _setUpPendingAction() internal returns (PreviousActionsData memory previousActionsData_) {
         setUpUserPositionInLong(
-            USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
         // make actionable
         skip(protocol.getValidationDeadline() + 1);

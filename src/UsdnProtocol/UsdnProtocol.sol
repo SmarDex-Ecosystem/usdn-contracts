@@ -357,7 +357,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Transfer the wstETH for the deposit
         _asset.safeTransferFrom(msg.sender, address(this), amount);
         _balanceVault += amount;
-        emit InitiatedDeposit(msg.sender, amount, block.timestamp);
+        emit InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp);
 
         // Calculate the total minted amount of USDN (vault balance and total supply are zero for now, we assume the
         // USDN price to be $1)
@@ -369,8 +369,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _usdn.mint(msg.sender, mintToUser);
 
         // Emit events
-        emit ValidatedDeposit(DEAD_ADDRESS, 0, MIN_USDN_SUPPLY, block.timestamp);
-        emit ValidatedDeposit(msg.sender, amount, mintToUser, block.timestamp);
+        emit ValidatedDeposit(DEAD_ADDRESS, DEAD_ADDRESS, 0, MIN_USDN_SUPPLY, block.timestamp);
+        emit ValidatedDeposit(msg.sender, msg.sender, amount, mintToUser, block.timestamp);
     }
 
     /**
@@ -403,7 +403,9 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         });
         // Save the position and update the state
         (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long, liquidationPenalty);
-        emit InitiatedOpenPosition(msg.sender, long.timestamp, leverage, long.amount, price, tick, tickVersion, index);
-        emit ValidatedOpenPosition(msg.sender, leverage, price, tick, tickVersion, index);
+        emit InitiatedOpenPosition(
+            msg.sender, msg.sender, long.timestamp, leverage, long.amount, price, tick, tickVersion, index
+        );
+        emit ValidatedOpenPosition(msg.sender, msg.sender, leverage, price, tick, tickVersion, index);
     }
 }

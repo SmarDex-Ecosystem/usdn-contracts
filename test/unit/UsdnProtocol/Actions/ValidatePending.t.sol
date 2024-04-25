@@ -12,10 +12,7 @@ import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfac
  */
 contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableProtocolFees = false;
-        params.flags.enableFunding = false;
-        _setUp(params);
+        _setUp(DEFAULT_PARAMS);
     }
 
     /**
@@ -29,14 +26,14 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
     function test_validateActionablePendingActions() public {
         PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
 
-        vm.expectEmit(true, false, false, false);
-        emit ValidatedOpenPosition(USER_1, 0, 0, 0, 0, 0);
-        vm.expectEmit(true, false, false, false);
-        emit ValidatedClosePosition(USER_2, 0, 0, 0, 0, 0);
-        vm.expectEmit(true, false, false, false);
-        emit ValidatedDeposit(USER_3, 0, 0, 0);
-        vm.expectEmit(true, false, false, false);
-        emit ValidatedWithdrawal(USER_4, 0, 0, 0);
+        vm.expectEmit(true, true, false, false);
+        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
+        vm.expectEmit(true, true, false, false);
+        emit ValidatedClosePosition(USER_2, USER_2, 0, 0, 0, 0, 0);
+        vm.expectEmit(true, true, false, false);
+        emit ValidatedDeposit(USER_3, USER_3, 0, 0, 0);
+        vm.expectEmit(true, true, false, false);
+        emit ValidatedWithdrawal(USER_4, USER_4, 0, 0, 0);
         uint256 validated = protocol.validateActionablePendingActions(previousActionsData, 10);
 
         assertEq(validated, 4, "validated actions");
@@ -171,10 +168,22 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
      */
     function _setUpFourPendingActions() internal returns (PreviousActionsData memory previousActionsData_) {
         setUpUserPositionInLong(
-            USER_1, ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
         setUpUserPositionInLong(
-            USER_2, ProtocolAction.InitiateClosePosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: USER_2,
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
         setUpUserPositionInVault(USER_3, ProtocolAction.InitiateDeposit, 1 ether, params.initialPrice);
         setUpUserPositionInVault(USER_4, ProtocolAction.InitiateWithdrawal, 1 ether, params.initialPrice);
