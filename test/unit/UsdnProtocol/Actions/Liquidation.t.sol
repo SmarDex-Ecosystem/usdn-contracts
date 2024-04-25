@@ -10,9 +10,7 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function setUp() public {
-        SetUpParams memory params = DEFAULT_PARAMS;
-        params.flags.enableFunding = false;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
 
         usdn.approve(address(protocol), type(uint256).max);
 
