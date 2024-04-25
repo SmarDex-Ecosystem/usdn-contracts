@@ -248,8 +248,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice Accumulated data for a given tick and tick version
     mapping(bytes32 => TickData) internal _tickData;
 
-    /// @notice Cached value of the maximum initialized tick
-    int24 internal _maxInitializedTick;
+    /// @notice The highest tick with a position
+    int24 internal _highestPopulatedTick;
 
     /// @notice Cache of the total long positions count
     uint256 internal _totalLongPositions;
@@ -550,8 +550,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getMaxInitializedTick() external view returns (int24) {
-        return _maxInitializedTick;
+    function getHighestPopulatedTick() external view returns (int24) {
+        return _highestPopulatedTick;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

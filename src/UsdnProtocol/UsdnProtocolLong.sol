@@ -295,10 +295,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @notice Find the largest tick which contains at least one position
+     * @notice Find the highest tick that contains at least one position
+     * @dev If there are no ticks with a position left, returns minTick()
      * @param searchStart The tick from which to start searching
+     * @return tick_ The next highest tick below `searchStart`
      */
-    function _findMaxInitializedTick(int24 searchStart) internal view returns (int24 tick_) {
+    function _findHighestPopulatedTick(int24 searchStart) internal view returns (int24 tick_) {
         uint256 index = _tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchStart));
         if (index == LibBitmap.NOT_FOUND) {
             tick_ = minTick();
@@ -420,9 +422,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // Add to tick array
         Position[] storage tickArray = _longPositions[tickHash];
         index_ = tickArray.length;
-        if (tick > _maxInitializedTick) {
-            // keep track of max initialized tick
-            _maxInitializedTick = tick;
+        if (tick > _highestPopulatedTick) {
+            // keep track of the highest populated tick
+            _highestPopulatedTick = tick;
         }
         tickArray.push(long);
 
@@ -604,7 +606,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 unadjustedPrice =
             _unadjustPrice(data.currentPrice, data.currentPrice, data.longTradingExpo, data.accumulator);
         data.currentTick = TickMath.getClosestTickAtPrice(unadjustedPrice);
-        data.iTick = _maxInitializedTick;
+        data.iTick = _highestPopulatedTick;
 
         do {
             uint256 index = _tickBitmap.findLastSet(_calcBitmapIndexFromTick(data.iTick));
@@ -670,14 +672,14 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         _totalExpo -= data.totalExpoToRemove;
         _liqMultiplierAccumulator = _liqMultiplierAccumulator.sub(HugeUint.wrap(data.accumulatorValueToRemove));
 
-        // keep track of the max initialized tick
+        // keep track of the highest populated tick
         if (effects.liquidatedPositions != 0) {
             if (data.iTick < data.currentTick) {
                 // all ticks above the current tick were liquidated
-                _maxInitializedTick = _findMaxInitializedTick(data.currentTick);
+                _highestPopulatedTick = _findHighestPopulatedTick(data.currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                _maxInitializedTick = _findMaxInitializedTick(data.iTick);
+                _highestPopulatedTick = _findHighestPopulatedTick(data.iTick);
             }
         }
 

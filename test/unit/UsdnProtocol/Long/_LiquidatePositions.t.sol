@@ -97,9 +97,9 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
 
         assertLt(
-            protocol.getMaxInitializedTick(),
+            protocol.getHighestPopulatedTick(),
             tick,
-            "The max Initialized tick should be lower than the last liquidated tick"
+            "The highest populated tick should be lower than the last liquidated tick"
         );
     }
 
@@ -172,7 +172,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      * @custom:then It should liquidate the position.
      */
     function test_canLiquidateTheLastPosition() public {
-        int24 tick = protocol.getMaxInitializedTick();
+        int24 tick = protocol.getHighestPopulatedTick();
         uint128 liqPrice = protocol.getEffectivePriceForTick(tick);
         int256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
         int256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
@@ -195,7 +195,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         assertEq(logsAmount, 1, "Only one log should have been emitted");
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
         assertEq(
-            protocol.getMaxInitializedTick(),
+            protocol.getHighestPopulatedTick(),
             TickMath.minUsableTick(protocol.getTickSpacing()),
             "The max Initialized tick should be equal to the very last tick"
         );
@@ -267,7 +267,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
 
         assertEq(
-            protocol.getMaxInitializedTick(),
+            protocol.getHighestPopulatedTick(),
             ticksToLiquidate[ticksToLiquidate.length - 1],
             "Max initialized tick should be the last tick left to liquidate"
         );

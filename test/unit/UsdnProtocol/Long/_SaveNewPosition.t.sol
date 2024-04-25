@@ -72,20 +72,22 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
 
         // state modified by condition before opening the position
         uint256 tickBitmapIndexBefore = protocol.findLastSetInTickBitmap(expectedTick);
-        int24 maxInitializedTickBefore = protocol.getMaxInitializedTick();
+        int24 highestPopulatedTickBefore = protocol.getHighestPopulatedTick();
 
         protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
         uint256 tickBitmapIndexAfter = protocol.findLastSetInTickBitmap(expectedTick);
-        int24 initializedTickAfter = protocol.getMaxInitializedTick();
+        int24 highestPopulatedTickAfter = protocol.getHighestPopulatedTick();
 
         // check state modified by condition after opening the position
         assertLt(tickBitmapIndexBefore, tickBitmapIndexAfter, "first position in this tick");
-        assertLt(maxInitializedTickBefore, initializedTickAfter, "max initialized tick");
+        assertLt(highestPopulatedTickBefore, highestPopulatedTickAfter, "highest populated tick");
 
         protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
 
         // state not modified by condition after opening the position
         assertEq(tickBitmapIndexAfter, protocol.findLastSetInTickBitmap(expectedTick), "second position in this tick");
-        assertEq(initializedTickAfter, protocol.getMaxInitializedTick(), "second position max initialized tick");
+        assertEq(
+            highestPopulatedTickAfter, protocol.getHighestPopulatedTick(), "second position highest populated tick"
+        );
     }
 }
