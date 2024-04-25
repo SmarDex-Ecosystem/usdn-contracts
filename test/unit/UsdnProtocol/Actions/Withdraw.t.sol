@@ -28,10 +28,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     uint256 internal initialUsdnShares;
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableFunding = true;
-        params.flags.enableProtocolFees = true;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
         withdrawShares = USDN_AMOUNT * uint152(usdn.MAX_DIVISOR());
         usdn.approve(address(protocol), type(uint256).max);
         // user deposits wstETH at price $2000
@@ -147,14 +144,14 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $3000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.425409641068422497
+     * @custom:then The user's wstETH balance increases by 0.425454995913583891
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425409641068422497
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425454995913583891
      */
     function test_validateWithdrawPriceUp() public {
         skip(3600);
         _checkValidateWithdrawWithPrice(
-            uint128(2500 ether), uint128(3000 ether), 0.425409641068422497 ether, address(this)
+            uint128(2500 ether), uint128(3000 ether), 0.425454995913583891 ether, address(this)
         );
     }
 
@@ -164,14 +161,14 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $2000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.455218606057907765
+     * @custom:then The user's wstETH balance increases by 0.455272997548150334
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.455218606057907765
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.455272997548150334
      */
     function test_validateWithdrawPriceDown() public {
         skip(3600);
         _checkValidateWithdrawWithPrice(
-            uint128(2500 ether), uint128(2000 ether), 0.455218606057907765 ether, address(this)
+            uint128(2500 ether), uint128(2000 ether), 0.455272997548150334 ether, address(this)
         );
     }
 
@@ -224,7 +221,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      */
     function test_validateWithdrawDifferentToAddress() public {
         skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2000 ether), uint128(2000 ether), 0.499958641112900829 ether, USER_1);
+        _checkValidateWithdrawWithPrice(uint128(2000 ether), uint128(2000 ether), 0.5 ether, USER_1);
     }
 
     /**
