@@ -666,6 +666,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     /**
      * @notice Handle negative balances by transferring assets from one side to the other
      * @dev Balances are unsigned integers and can't be negative
+     * In theory, this can not happen anymore because we have more precise calculations with the
+     * `liqMultiplierAccumulator` compared to the old `liquidationMultiplier`
+     * TODO: check if can be removed
      * @param tempLongBalance The temporary long balance after liquidations
      * @param tempVaultBalance The temporary vault balance after liquidations
      * @return longBalance_ The new long balance after rebalancing

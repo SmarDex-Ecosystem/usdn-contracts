@@ -73,7 +73,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {
-        int256 longTradingExpo = int256(_totalExpo) - int256(_balanceVault);
+        int256 longTradingExpo = longTradingExpoWithFunding(uint128(currentPrice), uint128(block.timestamp));
         if (longTradingExpo < 0) {
             longTradingExpo = 0;
         }
