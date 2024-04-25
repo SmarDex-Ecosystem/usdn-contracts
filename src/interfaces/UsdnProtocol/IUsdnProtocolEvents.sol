@@ -355,7 +355,7 @@ interface IUsdnProtocolEvents {
     event MinLongPositionUpdated(uint256 minLongPosition);
 
     /**
-     * @notice Emitted when a security deposit is paid.
+     * @notice Emitted when a security deposit is refunded.
      * @param paidBy Address of the user who paid the security deposit
      * @param receivedBy Address of the user who received the security deposit
      * @param amount Amount of security deposit refunded
