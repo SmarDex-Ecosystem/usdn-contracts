@@ -31,9 +31,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
     uint256 expectedLiquidatorRewards;
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableFunding = false;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         usdn.approve(address(protocol), type(uint256).max);

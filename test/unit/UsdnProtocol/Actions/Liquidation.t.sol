@@ -14,9 +14,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     bool internal _reenter;
 
     function setUp() public {
-        SetUpParams memory params = DEFAULT_PARAMS;
-        params.flags.enableFunding = false;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
 
         usdn.approve(address(protocol), type(uint256).max);
 
