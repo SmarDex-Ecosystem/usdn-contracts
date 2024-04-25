@@ -9,9 +9,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 /// @custom:feature Test the _liquidatePositions internal function of the long layer
 contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableFunding = true;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**
@@ -93,7 +91,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
 
         assertLt(
-            protocol.getMaxInitializedTick(),
+            protocol.getHighestPopulatedTick(),
             desiredLiqTick,
             "The max Initialized tick should be lower than the last liquidated tick"
         );
@@ -107,6 +105,10 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
      * @custom:then It should liquidate the position.
      */
     function test_canLiquidateAPositionWithFundings() public {
+        params = DEFAULT_PARAMS;
+        params.flags.enableFunding = true;
+        super._setUp(params);
+
         uint128 price = 2000 ether;
         int24 desiredLiqTick = protocol.getEffectiveTickForPrice(price - 200 ether);
         uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
@@ -122,7 +124,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             })
         );
 
-        skip(34 days);
+        skip(3 days);
         protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
 
         uint128 liqPriceAfterFundings =
@@ -185,7 +187,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         assertEq(logsAmount, 1, "Only one log should have been emitted");
         assertEq(liquidationsEffects.liquidatedPositions, 1, "Only one position should have been liquidated");
         assertEq(
-            protocol.getMaxInitializedTick(),
+            protocol.getHighestPopulatedTick(),
             TickMath.minUsableTick(protocol.getTickSpacing()),
             "The max Initialized tick should be equal to the very last tick"
         );
@@ -254,7 +256,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         );
 
         assertEq(
-            protocol.getMaxInitializedTick(),
+            protocol.getHighestPopulatedTick(),
             ticksToLiquidate[ticksToLiquidate.length - 1],
             "Max initialized tick should be the last tick left to liquidate"
         );

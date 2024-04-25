@@ -16,7 +16,6 @@ import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 5 ether;
         params.initialLong = 10 ether;
         params.flags.enableUsdnRebase = true;
         super._setUp(params);

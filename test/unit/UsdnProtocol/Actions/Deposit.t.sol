@@ -21,7 +21,6 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
         params.flags.enableSdexBurnOnDeposit = true;
         super._setUp(params);
 
@@ -199,7 +198,6 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function test_smallDepositSDEXBurnDisabled() public {
         params = DEFAULT_PARAMS;
         params.initialPrice = 1 ether;
-        params.flags.enableSdexBurnOnDeposit = false;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
 
