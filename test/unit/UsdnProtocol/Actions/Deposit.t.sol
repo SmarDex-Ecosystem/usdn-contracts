@@ -194,7 +194,6 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function test_smallDepositSDEXBurnDisabled() public {
         params = DEFAULT_PARAMS;
         params.initialPrice = 1 ether;
-        params.flags.enableSdexBurnOnDeposit = false;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
 
