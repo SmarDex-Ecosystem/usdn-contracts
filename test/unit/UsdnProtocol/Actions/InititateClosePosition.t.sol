@@ -209,7 +209,13 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
         protocol.initiateClosePosition(
-            tick, tickVersion, index, positionAmount, priceData, PreviousActionsData(previousData, rawIndices), USER_1
+            tick,
+            tickVersion,
+            index,
+            positionAmount,
+            priceData,
+            PreviousActionsData(previousData, rawIndices),
+            address(this)
         );
     }
 
