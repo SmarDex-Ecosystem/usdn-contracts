@@ -12,9 +12,11 @@ import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProto
  * @custom:feature The getter functions of the USDN Protocol
  * @custom:background Given a protocol initialized at equilibrium
  */
-contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
+        params.flags.enableFunding = true;
+        params.flags.enableProtocolFees = false;
         params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
         super._setUp(params);
     }
@@ -29,7 +31,9 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
          * 5000 - 5000 / 1.000000001 = 0.000004999999995001
          * tick(0.000004999999995001) = -122100 => + tickSpacing = -122000
          */
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), TickMath.getPriceAtTick(-122_000), "for price = 5000");
+        assertEq(
+            protocol.getMinLiquidationPrice(5000 ether), protocol.getEffectivePriceForTick(-122_000), "for price = 5000"
+        );
 
         /**
          * 10^12 - 10^12 / 1.000000001 < MINIMUM_PRICE
@@ -37,7 +41,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
          */
         assertEq(
             protocol.getMinLiquidationPrice(10 ** 12),
-            TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing()),
+            protocol.getEffectivePriceForTick(protocol.minTick() + protocol.getTickSpacing()),
             "for price = 1 * 10^12 wei"
         );
     }
@@ -65,7 +69,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_042_034_709_631, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_043_690_835_384, "wrong minimum liquidation price");
     }
 
     /**
@@ -83,7 +87,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_045_368_555_235, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_032_680_073_587, "wrong minimum liquidation price");
     }
 
     /**
@@ -99,7 +103,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
         protocol.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS() + 1);
         assertEq(
             protocol.getMinLiquidationPrice(5000 ether),
-            TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
+            protocol.getEffectivePriceForTick(protocol.minTick() + protocol.getTickSpacing())
         );
     }
 
@@ -114,7 +118,7 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
          * tick(454.545454545454545455) = 61_100 => + tickSpacing = 61_200
          */
         protocol.setMinLeverage(11 * 10 ** (protocol.LEVERAGE_DECIMALS() - 1)); // = x1.1
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), TickMath.getPriceAtTick(61_200));
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), protocol.getEffectivePriceForTick(61_200));
     }
 
     /**
