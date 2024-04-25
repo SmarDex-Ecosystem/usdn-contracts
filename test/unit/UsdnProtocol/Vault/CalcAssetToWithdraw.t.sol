@@ -18,9 +18,7 @@ contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBas
     uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableFunding = false;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
         usdn.approve(address(protocol), type(uint256).max);
         // user deposits wstETH at price $2000
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
@@ -41,5 +39,26 @@ contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBas
 
         assetExpected = protocol.calcAssetToWithdraw(uint152(24_860_000_000 ether), 2000 ether);
         assertEq(assetExpected, 12_430_000, "asset to transfer");
+    }
+
+    /**
+     * @custom:scenario Fuzzing the `calcAssetToWithdraw` and `withdraw` functions
+     * @custom:given A user who deposited 1 wstETH at price $2000 to get 2000 USDN
+     * @custom:when The user withdraw an amount of USDN shares from the vault
+     * @custom:then The amount of asset should be calculated correctly
+     */
+    function testFuzz_compareCalcAssetToWithdrawAndWithdraw(uint152 shares) public {
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        shares = uint152(bound(shares, 1, usdn.sharesOf(address(this))));
+
+        // calculate the expected asset to be received
+        uint256 assetExpected = protocol.calcAssetToWithdraw(shares, 2000 ether);
+
+        protocol.initiateWithdrawal(shares, currentPrice, EMPTY_PREVIOUS_DATA);
+        // wait the required delay between initiation and validation
+        _waitDelay();
+        protocol.validateWithdrawal(currentPrice, EMPTY_PREVIOUS_DATA);
+
+        assertEq(wstETH.balanceOf(address(this)), assetExpected, "wstETH user balance after withdraw");
     }
 }
