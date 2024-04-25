@@ -1243,6 +1243,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         success_ = true;
         executed_ = true;
         securityDepositValue_ = pending.securityDepositValue * SECURITY_DEPOSIT_FACTOR;
+        emit SecurityDepositRefunded(pending.user, msg.sender, securityDepositValue_);
     }
 
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
