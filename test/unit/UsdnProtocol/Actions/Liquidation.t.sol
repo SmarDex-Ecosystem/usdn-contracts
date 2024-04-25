@@ -5,12 +5,14 @@ import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
 contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        SetUpParams memory params = DEFAULT_PARAMS;
+        params.flags.enableFunding = false;
+        super._setUp(params);
 
         usdn.approve(address(protocol), type(uint256).max);
 
@@ -445,19 +447,18 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.prank(DEPLOYER);
         liquidationRewardsManager.setRewardsParameters(10_000, 30_000, 20_000, 1000 gwei, 20_000);
 
-        // Trigger PnL and funding calculations now to avoid having to predict them later
-        protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
-
         uint256 expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
         // Sanity check
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
 
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
-        uint256 vaultBalanceBeforeRewards = protocol.getBalanceVault();
-
         // Get the proper liquidation price for the tick
         price = protocol.getEffectivePriceForTick(tick);
         int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTickData(tick));
+        int256 vaultAssetAvailable = protocol.i_vaultAssetAvailable(price);
+
+        // we need to skip 1 minute to make the new price data fresh
+        skip(1 minutes);
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
@@ -475,8 +476,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Check that the vault balance got updated
         assertEq(
-            vaultBalanceBeforeRewards + uint256(collateralLiquidated) - protocol.getBalanceVault(),
-            expectedLiquidatorRewards,
+            protocol.getBalanceVault(),
+            uint256(vaultAssetAvailable) + uint256(collateralLiquidated) - expectedLiquidatorRewards,
             "The vault does not contain the right amount of funds"
         );
     }
@@ -490,7 +491,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
      * @custom:and The protocol send rewards for the liquidation based on what's left in the vault
      */
     function test_canLiquidateAndReceiveRewardsUpToTheVaultBalance() public {
-        uint128 price = 2000 ether;
+        uint128 initialPrice = params.initialPrice;
+        uint128 endPrice = 1700 ether;
 
         // Setup a long position from another user
         (int24 tick,,) = setUpUserPositionInLong(
@@ -498,8 +500,8 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
                 positionSize: 5 ether,
-                desiredLiqPrice: 1700 ether,
-                price: price
+                desiredLiqPrice: endPrice,
+                price: initialPrice
             })
         );
 
@@ -524,13 +526,17 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         );
 
         // Get the proper liquidation price for the tick
-        price = protocol.getEffectivePriceForTick(tick);
+        uint128 price = protocol.getEffectivePriceForTick(tick);
+        // Calculate the rewards that the liquidator should receive (collateral liquidated + vault balance)
         int256 collateralLiquidated = protocol.i_tickValue(price, tick, protocol.getTickData(tick));
+        int256 vaultAssetAvailable = protocol.i_vaultAssetAvailable(price);
+        uint256 expectedRewards = uint256(vaultAssetAvailable + collateralLiquidated);
+
+        // we need to skip 1 minute to make the new price data fresh
+        skip(1 minutes);
 
         vm.expectEmit();
-        emit IUsdnProtocolEvents.LiquidatorRewarded(
-            address(this), vaultBalanceBeforeRewards + uint256(collateralLiquidated)
-        );
+        emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedRewards);
         uint256 liquidatedPositions = protocol.liquidate(abi.encode(price), 1);
 
         // Check that the right number of positions have been liquidated
@@ -538,7 +544,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         assertEq(
             wstETH.balanceOf(address(this)) - wstETHBalanceBeforeRewards,
-            vaultBalanceBeforeRewards + uint256(collateralLiquidated),
+            expectedRewards,
             "The liquidator did not receive the right amount of rewards"
         );
         assertEq(protocol.getBalanceVault(), 0, "The vault should have given what was left");
@@ -569,8 +575,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // price drops
         skip(1 hours);
-        currentPrice = 1000 ether;
-        priceData = abi.encode(currentPrice);
+        priceData = abi.encode(1000 ether);
 
         // liquidate
         uint256 balanceBefore = address(this).balance;

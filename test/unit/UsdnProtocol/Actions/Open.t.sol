@@ -32,8 +32,6 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.flags.enableProtocolFees = false;
-        params.flags.enableFunding = false;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
     }

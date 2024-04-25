@@ -32,10 +32,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.flags.enableFunding = false;
         params.flags.enablePositionFees = false;
-        params.flags.enableProtocolFees = false;
-
         super._setUp(params);
 
         (tick, tickVersion, index) = setUpUserPositionInLong(
@@ -136,6 +133,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_RevertWhen_closePartialPositionWithAnOutdatedTick() external {
         bytes memory priceData = abi.encode(protocol.getEffectivePriceForTick(tick));
 
+        // we need wait delay to make the new price data fresh
+        _waitDelay();
         // Liquidate the position
         protocol.liquidate(priceData, 1);
         (, uint256 version) = protocol.i_tickHash(tick);
