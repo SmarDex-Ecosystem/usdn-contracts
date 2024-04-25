@@ -13,6 +13,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
+        params.flags.enableFunding = true;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
     }

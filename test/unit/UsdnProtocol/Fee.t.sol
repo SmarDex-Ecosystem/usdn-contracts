@@ -13,7 +13,10 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  */
 contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.flags.enableFunding = true;
+        params.flags.enableProtocolFees = true;
+        super._setUp(params);
     }
 
     /**
