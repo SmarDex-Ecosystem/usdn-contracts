@@ -12,10 +12,7 @@ import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfac
  */
 contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableProtocolFees = false;
-        params.flags.enableFunding = false;
-        _setUp(params);
+        _setUp(DEFAULT_PARAMS);
     }
 
     /**

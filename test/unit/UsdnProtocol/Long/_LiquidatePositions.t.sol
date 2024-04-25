@@ -9,7 +9,9 @@ import { TickMath } from "src/libraries/TickMath.sol";
 /// @custom:feature Test the _liquidatePositions internal function of the long layer
 contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.flags.enableFunding = true;
+        super._setUp(params);
     }
 
     /**
