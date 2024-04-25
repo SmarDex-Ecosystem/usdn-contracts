@@ -330,23 +330,21 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
-     * @custom:scenario The initial open position and a user open position are opened. The price drop and all positions
-     * can be liquidated.
-     * The first `initiateClosePosition` liquidate the initial open position but isn't validated as a position must
-     * always be liquidated.
-     * The second `initiateClosePosition` liquidate the remaining user open position and can be validated
-     * @custom:given The initial open position
+     * @custom:scenario A initiate close liquidates a pending tick but is not validated
+     * because a tick still need to be liquidated
      * @custom:and A first user open position
-     * @custom:and The price drop below all position liquidation price
+     * @custom:given The initial open position
+     * @custom:and A second user open position with a liquidation price below all others
+     * @custom:and The price drop below the initiate and the first user open position
      * @custom:when The first `initiateClosePosition` is called
-     * @custom:and The initial open position is liquidated
-     * @custom:and The user open position still need to be liquidated
-     * @custom:and The close position isn't validated
+     * @custom:and The initial open position tick is liquidated
+     * @custom:and The first user open position tick still need to be liquidated
+     * @custom:and The user close isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `initiateClosePosition` is called
-     * @custom:and The remaining user open position is liquidated
-     * @custom:and No more position needs to be liquidated
-     * @custom:and The close position is validated
+     * @custom:and The first user open position tick is liquidated
+     * @custom:and No more tick needs to be liquidated
+     * @custom:and The user close is validated
      * @custom:then The transaction is completed
      */
     function test_initiateClosePositionIsPendingLiquidation() public {
@@ -360,7 +358,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         assertTrue(tick != initialPosTick, "same tick");
         skip(30 minutes - oracleMiddleware.getValidationDelay());
 
-        // user open position with a liquidation price lower than others positions
+        // user open position with a liquidation price far lower than others positions
         (int24 userPosTick, uint256 userPosTickVersion, uint256 userPosIndex) = setUpUserPositionInLong(
             OpenParams(
                 USER_1, ProtocolAction.ValidateOpenPosition, 10 ether, params.initialPrice / 30, params.initialPrice
@@ -368,6 +366,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
 
         assertTrue(initialPosTick != userPosTick, "same tick");
+
+        // required for a price update
         skip(30 minutes - oracleMiddleware.getValidationDelay());
 
         {
@@ -385,12 +385,21 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 USER_1
             );
 
+            _waitDelay();
+
+            vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+            protocol.validateClosePosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
+
+            // should liquidate user position tick
+            assertEq(tickVersion + 1, protocol.getTickVersion(tick), "contract position is not liquidated");
+            // should not liquidate the initial position tick
+            assertEq(initialPosTickVersion, protocol.getTickVersion(initialPosTick), "initial position is liquidated");
+            // should not being validated because a tick still need to be liquidated
             assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
             assertEq(wstethBalanceBefore, wstETH.balanceOf(USER_1), "different user wsteth balance");
-            assertEq(tickVersion + 1, protocol.getTickVersion(tick), "contract position is not liquidated");
-            assertEq(initialPosTickVersion, protocol.getTickVersion(initialPosTick), "initial position is liquidated");
         }
 
+        // required for a price update
         skip(30 minutes - oracleMiddleware.getValidationDelay());
 
         {
@@ -409,15 +418,122 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
             _waitDelay();
 
+            // should be completed
             protocol.validateClosePosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
             vm.stopPrank();
 
-            assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
-            assertLt(wstethBalanceBefore, wstETH.balanceOf(USER_1), "same user wsteth balance");
+            // should liquidate the initial position tick
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position isn't liquidated"
             );
+            // should be validated because no more position need to be liquidated
+            assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
+            assertLt(wstethBalanceBefore, wstETH.balanceOf(USER_1), "same user wsteth balance");
+        }
+    }
+
+    /**
+     * @custom:scenario A initiate close liquidates a tick but is not validated
+     * because a tick still need to be liquidated. In the same block another close
+     * liquid the remaining tick and is validated
+     * @custom:and A first user open position
+     * @custom:given The initial open position
+     * @custom:and A second user open position with a liquidation price below all others
+     * @custom:and The price drop below the initiate and the first user open position
+     * @custom:when The first `initiateClosePosition` is called
+     * @custom:and The initial open position tick is liquidated
+     * @custom:and The first user open position tick still need to be liquidated
+     * @custom:and The user close isn't validated
+     * @custom:then The transaction is completed
+     * @custom:when The second `initiateClosePosition` is called in the same block
+     * @custom:and The first user open position tick is liquidated
+     * @custom:and No more tick needs to be liquidated
+     * @custom:and The user close is validated
+     * @custom:then The transaction is completed
+     */
+    function test_initiateClosePositionSameBlockIsPendingLiquidation() public {
+        // initial position tick
+        uint128 initialLiqPriceWithoutPenalty = (params.initialPrice / 2)
+            + params.initialPrice / 2 * uint128(protocol.getProtocolFeeBps()) / uint128(protocol.BPS_DIVISOR());
+        int24 initialPosTick = protocol.getEffectiveTickForPrice(initialLiqPriceWithoutPenalty)
+            + int24(int8(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        uint256 initialPosTickVersion = protocol.getTickVersion(initialPosTick);
+
+        assertTrue(tick != initialPosTick, "same tick");
+        skip(30 minutes - oracleMiddleware.getValidationDelay());
+
+        // user open position with a liquidation price far lower than others positions
+        (int24 userPosTick, uint256 userPosTickVersion, uint256 userPosIndex) = setUpUserPositionInLong(
+            OpenParams(
+                USER_1, ProtocolAction.ValidateOpenPosition, 10 ether, params.initialPrice / 30, params.initialPrice
+            )
+        );
+
+        assertTrue(initialPosTick != userPosTick, "same tick");
+
+        // required for a price update
+        skip(30 minutes - oracleMiddleware.getValidationDelay());
+
+        {
+            uint256 wstethBalanceBefore = wstETH.balanceOf(USER_1);
+            uint256 balanceETHBefore = USER_1.balance;
+
+            vm.startPrank(USER_1);
+            protocol.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
+                userPosTick,
+                userPosTickVersion,
+                userPosIndex,
+                10 ether,
+                abi.encode(params.initialPrice / 10),
+                EMPTY_PREVIOUS_DATA,
+                USER_1
+            );
+
+            _waitDelay();
+
+            vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+            protocol.validateClosePosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
+
+            // should liquidate user position tick
+            assertEq(tickVersion + 1, protocol.getTickVersion(tick), "contract position is not liquidated");
+            // should not liquidate the initial position tick
+            assertEq(initialPosTickVersion, protocol.getTickVersion(initialPosTick), "initial position is liquidated");
+            // should not being validated because a tick still need to be liquidated
+            assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
+            assertEq(wstethBalanceBefore, wstETH.balanceOf(USER_1), "different user wsteth balance");
+        }
+
+        // next user deposit will be in the same block
+
+        {
+            uint256 wstethBalanceBefore = wstETH.balanceOf(USER_1);
+            uint256 balanceETHBefore = USER_1.balance;
+
+            protocol.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
+                userPosTick,
+                userPosTickVersion,
+                userPosIndex,
+                10 ether,
+                abi.encode(params.initialPrice / 10),
+                EMPTY_PREVIOUS_DATA,
+                USER_1
+            );
+
+            _waitDelay();
+
+            // should be completed
+            protocol.validateClosePosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
+
+            vm.stopPrank();
+
+            // should liquidate the initial position tick
+            assertEq(
+                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position isn't liquidated"
+            );
+            // should be validated because no more position need to be liquidated
+            assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
+            assertLt(wstethBalanceBefore, wstETH.balanceOf(USER_1), "same user wsteth balance");
         }
     }
 
