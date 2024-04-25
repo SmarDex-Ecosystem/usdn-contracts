@@ -54,7 +54,7 @@ contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBas
         // calculate the expected asset to be received
         uint256 assetExpected = protocol.calcAssetToWithdraw(shares, 2000 ether);
 
-        protocol.initiateWithdrawal(shares, currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(shares, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
         // wait the required delay between initiation and validation
         _waitDelay();
         protocol.validateWithdrawal(currentPrice, EMPTY_PREVIOUS_DATA);
