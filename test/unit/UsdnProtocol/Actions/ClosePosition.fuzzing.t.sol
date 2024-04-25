@@ -18,10 +18,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.flags.enableFunding = false;
         params.flags.enablePositionFees = false;
-        params.flags.enableProtocolFees = false;
-
         super._setUp(params);
     }
 
@@ -50,11 +47,13 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
 
         bytes memory priceData = abi.encode(params.initialPrice);
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this),
-            ProtocolAction.ValidateOpenPosition,
-            uint128(amountToOpen),
-            params.initialPrice - (params.initialPrice / 5),
-            params.initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: uint128(amountToOpen),
+                desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
+                price: params.initialPrice
+            })
         );
 
         uint256 amountClosed;
@@ -64,7 +63,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             amountClosed += amountToClose;
 
             protocol.initiateClosePosition(
-                tick, tickVersion, index, uint128(amountToClose), priceData, EMPTY_PREVIOUS_DATA
+                tick, tickVersion, index, uint128(amountToClose), priceData, EMPTY_PREVIOUS_DATA, address(this)
             );
             _waitDelay();
             protocol.i_validateClosePosition(address(this), priceData);
@@ -84,7 +83,13 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
         // Close the what's left of the position
         if (amountClosed != amountToOpen) {
             protocol.initiateClosePosition(
-                tick, tickVersion, index, uint128(amountToOpen - amountClosed), priceData, EMPTY_PREVIOUS_DATA
+                tick,
+                tickVersion,
+                index,
+                uint128(amountToOpen - amountClosed),
+                priceData,
+                EMPTY_PREVIOUS_DATA,
+                address(this)
             );
             _waitDelay();
             protocol.i_validateClosePosition(address(this), priceData);

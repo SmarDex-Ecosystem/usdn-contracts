@@ -14,6 +14,7 @@ import { ADMIN } from "test/utils/Constants.sol";
 contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     function setUp() public {
         SetUpParams memory params = DEFAULT_PARAMS;
+        params.flags.enableFunding = false;
         params.flags.enableLimits = true;
         params.initialDeposit = 49.199702697034631562 ether;
         params.initialLong = 50 ether;
@@ -36,18 +37,33 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
      * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should revert when vault expo equal 0
      * @custom:given The protocol is balanced
      * @custom:and A long position is opened
-     * @custom:and The price crashes very hard and liquidates the existing positions
+     * @custom:and The price is increased and profit exceeds the vault balance
      * @custom:and The vault balance/expo is 0
      * @custom:when The `_checkImbalanceLimitWithdrawal` function is called
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_checkImbalanceLimitWithdrawalZeroVaultExpo() public {
-        setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 0.5 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
 
-        // liquidate everything with huge bad debt
-        protocol.liquidate(abi.encode(params.initialPrice / 100), 1);
+        protocol.initiateClosePosition(
+            tick,
+            tickVersion,
+            index,
+            0.5 ether,
+            abi.encode(params.initialPrice * 10_000),
+            EMPTY_PREVIOUS_DATA,
+            address(this)
+        );
+        _waitDelay();
+        protocol.validateClosePosition(abi.encode(params.initialPrice * 10_000), EMPTY_PREVIOUS_DATA);
 
         // vault expo should be zero
         assertEq(protocol.getBalanceVault(), 0, "vault expo isn't 0");

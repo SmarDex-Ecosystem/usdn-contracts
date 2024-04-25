@@ -13,7 +13,10 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  */
 contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.flags.enableFunding = true;
+        params.flags.enableProtocolFees = true;
+        super._setUp(params);
     }
 
     /**
@@ -110,12 +113,15 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
             address(this), ProtocolAction.ValidateDeposit, 10_000 ether, DEFAULT_PARAMS.initialPrice
         );
         skip(4 days);
+
         setUpUserPositionInLong(
-            address(this),
-            ProtocolAction.ValidateOpenPosition,
-            5000 ether,
-            DEFAULT_PARAMS.initialPrice / 2,
-            DEFAULT_PARAMS.initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 5000 ether,
+                desiredLiqPrice: DEFAULT_PARAMS.initialPrice / 2,
+                price: DEFAULT_PARAMS.initialPrice
+            })
         );
         skip(8 days);
         assertEq(wstETH.balanceOf(ADMIN), 0, "fee collector balance before collect");
