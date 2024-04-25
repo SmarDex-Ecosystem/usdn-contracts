@@ -13,7 +13,6 @@ import {
     LongPendingAction,
     ProtocolAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature The entry/exit position fees mechanism of the protocol
@@ -57,10 +56,11 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA, address(this));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        (, uint128 leverage,, uint256 price,,,) =
-            abi.decode(logs[0].data, (uint40, uint128, uint128, uint128, int24, uint256, uint256));
+        assertEq(logs[1].topics[0], InitiatedOpenPosition.selector);
 
-        assertEq(logs[0].topics[0], InitiatedOpenPosition.selector);
+        (, uint128 leverage,, uint256 price,,,) =
+            abi.decode(logs[1].data, (uint40, uint128, uint128, uint128, int24, uint256, uint256));
+
         assertEq(price, expectedPrice, "assetPrice");
         assertEq(leverage, expectedLeverage, "leverage");
     }
