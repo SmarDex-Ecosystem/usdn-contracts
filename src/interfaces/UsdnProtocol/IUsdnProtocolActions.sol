@@ -21,11 +21,13 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param amount The amount of wstETH to deposit.
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
+     * @param to The address that will receive the USDN tokens
      */
     function initiateDeposit(
         uint128 amount,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData,
+        address to
     ) external payable;
 
     /**
@@ -55,11 +57,13 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
+     * @param to The address that will receive the assets
      */
     function initiateWithdrawal(
         uint152 usdnShares,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData,
+        address to
     ) external payable;
 
     /**
@@ -92,6 +96,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions.
+     * @param to The address that will be the owner of the position
      * @return tick_ The tick containing the new position
      * @return tickVersion_ The tick version
      * @return index_ The index of the new position inside the tick array
@@ -100,7 +105,8 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         uint128 amount,
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData,
+        address to
     ) external payable returns (int24 tick_, uint256 tickVersion_, uint256 index_);
 
     /**
@@ -141,6 +147,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
+     * @param to The address that will receive the assets
      */
     function initiateClosePosition(
         int24 tick,
@@ -148,7 +155,8 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         uint256 index,
         uint128 amountToClose,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData
+        PreviousActionsData calldata previousActionsData,
+        address to
     ) external payable;
 
     /**

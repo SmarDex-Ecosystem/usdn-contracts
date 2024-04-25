@@ -32,11 +32,13 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
         assertEq(highestPopulatedTick, _initialTick, "The tick of protocol initialization should have been found");
 
         (int24 higherTick,,) = setUpUserPositionInLong(
-            address(this),
-            ProtocolAction.ValidateOpenPosition,
-            1 ether,
-            DEFAULT_PARAMS.initialPrice - 400 ether,
-            DEFAULT_PARAMS.initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: DEFAULT_PARAMS.initialPrice - 400 ether,
+                price: DEFAULT_PARAMS.initialPrice
+            })
         );
 
         // Add a position in a higher liquidation tick to check the result changes
@@ -44,7 +46,7 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
         assertEq(highestPopulatedTick, higherTick, "The tick of the newly created position should have been found");
 
         // Search from lower than the higher tick previously populated
-        highestPopulatedTick = protocol.i_findHighestPopulatedTick(higherTick - 1);
+        highestPopulatedTick = protocol.i_findHighestPopulatedTick(higherTick - protocol.getTickSpacing());
         assertEq(
             highestPopulatedTick, _initialTick, "The tick lower than the newly created position should have been found"
         );
@@ -57,7 +59,7 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
      * @custom:then the minimum usable tick is returned
      */
     function test_findHighestPopulatedTickWhenNothingFound() public {
-        int24 result = protocol.i_findHighestPopulatedTick(_initialTick - 1);
+        int24 result = protocol.i_findHighestPopulatedTick(_initialTick - protocol.getTickSpacing());
         assertEq(result, protocol.minTick(), "No tick should have been found (min usable tick returned)");
     }
 }

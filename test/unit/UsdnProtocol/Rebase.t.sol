@@ -18,8 +18,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         params.initialDeposit = 5 ether;
         params.initialLong = 10 ether;
         params.flags.enablePositionFees = false;
-        params.flags.enableProtocolFees = false;
-        params.flags.enableFunding = false;
         params.flags.enableUsdnRebase = true;
         super._setUp(params);
 
@@ -128,7 +126,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateDeposit(1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit(1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this));
     }
 
     /**
@@ -174,7 +172,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateWithdrawal(100 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal(100 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this));
     }
 
     /**
@@ -219,7 +217,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateOpenPosition(1 ether, params.initialPrice / 2, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.initiateOpenPosition(
+            1 ether, params.initialPrice / 2, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this)
+        );
     }
 
     /**
@@ -230,7 +230,13 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenValidateOpenPosition() public {
         setUpUserPositionInLong(
-            address(this), ProtocolAction.InitiateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
 
         // initial price is $1
@@ -255,7 +261,13 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenInitiateClosePosition() public {
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
 
         // initial price is $1
@@ -269,7 +281,9 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.initiateClosePosition(
+            tick, tickVersion, index, 1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this)
+        );
     }
 
     /**
@@ -280,7 +294,13 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      */
     function test_usdnRebaseWhenValidateClosePosition() public {
         setUpUserPositionInLong(
-            address(this), ProtocolAction.InitiateClosePosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
 
         // initial price is $1
