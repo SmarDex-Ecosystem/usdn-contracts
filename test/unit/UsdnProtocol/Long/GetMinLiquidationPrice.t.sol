@@ -15,7 +15,6 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         params = DEFAULT_PARAMS;
         params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
         params.flags.enableFunding = true;
-        params.flags.enableProtocolFees = true;
         super._setUp(params);
     }
 
@@ -65,7 +64,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_042_034_709_631, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_042_032_017_225, "wrong minimum liquidation price");
     }
 
     /**
@@ -83,7 +82,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_045_368_555_235, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_032_680_073_587, "wrong minimum liquidation price");
     }
 
     /**
