@@ -124,7 +124,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             })
         );
 
-        skip(34 days);
+        skip(3 days);
         protocol.i_applyPnlAndFunding(price, uint128(block.timestamp));
 
         uint128 liqPriceAfterFundings =
