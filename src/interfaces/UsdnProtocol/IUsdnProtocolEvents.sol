@@ -357,8 +357,8 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a security deposit is paid.
      * @param paidBy Address of the user who paid the security deposit
-     * @param receiver Address of the user who received the security deposit
+     * @param receivedBy Address of the user who received the security deposit
      * @param amount Amount of security deposit refunded
      */
-    event SecurityDepositRefunded(address indexed paidBy, address indexed receiver, uint256 amount);
+    event SecurityDepositRefunded(address indexed paidBy, address indexed receivedBy, uint256 amount);
 }
