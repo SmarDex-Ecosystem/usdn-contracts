@@ -463,13 +463,12 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
 
         /* -------------------------- Balance Vault & Long -------------------------- */
-        assertEq(vaultBalanceBefore, protocol.getBalanceVault(), "Balance of the vault should not have changed");
-        assertApproxEqAbs(
-            longBalanceBefore - uint256(profits),
-            protocol.getBalanceLong(),
-            1,
-            "Profits should have been subtracted from the long's balance"
+        assertEq(
+            protocol.getBalanceVault(),
+            vaultBalanceBefore - (assetToTransfer - action.closeTempTransfer),
+            "Balance of the vault should decrease to pay the missing profit"
         );
+        assertEq(protocol.getBalanceLong(), longBalanceBefore, "Long balance should not change");
     }
 
     /**

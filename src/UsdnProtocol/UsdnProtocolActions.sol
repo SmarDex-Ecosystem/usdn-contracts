@@ -1242,7 +1242,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Normally, the position value should be smaller than `long.closeTempTransfer` (due to the position fee).
         // We can send the difference (any remaining collateral) to the vault.
         // If the price increased since the initiate, it's possible that the position value is higher than the
-        // `long.closeTempTransfer`. In this case, we need to further reduce the long balance.
+        // `long.closeTempTransfer`. In this case, we need to take the missing assets from the vault.
         if (assetToTransfer < long.closeTempTransfer) {
             uint256 remainingCollateral;
             unchecked {
@@ -1250,11 +1250,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             }
             _balanceVault += remainingCollateral;
         } else if (assetToTransfer > long.closeTempTransfer) {
-            uint256 toRemove;
+            uint256 missingValue;
             unchecked {
-                toRemove = assetToTransfer - long.closeTempTransfer;
+                missingValue = assetToTransfer - long.closeTempTransfer;
             }
-            _balanceLong -= toRemove;
+            _balanceVault -= missingValue;
         }
 
         // send the asset to the user
