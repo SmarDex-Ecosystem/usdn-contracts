@@ -389,7 +389,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @notice Get the highest tick that has an open position
      * @return The highest populated tick
      */
-    function getMaxInitializedTick() external view returns (int24);
+    function getHighestPopulatedTick() external view returns (int24);
 
     /**
      * @notice Get the total number of long positions currently open

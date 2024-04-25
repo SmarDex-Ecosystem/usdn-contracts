@@ -112,10 +112,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @notice Find the largest tick which contains at least one position
+     * @notice Find the highest tick that contains at least one position
+     * @dev If there are no ticks with a position left, returns minTick()
      * @param searchStart The tick from which to start searching
+     * @return tick_ The next highest tick below `searchStart`
      */
-    function _findMaxInitializedTick(int24 searchStart) internal view returns (int24 tick_) {
+    function _findHighestPopulatedTick(int24 searchStart) internal view returns (int24 tick_) {
         uint256 index = _tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchStart));
         if (index == LibBitmap.NOT_FOUND) {
             tick_ = minTick();
@@ -232,9 +234,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // Add to tick array
         Position[] storage tickArray = _longPositions[tickHash];
         index_ = tickArray.length;
-        if (tick > _maxInitializedTick) {
-            // keep track of max initialized tick
-            _maxInitializedTick = tick;
+        if (tick > _highestPopulatedTick) {
+            // keep track of the highest populated tick
+            _highestPopulatedTick = tick;
         }
         tickArray.push(long);
 
@@ -386,7 +388,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         int24 currentTick = TickMath.getClosestTickAtPrice(
             FixedPointMathLib.fullMulDiv(currentPrice, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, _liquidationMultiplier)
         );
-        int24 tick = _maxInitializedTick;
+        int24 tick = _highestPopulatedTick;
 
         do {
             {
@@ -430,10 +432,10 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         if (effects_.liquidatedPositions != 0) {
             if (tick < currentTick) {
                 // all ticks above the current tick were liquidated
-                _maxInitializedTick = _findMaxInitializedTick(currentTick);
+                _highestPopulatedTick = _findHighestPopulatedTick(currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                _maxInitializedTick = _findMaxInitializedTick(tick);
+                _highestPopulatedTick = _findHighestPopulatedTick(tick);
             }
         }
 
