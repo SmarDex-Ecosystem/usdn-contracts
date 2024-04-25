@@ -13,10 +13,13 @@ import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
 contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
     function setUp() public {
         SetUpParams memory params = DEFAULT_PARAMS;
-        params.flags.enableLimits = true;
         params.initialDeposit = 49.199702697034631562 ether;
         params.initialLong = 50 ether;
         super._setUp(params);
+
+        // we enable only deposit limit
+        vm.prank(ADMIN);
+        protocol.setExpoImbalanceLimits(0, 200, 0, 0);
     }
 
     /**
