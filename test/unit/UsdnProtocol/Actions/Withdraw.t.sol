@@ -98,8 +98,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no pending action");
 
-        WithdrawalPendingAction memory action =
-            protocol.i_toWithdrawalPendingAction(protocol.getUserPendingAction(address(this)));
+        WithdrawalPendingAction memory action = protocol.i_toWithdrawalPendingAction(protocol.getUserPendingAction(to));
         assertTrue(action.action == ProtocolAction.ValidateWithdrawal, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
@@ -243,7 +242,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(initialPrice);
         protocol.initiateWithdrawal(withdrawShares, currentPrice, EMPTY_PREVIOUS_DATA, to);
 
-        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        PendingAction memory pending = protocol.getUserPendingAction(to);
         WithdrawalPendingAction memory withdrawal = protocol.i_toWithdrawalPendingAction(pending);
 
         uint256 vaultBalance = protocol.getBalanceVault(); // save for withdrawn amount calculation in case price
