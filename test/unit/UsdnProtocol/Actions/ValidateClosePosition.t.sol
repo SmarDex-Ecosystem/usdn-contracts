@@ -499,16 +499,16 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
-     * @custom:scenario Validate a close of a position that should be liquidated with bad debt
-     * @custom:given A validated open position
-     * @custom:and The initiate position is already done for the entirety of the deployer's position
-     * @custom:and The price dipped below its liquidation price before the validation
-     * @custom:when The owner of the position validates the close position action
-     * @custom:then The state of the protocol is updated
-     * @custom:and a LiquidatedPosition event is emitted
-     * @custom:and the vault balance falls to zero
+     * @custom:scenario Validate a close of a position that should be liquidated
+     * @custom:given A validated open position where the initiate close was already done at opening price
+     * @custom:and The long balance was decreased by the value of the position that is being closed
+     * @custom:when The price dips below the liquidation price
+     * @custom:and The `validateClosePosition` is called with a price below liquidation
+     * @custom:then The position is liquidated
+     * @custom:and The user doesn't receive their funds back
+     * @custom:and the vault receives any remaining collateral at the time of `initiateClosePosition`
      */
-    function test_internalValidateCloseLiquidatePositionZeroVaultBalance() public {
+    function test_internalValidateCloseLiquidatePosition() public {
         // liquidate the position in setup, leaving only the deployer position
         _waitBeforeLiquidation();
         uint256 liquidated = protocol.testLiquidate(abi.encode(7 * params.initialPrice / 10), 10);
@@ -516,95 +516,34 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         bytes memory priceData = abi.encode(params.initialPrice);
 
+        uint256 longBalanceBefore = protocol.getBalanceLong();
+
         /* ------------------------- Initiate Close Position ------------------------ */
         tick = protocol.getEffectiveTickForPrice(params.initialPrice / 2)
             + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
-        (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(tick, 0, 0);
+        (Position memory pos,) = protocol.getLongPosition(tick, 0, 0);
         vm.prank(DEPLOYER);
         protocol.initiateClosePosition(tick, 0, 0, pos.amount, priceData, EMPTY_PREVIOUS_DATA, address(this));
 
-        /* ------------------ Validate close position with bad debt ----------------- */
+        /* ----------------- Validate close position under liq price ---------------- */
 
-        priceData = abi.encode(50 ether);
+        priceData = abi.encode(800 ether);
         skip(1 hours);
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(DEPLOYER));
+        assertEq(protocol.getBalanceLong(), longBalanceBefore - action.closeTempTransfer, "long balance decreased");
 
-        (, int256 positionValue) = protocol.i_assetToTransfer(
-            50 ether,
-            protocol.i_getEffectivePriceForTick(
-                tick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing(), action.closeLiqMultiplier
-            ),
-            pos.totalExpo,
-            0
-        );
-        assertLt(positionValue, 0, "position value should be negative");
+        uint256 vaultBalanceBefore = protocol.getBalanceVault();
+        uint256 userBalanceBefore = wstETH.balanceOf(DEPLOYER);
 
         // Make sure we liquidate the position
         vm.expectEmit(true, false, false, false);
         emit LiquidatedPosition(DEPLOYER, 0, 0, 0, 0, 0);
         protocol.i_validateClosePosition(DEPLOYER, priceData);
 
-        assertEq(protocol.getBalanceVault(), 0, "final vault balance");
-    }
-
-    /**
-     * @custom:scenario Validate a close of a position that should be liquidated and end up with zero long balance
-     * @custom:given A validated open position
-     * @custom:and The initiate position is already done for the entirety of the deployer's position, right at the
-     * liquidation price
-     * @custom:and The price dipped just below its liquidation price before the validation
-     * @custom:when The owner of the position validates the close position action
-     * @custom:then The state of the protocol is updated
-     * @custom:and a LiquidatedPosition event is emitted
-     * @custom:and the long balance falls to zero
-     */
-    function test_internalValidateCloseLiquidatePositionZeroLongBalance() public {
-        skip(1 minutes);
-
-        int24 deployerTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2)
-            + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
-
-        // liquidate the position in setup, leaving only the deployer position
-        uint128 liquidationPrice = protocol.getEffectivePriceForTick(tick);
-        uint256 liquidated = protocol.testLiquidate(abi.encode(liquidationPrice - 1), 10);
-        assertEq(liquidated, 1, "liquidated");
-
-        // we initiate the close with a price that leaves little remaining collateral
-        liquidationPrice = protocol.getEffectivePriceForTick(deployerTick);
-        bytes memory priceData = abi.encode(liquidationPrice);
-
-        /* ------------------------- Initiate Close Position ------------------------ */
-
-        (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(deployerTick, 0, 0);
-        vm.prank(DEPLOYER);
-        protocol.initiateClosePosition(deployerTick, 0, 0, pos.amount, priceData, EMPTY_PREVIOUS_DATA, DEPLOYER);
-
-        /* ---- Validate close position with a large enough remaining collateral ---- */
-
-        _waitDelay();
-
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(DEPLOYER));
-
-        liquidationPrice = protocol.getEffectivePriceForTick(deployerTick);
-        priceData = abi.encode(liquidationPrice * 99 / 100);
-
-        (, int256 positionValue) = protocol.i_assetToTransfer(
-            liquidationPrice * 99 / 100,
-            protocol.i_getEffectivePriceForTick(
-                deployerTick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing(), action.closeLiqMultiplier
-            ),
-            pos.totalExpo,
-            0
-        );
-        assertGt(positionValue, 0, "position value should be positive");
-
-        // Make sure we liquidate the position
-        vm.expectEmit(true, false, false, false);
-        emit LiquidatedPosition(DEPLOYER, 0, 0, 0, 0, 0);
-        protocol.i_validateClosePosition(DEPLOYER, priceData);
-
-        assertEq(protocol.getBalanceLong(), 0, "final long balance");
+        assertEq(protocol.getBalanceVault(), vaultBalanceBefore + action.closeTempTransfer, "final vault balance");
+        assertEq(protocol.getBalanceLong(), longBalanceBefore - action.closeTempTransfer, "final long balance");
+        assertEq(wstETH.balanceOf(DEPLOYER), userBalanceBefore, "user balance");
     }
 
     /// @dev Allow refund tests
