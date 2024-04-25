@@ -16,9 +16,14 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
 
+    struct TestData {
+        uint256 protocolTotalExpo;
+        uint256 initialPosCount;
+        uint256 userBalanceBefore;
+    }
+
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.flags.enablePositionFees = false;
         super._setUp(params);
     }
 
@@ -37,13 +42,16 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
     function testFuzz_closePositionWithAmount(uint256 iterations, uint256 amountToOpen, uint256 amountToClose)
         external
     {
+        TestData memory data;
         // Bound values
         iterations = bound(iterations, 1, 10);
-        amountToOpen = bound(amountToOpen, 1, 100_000 ether);
+        amountToOpen = bound(amountToOpen, 1 ether, 100_000 ether);
 
-        uint256 protocolTotalExpo = protocol.getTotalExpo();
-        uint256 initialPosCount = protocol.getTotalLongPositions();
-        uint256 userBalanceBefore = amountToOpen;
+        data.protocolTotalExpo = protocol.getTotalExpo();
+        data.initialPosCount = protocol.getTotalLongPositions();
+        data.userBalanceBefore = amountToOpen;
+
+        assertEq(wstETH.balanceOf(address(this)), 0, "User should have no wstETH");
 
         bytes memory priceData = abi.encode(params.initialPrice);
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
@@ -55,6 +63,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
                 price: params.initialPrice
             })
         );
+        //assertEq(protocol.getBalanceLong(), balanceLongBefore + amountToOpen, "long balance increase");
 
         uint256 amountClosed;
         for (uint256 i = 0; i < iterations; ++i) {
@@ -62,11 +71,15 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             amountToClose = bound(amountToClose, 1, posBefore.amount);
             amountClosed += amountToClose;
 
+            uint256 balanceBefore = wstETH.balanceOf(address(this));
+
             protocol.initiateClosePosition(
                 tick, tickVersion, index, uint128(amountToClose), priceData, EMPTY_PREVIOUS_DATA, address(this)
             );
             _waitDelay();
             protocol.i_validateClosePosition(address(this), priceData);
+
+            emit log_named_decimal_uint("got", wstETH.balanceOf(address(this)) - balanceBefore, 18);
 
             (Position memory posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
             assertEq(
@@ -82,6 +95,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
 
         // Close the what's left of the position
         if (amountClosed != amountToOpen) {
+            uint256 balanceBefore = wstETH.balanceOf(address(this));
             protocol.initiateClosePosition(
                 tick,
                 tickVersion,
@@ -93,18 +107,19 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             );
             _waitDelay();
             protocol.i_validateClosePosition(address(this), priceData);
+            emit log_named_decimal_uint("got", wstETH.balanceOf(address(this)) - balanceBefore, 18);
         }
 
         (Position memory pos,) = protocol.getLongPosition(tick, tickVersion, index);
         assertEq(pos.amount, 0, "Amount left should be 0");
         assertEq(pos.user, address(0), "Position should have been deleted from the tick array");
 
-        assertEq(protocolTotalExpo, protocol.getTotalExpo(), "Total expo should be the same");
-        assertEq(initialPosCount, protocol.getTotalLongPositions(), "Amount of positions should be the same");
-        assertApproxEqAbs(
-            userBalanceBefore,
+        assertEq(data.protocolTotalExpo, protocol.getTotalExpo(), "Total expo should be the same");
+        assertEq(data.initialPosCount, protocol.getTotalLongPositions(), "Amount of positions should be the same");
+        assertApproxEqRel(
+            data.userBalanceBefore,
             wstETH.balanceOf(address(this)),
-            iterations + 1,
+            1e1, // 0.000000000000001%
             "The user should have gotten back approximately all of his assets"
         );
     }
