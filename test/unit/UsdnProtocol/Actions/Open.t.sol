@@ -76,55 +76,63 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
                 )
         );
 
-        // state before opening the position
-        ValueToCheckBefore memory before = ValueToCheckBefore({
-            balance: wstETH.balanceOf(address(this)),
-            protocolBalance: wstETH.balanceOf(address(protocol)),
-            totalPositions: protocol.getTotalLongPositions(),
-            totalExpo: protocol.getTotalExpo(),
-            balanceLong: uint256(protocol.i_longAssetAvailable(CURRENT_PRICE))
-        });
+        int24 tick;
+        uint256 tickVersion;
+        uint256 index;
+        uint256 positionExpo;
+        {
+            // state before opening the position
+            ValueToCheckBefore memory before = ValueToCheckBefore({
+                balance: wstETH.balanceOf(address(this)),
+                protocolBalance: wstETH.balanceOf(address(protocol)),
+                totalPositions: protocol.getTotalLongPositions(),
+                totalExpo: protocol.getTotalExpo(),
+                balanceLong: uint256(protocol.i_longAssetAvailable(CURRENT_PRICE))
+            });
 
-        vm.expectEmit();
-        emit InitiatedOpenPosition(
-            address(this),
-            to,
-            uint40(block.timestamp),
-            expectedLeverage,
-            uint128(LONG_AMOUNT),
-            CURRENT_PRICE,
-            expectedTick,
-            0,
-            0
-        ); // expected event
-        (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
-        );
-        uint256 tickLiqPrice = protocol.getEffectivePriceForTick(
-            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-        );
+            vm.expectEmit();
+            emit InitiatedOpenPosition(
+                address(this),
+                to,
+                uint40(block.timestamp),
+                expectedLeverage,
+                uint128(LONG_AMOUNT),
+                CURRENT_PRICE,
+                expectedTick,
+                0,
+                0
+            ); // expected event
+            (tick, tickVersion, index) = protocol.initiateOpenPosition(
+                uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
+            );
+            uint256 tickLiqPrice = protocol.getEffectivePriceForTick(
+                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
+            );
 
-        // check state after opening the position
-        assertEq(tick, expectedTick, "tick number");
-        assertEq(tickVersion, 0, "tick version");
-        assertEq(index, 0, "index");
+            // check state after opening the position
+            assertEq(tick, expectedTick, "tick number");
+            assertEq(tickVersion, 0, "tick version");
+            assertEq(index, 0, "index");
 
-        assertEq(wstETH.balanceOf(address(this)), before.balance - LONG_AMOUNT, "user wstETH balance");
-        assertEq(wstETH.balanceOf(address(protocol)), before.protocolBalance + LONG_AMOUNT, "protocol wstETH balance");
-        assertEq(protocol.getTotalLongPositions(), before.totalPositions + 1, "total long positions");
-        uint256 positionExpo =
-            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, uint128(tickLiqPrice));
-        assertEq(protocol.getTotalExpo(), before.totalExpo + positionExpo, "protocol total expo");
-        TickData memory tickData = protocol.getTickData(expectedTick);
-        assertEq(tickData.totalExpo, positionExpo, "total expo in tick");
-        assertEq(tickData.totalPos, 1, "positions in tick");
-        assertEq(protocol.getBalanceLong(), before.balanceLong + LONG_AMOUNT, "balance of long side");
+            assertEq(wstETH.balanceOf(address(this)), before.balance - LONG_AMOUNT, "user wstETH balance");
+            assertEq(
+                wstETH.balanceOf(address(protocol)), before.protocolBalance + LONG_AMOUNT, "protocol wstETH balance"
+            );
+            assertEq(protocol.getTotalLongPositions(), before.totalPositions + 1, "total long positions");
+            positionExpo =
+                protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, uint128(tickLiqPrice));
+            assertEq(protocol.getTotalExpo(), before.totalExpo + positionExpo, "protocol total expo");
+            TickData memory tickData = protocol.getTickData(expectedTick);
+            assertEq(tickData.totalExpo, positionExpo, "total expo in tick");
+            assertEq(tickData.totalPos, 1, "positions in tick");
+            assertEq(protocol.getBalanceLong(), before.balanceLong + LONG_AMOUNT, "balance of long side");
+        }
 
         // the pending action should not yet be actionable by a third party
         (PendingAction[] memory pendingActions,) = protocol.getActionablePendingActions(address(0));
         assertEq(pendingActions.length, 0, "no pending action");
 
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(to));
         assertTrue(action.action == ProtocolAction.ValidateOpenPosition, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.user, address(this), "action user");
