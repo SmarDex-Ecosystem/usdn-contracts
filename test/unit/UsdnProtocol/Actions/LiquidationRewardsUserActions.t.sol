@@ -97,7 +97,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.validateDeposit(liquidationPriceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(address(this), liquidationPriceData, EMPTY_PREVIOUS_DATA);
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
@@ -154,7 +154,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.validateWithdrawal(liquidationPriceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(address(this), liquidationPriceData, EMPTY_PREVIOUS_DATA);
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
@@ -215,7 +215,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.validateOpenPosition(liquidationPriceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), liquidationPriceData, EMPTY_PREVIOUS_DATA);
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
@@ -307,7 +307,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.validateClosePosition(liquidationPriceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(address(this), liquidationPriceData, EMPTY_PREVIOUS_DATA);
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));

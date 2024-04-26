@@ -92,7 +92,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
             address(this)
         );
         _waitDelay();
-        protocol.validateClosePosition(abi.encode(params.initialPrice * 10_000), EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(address(this), abi.encode(params.initialPrice * 10_000), EMPTY_PREVIOUS_DATA);
 
         // vault expo should be zero
         assertEq(protocol.getBalanceVault(), 0, "vault expo isn't 0");
