@@ -100,6 +100,7 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
      * @notice Withdraw the ether balance of this contract
      * @dev This contract can receive funds but is not designed to hold them
      * So this function can be used if there's an error and funds remain after a call
+     * @param to The address to send the ether to
      */
-    function withdrawEther() external;
+    function withdrawEther(address to) external;
 }

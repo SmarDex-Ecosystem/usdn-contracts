@@ -10,8 +10,6 @@ import { USER_1 } from "test/utils/Constants.sol";
  * @custom:feature The `withdrawEther` function of the `OracleMiddleware` contract
  */
 contract TestOracleMiddlewareWithdrawEther is OracleMiddlewareBaseFixture {
-    bool internal _failOnReceive;
-
     function setUp() public override {
         super.setUp();
         vm.deal(address(oracleMiddleware), 1 ether);
@@ -26,7 +24,7 @@ contract TestOracleMiddlewareWithdrawEther is OracleMiddlewareBaseFixture {
     function test_RevertWhen_withdrawEtherCalledByNonOwner() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
         vm.prank(USER_1);
-        oracleMiddleware.withdrawEther();
+        oracleMiddleware.withdrawEther(USER_1);
     }
 
     /**
@@ -36,9 +34,8 @@ contract TestOracleMiddlewareWithdrawEther is OracleMiddlewareBaseFixture {
      * @custom:then the transaction reverts with a OracleMiddlewareTransferFailed error
      */
     function test_RevertWhen_withdrawEtherToAnAddressThatCannotReceiveEther() public {
-        _failOnReceive = true;
-        vm.expectRevert(OracleMiddlewareTransferFailed.selector);
-        oracleMiddleware.withdrawEther();
+        vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareTransferFailed.selector, address(this)));
+        oracleMiddleware.withdrawEther(address(this));
     }
 
     /**
@@ -48,20 +45,16 @@ contract TestOracleMiddlewareWithdrawEther is OracleMiddlewareBaseFixture {
      * @custom:then the ether balance of the contract is sent to the caller
      */
     function test_withdrawEther() public {
-        uint256 userBalanceBefore = address(this).balance;
+        uint256 userBalanceBefore = USER_1.balance;
         uint256 middlewareBalanceBefore = address(oracleMiddleware).balance;
 
-        oracleMiddleware.withdrawEther();
+        oracleMiddleware.withdrawEther(USER_1);
 
         assertEq(address(oracleMiddleware).balance, 0, "No ether should be left in the middleware");
         assertEq(
             userBalanceBefore + middlewareBalanceBefore,
-            address(this).balance,
+            USER_1.balance,
             "Middleware ether balance should have been transferred to the user"
         );
-    }
-
-    receive() external payable {
-        require(!_failOnReceive, "receive failed");
     }
 }
