@@ -5,7 +5,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1 } from "test/utils/Constants.sol";
+import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 
 import {
     LongPendingAction,
@@ -64,6 +64,35 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 UsdnProtocolAmountToCloseHigherThanPositionAmount.selector, amountToClose, positionAmount
             )
         );
+        protocol.i_initiateClosePosition(
+            address(this),
+            address(this),
+            PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
+            amountToClose,
+            priceData
+        );
+    }
+
+    /**
+     * @custom:scenario A user tries to close a position with a remaining amount lower than the min long position
+     * @custom:given A validated open position
+     * @custom:when The owner of the position calls initiateClosePosition with
+     * an amount higher than positionAmount - minLongPosition
+     * @custom:then The call reverts with
+     */
+    function test_RevertWhen_closePartialPositionWithAmountRemainingLowerThanMinLongPosition() external {
+        vm.prank(ADMIN);
+        protocol.setMinLongPosition(positionAmount / 2);
+
+        bytes memory priceData = abi.encode(params.initialPrice);
+        uint128 amountToClose = positionAmount / 2 + 1;
+
+        // Sanity check
+        assertLt(
+            positionAmount - amountToClose, positionAmount / 2, "The amount remaining is too high to trigger the error"
+        );
+
+        vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
         protocol.i_initiateClosePosition(
             address(this),
             address(this),
