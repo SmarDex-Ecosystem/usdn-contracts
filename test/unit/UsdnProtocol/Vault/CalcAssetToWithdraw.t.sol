@@ -8,7 +8,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @custom:feature The calcAssetToWithdraw function of the UsdnProtocolVault contract
+ * @custom:feature The previewWithdraw function of the UsdnProtocolVault contract
  * @custom:background Given a protocol initialized with default params and enabledFunding = false
  * @custom:and A user who deposited 1 wstETH at price $2000 to get 2000 USDN
  */
@@ -25,34 +25,34 @@ contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBas
     }
 
     /**
-     * @custom:scenario Check calculations of `calcAssetToWithdraw`
+     * @custom:scenario Check calculations of `previewWithdraw`
      * @custom:given A user who deposited 1 wstETH at price $2000 to get 2000 USDN
      * @custom:when The user simulate withdraw of an amount of usdnShares from the vault
      * @custom:then The amount of asset should be calculated correctly
      */
-    function test_calcAssetToWithdraw() public {
-        uint256 assetExpected = protocol.calcAssetToWithdraw(uint152(usdn.sharesOf(address(this))), 2000 ether);
+    function test_previewWithdraw() public {
+        uint256 assetExpected = protocol.previewWithdraw(uint152(usdn.sharesOf(address(this))), 2000 ether);
         assertEq(assetExpected, DEPOSIT_AMOUNT, "asset to transfer");
 
-        assetExpected = protocol.calcAssetToWithdraw(uint152(2000 ether), 2000 ether);
+        assetExpected = protocol.previewWithdraw(uint152(2000 ether), 2000 ether);
         assertEq(assetExpected, 1, "asset to transfer");
 
-        assetExpected = protocol.calcAssetToWithdraw(uint152(24_860_000_000 ether), 2000 ether);
+        assetExpected = protocol.previewWithdraw(uint152(24_860_000_000 ether), 2000 ether);
         assertEq(assetExpected, 12_430_000, "asset to transfer");
     }
 
     /**
-     * @custom:scenario Fuzzing the `calcAssetToWithdraw` and `withdraw` functions
+     * @custom:scenario Fuzzing the `previewWithdraw` and `withdraw` functions
      * @custom:given A user who deposited 1 wstETH at price $2000 to get 2000 USDN
      * @custom:when The user withdraw an amount of USDN shares from the vault
      * @custom:then The amount of asset should be calculated correctly
      */
-    function testFuzz_compareCalcAssetToWithdrawAndWithdraw(uint152 shares) public {
+    function testFuzz_comparepreviewWithdrawAndWithdraw(uint152 shares) public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         shares = uint152(bound(shares, 1, usdn.sharesOf(address(this))));
 
         // calculate the expected asset to be received
-        uint256 assetExpected = protocol.calcAssetToWithdraw(shares, 2000 ether);
+        uint256 assetExpected = protocol.previewWithdraw(shares, 2000 ether);
 
         protocol.initiateWithdrawal(shares, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
         // wait the required delay between initiation and validation

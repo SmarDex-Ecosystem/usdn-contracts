@@ -34,7 +34,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param price The price of the asset
      * @return assetExpected_ The amount of asset expected to be received
      */
-    function calcAssetToWithdraw(uint152 usdnShares, uint256 price) external view returns (uint256 assetExpected_) {
+    function previewWithdraw(uint152 usdnShares, uint256 price) external view returns (uint256 assetExpected_) {
         // Apply fees on price
         uint128 withdrawalPriceWithFees = (price + price * _positionFeeBps / BPS_DIVISOR).toUint128();
         uint256 balanceVault = _vaultAssetAvailable(
