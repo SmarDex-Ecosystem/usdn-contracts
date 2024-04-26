@@ -756,7 +756,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Call "setMinLongPosition" from admin.
      * @custom:given The initial usdnProtocol state.
-     * @custom:when Admin wallet call function with a value superior to 100 * 10 ** _priceFeedDecimals.
+     * @custom:when Admin wallet call function with a value superior to 100 * 10 ** _assetDecimals.
      * @custom:then The transaction should revert.
      */
     function test_RevertWhen_setMinLongPosition_Sup() external adminPrank {

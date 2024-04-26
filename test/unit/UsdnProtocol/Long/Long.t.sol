@@ -169,13 +169,13 @@ contract TestUsdnProtocolLong is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check that the position is correctly validated when its amount of collateral
+     * @custom:scenario Check that the position is correctly initiated when its amount of collateral
      * is greater than the minimum long position
      * @custom:given A position size greater than the minimum long position
      * @custom:when initiateOpenPosition is called
      * @custom:then The transaction was accepted with a expected position
      */
-    function test_validateOpenPositionWithEnoughAssets() public {
+    function test_initiateOpenPositionWithEnoughAssets() public {
         vm.prank(ADMIN);
         protocol.setMinLongPosition(1 ether);
 
