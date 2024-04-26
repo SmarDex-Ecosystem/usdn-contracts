@@ -83,7 +83,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     struct ClosePositionData {
         Position pos;
         uint8 liquidationPenalty;
-        uint24 securityDepositValue;
+        uint64 securityDepositValue;
         uint128 totalExpoToClose;
         uint128 lastPrice;
         uint256 tempTransfer;
@@ -500,7 +500,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 timestamp: uint40(block.timestamp),
                 user: user,
                 to: to,
-                securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24()
+                securityDepositValue: _securityDepositValue
             }),
             _unused: 0,
             amount: amount,
@@ -648,7 +648,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                     timestamp: uint40(block.timestamp),
                     user: user,
                     to: to,
-                    securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24()
+                    securityDepositValue: _securityDepositValue
                 }),
                 sharesLSB: _calcWithdrawalAmountLSB(usdnShares),
                 sharesMSB: _calcWithdrawalAmountMSB(usdnShares),
@@ -824,7 +824,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 timestamp: uint40(block.timestamp),
                 user: user,
                 to: to,
-                securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24()
+                securityDepositValue: _securityDepositValue
             }),
             tick: data.posId.tick,
             closeAmount: 0,
@@ -1114,7 +1114,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             0
         );
 
-        data_.securityDepositValue = (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24();
+        data_.securityDepositValue = _securityDepositValue;
     }
 
     /**

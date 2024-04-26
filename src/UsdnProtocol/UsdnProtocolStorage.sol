@@ -160,7 +160,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     address internal _feeCollector;
 
     /// @notice The deposit required for a new position (0.5 ether)
-    uint256 internal _securityDepositValue = 0.5 ether;
+    uint64 internal _securityDepositValue = 0.5 ether;
 
     /// @notice The nominal (target) price of USDN (with _priceFeedDecimals)
     uint128 internal _targetUsdnPrice;
@@ -415,7 +415,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getSecurityDepositValue() external view returns (uint256) {
+    function getSecurityDepositValue() external view returns (uint64) {
         return _securityDepositValue;
     }
 

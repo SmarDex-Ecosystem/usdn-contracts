@@ -102,7 +102,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      * @dev The value must be a multiple of SECURITY_DEPOSIT_FACTOR to avoid loosing eth du to rounding errors.
      * @param securityDepositValue The security deposit value.
      */
-    function setSecurityDepositValue(uint256 securityDepositValue) external;
+    function setSecurityDepositValue(uint64 securityDepositValue) external;
 
     /**
      * @notice Set the minimum amount of fees to be collected before they can be withdrawn

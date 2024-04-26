@@ -221,7 +221,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @notice Get the security deposit required to open a new position
      * @return The amount of assets to use as a security deposit (in ether)
      */
-    function getSecurityDepositValue() external view returns (uint256);
+    function getSecurityDepositValue() external view returns (uint64);
 
     /**
      * @notice Get the threshold before fees are sent to the fee collector
