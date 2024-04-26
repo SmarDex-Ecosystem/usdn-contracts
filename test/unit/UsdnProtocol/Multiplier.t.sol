@@ -15,7 +15,9 @@ contract TestUsdnProtocolMultiplier is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.flags.enableFunding = true;
+        super._setUp(params);
     }
 
     /**

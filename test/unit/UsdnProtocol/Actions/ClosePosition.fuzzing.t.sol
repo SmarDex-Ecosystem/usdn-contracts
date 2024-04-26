@@ -17,12 +17,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
     using SafeCast for uint256;
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableFunding = false;
-        params.flags.enablePositionFees = false;
-        params.flags.enableProtocolFees = false;
-
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**

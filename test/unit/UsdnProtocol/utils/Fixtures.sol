@@ -49,15 +49,15 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
-        initialDeposit: 10 ether,
+        initialDeposit: 4.919970269703463156 ether,
         initialLong: 5 ether,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
         initialBlock: block.number,
         flags: Flags({
             enablePositionFees: false,
-            enableProtocolFees: true,
-            enableFunding: true,
+            enableProtocolFees: false,
+            enableFunding: false,
             enableLimits: false,
             enableUsdnRebase: false,
             enableSecurityDeposit: false,

@@ -17,7 +17,9 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
     uint128 constant OPEN_AMOUNT = 10 ether;
 
     function setUp() external {
-        _setUp(DEFAULT_PARAMS);
+        SetUpParams memory params = DEFAULT_PARAMS;
+        params.flags.enableFunding = false;
+        _setUp(params);
     }
 
     /**
@@ -85,6 +87,8 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
             })
         );
 
+        // we need to skip 1 minute to make the new price data fresh
+        skip(1 minutes);
         protocol.liquidate(abi.encode(params.initialPrice / 3), 10);
 
         vm.expectRevert(

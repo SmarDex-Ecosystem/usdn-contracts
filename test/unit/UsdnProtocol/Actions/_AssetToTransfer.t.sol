@@ -13,9 +13,7 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
     using Strings for uint256;
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.initialDeposit = 5 ether;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**
@@ -69,7 +67,7 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
      * @custom:then The asset to transfer is zero
      */
     function test_assetToTransferZeroBalance() public {
-        uint128 price = 1000 ether;
+        uint128 price = 500 ether;
         skip(1 weeks);
         // liquidate the default position
         protocol.liquidate(abi.encode(price), 10);
