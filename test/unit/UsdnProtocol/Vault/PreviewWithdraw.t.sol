@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -18,7 +19,9 @@ contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBas
     uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
 
     function setUp() public {
-        super._setUp(DEFAULT_PARAMS);
+        params = DEFAULT_PARAMS;
+        params.flags.enableFunding = true;
+        super._setUp(params);
         usdn.approve(address(protocol), type(uint256).max);
         // user deposits wstETH at price $2000
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
@@ -31,14 +34,16 @@ contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBas
      * @custom:then The amount of asset should be calculated correctly
      */
     function test_previewWithdraw() public {
-        uint256 assetExpected = protocol.previewWithdraw(uint152(usdn.sharesOf(address(this))), 2000 ether);
-        assertEq(assetExpected, DEPOSIT_AMOUNT, "asset to transfer");
+        uint256 price = 2000 ether;
+        uint128 timestamp = uint128(block.timestamp);
+        uint256 assetExpected = protocol.previewWithdraw(uint152(usdn.sharesOf(address(this))), price, timestamp);
+        assertEq(assetExpected, DEPOSIT_AMOUNT + 259_596_326_121_494, "asset to transfer total share");
 
-        assetExpected = protocol.previewWithdraw(uint152(2000 ether), 2000 ether);
-        assertEq(assetExpected, 1, "asset to transfer");
+        assetExpected = protocol.previewWithdraw(uint152(2000 ether), price, timestamp);
+        assertEq(assetExpected, 1, "asset to transfer just one asset");
 
-        assetExpected = protocol.previewWithdraw(uint152(24_860_000_000 ether), 2000 ether);
-        assertEq(assetExpected, 12_430_000, "asset to transfer");
+        assetExpected = protocol.previewWithdraw(uint152(24_860_000_000 ether), price, timestamp);
+        assertEq(assetExpected, 12_430_000 + 3226, "asset to transfer for 24860000000 ether shares");
     }
 
     /**
@@ -52,7 +57,7 @@ contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBas
         shares = uint152(bound(shares, 1, usdn.sharesOf(address(this))));
 
         // calculate the expected asset to be received
-        uint256 assetExpected = protocol.previewWithdraw(shares, 2000 ether);
+        uint256 assetExpected = protocol.previewWithdraw(shares, 2000 ether, uint128(block.timestamp));
 
         protocol.initiateWithdrawal(shares, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
         // wait the required delay between initiation and validation

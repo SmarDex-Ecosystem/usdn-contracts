@@ -32,15 +32,21 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @notice Calculate an estimation of asset received when withdraw
      * @param usdnShares The amount of USDN shares
      * @param price The price of the asset
+     * @param timestamp The timestamp when you want to calculate the asset
      * @return assetExpected_ The amount of asset expected to be received
      */
-    function previewWithdraw(uint152 usdnShares, uint256 price) external view returns (uint256 assetExpected_) {
+    function previewWithdraw(uint152 usdnShares, uint256 price, uint128 timestamp)
+        external
+        view
+        returns (uint256 assetExpected_)
+    {
         // Apply fees on price
         uint128 withdrawalPriceWithFees = (price + price * _positionFeeBps / BPS_DIVISOR).toUint128();
-        uint256 balanceVault = _vaultAssetAvailable(
-            _totalExpo, _balanceVault, _balanceLong, withdrawalPriceWithFees, uint128(price)
-        ).toUint256();
 
+        int256 available_ = vaultAssetAvailableWithFunding(uint128(price), timestamp);
+        uint256 balanceVault = _vaultAssetAvailable(
+            _totalExpo, uint128(uint256(available_)), _balanceLong, withdrawalPriceWithFees, uint128(price)
+        ).toUint256();
         // assetExpected = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         //                 = shares * assetAvailable / usdnTotalShares
         assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, balanceVault, _usdn.totalShares());
