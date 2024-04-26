@@ -338,7 +338,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setMinLongPosition(uint256 newMinLongPosition) external onlyOwner {
-        if (newMinLongPosition > 50_000 * 10 ** _priceFeedDecimals) {
+        if (newMinLongPosition > 100 * 10 ** _assetDecimals) {
             revert UsdnProtocolInvalidMinLongPosition();
         }
         _minLongPosition = newMinLongPosition;

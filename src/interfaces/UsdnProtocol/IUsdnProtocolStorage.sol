@@ -277,8 +277,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getUsdnRebaseInterval() external view returns (uint256);
 
     /**
-     * @notice Get the minimum collateral value when opening a long position (in USD)
-     * @return The minimum value (in _priceFeedDecimals)
+     * @notice Get the minimum collateral amount when opening a long position
+     * @return The minimum amount (with _assetDecimals)
      */
     function getMinLongPosition() external view returns (uint256);
 

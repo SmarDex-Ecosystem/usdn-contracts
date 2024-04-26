@@ -701,6 +701,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
+        if (amount < _minLongPosition) {
+            revert UsdnProtocolLongPositionTooSmall();
+        }
 
         uint128 adjustedPrice;
         uint128 neutralPrice;
@@ -710,10 +713,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             // Apply fees on price
             adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
-            if (FixedPointMathLib.fullMulDiv(amount, adjustedPrice, 10 ** _assetDecimals) < _minLongPosition) {
-                revert UsdnProtocolLongPositionTooSmall();
-            }
-
             neutralPrice = currentPrice.neutralPrice.toUint128();
 
             _applyPnlAndFundingAndLiquidate(
