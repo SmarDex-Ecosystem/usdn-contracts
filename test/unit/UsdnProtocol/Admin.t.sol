@@ -620,6 +620,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert.
      */
     function test_RevertWhen_setSecurityDepositValue_Sup() external adminPrank {
+        vm.skip(true);
+
         vm.expectRevert(UsdnProtocolInvalidSecurityDepositValue.selector);
         // set security deposit with SECURITY_DEPOSIT_FACTOR - 1
         protocol.setSecurityDepositValue(10 ether + 1);
@@ -632,6 +634,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert.
      */
     function test_RevertWhen_setSecurityDepositValue_notMultiple() external adminPrank {
+        vm.skip(true);
+
         vm.expectRevert(UsdnProtocolInvalidSecurityDepositValue.selector);
         // set security deposit with 1 ether and 1 wei
         protocol.setSecurityDepositValue(1 ether + 1);

@@ -555,7 +555,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateDepositWithAction(pending, priceData);
-        return (pending.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR);
+        return pending.common.securityDepositValue;
     }
 
     function _validateDepositWithAction(PendingAction memory pending, bytes calldata priceData) internal {
@@ -711,7 +711,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateWithdrawalWithAction(pending, priceData);
-        return (pending.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR);
+        return pending.common.securityDepositValue;
     }
 
     function _validateWithdrawalWithAction(PendingAction memory pending, bytes calldata priceData) internal {
@@ -913,7 +913,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateOpenPositionWithAction(pending, priceData);
-        return (pending.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR);
+        return pending.common.securityDepositValue;
     }
 
     function _validateOpenPositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
@@ -1218,7 +1218,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateClosePositionWithAction(pending, priceData);
-        return (pending.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR);
+        return pending.common.securityDepositValue;
     }
 
     function _validateClosePositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
@@ -1408,7 +1408,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
         success_ = true;
         executed_ = true;
-        securityDepositValue_ = pending.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR;
+        securityDepositValue_ = pending.common.securityDepositValue;
         emit SecurityDepositRefunded(pending.common.user, msg.sender, securityDepositValue_);
     }
 
