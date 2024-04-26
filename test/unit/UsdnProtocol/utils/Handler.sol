@@ -405,4 +405,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external pure returns (uint128) {
         return _getEffectivePriceForTick(tick, liqMultiplier);
     }
+
+    function i_calcFixedPrecisionMultiplier(
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) external pure returns (uint256) {
+        return _calcFixedPrecisionMultiplier(assetPrice, longTradingExpo, accumulator);
+    }
 }

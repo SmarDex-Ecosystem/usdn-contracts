@@ -141,35 +141,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function oldGetEffectiveTickForPrice(uint128 price, uint256 liqMultiplier) public view returns (int24 tick_) {
-        // adjusted price with liquidation multiplier
-        uint256 priceWithMultiplier =
-            FixedPointMathLib.fullMulDiv(price, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS, liqMultiplier);
-
-        if (priceWithMultiplier < TickMath.MIN_PRICE) {
-            return minTick();
-        }
-
-        tick_ = TickMath.getTickAtPrice(priceWithMultiplier);
-
-        // round down to the next valid tick according to _tickSpacing (towards negative infinity)
-        if (tick_ < 0) {
-            // we round up the inverse number (positive) then invert it -> round towards negative infinity
-            tick_ = -int24(int256(FixedPointMathLib.divUp(uint256(int256(-tick_)), uint256(int256(_tickSpacing)))))
-                * _tickSpacing;
-            // avoid invalid ticks
-            int24 minUsableTick = minTick();
-            if (tick_ < minUsableTick) {
-                tick_ = minUsableTick;
-            }
-        } else {
-            // rounding is desirable here
-            // slither-disable-next-line divide-before-multiply
-            tick_ = (tick_ / _tickSpacing) * _tickSpacing;
-        }
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
     function getEffectivePriceForTick(int24 tick) public view returns (uint128 price_) {
         price_ = getEffectivePriceForTick(tick, _lastPrice, _totalExpo - _balanceLong, _liqMultiplierAccumulator);
     }
@@ -193,14 +164,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      */
     function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public pure returns (uint128 price_) {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), liqMultiplier);
-    }
-
-    /// @inheritdoc IUsdnProtocolLong
-    function oldGetEffectivePriceForTick(int24 tick, uint256 liqMultiplier) public pure returns (uint128 price_) {
-        // adjusted price with liquidation multiplier
-        price_ = FixedPointMathLib.fullMulDiv(
-            TickMath.getPriceAtTick(tick), liqMultiplier, 10 ** LIQUIDATION_MULTIPLIER_DECIMALS
-        ).toUint128();
     }
 
     /**
@@ -283,7 +246,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) public pure returns (uint256 multiplier_) {
+    ) internal pure returns (uint256 multiplier_) {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
             return 10 ** LIQUIDATION_MULTIPLIER_DECIMALS;

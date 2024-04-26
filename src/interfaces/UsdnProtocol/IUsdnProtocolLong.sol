@@ -86,14 +86,6 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
     ) external view returns (int24);
 
     /**
-     * @notice Get the tick number corresponding to a given price, taking into account the effects of funding
-     * @param price The price
-     * @param liqMultiplier The liquidation price multiplier
-     * @return The tick number, a multiple of the tick spacing
-     */
-    function oldGetEffectiveTickForPrice(uint128 price, uint256 liqMultiplier) external view returns (int24);
-
-    /**
      * @notice Get the liquidation price corresponding to a given tick number
      * @dev Uses the values from storage for the various variables
      * Note that ticks that are not a multiple of the tick spacing cannot contain a long position.
@@ -117,15 +109,6 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
     ) external view returns (uint128);
-
-    /**
-     * @notice Get the liquidation price corresponding to a given tick number
-     * @dev This takes into account the liquidation price multiplier.
-     * Note that ticks that are not a multiple of the tick spacing cannot contain a long position.
-     * @param tick The tick number
-     * @param liqMultiplier The liquidation price multiplier
-     */
-    function oldGetEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external view returns (uint128);
 
     /**
      * @notice Retrieve the liquidation penalty assigned to `tick` if there are positions in it, otherwise retrieve the

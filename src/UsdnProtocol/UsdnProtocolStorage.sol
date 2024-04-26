@@ -190,13 +190,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The timestamp of the last balances update
     uint128 internal _lastUpdateTimestamp;
 
-    /**
-     * @notice The multiplier for liquidation price calculations
-     * @dev This value represents 1 with 38 decimals to have the same precision when the multiplier
-     * tends to 0 and high values (uint256.max have 78 digits).
-     */
-    uint256 internal _liquidationMultiplier = 1e38;
-
     /// @notice The pending protocol fee accumulator
     uint256 internal _pendingProtocolFee;
 
@@ -478,11 +471,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getLastUpdateTimestamp() external view returns (uint128) {
         return _lastUpdateTimestamp;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
-    function getLiquidationMultiplier() external view returns (uint256) {
-        return _liquidationMultiplier;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

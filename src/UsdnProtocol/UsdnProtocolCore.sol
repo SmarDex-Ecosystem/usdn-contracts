@@ -34,21 +34,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /* -------------------------- Public view functions ------------------------- */
 
     /// @inheritdoc IUsdnProtocolCore
-    function getLiquidationMultiplier(uint128 timestamp) public view returns (uint256) {
-        // slither-disable-next-line incorrect-equality
-        if (timestamp == _lastUpdateTimestamp) {
-            return _liquidationMultiplier;
-        }
-        if (timestamp < _lastUpdateTimestamp) {
-            revert UsdnProtocolTimestampTooOld();
-        }
-        int256 ema = calcEMA(_lastFunding, timestamp - _lastUpdateTimestamp, _EMAPeriod, _EMA);
-        (int256 fund,) = _funding(timestamp, ema);
-        // starting here, timestamp is strictly greater than _lastUpdateTimestamp
-        return _getLiquidationMultiplier(fund, _liquidationMultiplier);
-    }
-
-    /// @inheritdoc IUsdnProtocolCore
     function funding(uint128 timestamp) public view returns (int256 fund_, int256 oldLongExpo_) {
         (fund_, oldLongExpo_) = _funding(timestamp, _EMA);
     }
@@ -387,8 +372,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
      * calculate the new liquidation multiplier and the temporary new balances for each side.
-     * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding` and
-     * `_liquidationMultiplier`, but does not update the balances. This is left to the caller.
+     * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
+     * update the balances. This is left to the caller.
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
      * @return priceUpdated_ Whether the price was updated
@@ -436,7 +421,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fundWithFee;
-        _liquidationMultiplier = _getLiquidationMultiplier(fundWithFee, _liquidationMultiplier);
 
         priceUpdated_ = true;
     }

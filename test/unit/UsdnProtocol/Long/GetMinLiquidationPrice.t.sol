@@ -60,7 +60,11 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
 
         assertGt(
-            protocol.getLiquidationMultiplier(),
+            protocol.i_calcFixedPrecisionMultiplier(
+                params.initialPrice,
+                protocol.getTotalExpo() - protocol.getBalanceLong(),
+                protocol.getLiqMultiplierAccumulator()
+            ),
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
@@ -78,7 +82,11 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
 
         assertLt(
-            protocol.getLiquidationMultiplier(),
+            protocol.i_calcFixedPrecisionMultiplier(
+                params.initialPrice,
+                protocol.getTotalExpo() - protocol.getBalanceLong(),
+                protocol.getLiqMultiplierAccumulator()
+            ),
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
