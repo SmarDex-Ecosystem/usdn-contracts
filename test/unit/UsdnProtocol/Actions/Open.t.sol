@@ -247,7 +247,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             );
 
             vm.prank(USER_1);
-            vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+            vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
             protocol.validateOpenPosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
             // should liquidate initial position tick
@@ -344,7 +344,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             );
 
             vm.prank(USER_1);
-            vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+            vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
             protocol.validateOpenPosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
             // should liquidate initial position tick

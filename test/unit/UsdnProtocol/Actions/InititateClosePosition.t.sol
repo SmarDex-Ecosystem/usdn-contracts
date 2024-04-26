@@ -385,7 +385,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
             _waitDelay();
 
-            vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+            vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
             protocol.validateClosePosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
             // should liquidate user position tick
@@ -490,7 +490,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
             _waitDelay();
 
-            vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+            vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
             protocol.validateClosePosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
             // should liquidate user position tick

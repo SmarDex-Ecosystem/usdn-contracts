@@ -170,7 +170,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
             _waitDelay();
 
-            vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+            vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
             protocol.validateWithdrawal(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
             vm.stopPrank();
@@ -275,7 +275,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
             _waitDelay();
 
-            vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+            vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
             protocol.validateWithdrawal(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
             vm.stopPrank();

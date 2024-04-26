@@ -57,7 +57,7 @@ contract UsdnProtocolHandler is UsdnProtocol {
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
-    ) external returns (uint256 securityDepositValue_) {
+    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_) {
         return _initiateClosePosition(user, to, posId, amountToClose, currentPriceData, 0);
     }
 

@@ -341,7 +341,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
             _waitDelay();
 
-            vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+            vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
             protocol.validateDeposit(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
             vm.stopPrank();
