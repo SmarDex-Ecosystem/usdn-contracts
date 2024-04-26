@@ -290,6 +290,10 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /// @inheritdoc IOracleMiddleware
     function withdrawEther(address to) external onlyOwner {
+        if (to == address(0)) {
+            revert OracleMiddlewareTransferToZeroAddress();
+        }
+
         (bool success,) = payable(to).call{ value: address(this).balance }("");
         if (!success) {
             revert OracleMiddlewareTransferFailed(to);

@@ -36,8 +36,8 @@ interface IOracleMiddlewareErrors {
      */
     error OracleMiddlewareTransferFailed(address to);
 
-    /// @notice The sender could not accept the ether refund
-    error OracleMiddlewareEtherRefundFailed();
+    /// @notice The address supposed to receive the ether is the zero address
+    error OracleMiddlewareTransferToZeroAddress();
 
     /**
      * @notice The recent price delay is outside of the limits

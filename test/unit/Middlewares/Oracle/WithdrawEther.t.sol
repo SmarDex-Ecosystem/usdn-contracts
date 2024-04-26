@@ -39,6 +39,17 @@ contract TestOracleMiddlewareWithdrawEther is OracleMiddlewareBaseFixture {
     }
 
     /**
+     * @custom:scenario The owner calls the function with the zero address
+     * @custom:given The caller being the owner
+     * @custom:when withdrawEther is called with the to parameter being the zero address
+     * @custom:then the transaction reverts with a OracleMiddlewareTransferToZeroAddress error
+     */
+    function test_RevertWhen_withdrawEtherToTheZeroAddress() public {
+        vm.expectRevert(OracleMiddlewareTransferToZeroAddress.selector);
+        oracleMiddleware.withdrawEther(address(0));
+    }
+
+    /**
      * @custom:scenario The owner withdraw the ether in the contract
      * @custom:given A user that is the owner
      * @custom:when withdrawEther is called
