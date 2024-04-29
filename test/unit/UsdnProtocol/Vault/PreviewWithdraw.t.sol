@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
-
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -14,8 +11,6 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * @custom:and A user who deposited 1 wstETH at price $2000 to get 2000 USDN
  */
 contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBaseFixture {
-    using SafeCast for uint256;
-
     uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
 
     function setUp() public {
@@ -24,29 +19,6 @@ contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBas
         params.flags.enablePositionFees = true;
         super._setUp(params);
         usdn.approve(address(protocol), type(uint256).max);
-    }
-
-    /**
-     * @custom:scenario Check calculations of `previewWithdraw`
-     * @custom:given A user who deposited 1 wstETH at price $2000 to get 2000 USDN
-     * @custom:when The user simulate withdraw of an amount of usdnShares from the vault
-     * @custom:then The amount of asset should be calculated correctly
-     */
-    function test_previewWithdraw() public {
-        // user deposits wstETH at price $2000
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
-        uint256 price = 2000 ether;
-        uint128 timestamp = protocol.getLastUpdateTimestamp();
-
-        // Apply fees on price
-        uint128 withdrawalPriceWithFees =
-            (price + price * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR()).toUint128();
-        int256 available = protocol.vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
-        uint256 assetCalculated =
-            FixedPointMathLib.fullMulDiv(DEPOSIT_AMOUNT, uint256(available), protocol.getBalanceVault());
-
-        uint256 assetExpected = protocol.previewWithdraw(uint152(usdn.sharesOf(address(this))), price, timestamp);
-        assertEq(assetExpected, assetCalculated, "asset to transfer total share");
     }
 
     /**

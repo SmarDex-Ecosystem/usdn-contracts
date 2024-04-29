@@ -652,12 +652,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 shares = _mergeWithdrawalAmountParts(withdrawal.sharesLSB, withdrawal.sharesMSB);
 
-        // assetToTransfer = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
-        //                 = shares * assetAvailable / usdnTotalShares
-        uint256 assetToTransfer = FixedPointMathLib.fullMulDiv(shares, available, withdrawal.usdnTotalShares);
-
         // we have the USDN in the contract already
         IUsdn usdn = _usdn;
+
+        uint256 assetToTransfer = _calcBurnUsdn(shares, available, usdn.totalShares());
+
         usdn.burnShares(shares);
 
         // send the asset to the user

@@ -4,6 +4,8 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
+import { console2 } from "forge-std/Test.sol";
+
 import { UsdnProtocolCore } from "src/UsdnProtocol/UsdnProtocolCore.sol";
 import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -32,22 +34,36 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @notice Calculate an estimation of asset received when withdraw
      * @param usdnShares The amount of USDN shares
      * @param price The price of the asset
-     * @param timestamp The timestamp when you want to calculate the asset
+     * @param timestamp The timestamp of the operation
      * @return assetExpected_ The amount of asset expected to be received
      */
-    function previewWithdraw(uint152 usdnShares, uint256 price, uint128 timestamp)
-        external
+    function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
+        public
         view
         returns (uint256 assetExpected_)
     {
         // Apply fees on price
         uint128 withdrawalPriceWithFees = (price + price * _positionFeeBps / BPS_DIVISOR).toUint128();
-
-        int256 available = vaultAssetAvailableWithFunding(uint128(withdrawalPriceWithFees), timestamp);
+        int256 available = vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
         if (available < 0) return 0;
+        assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), _usdn.totalShares());
+    }
+
+    /**
+     * @notice Calculate the amount of asset expected to be received when burning USDN shares
+     * @param usdnShares The amount of USDN shares
+     * @param available The available asset in the vault
+     * @param usdnTotalShares The total supply of USDN shares
+     * @return assetExpected_ The amount of asset expected to be received
+     */
+    function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
+        internal
+        pure
+        returns (uint256 assetExpected_)
+    {
         // assetExpected = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         //                 = shares * assetAvailable / usdnTotalShares
-        assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, uint256(available), _usdn.totalShares());
+        assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, uint256(available), usdnTotalShares);
     }
 
     /**
