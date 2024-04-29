@@ -43,14 +43,11 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         // Apply fees on price
         uint128 withdrawalPriceWithFees = (price + price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
-        int256 available_ = vaultAssetAvailableWithFunding(uint128(price), timestamp);
-        uint256 balanceVault = _vaultAssetAvailable(
-            _totalExpo, uint128(uint256(available_)), _balanceLong, withdrawalPriceWithFees, uint128(price)
-        ).toUint256();
-        if (balanceVault < 0) return 0;
+        int256 available = vaultAssetAvailableWithFunding(uint128(withdrawalPriceWithFees), timestamp);
+        if (available < 0) return 0;
         // assetExpected = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         //                 = shares * assetAvailable / usdnTotalShares
-        assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, balanceVault, _usdn.totalShares());
+        assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, uint256(available), _usdn.totalShares());
     }
 
     /**
