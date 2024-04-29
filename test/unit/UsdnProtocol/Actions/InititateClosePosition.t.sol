@@ -330,8 +330,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     /**
      * @custom:scenario A initiate close liquidates a pending tick but is not validated
      * because a tick still need to be liquidated
-     * @custom:and A first user open position
      * @custom:given The initial open position
+     * @custom:and A first user open position
      * @custom:and A second user open position with a liquidation price below all others
      * @custom:and The price drop below the initiate and the first user open position
      * @custom:when The first `initiateClosePosition` is called
@@ -435,8 +435,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:scenario A initiate close liquidates a tick but is not validated
      * because a tick still need to be liquidated. In the same block another close
      * liquid the remaining tick and is validated
-     * @custom:and A first user open position
      * @custom:given The initial open position
+     * @custom:and A first user open position
      * @custom:and A second user open position with a liquidation price below all others
      * @custom:and The price drop below the initiate and the first user open position
      * @custom:when The first `initiateClosePosition` is called
