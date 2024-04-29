@@ -20,6 +20,7 @@ contract TestUsdnProtocolVaultCalcBurnUsdn is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Check calculation asset received when withdraw
+     * @custom:given A protocol initialized with default params
      * @custom:when The function "_calcBurnUsdn" is called with some parameters
      * @custom:then The total supply is calculated correctly
      */
@@ -30,14 +31,12 @@ contract TestUsdnProtocolVaultCalcBurnUsdn is UsdnProtocolBaseFixture {
         uint256 assetExpected = protocol.i_calcBurnUsdn(usdnShares, available, usdnTotalShares);
         assertEq(assetExpected, 10_000_000_000_000_000_000, "assetExpected must match with expected value");
 
-        usdnShares = 78 ether;
-        available = 2 ether;
-        usdnTotalShares = 1;
+        usdnShares = 787 ether;
+        available = 28 ether;
+        usdnTotalShares = 79_680_003;
         assetExpected = protocol.i_calcBurnUsdn(usdnShares, available, usdnTotalShares);
         assertEq(
-            assetExpected,
-            156_000_000_000_000_000_000_000_000_000_000_000_000,
-            "assetExpected must match with expected value"
+            assetExpected, 276_556_214_487_090_318_006_137_625_270_922, "assetExpected must match with expected value"
         );
         usdnShares = 79 ether;
         available = 8962 ether;

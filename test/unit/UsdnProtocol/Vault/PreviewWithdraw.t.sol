@@ -10,7 +10,7 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * @custom:background Given a protocol initialized with default params and enabledFunding = false
  * @custom:and A user who deposited 1 wstETH at price $2000 to get 2000 USDN
  */
-contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
     uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
 
     function setUp() public {
