@@ -47,6 +47,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         uint256 balanceVault = _vaultAssetAvailable(
             _totalExpo, uint128(uint256(available_)), _balanceLong, withdrawalPriceWithFees, uint128(price)
         ).toUint256();
+        if (balanceVault < 0) return 0;
         // assetExpected = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
         //                 = shares * assetAvailable / usdnTotalShares
         assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, balanceVault, _usdn.totalShares());
