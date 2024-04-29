@@ -4,8 +4,6 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { console2 } from "forge-std/Test.sol";
-
 import { UsdnProtocolCore } from "src/UsdnProtocol/UsdnProtocolCore.sol";
 import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
