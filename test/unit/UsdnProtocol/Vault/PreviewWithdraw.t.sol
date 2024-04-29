@@ -25,8 +25,6 @@ contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBas
         params.flags.enablePositionFees = true;
         super._setUp(params);
         usdn.approve(address(protocol), type(uint256).max);
-        // user deposits wstETH at price $2000
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
     }
 
     /**
@@ -36,27 +34,33 @@ contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBas
      * @custom:then The amount of asset should be calculated correctly
      */
     function test_previewWithdraw() public {
+        // user deposits wstETH at price $2000
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
         uint256 price = 2000 ether;
+        uint128 timestamp = protocol.getLastUpdateTimestamp();
 
         // Apply fees on price
         uint128 withdrawalPriceWithFees =
             (price + price * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR()).toUint128();
-        uint256 assetCalculated = FixedPointMathLib.fullMulDiv(
-            DEPOSIT_AMOUNT,
-            uint256(protocol.vaultAssetAvailableWithFunding(withdrawalPriceWithFees, protocol.getLastUpdateTimestamp())),
-            protocol.getBalanceVault()
-        );
+        int256 available = protocol.vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
+        uint256 assetCalculated =
+            FixedPointMathLib.fullMulDiv(DEPOSIT_AMOUNT, uint256(available), protocol.getBalanceVault());
 
-        uint256 assetExpected =
-            protocol.previewWithdraw(uint152(usdn.sharesOf(address(this))), price, protocol.getLastUpdateTimestamp());
+        uint256 assetExpected = protocol.previewWithdraw(uint152(usdn.sharesOf(address(this))), price, timestamp);
         assertEq(assetExpected, assetCalculated, "asset to transfer total share");
     }
 
+    /**
+     * @custom:scenario Check calculations of `previewWithdraw` when the available asset is less than zero
+     * @custom:given A protocol initialized with default params
+     * @custom:when The user simulate withdraw of an amount of usdnShares from the vault
+     * @custom:then The amount of asset should be equal to zero
+     */
     function test_previewWithdrawLessThanZero() public {
-        uint256 price = 2e40;
+        uint256 price = 2e35;
         uint256 assetExpected =
             protocol.previewWithdraw(uint152(usdn.sharesOf(address(this))), price, protocol.getLastUpdateTimestamp());
-        assertEq(assetExpected, 0, "asset is less than zero");
+        assertEq(assetExpected, 0, "asset is equal to zero");
     }
 
     /**
@@ -66,6 +70,8 @@ contract TestUsdnProtocolCalculateAssetTransferredForWithdraw is UsdnProtocolBas
      * @custom:then The amount of asset should be calculated correctly
      */
     function testFuzz_comparePreviewWithdrawAndWithdraw(uint152 shares) public {
+        // user deposits wstETH at price $2000
+        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
         skip(1 hours);
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         shares = uint152(bound(shares, 1, usdn.sharesOf(address(this))));
