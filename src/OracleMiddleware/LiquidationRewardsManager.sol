@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
@@ -70,9 +69,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         RewardsParameters memory rewardsParameters = _rewardsParameters;
         // Calculate the amount of gas spent during the liquidation.
         uint256 gasUsed = rewardsParameters.otherGasUsed + BASE_GAS_COST
-            + FixedPointMathLib.fullMulDiv(
-                rewardsParameters.gasUsedPerTick * tickAmount, rewardsParameters.multiplierBps, BPS_DIVISOR
-            );
+            + (uint256(rewardsParameters.gasUsedPerTick) * tickAmount * rewardsParameters.multiplierBps / BPS_DIVISOR);
 
         if (rebased) {
             gasUsed += rewardsParameters.rebaseGasUsed;
