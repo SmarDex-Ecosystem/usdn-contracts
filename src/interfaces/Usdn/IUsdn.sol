@@ -123,18 +123,22 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /*                             Dev view functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @dev The current value of the divisor that converts between tokens and shares.
+    /// @notice The current value of the divisor that converts between tokens and shares.
     function divisor() external view returns (uint256);
 
-    /// @dev Minter role signature.
+    /// @notice Minter role signature.
     function MINTER_ROLE() external pure returns (bytes32);
 
-    /// @dev Rebaser role signature.
+    /// @notice Rebaser role signature.
     function REBASER_ROLE() external pure returns (bytes32);
 
-    /// @dev Maximum value of the divisor, which is also the initial value.
+    /// @notice Maximum value of the divisor, which is also the initial value.
     function MAX_DIVISOR() external pure returns (uint256);
 
-    /// @dev Minimum acceptable value of the divisor.
+    /// @notice Minimum acceptable value of the divisor.
+    /**
+     * @dev The minimum divisor that can be set. This corresponds to a growth of 1B times. Technically, 1e5 would still
+     * work without precision errors.
+     */
     function MIN_DIVISOR() external pure returns (uint256);
 }
