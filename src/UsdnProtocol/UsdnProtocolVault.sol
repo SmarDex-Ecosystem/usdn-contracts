@@ -49,11 +49,11 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     }
 
     /**
-     * @notice Calculate the amount of asset expected to be received when burning USDN shares
+     * @notice Calculate the amount of assets received when burning USDN shares
      * @param usdnShares The amount of USDN shares
      * @param available The available asset in the vault
      * @param usdnTotalShares The total supply of USDN shares
-     * @return assetExpected_ The amount of asset expected to be received
+     * @return assetExpected_ The expected amount of asset to be received
      */
     function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
         internal

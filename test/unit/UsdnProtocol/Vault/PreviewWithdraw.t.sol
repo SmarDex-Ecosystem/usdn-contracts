@@ -9,7 +9,8 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 
 /**
  * @custom:feature The previewWithdraw function of the UsdnProtocolVault contract
- * @custom:background Given a protocol initialized with default params and enabledFunding = false
+ * @custom:background Given a protocol initialized with default params
+ * @custom:and enableFunding = true and enablePositionFees = true
  * @custom:and A user who deposited 1 wstETH at price $2000 to get 2000 USDN
  */
 contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
