@@ -1,5 +1,5 @@
 {
-    "include": "src/**/Usdn.sol",
+    "include": "src/**/IUsdn.sol",
     "exclude": "(test|scripts)/**/*.sol",
     "enforceInheritdoc": true,
     "constructorNatspec": false
