@@ -1361,8 +1361,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         int256 positionValue = _positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
 
         if (positionValue <= 0) {
+            // should not happen, unless we did not manage to liquidate all ticks that needed to be liquidated during
+            // the initiateClosePosition
             assetToTransfer_ = 0;
-        } else if (positionValue > available.toInt256()) {
+        } else if (uint256(positionValue) > available) {
             assetToTransfer_ = available;
         } else {
             assetToTransfer_ = uint256(positionValue);
