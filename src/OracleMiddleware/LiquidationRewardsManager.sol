@@ -68,15 +68,18 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
         RewardsParameters memory rewardsParameters = _rewardsParameters;
         // Calculate the amount of gas spent during the liquidation.
-        uint256 gasUsed =
-            rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
+        uint256 gasUsed = rewardsParameters.otherGasUsed + BASE_GAS_COST
+            + (
+                rewardsParameters.gasUsedPerTick * tickAmount * rewardsParameters.multiplierBps
+                    / REWARDS_MULTIPLIER_DENOMINATOR
+            );
+
         if (rebased) {
             gasUsed += rewardsParameters.rebaseGasUsed;
         }
+
         // Multiply by the gas price and the rewards multiplier.
-        wstETHRewards_ = _wstEth.getWstETHByStETH(
-            gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplierBps / REWARDS_MULTIPLIER_DENOMINATOR
-        );
+        wstETHRewards_ = _wstEth.getWstETHByStETH(gasUsed * _getGasPrice(rewardsParameters));
     }
 
     /// @inheritdoc ILiquidationRewardsManager
