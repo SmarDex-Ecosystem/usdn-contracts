@@ -32,19 +32,19 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
      * @custom:and The leverage is x2
      * @custom:when The user initiates a position opening with 1 wstETH as collateral
      * @custom:then The protocol emit an event with the correct price including the fees
-     * @custom:and The protocol emit an event with the correct leverage computed with the fees
+     * @custom:and The protocol emit an event with the correct total expo computed with the fees
      */
     function test_initiateOpenPosition() public {
         uint128 desiredLiqPrice = 2000 ether / 2;
 
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
-        uint256 expectedLeverage = protocol.i_getLeverage(
-            uint128(expectedPrice),
-            protocol.getEffectivePriceForTick(
-                protocol.getEffectiveTickForPrice(desiredLiqPrice)
-                    - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-            )
+        int24 expectedTick = protocol.getEffectiveTickForPrice(uint128(desiredLiqPrice));
+
+        // Price without the liquidation penalty
+        uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(
+            expectedTick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
         );
+        uint128 expectedPosTotalExpo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, effectiveTickPrice);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         vm.recordLogs();
@@ -55,11 +55,11 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         Vm.Log[] memory logs = vm.getRecordedLogs();
         assertEq(logs[1].topics[0], InitiatedOpenPosition.selector);
 
-        (, uint128 leverage,, uint256 price,,,) =
-            abi.decode(logs[1].data, (uint40, uint128, uint128, uint128, int24, uint256, uint256));
+        (, uint128 posTotalExpo,, uint256 price,,,) =
+            abi.decode(logs[0].data, (uint40, uint128, uint128, uint128, int24, uint256, uint256));
 
         assertEq(price, expectedPrice, "assetPrice");
-        assertEq(leverage, expectedLeverage, "leverage");
+        assertEq(posTotalExpo, expectedPosTotalExpo, "posTotalExpo");
     }
 
     /**
@@ -69,7 +69,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
      * @custom:when The user initiates a position opening with 1 wstETH as collateral
      * @custom:and The user validate his position opening with the same price
      * @custom:then The protocol emit an event with the correct price with the fees
-     * @custom:and The protocol emit an event with the correct leverage computed with the fees
+     * @custom:and The protocol emit an event with the correct total expo computed with the fees
      */
     function test_validateOpenPosition() public {
         skip(1 hours);
@@ -118,6 +118,61 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
      * @custom:and The leverage is x2
      * @custom:when The user initiates a position opening with 1 wstETH as collateral
      * @custom:and The user validate his position opening with the same price
+     * <<<<<<< HEAD
+     * =======
+     * @custom:and The user should be able to initiate a position closing
+     * @custom:then The user pending position should have a start price according to the fees
+     * @custom:and The user pending position should have a total expo according to the fees
+     */
+    function test_initiateClosePosition() public {
+        skip(1 hours);
+
+        uint128 desiredLiqPrice = 2000 ether / 2;
+        bytes memory priceData = abi.encode(2000 ether);
+
+        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: desiredLiqPrice,
+                price: 2000 ether
+            })
+        );
+        skip(1 hours);
+
+        // Call liquidate to trigger balance update
+        protocol.liquidate(priceData, 0);
+
+        uint256 storageBalanceBefore = protocol.getBalanceLong();
+
+        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
+
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+
+        (uint256 expectedTempTransfer,) = protocol.i_assetToTransfer(
+            uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
+            tick,
+            protocol.getLiquidationPenalty(),
+            action.closeTotalExpo,
+            protocol.getLiquidationMultiplier(),
+            0
+        );
+
+        uint256 storageBalanceAfter = protocol.getBalanceLong();
+
+        assertEq(action.closeTempTransfer, expectedTempTransfer, "Computed asset to transfer");
+        assertEq(storageBalanceBefore - storageBalanceAfter, expectedTempTransfer, "Protocol balance");
+    }
+
+    /**
+     * @custom:scenario The user open a position and then initiate the position closing
+     * @custom:given The price of the asset is $2000
+     * @custom:and The leverage is x2
+     * @custom:when The user initiates a position opening with 1 wstETH as collateral
+     * @custom:and The user validate his position opening with the same price
+     * >>>>>>> 2e0adea (feat(open-pos): replace the leverage by the position total expo in the InitiatedOpenPosition
+     * event)
      * @custom:and The user initiates a position closing
      * @custom:and The user should be able to validate his position closing
      * @custom:then The user should receive the expected amount of wstETH according to the fees

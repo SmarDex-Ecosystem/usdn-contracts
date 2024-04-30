@@ -55,7 +55,7 @@ interface IUsdnProtocolEvents {
      * @param user The user address.
      * @param to The address that will be the owner of the position.
      * @param timestamp The timestamp of the action.
-     * @param leverage The initial leverage of the position (pending validation).
+     * @param totalExpo The initial total expo of the position (pending validation).
      * @param amount The amount of asset that were deposited as collateral.
      * @param startPrice The asset price at the moment of the position creation (pending validation).
      * @param tick The tick containing the position.
@@ -66,7 +66,7 @@ interface IUsdnProtocolEvents {
         address indexed user,
         address indexed to,
         uint40 timestamp,
-        uint128 leverage,
+        uint128 totalExpo,
         uint128 amount,
         uint128 startPrice,
         int24 tick,

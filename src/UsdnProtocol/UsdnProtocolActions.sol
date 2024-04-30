@@ -913,7 +913,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             user,
             to,
             uint40(block.timestamp),
-            data.leverage,
+            positionTotalExpo,
             amount,
             data.adjustedPrice,
             posId_.tick,
