@@ -137,8 +137,8 @@ struct WithdrawalPendingAction {
  * @param closeLiqMultiplier A fixed precision representation of the liquidation multiplier (with
  * LIQUIDATION_MULTIPLIER_DECIMALS decimals) used to calculate the effective price for a given tick number (only used
  * when closing a position).
- * @param closeTempTransfer The amount that was optimistically removed on `initiateClosePosition` (only used when
- * closing a position).
+ * @param closeBoundedPositionValue The amount that was removed from the long balance on `initiateClosePosition` (only
+ * used when closing a position).
  */
 struct LongPendingAction {
     PendingActionCommonData common; // 55 bytes
@@ -148,7 +148,7 @@ struct LongPendingAction {
     uint256 tickVersion; // 32 bytes
     uint256 index; // 32 bytes
     uint256 closeLiqMultiplier; // 32 bytes
-    uint256 closeTempTransfer; // 32 bytes
+    uint256 closeBoundedPositionValue; // 32 bytes
 }
 
 /**

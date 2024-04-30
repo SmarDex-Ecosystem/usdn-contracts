@@ -212,12 +212,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _convertLongPendingAction(action);
     }
 
-    function i_assetToTransfer(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
+    function i_assetToRemove(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
         external
         view
         returns (uint256)
     {
-        return _assetToTransfer(priceWithFees, liqPriceWithoutPenalty, posExpo);
+        return _assetToRemove(priceWithFees, liqPriceWithoutPenalty, posExpo);
     }
 
     function i_tickValue(

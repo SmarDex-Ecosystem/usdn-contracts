@@ -340,7 +340,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint256 totalExpoBefore = protocol.getTotalExpo();
         uint256 balanceLongBefore = protocol.getBalanceLong();
         HugeUint.Uint512 memory accumulator = protocol.getLiqMultiplierAccumulator();
-        uint256 assetToTransfer = protocol.i_assetToTransfer(
+        uint256 assetToTransfer = protocol.i_assetToRemove(
             params.initialPrice,
             protocol.getEffectivePriceForTick(
                 tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
@@ -390,7 +390,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
         assertEq(action.tickVersion, tickVersion, "The tick version should not have changed");
         assertEq(action.index, index, "The index should not have changed");
-        assertEq(action.closeTempTransfer, assetToTransfer, "The close temp transfer should not have changed");
+        assertEq(action.closeBoundedPositionValue, assetToTransfer, "The pos value should not have changed");
 
         /* ----------------------------- Protocol State ----------------------------- */
         TickData memory newTickData = protocol.getTickData(tick);

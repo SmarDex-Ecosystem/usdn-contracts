@@ -213,7 +213,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, positionAmount, pos.amount).toUint128();
 
-        uint256 expectedAmountReceived = protocol.i_assetToTransfer(
+        uint256 expectedAmountReceived = protocol.i_assetToRemove(
             price,
             protocol.i_getEffectivePriceForTick(
                 tick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing(), action.closeLiqMultiplier
@@ -277,7 +277,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         data.action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         data.totalExpoToClose =
             FixedPointMathLib.fullMulDiv(data.pos.totalExpo, data.amountToClose, data.pos.amount).toUint128();
-        data.expectedAmountReceived = protocol.i_assetToTransfer(
+        data.expectedAmountReceived = protocol.i_assetToRemove(
             params.initialPrice,
             protocol.i_getEffectivePriceForTick(
                 tick - int24(uint24(data.liquidationPenalty)) * protocol.getTickSpacing(),
@@ -330,7 +330,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
         _waitDelay();
         data.action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
-        data.expectedAmountReceived = protocol.i_assetToTransfer(
+        data.expectedAmountReceived = protocol.i_assetToRemove(
             params.initialPrice,
             protocol.i_getEffectivePriceForTick(
                 tick - int24(uint24(data.liquidationPenalty)) * protocol.getTickSpacing(),
@@ -387,7 +387,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint128 priceAfterInit = params.initialPrice - 50 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, timestamp));
         uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(priceAfterInit, timestamp));
-        uint256 assetToTransfer = protocol.i_assetToTransfer(
+        uint256 assetToTransfer = protocol.i_assetToRemove(
             priceAfterInit,
             protocol.i_getEffectivePriceForTick(
                 action.tick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing(), action.closeLiqMultiplier
@@ -413,7 +413,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         /* -------------------------- Balance Vault & Long -------------------------- */
         assertEq(
             protocol.getBalanceVault(),
-            vaultBalanceBefore + (action.closeTempTransfer - assetToTransfer),
+            vaultBalanceBefore + (action.closeBoundedPositionValue - assetToTransfer),
             "Vault gets the difference"
         );
         assertEq(protocol.getBalanceLong(), longBalanceBefore, "Long balance doesn't change");
@@ -447,7 +447,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint128 price = params.initialPrice + 200 ether;
         uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp)));
         uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp)));
-        uint256 assetToTransfer = protocol.i_assetToTransfer(
+        uint256 assetToTransfer = protocol.i_assetToRemove(
             price,
             protocol.i_getEffectivePriceForTick(
                 action.tick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing(), action.closeLiqMultiplier
@@ -472,7 +472,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         /* -------------------------- Balance Vault & Long -------------------------- */
         assertEq(
             protocol.getBalanceVault(),
-            vaultBalanceBefore - (assetToTransfer - action.closeTempTransfer),
+            vaultBalanceBefore - (assetToTransfer - action.closeBoundedPositionValue),
             "Balance of the vault should decrease to pay the missing profit"
         );
         assertEq(protocol.getBalanceLong(), longBalanceBefore, "Long balance should not change");
@@ -507,7 +507,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         data.action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         assertEq(
             protocol.getBalanceLong(),
-            data.longBalanceStart - data.action.closeTempTransfer,
+            data.longBalanceStart - data.action.closeBoundedPositionValue,
             "long balance decreased during initiate"
         );
 
@@ -525,7 +525,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         data.remainingValue = protocol.i_positionValue(
             data.liquidationPrice, data.liqPriceWithoutPenalty, data.pos.totalExpo - data.action.closePosTotalExpo
         );
-        data.remainingToTransfer = protocol.i_assetToTransfer(
+        data.remainingToTransfer = protocol.i_assetToRemove(
             data.liquidationPrice, data.liqPriceWithoutPenalty, data.pos.totalExpo - data.action.closePosTotalExpo
         );
 
@@ -550,7 +550,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         /* -------------------------- Balance Vault & Long -------------------------- */
         assertEq(
             protocol.getBalanceVault(),
-            data.vaultBalanceBefore + data.action.closeTempTransfer + data.remainingToTransfer,
+            data.vaultBalanceBefore + data.action.closeBoundedPositionValue + data.remainingToTransfer,
             "Full value of the position should have been transferred to the vault"
         );
         assertEq(
@@ -596,7 +596,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         skip(1 hours);
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(DEPLOYER));
-        assertEq(protocol.getBalanceLong(), longBalanceBefore - action.closeTempTransfer, "long balance decreased");
+        assertEq(
+            protocol.getBalanceLong(), longBalanceBefore - action.closeBoundedPositionValue, "long balance decreased"
+        );
 
         uint256 vaultBalanceBefore = protocol.getBalanceVault();
         uint256 userBalanceBefore = wstETH.balanceOf(DEPLOYER);
@@ -606,8 +608,10 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         emit LiquidatedPosition(DEPLOYER, 0, 0, 0, 0, 0);
         protocol.i_validateClosePosition(DEPLOYER, priceData);
 
-        assertEq(protocol.getBalanceVault(), vaultBalanceBefore + action.closeTempTransfer, "final vault balance");
-        assertEq(protocol.getBalanceLong(), longBalanceBefore - action.closeTempTransfer, "final long balance");
+        assertEq(
+            protocol.getBalanceVault(), vaultBalanceBefore + action.closeBoundedPositionValue, "final vault balance"
+        );
+        assertEq(protocol.getBalanceLong(), longBalanceBefore - action.closeBoundedPositionValue, "final long balance");
         assertEq(wstETH.balanceOf(DEPLOYER), userBalanceBefore, "user balance");
     }
 

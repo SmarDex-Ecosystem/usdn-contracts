@@ -76,7 +76,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param securityDepositValue The security deposit value
      * @param totalExpoToClose The total expo to close
      * @param lastPrice The price after the last balances update
-     * @param tempTransfer The value of the position that was removed from the long balance
+     * @param tempPositionValue The bounded value of the position that was removed from the long balance
      * @param longTradingExpo The long trading expo
      * @param liqMulAcc The liquidation multiplier accumulator
      */
@@ -86,7 +86,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint24 securityDepositValue;
         uint128 totalExpoToClose;
         uint128 lastPrice;
-        uint256 tempTransfer;
+        uint256 tempPositionValue;
         uint256 longTradingExpo;
         HugeUint.Uint512 liqMulAcc;
     }
@@ -832,7 +832,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             tickVersion: data.posId.tickVersion,
             index: data.posId.index,
             closeLiqMultiplier: 0,
-            closeTempTransfer: 0
+            closeBoundedPositionValue: 0
         });
         securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(action));
     }
@@ -1102,7 +1102,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // In order to have the maximum precision, we do not pre-compute the liquidation multiplier with a fixed
         // precision just now, we will store it in the pending action later, to be used in the validate action.
-        data_.tempTransfer = _assetToTransfer(
+        data_.tempPositionValue = _assetToRemove(
             data_.lastPrice,
             getEffectivePriceForTick(
                 posId.tick - int24(uint24(data_.liquidationPenalty)) * _tickSpacing,
@@ -1146,7 +1146,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             tickVersion: posId.tickVersion,
             index: posId.index,
             closeLiqMultiplier: _calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
-            closeTempTransfer: data.tempTransfer
+            closeBoundedPositionValue: data.tempPositionValue
         });
         securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(action));
     }
@@ -1185,7 +1185,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         securityDepositValue_ = _createClosePendingAction(user, to, posId, amountToClose, data);
 
-        _balanceLong -= data.tempTransfer;
+        _balanceLong -= data.tempPositionValue;
 
         _removeAmountFromPosition(posId.tick, posId.index, data.pos, amountToClose, data.totalExpoToClose);
 
@@ -1238,7 +1238,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // Position should be liquidated, we don't transfer assets to the user.
             // Position was already removed from tick so no additional bookkeeping is necessary.
             // Credit the full amount to the vault to preserve the total balance invariant.
-            _balanceVault += long.closeTempTransfer;
+            _balanceVault += long.closeBoundedPositionValue;
             emit LiquidatedPosition(
                 long.common.user, long.tick, long.tickVersion, long.index, currentPrice.neutralPrice, liquidationPrice
             );
@@ -1255,22 +1255,25 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 assetToTransfer;
         if (positionValue > 0) {
             assetToTransfer = uint256(positionValue);
-            // Normally, the position value should be smaller than `long.closeTempTransfer` (due to the position fee).
+            // Normally, the position value should be smaller than `long.closeBoundedPositionValue` (due to the position
+            // fee).
             // We can send the difference (any remaining collateral) to the vault.
             // If the price increased since the initiate, it's possible that the position value is higher than the
-            // `long.closeTempTransfer`. In that case, we need to take the missing assets from the vault.
-            if (assetToTransfer < long.closeTempTransfer) {
+            // `long.closeBoundedPositionValue`. In that case, we need to take the missing assets from the vault.
+            if (assetToTransfer < long.closeBoundedPositionValue) {
                 uint256 remainingCollateral;
                 unchecked {
-                    // since assetToTransfer is strictly smaller than closeTempTransfer, this operation can't underflow
-                    remainingCollateral = long.closeTempTransfer - assetToTransfer;
+                    // since assetToTransfer is strictly smaller than closeBoundedPositionValue, this operation can't
+                    // underflow
+                    remainingCollateral = long.closeBoundedPositionValue - assetToTransfer;
                 }
                 _balanceVault += remainingCollateral;
-            } else if (assetToTransfer > long.closeTempTransfer) {
+            } else if (assetToTransfer > long.closeBoundedPositionValue) {
                 uint256 missingValue;
                 unchecked {
-                    // since assetToTransfer is strictly larger than closeTempTransfer, this operation can't underflow
-                    missingValue = assetToTransfer - long.closeTempTransfer;
+                    // since assetToTransfer is strictly larger than closeBoundedPositionValue, this operation can't
+                    // underflow
+                    missingValue = assetToTransfer - long.closeBoundedPositionValue;
                 }
                 uint256 balanceVault = _balanceVault;
                 // If the vault does not have enough balance left to pay out the missing value, we take what we can
@@ -1341,18 +1344,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Calculate how much wstETH must be transferred to a user to close a position.
+     * @notice Calculate how much wstETH must be removed from the long balance due to a position closing.
      * @dev The amount is bound by the amount of wstETH available in the long side.
      * @param priceWithFees The current price of the asset, adjusted with fees
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      * @param posExpo The total expo of the position
-     * @return assetToTransfer_ The amount of assets to transfer to the user, bound by zero and the available
+     * @return boundedPosValue_ The amount of assets to remove from the long balance, bound by zero and the available
      * long balance
      */
-    function _assetToTransfer(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
+    function _assetToRemove(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
         internal
         view
-        returns (uint256 assetToTransfer_)
+        returns (uint256 boundedPosValue_)
     {
         // The available amount of asset on the long side (with the current balance)
         uint256 available = _balanceLong;
@@ -1363,11 +1366,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (positionValue <= 0) {
             // should not happen, unless we did not manage to liquidate all ticks that needed to be liquidated during
             // the initiateClosePosition
-            assetToTransfer_ = 0;
+            boundedPosValue_ = 0;
         } else if (uint256(positionValue) > available) {
-            assetToTransfer_ = available;
+            boundedPosValue_ = available;
         } else {
-            assetToTransfer_ = uint256(positionValue);
+            boundedPosValue_ = uint256(positionValue);
         }
     }
 
