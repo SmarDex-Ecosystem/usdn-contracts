@@ -20,7 +20,25 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     using HugeUint for HugeUint.Uint512;
 
     /**
-     * @notice Structure to hold the transient data during liquidation
+     * @notice Struct to hold temporary data during the update of the liquidation price of a position
+     * @param fromTickHash The hash of the origin tick
+     * @param toTickHash The hash of the destination tick
+     * @param unadjustedFromTickPrice The unadjusted price of the origin tick
+     * @param unadjustedToTickPrice The unadjusted price of the destination tick
+     * @param oldPosTotalExpo The total expo of the position before the update
+     * @param totalExpo The total expo of the protocol before the update
+     */
+    struct UpdateLiqPriceData {
+        bytes32 fromTickHash;
+        bytes32 toTickHash;
+        uint256 unadjustedFromTickPrice;
+        uint256 unadjustedToTickPrice;
+        uint256 oldPosTotalExpo;
+        uint256 totalExpo;
+    }
+
+    /**
+     * @notice Structure to hold the temporary data during liquidation
      * @param tempLongBalance The temporary long balance
      * @param tempVaultBalance The temporary vault balance
      * @param currentTick The current tick (tick corresponding to the current asset price)
@@ -464,24 +482,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         tickData.totalExpo -= totalExpoToRemove;
         _liqMultiplierAccumulator =
             _liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * totalExpoToRemove));
-    }
-
-    /**
-     * @notice Struct to hold temporary data during the update of the liquidation price of a position
-     * @param fromTickHash The hash of the origin tick
-     * @param toTickHash The hash of the destination tick
-     * @param unadjustedFromTickPrice The unadjusted price of the origin tick
-     * @param unadjustedToTickPrice The unadjusted price of the destination tick
-     * @param oldPosTotalExpo The total expo of the position before the update
-     * @param totalExpo The total expo of the protocol before the update
-     */
-    struct UpdateLiqPriceData {
-        bytes32 fromTickHash;
-        bytes32 toTickHash;
-        uint256 unadjustedFromTickPrice;
-        uint256 unadjustedToTickPrice;
-        uint256 oldPosTotalExpo;
-        uint256 totalExpo;
     }
 
     /**
