@@ -445,8 +445,15 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
                 protocol.getLiqMultiplierAccumulator()
             )
         );
-        // final leverage should be above 10x because of the stored liquidation penalty of the target tick
-        assertGt(data.expectedLeverage, uint128(10 * 10 ** protocol.LEVERAGE_DECIMALS()), "final leverage");
+        uint128 expectedPosTotalExpo =
+            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), validatePrice, expectedLiqPrice);
+
+        {
+            // Sanity check
+            uint128 expectedLeverage = protocol.i_getLeverage(validatePrice, expectedLiqPrice);
+            // final leverage should be above 10x because of the stored liquidation penalty of the target tick
+            assertGt(expectedLeverage, uint128(10 * 10 ** protocol.LEVERAGE_DECIMALS()), "final leverage");
+        }
 
         // validate deposit with a lower entry price
         vm.expectEmit();
@@ -462,7 +469,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         emit ValidatedOpenPosition(
             address(this),
             address(this),
-            data.expectedLeverage,
+            data.expectedPosTotalExpo,
             data.validatePrice,
             data.validateTick,
             data.validateTickVersion,

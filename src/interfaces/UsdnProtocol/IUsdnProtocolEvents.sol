@@ -78,7 +78,7 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when a user validates the opening of a long position.
      * @param user The user address.
      * @param to The address that will be the owner of the position.
-     * @param newLeverage The initial leverage of the position (final).
+     * @param totalExpo The total expo of the position.
      * @param newStartPrice The asset price at the moment of the position creation (final).
      * @param tick The tick containing the position.
      * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
@@ -90,7 +90,7 @@ interface IUsdnProtocolEvents {
     event ValidatedOpenPosition(
         address indexed user,
         address indexed to,
-        uint128 newLeverage,
+        uint128 totalExpo,
         uint128 newStartPrice,
         int24 tick,
         uint256 tickVersion,

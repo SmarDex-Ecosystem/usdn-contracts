@@ -1026,20 +1026,22 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 data.liqPriceWithoutPenalty =
                     getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing);
             }
-            // recalculate the leverage with the new liquidation price
-            data.leverage = _getLeverage(data.startPrice, data.liqPriceWithoutPenalty);
 
-            // move the position to its new tick, updating its total expo, and returning the new tickVersion and index
-            (uint256 tickVersion, uint256 index) = _updateLiquidationPrice(
-                data.action.tick, data.action.index, tick, data.pos, data.startPrice, data.liqPriceWithoutPenalty
-            );
+            // update position total expo
+            data.pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
 
             // emit LiquidationPriceUpdated
             emit LiquidationPriceUpdated(
                 data.action.tick, data.action.tickVersion, data.action.index, tick, tickVersion, index
             );
             emit ValidatedOpenPosition(
-                data.action.common.user, data.action.common.to, data.leverage, data.startPrice, tick, tickVersion, index
+                data.action.common.user,
+                data.action.common.to,
+                data.pos.totalExpo,
+                data.startPrice,
+                tick,
+                tickVersion,
+                index
             );
         } else {
             // Calculate the new total expo

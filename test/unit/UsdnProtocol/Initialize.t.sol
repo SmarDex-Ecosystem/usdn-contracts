@@ -102,6 +102,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         int24 tickWithoutPenalty = protocol.getEffectiveTickForPrice(INITIAL_PRICE / 2);
         int24 expectedTick =
             tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        uint128 posTotalExpo = 2 * INITIAL_POSITION;
         uint128 leverage = uint128(2 * 10 ** protocol.LEVERAGE_DECIMALS());
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
@@ -118,10 +119,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             0
         );
         vm.expectEmit();
-        emit ValidatedOpenPosition(address(this), address(this), leverage, INITIAL_PRICE, expectedTick, 0, 0);
-        protocol.i_createInitialPosition(
-            INITIAL_POSITION, INITIAL_PRICE, tickWithoutPenalty, leverage, 2 * INITIAL_POSITION
-        );
+        emit ValidatedOpenPosition(address(this), address(this), posTotalExpo, INITIAL_PRICE, expectedTick, 0, 0);
+        protocol.i_createInitialPosition(INITIAL_POSITION, INITIAL_PRICE, tickWithoutPenalty, leverage, posTotalExpo);
 
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore - INITIAL_POSITION, "deployer wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_POSITION, "protocol wstETH balance");
@@ -130,7 +129,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         (Position memory pos,) = protocol.getLongPosition(expectedTick, 0, 0);
         assertEq(pos.user, address(this), "position user");
         assertEq(pos.amount, INITIAL_POSITION, "position amount");
-        assertEq(pos.totalExpo, 2 * INITIAL_POSITION, "position total expo");
+        assertEq(pos.totalExpo, posTotalExpo, "position total expo");
         assertEq(pos.timestamp, block.timestamp, "position timestamp");
     }
 
@@ -171,6 +170,8 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         int24 expectedTick =
             tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
         uint128 liquidationPriceWithoutPenalty = protocol.getEffectivePriceForTick(tickWithoutPenalty);
+        uint128 expectedPosTotalExpo =
+            protocol.i_calculatePositionTotalExpo(INITIAL_DEPOSIT, INITIAL_PRICE, liquidationPriceWithoutPenalty);
         uint128 leverage = protocol.i_getLeverage(INITIAL_PRICE, liquidationPriceWithoutPenalty);
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
@@ -195,7 +196,9 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             0
         );
         vm.expectEmit();
-        emit ValidatedOpenPosition(address(this), address(this), leverage, INITIAL_PRICE, expectedTick, 0, 0);
+        emit ValidatedOpenPosition(
+            address(this), address(this), expectedPosTotalExpo, INITIAL_PRICE, expectedTick, 0, 0
+        );
         protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
 
         assertEq(

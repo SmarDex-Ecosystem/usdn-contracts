@@ -406,6 +406,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         emit InitiatedOpenPosition(
             msg.sender, msg.sender, long.timestamp, leverage, long.amount, price, tick, tickVersion, index
         );
-        emit ValidatedOpenPosition(msg.sender, msg.sender, leverage, price, tick, tickVersion, index);
+        emit ValidatedOpenPosition(msg.sender, msg.sender, positionTotalExpo, price, tick, tickVersion, index);
     }
 }

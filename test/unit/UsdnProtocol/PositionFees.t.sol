@@ -77,7 +77,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether / 2;
         bytes memory priceData = abi.encode(2000 ether);
 
-        setUpUserPositionInLong(
+        (int24 tick,,) = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.InitiateOpenPosition,
@@ -93,25 +93,23 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         // Call liquidate to trigger liquidation multiplier update
         protocol.testLiquidate(priceData, 0);
 
-        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
-        uint256 expectedLeverage = protocol.i_getLeverage(
-            uint128(expectedPrice),
-            protocol.getEffectivePriceForTick(
-                protocol.getEffectiveTickForPrice(desiredLiqPrice)
-                    - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-            )
+        // Price without the liquidation penalty
+        uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(
+            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
         );
+        uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
+        uint128 expectedPosTotalExpo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, effectiveTickPrice);
 
         vm.recordLogs();
 
         protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        (uint128 leverage, uint256 price,,,) = abi.decode(logs[0].data, (uint128, uint128, int24, uint256, uint256));
+        (uint128 posTotalExpo, uint256 price,,,) = abi.decode(logs[0].data, (uint128, uint128, int24, uint256, uint256));
 
         assertEq(logs[0].topics[0], ValidatedOpenPosition.selector);
         assertEq(price, expectedPrice, "assetPrice");
-        assertEq(leverage, expectedLeverage, "leverage");
+        assertEq(posTotalExpo, expectedPosTotalExpo, "posTotalExpo");
     }
 
     /**
