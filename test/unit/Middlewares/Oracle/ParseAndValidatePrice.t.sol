@@ -497,6 +497,9 @@ contract TestOracleMiddlewareParseAndValidatePrice is OracleMiddlewareBaseFixtur
     function test_RevertWhen_parseAndValidatePriceIncorrectFee() public {
         uint256 validationCost = oracleMiddleware.validationCost(abi.encode("data"), ProtocolAction.ValidateDeposit);
 
+        // Sanity check
+        assertGt(validationCost, 0, "The validation cost must be higher than 0");
+
         // Fee too low
         vm.expectRevert(OracleMiddlewareIncorrectFee.selector);
         oracleMiddleware.parseAndValidatePrice{ value: validationCost - 1 }(
