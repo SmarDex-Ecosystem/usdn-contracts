@@ -9,12 +9,16 @@ interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTy
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Denominator for the reward multiplier, will give us a 0.01% basis point
+    /**
+     * @notice Denominator for the reward multiplier, will give us a 0.01% basis point
+     * @return The BPS divisor
+     */
     function BPS_DIVISOR() external pure returns (uint32);
 
     /**
-     * @notice Fixed amount of gas a transaction consume.
+     * @notice Fixed amount of gas a transaction consumes.
      * @dev Is a uint256 to avoid overflows during gas usage calculations
+     * @return The base gas cost
      */
     function BASE_GAS_COST() external pure returns (uint256);
 

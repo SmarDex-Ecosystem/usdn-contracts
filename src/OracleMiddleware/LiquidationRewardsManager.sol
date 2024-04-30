@@ -137,7 +137,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             gasPrice_ = tx.gasprice;
         }
 
-        // Avoid paying an insane amount if network is abnormally congested
+        // Avoid paying an insane amount if the network is abnormally congested
         if (gasPrice_ > rewardsParameters.gasPriceLimit) {
             gasPrice_ = rewardsParameters.gasPriceLimit;
         }
