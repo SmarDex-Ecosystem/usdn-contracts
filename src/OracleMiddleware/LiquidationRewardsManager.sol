@@ -48,7 +48,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             otherGasUsed: 384_487,
             rebaseGasUsed: 8897,
             gasPriceLimit: 1000 gwei,
-            multiplierBps: 20_000
+            multiplierBps: 30_000
         });
     }
 
