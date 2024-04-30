@@ -16,7 +16,7 @@ interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTy
     function BPS_DIVISOR() external pure returns (uint32);
 
     /**
-     * @notice Fixed amount of gas a transaction consumes.
+     * @notice Fixed amount of gas a transaction consumes
      * @dev Is a uint256 to avoid overflows during gas usage calculations
      * @return The base gas cost
      */
