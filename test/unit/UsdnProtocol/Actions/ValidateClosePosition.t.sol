@@ -69,7 +69,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         // Try to validate a close position action with a pending action other than ValidateClosePosition
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolInvalidPendingAction.selector));
-        protocol.i_validateClosePosition(address(this), address(this), priceData);
+        protocol.i_validateClosePosition(address(this), priceData);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -88,7 +88,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 etherBalanceBefore = address(this).balance;
 
         protocol.initiateClosePosition(
-            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
         _waitDelay();
         protocol.validateClosePosition{ value: 1 ether }(address(this), priceData, EMPTY_PREVIOUS_DATA);
@@ -121,7 +121,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
 
         protocol.initiateClosePosition(
-            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
 
         skip(protocol.getValidationDeadline());
@@ -145,7 +145,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     function test_validateClosePosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);
         protocol.initiateClosePosition(
-            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
         _waitDelay();
 
@@ -189,7 +189,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------- Initiate Close Position ------------------------ */
         (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(tick, tickVersion, index);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(to);
-        protocol.initiateClosePosition(tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, to);
+        protocol.initiateClosePosition(
+            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, to, address(this)
+        );
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
@@ -202,7 +204,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit ValidatedClosePosition(address(this), to, tick, tickVersion, index, expectedAmountReceived, -1);
-        protocol.i_validateClosePosition(address(this), to, priceData);
+        protocol.i_validateClosePosition(to, priceData);
 
         /* ----------------------------- User's Balance ----------------------------- */
         assertApproxEqAbs(
@@ -230,7 +232,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(address(this));
         uint128 amountToClose = 100_000;
         protocol.initiateClosePosition(
-            tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
         _waitDelay();
 
@@ -253,7 +255,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, expectedAmountReceived, -1);
-        protocol.i_validateClosePosition(address(this), address(this), priceData);
+        protocol.i_validateClosePosition(address(this), priceData);
 
         /* ---------------------------- Position's state ---------------------------- */
         (Position memory posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
@@ -272,7 +274,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         /* --------------------- Close the rest of the position --------------------- */
         protocol.initiateClosePosition(
-            tick, tickVersion, index, pos.amount - amountToClose, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick,
+            tickVersion,
+            index,
+            pos.amount - amountToClose,
+            priceData,
+            EMPTY_PREVIOUS_DATA,
+            address(this),
+            address(this)
         );
         _waitDelay();
         action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
@@ -287,7 +296,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, expectedAmountReceived, -1);
-        protocol.i_validateClosePosition(address(this), address(this), priceData);
+        protocol.i_validateClosePosition(address(this), priceData);
 
         (posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
         assertEq(posAfter.user, address(0), "The address should be 0x0 (position deleted)");
@@ -319,7 +328,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         uint128 amountToClose = pos.amount / 2;
         protocol.initiateClosePosition(
-            tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
         _waitDelay();
 
@@ -344,7 +353,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, assetToTransfer, losses);
-        protocol.i_validateClosePosition(address(this), address(this), priceData);
+        protocol.i_validateClosePosition(address(this), priceData);
 
         assertEq(
             protocol.getAsset().balanceOf(address(this)),
@@ -382,7 +391,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         uint128 amountToClose = pos.amount / 2;
         protocol.initiateClosePosition(
-            tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
         _waitDelay();
 
@@ -406,7 +415,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, assetToTransfer, profits);
-        protocol.i_validateClosePosition(address(this), address(this), priceData);
+        protocol.i_validateClosePosition(address(this), priceData);
 
         assertEq(
             protocol.getAsset().balanceOf(address(this)),
@@ -443,7 +452,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         uint128 amountToClose = pos.amount / 2;
         protocol.initiateClosePosition(
-            tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, amountToClose, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
         _waitDelay();
 
@@ -472,7 +481,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         emit LiquidatedTick(tick, tickVersion, 0, 0, 0);
         vm.expectEmit(true, false, false, false);
         emit LiquidatedPosition(address(this), 0, 0, 0, 0, 0);
-        protocol.i_validateClosePosition(address(this), address(this), priceData);
+        protocol.i_validateClosePosition(address(this), priceData);
 
         assertEq(
             protocol.getAsset().balanceOf(address(this)), assetBalanceBefore, "User should not have received any asset"
@@ -516,7 +525,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
         (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(tick, 0, 0);
         vm.prank(DEPLOYER);
-        protocol.initiateClosePosition(tick, 0, 0, pos.amount, priceData, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateClosePosition(
+            tick, 0, 0, pos.amount, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
+        );
 
         /* ------------------ Validate close position with bad debt ----------------- */
 
@@ -536,7 +547,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         // Make sure we liquidate the position
         vm.expectEmit(true, false, false, false);
         emit LiquidatedPosition(DEPLOYER, 0, 0, 0, 0, 0);
-        protocol.i_validateClosePosition(DEPLOYER, address(this), priceData);
+        protocol.i_validateClosePosition(DEPLOYER, priceData);
 
         assertEq(protocol.getBalanceVault(), 0, "final vault balance");
     }
@@ -569,7 +580,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(tick, 0, 0);
         vm.prank(DEPLOYER);
-        protocol.initiateClosePosition(tick, 0, 0, pos.amount, priceData, EMPTY_PREVIOUS_DATA, DEPLOYER);
+        protocol.initiateClosePosition(tick, 0, 0, pos.amount, priceData, EMPTY_PREVIOUS_DATA, DEPLOYER, DEPLOYER);
 
         /* ---- Validate close position with a large enough remaining collateral ---- */
 
@@ -589,7 +600,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         // Make sure we liquidate the position
         vm.expectEmit(true, false, false, false);
         emit LiquidatedPosition(DEPLOYER, 0, 0, 0, 0, 0);
-        protocol.i_validateClosePosition(DEPLOYER, DEPLOYER, priceData);
+        protocol.i_validateClosePosition(DEPLOYER, priceData);
 
         assertEq(protocol.getBalanceLong(), 0, "final long balance");
     }

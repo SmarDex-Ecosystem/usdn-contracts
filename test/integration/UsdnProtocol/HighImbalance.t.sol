@@ -48,7 +48,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
             + protocol.getSecurityDepositValue();
 
         protocol.initiateOpenPosition{ value: messageValue }(
-            3 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA, address(this)
+            3 ether, 2563 ether, "", EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
 
         vm.warp(1_708_090_246);
@@ -64,7 +64,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         mockChainlinkOnChain.setLastPrice(3290e8);
 
         protocol.initiateOpenPosition{ value: messageValue }(
-            3.01 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA, address(this)
+            3.01 ether, 2674 ether, "", EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
 
         vm.warp(1_708_090_438);
@@ -87,7 +87,7 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
         wstETH.approve(address(protocol), type(uint256).max);
 
         protocol.initiateOpenPosition{ value: messageValue }(
-            4.0001 ether, 1684 ether, "", EMPTY_PREVIOUS_DATA, address(this)
+            4.0001 ether, 1684 ether, "", EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
         vm.stopPrank();
 

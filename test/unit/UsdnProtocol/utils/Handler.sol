@@ -48,21 +48,22 @@ contract UsdnProtocolHandler is UsdnProtocol {
     /// @dev Push a pending item to the front of the pending actions queue
     function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
         rawIndex_ = _pendingActionsQueue.pushFront(action);
-        _pendingActions[action.user] = uint256(rawIndex_) + 1;
+        _pendingActions[action.validator] = uint256(rawIndex_) + 1;
     }
 
     function i_initiateClosePosition(
         address user,
         address to,
+        address validator,
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) external returns (uint256 securityDepositValue_) {
-        return _initiateClosePosition(user, to, posId, amountToClose, currentPriceData);
+        return _initiateClosePosition(user, to, validator, posId, amountToClose, currentPriceData);
     }
 
-    function i_validateClosePosition(address user, address to, bytes calldata priceData) external {
-        _validateClosePosition(user, to, priceData);
+    function i_validateClosePosition(address validator, bytes calldata priceData) external {
+        _validateClosePosition(validator, priceData);
     }
 
     function i_removeAmountFromPosition(
@@ -313,11 +314,13 @@ contract UsdnProtocolHandler is UsdnProtocol {
         _executePendingActionOrRevert(data);
     }
 
-    function i_refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore)
-        external
-        payable
-    {
-        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+    function i_refundExcessEther(
+        uint256 securityDepositValue,
+        uint256 amountToRefund,
+        uint256 balanceBefore,
+        address to
+    ) external payable {
+        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore, to);
     }
 
     function i_mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB) external pure returns (uint256) {

@@ -59,6 +59,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
             0.5 ether,
             abi.encode(params.initialPrice * 10_000),
             EMPTY_PREVIOUS_DATA,
+            address(this),
             address(this)
         );
         _waitDelay();

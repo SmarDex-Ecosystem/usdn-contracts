@@ -19,7 +19,7 @@ contract TestRefundExcessEther is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_refundExcessEther() public {
         vm.expectRevert(UsdnProtocolUnexpectedBalance.selector);
-        protocol.i_refundExcessEther(1, 0, 0);
+        protocol.i_refundExcessEther(1, 0, 0, address(this));
     }
 
     /**
@@ -31,6 +31,6 @@ contract TestRefundExcessEther is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_refundExcessEther_noReceive() public {
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
-        protocol.i_refundExcessEther{ value: 1 ether }(0, 1 ether, 0);
+        protocol.i_refundExcessEther{ value: 1 ether }(0, 1 ether, 0, address(this));
     }
 }

@@ -136,7 +136,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // If the currentUser is equal to the user of the pending action, then the pending action is not actionable
             // by this user (it will get validated automatically by their action). And so we need to return the next
             // item in the queue so that they can validate a third-party pending action (if any).
-            if (candidate.timestamp == 0 || candidate.user == currentUser) {
+            if (candidate.timestamp == 0 || candidate.validator == currentUser) {
                 rawIndices_[i] = rawIndex;
                 // try the next one
                 unchecked {

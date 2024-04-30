@@ -26,7 +26,7 @@ contract DequeFixture is BaseFixture {
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
-        assertEq(a.user, b.user, string.concat(err, " - action user"));
+        assertEq(a.validator, b.validator, string.concat(err, " - action user"));
         assertEq(a.var1, b.var1, string.concat(err, " - action var1"));
         assertEq(a.amount, b.amount, string.concat(err, " - action amount"));
         assertEq(a.var2, b.var2, string.concat(err, " - action var2"));

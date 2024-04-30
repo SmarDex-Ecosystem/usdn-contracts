@@ -66,6 +66,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         protocol.i_initiateClosePosition(
             address(this),
             address(this),
+            address(this),
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
             amountToClose,
             priceData
@@ -81,6 +82,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
         protocol.i_initiateClosePosition(
+            USER_1,
             USER_1,
             USER_1,
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
@@ -99,7 +101,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.i_initiateClosePosition(
-            USER_1, address(0), PositionId(tick, tickVersion, index), positionAmount, priceData
+            USER_1, address(0), USER_1, PositionId(tick, tickVersion, index), positionAmount, priceData
         );
     }
 
@@ -114,6 +116,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolAmountToCloseIsZero.selector));
         protocol.i_initiateClosePosition(
+            address(this),
             address(this),
             address(this),
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
@@ -144,6 +147,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         protocol.i_initiateClosePosition(
             address(this),
             address(this),
+            address(this),
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
             positionAmount / 2,
             priceData
@@ -166,7 +170,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint256 etherBalanceBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 1 ether }(
-            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
 
         assertEq(
@@ -212,6 +216,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             positionAmount,
             priceData,
             PreviousActionsData(previousData, rawIndices),
+            address(this),
             address(this)
         );
     }
@@ -230,7 +235,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             address(this), address(this), tick, tickVersion, index, positionAmount, positionAmount, 0
         );
         protocol.initiateClosePosition(
-            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
     }
 
@@ -366,6 +371,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         protocol.i_initiateClosePosition(
             address(this),
             to,
+            address(this),
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
             amountToClose,
             abi.encode(params.initialPrice)
@@ -375,7 +381,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(to));
         assertTrue(action.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
         assertEq(action.timestamp, block.timestamp, "The block timestamp should be now");
-        assertEq(action.user, address(this), "The user should be the transaction sender");
+        assertEq(action.validator, address(this), "The validator should be the transaction sender");
         assertEq(action.to, to, "To is wrong");
         assertEq(action.tick, tick, "The position tick is wrong");
         assertEq(

@@ -222,7 +222,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateDeposit{ value: securityDepositValue }(positionSize, priceData, EMPTY_PREVIOUS_DATA, user);
+        protocol.initiateDeposit{ value: securityDepositValue }(
+            positionSize, priceData, EMPTY_PREVIOUS_DATA, user, user
+        );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
@@ -233,7 +235,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         uint256 balanceOf = usdn.balanceOf(user);
         usdn.approve(address(protocol), balanceOf);
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA, user
+            uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA, user, user
         );
         _waitDelay();
 
@@ -262,7 +264,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         bytes memory priceData = abi.encode(openParams.price);
 
         (tick_, tickVersion_, index_) = protocol.initiateOpenPosition{ value: securityDepositValue }(
-            openParams.positionSize, openParams.desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA, openParams.user
+            openParams.positionSize,
+            openParams.desiredLiqPrice,
+            priceData,
+            EMPTY_PREVIOUS_DATA,
+            openParams.user,
+            openParams.user
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
@@ -272,7 +279,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            tick_, tickVersion_, index_, openParams.positionSize, priceData, EMPTY_PREVIOUS_DATA, openParams.user
+            tick_,
+            tickVersion_,
+            index_,
+            openParams.positionSize,
+            priceData,
+            EMPTY_PREVIOUS_DATA,
+            openParams.user,
+            openParams.user
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
@@ -315,7 +329,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
-        assertEq(a.user, b.user, string.concat(err, " - action user"));
+        assertEq(a.validator, b.validator, string.concat(err, " - action validator"));
         assertEq(a.var1, b.var1, string.concat(err, " - action var1"));
         assertEq(a.amount, b.amount, string.concat(err, " - action amount"));
         assertEq(a.var2, b.var2, string.concat(err, " - action var2"));

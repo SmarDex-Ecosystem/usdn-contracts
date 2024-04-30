@@ -22,12 +22,14 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
      * @param to The address that will receive the USDN tokens
+     * @param validator The address that will validate the deposit
      */
     function initiateDeposit(
         uint128 amount,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
-        address to
+        address to,
+        address validator
     ) external payable;
 
     /**
@@ -39,12 +41,12 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * The security deposit will be returned to the sender.
-     * @param to The address register in the deposit action
+     * @param validator The address register in the deposit action
      * @param depositPriceData The price data corresponding to the sender's pending deposit action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
     function validateDeposit(
-        address to,
+        address validator,
         bytes calldata depositPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable;
@@ -61,12 +63,14 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
      * @param to The address that will receive the assets
+     * @param validator The address that will validate the withdrawal
      */
     function initiateWithdrawal(
         uint152 usdnShares,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
-        address to
+        address to,
+        address validator
     ) external payable;
 
     /**
@@ -78,12 +82,12 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * The security deposit will be returned to the sender.
-     * @param to The address register in the withdrawal action
+     * @param validator The address register in the withdrawal action
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
     function validateWithdrawal(
-        address to,
+        address validator,
         bytes calldata withdrawalPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable;
@@ -103,6 +107,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions.
      * @param to The address that will be the owner of the position
+     * @param validator The address that will validate the open position
      * @return tick_ The tick containing the new position
      * @return tickVersion_ The tick version
      * @return index_ The index of the new position inside the tick array
@@ -112,7 +117,8 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         uint128 desiredLiqPrice,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
-        address to
+        address to,
+        address validator
     ) external payable returns (int24 tick_, uint256 tickVersion_, uint256 index_);
 
     /**
@@ -127,12 +133,12 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * It is also possible for this operation to change the tick, tickVersion and index of the position, in which case
      * we emit the `LiquidationPriceUpdated` event.
      * The security deposit will be returned to the sender.
-     * @param to The address register in the open position action
+     * @param validator The address register in the open position action
      * @param openPriceData The price data corresponding to the sender's pending open position action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
     function validateOpenPosition(
-        address to,
+        address validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable;
@@ -157,6 +163,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
      * @param to The address that will receive the assets
+     * @param validator The address that will validate the close position
      */
     function initiateClosePosition(
         int24 tick,
@@ -165,7 +172,8 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         uint128 amountToClose,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
-        address to
+        address to,
+        address validator
     ) external payable;
 
     /**
@@ -178,12 +186,12 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * (from the oracle middleware) to the timestamp of the initiate action.
      * This operation calculates the final exit price and profit of the long position and performs the payout.
      * The security deposit will be returned to the sender.
-     * @param to The address register in the close position action
+     * @param validator The address register in the close position action
      * @param closePriceData The price data corresponding to the sender's pending close position action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
     function validateClosePosition(
-        address to,
+        address validator,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable;
