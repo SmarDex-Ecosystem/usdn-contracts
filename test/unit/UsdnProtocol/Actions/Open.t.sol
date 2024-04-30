@@ -370,6 +370,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         uint256 newTickVersion = protocol.getTickVersion(newTick);
         TickData memory tickData = protocol.getTickData(newTick);
         uint256 newIndex = tickData.totalPos;
+        int256 longBalanceBefore = protocol.longAssetAvailableWithFunding(newPrice, uint128(block.timestamp - 1));
 
         vm.expectEmit();
         emit LiquidationPriceUpdated(tick, tickVersion, index, newTick, newTickVersion, newIndex);
@@ -383,6 +384,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(pos.amount, tempPos.amount, "amount");
         assertLt(newTick, tick, "tick");
         assertGt(pos.totalExpo, tempPos.totalExpo, "totalExpo");
+        assertEq(protocol.getBalanceLong(), uint256(longBalanceBefore), "balance of long side unchanged");
     }
 
     /**
