@@ -14,8 +14,6 @@ contract TestUsdnProtocolVaultCalcBurnUsdn is UsdnProtocolBaseFixture {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
         usdn.approve(address(protocol), type(uint256).max);
-        // user deposits wstETH at price $2000
-        setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1 ether, 2000 ether);
     }
 
     /**
