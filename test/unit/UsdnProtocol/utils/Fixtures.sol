@@ -311,6 +311,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
      * Reverts if not equal.
      * @param a First `PendingAction`
      * @param b Second `PendingAction`
+     * @param err Assert message prefix
      */
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
         assertTrue(a.common.action == b.common.action, string.concat(err, " - action type"));

@@ -334,8 +334,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @param amountToClose Amount of the position to close
      */
     function _initiateCloseAPositionHelper(uint128 amountToClose, address to) internal {
-        //uint256 liquidationMultiplier = protocol.getLiquidationMultiplier();
-
         (Position memory posBefore,) = protocol.getLongPosition(tick, tickVersion, index);
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
@@ -393,9 +391,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
         assertEq(action.tickVersion, tickVersion, "The tick version should not have changed");
         assertEq(action.index, index, "The index should not have changed");
-        // TODO: update this assert
-        //assertEq(action.closeLongTradingExpo, liquidationMultiplier, "The liquidation multiplier should not have
-        // changed");
         assertEq(action.closeTempTransfer, assetToTransfer, "The close temp transfer should not have changed");
 
         /* ----------------------------- Protocol State ----------------------------- */

@@ -88,7 +88,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         );
 
         // Wait at least 30 seconds additionally to make sure liquidate updates the state
-        skip(30);
+        _waitBeforeLiquidation();
 
         // Call liquidate to trigger liquidation multiplier update
         protocol.testLiquidate(priceData, 0);

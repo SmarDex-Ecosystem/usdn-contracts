@@ -32,8 +32,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
      * @custom:when The owner of the position close the position partially n times
      * @custom:and and fully close the position if there is any leftover
      * @custom:then The state of the protocol is updated
-     * @custom:and the user receives all of his funds back
-     *
+     * @custom:and the user receives all of his funds back with less than 0.000000000000001% error
      * @param iterations The amount of time we want to close the position
      * @param amountToOpen The amount of assets in the position
      * @param amountToClose The amount to close per iteration
@@ -62,7 +61,6 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
                 price: params.initialPrice
             })
         );
-        //assertEq(protocol.getBalanceLong(), balanceLongBefore + amountToOpen, "long balance increase");
 
         uint256 amountClosed;
         for (uint256 i = 0; i < iterations; ++i) {
@@ -70,15 +68,11 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             amountToClose = bound(amountToClose, 1, posBefore.amount);
             amountClosed += amountToClose;
 
-            uint256 balanceBefore = wstETH.balanceOf(address(this));
-
             protocol.initiateClosePosition(
                 tick, tickVersion, index, uint128(amountToClose), priceData, EMPTY_PREVIOUS_DATA, address(this)
             );
             _waitDelay();
             protocol.i_validateClosePosition(address(this), priceData);
-
-            emit log_named_decimal_uint("got", wstETH.balanceOf(address(this)) - balanceBefore, 18);
 
             (Position memory posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
             assertEq(
@@ -94,7 +88,6 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
 
         // Close the what's left of the position
         if (amountClosed != amountToOpen) {
-            uint256 balanceBefore = wstETH.balanceOf(address(this));
             protocol.initiateClosePosition(
                 tick,
                 tickVersion,
@@ -106,7 +99,6 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             );
             _waitDelay();
             protocol.i_validateClosePosition(address(this), priceData);
-            emit log_named_decimal_uint("got", wstETH.balanceOf(address(this)) - balanceBefore, 18);
         }
 
         (Position memory pos,) = protocol.getLongPosition(tick, tickVersion, index);

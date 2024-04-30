@@ -589,7 +589,6 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // liquidate
         uint256 balanceBefore = address(this).balance;
-        emit log_named_decimal_uint("balanceBefore external", balanceBefore, 18);
         uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.Liquidation);
         // we use `liquidate` instead of `testLiquidate` to avoid testing the "hack" in the handler
         protocol.liquidate{ value: 0.5 ether }(priceData, 1);

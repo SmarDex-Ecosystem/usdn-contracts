@@ -382,18 +382,18 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             action.closeTempTransfer
         );
         priceData = abi.encode(priceAfterInit);
-        int256 profit = int256(assetToTransfer) - int256(uint256(action.closeAmount));
+        int256 pnl = int256(assetToTransfer) - int256(uint256(action.closeAmount));
 
-        assertLt(profit, 0, "User should have lost money on his position");
+        assertLt(pnl, 0, "User should have lost money on his position");
 
         vm.expectEmit();
-        emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, assetToTransfer, profit);
+        emit ValidatedClosePosition(address(this), address(this), tick, tickVersion, index, assetToTransfer, pnl);
         protocol.i_validateClosePosition(address(this), priceData);
 
         assertEq(
             protocol.getAsset().balanceOf(address(this)),
-            // profit is a negative value
-            assetBalanceBefore + uint256(int128(action.closeAmount) + profit),
+            // pnl is a negative value
+            assetBalanceBefore + uint256(int128(action.closeAmount) + pnl),
             "User should have received his assets minus his losses"
         );
 

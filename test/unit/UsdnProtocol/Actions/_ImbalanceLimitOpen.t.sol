@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
+import { ADMIN } from "test/utils/Constants.sol";
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
