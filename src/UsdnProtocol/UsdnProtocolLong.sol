@@ -209,7 +209,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // unadjustedPrice = price / M
         // unadjustedPrice = price * accumulator / (assetPrice * (totalExpo - balanceLong))
         HugeUint.Uint512 memory numerator = accumulator.mul(price);
-        unadjustedPrice_ = numerator.div(HugeUint.wrap(assetPrice * longTradingExpo));
+        unadjustedPrice_ = numerator.div(assetPrice * longTradingExpo);
     }
 
     /**
