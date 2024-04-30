@@ -392,6 +392,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
         uint256 balanceBeforeRewards = protocol.getBalanceVault() + protocol.getBalanceLong();
+        assertEq(balanceBeforeRewards, wstETH.balanceOf(address(protocol)), "protocol total balance");
         uint256 longPositionsBeforeLiquidation = protocol.getTotalLongPositions();
 
         _waitBeforeLiquidation();
