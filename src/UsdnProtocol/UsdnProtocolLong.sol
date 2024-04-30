@@ -26,7 +26,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param unadjustedFromTickPrice The unadjusted price of the origin tick
      * @param unadjustedToTickPrice The unadjusted price of the destination tick
      * @param oldPosTotalExpo The total expo of the position before the update
-     * @param totalExpo The total expo of the protocol before the update
      */
     struct UpdateLiqPriceData {
         bytes32 fromTickHash;
@@ -34,7 +33,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 unadjustedFromTickPrice;
         uint256 unadjustedToTickPrice;
         uint256 oldPosTotalExpo;
-        uint256 totalExpo;
     }
 
     /**
@@ -519,10 +517,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         fromTickData.totalExpo -= data.oldPosTotalExpo;
         // Remove from tick array (set to zero to avoid shifting indices)
         delete _longPositions[data.fromTickHash][fromIndex];
-        data.totalExpo = _totalExpo;
         // Update the position total expo
         pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
-        _totalExpo = data.totalExpo + pos.totalExpo - data.oldPosTotalExpo;
+        _totalExpo += pos.totalExpo - data.oldPosTotalExpo;
 
         // Add to destination tick array
         Position[] storage tickArray = _longPositions[data.toTickHash];
