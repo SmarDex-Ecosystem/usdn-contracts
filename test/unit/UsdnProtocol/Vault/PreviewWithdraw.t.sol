@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -11,6 +13,8 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * @custom:and A user who deposited 1 wstETH at price $2000 to get 2000 USDN
  */
 contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
+    using SafeCast for uint256;
+
     uint128 internal constant DEPOSIT_AMOUNT = 1 ether;
 
     function setUp() public {
@@ -28,9 +32,26 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
      * @custom:then The amount of asset should be equal to zero
      */
     function test_previewWithdrawLessThanZero() public {
-        uint256 price = 2e35;
-        uint256 assetExpected =
-            protocol.previewWithdraw(uint152(usdn.sharesOf(address(this))), price, protocol.getLastUpdateTimestamp());
+        uint128 price = 2000 ether;
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1000 ether,
+                desiredLiqPrice: price * 90 / 100,
+                price: price
+            })
+        );
+
+        uint128 timestamp = protocol.getLastUpdateTimestamp();
+
+        // Apply fees on price
+        uint128 withdrawalPriceWithFees =
+            (price * 10 + price * 10 * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR()).toUint128();
+        int256 available = protocol.vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
+        assertLt(available, 0, "vaultAssetAvailableWithFunding should be less than");
+
+        uint256 assetExpected = protocol.previewWithdraw(uint152(usdn.sharesOf(address(this))), price * 10, timestamp);
         assertEq(assetExpected, 0, "asset is equal to zero");
     }
 
