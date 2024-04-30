@@ -209,7 +209,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // unadjustedPrice = price / M
         // unadjustedPrice = price * accumulator / (assetPrice * (totalExpo - balanceLong))
         HugeUint.Uint512 memory numerator = accumulator.mul(price);
-        unadjustedPrice_ = HugeUint.div(numerator, HugeUint.wrap(assetPrice * longTradingExpo));
+        unadjustedPrice_ = numerator.div(HugeUint.wrap(assetPrice * longTradingExpo));
     }
 
     /**
@@ -236,7 +236,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // price = unadjustedPrice * M
         // price = unadjustedPrice * assetPrice * (totalExpo - balanceLong) / accumulator
         HugeUint.Uint512 memory numerator = HugeUint.mul(unadjustedPrice, assetPrice * longTradingExpo);
-        price_ = HugeUint.div(numerator, accumulator).toUint128();
+        price_ = numerator.div(accumulator).toUint128();
     }
 
     /**
@@ -270,7 +270,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // M = assetPrice * (totalExpo - balanceLong) / accumulator
         HugeUint.Uint512 memory numerator =
             HugeUint.mul(10 ** LIQUIDATION_MULTIPLIER_DECIMALS, assetPrice * longTradingExpo);
-        multiplier_ = HugeUint.div(numerator, accumulator);
+        multiplier_ = numerator.div(accumulator);
     }
 
     /**
