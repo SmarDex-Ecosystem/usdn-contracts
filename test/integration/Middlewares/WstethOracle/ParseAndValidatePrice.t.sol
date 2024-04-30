@@ -186,9 +186,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                         || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
                         || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
                 ) {
-                    // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data
-                    // timestamp
-                    // is recent compared to block.timestamp
+                    // Since we force the usage of Pyth for initiate actions,
+                    // Pyth requires that the price data timestamp is recent compared to block.timestamp
                     vm.warp(pythTimestamp);
                     middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: validationCost }(0, action, data);
                 } else {

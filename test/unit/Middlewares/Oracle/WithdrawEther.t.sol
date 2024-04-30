@@ -19,7 +19,7 @@ contract TestOracleMiddlewareWithdrawEther is OracleMiddlewareBaseFixture {
      * @custom:scenario A user that is not the owner calls withdrawEther
      * @custom:given A user that is not the owner
      * @custom:when withdrawEther is called
-     * @custom:then the transaction reverts with a OwnableUnauthorizedAccount error
+     * @custom:then the transaction reverts with an OwnableUnauthorizedAccount error
      */
     function test_RevertWhen_withdrawEtherCalledByNonOwner() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER_1));
@@ -31,7 +31,7 @@ contract TestOracleMiddlewareWithdrawEther is OracleMiddlewareBaseFixture {
      * @custom:scenario A contract that cannot receive ether calls withdrawEther
      * @custom:given A contract that cannot receive ether as the owner of the middleware
      * @custom:when withdrawEther is called
-     * @custom:then the transaction reverts with a OracleMiddlewareTransferFailed error
+     * @custom:then the transaction reverts with an OracleMiddlewareTransferFailed error
      */
     function test_RevertWhen_withdrawEtherToAnAddressThatCannotReceiveEther() public {
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewareTransferFailed.selector, address(this)));
@@ -42,7 +42,7 @@ contract TestOracleMiddlewareWithdrawEther is OracleMiddlewareBaseFixture {
      * @custom:scenario The owner calls the function with the zero address
      * @custom:given The caller being the owner
      * @custom:when withdrawEther is called with the to parameter being the zero address
-     * @custom:then the transaction reverts with a OracleMiddlewareTransferToZeroAddress error
+     * @custom:then the transaction reverts with an OracleMiddlewareTransferToZeroAddress error
      */
     function test_RevertWhen_withdrawEtherToTheZeroAddress() public {
         vm.expectRevert(OracleMiddlewareTransferToZeroAddress.selector);
@@ -50,7 +50,7 @@ contract TestOracleMiddlewareWithdrawEther is OracleMiddlewareBaseFixture {
     }
 
     /**
-     * @custom:scenario The owner withdraw the ether in the contract
+     * @custom:scenario The owner withdraws the ether in the contract
      * @custom:given A user that is the owner
      * @custom:when withdrawEther is called
      * @custom:then the ether balance of the contract is sent to the caller
