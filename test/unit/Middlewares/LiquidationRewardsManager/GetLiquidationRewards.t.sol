@@ -84,8 +84,10 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      */
     function test_getLiquidationRewardsWithOracleGasPrice() public {
         mockChainlinkOnChain.setLatestRoundData(1, 15 gwei, block.timestamp, 1);
+
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
         assertEq(rewards, 1_397_250_000_000_000, "without rebase");
+
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true);
         assertEq(rewards, 1_742_250_000_000_000, "with rebase");
     }
@@ -101,8 +103,10 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      */
     function test_getLiquidationRewardsWithTxGasPrice() public {
         vm.txGasPrice(20 gwei);
+
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
         assertEq(rewards, 1_863_000_000_000_000, "without rebase");
+
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true);
         assertEq(rewards, 2_323_000_000_000_000, "with rebase");
     }
@@ -119,9 +123,10 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
     function test_getLiquidationRewardsWithTxGasPriceAndAboveTheLimit() public {
         vm.txGasPrice(1001 gwei);
         mockChainlinkOnChain.setLatestRoundData(1, 2000 gwei, block.timestamp, 1);
+
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
-        // With a gas price at 1001 gwei, the result without the limit should have been 140_440_300_000_000_000
         assertEq(rewards, 93_150_000_000_000_000, "without rebase");
+
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true);
         assertEq(rewards, 116_150_000_000_000_000, "with rebase");
     }
@@ -138,9 +143,10 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
     function test_getLiquidationRewardsWithOracleAndAboveTheLimit() public {
         vm.txGasPrice(2000 gwei);
         mockChainlinkOnChain.setLatestRoundData(1, 1001 gwei, block.timestamp, 1);
+
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
-        // With a gas price at 1001 gwei, the result without the limit should have been 140_440_300_000_000_000
         assertEq(rewards, 93_150_000_000_000_000, "without rebase");
+
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true);
         assertEq(rewards, 116_150_000_000_000_000, "with rebase");
     }
@@ -152,8 +158,10 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      */
     function test_getLiquidationRewardsWithOracleGasPriceFeedBroken() public {
         mockChainlinkOnChain.toggleRevert();
+
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
         assertEq(rewards, 0, "The function should return 0");
+
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true);
         assertEq(rewards, 0, "with rebase");
     }
@@ -165,8 +173,10 @@ contract TestLiquidationRewardsManagerGetLiquidationRewards is LiquidationReward
      */
     function test_getLiquidationRewardsWithOracleGasPriceTooOld() public {
         mockChainlinkOnChain.setLastPublishTime(0);
+
         uint256 rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
         assertEq(rewards, 0, "The function should return 0");
+
         rewards = liquidationRewardsManager.getLiquidationRewards(1, 0, true);
         assertEq(rewards, 0, "with rebase");
     }
