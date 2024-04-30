@@ -340,7 +340,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint256 totalExpoBefore = protocol.getTotalExpo();
         uint256 balanceLongBefore = protocol.getBalanceLong();
         HugeUint.Uint512 memory accumulator = protocol.getLiqMultiplierAccumulator();
-        (uint256 assetToTransfer,) = protocol.i_assetToTransfer(
+        uint256 assetToTransfer = protocol.i_assetToTransfer(
             params.initialPrice,
             protocol.getEffectivePriceForTick(
                 tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
@@ -348,8 +348,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 totalExpoBefore - balanceLongBefore,
                 accumulator
             ),
-            totalExpoToClose,
-            0
+            totalExpoToClose
         );
 
         TickData memory tickData = protocol.getTickData(tick);

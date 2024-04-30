@@ -28,14 +28,11 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
      */
     function test_assetToTransfer() public {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
-        (uint256 toTransfer, int256 value) = protocol.i_assetToTransfer(
-            params.initialPrice,
-            protocol.getEffectivePriceForTick(
-                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-            ),
-            2 ether,
-            0
+        uint128 liqPrice = protocol.getEffectivePriceForTick(
+            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
         );
+        int256 value = protocol.i_positionValue(params.initialPrice, liqPrice, 2 ether);
+        uint256 toTransfer = protocol.i_assetToTransfer(params.initialPrice, liqPrice, 2 ether);
         assertEq(toTransfer, uint256(value), "to transfer vs pos value");
         assertEq(toTransfer, 1.512304848730381401 ether, "to transfer");
     }
@@ -53,14 +50,11 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
     function test_assetToTransferNotEnoughBalance() public {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
         uint256 longAvailable = uint256(protocol.i_longAssetAvailable(params.initialPrice)); // 5 ether
-        (uint256 toTransfer, int256 value) = protocol.i_assetToTransfer(
-            params.initialPrice,
-            protocol.getEffectivePriceForTick(
-                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-            ),
-            200 ether,
-            0
+        uint128 liqPrice = protocol.getEffectivePriceForTick(
+            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
         );
+        int256 value = protocol.i_positionValue(params.initialPrice, liqPrice, 200 ether);
+        uint256 toTransfer = protocol.i_assetToTransfer(params.initialPrice, liqPrice, 200 ether);
         assertGt(uint256(value), toTransfer, "value vs asset to transfer");
         assertEq(toTransfer, longAvailable, "asset to transfer vs long asset available");
     }
@@ -83,13 +77,12 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
         assertEq(protocol.i_longAssetAvailable(price), 0, "long asset available");
 
         int24 tick = protocol.getEffectiveTickForPrice(price);
-        (uint256 toTransfer,) = protocol.i_assetToTransfer(
+        uint256 toTransfer = protocol.i_assetToTransfer(
             params.initialPrice,
             protocol.getEffectivePriceForTick(
                 tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
             ),
-            100 ether,
-            0
+            100 ether
         );
         assertEq(toTransfer, 0, "asset to transfer");
     }

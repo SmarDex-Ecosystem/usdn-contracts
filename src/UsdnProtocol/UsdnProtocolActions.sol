@@ -1102,7 +1102,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // In order to have the maximum precision, we do not pre-compute the liquidation multiplier with a fixed
         // precision just now, we will store it in the pending action later, to be used in the validate action.
-        (data_.tempTransfer,) = _assetToTransfer(
+        data_.tempTransfer = _assetToTransfer(
             data_.lastPrice,
             getEffectivePriceForTick(
                 posId.tick - int24(uint24(data_.liquidationPenalty)) * _tickSpacing,
@@ -1110,8 +1110,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 data_.longTradingExpo,
                 data_.liqMulAcc
             ),
-            data_.totalExpoToClose,
-            0
+            data_.totalExpoToClose
         );
 
         data_.securityDepositValue = (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24();
@@ -1232,15 +1231,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Apply fees on price
         uint128 priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
-        (uint256 assetToTransfer,) = _assetToTransfer(
-            priceWithFees,
-            _getEffectivePriceForTick(
-                long.tick - int24(uint24(getTickLiquidationPenalty(long.tick))) * _tickSpacing, long.closeLiqMultiplier
-            ),
-            long.closePosTotalExpo,
-            long.closeTempTransfer
-        );
-
         // get liquidation price (with liq penalty) to check if position was valid at `timestamp + validationDelay`
         uint128 liquidationPrice = _getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
 
@@ -1255,23 +1245,54 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        // Normally, the position value should be smaller than `long.closeTempTransfer` (due to the position fee).
-        // We can send the difference (any remaining collateral) to the vault.
-        // If the price increased since the initiate, it's possible that the position value is higher than the
-        // `long.closeTempTransfer`. In this case, we need to take the missing assets from the vault.
-        if (assetToTransfer < long.closeTempTransfer) {
-            uint256 remainingCollateral;
-            unchecked {
-                remainingCollateral = long.closeTempTransfer - assetToTransfer;
+        int256 positionValue = _positionValue(
+            priceWithFees,
+            _getEffectivePriceForTick(
+                long.tick - int24(uint24(getTickLiquidationPenalty(long.tick))) * _tickSpacing, long.closeLiqMultiplier
+            ),
+            long.closePosTotalExpo
+        );
+        uint256 assetToTransfer;
+        if (positionValue > 0) {
+            assetToTransfer = uint256(positionValue);
+            // Normally, the position value should be smaller than `long.closeTempTransfer` (due to the position fee).
+            // We can send the difference (any remaining collateral) to the vault.
+            // If the price increased since the initiate, it's possible that the position value is higher than the
+            // `long.closeTempTransfer`. In that case, we need to take the missing assets from the vault.
+            if (assetToTransfer < long.closeTempTransfer) {
+                uint256 remainingCollateral;
+                unchecked {
+                    // since assetToTransfer is strictly smaller than closeTempTransfer, this operation can't underflow
+                    remainingCollateral = long.closeTempTransfer - assetToTransfer;
+                }
+                _balanceVault += remainingCollateral;
+            } else if (assetToTransfer > long.closeTempTransfer) {
+                uint256 missingValue;
+                unchecked {
+                    // since assetToTransfer is strictly larger than closeTempTransfer, this operation can't underflow
+                    missingValue = assetToTransfer - long.closeTempTransfer;
+                }
+                uint256 balanceVault = _balanceVault;
+                // If the vault does not have enough balance left to pay out the missing value, we take what we can
+                if (missingValue > balanceVault) {
+                    _balanceVault = 0;
+                    unchecked {
+                        // since missingValue is strictly larger than balanceVault, their subtraction can't underflow
+                        // moreover, since (missingValue - balanceVault) is smaller than or equal to missingValue,
+                        // and since missingValue is smaller than or equal to assetToTransfer,
+                        // (missingValue - balanceVault) is smaller than or equal to assetToTransfer, and their
+                        // subtraction can't underflow.
+                        assetToTransfer -= (missingValue - balanceVault);
+                    }
+                } else {
+                    unchecked {
+                        // since missingValue is smaller than or equal to balanceVault, this operation can't underflow
+                        _balanceVault = balanceVault - missingValue;
+                    }
+                }
             }
-            _balanceVault += remainingCollateral;
-        } else if (assetToTransfer > long.closeTempTransfer) {
-            uint256 missingValue;
-            unchecked {
-                missingValue = assetToTransfer - long.closeTempTransfer;
-            }
-            _balanceVault -= missingValue;
         }
+        // in case the position value is zero or negative, we don't transfer any asset to the user
 
         // send the asset to the user
         if (assetToTransfer > 0) {
@@ -1325,29 +1346,26 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param priceWithFees The current price of the asset, adjusted with fees
      * @param liqPriceWithoutPenalty The liquidation price without penalty
      * @param posExpo The total expo of the position
-     * @param tempTransferred An amount that was already subtracted from the long balance
-     * @return assetToTransfer_ The amount of assets to transfer to the user, bound by zero and the available balance
-     * @return positionValue_ The position value, which can be negative in case of bad debt
+     * @return assetToTransfer_ The amount of assets to transfer to the user, bound by zero and the available
+     * long balance
      */
-    function _assetToTransfer(
-        uint128 priceWithFees,
-        uint128 liqPriceWithoutPenalty,
-        uint128 posExpo,
-        uint256 tempTransferred
-    ) internal view returns (uint256 assetToTransfer_, int256 positionValue_) {
+    function _assetToTransfer(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
+        internal
+        view
+        returns (uint256 assetToTransfer_)
+    {
         // The available amount of asset on the long side (with the current balance)
-        uint256 available = _balanceLong + tempTransferred;
+        uint256 available = _balanceLong;
 
         // Calculate position value
-        positionValue_ = _positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
-        // TODO: maybe we don't need to return this value anymore
+        int256 positionValue = _positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
 
-        if (positionValue_ <= 0) {
+        if (positionValue <= 0) {
             assetToTransfer_ = 0;
-        } else if (positionValue_ > available.toInt256()) {
+        } else if (positionValue > available.toInt256()) {
             assetToTransfer_ = available;
         } else {
-            assetToTransfer_ = uint256(positionValue_);
+            assetToTransfer_ = uint256(positionValue);
         }
     }
 

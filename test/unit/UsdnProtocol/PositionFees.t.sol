@@ -146,14 +146,15 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
-        (uint256 expectedTransfer,) = protocol.i_assetToTransfer(
-            uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
-            protocol.i_getEffectivePriceForTick(
-                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
-                action.closeLiqMultiplier
-            ),
-            action.closePosTotalExpo,
-            action.closeTempTransfer
+        uint256 expectedTransfer = uint256(
+            protocol.i_positionValue(
+                uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
+                protocol.i_getEffectivePriceForTick(
+                    tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
+                    action.closeLiqMultiplier
+                ),
+                action.closePosTotalExpo
+            )
         );
 
         _waitDelay();
