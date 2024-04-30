@@ -87,10 +87,10 @@ struct PendingAction {
  * @param common The common data for all pending actions.
  * @param _unused Unused field to align the struct to `PendingAction`.
  * @param amount The amount of assets of the pending deposit.
- * @param assetPrice The price of the asset at the time of last update.
- * @param totalExpo The total exposure at the time of last update.
- * @param balanceVault The balance of the vault at the time of last update.
- * @param balanceLong The balance of the long position at the time of last update.
+ * @param assetPrice The price of the asset at the time of the last update.
+ * @param totalExpo The total exposure at the time of the last update.
+ * @param balanceVault The balance of the vault at the time of the last update.
+ * @param balanceLong The balance of the long position at the time of the last update.
  * @param usdnTotalSupply The total supply of USDN at the time of the action.
  */
 struct DepositPendingAction {
@@ -109,10 +109,10 @@ struct DepositPendingAction {
  * @param common The common data for all pending actions.
  * @param sharesLSB 3 least significant bytes of the withdrawal shares amount (uint152).
  * @param sharesMSB 16 most significant bytes of the withdrawal shares amount (uint152).
- * @param assetPrice The price of the asset at the time of last update.
- * @param totalExpo The total exposure at the time of last update.
- * @param balanceVault The balance of the vault at the time of last update.
- * @param balanceLong The balance of the long position at the time of last update.
+ * @param assetPrice The price of the asset at the time of the last update.
+ * @param totalExpo The total exposure at the time of the last update.
+ * @param balanceVault The balance of the vault at the time of the last update.
+ * @param balanceLong The balance of the long position at the time of the last update.
  * @param usdnTotalShares The total shares supply of USDN at the time of the action.
  */
 struct WithdrawalPendingAction {

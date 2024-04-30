@@ -40,7 +40,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function TOKENS_DECIMALS() external pure returns (uint8);
 
     /**
-     * @notice Get the number of decimals use for the fixed representation of the liquidation multiplier
+     * @notice Get the number of decimals used for the fixed representation of the liquidation multiplier
      * @return The liquidation multiplier's number of decimals
      */
     function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8);
