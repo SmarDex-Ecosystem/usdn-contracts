@@ -21,7 +21,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ILiquidationRewardsManager
-    uint32 public constant REWARDS_MULTIPLIER_DENOMINATOR = 10_000;
+    uint32 public constant BPS_DIVISOR = 10_000;
 
     /// @inheritdoc ILiquidationRewardsManager
     uint256 public constant BASE_GAS_COST = 21_000;
@@ -71,9 +71,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         // Calculate the amount of gas spent during the liquidation.
         uint256 gasUsed = rewardsParameters.otherGasUsed + BASE_GAS_COST
             + FixedPointMathLib.fullMulDiv(
-                rewardsParameters.gasUsedPerTick * tickAmount,
-                rewardsParameters.multiplierBps,
-                REWARDS_MULTIPLIER_DENOMINATOR
+                rewardsParameters.gasUsedPerTick * tickAmount, rewardsParameters.multiplierBps, BPS_DIVISOR
             );
 
         if (rebased) {
@@ -105,7 +103,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             revert LiquidationRewardsManagerRebaseGasUsedTooHigh(rebaseGasUsed);
         } else if (gasPriceLimit > 8000 gwei) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
-        } else if (multiplierBps > 10 * REWARDS_MULTIPLIER_DENOMINATOR) {
+        } else if (multiplierBps > 10 * BPS_DIVISOR) {
             revert LiquidationRewardsManagerMultiplierBpsTooHigh(multiplierBps);
         }
 

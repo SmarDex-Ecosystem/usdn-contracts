@@ -35,7 +35,7 @@ interface ILiquidationRewardsManagerErrorsEventsTypes {
         uint32 otherGasUsed;
         uint32 rebaseGasUsed;
         uint64 gasPriceLimit;
-        uint32 multiplierBps; // to be divided by REWARDS_MULTIPLIER_DENOMINATOR
+        uint32 multiplierBps; // to be divided by BPS_DIVISOR
     }
 
     /* -------------------------------------------------------------------------- */

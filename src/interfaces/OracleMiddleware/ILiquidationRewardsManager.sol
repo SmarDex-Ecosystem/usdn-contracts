@@ -10,7 +10,7 @@ interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTy
     /* -------------------------------------------------------------------------- */
 
     /// @notice Denominator for the reward multiplier, will give us a 0.01% basis point.
-    function REWARDS_MULTIPLIER_DENOMINATOR() external pure returns (uint32);
+    function BPS_DIVISOR() external pure returns (uint32);
 
     /**
      * @notice Fixed amount of gas a transaction consume.
@@ -44,7 +44,7 @@ interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTy
      * @param otherGasUsed Gas used for the rest of the computation.
      * @param rebaseGasUsed Gas used for the optional USDN rebase.
      * @param gasPriceLimit Upper limit for the gas price.
-     * @param multiplierBps Multiplier for the rewards (will be divided by REWARDS_MULTIPLIER_DENOMINATOR).
+     * @param multiplierBps Multiplier for the rewards (will be divided by BPS_DIVISOR).
      */
     function setRewardsParameters(
         uint32 gasUsedPerTick,
