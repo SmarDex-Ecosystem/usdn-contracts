@@ -49,7 +49,7 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
         uint128 withdrawalPriceWithFees =
             (price * 10 + price * 10 * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR()).toUint128();
         int256 available = protocol.vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
-        assertLt(available, 0, "vaultAssetAvailableWithFunding should be less than");
+        assertLt(available, 0, "vaultAssetAvailableWithFunding should be less than 0");
 
         uint256 assetExpected = protocol.previewWithdraw(uint152(usdn.sharesOf(address(this))), price * 10, timestamp);
         assertEq(assetExpected, 0, "asset is equal to zero");
