@@ -27,7 +27,7 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
             return;
         }
         int24 expectedMinTick = TickMath.minUsableTick(tickSpacing);
-        uint256 min_price = protocol.i_minPrice();
+        uint256 minPrice = protocol.i_minPrice();
 
         /* ---------------- priceWithMultiplier < TickMath.MIN_PRICE ---------------- */
         uint128 price = 20 ether;
@@ -36,11 +36,11 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
         HugeUint.Uint512 memory accumulator = HugeUint.wrap(5000 ether);
         assertLt(
             protocol.i_unadjustPrice(price, assetPrice, longTradingExpo, accumulator),
-            min_price,
-            "unadjustPrice should be lower than min_price"
+            minPrice,
+            "unadjustPrice should be lower than minPrice"
         );
-        int24 minTick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
-        assertEq(minTick, expectedMinTick, "first tick should be equal to minTick");
+        int24 tick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
+        assertEq(tick, expectedMinTick, "first tick should be equal to minTick");
     }
 
     /**
@@ -63,7 +63,6 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
             min_price,
             "unadjustPrice should be greater than min_price"
         );
-
         int24 tick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
         assertEq(tick, -303_420, "tick should be -161200");
 
@@ -81,7 +80,6 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
             min_price,
             "unadjustPrice should be greater than min_price"
         );
-
         tick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
         assertEq(tick, expectedMinTick, "tick should be equal to minTick");
     }
