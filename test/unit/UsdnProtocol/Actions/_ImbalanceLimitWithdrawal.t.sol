@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -13,11 +12,11 @@ import { ADMIN } from "test/utils/Constants.sol";
  */
 contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
     function setUp() public {
-        SetUpParams memory params = DEFAULT_PARAMS;
-        params.flags.enableLimits = true;
-        params.initialDeposit = 49.199702697034631562 ether;
-        params.initialLong = 50 ether;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
+
+        // we enable only open limit
+        vm.prank(ADMIN);
+        protocol.setExpoImbalanceLimits(0, 0, 600, 0);
     }
 
     /**
@@ -34,23 +33,12 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should revert when vault expo equal 0
-     * @custom:given The protocol is balanced
-     * @custom:and A long position is opened
-     * @custom:and The price crashes very hard and liquidates the existing positions
-     * @custom:and The vault balance/expo is 0
+     * @custom:given The protocol has a zero vault balance / expo
      * @custom:when The `_checkImbalanceLimitWithdrawal` function is called
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_checkImbalanceLimitWithdrawalZeroVaultExpo() public {
-        setUpUserPositionInLong(
-            address(this), ProtocolAction.ValidateOpenPosition, 0.1 ether, params.initialPrice / 2, params.initialPrice
-        );
-
-        // liquidate everything with huge bad debt
-        protocol.liquidate(abi.encode(params.initialPrice / 100), 1);
-
-        // vault expo should be zero
-        assertEq(protocol.getBalanceVault(), 0, "vault expo isn't 0");
+        protocol.emptyVault();
         uint256 totalExpo = protocol.getTotalExpo();
 
         // should revert

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Test } from "forge-std/Test.sol";
+
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
@@ -20,6 +22,7 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
@@ -27,7 +30,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
  * @title UsdnProtocolHandler
  * @dev Wrapper to aid in testing the protocol
  */
-contract UsdnProtocolHandler is UsdnProtocol {
+contract UsdnProtocolHandler is UsdnProtocol, Test {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
 
@@ -49,16 +52,58 @@ contract UsdnProtocolHandler is UsdnProtocol {
     /// @dev Push a pending item to the front of the pending actions queue
     function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
         rawIndex_ = _pendingActionsQueue.pushFront(action);
-        _pendingActions[action.user] = uint256(rawIndex_) + 1;
+        _pendingActions[action.common.user] = uint256(rawIndex_) + 1;
+    }
+
+    /**
+     * @dev Use this function in unit tests to make sure we provide a fresh price that updates the balances
+     * The function reverts the price given by the mock oracle middleware is not fresh enough to trigger a balance
+     * update. Call `_waitBeforeLiquidation()` before calling this function to make sure enough time has passed.
+     * Do not use this function in contexts where ether needs to be refunded.
+     */
+    function testLiquidate(bytes calldata currentPriceData, uint16 iterations)
+        external
+        payable
+        returns (uint256 liquidatedPositions_)
+    {
+        uint256 lastUpdateTimestampBefore = _lastUpdateTimestamp;
+        vm.startPrank(msg.sender);
+        liquidatedPositions_ = this.liquidate(currentPriceData, iterations);
+        vm.stopPrank();
+        require(_lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
+    }
+
+    function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {
+        int256 longTradingExpo = longTradingExpoWithFunding(uint128(currentPrice), uint128(block.timestamp));
+        if (longTradingExpo < 0) {
+            longTradingExpo = 0;
+        }
+        return _tickValue(
+            tick,
+            currentPrice,
+            uint256(longTradingExpo),
+            _liqMultiplierAccumulator,
+            _tickData[tickHash(tick, _tickVersion[tick])]
+        );
+    }
+
+    /**
+     * @dev Helper function to simulate a situation where the vault would be empty. In practice, it's not possible to
+     * achieve.
+     */
+    function emptyVault() external {
+        _balanceLong += _balanceVault;
+        _balanceVault = 0;
     }
 
     function i_initiateClosePosition(
         address user,
+        address to,
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) external returns (uint256 securityDepositValue_) {
-        return _initiateClosePosition(user, posId, amountToClose, currentPriceData);
+        return _initiateClosePosition(user, to, posId, amountToClose, currentPriceData);
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
@@ -168,19 +213,22 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _convertLongPendingAction(action);
     }
 
-    function i_assetToTransfer(
-        uint128 currentPrice,
-        int24 tick,
-        uint8 liquidationPenalty,
-        uint128 expo,
-        uint256 liqMultiplier,
-        uint256 tempTransferred
-    ) external view returns (uint256, int256) {
-        return _assetToTransfer(currentPrice, tick, liquidationPenalty, expo, liqMultiplier, tempTransferred);
+    function i_assetToRemove(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
+        external
+        view
+        returns (uint256)
+    {
+        return _assetToRemove(priceWithFees, liqPriceWithoutPenalty, posExpo);
     }
 
-    function i_tickValue(uint256 currentPrice, int24 tick, TickData memory tickData) external view returns (int256) {
-        return _tickValue(currentPrice, tick, tickData);
+    function i_tickValue(
+        int24 tick,
+        uint256 currentPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
+        TickData memory tickData
+    ) external view returns (int256) {
+        return _tickValue(tick, currentPrice, longTradingExpo, accumulator, tickData);
     }
 
     function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
@@ -249,16 +297,28 @@ contract UsdnProtocolHandler is UsdnProtocol {
         return _getLeverage(price, liqPrice);
     }
 
-    function i_bitmapIndexToTick(uint256 index) external view returns (int24) {
-        return _bitmapIndexToTick(index);
+    function i_calcTickFromBitmapIndex(uint256 index) external view returns (int24) {
+        return _calcTickFromBitmapIndex(index);
     }
 
-    function i_tickToBitmapIndex(int24 tick) external view returns (uint256) {
-        return _tickToBitmapIndex(tick);
+    function i_calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) external pure returns (int24) {
+        return _calcTickFromBitmapIndex(index, tickSpacing);
+    }
+
+    function i_calcBitmapIndexFromTick(int24 tick) external view returns (uint256) {
+        return _calcBitmapIndexFromTick(tick);
+    }
+
+    function i_calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) external pure returns (uint256) {
+        return _calcBitmapIndexFromTick(tick, tickSpacing);
+    }
+
+    function i_findHighestPopulatedTick(int24 searchStart) external view returns (int24 tick_) {
+        return _findHighestPopulatedTick(searchStart);
     }
 
     function findLastSetInTickBitmap(int24 searchFrom) external view returns (uint256 index) {
-        return _tickBitmap.findLastSet(_tickToBitmapIndex(searchFrom));
+        return _tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchFrom));
     }
 
     function i_updateEMA(uint128 secondsElapsed) external returns (int256) {
@@ -340,6 +400,18 @@ contract UsdnProtocolHandler is UsdnProtocol {
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {
         _checkSafetyMargin(currentPrice, liquidationPrice);
+    }
+
+    function i_getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external pure returns (uint128) {
+        return _getEffectivePriceForTick(tick, liqMultiplier);
+    }
+
+    function i_calcFixedPrecisionMultiplier(
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) external pure returns (uint256) {
+        return _calcFixedPrecisionMultiplier(assetPrice, longTradingExpo, accumulator);
     }
 
     function i_minPrice() external pure returns (uint256) {

@@ -49,15 +49,15 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
-        initialDeposit: 10 ether,
+        initialDeposit: 4.919970269703463156 ether,
         initialLong: 5 ether,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
         initialBlock: block.number,
         flags: Flags({
             enablePositionFees: false,
-            enableProtocolFees: true,
-            enableFunding: true,
+            enableProtocolFees: false,
+            enableFunding: false,
             enableLimits: false,
             enableUsdnRebase: false,
             enableSecurityDeposit: false,
@@ -65,6 +65,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
             enableLongLimit: false
         })
     });
+
+    struct OpenParams {
+        address user;
+        ProtocolAction untilAction;
+        uint128 positionSize;
+        uint128 desiredLiqPrice;
+        uint256 price;
+    }
 
     Usdn public usdn;
     Sdex public sdex;
@@ -120,8 +128,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         }
         if (!params.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
-            protocol.setUsdnRebaseThreshold(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
-            protocol.setTargetUsdnPrice(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
+            protocol.setUsdnRebaseThreshold(type(uint128).max);
+            protocol.setTargetUsdnPrice(type(uint128).max);
         }
         if (!params.flags.enableSecurityDeposit) {
             protocol.setSecurityDepositValue(0);
@@ -214,7 +222,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateDeposit{ value: securityDepositValue }(positionSize, priceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateDeposit{ value: securityDepositValue }(positionSize, priceData, EMPTY_PREVIOUS_DATA, user);
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
@@ -224,7 +232,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         uint256 balanceOf = usdn.balanceOf(user);
         usdn.approve(address(protocol), balanceOf);
-        protocol.initiateWithdrawal{ value: securityDepositValue }(uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA);
+        protocol.initiateWithdrawal{ value: securityDepositValue }(
+            uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA, user
+        );
         _waitDelay();
 
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
@@ -237,41 +247,35 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
      * @notice Create user positions on the long side (open and close a position)
      * @dev The order in which the actions are performed are defined as followed:
      * @dev InitiateOpenPosition -> ValidateOpenPosition -> InitiateClosePosition -> ValidateWithdrawal
-     * @param user User that performs the actions
-     * @param untilAction Action after which the function returns
-     * @param positionSize Amount of wstEth to deposit
-     * @param desiredLiqPrice Price at which the position should be liquidated
-     * @param price Current price
+     * @param openParams open position params
      * @return tick_ The tick at which the position was opened
      * @return tickVersion_ The tick version of the price tick
      * @return index_ The index of the new position inside the tick array
      */
-    function setUpUserPositionInLong(
-        address user,
-        ProtocolAction untilAction,
-        uint128 positionSize,
-        uint128 desiredLiqPrice,
-        uint256 price
-    ) public prankUser(user) returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+    function setUpUserPositionInLong(OpenParams memory openParams)
+        public
+        prankUser(openParams.user)
+        returns (int24 tick_, uint256 tickVersion_, uint256 index_)
+    {
         uint256 securityDepositValue = protocol.getSecurityDepositValue();
-        wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
-        bytes memory priceData = abi.encode(price);
+        wstETH.mintAndApprove(openParams.user, openParams.positionSize, address(protocol), openParams.positionSize);
+        bytes memory priceData = abi.encode(openParams.price);
 
         (tick_, tickVersion_, index_) = protocol.initiateOpenPosition{ value: securityDepositValue }(
-            positionSize, desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA
+            openParams.positionSize, openParams.desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA, openParams.user
         );
         _waitDelay();
-        if (untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
+        if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
 
         protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        if (untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
+        if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            tick_, tickVersion_, index_, positionSize, priceData, EMPTY_PREVIOUS_DATA
+            tick_, tickVersion_, index_, openParams.positionSize, priceData, EMPTY_PREVIOUS_DATA, openParams.user
         );
         _waitDelay();
-        if (untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
+        if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
 
         protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
@@ -287,11 +291,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
      */
     function _createStalePendingActionHelper() internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
         // create a pending action with a liquidation price around $1700
-        (tick_, tickVersion_, index_) =
-            setUpUserPositionInLong(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1700 ether, 2000 ether);
+        (tick_, tickVersion_, index_) = setUpUserPositionInLong(
+            OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1700 ether, 2000 ether)
+        );
 
         // the price drops to $1500 and the position gets liquidated
-        skip(30);
+        _waitBeforeLiquidation();
         protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
 
         // the pending action is stale
@@ -306,13 +311,18 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
      * Reverts if not equal.
      * @param a First `PendingAction`
      * @param b Second `PendingAction`
+     * @param err Assert message prefix
      */
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
-        assertTrue(a.action == b.action, string.concat(err, " - action type"));
-        assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
-        assertEq(a.user, b.user, string.concat(err, " - action user"));
+        assertTrue(a.common.action == b.common.action, string.concat(err, " - action type"));
+        assertEq(a.common.timestamp, b.common.timestamp, string.concat(err, " - action timestamp"));
+        assertEq(a.common.user, b.common.user, string.concat(err, " - action user"));
+        assertEq(
+            a.common.securityDepositValue,
+            b.common.securityDepositValue,
+            string.concat(err, " - action security deposit")
+        );
         assertEq(a.var1, b.var1, string.concat(err, " - action var1"));
-        assertEq(a.amount, b.amount, string.concat(err, " - action amount"));
         assertEq(a.var2, b.var2, string.concat(err, " - action var2"));
         assertEq(a.var3, b.var3, string.concat(err, " - action var3"));
         assertEq(a.var4, b.var4, string.concat(err, " - action var4"));
@@ -322,6 +332,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
     function _waitDelay() internal {
         skip(oracleMiddleware.getValidationDelay() + 1);
+    }
+
+    function _waitBeforeLiquidation() internal {
+        skip(31);
     }
 
     /// @dev Calculate proper initial values from randoms to initiate a balanced protocol

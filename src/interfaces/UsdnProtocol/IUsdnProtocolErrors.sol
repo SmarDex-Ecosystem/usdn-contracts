@@ -15,6 +15,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided amount is zero
     error UsdnProtocolZeroAmount();
 
+    /// @dev Indicates that the provided to address is invalid
+    error UsdnProtocolInvalidAddressTo();
+
     /// @dev Indicates that the initialization deposit is too low
     error UsdnProtocolMinInitAmount(uint256 minInitAmount);
 
@@ -149,4 +152,10 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the deposit amount is too small, leading to no USDN minted or no SDEX burned
     error UsdnProtocolDepositTooSmall();
+
+    /**
+     * @dev Indicates that the long trading expo is zero, which means we can't get the effective tick for a liquidation
+     * price.
+     */
+    error UsdnProtocolZeroLongTradingExpo();
 }

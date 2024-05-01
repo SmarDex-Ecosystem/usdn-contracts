@@ -13,11 +13,11 @@ import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
  */
 contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
     function setUp() public {
-        SetUpParams memory params = DEFAULT_PARAMS;
-        params.flags.enableLimits = true;
-        params.initialDeposit = 49.199702697034631562 ether;
-        params.initialLong = 50 ether;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
+
+        // we enable only close limit
+        vm.prank(ADMIN);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 600);
     }
 
     /**
@@ -79,7 +79,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         protocol.setExpoImbalanceLimits(0, 0, 0, 0);
 
         // the initialized tick
-        int24 tick = protocol.getMaxInitializedTick();
+        int24 tick = protocol.getHighestPopulatedTick();
 
         vm.startPrank(DEPLOYER);
 
@@ -95,7 +95,8 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
             0, // unique long
             params.initialLong,
             abi.encode(params.initialPrice),
-            data
+            data,
+            DEPLOYER
         );
 
         // wait more than 2 blocks

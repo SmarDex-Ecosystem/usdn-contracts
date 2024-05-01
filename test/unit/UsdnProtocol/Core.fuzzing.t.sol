@@ -11,7 +11,17 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  * @custom:background Given a protocol instance that was initialized with default params
  */
 contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
+    struct TestData {
+        uint256 currentPrice;
+        int24 firstPosTick;
+        Position firstPos;
+        uint256 longPosValue;
+    }
+
     function setUp() public {
+        params = DEFAULT_PARAMS;
+        params.flags.enableFunding = false;
+        params.flags.enableProtocolFees = false;
         super._setUp(DEFAULT_PARAMS);
     }
 
@@ -21,18 +31,18 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset starts at 2000 dollars
      * @custom:and 10 random long positions and 10 random deposits are created with prices between 2000 and 3000 dollars
      * @custom:when The sum of all position values is calculated at a price between the max position start price and
-     * 10000 dollars, subtracting 5 USD to simulate taking the lower bound of the confidence interval.
+     * 10000 dollars.
      * @custom:then The long side available balance is greater or equal to the sum of all position values
-     * @dev If taking the same price to calculate individual position values as the overall long balance, then errors
-     * will accumulate and might lead to the sum of long positions' balances exceeding the total long available assets.
-     * However, since we penalize the user's position upon close by taking the lowest bound of the price confidence
-     * interval given by the oracle, the protocol always win.
      * @param finalPrice the final price of the asset, at which we want to compare the available balance with the sum of
-     * all long positions. 5 USD are subtracted when calculating a single long position value.
+     * all long positions.
      * @param random a random number used to generate the position parameters
      */
     function testFuzz_longAssetAvailable(uint128 finalPrice, uint256 random) public {
-        uint256 currentPrice = 2000 ether;
+        TestData memory data;
+        data.currentPrice = 2000 ether;
+
+        data.firstPosTick = protocol.getHighestPopulatedTick();
+        (data.firstPos,) = protocol.getLongPosition(data.firstPosTick, 0, 0);
 
         Position[] memory pos = new Position[](10);
         int24[] memory ticks = new int24[](10);
@@ -46,7 +56,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
             {
                 longAmount = (random % 9 ether) + 1 ether;
                 uint256 longLeverage = (random % 3) + 2;
-                longLiqPrice = currentPrice / longLeverage;
+                longLiqPrice = data.currentPrice / longLeverage;
             }
 
             // create a random user with ~8.5K wstETH
@@ -58,9 +68,14 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
                 (bool success,) = address(wstETH).call{ value: 10_000 ether }("");
                 require(success, "wstETH mint failed");
             }
-
             (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-                user, ProtocolAction.ValidateOpenPosition, uint128(longAmount), uint128(longLiqPrice), currentPrice
+                OpenParams({
+                    user: user,
+                    untilAction: ProtocolAction.ValidateOpenPosition,
+                    positionSize: uint128(longAmount),
+                    desiredLiqPrice: uint128(longLiqPrice),
+                    price: data.currentPrice
+                })
             );
             (pos[i],) = protocol.getLongPosition(tick, tickVersion, index);
             ticks[i] = tick;
@@ -70,38 +85,29 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
 
             // create a random deposit position
             uint256 depositAmount = (random % 9 ether) + 1 ether;
-            setUpUserPositionInVault(user, ProtocolAction.ValidateDeposit, uint128(depositAmount), currentPrice);
+            setUpUserPositionInVault(user, ProtocolAction.ValidateDeposit, uint128(depositAmount), data.currentPrice);
             vm.stopPrank();
 
             // increase the current price, each time by 100 dollars or less, the max price is 3000 dollars
-            currentPrice += random % 100 ether;
+            data.currentPrice += random % 100 ether;
         }
 
         skip(1 hours);
 
         // Bound the final price between the highest position start price and 10000 dollars
-        finalPrice = uint128(bound(uint256(finalPrice), currentPrice, 10_000 ether));
+        finalPrice = uint128(bound(uint256(finalPrice), data.currentPrice, 10_000 ether));
 
-        // calculate the value of all new long positions (simulating taking the low bound of the confidence interval)
+        // calculate the value of all new long positions
         uint256 longPosValue;
         for (uint256 i = 0; i < 10; i++) {
-            longPosValue += uint256(
-                protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice - 5 ether, uint128(block.timestamp))
-            );
+            longPosValue +=
+                uint256(protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice, uint128(block.timestamp)));
         }
 
-        (Position memory firstPos,) = protocol.getLongPosition(
-            protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2)
-                + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
-            0,
-            0
-        );
-
         // calculate the value of the deployer's long position
-        uint128 liqPrice =
-            protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(DEFAULT_PARAMS.initialPrice / 2));
+        uint128 liqPrice = protocol.getEffectivePriceForTick(data.firstPosTick);
 
-        longPosValue += uint256(protocol.i_positionValue(finalPrice - 5 ether, liqPrice, firstPos.totalExpo));
+        longPosValue += uint256(protocol.i_positionValue(finalPrice, liqPrice, data.firstPos.totalExpo));
 
         emit log_named_decimal_uint("longPosValue", longPosValue, wstETH.decimals());
         emit log_named_decimal_uint(

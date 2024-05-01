@@ -180,6 +180,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             return _getLowLatencyPrice(data, 0, dir);
         }
 
+        // Chainlink calls do not require a fee
+        if (msg.value > 0) {
+            revert OracleMiddlewareIncorrectFee();
+        }
+
         ChainlinkPriceInfo memory chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS);
 
         // check if the cached pyth price is more recent and return it instead
@@ -281,5 +286,17 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         _confRatio = newConfRatio;
 
         emit ConfRatioUpdated(newConfRatio);
+    }
+
+    /// @inheritdoc IOracleMiddleware
+    function withdrawEther(address to) external onlyOwner {
+        if (to == address(0)) {
+            revert OracleMiddlewareTransferToZeroAddress();
+        }
+
+        (bool success,) = payable(to).call{ value: address(this).balance }("");
+        if (!success) {
+            revert OracleMiddlewareTransferFailed(to);
+        }
     }
 }

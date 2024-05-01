@@ -16,9 +16,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  */
 contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableLimits = true;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
     }
 
     /**
@@ -720,6 +718,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then transaction should revert.
      */
     function test_RevertWhen_setExpoImbalanceLimitsLow() external adminPrank {
+        protocol.setExpoImbalanceLimits(2, 2, 0, 0);
+
         // open and deposit limits basis point
         (int256 openLimitBps, int256 depositLimitBps,,) = protocol.getExpoImbalanceLimits();
 
