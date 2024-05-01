@@ -377,8 +377,8 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @notice Save a new position in the protocol, adjusting the tick data and global variables.
-     * @dev Note: this method does no update the long balance.
+     * @notice Save a new position in the protocol, adjusting the tick data and global variables
+     * @dev Note: this method does not update the long balance
      * @param tick The tick to hold the new position
      * @param long The position to save
      * @param liquidationPenalty The liquidation penalty for the tick
@@ -429,7 +429,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Remove the provided total amount from its position and update the tick data and position
-     * @dev Note: this method does no update the long balance.
+     * @dev Note: this method does not update the long balance
      * If the amount to remove is greater than or equal to the position's total amount, the position is deleted instead
      * @param tick The tick to remove from
      * @param index Index of the position in the tick array
