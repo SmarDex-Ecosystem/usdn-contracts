@@ -711,7 +711,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @notice Update the state of the contract according to the liquidation effects
      * @param data The liquidation data
      * @param effects The effects of the liquidations
-     * @return data The updated liquidation data
+     * @return The updated liquidation data
      */
     function _updateStateAfterLiquidation(LiquidationData memory data, LiquidationsEffects memory effects)
         internal
