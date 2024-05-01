@@ -529,7 +529,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 timestamp: uint40(block.timestamp),
                 user: user,
                 to: to,
-                securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24()
+                securityDepositValue: _securityDepositValue
             }),
             _unused: 0,
             amount: amount,
@@ -584,7 +584,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateDepositWithAction(pending, priceData);
-        return (pending.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR);
+        return pending.common.securityDepositValue;
     }
 
     function _validateDepositWithAction(PendingAction memory pending, bytes calldata priceData) internal {
@@ -684,7 +684,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                     timestamp: uint40(block.timestamp),
                     user: user,
                     to: to,
-                    securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24()
+                    securityDepositValue: _securityDepositValue
                 }),
                 sharesLSB: _calcWithdrawalAmountLSB(usdnShares),
                 sharesMSB: _calcWithdrawalAmountMSB(usdnShares),
@@ -747,7 +747,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateWithdrawalWithAction(pending, priceData);
-        return (pending.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR);
+        return pending.common.securityDepositValue;
     }
 
     function _validateWithdrawalWithAction(PendingAction memory pending, bytes calldata priceData) internal {
@@ -864,7 +864,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 timestamp: uint40(block.timestamp),
                 user: user,
                 to: to,
-                securityDepositValue: (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24()
+                securityDepositValue: _securityDepositValue
             }),
             tick: data.posId.tick,
             closeAmount: 0,
@@ -954,7 +954,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateOpenPositionWithAction(pending, priceData);
-        return (pending.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR);
+        return pending.common.securityDepositValue;
     }
 
     /**
@@ -1185,7 +1185,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             data_.totalExpoToClose
         );
 
-        data_.securityDepositValue = (_securityDepositValue / SECURITY_DEPOSIT_FACTOR).toUint24();
+        data_.securityDepositValue = _securityDepositValue;
     }
 
     /**
@@ -1289,7 +1289,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         _validateClosePositionWithAction(pending, priceData);
-        return (pending.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR);
+        return pending.common.securityDepositValue;
     }
 
     function _validateClosePositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
@@ -1505,7 +1505,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
         success_ = true;
         executed_ = true;
-        securityDepositValue_ = pending.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR;
+        securityDepositValue_ = pending.common.securityDepositValue;
         emit SecurityDepositRefunded(pending.common.user, msg.sender, securityDepositValue_);
     }
 

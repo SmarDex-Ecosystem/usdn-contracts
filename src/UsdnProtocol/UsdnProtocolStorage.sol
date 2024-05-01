@@ -42,9 +42,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 public constant SDEX_BURN_ON_DEPOSIT_DIVISOR = 1e8;
 
     /// @inheritdoc IUsdnProtocolStorage
-    uint128 public constant SECURITY_DEPOSIT_FACTOR = 1e15;
-
-    /// @inheritdoc IUsdnProtocolStorage
     uint256 public constant BPS_DIVISOR = 10_000;
 
     /// @inheritdoc IUsdnProtocolStorage
