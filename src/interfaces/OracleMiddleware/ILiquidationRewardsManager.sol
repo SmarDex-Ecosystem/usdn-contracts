@@ -32,12 +32,16 @@ interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTy
      * @param remainingCollateral The amount of collateral remaining after liquidations. If negative, it means there was
      * not enough collateral to cover the losses caused by the liquidations (can happen during heavy price fluctuations)
      * @param rebased Whether an optional USDN rebase was performed
+     * @param priceData The oracle price data blob, if any. This can be used to reward users differently depending on
+     * which oracle they used to provide a liquidation price.
      * @return wstETHRewards_ The wstETH to send to the liquidator as rewards (in wei)
      */
-    function getLiquidationRewards(uint16 tickAmount, int256 remainingCollateral, bool rebased)
-        external
-        view
-        returns (uint256 wstETHRewards_);
+    function getLiquidationRewards(
+        uint16 tickAmount,
+        int256 remainingCollateral,
+        bool rebased,
+        bytes calldata priceData
+    ) external view returns (uint256 wstETHRewards_);
 
     /**
      * @notice Returns the parameters used to calculate the rewards for a liquidation
