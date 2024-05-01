@@ -653,7 +653,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Prepare the pending action struct for a withdrawal and add it to the queue.
+     * @notice Prepare the pending action struct for a withdrawal and add it to the queue
+     * @param user The address of the user initiating the withdrawal
+     * @param to The address that will receive the assets
+     * @param usdnShares The amount of USDN shares to burn
      * @param data The withdrawal action data
      * @return securityDepositValue_ The security deposit value
      */
@@ -790,11 +793,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Update protocol balances, then prepare the data for the initiate open position action.
-     * @dev Reverts if the imbalance limit is reached, or if the safety margin is not respected.
-     * @param amount The amount of wstETH to deposit.
-     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty.
+     * @notice Update protocol balances, then prepare the data for the initiate open position action
+     * @dev Reverts if the imbalance limit is reached, or if the safety margin is not respected
+     * @param amount The amount of wstETH to deposit
+     * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param currentPriceData The current price data
+     * @return data_ The temporary data for the open position action
      */
     function _prepareInitiateOpenPositionData(uint128 amount, uint128 desiredLiqPrice, bytes calldata currentPriceData)
         internal
@@ -1103,15 +1107,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Update protocol balances, then prepare the data for the initiate close position action.
-     * @dev Reverts if the imbalance limit is reached, or if any of the checks in `_checkInitiateClosePosition` fail.
-     * Returns without creating a pending action if the position gets liquidated in this transaction.
-     * @param user The address of the user initiating the close position.
+     * @notice Update protocol balances, then prepare the data for the initiate close position action
+     * @dev Reverts if the imbalance limit is reached, or if any of the checks in `_checkInitiateClosePosition` fail
+     * Returns without creating a pending action if the position gets liquidated in this transaction
+     * @param user The address of the user initiating the close position
      * @param to The address that will receive the assets
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
      * @return data_ The close position data
+     * @return liq_ Whether the position was liquidated and the caller should return early
      */
     function _prepareClosePositionData(
         address user,

@@ -327,6 +327,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param longTradingExpo The trading expo of the long side
      * @param accumulator The liquidation multiplier accumulator
      * @param tickData The aggregate data for the tick
+     * @return value_ The value of the tick (qty of asset tokens)
      */
     function _tickValue(
         int24 tick,
