@@ -51,6 +51,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
             // middleware data
             PriceInfo memory middlewarePrice;
+            uint256 validationCost = wstethMiddleware.validationCost(data, action);
             if (
                 action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
                     || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
@@ -59,9 +60,9 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
                 // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
                 // is recent compared to block.timestamp
                 vm.warp(pythTimestamp);
-                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
+                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: validationCost }(0, action, data);
             } else {
-                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: validationCost }(
                     uint128(pythTimestamp - wstethMiddleware.getValidationDelay()), action, data
                 );
             }
@@ -108,7 +109,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
      * @custom:then The price retrieved by the oracle middleware is the same as the one from the chainlink onchain data
      * by applying Steth/Wsteth onchain price ratio.
      */
-    function test_ForkWstethParseAndValidatePriceFornInitiateDepositWithChainlink() public ethMainnetFork reSetUp {
+    function test_ForkWstethParseAndValidatePriceForInitiateDepositWithChainlink() public ethMainnetFork reSetUp {
         // all targeted actions loop
         for (uint256 i; i < actions.length; i++) {
             // action type
@@ -134,7 +135,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
             PriceInfo memory middlewarePrice =
-                wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(uint128(block.timestamp), action, "");
+                wstethMiddleware.parseAndValidatePrice(uint128(block.timestamp), action, "");
             // timestamp check
             assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
             // price check
@@ -178,19 +179,22 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
             // middleware data
             PriceInfo memory middlewarePrice;
-            if (
-                action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
-                    || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
-                    || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
-            ) {
-                // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
-                // is recent compared to block.timestamp
-                vm.warp(pythTimestamp);
-                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
-            } else {
-                middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(
-                    uint128(pythTimestamp - wstethMiddleware.getValidationDelay()), action, data
-                );
+            {
+                uint256 validationCost = wstethMiddleware.validationCost(data, action);
+                if (
+                    action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
+                        || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
+                        || action == ProtocolAction.InitiateOpenPosition || action == ProtocolAction.InitiateClosePosition
+                ) {
+                    // Since we force the usage of Pyth for initiate actions,
+                    // Pyth requires that the price data timestamp is recent compared to block.timestamp
+                    vm.warp(pythTimestamp);
+                    middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: validationCost }(0, action, data);
+                } else {
+                    middlewarePrice = wstethMiddleware.parseAndValidatePrice{ value: validationCost }(
+                        uint128(pythTimestamp - wstethMiddleware.getValidationDelay()), action, data
+                    );
+                }
             }
 
             // timestamp check
@@ -279,7 +283,7 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
             (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
             PriceInfo memory middlewarePrice =
-                wstethMiddleware.parseAndValidatePrice{ value: 1 ether }(uint128(block.timestamp), action, "");
+                wstethMiddleware.parseAndValidatePrice(uint128(block.timestamp), action, "");
             // timestamp check
             assertEq(middlewarePrice.timestamp, chainlinkTimestamp, timestampError);
             // price check
