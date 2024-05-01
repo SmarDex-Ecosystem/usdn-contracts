@@ -62,7 +62,7 @@ contract TestInitializableReentrancyGuardInitializedAndNonReentrant is
      * @custom:given A user being a smart contract that can receive ether
      * @custom:and an initialized contract with a function that sends ether to the caller
      * @custom:when The user calls a function with the modifier
-     * @custom:then The call do not revert and there is no reentrancy
+     * @custom:then The call does not revert and there is no reentrancy
      */
     function test_initializedAndNonReentrant() external {
         handler.initialize();
