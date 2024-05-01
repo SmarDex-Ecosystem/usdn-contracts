@@ -17,8 +17,10 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
     uint128 constant OPEN_AMOUNT = 10 ether;
 
     function setUp() external {
-        SetUpParams memory params = DEFAULT_PARAMS;
+        params = DEFAULT_PARAMS;
         params.flags.enableFunding = false;
+        params.flags.enableProtocolFees = false;
+        params.flags.enablePositionFees = true;
         _setUp(params);
     }
 
@@ -26,14 +28,25 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
      * @custom:scenario Check the return value of the function `getLongPosition`
      * @custom:given A initialized protocol
      * @custom:and A user position is opened
-     * @custom:when The function is called with user position arguments
+     * @custom:when The function is called with user position arguments before the validation
+     * @custom:and The function is called with user position arguments after the validation
      * @custom:then The function should return expected user position values
      */
     function test_getLongPosition() public {
+        int24 expectedTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
+        uint128 adjustedPrice =
+            uint128(params.initialPrice + (params.initialPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR());
+        uint8 liqPenalty = protocol.getTickLiquidationPenalty(expectedTick);
+
+        uint128 liqPriceWithoutPenalty =
+            protocol.getEffectivePriceForTick(expectedTick - int24(uint24(liqPenalty)) * protocol.getTickSpacing());
+        uint128 totalExpo =
+            uint128(FixedPointMathLib.fullMulDiv(OPEN_AMOUNT, adjustedPrice, adjustedPrice - liqPriceWithoutPenalty));
+
         (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
+                untilAction: ProtocolAction.InitiateOpenPosition,
                 positionSize: OPEN_AMOUNT,
                 desiredLiqPrice: params.initialPrice / 2,
                 price: params.initialPrice
@@ -42,28 +55,28 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
 
         (Position memory position, uint8 liquidationPenalty) = protocol.getLongPosition(tick, tickVersion, index);
 
-        uint128 adjustedPrice =
-            uint128(params.initialPrice + (params.initialPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR());
-        int24 effectiveTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
-        uint8 effectiveLiquidationPenalty = protocol.getTickLiquidationPenalty(effectiveTick);
+        uint256 expectedTimestamp = block.timestamp - oracleMiddleware.getValidationDelay() - 1;
+        assertEq(position.timestamp, expectedTimestamp, "initiate position timestamp");
+        assertEq(position.user, USER_1, "initiate position user");
+        assertEq(position.totalExpo, totalExpo, "initiate position totalExpo");
+        assertEq(position.amount, OPEN_AMOUNT, "initiate position amount");
+        assertEq(liquidationPenalty, liqPenalty, "initiate liquidationPenalty");
 
-        uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            effectiveTick - int24(uint24(effectiveLiquidationPenalty)) * protocol.getTickSpacing()
-        );
-
-        uint128 positionTotalExpo =
+        liqPriceWithoutPenalty =
+            protocol.getEffectivePriceForTick(expectedTick - int24(uint24(liqPenalty)) * protocol.getTickSpacing());
+        totalExpo =
             uint128(FixedPointMathLib.fullMulDiv(OPEN_AMOUNT, adjustedPrice, adjustedPrice - liqPriceWithoutPenalty));
 
-        assertEq(
-            position.timestamp + 2 * (oracleMiddleware.getValidationDelay() + 1),
-            block.timestamp,
-            "wrong position timestamp"
-        );
+        vm.prank(USER_1);
+        protocol.validateOpenPosition(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
 
-        assertEq(position.user, USER_1, "wrong position user");
-        assertEq(position.totalExpo, positionTotalExpo, "wrong position totalExpo");
-        assertEq(position.amount, OPEN_AMOUNT, "wrong position amount");
-        assertEq(liquidationPenalty, effectiveLiquidationPenalty, "wrong liquidationPenalty");
+        (position, liquidationPenalty) = protocol.getLongPosition(tick, tickVersion, index);
+
+        assertEq(position.timestamp, expectedTimestamp, "validate position timestamp");
+        assertEq(position.user, USER_1, "validate position user");
+        assertEq(position.totalExpo, totalExpo, "validate position totalExpo");
+        assertEq(position.amount, OPEN_AMOUNT, "validate position amount");
+        assertEq(liquidationPenalty, liqPenalty, "validate liquidationPenalty");
     }
 
     /**
@@ -87,9 +100,8 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
             })
         );
 
-        // we need to skip 1 minute to make the new price data fresh
-        skip(1 minutes);
-        protocol.liquidate(abi.encode(params.initialPrice / 3), 10);
+        _waitBeforeLiquidation();
+        protocol.testLiquidate(abi.encode(params.initialPrice / 3), 10);
 
         vm.expectRevert(
             abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion)
