@@ -98,9 +98,8 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setSdexBurnOnDepositRatio(uint32 newRatio) external;
 
     /**
-     * TO DO :
      * @notice Set the security deposit value.
-     * @dev The value must be a multiple of SECURITY_DEPOSIT_FACTOR to avoid loosing eth du to rounding errors.
+     * @dev The maximum value of the security deposit is 2^64 - 1 = 18446744073709551615 = 18.4 ethers
      * @param securityDepositValue The security deposit value.
      */
     function setSecurityDepositValue(uint64 securityDepositValue) external;
