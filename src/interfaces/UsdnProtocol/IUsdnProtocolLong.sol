@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
  * @title IUsdnProtocolLong
@@ -60,35 +61,54 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
 
     /**
      * @notice Get the tick number corresponding to a given price
-     * @dev This takes into account the liquidation price multiplier and the tick spacing
+     * @dev Uses the values from storage for the various variables
      * @param price The price
+     * @return The tick number, a multiple of the tick spacing
      */
     function getEffectiveTickForPrice(uint128 price) external view returns (int24);
 
     /**
      * @notice Get the tick number corresponding to a given price
-     * @dev This takes into account the liquidation price multiplier and the tick spacing
+     * @dev This takes into account the effects of the funding and respects the tick spacing
      * @param price The price
-     * @param liqMultiplier The liquidation price multiplier
+     * @param assetPrice The current price of the asset
+     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
+     * @param accumulator The liquidation multiplier accumulator
+     * @param tickSpacing The tick spacing
+     * @return The tick number, a multiple of the tick spacing
      */
-    function getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier) external view returns (int24);
+    function getEffectiveTickForPrice(
+        uint128 price,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator,
+        int24 tickSpacing
+    ) external view returns (int24);
 
     /**
      * @notice Get the liquidation price corresponding to a given tick number
-     * @dev This takes into account the liquidation price multiplier.
+     * @dev Uses the values from storage for the various variables
      * Note that ticks that are not a multiple of the tick spacing cannot contain a long position.
      * @param tick The tick number
+     * @return The liquidation price
      */
     function getEffectivePriceForTick(int24 tick) external view returns (uint128);
 
     /**
-     * @notice Get the liquidation price corresponding to a given tick number
-     * @dev This takes into account the liquidation price multiplier.
-     * Note that ticks that are not a multiple of the tick spacing cannot contain a long position.
+     * @notice Get the liquidation price corresponding to a given tick number, taking into account the effect of funding
+     * @dev Note that ticks that are not a multiple of the tick spacing cannot contain a long position.
      * @param tick The tick number
-     * @param liqMultiplier The liquidation price multiplier
+     * @param assetPrice The current price of the asset
+     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
+     * @param accumulator The liquidation multiplier accumulator
+     * @return The liquidation price
      */
-    function getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external view returns (uint128);
+    function getEffectivePriceForTick(
+        int24 tick,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) external view returns (uint128);
 
     /**
      * @notice Retrieve the liquidation penalty assigned to `tick` if there are positions in it, otherwise retrieve the
