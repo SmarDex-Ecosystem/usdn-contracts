@@ -158,8 +158,8 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Set the minimum long position size
-     * @param newMinLongPosition The new minimum long position, with _assetDecimals
      * @dev This value is used to prevent users from opening positions that are too small and not worth liquidating
+     * @param newMinLongPosition The new minimum long position, with _assetDecimals
      */
     function setMinLongPosition(uint256 newMinLongPosition) external;
 }
