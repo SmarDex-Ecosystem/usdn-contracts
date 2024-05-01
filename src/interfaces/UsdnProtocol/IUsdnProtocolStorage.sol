@@ -358,7 +358,10 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      */
     function getTotalExpo() external view returns (uint256);
 
-    /// @notice The accumulator used to calculate the liquidation multiplier
+    /**
+     * @notice The accumulator used to calculate the liquidation multiplier
+     * @return The liquidation multiplier accumulator
+     */
     function getLiqMultiplierAccumulator() external view returns (HugeUint.Uint512 memory);
 
     /**
