@@ -416,7 +416,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             vaultBalanceBefore + (action.closeBoundedPositionValue - assetToTransfer),
             "Vault gets the difference"
         );
-        assertEq(protocol.getBalanceLong(), longBalanceBefore, "Long balance doesn't change");
+        assertEq(protocol.getBalanceLong(), longBalanceBefore, "Long balance does not change");
     }
 
     /**

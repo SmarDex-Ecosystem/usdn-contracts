@@ -32,9 +32,9 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
             tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
         );
         int256 value = protocol.i_positionValue(params.initialPrice, liqPrice, 2 ether);
-        uint256 toTransfer = protocol.i_assetToRemove(params.initialPrice, liqPrice, 2 ether);
-        assertEq(toTransfer, uint256(value), "to transfer vs pos value");
-        assertEq(toTransfer, 1.512304848730381401 ether, "to transfer");
+        uint256 toRemove = protocol.i_assetToRemove(params.initialPrice, liqPrice, 2 ether);
+        assertEq(toRemove, uint256(value), "to transfer vs pos value");
+        assertEq(toRemove, 1.512304848730381401 ether, "to transfer");
     }
 
     /**
@@ -54,9 +54,9 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
             tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
         );
         int256 value = protocol.i_positionValue(params.initialPrice, liqPrice, 200 ether);
-        uint256 toTransfer = protocol.i_assetToRemove(params.initialPrice, liqPrice, 200 ether);
-        assertGt(uint256(value), toTransfer, "value vs asset to transfer");
-        assertEq(toTransfer, longAvailable, "asset to transfer vs long asset available");
+        uint256 toRemove = protocol.i_assetToRemove(params.initialPrice, liqPrice, 200 ether);
+        assertGt(uint256(value), toRemove, "value vs asset to transfer");
+        assertEq(toRemove, longAvailable, "asset to transfer vs long asset available");
     }
 
     /**
@@ -77,13 +77,13 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
         assertEq(protocol.i_longAssetAvailable(price), 0, "long asset available");
 
         int24 tick = protocol.getEffectiveTickForPrice(price);
-        uint256 toTransfer = protocol.i_assetToRemove(
+        uint256 toRemove = protocol.i_assetToRemove(
             params.initialPrice,
             protocol.getEffectivePriceForTick(
                 tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
             ),
             100 ether
         );
-        assertEq(toTransfer, 0, "asset to transfer");
+        assertEq(toRemove, 0, "asset to transfer");
     }
 }
