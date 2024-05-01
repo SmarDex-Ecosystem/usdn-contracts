@@ -31,9 +31,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
     uint256 expectedLiquidatorRewards;
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableFunding = false;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         usdn.approve(address(protocol), type(uint256).max);
@@ -293,16 +291,17 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         skip(1 hours);
 
         (PendingAction memory action,) = protocol.i_getPendingAction(address(this));
+        LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
         uint256 priceWithFees =
             liquidationPrice - (liquidationPrice * protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
 
         int256 positionValue = protocol.i_positionValue(
             uint128(priceWithFees),
-            protocol.getEffectivePriceForTick(
+            protocol.i_getEffectivePriceForTick(
                 tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
-                protocol.getLiquidationMultiplier()
+                longAction.closeLiqMultiplier
             ),
-            protocol.i_toLongPendingAction(action).closeTotalExpo
+            longAction.closePosTotalExpo
         );
 
         uint256 vaultProfit = depositAmount - uint256(positionValue);

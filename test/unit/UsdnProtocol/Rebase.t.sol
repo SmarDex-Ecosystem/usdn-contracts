@@ -15,9 +15,7 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
 contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 5 ether;
         params.initialLong = 10 ether;
-        params.flags.enablePositionFees = false;
         params.flags.enableUsdnRebase = true;
         super._setUp(params);
 
@@ -95,7 +93,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase (no liquidation happens)
         vm.expectEmit();
         emit Rebase(usdn.MAX_DIVISOR(), expectedDivisor);
-        protocol.liquidate(abi.encode(newPrice), 0);
+        protocol.testLiquidate(abi.encode(newPrice), 0);
 
         assertApproxEqAbs(
             protocol.usdnPrice(newPrice, uint128(block.timestamp - 30)),

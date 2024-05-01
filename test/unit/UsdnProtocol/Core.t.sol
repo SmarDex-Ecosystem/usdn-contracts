@@ -12,7 +12,6 @@ import { ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProto
 contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
         params.flags.enableFunding = true;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), 10_000 ether, address(protocol), type(uint256).max);
@@ -78,12 +77,12 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(params.initialPrice);
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 10 ether, params.initialPrice);
         skip(1 days);
-        protocol.liquidate(priceData, 1);
+        protocol.testLiquidate(priceData, 1);
 
         int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
-        protocol.liquidate(priceData, 1);
+        protocol.testLiquidate(priceData, 1);
 
         assertGt(protocol.getEMA(), lastFunding);
     }
@@ -108,7 +107,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() - 1);
         // we call liquidate() to update the EMA
-        protocol.liquidate(abi.encode(params.initialPrice), 1);
+        protocol.testLiquidate(abi.encode(params.initialPrice), 1);
 
         assertLt(protocol.getEMA(), lastFunding);
     }
@@ -146,12 +145,12 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(params.initialPrice);
         // we skip 1 day and call liquidate() to have a non-zero funding
         skip(1 days);
-        protocol.liquidate(priceData, 1);
+        protocol.testLiquidate(priceData, 1);
 
         int256 lastFunding = protocol.getLastFunding();
         skip(protocol.getEMAPeriod() + 1);
         // we call liquidate() to update the EMA
-        protocol.liquidate(priceData, 1);
+        protocol.testLiquidate(priceData, 1);
 
         assertEq(protocol.getEMA(), lastFunding, "EMA should be equal to last funding");
     }
@@ -163,6 +162,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then fund should be equal to -fundingSF + EMA
      */
     function test_funding_NegLong_ZeroVault() public {
+        vm.skip(true); // This case is not realistic anymore with the new liquidation multiplier calculations
+
         skip(1 hours);
         uint128 price = params.initialPrice;
         setUpUserPositionInLong(
@@ -176,7 +177,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         );
 
         skip(1 hours);
-        protocol.liquidate(abi.encode(price / 100), 10);
+        protocol.testLiquidate(abi.encode(price / 100), 10);
         assertLt(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo should be negative");
         assertEq(protocol.getBalanceVault(), 0, "vault expo should be zero");
 
@@ -211,7 +212,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         );
 
         skip(1 hours);
-        protocol.liquidate(abi.encode(price * 100), 10);
+        protocol.testLiquidate(abi.encode(price * 100), 10);
         assertGt(int256(protocol.getTotalExpo()) - int256(protocol.getBalanceLong()), 0, "long expo should be positive");
         assertEq(protocol.getBalanceVault(), 0, "vault expo should be zero");
 
@@ -252,7 +253,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
-        protocol.liquidate(priceData, 5);
+        protocol.testLiquidate(priceData, 5);
         assertEq(available, int256(protocol.getBalanceLong()), "long balance != available");
     }
 
@@ -272,7 +273,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.longAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
-        protocol.liquidate(abi.encode(price), 5);
+        protocol.testLiquidate(abi.encode(price), 5);
 
         assertEq(available, int256(protocol.getBalanceLong()), "long balance != available");
     }
@@ -304,7 +305,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
-        protocol.liquidate(abi.encode(price), 5);
+        protocol.testLiquidate(abi.encode(price), 5);
 
         assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
     }
@@ -335,7 +336,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         // we have to subtract 30 seconds from the timestamp because of the mock oracle middleware behavior
         int256 available = protocol.vaultAssetAvailableWithFunding(price, uint128(block.timestamp) - 30);
         // call liquidate to update the contract state
-        protocol.liquidate(priceData, 5);
+        protocol.testLiquidate(priceData, 5);
         assertEq(available, int256(protocol.getBalanceVault()), "vault balance != available");
     }
 

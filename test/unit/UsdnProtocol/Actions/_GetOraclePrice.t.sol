@@ -45,7 +45,7 @@ contract TestUsdnProtocolActionsGetOraclePrice is UsdnProtocolBaseFixture {
      * @custom:scenario Validate price data but insufficient fee provided
      * @custom:given The oracle middleware requires 1 wei for validation
      * @custom:when The price is requested for each action (without providing ether)
-     * @custom:then The function reverts with the `OracleMiddlewareInsufficientFee` error
+     * @custom:then The function reverts with the `UsdnProtocolInsufficientOracleFee` error
      */
     function test_RevertWhen_getOraclePriceInsufficientFee() public {
         for (uint8 i = 0; i <= uint8(type(ProtocolAction).max); i++) {

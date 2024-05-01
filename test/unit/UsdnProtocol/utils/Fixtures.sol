@@ -49,7 +49,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
-        initialDeposit: 10 ether,
+        initialDeposit: 4.919970269703463156 ether,
         initialLong: 5 ether,
         initialPrice: 2000 ether, // 2000 USD per wstETH
         initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
@@ -128,8 +128,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         }
         if (!params.flags.enableUsdnRebase) {
             // set a high target price to effectively disable rebases
-            protocol.setUsdnRebaseThreshold(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
-            protocol.setTargetUsdnPrice(uint128(1000 * 10 ** protocol.getPriceFeedDecimals()));
+            protocol.setUsdnRebaseThreshold(type(uint128).max);
+            protocol.setTargetUsdnPrice(type(uint128).max);
         }
         if (!params.flags.enableSecurityDeposit) {
             protocol.setSecurityDepositValue(0);
@@ -296,7 +296,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         );
 
         // the price drops to $1500 and the position gets liquidated
-        skip(30);
+        _waitBeforeLiquidation();
         protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
 
         // the pending action is stale
@@ -311,13 +311,18 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
      * Reverts if not equal.
      * @param a First `PendingAction`
      * @param b Second `PendingAction`
+     * @param err Assert message prefix
      */
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
-        assertTrue(a.action == b.action, string.concat(err, " - action type"));
-        assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
-        assertEq(a.user, b.user, string.concat(err, " - action user"));
+        assertTrue(a.common.action == b.common.action, string.concat(err, " - action type"));
+        assertEq(a.common.timestamp, b.common.timestamp, string.concat(err, " - action timestamp"));
+        assertEq(a.common.user, b.common.user, string.concat(err, " - action user"));
+        assertEq(
+            a.common.securityDepositValue,
+            b.common.securityDepositValue,
+            string.concat(err, " - action security deposit")
+        );
         assertEq(a.var1, b.var1, string.concat(err, " - action var1"));
-        assertEq(a.amount, b.amount, string.concat(err, " - action amount"));
         assertEq(a.var2, b.var2, string.concat(err, " - action var2"));
         assertEq(a.var3, b.var3, string.concat(err, " - action var3"));
         assertEq(a.var4, b.var4, string.concat(err, " - action var4"));
@@ -327,6 +332,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
     function _waitDelay() internal {
         skip(oracleMiddleware.getValidationDelay() + 1);
+    }
+
+    function _waitBeforeLiquidation() internal {
+        skip(31);
     }
 
     /// @dev Calculate proper initial values from randoms to initiate a balanced protocol

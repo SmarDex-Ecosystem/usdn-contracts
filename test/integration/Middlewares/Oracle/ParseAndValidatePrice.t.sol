@@ -53,6 +53,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // middleware data
             PriceInfo memory middlewarePrice;
+            uint256 validationCost = oracleMiddleware.validationCost(data, action);
 
             if (
                 action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
@@ -62,9 +63,9 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
                 // is recent compared to block.timestamp
                 vm.warp(pythTimestamp);
-                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
+                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(0, action, data);
             } else {
-                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
                     uint128(pythTimestamp - oracleMiddleware.getValidationDelay()), action, data
                 );
             }
@@ -125,7 +126,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // chainlink data
             (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
-            PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+            PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice(
                 uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, ""
             );
             // timestamp check
@@ -171,6 +172,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
             // middleware data
             PriceInfo memory middlewarePrice;
+            uint256 validationCost = oracleMiddleware.validationCost(data, action);
             if (
                 action == ProtocolAction.Initialize || action == ProtocolAction.Liquidation
                     || action == ProtocolAction.InitiateDeposit || action == ProtocolAction.InitiateWithdrawal
@@ -179,9 +181,9 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 // Since we force the usage of Pyth for initiate actions, Pyth requires that the price data timestamp
                 // is recent compared to block.timestamp
                 vm.warp(pythTimestamp);
-                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(0, action, data);
+                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(0, action, data);
             } else {
-                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+                middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
                     uint128(pythTimestamp - oracleMiddleware.getValidationDelay()), action, data
                 );
             }
@@ -242,7 +244,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
             // chainlink data
             (uint256 chainlinkPrice, uint256 chainlinkTimestamp) = getChainlinkPrice();
             // middleware data
-            PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+            PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice(
                 uint128(block.timestamp - oracleMiddleware.getValidationDelay()), action, ""
             );
             // timestamp check
@@ -269,18 +271,18 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
         // get pyth price that must be more recent than chainlink data
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, chainlinkTimestamp + 1);
+        uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
 
         // submit to oracle middleware so it gets cached by Pyth
-        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+        PriceInfo memory middlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(chainlinkTimestamp + 1 - oracleMiddleware.getValidationDelay()),
             ProtocolAction.ValidateDeposit,
             data
         );
 
         // get oracle middleware price without providing data
-        PriceInfo memory cachedMiddlewarePrice = oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-            uint128(block.timestamp), ProtocolAction.InitiateDeposit, ""
-        );
+        PriceInfo memory cachedMiddlewarePrice =
+            oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
 
         // timestamp check
         assertEq(cachedMiddlewarePrice.timestamp, middlewarePrice.timestamp, "timestamp equal to pyth timestamp");
@@ -304,9 +306,10 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
         // get pyth price that must be more recent than chainlink data
         (,,,, bytes memory data) = getHermesApiSignature(PYTH_STETH_USD, chainlinkTimestamp + 1);
+        uint256 validationCost = oracleMiddleware.validationCost(data, ProtocolAction.ValidateDeposit);
 
         // submit to oracle middleware so it gets cached by Pyth
-        oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
+        oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
             uint128(chainlinkTimestamp + 1 - oracleMiddleware.getValidationDelay()),
             ProtocolAction.ValidateDeposit,
             data
@@ -317,9 +320,7 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
 
         // get oracle middleware price without providing data
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePriceTooOld.selector, chainlinkTimestamp + 1));
-        oracleMiddleware.parseAndValidatePrice{ value: 1 ether }(
-            uint128(block.timestamp), ProtocolAction.InitiateDeposit, ""
-        );
+        oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.InitiateDeposit, "");
     }
 
     // receive ether refunds

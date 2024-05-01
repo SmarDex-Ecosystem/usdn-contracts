@@ -28,10 +28,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     uint256 internal initialUsdnShares;
 
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableFunding = true;
-        params.flags.enableProtocolFees = true;
-        super._setUp(params);
+        super._setUp(DEFAULT_PARAMS);
         withdrawShares = USDN_AMOUNT * uint152(usdn.MAX_DIVISOR());
         usdn.approve(address(protocol), type(uint256).max);
         // user deposits wstETH at price $2000
@@ -83,7 +80,6 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
     }
 
     function _initiateWithdraw(address to) internal {
-        skip(3600);
         bytes memory currentPrice = abi.encode(uint128(3000 ether));
         uint256 protocolUsdnInitialShares = usdn.sharesOf(address(protocol));
 
@@ -103,18 +99,18 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
         WithdrawalPendingAction memory action =
             protocol.i_toWithdrawalPendingAction(protocol.getUserPendingAction(address(this)));
-        assertTrue(action.action == ProtocolAction.ValidateWithdrawal, "action type");
-        assertEq(action.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.user, address(this), "action user");
-        assertEq(action.to, to, "action to");
+        assertTrue(action.common.action == ProtocolAction.ValidateWithdrawal, "action type");
+        assertEq(action.common.timestamp, block.timestamp, "action timestamp");
+        assertEq(action.common.user, address(this), "action user");
+        assertEq(action.common.to, to, "action to");
         uint256 shares = protocol.i_mergeWithdrawalAmountParts(action.sharesLSB, action.sharesMSB);
         assertEq(shares, withdrawShares, "action shares");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions[0].user, address(this), "pending action user");
-        assertEq(action.to, to, "pending action user");
+        assertEq(actions[0].common.user, address(this), "pending action user");
+        assertEq(actions[0].common.to, to, "pending action user");
         assertEq(rawIndices[0], 1, "raw index");
     }
 
@@ -147,14 +143,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $3000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.425409641068422497
+     * @custom:then The user's wstETH balance increases by 0.347635290659860583
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.425409641068422497
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.347635290659860583
      */
     function test_validateWithdrawPriceUp() public {
-        skip(3600);
         _checkValidateWithdrawWithPrice(
-            uint128(2500 ether), uint128(3000 ether), 0.425409641068422497 ether, address(this)
+            uint128(2500 ether), uint128(3000 ether), 0.347635290659860583 ether, address(this)
         );
     }
 
@@ -164,14 +159,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:and The price of the asset is $2500 at the moment of initiation
      * @custom:and The price of the asset is $2000 at the moment of validation
      * @custom:when The user validates the withdrawal
-     * @custom:then The user's wstETH balance increases by 0.455218606057907765
+     * @custom:then The user's wstETH balance increases by 0.416891976723560318
      * @custom:and The USDN total supply decreases by 1000
-     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.455218606057907765
+     * @custom:and The protocol emits a `ValidatedWithdrawal` event with the withdrawn amount of 0.416891976723560318
      */
     function test_validateWithdrawPriceDown() public {
-        skip(3600);
         _checkValidateWithdrawWithPrice(
-            uint128(2500 ether), uint128(2000 ether), 0.455218606057907765 ether, address(this)
+            uint128(2500 ether), uint128(2000 ether), 0.416891976723560318 ether, address(this)
         );
     }
 
@@ -223,8 +217,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
      * @custom:then The protocol emits a `ValidatedWithdrawal` event with the right beneficiary
      */
     function test_validateWithdrawDifferentToAddress() public {
-        skip(3600);
-        _checkValidateWithdrawWithPrice(uint128(2000 ether), uint128(2000 ether), 0.499958641112900829 ether, USER_1);
+        _checkValidateWithdrawWithPrice(uint128(2000 ether), uint128(2000 ether), 0.5 ether, USER_1);
     }
 
     /**
@@ -262,8 +255,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
         }
 
-        PriceInfo memory withdrawalPrice =
-            protocol.i_getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, abi.encode(assetPrice));
+        PriceInfo memory withdrawalPrice = protocol.i_getOraclePrice(
+            ProtocolAction.ValidateWithdrawal, withdrawal.common.timestamp, abi.encode(assetPrice)
+        );
 
         // Apply fees on price
         uint256 withdrawalPriceWithFees =
@@ -295,8 +289,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertEq(withdrawnAmount, expectedAssetAmount, "asset amount");
 
         vm.expectEmit();
-        emit ValidatedWithdrawal(address(this), to, withdrawnAmount, USDN_AMOUNT, withdrawal.timestamp); // expected
-            // event
+        emit ValidatedWithdrawal(address(this), to, withdrawnAmount, USDN_AMOUNT, withdrawal.common.timestamp);
         protocol.validateWithdrawal(currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");

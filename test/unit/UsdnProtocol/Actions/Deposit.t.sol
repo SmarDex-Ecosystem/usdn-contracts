@@ -16,7 +16,6 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
     function setUp() public {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 4.919970269703463156 ether; // same as long trading expo
         params.flags.enableSdexBurnOnDeposit = true;
         super._setUp(params);
 
@@ -95,16 +94,16 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(actions.length, 0, "no pending action");
 
         PendingAction memory action = protocol.getUserPendingAction(address(this));
-        assertTrue(action.action == ProtocolAction.ValidateDeposit, "action type");
-        assertEq(action.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.user, address(this), "action user");
-        assertEq(action.to, to, "action to");
-        assertEq(action.amount, depositAmount, "action amount");
+        assertTrue(action.common.action == ProtocolAction.ValidateDeposit, "action type");
+        assertEq(action.common.timestamp, block.timestamp, "action timestamp");
+        assertEq(action.common.user, address(this), "action user");
+        assertEq(action.common.to, to, "action to");
+        assertEq(action.var2, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (actions,) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions[0].user, address(this), "pending action user");
+        assertEq(actions[0].common.user, address(this), "pending action user");
     }
 
     /**
@@ -194,7 +193,6 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function test_smallDepositSDEXBurnDisabled() public {
         params = DEFAULT_PARAMS;
         params.initialPrice = 1 ether;
-        params.flags.enableSdexBurnOnDeposit = false;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
 
