@@ -1332,7 +1332,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                         // and since missingValue is smaller than or equal to assetToTransfer,
                         // (missingValue - balanceVault) is smaller than or equal to assetToTransfer, and their
                         // subtraction can't underflow.
-                        assetToTransfer -= (missingValue - balanceVault);
+                        assetToTransfer -= missingValue - balanceVault;
                     }
                 } else {
                     unchecked {
