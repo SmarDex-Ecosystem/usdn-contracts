@@ -376,4 +376,22 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         // init protocol
         _setUp(params);
     }
+
+    /**
+     * @dev Get the initial long position tick and tick version
+     * @return initialPosTick_ The initial position tick
+     * @return initialPosTickVersion_ The initial position tick version
+     */
+    function _getInitialLongPosition() internal view returns (int24 initialPosTick_, uint256 initialPosTickVersion_) {
+        uint128 initialLiqPriceWithoutPenalty = (params.initialPrice / 2)
+            + params.initialPrice / 2 * uint128(protocol.getProtocolFeeBps()) / uint128(protocol.BPS_DIVISOR());
+        initialPosTick_ = protocol.getEffectiveTickForPrice(initialLiqPriceWithoutPenalty)
+            + int24(int8(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
+        initialPosTickVersion_ = protocol.getTickVersion(initialPosTick_);
+    }
+
+    /// @dev Wait the required delay to refresh mock middleware price
+    function _waitMockMiddlewarePriceDelay() internal {
+        skip(30 minutes - oracleMiddleware.getValidationDelay());
+    }
 }

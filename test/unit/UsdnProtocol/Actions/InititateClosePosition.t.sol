@@ -6,6 +6,7 @@ import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import {
     LongPendingAction,
+    PendingAction,
     Position,
     PreviousActionsData,
     ProtocolAction,
@@ -25,10 +26,11 @@ import { USER_1 } from "test/utils/Constants.sol";
 contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture {
     using SafeCast for uint256;
 
-    uint128 private positionAmount = 1 ether;
+    uint128 private constant POSITION_AMOUNT = 1 ether;
     int24 private tick;
     uint256 private tickVersion;
     uint256 private index;
+    uint256 internal securityDeposit;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -37,11 +39,13 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: positionAmount,
+                positionSize: POSITION_AMOUNT,
                 desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
                 price: params.initialPrice
             })
         );
+
+        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /* -------------------------------------------------------------------------- */
@@ -56,11 +60,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      */
     function test_RevertWhen_closePartialPositionWithAmountHigherThanPositionAmount() external {
         bytes memory priceData = abi.encode(params.initialPrice);
-        uint128 amountToClose = positionAmount + 1;
+        uint128 amountToClose = POSITION_AMOUNT + 1;
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                UsdnProtocolAmountToCloseHigherThanPositionAmount.selector, amountToClose, positionAmount
+                UsdnProtocolAmountToCloseHigherThanPositionAmount.selector, amountToClose, POSITION_AMOUNT
             )
         );
         protocol.i_initiateClosePosition(
@@ -84,7 +88,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             USER_1,
             USER_1,
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
-            positionAmount,
+            POSITION_AMOUNT,
             priceData
         );
     }
@@ -99,7 +103,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.i_initiateClosePosition(
-            USER_1, address(0), PositionId(tick, tickVersion, index), positionAmount, priceData
+            USER_1, address(0), PositionId(tick, tickVersion, index), POSITION_AMOUNT, priceData
         );
     }
 
@@ -145,7 +149,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             address(this),
             address(this),
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
-            positionAmount / 2,
+            POSITION_AMOUNT / 2,
             priceData
         );
     }
@@ -166,7 +170,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint256 etherBalanceBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 1 ether }(
-            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, POSITION_AMOUNT, priceData, EMPTY_PREVIOUS_DATA, address(this)
         );
 
         assertEq(
@@ -190,7 +194,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.InitiateOpenPosition,
-                positionSize: positionAmount,
+                positionSize: POSITION_AMOUNT,
                 desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
                 price: params.initialPrice
             })
@@ -206,7 +210,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
         protocol.initiateClosePosition(
-            tick, tickVersion, index, positionAmount, priceData, PreviousActionsData(previousData, rawIndices), USER_1
+            tick, tickVersion, index, POSITION_AMOUNT, priceData, PreviousActionsData(previousData, rawIndices), USER_1
         );
     }
 
@@ -221,10 +225,10 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit InitiatedClosePosition(
-            address(this), address(this), tick, tickVersion, index, positionAmount, positionAmount, 0
+            address(this), address(this), tick, tickVersion, index, POSITION_AMOUNT, POSITION_AMOUNT, 0
         );
         protocol.initiateClosePosition(
-            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, POSITION_AMOUNT, priceData, EMPTY_PREVIOUS_DATA, address(this)
         );
     }
 
@@ -260,7 +264,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function _internalInitiateClosePositionScenario(address to) internal {
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
         TickData memory tickData = protocol.getTickData(tick);
-        _initiateCloseAPositionHelper(positionAmount, to);
+        _initiateCloseAPositionHelper(POSITION_AMOUNT, to);
 
         /* ---------------------------- Position's state ---------------------------- */
         (Position memory posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
@@ -292,7 +296,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the position still exists
      */
     function test_internalInitiateClosePositionPartially() external {
-        uint128 amountToClose = positionAmount / 2;
+        uint128 amountToClose = POSITION_AMOUNT / 2;
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
         TickData memory tickData = protocol.getTickData(tick);
         (Position memory posBefore,) = protocol.getLongPosition(tick, tickVersion, index);
@@ -346,88 +350,60 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The transaction is completed
      */
     function test_initiateClosePositionIsPendingLiquidation() public {
-        // initial position tick
-        uint128 initialLiqPriceWithoutPenalty = (params.initialPrice / 2)
-            + params.initialPrice / 2 * uint128(protocol.getProtocolFeeBps()) / uint128(protocol.BPS_DIVISOR());
-        int24 initialPosTick = protocol.getEffectiveTickForPrice(initialLiqPriceWithoutPenalty)
-            + int24(int8(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
-        uint256 initialPosTickVersion = protocol.getTickVersion(initialPosTick);
+        // initial open position
+        (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
 
-        assertTrue(tick != initialPosTick, "same tick");
-        skip(30 minutes - oracleMiddleware.getValidationDelay());
-
-        // user open position with a liquidation price far lower than others positions
+        // open position with a liquidation price far lower than others positions
         (int24 userPosTick, uint256 userPosTickVersion, uint256 userPosIndex) = setUpUserPositionInLong(
             OpenParams(
-                USER_1, ProtocolAction.ValidateOpenPosition, 10 ether, params.initialPrice / 30, params.initialPrice
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                POSITION_AMOUNT,
+                params.initialPrice / 30,
+                params.initialPrice
             )
         );
 
-        assertTrue(initialPosTick != userPosTick, "same tick");
-
-        // required for a price update
-        skip(30 minutes - oracleMiddleware.getValidationDelay());
+        _waitMockMiddlewarePriceDelay();
 
         {
-            uint256 wstethBalanceBefore = wstETH.balanceOf(USER_1);
-            uint256 balanceETHBefore = USER_1.balance;
-
-            vm.startPrank(USER_1);
-            protocol.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
+            protocol.initiateClosePosition{ value: securityDeposit }(
                 userPosTick,
                 userPosTickVersion,
                 userPosIndex,
-                10 ether,
+                POSITION_AMOUNT,
                 abi.encode(params.initialPrice / 10),
                 EMPTY_PREVIOUS_DATA,
-                USER_1
+                address(this)
             );
 
-            _waitDelay();
+            PendingAction memory pending = protocol.getUserPendingAction(address(this));
+            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action is initiated");
 
-            vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
-            protocol.validateClosePosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
+            assertEq(tickVersion + 1, protocol.getTickVersion(tick), "first user position is not liquidated");
 
-            // should liquidate user position tick
-            assertEq(tickVersion + 1, protocol.getTickVersion(tick), "contract position is not liquidated");
-            // should not liquidate the initial position tick
             assertEq(initialPosTickVersion, protocol.getTickVersion(initialPosTick), "initial position is liquidated");
-            // should not being validated because a tick still need to be liquidated
-            assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
-            assertEq(wstethBalanceBefore, wstETH.balanceOf(USER_1), "different user wsteth balance");
         }
 
-        // required for a price update
-        skip(30 minutes - oracleMiddleware.getValidationDelay());
+        _waitMockMiddlewarePriceDelay();
 
         {
-            uint256 wstethBalanceBefore = wstETH.balanceOf(USER_1);
-            uint256 balanceETHBefore = USER_1.balance;
-
-            protocol.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
+            protocol.initiateClosePosition{ value: securityDeposit }(
                 userPosTick,
                 userPosTickVersion,
                 userPosIndex,
-                10 ether,
+                POSITION_AMOUNT,
                 abi.encode(params.initialPrice / 10),
                 EMPTY_PREVIOUS_DATA,
-                USER_1
+                address(this)
             );
 
-            _waitDelay();
+            PendingAction memory pending = protocol.getUserPendingAction(address(this));
+            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateClosePosition), "action is not initiated");
 
-            // should be completed
-            protocol.validateClosePosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
-
-            vm.stopPrank();
-
-            // should liquidate the initial position tick
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position isn't liquidated"
             );
-            // should be validated because no more position need to be liquidated
-            assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
-            assertLt(wstethBalanceBefore, wstETH.balanceOf(USER_1), "same user wsteth balance");
         }
     }
 
@@ -451,87 +427,58 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The transaction is completed
      */
     function test_initiateClosePositionSameBlockIsPendingLiquidation() public {
-        // initial position tick
-        uint128 initialLiqPriceWithoutPenalty = (params.initialPrice / 2)
-            + params.initialPrice / 2 * uint128(protocol.getProtocolFeeBps()) / uint128(protocol.BPS_DIVISOR());
-        int24 initialPosTick = protocol.getEffectiveTickForPrice(initialLiqPriceWithoutPenalty)
-            + int24(int8(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
-        uint256 initialPosTickVersion = protocol.getTickVersion(initialPosTick);
+        // initial open position
+        (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
 
-        assertTrue(tick != initialPosTick, "same tick");
-        skip(30 minutes - oracleMiddleware.getValidationDelay());
-
-        // user open position with a liquidation price far lower than others positions
+        // open position with a liquidation price far lower than others positions
         (int24 userPosTick, uint256 userPosTickVersion, uint256 userPosIndex) = setUpUserPositionInLong(
             OpenParams(
-                USER_1, ProtocolAction.ValidateOpenPosition, 10 ether, params.initialPrice / 30, params.initialPrice
+                address(this),
+                ProtocolAction.ValidateOpenPosition,
+                POSITION_AMOUNT,
+                params.initialPrice / 30,
+                params.initialPrice
             )
         );
 
-        assertTrue(initialPosTick != userPosTick, "same tick");
-
-        // required for a price update
-        skip(30 minutes - oracleMiddleware.getValidationDelay());
+        _waitMockMiddlewarePriceDelay();
 
         {
-            uint256 wstethBalanceBefore = wstETH.balanceOf(USER_1);
-            uint256 balanceETHBefore = USER_1.balance;
-
-            vm.startPrank(USER_1);
-            protocol.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
+            protocol.initiateClosePosition{ value: securityDeposit }(
                 userPosTick,
                 userPosTickVersion,
                 userPosIndex,
-                10 ether,
+                POSITION_AMOUNT,
                 abi.encode(params.initialPrice / 10),
                 EMPTY_PREVIOUS_DATA,
-                USER_1
+                address(this)
             );
 
-            _waitDelay();
+            PendingAction memory pending = protocol.getUserPendingAction(address(this));
+            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action is initiated");
 
-            vm.expectRevert(UsdnProtocolInvalidPendingAction.selector);
-            protocol.validateClosePosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
+            assertEq(tickVersion + 1, protocol.getTickVersion(tick), "first user position is not liquidated");
 
-            // should liquidate user position tick
-            assertEq(tickVersion + 1, protocol.getTickVersion(tick), "contract position is not liquidated");
-            // should not liquidate the initial position tick
             assertEq(initialPosTickVersion, protocol.getTickVersion(initialPosTick), "initial position is liquidated");
-            // should not being validated because a tick still need to be liquidated
-            assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
-            assertEq(wstethBalanceBefore, wstETH.balanceOf(USER_1), "different user wsteth balance");
         }
 
-        // next user deposit will be in the same block
-
         {
-            uint256 wstethBalanceBefore = wstETH.balanceOf(USER_1);
-            uint256 balanceETHBefore = USER_1.balance;
-
-            protocol.initiateClosePosition{ value: protocol.getSecurityDepositValue() }(
+            protocol.initiateClosePosition{ value: securityDeposit }(
                 userPosTick,
                 userPosTickVersion,
                 userPosIndex,
-                10 ether,
+                POSITION_AMOUNT,
                 abi.encode(params.initialPrice / 10),
                 EMPTY_PREVIOUS_DATA,
-                USER_1
+                address(this)
             );
 
-            _waitDelay();
+            PendingAction memory pending = protocol.getUserPendingAction(address(this));
+            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateClosePosition), "action is not initiated");
 
-            // should be completed
-            protocol.validateClosePosition(abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
-
-            vm.stopPrank();
-
-            // should liquidate the initial position tick
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position isn't liquidated"
             );
-            // should be validated because no more position need to be liquidated
-            assertEq(balanceETHBefore, USER_1.balance, "user loss eth");
-            assertLt(wstethBalanceBefore, wstETH.balanceOf(USER_1), "same user wsteth balance");
         }
     }
 
