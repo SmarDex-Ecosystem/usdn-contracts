@@ -258,11 +258,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setSecurityDepositValue(uint256 securityDepositValue) external onlyOwner {
-        if (securityDepositValue > 10 ether) {
-            revert UsdnProtocolInvalidSecurityDepositValue();
-        }
-
+    function setSecurityDepositValue(uint64 securityDepositValue) external onlyOwner {
         _securityDepositValue = securityDepositValue;
         emit SecurityDepositValueUpdated(securityDepositValue);
     }

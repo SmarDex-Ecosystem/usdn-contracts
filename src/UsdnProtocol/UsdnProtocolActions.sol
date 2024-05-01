@@ -103,7 +103,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     struct ClosePositionData {
         Position pos;
         uint8 liquidationPenalty;
-        uint24 securityDepositValue;
+        uint64 securityDepositValue;
         uint128 totalExpoToClose;
         uint128 lastPrice;
         uint256 tempPositionValue;

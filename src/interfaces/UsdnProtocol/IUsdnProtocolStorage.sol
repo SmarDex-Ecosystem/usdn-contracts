@@ -58,12 +58,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function SDEX_BURN_ON_DEPOSIT_DIVISOR() external pure returns (uint256);
 
     /**
-     * @notice Get the factor to convert the security deposit value to an uint24
-     * @return The security deposit factor
-     */
-    function SECURITY_DEPOSIT_FACTOR() external pure returns (uint128);
-
-    /**
      * @notice Get the divisor for basis point values
      * @dev Example: 200 -> 2%
      * @return The basis points divisor
@@ -221,7 +215,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @notice Get the security deposit required to open a new position
      * @return The amount of assets to use as a security deposit (in ether)
      */
-    function getSecurityDepositValue() external view returns (uint256);
+    function getSecurityDepositValue() external view returns (uint64);
 
     /**
      * @notice Get the threshold before fees are sent to the fee collector
