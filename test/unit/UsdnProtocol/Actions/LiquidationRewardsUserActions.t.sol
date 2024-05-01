@@ -57,7 +57,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         liquidationPrice = protocol.getEffectivePriceForTick(tick);
         liquidationPriceData = abi.encode(liquidationPrice);
         initialPriceData = abi.encode(initialPrice);
-        expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false);
+        expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, "");
 
         assertGt(expectedLiquidatorRewards, 0, "The expected liquidation rewards should be greater than 0");
     }
