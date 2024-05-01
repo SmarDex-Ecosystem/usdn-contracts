@@ -417,4 +417,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function i_minPrice() external pure returns (uint256) {
         return TickMath.MIN_PRICE;
     }
+
+    function i_unadjustPrice(
+        uint256 price,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) external pure returns (uint256) {
+        return _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
+    }
 }
