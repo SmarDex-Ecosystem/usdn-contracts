@@ -98,7 +98,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /**
      * @notice Convert a number of shares to the corresponding amount of tokens
      * @dev The conversion never overflows as we are performing a division. The conversion rounds to the nearest amount
-     * of tokens that minimize the error when converting back to shares
+     * of tokens that minimizes the error when converting back to shares
      * @param amountShares The amount of shares to convert to tokens
      * @return tokens_ The corresponding amount of tokens
      */
