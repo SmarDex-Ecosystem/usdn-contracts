@@ -412,4 +412,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     ) external pure returns (uint256) {
         return _calcFixedPrecisionMultiplier(assetPrice, longTradingExpo, accumulator);
     }
+
+    function i_calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
+        external
+        pure
+        returns (uint256 assetExpected_)
+    {
+        return _calcBurnUsdn(usdnShares, available, usdnTotalShares);
+    }
 }
