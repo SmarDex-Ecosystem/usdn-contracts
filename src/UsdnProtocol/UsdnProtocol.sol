@@ -403,6 +403,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         });
         // Save the position and update the state
         (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long, liquidationPenalty);
+        _balanceLong = long.amount;
         emit InitiatedOpenPosition(
             msg.sender, msg.sender, long.timestamp, leverage, long.amount, price, tick, tickVersion, index
         );
