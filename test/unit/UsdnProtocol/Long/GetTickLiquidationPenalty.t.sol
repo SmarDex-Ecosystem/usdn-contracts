@@ -83,7 +83,8 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
         // we need to skip 1 minute to make the new price data fresh
         skip(1 minutes);
         assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty, "tick value");
-        protocol.liquidate(abi.encode(params.initialPrice / 3), 10);
+        _waitBeforeLiquidation();
+        protocol.testLiquidate(abi.encode(params.initialPrice / 3), 10);
 
         // change the penalty setting
         vm.prank(ADMIN);

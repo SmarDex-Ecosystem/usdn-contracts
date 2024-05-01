@@ -34,6 +34,18 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint256 balanceLong;
     }
 
+    struct TestData {
+        uint128 validatePrice;
+        int24 validateTick;
+        uint8 originalLiqPenalty;
+        int24 tempTick;
+        uint256 tempTickVersion;
+        uint256 tempIndex;
+        uint256 validateTickVersion;
+        uint256 validateIndex;
+        uint128 expectedLeverage;
+    }
+
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
@@ -126,10 +138,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         assertEq(pendingActions.length, 0, "no pending action");
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
-        assertTrue(action.action == ProtocolAction.ValidateOpenPosition, "action type");
-        assertEq(action.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.user, address(this), "action user");
-        assertEq(action.to, to, "action to");
+        assertTrue(action.common.action == ProtocolAction.ValidateOpenPosition, "action type");
+        assertEq(action.common.timestamp, block.timestamp, "action timestamp");
+        assertEq(action.common.user, address(this), "action user");
+        assertEq(action.common.to, to, "action to");
         assertEq(action.tick, expectedTick, "action tick");
         assertEq(action.tickVersion, 0, "action tickVersion");
         assertEq(action.index, 0, "action index");
@@ -138,12 +150,12 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         skip(protocol.getValidationDeadline() + 1);
         (pendingActions,) = protocol.getActionablePendingActions(address(0));
         action = protocol.i_toLongPendingAction(pendingActions[0]);
-        assertEq(action.user, address(this), "pending action user");
+        assertEq(action.common.user, address(this), "pending action user");
 
         Position memory position;
         (position,) = protocol.getLongPosition(tick, tickVersion, index);
         assertEq(position.user, to, "user position");
-        assertEq(position.timestamp, action.timestamp, "timestamp position");
+        assertEq(position.timestamp, action.common.timestamp, "timestamp position");
         assertEq(position.amount, uint128(LONG_AMOUNT), "amount position");
         assertEq(position.totalExpo, positionExpo, "totalExpo position");
 
@@ -264,8 +276,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint128 expectedMaxLiqPrice =
             uint128(CURRENT_PRICE * (protocol.BPS_DIVISOR() - protocol.getSafetyMarginBps()) / protocol.BPS_DIVISOR());
 
-        int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE, protocol.getLiquidationMultiplier());
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick, protocol.getLiquidationMultiplier());
+        int24 expectedTick = protocol.getEffectiveTickForPrice(CURRENT_PRICE);
+        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(expectedTick);
 
         vm.expectRevert(
             abi.encodeWithSelector(

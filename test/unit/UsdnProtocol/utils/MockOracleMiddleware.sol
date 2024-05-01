@@ -112,4 +112,11 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     function setRequireValidationCost(bool req) external {
         _requireValidationCost = req;
     }
+
+    function withdrawEther(address to) external {
+        (bool success,) = payable(to).call{ value: address(this).balance }("");
+        if (!success) {
+            revert OracleMiddlewareTransferFailed(to);
+        }
+    }
 }

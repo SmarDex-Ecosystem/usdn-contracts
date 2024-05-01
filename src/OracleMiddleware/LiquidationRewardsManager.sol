@@ -11,8 +11,8 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 /**
  * @title LiquidationRewardsManager contract
  * @notice This contract is used by the USDN protocol to calculate the rewards that need to be paid out to the
- * liquidators.
- * @dev This contract is a middleware between the USDN protocol and the gas price oracle.
+ * liquidators
+ * @dev This contract is a middleware between the USDN protocol and the gas price oracle
  */
 contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracle, Ownable {
     /* -------------------------------------------------------------------------- */
@@ -20,7 +20,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ILiquidationRewardsManager
-    uint32 public constant REWARDS_MULTIPLIER_DENOMINATOR = 10_000;
+    uint32 public constant BPS_DIVISOR = 10_000;
 
     /// @inheritdoc ILiquidationRewardsManager
     uint256 public constant BASE_GAS_COST = 21_000;
@@ -29,12 +29,12 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /*                              Storage Variables                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Address of the wstETH contract.
+    /// @notice Address of the wstETH contract
     IWstETH private immutable _wstEth;
 
     /**
-     * @notice Parameters for the rewards calculation.
-     * @dev Those values need to be updated if the gas cost changes.
+     * @notice Parameters for the rewards calculation
+     * @dev Those values need to be updated if the gas cost changes
      */
     RewardsParameters private _rewardsParameters;
 
@@ -44,11 +44,11 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
-            gasUsedPerTick: 32_107,
-            otherGasUsed: 384_487,
-            rebaseGasUsed: 8897,
+            gasUsedPerTick: 32_544,
+            otherGasUsed: 380_690,
+            rebaseGasUsed: 8881,
             gasPriceLimit: 1000 gwei,
-            multiplierBps: 20_000
+            multiplierBps: 30_000
         });
     }
 
@@ -61,22 +61,22 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
         view
         returns (uint256 wstETHRewards_)
     {
-        // Do not give rewards if no ticks were liquidated.
+        // Do not give rewards if no ticks were liquidated
         if (tickAmount == 0) {
             return 0;
         }
 
         RewardsParameters memory rewardsParameters = _rewardsParameters;
-        // Calculate the amount of gas spent during the liquidation.
-        uint256 gasUsed =
-            rewardsParameters.otherGasUsed + BASE_GAS_COST + (rewardsParameters.gasUsedPerTick * tickAmount);
+        // Calculate the amount of gas spent during the liquidation
+        uint256 gasUsed = rewardsParameters.otherGasUsed + BASE_GAS_COST
+            + (uint256(rewardsParameters.gasUsedPerTick) * tickAmount * rewardsParameters.multiplierBps / BPS_DIVISOR);
+
         if (rebased) {
             gasUsed += rewardsParameters.rebaseGasUsed;
         }
-        // Multiply by the gas price and the rewards multiplier.
-        wstETHRewards_ = _wstEth.getWstETHByStETH(
-            gasUsed * _getGasPrice(rewardsParameters) * rewardsParameters.multiplierBps / REWARDS_MULTIPLIER_DENOMINATOR
-        );
+
+        // Multiply by the gas price and the rewards multiplier
+        wstETHRewards_ = _wstEth.getWstETHByStETH(gasUsed * _getGasPrice(rewardsParameters));
     }
 
     /// @inheritdoc ILiquidationRewardsManager
@@ -100,7 +100,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             revert LiquidationRewardsManagerRebaseGasUsedTooHigh(rebaseGasUsed);
         } else if (gasPriceLimit > 8000 gwei) {
             revert LiquidationRewardsManagerGasPriceLimitTooHigh(gasPriceLimit);
-        } else if (multiplierBps > 10 * REWARDS_MULTIPLIER_DENOMINATOR) {
+        } else if (multiplierBps > 10 * BPS_DIVISOR) {
             revert LiquidationRewardsManagerMultiplierBpsTooHigh(multiplierBps);
         }
 
@@ -116,14 +116,14 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     }
 
     /**
-     * @notice Get the gas price from Chainlink or tx.gasprice, the lesser of the 2 values.
-     * @dev This function cannot return a value higher than the _gasPriceLimit storage variable.
-     * @return gasPrice_ The gas price.
+     * @notice Get the gas price from Chainlink or tx.gasprice, the lesser of the 2 values
+     * @dev This function cannot return a value higher than the _gasPriceLimit storage variable
+     * @return gasPrice_ The gas price
      */
     function _getGasPrice(RewardsParameters memory rewardsParameters) internal view returns (uint256 gasPrice_) {
         ChainlinkPriceInfo memory priceInfo = _getChainlinkPrice();
 
-        // If the gas price is invalid, return 0 and do not distribute rewards.
+        // If the gas price is invalid, return 0 and do not distribute rewards
         if (priceInfo.price <= 0) {
             return 0;
         }
@@ -134,7 +134,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
             gasPrice_ = tx.gasprice;
         }
 
-        // Avoid paying an insane amount if network is abnormally congested
+        // Avoid paying an insane amount if the network is abnormally congested
         if (gasPrice_ > rewardsParameters.gasPriceLimit) {
             gasPrice_ = rewardsParameters.gasPriceLimit;
         }
