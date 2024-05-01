@@ -81,7 +81,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setExpoImbalanceLimits(0, 0, 0, 0);
 
         vm.expectRevert(customError);
-        protocol.setMinLongPosition(0);
+        protocol.setMinLongPosition(100 ether);
     }
 
     /**
@@ -751,18 +751,5 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setMinLongPosition(newValue);
         // assert that the new value is equal to the expected value
         assertEq(protocol.getMinLongPosition(), newValue);
-    }
-
-    /**
-     * @custom:scenario Call "setMinLongPosition" from admin.
-     * @custom:given The initial usdnProtocol state.
-     * @custom:when Admin wallet call function with a value superior to 50_000 * 10 ** _priceFeedDecimals.
-     * @custom:then The transaction should revert.
-     */
-    function test_RevertWhen_setMinLongPosition_Sup() external adminPrank {
-        uint256 usdnDecimals = protocol.getPriceFeedDecimals();
-        vm.expectRevert(UsdnProtocolInvalidMinLongPosition.selector);
-        // set minimum long position
-        protocol.setMinLongPosition(50_000 * 10 ** usdnDecimals + 1);
     }
 }
