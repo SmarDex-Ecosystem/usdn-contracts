@@ -29,7 +29,7 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Check calculations of `previewWithdraw` when the available asset is less than zero
      * @custom:given A protocol initialized with default params
-     * @custom:when The user simulate withdraw of an amount of usdnShares from the vault
+     * @custom:when The user simulate a withdrawal of an amount of usdnShares from the vault
      * @custom:then The amount of asset should be equal to zero
      */
     function test_previewWithdrawLessThanZero() public {
@@ -59,11 +59,11 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Fuzzing the `previewWithdraw` and `withdraw` functions
      * @custom:given A user who deposited 1 wstETH at price $2000 to get 2000 USDN
-     * @custom:when The user withdraw an amount of USDN shares from the vault
+     * @custom:when The user withdraws an amount of USDN shares from the vault
      * @custom:then The amount of asset should be calculated correctly
      */
     function testFuzz_comparePreviewWithdrawAndWithdraw(uint152 shares) public {
-        // user deposits wstETH at price $2000
+        // user deposits wstETH at a price of $2000
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, DEPOSIT_AMOUNT, 2000 ether);
         skip(1 hours);
         bytes memory currentPrice = abi.encode(uint128(2000 ether));

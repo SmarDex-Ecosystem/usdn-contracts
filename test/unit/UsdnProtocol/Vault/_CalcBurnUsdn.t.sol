@@ -13,7 +13,7 @@ contract TestUsdnProtocolVaultCalcBurnUsdn is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check calculation asset received when withdraw
+     * @custom:scenario Check calculation asset received when withdrawing
      * @custom:given A protocol initialized with default params
      * @custom:when The function "_calcBurnUsdn" is called with some parameters
      * @custom:then The asset amount is calculated correctly
