@@ -71,7 +71,7 @@ abstract contract InitializableReentrancyGuard {
         }
     }
 
-    /// @dev Reverts if _status is ENTERED, or set _status to ENTERED
+    /// @notice Reverts if _status is ENTERED, or set _status to ENTERED
     function _nonReentrantBefore() private {
         // On the first call to nonReentrant, _status will be NOT_ENTERED
         if (_status == ENTERED) {
@@ -82,7 +82,7 @@ abstract contract InitializableReentrancyGuard {
         _status = ENTERED;
     }
 
-    /// @dev Set _status to NOT_ENTERED
+    /// @notice Set _status to NOT_ENTERED
     function _nonReentrantAfter() private {
         // By storing the original value once again, a refund is triggered (see
         // https://eips.ethereum.org/EIPS/eip-2200)
