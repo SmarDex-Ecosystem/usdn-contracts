@@ -35,7 +35,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
         assertEq(actions.length, 0, "remaining pending actions");
 
         PendingAction memory action = protocol.getUserPendingAction(USER_1);
-        assertTrue(action.common.action == ProtocolAction.None, "no user pending action");
+        assertTrue(action.action == ProtocolAction.None, "no user pending action");
     }
 
     /**

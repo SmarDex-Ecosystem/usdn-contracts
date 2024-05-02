@@ -314,14 +314,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
      * @param err Assert message prefix
      */
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
-        assertTrue(a.common.action == b.common.action, string.concat(err, " - action type"));
-        assertEq(a.common.timestamp, b.common.timestamp, string.concat(err, " - action timestamp"));
-        assertEq(a.common.user, b.common.user, string.concat(err, " - action user"));
-        assertEq(
-            a.common.securityDepositValue,
-            b.common.securityDepositValue,
-            string.concat(err, " - action security deposit")
-        );
+        assertTrue(a.action == b.action, string.concat(err, " - action type"));
+        assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
+        assertEq(a.user, b.user, string.concat(err, " - action user"));
+        assertEq(a.securityDepositValue, b.securityDepositValue, string.concat(err, " - action security deposit"));
         assertEq(a.var1, b.var1, string.concat(err, " - action var1"));
         assertEq(a.var2, b.var2, string.concat(err, " - action var2"));
         assertEq(a.var3, b.var3, string.concat(err, " - action var3"));
