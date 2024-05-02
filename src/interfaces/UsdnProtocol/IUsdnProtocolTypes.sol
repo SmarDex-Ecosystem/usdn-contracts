@@ -72,7 +72,11 @@ struct PendingActionCommonData {
  * @param var7 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  */
 struct PendingAction {
-    PendingActionCommonData common; // 55 bytes
+    ProtocolAction action; // 1 byte
+    uint40 timestamp; // 5 bytes
+    address user; // 20 bytes
+    address to; // 20 bytes
+    uint64 securityDepositValue; // 8 bytes
     int24 var1; // 3 bytes
     uint128 var2; // 16 bytes
     uint128 var3; // 16 bytes
@@ -94,7 +98,11 @@ struct PendingAction {
  * @param usdnTotalSupply The total supply of USDN at the time of the action.
  */
 struct DepositPendingAction {
-    PendingActionCommonData common; // 55 bytes
+    ProtocolAction action; // 1 byte
+    uint40 timestamp; // 5 bytes
+    address user; // 20 bytes
+    address to; // 20 bytes
+    uint64 securityDepositValue; // 8 bytes
     int24 _unused; // 3 bytes
     uint128 amount; // 16 bytes
     uint128 assetPrice; // 16 bytes
@@ -116,7 +124,11 @@ struct DepositPendingAction {
  * @param usdnTotalShares The total shares supply of USDN at the time of the action.
  */
 struct WithdrawalPendingAction {
-    PendingActionCommonData common; // 55 bytes
+    ProtocolAction action; // 1 byte
+    uint40 timestamp; // 5 bytes
+    address user; // 20 bytes
+    address to; // 20 bytes
+    uint64 securityDepositValue; // 8 bytes
     uint24 sharesLSB; // 3 bytes
     uint128 sharesMSB; // 16 bytes
     uint128 assetPrice; // 16 bytes
@@ -141,7 +153,11 @@ struct WithdrawalPendingAction {
  * used when closing a position).
  */
 struct LongPendingAction {
-    PendingActionCommonData common; // 55 bytes
+    ProtocolAction action; // 1 byte
+    uint40 timestamp; // 5 bytes
+    address user; // 20 bytes
+    address to; // 20 bytes
+    uint64 securityDepositValue; // 8 bytes
     int24 tick; // 3 bytes
     uint128 closeAmount; // 16 bytes
     uint128 closePosTotalExpo; // 16 bytes
