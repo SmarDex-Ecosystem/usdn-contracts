@@ -16,7 +16,6 @@ import {
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature The validate close position functions of the USDN Protocol
@@ -342,14 +341,13 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
         uint256 totalExpoBefore = protocol.getTotalExpo();
         uint256 balanceLongBefore = protocol.getBalanceLong();
-        HugeUint.Uint512 memory accumulator = protocol.getLiqMultiplierAccumulator();
         uint256 assetToTransfer = protocol.i_assetToRemove(
             params.initialPrice,
             protocol.getEffectivePriceForTick(
                 tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
                 params.initialPrice,
                 totalExpoBefore - balanceLongBefore,
-                accumulator
+                protocol.getLiqMultiplierAccumulator()
             ),
             totalExpoToClose
         );
