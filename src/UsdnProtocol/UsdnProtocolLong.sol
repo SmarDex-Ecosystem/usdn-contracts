@@ -91,7 +91,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             longTradingExpo = 0;
         }
         uint128 liqPrice = getEffectivePriceForTick(
-            posId.tick - int24(uint24(liquidationPenalty)) * _tickSpacing,
+            _calcTickWithoutPenalty(posId.tick, liquidationPenalty),
             price,
             uint256(longTradingExpo),
             _liqMultiplierAccumulator
@@ -321,7 +321,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         TickData memory tickData
     ) internal view returns (int256 value_) {
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(
-            tick - int24(uint24(tickData.liquidationPenalty)) * _tickSpacing, currentPrice, longTradingExpo, accumulator
+            _calcTickWithoutPenalty(tick, tickData.liquidationPenalty), currentPrice, longTradingExpo, accumulator
         );
 
         // value = totalExpo * (currentPrice - liqPriceWithoutPenalty) / currentPrice
@@ -537,6 +537,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                         / tickSpacing
             ) * tickSpacing
         );
+    }
+
+    /**
+     * @notice Calculate the tick without the liquidation penalty
+     * @param tick The tick that holds the position
+     * @param liquidationPenalty The liquidation penalty of the tick
+     * @return tick_ The tick corresponding to the liquidation price without penalty
+     */
+    function _calcTickWithoutPenalty(int24 tick, uint8 liquidationPenalty) internal view returns (int24 tick_) {
+        tick_ = tick - int24(uint24(liquidationPenalty)) * _tickSpacing;
     }
 
     /**

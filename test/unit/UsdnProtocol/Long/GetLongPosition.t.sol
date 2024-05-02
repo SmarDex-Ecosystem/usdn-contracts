@@ -39,7 +39,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
         uint8 liqPenalty = protocol.getTickLiquidationPenalty(expectedTick);
 
         uint128 liqPriceWithoutPenalty =
-            protocol.getEffectivePriceForTick(expectedTick - int24(uint24(liqPenalty)) * protocol.getTickSpacing());
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick, liqPenalty));
         uint128 totalExpo =
             uint128(FixedPointMathLib.fullMulDiv(OPEN_AMOUNT, adjustedPrice, adjustedPrice - liqPriceWithoutPenalty));
 
@@ -63,7 +63,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
         assertEq(liquidationPenalty, liqPenalty, "initiate liquidationPenalty");
 
         liqPriceWithoutPenalty =
-            protocol.getEffectivePriceForTick(expectedTick - int24(uint24(liqPenalty)) * protocol.getTickSpacing());
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick, liqPenalty));
         totalExpo =
             uint128(FixedPointMathLib.fullMulDiv(OPEN_AMOUNT, adjustedPrice, adjustedPrice - liqPriceWithoutPenalty));
 

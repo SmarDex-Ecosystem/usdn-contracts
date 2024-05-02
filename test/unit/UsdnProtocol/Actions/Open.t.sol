@@ -76,12 +76,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
         uint128 expectedLeverage = uint128(
             (10 ** protocol.LEVERAGE_DECIMALS() * CURRENT_PRICE)
-                / (
-                    CURRENT_PRICE
-                        - protocol.getEffectivePriceForTick(
-                            expectedTick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-                        )
-                )
+                / (CURRENT_PRICE - protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick)))
         );
 
         // state before opening the position
@@ -106,9 +101,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         PositionId memory posId = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
         );
-        uint256 tickLiqPrice = protocol.getEffectivePriceForTick(
-            posId.tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-        );
+        uint256 tickLiqPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick));
 
         // check state after opening the position
         assertEq(posId.tick, expectedTick, "tick number");
@@ -189,7 +182,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         );
 
         uint128 expectedLiqPrice =
-            protocol.getEffectivePriceForTick(posId.tick - int24(uint24(storedLiqPenalty)) * protocol.getTickSpacing());
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick, storedLiqPenalty));
         uint256 expectedTotalExpo =
             protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, expectedLiqPrice);
 
@@ -440,7 +433,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         data.expectedLeverage = protocol.i_getLeverage(
             data.validatePrice,
             protocol.getEffectivePriceForTick(
-                data.validateTick - int24(uint24(data.originalLiqPenalty - 1)) * protocol.getTickSpacing(),
+                protocol.i_calcTickWithoutPenalty(data.validateTick, data.originalLiqPenalty - 1),
                 data.validatePrice,
                 uint256(protocol.i_longTradingExpo(data.validatePrice)),
                 protocol.getLiqMultiplierAccumulator()

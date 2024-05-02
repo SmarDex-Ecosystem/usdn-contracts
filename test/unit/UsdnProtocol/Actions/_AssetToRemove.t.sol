@@ -28,9 +28,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
      */
     function test_assetToRemove() public {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
-        uint128 liqPrice = protocol.getEffectivePriceForTick(
-            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-        );
+        uint128 liqPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick));
         int256 value = protocol.i_positionValue(params.initialPrice, liqPrice, 2 ether);
         uint256 toRemove = protocol.i_assetToRemove(params.initialPrice, liqPrice, 2 ether);
         assertEq(toRemove, uint256(value), "to transfer vs pos value");
@@ -50,9 +48,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
     function test_assetToRemoveNotEnoughBalance() public {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
         uint256 longAvailable = uint256(protocol.i_longAssetAvailable(params.initialPrice)); // 5 ether
-        uint128 liqPrice = protocol.getEffectivePriceForTick(
-            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-        );
+        uint128 liqPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick));
         int256 value = protocol.i_positionValue(params.initialPrice, liqPrice, 200 ether);
         uint256 toRemove = protocol.i_assetToRemove(params.initialPrice, liqPrice, 200 ether);
         assertGt(uint256(value), toRemove, "value vs asset to transfer");
@@ -78,11 +74,7 @@ contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
 
         int24 tick = protocol.getEffectiveTickForPrice(price);
         uint256 toRemove = protocol.i_assetToRemove(
-            params.initialPrice,
-            protocol.getEffectivePriceForTick(
-                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-            ),
-            100 ether
+            params.initialPrice, protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick)), 100 ether
         );
         assertEq(toRemove, 0, "asset to transfer");
     }
