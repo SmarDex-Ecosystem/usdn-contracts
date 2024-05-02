@@ -5,6 +5,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
 
 import {
+    PendingActionCommonData,
     PendingAction,
     DepositPendingAction,
     WithdrawalPendingAction,
@@ -42,7 +43,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
-        assertEq(actions[0].user, address(this), "action user");
+        assertEq(actions[0].common.user, address(this), "action user");
         assertEq(rawIndices[0], 0, "raw index");
     }
 
@@ -56,16 +57,16 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
     function test_internalGetActionablePendingAction() public {
         // there should be no pending action at this stage
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
-        assertTrue(action.action == ProtocolAction.None, "pending action before initiate");
+        assertTrue(action.common.action == ProtocolAction.None, "pending action before initiate");
         // initiate long
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, 2000 ether);
         // the pending action is not yet actionable
         (action, rawIndex) = protocol.i_getActionablePendingAction();
-        assertTrue(action.action == ProtocolAction.None, "pending action after initiate");
+        assertTrue(action.common.action == ProtocolAction.None, "pending action after initiate");
         // the pending action is actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (action, rawIndex) = protocol.i_getActionablePendingAction();
-        assertEq(action.user, address(this), "action user");
+        assertEq(action.common.user, address(this), "action user");
         assertEq(rawIndex, 0, "raw index");
     }
 
@@ -124,7 +125,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
 
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 2, "actions length");
-        assertEq(actions[1].user, USER_3, "user");
+        assertEq(actions[1].common.user, USER_3, "user");
         assertEq(rawIndices[1], 2, "raw index");
     }
 
@@ -142,7 +143,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
 
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
-        assertTrue(action.user == USER_3, "user");
+        assertTrue(action.common.user == USER_3, "user");
         assertEq(rawIndex, 2, "raw index");
     }
 
@@ -165,7 +166,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_internalGetActionablePendingActionEmpty() public {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
-        assertEq(action.user, address(0), "action user");
+        assertEq(action.common.user, address(0), "action user");
         assertEq(rawIndex, 0, "raw index");
     }
 
@@ -195,7 +196,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
-        assertEq(actions[0].user, address(this), "action user");
+        assertEq(actions[0].common.user, address(this), "action user");
         assertEq(rawIndices[0], 0, "action rawIndex");
         // but if the user himself calls the function, the action should not be returned
         (actions, rawIndices) = protocol.getActionablePendingActions(address(this));
@@ -247,7 +248,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no action");
         (PendingAction memory action,) = protocol.i_getActionablePendingAction();
-        assertTrue(action.action == ProtocolAction.None, "no action (internal)");
+        assertTrue(action.common.action == ProtocolAction.None, "no action (internal)");
     }
 
     /**
@@ -306,30 +307,37 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_internalConvertDepositPendingAction() public {
         PendingAction memory action = PendingAction({
-            action: ProtocolAction.ValidateDeposit,
-            timestamp: uint40(block.timestamp),
-            user: address(this),
-            to: address(this),
-            securityDepositValue: 2424,
+            common: PendingActionCommonData({
+                action: ProtocolAction.ValidateDeposit,
+                timestamp: uint40(block.timestamp),
+                user: address(this),
+                to: address(this),
+                securityDepositValue: 2424
+            }),
             var1: 0, // must be zero because unused
-            amount: 42,
-            var2: 69,
-            var3: 420,
-            var4: 1337,
-            var5: 9000,
-            var6: 23
+            var2: 42,
+            var3: 69,
+            var4: 420,
+            var5: 1337,
+            var6: 9000,
+            var7: 23
         });
         DepositPendingAction memory depositAction = protocol.i_toDepositPendingAction(action);
-        assertTrue(depositAction.action == action.action, "action action");
-        assertEq(depositAction.timestamp, action.timestamp, "action timestamp");
-        assertEq(depositAction.user, action.user, "action user");
-        assertEq(depositAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
-        assertEq(depositAction.amount, action.amount, "action amount");
-        assertEq(depositAction.assetPrice, action.var2, "action price");
-        assertEq(depositAction.totalExpo, action.var3, "action expo");
-        assertEq(depositAction.balanceVault, action.var4, "action balance vault");
-        assertEq(depositAction.balanceLong, action.var5, "action balance long");
-        assertEq(depositAction.usdnTotalSupply, action.var6, "action total supply");
+        assertTrue(depositAction.common.action == action.common.action, "action action");
+        assertEq(depositAction.common.timestamp, action.common.timestamp, "action timestamp");
+        assertEq(depositAction.common.user, action.common.user, "action user");
+        assertEq(
+            depositAction.common.securityDepositValue,
+            action.common.securityDepositValue,
+            "action security deposit value"
+        );
+        assertEq(depositAction._unused, action.var1, "action amount");
+        assertEq(depositAction.amount, action.var2, "action amount");
+        assertEq(depositAction.assetPrice, action.var3, "action price");
+        assertEq(depositAction.totalExpo, action.var4, "action expo");
+        assertEq(depositAction.balanceVault, action.var5, "action balance vault");
+        assertEq(depositAction.balanceLong, action.var6, "action balance long");
+        assertEq(depositAction.usdnTotalSupply, action.var7, "action total supply");
         PendingAction memory result = protocol.i_convertDepositPendingAction(depositAction);
         _assertActionsEqual(action, result, "deposit pending action conversion");
     }
@@ -342,32 +350,38 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_internalConvertWithdrawalPendingAction() public {
         PendingAction memory action = PendingAction({
-            action: ProtocolAction.ValidateWithdrawal,
-            timestamp: uint40(block.timestamp),
-            user: address(this),
-            to: address(this),
-            securityDepositValue: 2424,
+            common: PendingActionCommonData({
+                action: ProtocolAction.ValidateWithdrawal,
+                timestamp: uint40(block.timestamp),
+                user: address(this),
+                to: address(this),
+                securityDepositValue: 2424
+            }),
             var1: 125,
-            amount: 42,
-            var2: 69,
-            var3: 420,
-            var4: 1337,
-            var5: 9000,
-            var6: 23
+            var2: 42,
+            var3: 69,
+            var4: 420,
+            var5: 1337,
+            var6: 9000,
+            var7: 23
         });
         WithdrawalPendingAction memory withdrawalAction = protocol.i_toWithdrawalPendingAction(action);
-        assertTrue(withdrawalAction.action == action.action, "action action");
-        assertEq(withdrawalAction.timestamp, action.timestamp, "action timestamp");
-        assertEq(withdrawalAction.user, action.user, "action user");
-        assertEq(withdrawalAction.to, action.to, "action to");
-        assertEq(withdrawalAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
+        assertTrue(withdrawalAction.common.action == action.common.action, "action action");
+        assertEq(withdrawalAction.common.timestamp, action.common.timestamp, "action timestamp");
+        assertEq(withdrawalAction.common.user, action.common.user, "action user");
+        assertEq(withdrawalAction.common.to, action.common.to, "action to");
+        assertEq(
+            withdrawalAction.common.securityDepositValue,
+            action.common.securityDepositValue,
+            "action security deposit value"
+        );
         assertEq(int24(withdrawalAction.sharesLSB), action.var1, "action shares LSB");
-        assertEq(withdrawalAction.sharesMSB, action.amount, "action shares MSB");
-        assertEq(withdrawalAction.assetPrice, action.var2, "action price");
-        assertEq(withdrawalAction.totalExpo, action.var3, "action expo");
-        assertEq(withdrawalAction.balanceVault, action.var4, "action balance vault");
-        assertEq(withdrawalAction.balanceLong, action.var5, "action balance long");
-        assertEq(withdrawalAction.usdnTotalShares, action.var6, "action total supply");
+        assertEq(withdrawalAction.sharesMSB, action.var2, "action shares MSB");
+        assertEq(withdrawalAction.assetPrice, action.var3, "action price");
+        assertEq(withdrawalAction.totalExpo, action.var4, "action expo");
+        assertEq(withdrawalAction.balanceVault, action.var5, "action balance vault");
+        assertEq(withdrawalAction.balanceLong, action.var6, "action balance long");
+        assertEq(withdrawalAction.usdnTotalShares, action.var7, "action total supply");
         PendingAction memory result = protocol.i_convertWithdrawalPendingAction(withdrawalAction);
         _assertActionsEqual(action, result, "withdrawal pending action conversion");
     }
@@ -380,32 +394,36 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_internalConvertLongPendingAction() public {
         PendingAction memory action = PendingAction({
-            action: ProtocolAction.ValidateOpenPosition,
-            timestamp: uint40(block.timestamp),
-            user: address(this),
-            to: address(this),
+            common: PendingActionCommonData({
+                action: ProtocolAction.ValidateOpenPosition,
+                timestamp: uint40(block.timestamp),
+                user: address(this),
+                to: address(this),
+                securityDepositValue: 2424
+            }),
             var1: 2398,
-            amount: 42,
-            securityDepositValue: 2424,
-            var2: 69,
-            var3: 420,
-            var4: 1337,
-            var5: 9000,
-            var6: 23
+            var2: 42,
+            var3: 69,
+            var4: 420,
+            var5: 1337,
+            var6: 9000,
+            var7: 23
         });
         LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
-        assertTrue(longAction.action == action.action, "action action");
-        assertEq(longAction.timestamp, action.timestamp, "action timestamp");
-        assertEq(longAction.user, action.user, "action user");
-        assertEq(longAction.to, action.to, "action to");
+        assertTrue(longAction.common.action == action.common.action, "action action");
+        assertEq(longAction.common.timestamp, action.common.timestamp, "action timestamp");
+        assertEq(longAction.common.user, action.common.user, "action user");
+        assertEq(longAction.common.to, action.common.to, "action to");
+        assertEq(
+            longAction.common.securityDepositValue, action.common.securityDepositValue, "action security deposit value"
+        );
         assertEq(longAction.tick, action.var1, "action tick");
-        assertEq(longAction.securityDepositValue, action.securityDepositValue, "action security deposit value");
-        assertEq(longAction.closeAmount, action.amount, "action amount");
-        assertEq(longAction.closeTotalExpo, action.var2, "action total expo");
-        assertEq(longAction.tickVersion, action.var3, "action version");
-        assertEq(longAction.index, action.var4, "action index");
-        assertEq(longAction.closeLiqMultiplier, action.var5, "action multiplier");
-        assertEq(longAction.closeTempTransfer, action.var6, "action transfer");
+        assertEq(longAction.closeAmount, action.var2, "action amount");
+        assertEq(longAction.closePosTotalExpo, action.var3, "action pos total expo");
+        assertEq(longAction.tickVersion, action.var4, "action version");
+        assertEq(longAction.index, action.var5, "action index");
+        assertEq(longAction.closeLiqMultiplier, action.var6, "action liq multiplier");
+        assertEq(longAction.closeBoundedPositionValue, action.var7, "action pos value");
         PendingAction memory result = protocol.i_convertLongPendingAction(longAction);
         _assertActionsEqual(action, result, "long pending action conversion");
     }

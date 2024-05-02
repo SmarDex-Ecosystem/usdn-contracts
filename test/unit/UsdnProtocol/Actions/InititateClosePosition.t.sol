@@ -4,6 +4,9 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
+import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { USER_1 } from "test/utils/Constants.sol";
+
 import {
     LongPendingAction,
     PendingAction,
@@ -13,9 +16,7 @@ import {
     TickData,
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
-import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1 } from "test/utils/Constants.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
  * @custom:feature The validate close position functions of the USDN Protocol
@@ -72,6 +73,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             address(this),
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
             amountToClose,
+            address(protocol).balance,
             priceData
         );
     }
@@ -89,6 +91,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             USER_1,
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
             POSITION_AMOUNT,
+            address(protocol).balance,
             priceData
         );
     }
@@ -103,7 +106,12 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.i_initiateClosePosition(
-            USER_1, address(0), PositionId(tick, tickVersion, index), POSITION_AMOUNT, priceData
+            address(this),
+            address(0),
+            PositionId(tick, tickVersion, index),
+            POSITION_AMOUNT,
+            address(protocol).balance,
+            priceData
         );
     }
 
@@ -122,6 +130,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             address(this),
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
             0,
+            address(protocol).balance,
             priceData
         );
     }
@@ -133,12 +142,13 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The call reverts because the position is not valid anymore
      */
     function test_RevertWhen_closePartialPositionWithAnOutdatedTick() external {
+        _waitBeforeLiquidation();
         bytes memory priceData = abi.encode(protocol.getEffectivePriceForTick(tick));
 
         // we need wait delay to make the new price data fresh
         _waitDelay();
         // Liquidate the position
-        protocol.liquidate(priceData, 1);
+        protocol.testLiquidate(priceData, 1);
         (, uint256 version) = protocol.i_tickHash(tick);
         assertGt(version, tickVersion, "The tick should have been liquidated");
 
@@ -150,6 +160,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             address(this),
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
             POSITION_AMOUNT / 2,
+            address(protocol).balance,
             priceData
         );
     }
@@ -378,7 +389,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action is initiated");
+            assertEq(uint256(pending.common.action), uint256(ProtocolAction.None), "action is initiated");
 
             assertEq(tickVersion + 1, protocol.getTickVersion(tick), "first user position is not liquidated");
 
@@ -399,7 +410,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateClosePosition), "action is not initiated");
+            assertEq(
+                uint256(pending.common.action), uint256(ProtocolAction.ValidateClosePosition), "action is not initiated"
+            );
 
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position isn't liquidated"
@@ -455,7 +468,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action is initiated");
+            assertEq(uint256(pending.common.action), uint256(ProtocolAction.None), "action is initiated");
 
             assertEq(tickVersion + 1, protocol.getTickVersion(tick), "first user position is not liquidated");
 
@@ -474,7 +487,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateClosePosition), "action is not initiated");
+            assertEq(
+                uint256(pending.common.action), uint256(ProtocolAction.ValidateClosePosition), "action is not initiated"
+            );
 
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position isn't liquidated"
@@ -487,18 +502,24 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @param amountToClose Amount of the position to close
      */
     function _initiateCloseAPositionHelper(uint128 amountToClose, address to) internal {
-        uint256 liquidationMultiplier = protocol.getLiquidationMultiplier();
-
         (Position memory posBefore,) = protocol.getLongPosition(tick, tickVersion, index);
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
-        (uint256 assetToTransfer,) = protocol.i_assetToTransfer(
-            params.initialPrice, tick, protocol.getLiquidationPenalty(), totalExpoToClose, liquidationMultiplier, 0
+        uint256 totalExpoBefore = protocol.getTotalExpo();
+        uint256 balanceLongBefore = protocol.getBalanceLong();
+        HugeUint.Uint512 memory accumulator = protocol.getLiqMultiplierAccumulator();
+        uint256 assetToTransfer = protocol.i_assetToRemove(
+            params.initialPrice,
+            protocol.getEffectivePriceForTick(
+                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
+                params.initialPrice,
+                totalExpoBefore - balanceLongBefore,
+                accumulator
+            ),
+            totalExpoToClose
         );
 
-        uint256 totalExpoBefore = protocol.getTotalExpo();
         TickData memory tickData = protocol.getTickData(tick);
-        uint256 balanceLongBefore = protocol.getBalanceLong();
 
         /* ------------------------ Initiate the close action ----------------------- */
         vm.expectEmit();
@@ -517,26 +538,28 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             to,
             PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
             amountToClose,
+            address(protocol).balance,
             abi.encode(params.initialPrice)
         );
 
         /* ------------------------- Pending action's state ------------------------- */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
-        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
-        assertEq(action.timestamp, block.timestamp, "The block timestamp should be now");
-        assertEq(action.user, address(this), "The user should be the transaction sender");
-        assertEq(action.to, to, "To is wrong");
+        assertTrue(action.common.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
+        assertEq(action.common.timestamp, block.timestamp, "The block timestamp should be now");
+        assertEq(action.common.user, address(this), "The user should be the transaction sender");
+        assertEq(action.common.to, to, "To is wrong");
         assertEq(action.tick, tick, "The position tick is wrong");
         assertEq(
-            action.closeTotalExpo, totalExpoToClose, "Total expo of pending action should be equal to totalExpoToClose"
+            action.closePosTotalExpo,
+            totalExpoToClose,
+            "Total expo of pending action should be equal to totalExpoToClose"
         );
         assertEq(
             action.closeAmount, amountToClose, "Amount of the pending action should be equal to the amount to close"
         );
         assertEq(action.tickVersion, tickVersion, "The tick version should not have changed");
         assertEq(action.index, index, "The index should not have changed");
-        assertEq(action.closeLiqMultiplier, liquidationMultiplier, "The liquidation multiplier should not have changed");
-        assertEq(action.closeTempTransfer, assetToTransfer, "The close temp transfer should not have changed");
+        assertEq(action.closeBoundedPositionValue, assetToTransfer, "The pos value should not have changed");
 
         /* ----------------------------- Protocol State ----------------------------- */
         TickData memory newTickData = protocol.getTickData(tick);

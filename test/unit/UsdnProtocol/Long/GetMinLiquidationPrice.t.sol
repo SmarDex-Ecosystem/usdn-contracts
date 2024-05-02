@@ -3,7 +3,6 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { TickMath } from "src/libraries/TickMath.sol";
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -27,7 +26,9 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
          * 5000 - 5000 / 1.000000001 = 0.000004999999995001
          * tick(0.000004999999995001) = -122100 => + tickSpacing = -122000
          */
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), TickMath.getPriceAtTick(-122_000), "for price = 5000");
+        assertEq(
+            protocol.getMinLiquidationPrice(5000 ether), protocol.getEffectivePriceForTick(-122_000), "for price = 5000"
+        );
 
         /**
          * 10^12 - 10^12 / 1.000000001 < MINIMUM_PRICE
@@ -35,7 +36,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
          */
         assertEq(
             protocol.getMinLiquidationPrice(10 ** 12),
-            TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing()),
+            protocol.getEffectivePriceForTick(protocol.minTick() + protocol.getTickSpacing()),
             "for price = 1 * 10^12 wei"
         );
     }
@@ -59,11 +60,15 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
 
         assertGt(
-            protocol.getLiquidationMultiplier(),
+            protocol.i_calcFixedPrecisionMultiplier(
+                params.initialPrice,
+                protocol.getTotalExpo() - protocol.getBalanceLong(),
+                protocol.getLiqMultiplierAccumulator()
+            ),
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier <= 1"
         );
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_042_032_017_225, "wrong minimum liquidation price");
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), 5_043_690_835_384, "wrong minimum liquidation price");
     }
 
     /**
@@ -77,7 +82,11 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.ValidateDeposit, 1, params.initialPrice);
 
         assertLt(
-            protocol.getLiquidationMultiplier(),
+            protocol.i_calcFixedPrecisionMultiplier(
+                params.initialPrice,
+                protocol.getTotalExpo() - protocol.getBalanceLong(),
+                protocol.getLiqMultiplierAccumulator()
+            ),
             10 ** protocol.LIQUIDATION_MULTIPLIER_DECIMALS(),
             "liquidation multiplier >= 1"
         );
@@ -97,7 +106,7 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
         protocol.setMinLeverage(10 ** protocol.LEVERAGE_DECIMALS() + 1);
         assertEq(
             protocol.getMinLiquidationPrice(5000 ether),
-            TickMath.getPriceAtTick(protocol.minTick() + protocol.getTickSpacing())
+            protocol.getEffectivePriceForTick(protocol.minTick() + protocol.getTickSpacing())
         );
     }
 
@@ -112,6 +121,6 @@ contract TestUsdnProtocolLongGetMinLiquidationPrice is UsdnProtocolBaseFixture {
          * tick(454.545454545454545455) = 61_100 => + tickSpacing = 61_200
          */
         protocol.setMinLeverage(11 * 10 ** (protocol.LEVERAGE_DECIMALS() - 1)); // = x1.1
-        assertEq(protocol.getMinLiquidationPrice(5000 ether), TickMath.getPriceAtTick(61_200));
+        assertEq(protocol.getMinLiquidationPrice(5000 ether), protocol.getEffectivePriceForTick(61_200));
     }
 }

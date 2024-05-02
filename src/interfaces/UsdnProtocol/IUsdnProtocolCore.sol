@@ -18,14 +18,6 @@ interface IUsdnProtocolCore is IUsdnProtocolStorage {
     /* -------------------------- Public view functions ------------------------- */
 
     /**
-     * @notice Get the predicted value of the liquidation price multiplier for the given timestamp
-     * @dev The effect of the funding rates since the last contract state update are taken into account. If the provided
-     * timestamp is older than the last state update, the function reverts with `UsdnProtocolTimestampTooOld`.
-     * @param timestamp The current timestamp
-     */
-    function getLiquidationMultiplier(uint128 timestamp) external view returns (uint256);
-
-    /**
      * @notice Get the predicted value of the funding since the last state update for the given timestamp
      * @dev When multiplied with the long trading exposure, this value gives the asset balance that needs to be paid to
      * the vault side (or long side if negative). If the provided timestamp is older than the last state update, the

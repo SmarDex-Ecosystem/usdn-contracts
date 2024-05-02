@@ -45,7 +45,8 @@ contract TestUsdnProtocolFee is UsdnProtocolBaseFixture {
         emit FeeBpsUpdated(0);
         protocol.setProtocolFeeBps(0);
 
-        protocol.liquidate(abi.encode(DEFAULT_PARAMS.initialPrice), 0);
+        _waitBeforeLiquidation();
+        protocol.testLiquidate(abi.encode(DEFAULT_PARAMS.initialPrice), 0);
 
         assertEq(protocol.getPendingProtocolFee(), 0, "initial pending protocol fee");
     }

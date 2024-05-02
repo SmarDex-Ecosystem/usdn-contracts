@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -34,38 +33,12 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The `_checkImbalanceLimitWithdrawal` function should revert when vault expo equal 0
-     * @custom:given The protocol is balanced
-     * @custom:and A long position is opened
-     * @custom:and The price is increased and profit exceeds the vault balance
-     * @custom:and The vault balance/expo is 0
+     * @custom:given The protocol has a zero vault balance / expo
      * @custom:when The `_checkImbalanceLimitWithdrawal` function is called
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_checkImbalanceLimitWithdrawalZeroVaultExpo() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            OpenParams({
-                user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: 0.5 ether,
-                desiredLiqPrice: params.initialPrice / 2,
-                price: params.initialPrice
-            })
-        );
-
-        protocol.initiateClosePosition(
-            tick,
-            tickVersion,
-            index,
-            0.5 ether,
-            abi.encode(params.initialPrice * 10_000),
-            EMPTY_PREVIOUS_DATA,
-            address(this)
-        );
-        _waitDelay();
-        protocol.validateClosePosition(abi.encode(params.initialPrice * 10_000), EMPTY_PREVIOUS_DATA);
-
-        // vault expo should be zero
-        assertEq(protocol.getBalanceVault(), 0, "vault expo isn't 0");
+        protocol.emptyVault();
         uint256 totalExpo = protocol.getTotalExpo();
 
         // should revert

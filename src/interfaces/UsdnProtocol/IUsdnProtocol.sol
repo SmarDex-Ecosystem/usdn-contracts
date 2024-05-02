@@ -157,9 +157,9 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setUsdnRebaseInterval(uint256 newInterval) external;
 
     /**
-     * @notice Set the minimum long position size in USD
-     * @param newMinLongPosition The new minimum long position, with _priceFeedDecimals
-     * @dev This value is used to prevent users from opening positions that are too small
+     * @notice Set the minimum long position size
+     * @dev This value is used to prevent users from opening positions that are too small and not worth liquidating
+     * @param newMinLongPosition The new minimum long position, with _assetDecimals
      */
     function setMinLongPosition(uint256 newMinLongPosition) external;
 }

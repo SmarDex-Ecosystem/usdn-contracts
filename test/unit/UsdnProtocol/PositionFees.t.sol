@@ -53,10 +53,11 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(1 ether, desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA, address(this));
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        (, uint128 leverage,, uint256 price,,,) =
-            abi.decode(logs[0].data, (uint40, uint128, uint128, uint128, int24, uint256, uint256));
+        assertEq(logs[1].topics[0], InitiatedOpenPosition.selector);
 
-        assertEq(logs[0].topics[0], InitiatedOpenPosition.selector);
+        (, uint128 leverage,, uint256 price,,,) =
+            abi.decode(logs[1].data, (uint40, uint128, uint128, uint128, int24, uint256, uint256));
+
         assertEq(price, expectedPrice, "assetPrice");
         assertEq(leverage, expectedLeverage, "leverage");
     }
@@ -87,10 +88,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         );
 
         // Wait at least 30 seconds additionally to make sure liquidate updates the state
-        skip(30);
+        _waitBeforeLiquidation();
 
         // Call liquidate to trigger liquidation multiplier update
-        protocol.liquidate(priceData, 0);
+        protocol.testLiquidate(priceData, 0);
 
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
         uint256 expectedLeverage = protocol.i_getLeverage(
@@ -111,57 +112,6 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         assertEq(logs[0].topics[0], ValidatedOpenPosition.selector);
         assertEq(price, expectedPrice, "assetPrice");
         assertEq(leverage, expectedLeverage, "leverage");
-    }
-
-    /**
-     * @custom:scenario The user open a position and then initiate the position closing
-     * @custom:given The price of the asset is $2000
-     * @custom:and The leverage is x2
-     * @custom:when The user initiates a position opening with 1 wstETH as collateral
-     * @custom:and The user validate his position opening with the same price
-     * @custom:and The user should be able to initiate a position closing
-     * @custom:then The user pending position should have a start price according to the fees
-     * @custom:and The user pending position should have a leverage according to the fees
-     */
-    function test_initiateClosePosition() public {
-        skip(1 hours);
-
-        uint128 desiredLiqPrice = 2000 ether / 2;
-        bytes memory priceData = abi.encode(2000 ether);
-
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
-            OpenParams({
-                user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: 1 ether,
-                desiredLiqPrice: desiredLiqPrice,
-                price: 2000 ether
-            })
-        );
-        skip(1 hours);
-
-        // Call liquidate to trigger balance update
-        protocol.liquidate(priceData, 0);
-
-        uint256 storageBalanceBefore = protocol.getBalanceLong();
-
-        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
-
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
-
-        (uint256 expectedTempTransfer,) = protocol.i_assetToTransfer(
-            uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
-            tick,
-            protocol.getLiquidationPenalty(),
-            action.closeTotalExpo,
-            protocol.getLiquidationMultiplier(),
-            0
-        );
-
-        uint256 storageBalanceAfter = protocol.getBalanceLong();
-
-        assertEq(action.closeTempTransfer, expectedTempTransfer, "Computed asset to transfer");
-        assertEq(storageBalanceBefore - storageBalanceAfter, expectedTempTransfer, "Protocol balance");
     }
 
     /**
@@ -196,13 +146,15 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
-        (uint256 expectedTransfer,) = protocol.i_assetToTransfer(
-            uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
-            tick,
-            protocol.getLiquidationPenalty(),
-            action.closeTotalExpo,
-            action.closeLiqMultiplier,
-            action.closeTempTransfer
+        uint256 expectedTransfer = uint256(
+            protocol.i_positionValue(
+                uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
+                protocol.i_getEffectivePriceForTick(
+                    tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
+                    action.closeLiqMultiplier
+                ),
+                action.closePosTotalExpo
+            )
         );
 
         _waitDelay();

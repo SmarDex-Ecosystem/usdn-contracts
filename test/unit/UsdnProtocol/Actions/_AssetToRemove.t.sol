@@ -6,10 +6,10 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 /**
- * @custom:feature Test the _assetToTransfer internal function of the actions layer
+ * @custom:feature Test the _assetToRemove internal function of the actions layer
  * @custom:background Given a protocol initialized with slightly more trading expo in the vault side.
  */
-contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolActionsAssetToRemove is UsdnProtocolBaseFixture {
     using Strings for uint256;
 
     function setUp() public {
@@ -17,7 +17,7 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Check value of the `assetToTransfer` function
+     * @custom:scenario Check value of the `_assetToRemove` function
      * @custom:given The position value is lower than the long available balance
      * @custom:and The position of amount 1 wstETH has a liquidation price slightly below $500 with leverage 2x
      * (starting price slightly below $1000)
@@ -26,17 +26,19 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
      * @custom:then Asset to transfer and position value are equal
      * @custom:and The asset to transfer is slightly above 1.5 wstETH
      */
-    function test_assetToTransfer() public {
+    function test_assetToRemove() public {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
-        (uint256 toTransfer, int256 value) = protocol.i_assetToTransfer(
-            params.initialPrice, tick, protocol.getLiquidationPenalty(), 2 ether, protocol.getLiquidationMultiplier(), 0
+        uint128 liqPrice = protocol.getEffectivePriceForTick(
+            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
         );
-        assertEq(toTransfer, uint256(value), "to transfer vs pos value");
-        assertEq(toTransfer, 1.512304848730381401 ether, "to transfer");
+        int256 value = protocol.i_positionValue(params.initialPrice, liqPrice, 2 ether);
+        uint256 toRemove = protocol.i_assetToRemove(params.initialPrice, liqPrice, 2 ether);
+        assertEq(toRemove, uint256(value), "to transfer vs pos value");
+        assertEq(toRemove, 1.512304848730381401 ether, "to transfer");
     }
 
     /**
-     * @custom:scenario Check value of the `assetToTransfer` function when the long balance is too small
+     * @custom:scenario Check value of the `_assetToRemove` function when the long balance is too small
      * @custom:given The position value is higher than the long available balance
      * @custom:and The position of amount 100 wstETH has a liquidation price slightly below $500 with leverage 2x
      * (starting price slightly below $1000)
@@ -45,32 +47,29 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
      * @custom:then Position value is greater than asset to transfer
      * @custom:and The asset to transfer is equal to the long available balance (because we don't have 150 wstETH)
      */
-    function test_assetToTransferNotEnoughBalance() public {
+    function test_assetToRemoveNotEnoughBalance() public {
         int24 tick = protocol.getEffectiveTickForPrice(params.initialPrice / 4);
         uint256 longAvailable = uint256(protocol.i_longAssetAvailable(params.initialPrice)); // 5 ether
-        (uint256 toTransfer, int256 value) = protocol.i_assetToTransfer(
-            params.initialPrice,
-            tick,
-            protocol.getLiquidationPenalty(),
-            200 ether,
-            protocol.getLiquidationMultiplier(),
-            0
+        uint128 liqPrice = protocol.getEffectivePriceForTick(
+            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
         );
-        assertGt(uint256(value), toTransfer, "value vs asset to transfer");
-        assertEq(toTransfer, longAvailable, "asset to transfer vs long asset available");
+        int256 value = protocol.i_positionValue(params.initialPrice, liqPrice, 200 ether);
+        uint256 toRemove = protocol.i_assetToRemove(params.initialPrice, liqPrice, 200 ether);
+        assertGt(uint256(value), toRemove, "value vs asset to transfer");
+        assertEq(toRemove, longAvailable, "asset to transfer vs long asset available");
     }
 
     /**
-     * @custom:scenario Check value of the `assetToTransfer` function when the long balance is zero
+     * @custom:scenario Check value of the `_assetToRemove` function when the long balance is zero
      * @custom:given The long balance is empty due to funding and price change
      * @custom:when the asset to transfer is calculated
      * @custom:then The asset to transfer is zero
      */
-    function test_assetToTransferZeroBalance() public {
+    function test_assetToRemoveZeroBalance() public {
         uint128 price = 500 ether;
         skip(1 weeks);
         // liquidate the default position
-        protocol.liquidate(abi.encode(price), 10);
+        protocol.testLiquidate(abi.encode(price), 10);
 
         assertEq(protocol.getTotalLongPositions(), 0, "total long positions");
         assertEq(protocol.i_longTradingExpo(price), 0, "long trading expo with funding");
@@ -78,14 +77,13 @@ contract TestUsdnProtocolActionsAssetToTransfer is UsdnProtocolBaseFixture {
         assertEq(protocol.i_longAssetAvailable(price), 0, "long asset available");
 
         int24 tick = protocol.getEffectiveTickForPrice(price);
-        (uint256 toTransfer,) = protocol.i_assetToTransfer(
+        uint256 toRemove = protocol.i_assetToRemove(
             params.initialPrice,
-            tick,
-            protocol.getLiquidationPenalty(),
-            100 ether,
-            protocol.getLiquidationMultiplier(),
-            0
+            protocol.getEffectivePriceForTick(
+                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
+            ),
+            100 ether
         );
-        assertEq(toTransfer, 0, "asset to transfer");
+        assertEq(toRemove, 0, "asset to transfer");
     }
 }

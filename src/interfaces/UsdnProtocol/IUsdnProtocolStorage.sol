@@ -10,6 +10,7 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { Position, PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
  * @title IUsdnProtocolStorage
@@ -39,7 +40,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function TOKENS_DECIMALS() external pure returns (uint8);
 
     /**
-     * @notice Get the number of decimals of the liquidation multiplier
+     * @notice Get the number of decimals used for the fixed representation of the liquidation multiplier
      * @return The liquidation multiplier's number of decimals
      */
     function LIQUIDATION_MULTIPLIER_DECIMALS() external pure returns (uint8);
@@ -277,8 +278,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getUsdnRebaseInterval() external view returns (uint256);
 
     /**
-     * @notice Get the minimum collateral value when opening a long position (in USD)
-     * @return The minimum value (in _priceFeedDecimals)
+     * @notice Get the minimum collateral amount when opening a long position
+     * @return The minimum amount (with _assetDecimals)
      */
     function getMinLongPosition() external view returns (uint256);
 
@@ -303,12 +304,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @return The timestamp of the last update
      */
     function getLastUpdateTimestamp() external view returns (uint128);
-
-    /**
-     * @notice Get the multiplier for liquidation price calculations
-     * @return The current value of the liquidation multiplier
-     */
-    function getLiquidationMultiplier() external view returns (uint256);
 
     /**
      * @notice Get the fees that were accumulated by the contract and are yet to be sent to the fee collector
@@ -362,6 +357,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @return The total exposure of the longs (with asset decimals)
      */
     function getTotalExpo() external view returns (uint256);
+
+    /**
+     * @notice The accumulator used to calculate the liquidation multiplier
+     * @return The liquidation multiplier accumulator
+     */
+    function getLiqMultiplierAccumulator() external view returns (HugeUint.Uint512 memory);
 
     /**
      * @notice Get the current version of the tick

@@ -13,7 +13,7 @@ import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReentrancyGuard {
     using LibBitmap for LibBitmap.Bitmap;
@@ -174,7 +174,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     uint256 internal _usdnRebaseInterval = 0;
 
-    /// @notice The minimum long position size in USD (with _priceFeedDecimals)
+    /// @notice The minimum long position size (with _assetDecimals)
     uint256 internal _minLongPosition;
 
     /* -------------------------------------------------------------------------- */
@@ -189,13 +189,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The timestamp of the last balances update
     uint128 internal _lastUpdateTimestamp;
-
-    /**
-     * @notice The multiplier for liquidation price calculations
-     * @dev This value represents 1 with 38 decimals to have the same precision when the multiplier
-     * tends to 0 and high values (uint256.max have 78 digits).
-     */
-    uint256 internal _liquidationMultiplier = 1e38;
 
     /// @notice The pending protocol fee accumulator
     uint256 internal _pendingProtocolFee;
@@ -230,6 +223,14 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The total exposure (with asset decimals)
     uint256 internal _totalExpo;
+
+    /*
+     * @notice The accumulator used to calculate the liquidation multiplier
+     * @dev This is the sum, for all ticks, of the total expo of positions inside the tick, multiplied by the
+     * unadjusted price of the tick which is `_tickData[tickHash].liquidationPenalty * _tickSpacing` below.
+     * The unadjusted price is obtained with `TickMath.getPriceAtTick`.
+     */
+    HugeUint.Uint512 internal _liqMultiplierAccumulator;
 
     /// @notice The liquidation tick version.
     mapping(int24 => uint256) internal _tickVersion;
@@ -297,7 +298,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
         _targetUsdnPrice = uint128(10_087 * 10 ** (_priceFeedDecimals - 4)); // $1.0087
         _usdnRebaseThreshold = uint128(1009 * 10 ** (_priceFeedDecimals - 3)); // $1.009
-        _minLongPosition = 5000 * 10 ** _priceFeedDecimals; // 5000 USD
+        _minLongPosition = 2 * 10 ** _assetDecimals;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -473,11 +474,6 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getLiquidationMultiplier() external view returns (uint256) {
-        return _liquidationMultiplier;
-    }
-
-    /// @inheritdoc IUsdnProtocolStorage
     function getPendingProtocolFee() external view returns (uint256) {
         return _pendingProtocolFee;
     }
@@ -516,6 +512,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getTotalExpo() external view returns (uint256) {
         return _totalExpo;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getLiqMultiplierAccumulator() external view returns (HugeUint.Uint512 memory) {
+        return _liqMultiplierAccumulator;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
