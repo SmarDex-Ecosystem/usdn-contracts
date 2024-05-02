@@ -1116,7 +1116,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      */
     function _checkInitiateClosePosition(address user, address to, uint128 amountToClose, Position memory pos)
         internal
-        pure
+        view
     {
         if (pos.user != user) {
             revert UsdnProtocolUnauthorized();
@@ -1124,6 +1124,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         if (amountToClose > pos.amount) {
             revert UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
+        }
+
+        // Make sure the remaining position is higher than _minLongPosition
+        uint128 remainingAmount = pos.amount - amountToClose;
+        if (remainingAmount > 0 && remainingAmount < _minLongPosition) {
+            revert UsdnProtocolLongPositionTooSmall();
         }
 
         if (amountToClose == 0) {
