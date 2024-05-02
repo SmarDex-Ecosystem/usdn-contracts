@@ -31,23 +31,22 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
 
         /* ------------------ unadjustedPrice < TickMath.MIN_PRICE ------------------ */
         uint128 price = 9999;
-        uint256 assetPrice = 0;
-        uint256 longTradingExpo = 0;
-        HugeUint.Uint512 memory accumulator = HugeUint.wrap(0);
         assertLt(
-            protocol.i_unadjustPrice(price, assetPrice, longTradingExpo, accumulator),
+            protocol.i_unadjustPrice(price, 0, 0, HugeUint.wrap(0)),
             TickMath.MIN_PRICE,
             "unadjustPrice should be lower than minPrice"
         );
-        int24 tick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
+        int24 tick = protocol.getEffectiveTickForPrice(price, 0, 0, HugeUint.wrap(0), tickSpacing);
         assertEq(tick, expectedMinTick, "tick should be equal to minTick");
     }
 
     /**
-     * @custom:scenario Call `getEffectiveTickForPrice` and return expected minUsableTick < tick_ < 0
+     * @custom:scenario Call `getEffectiveTickForPrice` and return expected tick
      * @custom:given A price, assetPrice, longTradingExpo and accumulator
-     * @custom:when getEffectiveTickForPrice is called
-     * @custom:then The function should return expected tick
+     * @custom:when getEffectiveTickForPrice is called with price 60_000 ether
+     * @custom:then The function should return tick_ = -303_500
+     * @custom:when getEffectiveTickForPrice is called with price 10_000
+     * @custom:then The function should return tick_ = minTick
      */
     function test_getEffectiveTickForPriceTickLowerThanZero() external {
         /* ------------------------ minUsableTick < tick_ < 0 ----------------------- */
@@ -67,44 +66,35 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
 
         /* -------------------------- tick_ < minUsableTick ------------------------- */
         int24 expectedMinTick = protocol.minTick();
-        tickSpacing = 100;
         price = 10_000;
-        assetPrice = 100 ether;
-        longTradingExpo = 100 ether;
-        accumulator = HugeUint.wrap(0 ether);
 
         assertEq(
-            protocol.i_unadjustPrice(price, assetPrice, longTradingExpo, accumulator),
+            protocol.i_unadjustPrice(price, 0, 0, HugeUint.wrap(0 ether)),
             price,
             "unadjustPrice should be equal to price"
         );
-        tick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
+        tick = protocol.getEffectiveTickForPrice(price, 0, 0, HugeUint.wrap(0 ether), tickSpacing);
         assertEq(tick, expectedMinTick, "tick should be equal to minTick");
     }
 
     /**
      * @custom:scenario Call `getEffectiveTickForPrice` and return expected tick_ >= 0
      * @custom:given A price, assetPrice, longTradingExpo and accumulator
-     * @custom:when getEffectiveTickForPrice is called
-     * @custom:then The function should return expected tick
+     * @custom:when getEffectiveTickForPrice is called with price 1 ether
+     * @custom:then The function should return tick_ = 0
+     * @custom:when getEffectiveTickForPrice is called with price 5_000_000_000 ether
+     * @custom:then The function should return tick_ > 0
      */
     function test_getEffectiveTickForPriceTickGreaterThanOrEqualZero() external {
         /* -------------------------------- tick_ = 0 ------------------------------- */
         int24 tickSpacing = 100;
         uint128 price = 1 ether;
-        uint256 assetPrice = 0;
-        uint256 longTradingExpo = 0;
-        HugeUint.Uint512 memory accumulator = HugeUint.wrap(0);
-        int24 tick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
+        int24 tick = protocol.getEffectiveTickForPrice(price, 0, 0, HugeUint.wrap(0), tickSpacing);
         assertEq(tick, 0, "tick should be equal to 0");
 
         /* -------------------------------- tick_ > 0 ------------------------------- */
-        tickSpacing = 100;
         price = 5_000_000_000 ether;
-        assetPrice = 150 ether;
-        longTradingExpo = 3 ether;
-        accumulator = HugeUint.wrap(0);
-        tick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
+        tick = protocol.getEffectiveTickForPrice(price, 0, 0, HugeUint.wrap(0), tickSpacing);
         assertEq(tick, 223_300, "tick should be equal to 223300");
     }
 }
