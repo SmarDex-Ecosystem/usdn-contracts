@@ -68,7 +68,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
                 (bool success,) = address(wstETH).call{ value: 10_000 ether }("");
                 require(success, "wstETH mint failed");
             }
-            (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+            PositionId memory posId = setUpUserPositionInLong(
                 OpenParams({
                     user: user,
                     untilAction: ProtocolAction.ValidateOpenPosition,
@@ -77,9 +77,9 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
                     price: data.currentPrice
                 })
             );
-            (pos[i],) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
-            ticks[i] = tick;
-            indices[i] = index;
+            (pos[i],) = protocol.getLongPosition(posId);
+            ticks[i] = posId.tick;
+            indices[i] = posId.index;
 
             random = uint256(keccak256(abi.encode(random, i, 2)));
 

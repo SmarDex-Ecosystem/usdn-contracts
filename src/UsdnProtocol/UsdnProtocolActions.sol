@@ -196,7 +196,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
         address to
-    ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+    ) external payable initializedAndNonReentrant returns (PositionId memory posId_) {
         uint256 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
@@ -205,11 +205,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund;
 
-        PositionId memory posId;
-        (posId, amountToRefund) = _initiateOpenPosition(msg.sender, to, amount, desiredLiqPrice, currentPriceData);
-        tick_ = posId.tick;
-        tickVersion_ = posId.tickVersion;
-        index_ = posId.index;
+        (posId_, amountToRefund) = _initiateOpenPosition(msg.sender, to, amount, desiredLiqPrice, currentPriceData);
 
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);

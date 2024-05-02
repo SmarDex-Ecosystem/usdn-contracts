@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { ADMIN } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { TickData, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { TickData, ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /// @custom:feature The `GetTickLiquidationPenalty` function of the long layer
 contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
@@ -43,7 +43,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      */
     function test_getTickLiquidationPenaltyPopulated() public {
         uint8 startPenalty = protocol.getLiquidationPenalty();
-        (int24 tick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -52,14 +52,14 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
                 price: params.initialPrice
             })
         );
-        assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty, "tick value");
+        assertEq(protocol.getTickLiquidationPenalty(posId.tick), startPenalty, "tick value");
 
         // change the penalty setting
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(startPenalty - 1);
 
         // check value hasn't changed
-        assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty, "new value");
+        assertEq(protocol.getTickLiquidationPenalty(posId.tick), startPenalty, "new value");
     }
 
     /**
@@ -70,7 +70,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      */
     function test_getTickLiquidationPenaltyLiquidated() public {
         uint8 startPenalty = protocol.getLiquidationPenalty();
-        (int24 tick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -82,7 +82,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
 
         // we need to skip 1 minute to make the new price data fresh
         skip(1 minutes);
-        assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty, "tick value");
+        assertEq(protocol.getTickLiquidationPenalty(posId.tick), startPenalty, "tick value");
         _waitBeforeLiquidation();
         protocol.testLiquidate(abi.encode(params.initialPrice / 3), 10);
 
@@ -91,7 +91,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
         protocol.setLiquidationPenalty(startPenalty - 1);
 
         // the tick has now the new value
-        assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty - 1, "new value");
+        assertEq(protocol.getTickLiquidationPenalty(posId.tick), startPenalty - 1, "new value");
     }
 
     /**
@@ -102,7 +102,7 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
      */
     function test_getTickLiquidationPenaltyWasPopulatedNowEmpty() public {
         uint8 startPenalty = protocol.getLiquidationPenalty();
-        (int24 tick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateClosePosition,
@@ -115,6 +115,6 @@ contract TestUsdnProtocolGetTickLiquidationPenalty is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(startPenalty - 1);
 
-        assertEq(protocol.getTickLiquidationPenalty(tick), startPenalty - 1, "final value");
+        assertEq(protocol.getTickLiquidationPenalty(posId.tick), startPenalty - 1, "final value");
     }
 }

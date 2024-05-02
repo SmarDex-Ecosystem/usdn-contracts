@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
@@ -97,9 +97,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions.
      * @param to The address that will be the owner of the position
-     * @return tick_ The tick containing the new position
-     * @return tickVersion_ The tick version
-     * @return index_ The index of the new position inside the tick array
+     * @return posId_ The unique position identifier
      */
     function initiateOpenPosition(
         uint128 amount,
@@ -107,7 +105,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
         address to
-    ) external payable returns (int24 tick_, uint256 tickVersion_, uint256 index_);
+    ) external payable returns (PositionId memory posId_);
 
     /**
      * @notice Validate a pending open position action.

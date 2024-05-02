@@ -35,9 +35,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         uint128 validatePrice;
         int24 validateTick;
         uint8 originalLiqPenalty;
-        int24 tempTick;
-        uint256 tempTickVersion;
-        uint256 tempIndex;
+        PositionId tempPosId;
         uint256 validateTickVersion;
         uint256 validateIndex;
         uint128 expectedLeverage;
@@ -107,17 +105,17 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             0,
             0
         ); // expected event
-        (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
+        PositionId memory posId = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
         );
         uint256 tickLiqPrice = protocol.getEffectivePriceForTick(
-            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
+            posId.tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
         );
 
         // check state after opening the position
-        assertEq(tick, expectedTick, "tick number");
-        assertEq(tickVersion, 0, "tick version");
-        assertEq(index, 0, "index");
+        assertEq(posId.tick, expectedTick, "tick number");
+        assertEq(posId.tickVersion, 0, "tick version");
+        assertEq(posId.index, 0, "index");
 
         assertEq(wstETH.balanceOf(address(this)), before.balance - LONG_AMOUNT, "user wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), before.protocolBalance + LONG_AMOUNT, "protocol wstETH balance");
@@ -150,7 +148,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(action.common.user, address(this), "pending action user");
 
         Position memory position;
-        (position,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
+        (position,) = protocol.getLongPosition(posId);
         assertEq(position.user, to, "user position");
         assertEq(position.timestamp, action.common.timestamp, "timestamp position");
         assertEq(position.amount, uint128(LONG_AMOUNT), "amount position");
@@ -174,7 +172,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(storedLiqPenalty); // set a different liquidation penalty
         // this position is opened to set the liquidation penalty of the tick
-        (int24 tick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -187,20 +185,22 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(originalLiqPenalty); // restore liquidation penalty
         assertEq(
-            protocol.getTickLiquidationPenalty(tick), storedLiqPenalty, "liquidation penalty of the tick was stored"
+            protocol.getTickLiquidationPenalty(posId.tick),
+            storedLiqPenalty,
+            "liquidation penalty of the tick was stored"
         );
 
         uint128 expectedLiqPrice =
-            protocol.getEffectivePriceForTick(tick - int24(uint24(storedLiqPenalty)) * protocol.getTickSpacing());
+            protocol.getEffectivePriceForTick(posId.tick - int24(uint24(storedLiqPenalty)) * protocol.getTickSpacing());
         uint256 expectedTotalExpo =
             protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, expectedLiqPrice);
 
         // create position which ends up in the same tick
-        (int24 tick2, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
+        PositionId memory posId2 = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
         );
-        assertEq(tick2, tick, "tick is the same");
-        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(PositionId(tick2, tickVersion, index));
+        assertEq(posId.tick, posId2.tick, "tick is the same");
+        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(posId);
         assertEq(pos.totalExpo, expectedTotalExpo, "pos total expo indicates that the stored penalty was used");
         assertEq(liqPenalty, storedLiqPenalty, "pos liquidation penalty");
     }
@@ -315,26 +315,26 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     function _validateOpenPositionScenario(address to) internal {
         uint256 initialTotalExpo = protocol.getTotalExpo();
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
-        (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
+        PositionId memory posId = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
         );
-        (Position memory tempPos,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
+        (Position memory tempPos,) = protocol.getLongPosition(posId);
 
         _waitDelay();
 
         uint128 newPrice = CURRENT_PRICE + 100 ether;
 
         vm.expectEmit(true, true, false, false);
-        emit ValidatedOpenPosition(address(this), to, 0, newPrice, tick, tickVersion, index);
+        emit ValidatedOpenPosition(address(this), to, 0, newPrice, posId.tick, posId.tickVersion, posId.index);
         protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
-        (Position memory pos,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
+        (Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.user, tempPos.user, "user");
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
         // price increased -> total expo decreased
         assertLt(pos.totalExpo, tempPos.totalExpo, "totalExpo");
 
-        TickData memory tickData = protocol.getTickData(tick);
+        TickData memory tickData = protocol.getTickData(posId.tick);
         assertEq(tickData.totalExpo, pos.totalExpo, "total expo in tick");
         assertEq(protocol.getTotalExpo(), initialTotalExpo + pos.totalExpo, "total expo");
     }
@@ -352,10 +352,10 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
      */
     function test_validateOpenPositionAboveMaxLeverage() public {
         uint128 desiredLiqPrice = CURRENT_PRICE * 9 / 10; // leverage approx 10x
-        (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
+        PositionId memory posId = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
         );
-        (Position memory tempPos,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
+        (Position memory tempPos,) = protocol.getLongPosition(posId);
 
         _waitDelay();
 
@@ -374,7 +374,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         int256 longBalanceBefore = protocol.longAssetAvailableWithFunding(newPrice, uint128(block.timestamp - 1));
 
         vm.expectEmit();
-        emit LiquidationPriceUpdated(tick, tickVersion, index, newTick, newTickVersion, newIndex);
+        emit LiquidationPriceUpdated(posId.tick, posId.tickVersion, posId.index, newTick, newTickVersion, newIndex);
         vm.expectEmit(true, false, false, false);
         emit ValidatedOpenPosition(address(this), address(this), 0, newPrice, newTick, newTickVersion, newIndex);
         protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
@@ -383,7 +383,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(pos.user, tempPos.user, "user");
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
         assertEq(pos.amount, tempPos.amount, "amount");
-        assertLt(newTick, tick, "tick");
+        assertLt(newTick, posId.tick, "tick");
         assertGt(pos.totalExpo, tempPos.totalExpo, "totalExpo");
         assertEq(protocol.getBalanceLong(), uint256(longBalanceBefore), "balance of long side unchanged");
     }
@@ -412,7 +412,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         // open another user position to set the tick's penalty to a lower value in storage
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(data.originalLiqPenalty - 1);
-        (int24 otherTick,,) = setUpUserPositionInLong(
+        PositionId memory otherPosId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -421,14 +421,14 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
                 price: CURRENT_PRICE
             })
         );
-        assertEq(otherTick, data.validateTick, "both positions in same tick");
+        assertEq(otherPosId.tick, data.validateTick, "both positions in same tick");
 
         // restore liquidation penalty to original value
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(data.originalLiqPenalty);
 
         // initiate deposit with leverage close to 10x
-        (data.tempTick, data.tempTickVersion, data.tempIndex) = protocol.initiateOpenPosition(
+        data.tempPosId = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), CURRENT_PRICE * 9 / 10, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
         );
 
@@ -452,9 +452,9 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         // validate deposit with a lower entry price
         vm.expectEmit();
         emit LiquidationPriceUpdated(
-            data.tempTick,
-            data.tempTickVersion,
-            data.tempIndex,
+            data.tempPosId.tick,
+            data.tempPosId.tickVersion,
+            data.tempPosId.index,
             data.validateTick,
             data.validateTickVersion,
             data.validateIndex
@@ -481,13 +481,13 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
      * @custom:and The transaction does not revert
      */
     function test_stalePendingActionReInit() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
+        PositionId memory posId = _createStalePendingActionHelper();
 
         wstETH.approve(address(protocol), 1 ether);
         bytes memory priceData = abi.encode(uint128(1500 ether));
         // we should be able to open a new position
         vm.expectEmit();
-        emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
+        emit StalePendingActionRemoved(address(this), posId.tick, posId.tickVersion, posId.index);
         protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
     }
 
@@ -500,12 +500,12 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
      * @custom:and The transaction does not revert
      */
     function test_stalePendingActionValidate() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
+        PositionId memory posId = _createStalePendingActionHelper();
 
         bytes memory priceData = abi.encode(uint128(1500 ether));
         // validating the action emits the proper event
         vm.expectEmit();
-        emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
+        emit StalePendingActionRemoved(address(this), posId.tick, posId.tickVersion, posId.index);
         protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
     }
 
