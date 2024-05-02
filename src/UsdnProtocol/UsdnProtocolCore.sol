@@ -121,13 +121,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             // If the msg.sender is equal to the user of the pending action, then the pending action is not actionable
             // by this user (it will get validated automatically by their action). And so we need to return the next
             // item in the queue so that they can validate a third-party pending action (if any).
-            if (candidate.common.timestamp == 0 || candidate.common.user == currentUser) {
+            if (candidate.timestamp == 0 || candidate.user == currentUser) {
                 rawIndices_[i] = rawIndex;
                 // try the next one
                 unchecked {
                     i++;
                 }
-            } else if (candidate.common.timestamp + _validationDeadline < block.timestamp) {
+            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
                 actions_[i] = candidate;
                 rawIndices_[i] = rawIndex;
@@ -594,13 +594,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             unchecked {
                 i++;
             }
-            if (candidate.common.timestamp == 0) {
+            if (candidate.timestamp == 0) {
                 // remove the stale pending action
                 // slither-disable-next-line unused-return
                 _pendingActionsQueue.popFront();
                 // try the next one
                 continue;
-            } else if (candidate.common.timestamp + _validationDeadline < block.timestamp) {
+            } else if (candidate.timestamp + _validationDeadline < block.timestamp) {
                 // we found an actionable pending action
                 return (candidate, rawIndex);
             }
@@ -623,11 +623,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         (PendingAction memory action, uint128 rawIndex) = _getPendingAction(user);
         // the position is only at risk of being liquidated while pending if it is an open position action
         // slither-disable-next-line incorrect-equality
-        if (action.common.action == ProtocolAction.ValidateOpenPosition) {
+        if (action.action == ProtocolAction.ValidateOpenPosition) {
             LongPendingAction memory openAction = _toLongPendingAction(action);
             (, uint256 version) = _tickHash(openAction.tick);
             if (version != openAction.tickVersion) {
-                securityDepositValue_ = openAction.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR;
+                securityDepositValue_ = openAction.securityDepositValue;
                 // the position was liquidated while pending
                 // remove the stale pending action
                 _pendingActionsQueue.clearAt(rawIndex);
@@ -692,7 +692,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         returns (PendingAction memory action_, uint128 rawIndex_)
     {
         (action_, rawIndex_) = _getPendingAction(user);
-        if (action_.common.action == ProtocolAction.None) {
+        if (action_.action == ProtocolAction.None) {
             revert UsdnProtocolNoPendingAction();
         }
     }

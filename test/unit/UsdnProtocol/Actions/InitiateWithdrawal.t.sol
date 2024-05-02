@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { USER_1 } from "test/utils/Constants.sol";
 
 import {
     PendingAction, ProtocolAction, WithdrawalPendingAction
@@ -99,18 +100,18 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
         WithdrawalPendingAction memory action =
             protocol.i_toWithdrawalPendingAction(protocol.getUserPendingAction(address(this)));
-        assertTrue(action.common.action == ProtocolAction.ValidateWithdrawal, "action type");
-        assertEq(action.common.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.common.user, address(this), "action user");
-        assertEq(action.common.to, to, "action to");
+        assertTrue(action.action == ProtocolAction.ValidateWithdrawal, "action type");
+        assertEq(action.timestamp, block.timestamp, "action timestamp");
+        assertEq(action.user, address(this), "action user");
+        assertEq(action.to, to, "action to");
         uint256 shares = protocol.i_mergeWithdrawalAmountParts(action.sharesLSB, action.sharesMSB);
         assertEq(shares, withdrawShares, "action shares");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions[0].common.user, address(this), "pending action user");
-        assertEq(actions[0].common.to, to, "pending action user");
+        assertEq(actions[0].user, address(this), "pending action user");
+        assertEq(actions[0].to, to, "pending action user");
         assertEq(rawIndices[0], 1, "raw index");
     }
 

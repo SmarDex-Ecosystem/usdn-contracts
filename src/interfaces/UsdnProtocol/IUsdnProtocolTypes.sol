@@ -45,24 +45,12 @@ enum ProtocolAction {
 }
 
 /**
- * @notice Common data for all pending actions.
+ * @notice A pending action in the queue.
  * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
  * @param user The user address.
  * @param to The to address.
  * @param securityDepositValue The security deposit of the pending action.
- */
-struct PendingActionCommonData {
-    ProtocolAction action; // 1 byte
-    uint40 timestamp; // 5 bytes
-    address user; // 20 bytes
-    address to; // 20 bytes
-    uint24 securityDepositValue; // 3 bytes
-}
-
-/**
- * @notice A pending action in the queue.
- * @param common The common data for all pending actions.
  * @param var1 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param var2 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param var3 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
@@ -72,7 +60,11 @@ struct PendingActionCommonData {
  * @param var7 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  */
 struct PendingAction {
-    PendingActionCommonData common; // 55 bytes
+    ProtocolAction action; // 1 byte
+    uint40 timestamp; // 5 bytes
+    address user; // 20 bytes
+    address to; // 20 bytes
+    uint64 securityDepositValue; // 8 bytes
     int24 var1; // 3 bytes
     uint128 var2; // 16 bytes
     uint128 var3; // 16 bytes
@@ -84,7 +76,11 @@ struct PendingAction {
 
 /**
  * @notice A pending action in the queue for a vault deposit.
- * @param common The common data for all pending actions.
+ * @param action The action type (Validate...).
+ * @param timestamp The timestamp of the initiate action.
+ * @param user The user address.
+ * @param to The to address.
+ * @param securityDepositValue The security deposit of the pending action.
  * @param _unused Unused field to align the struct to `PendingAction`.
  * @param amount The amount of assets of the pending deposit.
  * @param assetPrice The price of the asset at the time of the last update.
@@ -94,7 +90,11 @@ struct PendingAction {
  * @param usdnTotalSupply The total supply of USDN at the time of the action.
  */
 struct DepositPendingAction {
-    PendingActionCommonData common; // 55 bytes
+    ProtocolAction action; // 1 byte
+    uint40 timestamp; // 5 bytes
+    address user; // 20 bytes
+    address to; // 20 bytes
+    uint64 securityDepositValue; // 8 bytes
     int24 _unused; // 3 bytes
     uint128 amount; // 16 bytes
     uint128 assetPrice; // 16 bytes
@@ -106,7 +106,11 @@ struct DepositPendingAction {
 
 /**
  * @notice A pending action in the queue for a vault withdrawal.
- * @param common The common data for all pending actions.
+ * @param action The action type (Validate...).
+ * @param timestamp The timestamp of the initiate action.
+ * @param user The user address.
+ * @param to The to address.
+ * @param securityDepositValue The security deposit of the pending action.
  * @param sharesLSB 3 least significant bytes of the withdrawal shares amount (uint152).
  * @param sharesMSB 16 most significant bytes of the withdrawal shares amount (uint152).
  * @param assetPrice The price of the asset at the time of the last update.
@@ -116,7 +120,11 @@ struct DepositPendingAction {
  * @param usdnTotalShares The total shares supply of USDN at the time of the action.
  */
 struct WithdrawalPendingAction {
-    PendingActionCommonData common; // 55 bytes
+    ProtocolAction action; // 1 byte
+    uint40 timestamp; // 5 bytes
+    address user; // 20 bytes
+    address to; // 20 bytes
+    uint64 securityDepositValue; // 8 bytes
     uint24 sharesLSB; // 3 bytes
     uint128 sharesMSB; // 16 bytes
     uint128 assetPrice; // 16 bytes
@@ -128,7 +136,11 @@ struct WithdrawalPendingAction {
 
 /**
  * @notice A pending action in the queue for a long position.
- * @param common The common data for all pending actions.
+ * @param action The action type (Validate...).
+ * @param timestamp The timestamp of the initiate action.
+ * @param user The user address.
+ * @param to The to address.
+ * @param securityDepositValue The security deposit of the pending action.
  * @param tick The tick of the position.
  * @param closeAmount The amount of the pending action (only used when closing a position).
  * @param closePosTotalExpo The total expo of the position (only used when closing a position).
@@ -141,7 +153,11 @@ struct WithdrawalPendingAction {
  * used when closing a position).
  */
 struct LongPendingAction {
-    PendingActionCommonData common; // 55 bytes
+    ProtocolAction action; // 1 byte
+    uint40 timestamp; // 5 bytes
+    address user; // 20 bytes
+    address to; // 20 bytes
+    uint64 securityDepositValue; // 8 bytes
     int24 tick; // 3 bytes
     uint128 closeAmount; // 16 bytes
     uint128 closePosTotalExpo; // 16 bytes

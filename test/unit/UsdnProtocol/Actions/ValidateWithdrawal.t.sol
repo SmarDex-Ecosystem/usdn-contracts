@@ -167,9 +167,8 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
         }
 
-        PriceInfo memory withdrawalPrice = protocol.i_getOraclePrice(
-            ProtocolAction.ValidateWithdrawal, withdrawal.common.timestamp, abi.encode(assetPrice)
-        );
+        PriceInfo memory withdrawalPrice =
+            protocol.i_getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, abi.encode(assetPrice));
 
         // Apply fees on price
         uint256 withdrawalPriceWithFees =
@@ -201,7 +200,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         assertEq(withdrawnAmount, expectedAssetAmount, "asset amount");
 
         vm.expectEmit();
-        emit ValidatedWithdrawal(address(this), to, withdrawnAmount, USDN_AMOUNT, withdrawal.common.timestamp);
+        emit ValidatedWithdrawal(address(this), to, withdrawnAmount, USDN_AMOUNT, withdrawal.timestamp);
         protocol.validateWithdrawal(currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");

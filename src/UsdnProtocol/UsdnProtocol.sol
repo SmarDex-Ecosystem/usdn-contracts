@@ -258,13 +258,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setSecurityDepositValue(uint256 securityDepositValue) external onlyOwner {
-        // we allow to set the security deposit between 10 ** 15 (0.001 ether) and 10 ethers
-        // the value must be a multiple of the SECURITY_DEPOSIT_FACTOR
-        if (securityDepositValue > 10 ether || securityDepositValue % SECURITY_DEPOSIT_FACTOR != 0) {
-            revert UsdnProtocolInvalidSecurityDepositValue();
-        }
-
+    function setSecurityDepositValue(uint64 securityDepositValue) external onlyOwner {
         _securityDepositValue = securityDepositValue;
         emit SecurityDepositValueUpdated(securityDepositValue);
     }
@@ -338,9 +332,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setMinLongPosition(uint256 newMinLongPosition) external onlyOwner {
-        if (newMinLongPosition > 50_000 * 10 ** _priceFeedDecimals) {
-            revert UsdnProtocolInvalidMinLongPosition();
-        }
         _minLongPosition = newMinLongPosition;
         emit MinLongPositionUpdated(newMinLongPosition);
     }
@@ -403,6 +394,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         });
         // Save the position and update the state
         (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long, liquidationPenalty);
+        _balanceLong += long.amount;
         emit InitiatedOpenPosition(
             msg.sender, msg.sender, long.timestamp, leverage, long.amount, price, tick, tickVersion, index
         );

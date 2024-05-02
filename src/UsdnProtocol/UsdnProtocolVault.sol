@@ -10,6 +10,7 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 
 abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     using SafeCast for int256;
+    using SafeCast for uint256;
 
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
@@ -24,6 +25,44 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
     /// @inheritdoc IUsdnProtocolVault
     function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
         price_ = usdnPrice(currentPrice, uint128(block.timestamp));
+    }
+
+    /**
+     * @notice Calculate an estimation of assets received when withdrawing
+     * @param usdnShares The amount of USDN shares
+     * @param price The price of the asset
+     * @param timestamp The timestamp of the operation
+     * @return assetExpected_ The expected amount of asset to be received
+     */
+    function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
+        public
+        view
+        returns (uint256 assetExpected_)
+    {
+        // Apply fees on price
+        uint128 withdrawalPriceWithFees = (price + price * _positionFeeBps / BPS_DIVISOR).toUint128();
+        int256 available = vaultAssetAvailableWithFunding(withdrawalPriceWithFees, timestamp);
+        if (available < 0) {
+            return 0;
+        }
+        assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), _usdn.totalShares());
+    }
+
+    /**
+     * @notice Calculate the amount of assets received when burning USDN shares
+     * @param usdnShares The amount of USDN shares
+     * @param available The available asset in the vault
+     * @param usdnTotalShares The total supply of USDN shares
+     * @return assetExpected_ The expected amount of asset to be received
+     */
+    function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
+        internal
+        pure
+        returns (uint256 assetExpected_)
+    {
+        // assetExpected = amountUsdn * usdnPrice / assetPrice = amountUsdn * assetAvailable / totalSupply
+        //                 = shares * assetAvailable / usdnTotalShares
+        assetExpected_ = FixedPointMathLib.fullMulDiv(usdnShares, available, usdnTotalShares);
     }
 
     /**
