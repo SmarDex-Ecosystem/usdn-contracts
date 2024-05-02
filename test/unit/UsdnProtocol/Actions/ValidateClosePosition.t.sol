@@ -382,13 +382,10 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------- Validate Close Position ------------------------ */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         uint128 priceAfterInit = params.initialPrice - 50 ether;
-        uint256 vaultBalanceBefore;
-        uint256 longBalanceBefore;
-        {
-            uint128 timestamp = uint128(block.timestamp);
-            vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, timestamp));
-            longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(priceAfterInit, timestamp));
-        }
+        uint256 vaultBalanceBefore =
+            uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp)));
+        uint256 longBalanceBefore =
+            uint256(protocol.longAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp)));
         uint256 assetToTransfer = protocol.i_assetToRemove(
             priceAfterInit,
             protocol.i_getEffectivePriceForTick(
