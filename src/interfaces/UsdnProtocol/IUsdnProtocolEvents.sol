@@ -8,52 +8,52 @@ pragma solidity >=0.8.0;
 interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user initiates a deposit.
-     * @param user The user address.
      * @param to The address that will receive the USDN tokens.
+     * @param validator The address of the validator that will validate the deposit.
      * @param amount The amount of asset that were deposited.
      * @param timestamp The timestamp of the action.
      */
-    event InitiatedDeposit(address indexed user, address indexed to, uint256 amount, uint256 timestamp);
+    event InitiatedDeposit(address indexed to, address indexed validator, uint256 amount, uint256 timestamp);
 
     /**
      * @notice Emitted when a user validates a deposit.
-     * @param user The user address.
      * @param to The address that received the USDN tokens.
+     * @param validator The address of the validator that validated the deposit.
      * @param amountDeposited The amount of asset that were deposited.
      * @param usdnMinted The amount of USDN that were minted.
      * @param timestamp The timestamp of the InitiatedDeposit action.
      */
     event ValidatedDeposit(
-        address indexed user, address indexed to, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
+        address indexed to, address indexed validator, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
     );
 
     /**
      * @notice Emitted when a user initiates a withdrawal.
-     * @param user The user address.
      * @param to The address that will receive the assets.
+     * @param validator The address of the validator that will validate the withdrawal.
      * @param usdnAmount The amount of USDN that will be burned.
      * @param timestamp The timestamp of the action.
      */
-    event InitiatedWithdrawal(address indexed user, address indexed to, uint256 usdnAmount, uint256 timestamp);
+    event InitiatedWithdrawal(address indexed to, address indexed validator, uint256 usdnAmount, uint256 timestamp);
 
     /**
      * @notice Emitted when a user validates a withdrawal.
-     * @param user The user address.
      * @param to The address that received the assets.
+     * @param validator The address of the validator that validated the withdrawal.
      * @param amountWithdrawn The amount of asset that were withdrawn.
      * @param usdnBurned The amount of USDN that were burned.
      * @param timestamp The timestamp of the InitiatedWithdrawal action.
      */
     event ValidatedWithdrawal(
-        address indexed user, address indexed to, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp
+        address indexed to, address indexed validator, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp
     );
 
     /**
      * @notice Emitted when a user initiates the opening of a long position.
      * @dev The combination of the tick number, the tick version, and the index constitutes a unique identifier for the
      * position.
-     * @param user The user address.
      * @param to The address that will be the owner of the position.
+     * @param validator The address of the validator that will validate the position.
      * @param timestamp The timestamp of the action.
      * @param leverage The initial leverage of the position (pending validation).
      * @param amount The amount of asset that were deposited as collateral.
@@ -63,8 +63,8 @@ interface IUsdnProtocolEvents {
      * @param index The index of the position inside the tick array.
      */
     event InitiatedOpenPosition(
-        address indexed user,
         address indexed to,
+        address indexed validator,
         uint40 timestamp,
         uint128 leverage,
         uint128 amount,
@@ -76,8 +76,8 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user validates the opening of a long position.
-     * @param user The user address.
      * @param to The address that will be the owner of the position.
+     * @param validator The address of the validator that validated the position.
      * @param newLeverage The initial leverage of the position (final).
      * @param newStartPrice The asset price at the moment of the position creation (final).
      * @param tick The tick containing the position.
@@ -88,8 +88,8 @@ interface IUsdnProtocolEvents {
      * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      */
     event ValidatedOpenPosition(
-        address indexed user,
         address indexed to,
+        address indexed validator,
         uint128 newLeverage,
         uint128 newStartPrice,
         int24 tick,
@@ -117,8 +117,8 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user initiates the closing of all or part of a long position.
-     * @param user The user address.
      * @param to The address that will receive the assets.
+     * @param validator The address of the validator that will validate the position.
      * @param tick The tick containing the position.
      * @param tickVersion The tick version.
      * @param index The index of the position inside the tick array.
@@ -129,8 +129,8 @@ interface IUsdnProtocolEvents {
      * If the entirety of the position is being closed, this value is zero.
      */
     event InitiatedClosePosition(
-        address indexed user,
         address indexed to,
+        address indexed validator,
         int24 tick,
         uint256 tickVersion,
         uint256 index,
@@ -141,8 +141,8 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user validates the closing of a long position
-     * @param user The user address.
      * @param to The address that received the assets.
+     * @param validator The address of the validator that validated the position.
      * @param tick The tick that was containing the position.
      * @param tickVersion The tick version.
      * @param index The index that the position had inside the tick array.
@@ -150,8 +150,8 @@ interface IUsdnProtocolEvents {
      * @param profit The profit that the user made.
      */
     event ValidatedClosePosition(
-        address indexed user,
         address indexed to,
+        address indexed validator,
         int24 tick,
         uint256 tickVersion,
         uint256 index,

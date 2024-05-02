@@ -55,8 +55,8 @@ enum ProtocolAction {
 struct PendingActionCommonData {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
-    address user; // 20 bytes
     address to; // 20 bytes
+    address validator; // 20 bytes
     uint24 securityDepositValue; // 3 bytes
 }
 

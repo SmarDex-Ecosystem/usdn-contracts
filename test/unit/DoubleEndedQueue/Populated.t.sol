@@ -286,7 +286,7 @@ contract TestDequePopulated is DequeFixture {
         (PendingAction memory clearedAction,) = handler.at(1);
         assertTrue(clearedAction.common.action == ProtocolAction.None);
         assertEq(clearedAction.common.timestamp, 0);
-        assertEq(clearedAction.common.user, address(0));
+        assertEq(clearedAction.common.validator, address(0));
         assertEq(clearedAction.var1, 0);
         assertEq(clearedAction.var2, 0);
     }

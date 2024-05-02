@@ -33,7 +33,9 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         uint256 ethValue = oracleMiddleware.validationCost("", ProtocolAction.InitiateOpenPosition)
             + protocol.getSecurityDepositValue();
 
-        protocol.initiateOpenPosition{ value: ethValue }(2.5 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateOpenPosition{ value: ethValue }(
+            2.5 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA, address(this), address(this)
+        );
         uint256 ts1 = block.timestamp;
         vm.stopPrank();
         skip(30);
@@ -41,7 +43,9 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         (success,) = address(wstETH).call{ value: 10 ether }("");
         require(success, "USER_2 wstETH mint failed");
         wstETH.approve(address(protocol), type(uint256).max);
-        protocol.initiateOpenPosition{ value: ethValue }(2.5 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateOpenPosition{ value: ethValue }(
+            2.5 ether, 1000 ether, "", EMPTY_PREVIOUS_DATA, address(this), address(this)
+        );
         uint256 ts2 = block.timestamp;
         vm.stopPrank();
 
@@ -59,7 +63,7 @@ contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixtur
         rawIndices[0] = 0;
         vm.prank(USER_2);
         protocol.validateOpenPosition{ value: data1Fee + data2Fee }(
-            data2, PreviousActionsData(previousData, rawIndices)
+            address(this), data2, PreviousActionsData(previousData, rawIndices)
         );
         // No more pending action
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));

@@ -124,7 +124,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateDeposit(1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit(1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this), address(this));
     }
 
     /**
@@ -147,7 +147,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.validateDeposit(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -170,7 +170,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateWithdrawal(100 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateWithdrawal(100 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this), address(this));
     }
 
     /**
@@ -193,7 +193,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.validateWithdrawal(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -216,7 +216,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
         protocol.initiateOpenPosition(
-            1 ether, params.initialPrice / 2, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this)
+            1 ether, params.initialPrice / 2, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
     }
 
@@ -248,7 +248,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -280,7 +280,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
         protocol.initiateClosePosition(
-            tick, tickVersion, index, 1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, 1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
     }
 
@@ -312,6 +312,6 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.validateClosePosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
     }
 }

@@ -168,7 +168,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint256 etherBalanceBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 1 ether }(
-            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
 
         assertEq(
@@ -208,7 +208,14 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
         protocol.initiateClosePosition(
-            tick, tickVersion, index, positionAmount, priceData, PreviousActionsData(previousData, rawIndices), USER_1
+            tick,
+            tickVersion,
+            index,
+            positionAmount,
+            priceData,
+            PreviousActionsData(previousData, rawIndices),
+            USER_1,
+            address(this)
         );
     }
 
@@ -226,7 +233,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             address(this), address(this), tick, tickVersion, index, positionAmount, positionAmount, 0
         );
         protocol.initiateClosePosition(
-            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            tick, tickVersion, index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
     }
 
@@ -377,8 +384,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         assertTrue(action.common.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
         assertEq(action.common.timestamp, block.timestamp, "The block timestamp should be now");
-        assertEq(action.common.user, address(this), "The user should be the transaction sender");
         assertEq(action.common.to, to, "To is wrong");
+        assertEq(action.common.validator, address(this), "Validator is wrong");
         assertEq(action.tick, tick, "The position tick is wrong");
         assertEq(
             action.closePosTotalExpo,

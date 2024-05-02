@@ -43,7 +43,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
-        assertEq(actions[0].common.user, address(this), "action user");
+        assertEq(actions[0].common.validator, address(this), "action validator");
         assertEq(rawIndices[0], 0, "raw index");
     }
 
@@ -66,7 +66,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // the pending action is actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (action, rawIndex) = protocol.i_getActionablePendingAction();
-        assertEq(action.common.user, address(this), "action user");
+        assertEq(action.common.validator, address(this), "action validator");
         assertEq(rawIndex, 0, "raw index");
     }
 
@@ -125,7 +125,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
 
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 2, "actions length");
-        assertEq(actions[1].common.user, USER_3, "user");
+        assertEq(actions[1].common.validator, USER_3, "validator");
         assertEq(rawIndices[1], 2, "raw index");
     }
 
@@ -143,7 +143,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
 
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
-        assertTrue(action.common.user == USER_3, "user");
+        assertTrue(action.common.validator == USER_3, "validator");
         assertEq(rawIndex, 2, "raw index");
     }
 
@@ -166,7 +166,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_internalGetActionablePendingActionEmpty() public {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
-        assertEq(action.common.user, address(0), "action user");
+        assertEq(action.common.validator, address(0), "action validator");
         assertEq(rawIndex, 0, "raw index");
     }
 
@@ -196,7 +196,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
-        assertEq(actions[0].common.user, address(this), "action user");
+        assertEq(actions[0].common.validator, address(this), "action validator");
         assertEq(rawIndices[0], 0, "action rawIndex");
         // but if the user himself calls the function, the action should not be returned
         (actions, rawIndices) = protocol.getActionablePendingActions(address(this));
@@ -243,7 +243,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         previousData[0] = abi.encode(price1);
         uint128[] memory rawIndices = new uint128[](1);
         rawIndices[0] = 0;
-        protocol.validateOpenPosition(abi.encode(price2), PreviousActionsData(previousData, rawIndices));
+        protocol.validateOpenPosition(address(this), abi.encode(price2), PreviousActionsData(previousData, rawIndices));
         // No more pending action
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no action");
@@ -284,9 +284,9 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
         vm.prank(USER_3);
-        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData, USER_3);
+        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData, USER_3, address(this));
         vm.prank(USER_4);
-        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData, USER_4);
+        protocol.initiateDeposit(1 ether, abi.encode(2200 ether), previousActionsData, USER_4, address(this));
 
         // They should have validated both pending actions
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
@@ -310,8 +310,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             common: PendingActionCommonData({
                 action: ProtocolAction.ValidateDeposit,
                 timestamp: uint40(block.timestamp),
-                user: address(this),
                 to: address(this),
+                validator: address(this),
                 securityDepositValue: 2424
             }),
             var1: 0, // must be zero because unused
@@ -325,7 +325,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         DepositPendingAction memory depositAction = protocol.i_toDepositPendingAction(action);
         assertTrue(depositAction.common.action == action.common.action, "action action");
         assertEq(depositAction.common.timestamp, action.common.timestamp, "action timestamp");
-        assertEq(depositAction.common.user, action.common.user, "action user");
+        assertEq(depositAction.common.to, action.common.to, "action to");
+        assertEq(depositAction.common.validator, action.common.validator, "action validator");
         assertEq(
             depositAction.common.securityDepositValue,
             action.common.securityDepositValue,
@@ -353,8 +354,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             common: PendingActionCommonData({
                 action: ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),
-                user: address(this),
                 to: address(this),
+                validator: address(this),
                 securityDepositValue: 2424
             }),
             var1: 125,
@@ -368,8 +369,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         WithdrawalPendingAction memory withdrawalAction = protocol.i_toWithdrawalPendingAction(action);
         assertTrue(withdrawalAction.common.action == action.common.action, "action action");
         assertEq(withdrawalAction.common.timestamp, action.common.timestamp, "action timestamp");
-        assertEq(withdrawalAction.common.user, action.common.user, "action user");
         assertEq(withdrawalAction.common.to, action.common.to, "action to");
+        assertEq(withdrawalAction.common.validator, action.common.validator, "action validator");
         assertEq(
             withdrawalAction.common.securityDepositValue,
             action.common.securityDepositValue,
@@ -397,8 +398,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
             common: PendingActionCommonData({
                 action: ProtocolAction.ValidateOpenPosition,
                 timestamp: uint40(block.timestamp),
-                user: address(this),
                 to: address(this),
+                validator: address(this),
                 securityDepositValue: 2424
             }),
             var1: 2398,
@@ -412,8 +413,8 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         LongPendingAction memory longAction = protocol.i_toLongPendingAction(action);
         assertTrue(longAction.common.action == action.common.action, "action action");
         assertEq(longAction.common.timestamp, action.common.timestamp, "action timestamp");
-        assertEq(longAction.common.user, action.common.user, "action user");
         assertEq(longAction.common.to, action.common.to, "action to");
+        assertEq(longAction.common.validator, action.common.validator, "action validator");
         assertEq(
             longAction.common.securityDepositValue, action.common.securityDepositValue, "action security deposit value"
         );

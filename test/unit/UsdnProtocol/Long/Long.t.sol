@@ -61,7 +61,7 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         // Change the price
         price = 1999 ether;
         // Validate the position with the new price
-        protocol.validateOpenPosition(abi.encode(price), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), abi.encode(price), EMPTY_PREVIOUS_DATA);
 
         uint256 previousExpo = position.totalExpo;
         // Get the updated position
@@ -95,7 +95,12 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
 
         vm.expectRevert(abi.encodeWithSelector(UsdnProtocolLongPositionTooSmall.selector));
         protocol.initiateOpenPosition(
-            uint128(minLongPositionSize) - 1, 1000 ether, abi.encode(2000 ether), EMPTY_PREVIOUS_DATA, address(this)
+            uint128(minLongPositionSize) - 1,
+            1000 ether,
+            abi.encode(2000 ether),
+            EMPTY_PREVIOUS_DATA,
+            address(this),
+            address(this)
         );
     }
 

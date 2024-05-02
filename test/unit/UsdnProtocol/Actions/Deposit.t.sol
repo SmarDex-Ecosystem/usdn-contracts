@@ -69,7 +69,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
         vm.expectEmit();
         emit InitiatedDeposit(address(this), to, depositAmount, block.timestamp);
-        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to);
+        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to, address(this));
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
         assertEq(
@@ -96,14 +96,14 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         PendingAction memory action = protocol.getUserPendingAction(address(this));
         assertTrue(action.common.action == ProtocolAction.ValidateDeposit, "action type");
         assertEq(action.common.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.common.user, address(this), "action user");
         assertEq(action.common.to, to, "action to");
+        assertEq(action.common.validator, address(this), "action validator");
         assertEq(action.var2, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (actions,) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions[0].common.user, address(this), "pending action user");
+        assertEq(actions[0].common.validator, address(this), "pending action validator");
     }
 
     /**
@@ -114,7 +114,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_zeroAddressTo() public {
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.initiateDeposit(1 ether, abi.encode(uint128(2000 ether)), EMPTY_PREVIOUS_DATA, address(0));
+        protocol.initiateDeposit(
+            1 ether, abi.encode(uint128(2000 ether)), EMPTY_PREVIOUS_DATA, address(0), address(this)
+        );
     }
 
     /**
@@ -125,7 +127,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAmount() public {
         bytes memory priceData = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateDeposit(0, priceData, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit(0, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this));
     }
 
     /**
@@ -149,7 +151,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(usdnToMintEstimated, 0, "usdn minted");
 
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
-        protocol.initiateDeposit(deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit(
+            deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this), address(this)
+        );
     }
 
     /**
@@ -179,7 +183,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(sdexToBurn, 0, "sdex burned");
 
         vm.expectRevert(UsdnProtocolDepositTooSmall.selector);
-        protocol.initiateDeposit(deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit(
+            deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this), address(this)
+        );
     }
 
     /**
@@ -202,7 +208,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             protocol.i_calcMintUsdn(deposited, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
         assertGt(usdnToMintEstimated, 0, "usdn minted");
 
-        protocol.initiateDeposit(deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit(
+            deposited, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this), address(this)
+        );
     }
 
     /**
@@ -257,7 +265,9 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
-        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit{ value: 0.5 ether }(
+            1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(this)
+        );
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -273,14 +283,16 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         assertEq(validationCost, 1);
-        protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit{ value: validationCost }(
+            1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(this)
+        );
 
         _waitDelay();
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
         assertEq(validationCost, 1);
         uint256 balanceBefore = address(this).balance;
-        protocol.validateDeposit{ value: 0.5 ether }(currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: 0.5 ether }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -307,7 +319,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         uint256 initiateDepositTimestamp = block.timestamp;
         vm.expectEmit();
         emit InitiatedDeposit(address(this), to, depositAmount, initiateDepositTimestamp); // expected event
-        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to);
+        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to, address(this));
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation
@@ -328,7 +340,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit ValidatedDeposit(address(this), to, depositAmount, mintedAmount, initiateDepositTimestamp); // expected
             // event
-        protocol.validateDeposit(currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(usdn.balanceOf(to), mintedAmount, "USDN to balance");
         if (address(this) != to) {
