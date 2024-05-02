@@ -78,7 +78,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:given A validated open position
      * @custom:when The owner of the position calls initiateClosePosition with
      * an amount higher than positionAmount - minLongPosition
-     * @custom:then The call reverts with
+     * @custom:then The call reverts with the UsdnProtocolLongPositionTooSmall error
      */
     function test_RevertWhen_closePartialPositionWithAmountRemainingLowerThanMinLongPosition() external {
         vm.prank(ADMIN);
