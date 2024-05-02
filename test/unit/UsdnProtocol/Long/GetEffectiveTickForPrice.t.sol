@@ -28,16 +28,15 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
             return;
         }
         int24 expectedMinTick = TickMath.minUsableTick(tickSpacing);
-        uint256 minPrice = protocol.i_minPrice();
 
         /* ------------------ unadjustedPrice < TickMath.MIN_PRICE ------------------ */
-        uint128 price = 20 ether;
-        uint256 assetPrice = 2000 ether;
-        uint256 longTradingExpo = 300 ether;
-        HugeUint.Uint512 memory accumulator = HugeUint.wrap(5000 ether);
+        uint128 price = 9999;
+        uint256 assetPrice = 0;
+        uint256 longTradingExpo = 0;
+        HugeUint.Uint512 memory accumulator = HugeUint.wrap(0);
         assertLt(
             protocol.i_unadjustPrice(price, assetPrice, longTradingExpo, accumulator),
-            minPrice,
+            TickMath.MIN_PRICE,
             "unadjustPrice should be lower than minPrice"
         );
         int24 tick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
@@ -52,7 +51,6 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
      */
     function test_getEffectiveTickForPriceTickLowerThanZero() external {
         /* ------------------------ minUsableTick < tick_ < 0 ----------------------- */
-        uint256 minPrice = protocol.i_minPrice();
         int24 tickSpacing = 100;
         uint128 price = 60_000 ether;
         uint256 assetPrice = 150 ether;
@@ -61,7 +59,7 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
 
         assertGt(
             protocol.i_unadjustPrice(price, assetPrice, longTradingExpo, accumulator),
-            minPrice,
+            TickMath.MIN_PRICE,
             "unadjustPrice should be greater than minPrice"
         );
         int24 tick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
@@ -93,10 +91,10 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
     function test_getEffectiveTickForPriceTickGreaterThanOrEqualZero() external {
         /* -------------------------------- tick_ = 0 ------------------------------- */
         int24 tickSpacing = 100;
-        uint128 price = 2_950_000_000 ether;
-        uint256 assetPrice = 130 ether;
-        uint256 longTradingExpo = 9 ether;
-        HugeUint.Uint512 memory accumulator = HugeUint.wrap(400_000_000_000 ether);
+        uint128 price = 1 ether;
+        uint256 assetPrice = 0;
+        uint256 longTradingExpo = 0;
+        HugeUint.Uint512 memory accumulator = HugeUint.wrap(0);
         int24 tick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
         assertEq(tick, 0, "tick should be equal to 0");
 
@@ -105,8 +103,8 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
         price = 5_000_000_000 ether;
         assetPrice = 150 ether;
         longTradingExpo = 3 ether;
-        accumulator = HugeUint.wrap(400_000_000_000 ether);
+        accumulator = HugeUint.wrap(0);
         tick = protocol.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
-        assertEq(tick, 14_900, "tick should be equal to 345400");
+        assertEq(tick, 223_300, "tick should be equal to 223300");
     }
 }

@@ -422,10 +422,6 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _calcBurnUsdn(usdnShares, available, usdnTotalShares);
     }
 
-    function i_minPrice() external pure returns (uint256) {
-        return TickMath.MIN_PRICE;
-    }
-
     function i_unadjustPrice(
         uint256 price,
         uint256 assetPrice,
