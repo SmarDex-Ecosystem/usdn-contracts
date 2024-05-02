@@ -627,7 +627,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             LongPendingAction memory openAction = _toLongPendingAction(action);
             (, uint256 version) = _tickHash(openAction.tick);
             if (version != openAction.tickVersion) {
-                securityDepositValue_ = openAction.common.securityDepositValue * SECURITY_DEPOSIT_FACTOR;
+                securityDepositValue_ = openAction.common.securityDepositValue;
                 // the position was liquidated while pending
                 // remove the stale pending action
                 _pendingActionsQueue.clearAt(rawIndex);
