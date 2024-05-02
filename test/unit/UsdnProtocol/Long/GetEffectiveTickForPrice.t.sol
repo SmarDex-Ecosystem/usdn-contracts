@@ -69,11 +69,9 @@ contract TestUsdnProtocolLongGetEffectiveTickForPrice is UsdnProtocolBaseFixture
         price = 10_000;
 
         assertEq(
-            protocol.i_unadjustPrice(price, 0, 0, HugeUint.wrap(0 ether)),
-            price,
-            "unadjustPrice should be equal to price"
+            protocol.i_unadjustPrice(price, 0, 0, HugeUint.wrap(0)), price, "unadjustPrice should be equal to price"
         );
-        tick = protocol.getEffectiveTickForPrice(price, 0, 0, HugeUint.wrap(0 ether), tickSpacing);
+        tick = protocol.getEffectiveTickForPrice(price, 0, 0, HugeUint.wrap(0), tickSpacing);
         assertEq(tick, expectedMinTick, "tick should be equal to minTick");
     }
 
