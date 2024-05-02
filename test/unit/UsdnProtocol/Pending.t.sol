@@ -5,7 +5,6 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
 
 import {
-    PendingActionCommonData,
     PendingAction,
     DepositPendingAction,
     WithdrawalPendingAction,

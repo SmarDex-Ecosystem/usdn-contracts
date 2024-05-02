@@ -11,7 +11,6 @@ import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolA
 import {
     Position,
     ProtocolAction,
-    PendingActionCommonData,
     PendingAction,
     DepositPendingAction,
     WithdrawalPendingAction,

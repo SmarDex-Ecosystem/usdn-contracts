@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { USER_1, USER_2 } from "test/utils/Constants.sol";
 import { DequeFixture } from "test/unit/DoubleEndedQueue/utils/Fixtures.sol";
 
-import { ProtocolAction, PendingActionCommonData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue, PendingAction } from "src/libraries/DoubleEndedQueue.sol";
 
 /**
