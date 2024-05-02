@@ -46,7 +46,7 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
             protocol.getLongPosition(PositionId(expectedTick, 0, tickDataBefore.totalPos));
 
         // state after opening the position
-        assertEq(balanceLongBefore + LONG_AMOUNT, protocol.getBalanceLong(), "balance of long side");
+        assertEq(balanceLongBefore, protocol.getBalanceLong(), "balance of long side");
         assertEq(totalExpoBefore + LONG_AMOUNT * 3, protocol.getTotalExpo(), "total expo");
         TickData memory tickDataAfter = protocol.getTickData(expectedTick);
         assertEq(tickDataBefore.totalExpo + LONG_AMOUNT * 3, tickDataAfter.totalExpo, "total expo in tick");
