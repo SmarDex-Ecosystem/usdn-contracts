@@ -101,9 +101,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             expectedLeverage,
             uint128(LONG_AMOUNT),
             CURRENT_PRICE,
-            expectedTick,
-            0,
-            0
+            PositionId(expectedTick, 0, 0)
         ); // expected event
         PositionId memory posId = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
@@ -325,7 +323,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         uint128 newPrice = CURRENT_PRICE + 100 ether;
 
         vm.expectEmit(true, true, false, false);
-        emit ValidatedOpenPosition(address(this), to, 0, newPrice, posId.tick, posId.tickVersion, posId.index);
+        emit ValidatedOpenPosition(address(this), to, 0, newPrice, posId);
         protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
         (Position memory pos,) = protocol.getLongPosition(posId);
@@ -374,9 +372,11 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         int256 longBalanceBefore = protocol.longAssetAvailableWithFunding(newPrice, uint128(block.timestamp - 1));
 
         vm.expectEmit();
-        emit LiquidationPriceUpdated(posId.tick, posId.tickVersion, posId.index, newTick, newTickVersion, newIndex);
+        emit LiquidationPriceUpdated(posId, PositionId(newTick, newTickVersion, newIndex));
         vm.expectEmit(true, false, false, false);
-        emit ValidatedOpenPosition(address(this), address(this), 0, newPrice, newTick, newTickVersion, newIndex);
+        emit ValidatedOpenPosition(
+            address(this), address(this), 0, newPrice, PositionId(newTick, newTickVersion, newIndex)
+        );
         protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
         (Position memory pos,) = protocol.getLongPosition(PositionId(newTick, newTickVersion, newIndex));
@@ -452,12 +452,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         // validate deposit with a lower entry price
         vm.expectEmit();
         emit LiquidationPriceUpdated(
-            data.tempPosId.tick,
-            data.tempPosId.tickVersion,
-            data.tempPosId.index,
-            data.validateTick,
-            data.validateTickVersion,
-            data.validateIndex
+            data.tempPosId, PositionId(data.validateTick, data.validateTickVersion, data.validateIndex)
         );
         vm.expectEmit();
         emit ValidatedOpenPosition(
@@ -465,9 +460,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             address(this),
             data.expectedLeverage,
             data.validatePrice,
-            data.validateTick,
-            data.validateTickVersion,
-            data.validateIndex
+            PositionId(data.validateTick, data.validateTickVersion, data.validateIndex)
         );
         protocol.validateOpenPosition(abi.encode(data.validatePrice), EMPTY_PREVIOUS_DATA);
     }
@@ -487,7 +480,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(uint128(1500 ether));
         // we should be able to open a new position
         vm.expectEmit();
-        emit StalePendingActionRemoved(address(this), posId.tick, posId.tickVersion, posId.index);
+        emit StalePendingActionRemoved(address(this), posId);
         protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
     }
 
@@ -505,7 +498,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         bytes memory priceData = abi.encode(uint128(1500 ether));
         // validating the action emits the proper event
         vm.expectEmit();
-        emit StalePendingActionRemoved(address(this), posId.tick, posId.tickVersion, posId.index);
+        emit StalePendingActionRemoved(address(this), posId);
         protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
     }
 

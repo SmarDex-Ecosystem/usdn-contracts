@@ -13,7 +13,8 @@ import {
     PendingAction,
     DepositPendingAction,
     WithdrawalPendingAction,
-    LongPendingAction
+    LongPendingAction,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
@@ -632,7 +633,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                 // remove the stale pending action
                 _pendingActionsQueue.clearAt(rawIndex);
                 delete _pendingActions[user];
-                emit StalePendingActionRemoved(user, openAction.tick, openAction.tickVersion, openAction.index);
+                emit StalePendingActionRemoved(
+                    user,
+                    PositionId({ tick: openAction.tick, tickVersion: openAction.tickVersion, index: openAction.index })
+                );
             }
         }
     }

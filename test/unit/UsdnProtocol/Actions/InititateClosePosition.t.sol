@@ -180,7 +180,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         rawIndices[0] = 1;
 
         vm.expectEmit(true, true, false, false);
-        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
+        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, PositionId(0, 0, 0));
         protocol.initiateClosePosition(
             posId, positionAmount, priceData, PreviousActionsData(previousData, rawIndices), USER_1
         );
@@ -196,9 +196,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
 
         vm.expectEmit();
-        emit InitiatedClosePosition(
-            address(this), address(this), posId.tick, posId.tickVersion, posId.index, positionAmount, positionAmount, 0
-        );
+        emit InitiatedClosePosition(address(this), address(this), posId, positionAmount, positionAmount, 0);
         protocol.initiateClosePosition(posId, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this));
     }
 
@@ -328,14 +326,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------ Initiate the close action ----------------------- */
         vm.expectEmit();
         emit InitiatedClosePosition(
-            address(this),
-            to,
-            posId.tick,
-            posId.tickVersion,
-            posId.index,
-            posBefore.amount,
-            amountToClose,
-            posBefore.totalExpo - totalExpoToClose
+            address(this), to, posId, posBefore.amount, amountToClose, posBefore.totalExpo - totalExpoToClose
         );
         protocol.i_initiateClosePosition(address(this), to, posId, amountToClose, abi.encode(params.initialPrice));
 

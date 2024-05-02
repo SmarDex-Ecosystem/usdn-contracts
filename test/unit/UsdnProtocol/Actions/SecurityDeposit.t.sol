@@ -911,7 +911,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         wstETH.approve(address(protocol), 1 ether);
         vm.expectEmit();
-        emit StalePendingActionRemoved(address(this), posId.tick, posId.tickVersion, posId.index);
+        emit StalePendingActionRemoved(address(this), posId);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
         );

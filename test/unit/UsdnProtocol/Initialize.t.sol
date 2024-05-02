@@ -113,12 +113,12 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             leverage,
             INITIAL_POSITION,
             INITIAL_PRICE,
-            expectedTick,
-            0,
-            0
+            PositionId(expectedTick, 0, 0)
         );
         vm.expectEmit();
-        emit ValidatedOpenPosition(address(this), address(this), leverage, INITIAL_PRICE, expectedTick, 0, 0);
+        emit ValidatedOpenPosition(
+            address(this), address(this), leverage, INITIAL_PRICE, PositionId(expectedTick, 0, 0)
+        );
         protocol.i_createInitialPosition(
             INITIAL_POSITION, INITIAL_PRICE, tickWithoutPenalty, leverage, 2 * INITIAL_POSITION
         );
@@ -190,12 +190,12 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             leverage,
             INITIAL_POSITION,
             INITIAL_PRICE,
-            expectedTick,
-            0,
-            0
+            PositionId(expectedTick, 0, 0)
         );
         vm.expectEmit();
-        emit ValidatedOpenPosition(address(this), address(this), leverage, INITIAL_PRICE, expectedTick, 0, 0);
+        emit ValidatedOpenPosition(
+            address(this), address(this), leverage, INITIAL_PRICE, PositionId(expectedTick, 0, 0)
+        );
         protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
 
         assertEq(

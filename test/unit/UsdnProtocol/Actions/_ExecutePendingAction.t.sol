@@ -4,7 +4,12 @@ pragma solidity 0.8.20;
 import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction,
+    ProtocolAction,
+    PreviousActionsData,
+    PositionId
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the _executePendingAction internal function of the actions layer
@@ -25,7 +30,7 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
         PreviousActionsData memory previousActionsData = _setUpPendingAction();
 
         vm.expectEmit(true, true, false, false);
-        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
+        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, PositionId(0, 0, 0));
         (bool success, bool executed,) = protocol.i_executePendingAction(previousActionsData);
 
         assertTrue(success, "success");
