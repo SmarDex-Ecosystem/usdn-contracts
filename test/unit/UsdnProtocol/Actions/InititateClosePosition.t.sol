@@ -404,10 +404,10 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         /* ------------------------- Pending action's state ------------------------- */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
-        assertTrue(action.common.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
-        assertEq(action.common.timestamp, block.timestamp, "The block timestamp should be now");
-        assertEq(action.common.user, address(this), "The user should be the transaction sender");
-        assertEq(action.common.to, to, "To is wrong");
+        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
+        assertEq(action.timestamp, block.timestamp, "The block timestamp should be now");
+        assertEq(action.user, address(this), "The user should be the transaction sender");
+        assertEq(action.to, to, "To is wrong");
         assertEq(action.tick, tick, "The position tick is wrong");
         assertEq(
             action.closePosTotalExpo,

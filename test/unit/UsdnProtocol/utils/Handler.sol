@@ -52,7 +52,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     /// @dev Push a pending item to the front of the pending actions queue
     function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
         rawIndex_ = _pendingActionsQueue.pushFront(action);
-        _pendingActions[action.common.user] = uint256(rawIndex_) + 1;
+        _pendingActions[action.user] = uint256(rawIndex_) + 1;
     }
 
     /**
