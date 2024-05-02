@@ -216,7 +216,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 expectedAmountReceived = protocol.i_assetToRemove(
             price,
             protocol.i_getEffectivePriceForTick(
-                tick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing(), action.closeLiqMultiplier
+                protocol.i_calcTickWithoutPenalty(tick, liquidationPenalty), action.closeLiqMultiplier
             ),
             totalExpoToClose
         );
@@ -280,8 +280,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         data.expectedAmountReceived = protocol.i_assetToRemove(
             params.initialPrice,
             protocol.i_getEffectivePriceForTick(
-                tick - int24(uint24(data.liquidationPenalty)) * protocol.getTickSpacing(),
-                data.action.closeLiqMultiplier
+                protocol.i_calcTickWithoutPenalty(tick, data.liquidationPenalty), data.action.closeLiqMultiplier
             ),
             data.totalExpoToClose
         );
@@ -333,8 +332,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         data.expectedAmountReceived = protocol.i_assetToRemove(
             params.initialPrice,
             protocol.i_getEffectivePriceForTick(
-                tick - int24(uint24(data.liquidationPenalty)) * protocol.getTickSpacing(),
-                data.action.closeLiqMultiplier
+                protocol.i_calcTickWithoutPenalty(tick, data.liquidationPenalty), data.action.closeLiqMultiplier
             ),
             data.pos.totalExpo - data.totalExpoToClose
         );
@@ -383,14 +381,15 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         /* ------------------------- Validate Close Position ------------------------ */
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
-        uint128 timestamp = uint128(block.timestamp);
         uint128 priceAfterInit = params.initialPrice - 50 ether;
-        uint256 vaultBalanceBefore = uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, timestamp));
-        uint256 longBalanceBefore = uint256(protocol.longAssetAvailableWithFunding(priceAfterInit, timestamp));
+        uint256 vaultBalanceBefore =
+            uint256(protocol.vaultAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp)));
+        uint256 longBalanceBefore =
+            uint256(protocol.longAssetAvailableWithFunding(priceAfterInit, uint128(block.timestamp)));
         uint256 assetToTransfer = protocol.i_assetToRemove(
             priceAfterInit,
             protocol.i_getEffectivePriceForTick(
-                action.tick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing(), action.closeLiqMultiplier
+                protocol.i_calcTickWithoutPenalty(action.tick, liquidationPenalty), action.closeLiqMultiplier
             ),
             action.closePosTotalExpo
         );
@@ -450,7 +449,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 assetToTransfer = protocol.i_assetToRemove(
             price,
             protocol.i_getEffectivePriceForTick(
-                action.tick - int24(uint24(liquidationPenalty)) * protocol.getTickSpacing(), action.closeLiqMultiplier
+                protocol.i_calcTickWithoutPenalty(action.tick, liquidationPenalty), action.closeLiqMultiplier
             ),
             action.closePosTotalExpo
         );
@@ -520,7 +519,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             uint256(protocol.longAssetAvailableWithFunding(data.liquidationPrice, uint128(block.timestamp)));
         // value of the remaining part of the position (not being closed, but will be liquidated)
         data.liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            data.action.tick - int24(uint24(data.liquidationPenalty)) * protocol.getTickSpacing()
+            protocol.i_calcTickWithoutPenalty(data.action.tick, data.liquidationPenalty)
         );
         data.remainingValue = protocol.i_positionValue(
             data.liquidationPrice, data.liqPriceWithoutPenalty, data.pos.totalExpo - data.action.closePosTotalExpo

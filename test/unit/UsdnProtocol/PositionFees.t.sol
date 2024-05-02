@@ -41,8 +41,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 expectedLeverage = protocol.i_getLeverage(
             uint128(expectedPrice),
             protocol.getEffectivePriceForTick(
-                protocol.getEffectiveTickForPrice(desiredLiqPrice)
-                    - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
+                protocol.i_calcTickWithoutPenalty(protocol.getEffectiveTickForPrice(desiredLiqPrice))
             )
         );
 
@@ -97,8 +96,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 expectedLeverage = protocol.i_getLeverage(
             uint128(expectedPrice),
             protocol.getEffectivePriceForTick(
-                protocol.getEffectiveTickForPrice(desiredLiqPrice)
-                    - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
+                protocol.i_calcTickWithoutPenalty(protocol.getEffectiveTickForPrice(desiredLiqPrice))
             )
         );
 
@@ -149,10 +147,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint256 expectedTransfer = uint256(
             protocol.i_positionValue(
                 uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
-                protocol.i_getEffectivePriceForTick(
-                    tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
-                    action.closeLiqMultiplier
-                ),
+                protocol.i_getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick), action.closeLiqMultiplier),
                 action.closePosTotalExpo
             )
         );

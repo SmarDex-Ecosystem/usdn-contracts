@@ -422,6 +422,14 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _calcBurnUsdn(usdnShares, available, usdnTotalShares);
     }
 
+    function i_calcTickWithoutPenalty(int24 tick, uint8 liquidationPenalty) external view returns (int24) {
+        return _calcTickWithoutPenalty(tick, liquidationPenalty);
+    }
+
+    function i_calcTickWithoutPenalty(int24 tick) external view returns (int24) {
+        return _calcTickWithoutPenalty(tick, _liquidationPenalty);
+    }
+
     function i_unadjustPrice(
         uint256 price,
         uint256 assetPrice,

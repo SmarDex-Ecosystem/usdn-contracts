@@ -27,9 +27,7 @@ contract TestUsdnProtocolLongTickValue is UsdnProtocolBaseFixture {
      */
     function test_tickValue() public {
         int24 tick = protocol.getEffectiveTickForPrice(500 ether);
-        uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(
-            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-        );
+        uint128 liqPriceWithoutPenalty = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick));
         TickData memory tickData =
             TickData({ totalExpo: 10 ether, totalPos: 1, liquidationPenalty: protocol.getLiquidationPenalty() });
 
