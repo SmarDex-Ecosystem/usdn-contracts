@@ -77,12 +77,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
         uint128 expectedLeverage = uint128(
             (10 ** protocol.LEVERAGE_DECIMALS() * CURRENT_PRICE)
-                / (
-                    CURRENT_PRICE
-                        - protocol.getEffectivePriceForTick(
-                            protocol.i_calcTickWithoutPenalty(expectedTick, protocol.getLiquidationPenalty())
-                        )
-                )
+                / (CURRENT_PRICE - protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick)))
         );
 
         // state before opening the position
@@ -109,8 +104,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
         );
-        uint256 tickLiqPrice =
-            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick, protocol.getLiquidationPenalty()));
+        uint256 tickLiqPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick));
 
         // check state after opening the position
         assertEq(tick, expectedTick, "tick number");

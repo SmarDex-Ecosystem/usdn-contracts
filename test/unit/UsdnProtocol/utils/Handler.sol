@@ -426,6 +426,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _calcTickWithoutPenalty(tick, liquidationPenalty);
     }
 
+    function i_calcTickWithoutPenalty(int24 tick) external view returns (int24) {
+        return _calcTickWithoutPenalty(tick, this.getLiquidationPenalty());
+    }
+
     function i_unadjustPrice(
         uint256 price,
         uint256 assetPrice,

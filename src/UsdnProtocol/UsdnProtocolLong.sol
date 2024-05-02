@@ -541,9 +541,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
 
     /**
      * @notice Calculate the tick without the liquidation penalty
-     * @param tick The current tick of the position
+     * @param tick The tick that holds the position
      * @param liquidationPenalty The liquidation penalty of the tick
-     * @return tick_ The new tick for the position
+     * @return tick_ The tick corresponding to the liquidation price without penalty
      */
     function _calcTickWithoutPenalty(int24 tick, uint8 liquidationPenalty) internal view returns (int24 tick_) {
         tick_ = tick - int24(uint24(liquidationPenalty)) * _tickSpacing;
