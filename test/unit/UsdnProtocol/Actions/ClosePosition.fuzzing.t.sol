@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
@@ -64,7 +64,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
 
         uint256 amountClosed;
         for (uint256 i = 0; i < iterations; ++i) {
-            (Position memory posBefore,) = protocol.getLongPosition(tick, tickVersion, index);
+            (Position memory posBefore,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
             amountToClose = bound(amountToClose, 1, posBefore.amount);
             amountClosed += amountToClose;
 
@@ -74,7 +74,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             _waitDelay();
             protocol.i_validateClosePosition(address(this), priceData);
 
-            (Position memory posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
+            (Position memory posAfter,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
             assertEq(
                 posAfter.amount,
                 posBefore.amount - amountToClose,
@@ -101,7 +101,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             protocol.i_validateClosePosition(address(this), priceData);
         }
 
-        (Position memory pos,) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory pos,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
         assertEq(pos.amount, 0, "Amount left should be 0");
         assertEq(pos.user, address(0), "Position should have been deleted from the tick array");
 

@@ -17,7 +17,8 @@ import {
     Position,
     PendingAction,
     ProtocolAction,
-    PreviousActionsData
+    PreviousActionsData,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 import { OrderManagerHandler } from "test/unit/OrderManager/utils/Handler.sol";
@@ -182,10 +183,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
-        int24 firstPosTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
-        (Position memory firstPos,) = protocol.getLongPosition(
-            firstPosTick + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(), 0, 0
-        );
+        int24 firstPosTick = protocol.getHighestPopulatedTick();
+        (Position memory firstPos,) = protocol.getLongPosition(PositionId(firstPosTick, 0, 0));
 
         assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");

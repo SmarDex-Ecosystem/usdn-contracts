@@ -9,7 +9,8 @@ import {
     LongPendingAction,
     Position,
     PendingAction,
-    TickData
+    TickData,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -149,7 +150,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         assertEq(action.common.user, address(this), "pending action user");
 
         Position memory position;
-        (position,) = protocol.getLongPosition(tick, tickVersion, index);
+        (position,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
         assertEq(position.user, to, "user position");
         assertEq(position.timestamp, action.common.timestamp, "timestamp position");
         assertEq(position.amount, uint128(LONG_AMOUNT), "amount position");
@@ -199,7 +200,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
         );
         assertEq(tick2, tick, "tick is the same");
-        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(tick2, tickVersion, index);
+        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(PositionId(tick2, tickVersion, index));
         assertEq(pos.totalExpo, expectedTotalExpo, "pos total expo indicates that the stored penalty was used");
         assertEq(liqPenalty, storedLiqPenalty, "pos liquidation penalty");
     }
@@ -317,7 +318,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
         );
-        (Position memory tempPos,) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory tempPos,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
 
         _waitDelay();
 
@@ -327,7 +328,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         emit ValidatedOpenPosition(address(this), to, 0, newPrice, tick, tickVersion, index);
         protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
-        (Position memory pos,) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory pos,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
         assertEq(pos.user, tempPos.user, "user");
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
         // price increased -> total expo decreased
@@ -354,7 +355,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
         );
-        (Position memory tempPos,) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory tempPos,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
 
         _waitDelay();
 
@@ -378,7 +379,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         emit ValidatedOpenPosition(address(this), address(this), 0, newPrice, newTick, newTickVersion, newIndex);
         protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
-        (Position memory pos,) = protocol.getLongPosition(newTick, newTickVersion, newIndex);
+        (Position memory pos,) = protocol.getLongPosition(PositionId(newTick, newTickVersion, newIndex));
         assertEq(pos.user, tempPos.user, "user");
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
         assertEq(pos.amount, tempPos.amount, "amount");

@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { Position, ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, ProtocolAction, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The _removeAmountFromPosition internal function of the UsdnProtocolActions contract.
@@ -40,7 +40,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
      * @custom:and the protocol's state should be updated
      */
     function test_removeAmountFromPosition_removingEverythingDeletesThePosition() external {
-        (Position memory posBefore,) = protocol.getLongPosition(_tick, _tickVersion, _index);
+        (Position memory posBefore,) = protocol.getLongPosition(PositionId(_tick, _tickVersion, _index));
         uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
         TickData memory tickData = protocol.getTickData(_tick);
@@ -48,7 +48,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
 
         /* ----------------------------- Position State ----------------------------- */
         TickData memory newTickData = protocol.getTickData(_tick);
-        (Position memory posAfter,) = protocol.getLongPosition(_tick, _tickVersion, _index);
+        (Position memory posAfter,) = protocol.getLongPosition(PositionId(_tick, _tickVersion, _index));
         assertEq(posAfter.user, address(0), "Address of the position should have been reset");
         assertEq(posAfter.timestamp, 0, "Timestamp of the position should have been reset");
         assertEq(posAfter.totalExpo, 0, "Total expo of the position should have been reset");
@@ -79,7 +79,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
      * @custom:and the protocol's state should be updated
      */
     function test_removeAmountFromPosition_removingSomeAmountUpdatesThePosition() external {
-        (Position memory posBefore,) = protocol.getLongPosition(_tick, _tickVersion, _index);
+        (Position memory posBefore,) = protocol.getLongPosition(PositionId(_tick, _tickVersion, _index));
         uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
         TickData memory tickData = protocol.getTickData(_tick);
@@ -92,7 +92,7 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
 
         /* ----------------------------- Position State ----------------------------- */
         TickData memory newTickData = protocol.getTickData(_tick);
-        (Position memory posAfter,) = protocol.getLongPosition(_tick, _tickVersion, _index);
+        (Position memory posAfter,) = protocol.getLongPosition(PositionId(_tick, _tickVersion, _index));
         assertEq(posAfter.user, posBefore.user, "Address of the position should not have changed");
         assertEq(posAfter.timestamp, posBefore.timestamp, "Timestamp of the position should not have changed");
         assertEq(

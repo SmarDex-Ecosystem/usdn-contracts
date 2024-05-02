@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Fuzzing tests for the core of the protocol
@@ -42,7 +42,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         data.currentPrice = 2000 ether;
 
         data.firstPosTick = protocol.getHighestPopulatedTick();
-        (data.firstPos,) = protocol.getLongPosition(data.firstPosTick, 0, 0);
+        (data.firstPos,) = protocol.getLongPosition(PositionId(data.firstPosTick, 0, 0));
 
         Position[] memory pos = new Position[](10);
         int24[] memory ticks = new int24[](10);
@@ -77,7 +77,7 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
                     price: data.currentPrice
                 })
             );
-            (pos[i],) = protocol.getLongPosition(tick, tickVersion, index);
+            (pos[i],) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
             ticks[i] = tick;
             indices[i] = index;
 
@@ -100,8 +100,9 @@ contract TestUsdnProtocolFuzzingCore is UsdnProtocolBaseFixture {
         // calculate the value of all new long positions
         uint256 longPosValue;
         for (uint256 i = 0; i < 10; i++) {
-            longPosValue +=
-                uint256(protocol.getPositionValue(ticks[i], 0, indices[i], finalPrice, uint128(block.timestamp)));
+            longPosValue += uint256(
+                protocol.getPositionValue(PositionId(ticks[i], 0, indices[i]), finalPrice, uint128(block.timestamp))
+            );
         }
 
         // calculate the value of the deployer's long position

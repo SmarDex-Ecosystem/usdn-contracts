@@ -7,7 +7,7 @@ import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 
 import { Usdn } from "src/Usdn.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -127,7 +127,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_POSITION, "protocol wstETH balance");
         assertEq(protocol.getBalanceLong(), INITIAL_POSITION, "protocol long balance");
 
-        (Position memory pos,) = protocol.getLongPosition(expectedTick, 0, 0);
+        (Position memory pos,) = protocol.getLongPosition(PositionId(expectedTick, 0, 0));
         assertEq(pos.user, address(this), "position user");
         assertEq(pos.amount, INITIAL_POSITION, "position amount");
         assertEq(pos.totalExpo, 2 * INITIAL_POSITION, "position total expo");
@@ -207,7 +207,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         assertEq(usdn.balanceOf(address(this)), expectedUsdnMinted, "deployer USDN balance");
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "dead address USDN balance");
 
-        (Position memory pos,) = protocol.getLongPosition(expectedTick, 0, 0);
+        (Position memory pos,) = protocol.getLongPosition(PositionId(expectedTick, 0, 0));
         assertEq(pos.user, address(this), "position user");
         assertEq(pos.amount, INITIAL_POSITION, "position amount");
         assertEq(

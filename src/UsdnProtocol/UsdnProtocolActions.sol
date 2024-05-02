@@ -1146,7 +1146,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (ClosePositionData memory data_, bool liq_) {
-        (data_.pos, data_.liquidationPenalty) = getLongPosition(posId.tick, posId.tickVersion, posId.index);
+        (data_.pos, data_.liquidationPenalty) = getLongPosition(posId);
 
         _checkInitiateClosePosition(user, to, amountToClose, data_.pos);
 

@@ -265,7 +265,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         _initiateCloseAPositionHelper(positionAmount, to);
 
         /* ---------------------------- Position's state ---------------------------- */
-        (Position memory posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory posAfter,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
         assertEq(posAfter.user, address(0), "The user of the position should have been reset");
         assertEq(posAfter.timestamp, 0, "Timestamp of the position should have been reset");
         assertEq(posAfter.totalExpo, 0, "The total expo of the position should be 0");
@@ -297,13 +297,13 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint128 amountToClose = positionAmount / 2;
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
         TickData memory tickData = protocol.getTickData(tick);
-        (Position memory posBefore,) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory posBefore,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
         _initiateCloseAPositionHelper(amountToClose, address(this));
 
         /* ---------------------------- Position's state ---------------------------- */
-        (Position memory posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory posAfter,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
         assertEq(posBefore.user, posAfter.user, "The user of the position should not have changed");
         assertEq(posBefore.timestamp, posAfter.timestamp, "Timestamp of the position should have stayed the same");
         assertEq(
@@ -334,7 +334,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @param amountToClose Amount of the position to close
      */
     function _initiateCloseAPositionHelper(uint128 amountToClose, address to) internal {
-        (Position memory posBefore,) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory posBefore,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
         uint128 totalExpoToClose =
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
         uint256 totalExpoBefore = protocol.getTotalExpo();

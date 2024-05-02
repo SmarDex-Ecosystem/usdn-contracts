@@ -6,7 +6,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position, LiquidationsEffects, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, LiquidationsEffects, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolVault } from "src/UsdnProtocol/UsdnProtocolVault.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
@@ -71,16 +71,16 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getLongPosition(int24 tick, uint256 tickVersion, uint256 index)
+    function getLongPosition(PositionId memory posId)
         public
         view
         returns (Position memory pos_, uint8 liquidationPenalty_)
     {
-        (bytes32 tickHash, uint256 version) = _tickHash(tick);
-        if (tickVersion != version) {
-            revert UsdnProtocolOutdatedTick(version, tickVersion);
+        (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
+        if (posId.tickVersion != version) {
+            revert UsdnProtocolOutdatedTick(version, posId.tickVersion);
         }
-        pos_ = _longPositions[tickHash][index];
+        pos_ = _longPositions[tickHash][posId.index];
         liquidationPenalty_ = _tickData[tickHash].liquidationPenalty;
     }
 
@@ -93,12 +93,12 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /// @inheritdoc IUsdnProtocolLong
-    function getPositionValue(int24 tick, uint256 tickVersion, uint256 index, uint128 price, uint128 timestamp)
+    function getPositionValue(PositionId calldata posId, uint128 price, uint128 timestamp)
         external
         view
         returns (int256 value_)
     {
-        (Position memory pos, uint8 liquidationPenalty) = getLongPosition(tick, tickVersion, index);
+        (Position memory pos, uint8 liquidationPenalty) = getLongPosition(posId);
         int256 longTradingExpo = longTradingExpoWithFunding(price, timestamp);
         if (longTradingExpo < 0) {
             // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become zero.
@@ -107,7 +107,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             longTradingExpo = 0;
         }
         uint128 liqPrice = getEffectivePriceForTick(
-            tick - int24(uint24(liquidationPenalty)) * _tickSpacing,
+            posId.tick - int24(uint24(liquidationPenalty)) * _tickSpacing,
             price,
             uint256(longTradingExpo),
             _liqMultiplierAccumulator

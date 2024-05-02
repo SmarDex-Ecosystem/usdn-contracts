@@ -5,7 +5,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { ADMIN } from "test/utils/Constants.sol";
 
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The getter functions of the USDN Protocol
@@ -46,7 +46,7 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         );
 
         tickData = protocol.getTickData(tick);
-        (Position memory position,) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory position,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
 
         // Calculate the total expo of the position after the initialization
         assertEq(
@@ -65,7 +65,7 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
 
         uint256 previousExpo = position.totalExpo;
         // Get the updated position
-        (position,) = protocol.getLongPosition(tick, tickVersion, index);
+        (position,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
         uint256 newExpo = position.totalExpo;
 
         // Sanity check
@@ -129,7 +129,7 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         );
 
         tickData = protocol.getTickData(tick);
-        (Position memory position,) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory position,) = protocol.getLongPosition(PositionId(tick, tickVersion, index));
 
         // Calculate the total expo of the position after the initialization
         assertEq(
