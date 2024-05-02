@@ -85,13 +85,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
 
         vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
-        protocol.i_initiateClosePosition(
-            address(this),
-            address(this),
-            PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
-            amountToClose,
-            priceData
-        );
+        protocol.i_initiateClosePosition(address(this), address(this), posId, amountToClose, priceData);
     }
 
     /**
