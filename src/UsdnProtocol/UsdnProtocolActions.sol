@@ -997,7 +997,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Re-calculate leverage
         data_.liquidationPenalty = _tickData[data_.tickHash].liquidationPenalty;
         data_.liqPriceWithoutPenalty =
-            getEffectivePriceForTick(data_.action.tick - int24(uint24(data_.liquidationPenalty)) * _tickSpacing);
+            getEffectivePriceForTick(_calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
         // reverts if liqPriceWithoutPenalty >= startPrice
         data_.leverage = _getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
     }
@@ -1046,7 +1046,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
                 // Retrieve exact liquidation price without penalty.
                 data.liqPriceWithoutPenalty =
-                    getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing);
+                    getEffectivePriceForTick(_calcTickWithoutPenalty(tick, liquidationPenalty));
             }
             // recalculate the leverage with the new liquidation price
             data.leverage = _getLeverage(data.startPrice, data.liqPriceWithoutPenalty);
@@ -1188,7 +1188,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         data_.tempPositionValue = _assetToRemove(
             data_.lastPrice,
             getEffectivePriceForTick(
-                posId.tick - int24(uint24(data_.liquidationPenalty)) * _tickSpacing,
+                _calcTickWithoutPenalty(posId.tick, data_.liquidationPenalty),
                 data_.lastPrice,
                 data_.longTradingExpo,
                 data_.liqMulAcc
@@ -1333,7 +1333,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         int256 positionValue = _positionValue(
             priceWithFees,
             _getEffectivePriceForTick(
-                long.tick - int24(uint24(getTickLiquidationPenalty(long.tick))) * _tickSpacing, long.closeLiqMultiplier
+                _calcTickWithoutPenalty(long.tick, getTickLiquidationPenalty(long.tick)), long.closeLiqMultiplier
             ),
             long.closePosTotalExpo
         );
@@ -1413,8 +1413,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (uint128 leverage_, uint128 totalExpo_)
     {
         // remove liquidation penalty for leverage calculation
-        uint128 liqPriceWithoutPenalty =
-            getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing);
+        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(_calcTickWithoutPenalty(tick, liquidationPenalty));
         totalExpo_ = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
 
         // calculate position leverage

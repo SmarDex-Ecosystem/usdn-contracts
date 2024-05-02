@@ -80,7 +80,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
                 / (
                     CURRENT_PRICE
                         - protocol.getEffectivePriceForTick(
-                            expectedTick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
+                            protocol.i_calcTickWithoutPenalty(expectedTick, protocol.getLiquidationPenalty())
                         )
                 )
         );
@@ -109,9 +109,8 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
         );
-        uint256 tickLiqPrice = protocol.getEffectivePriceForTick(
-            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-        );
+        uint256 tickLiqPrice =
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick, protocol.getLiquidationPenalty()));
 
         // check state after opening the position
         assertEq(tick, expectedTick, "tick number");
@@ -190,7 +189,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         );
 
         uint128 expectedLiqPrice =
-            protocol.getEffectivePriceForTick(tick - int24(uint24(storedLiqPenalty)) * protocol.getTickSpacing());
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(tick, storedLiqPenalty));
         uint256 expectedTotalExpo =
             protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, expectedLiqPrice);
 
@@ -439,7 +438,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         data.expectedLeverage = protocol.i_getLeverage(
             data.validatePrice,
             protocol.getEffectivePriceForTick(
-                data.validateTick - int24(uint24(data.originalLiqPenalty - 1)) * protocol.getTickSpacing(),
+                protocol.i_calcTickWithoutPenalty(data.validateTick, data.originalLiqPenalty - 1),
                 data.validatePrice,
                 uint256(protocol.i_longTradingExpo(data.validatePrice)),
                 protocol.getLiqMultiplierAccumulator()
