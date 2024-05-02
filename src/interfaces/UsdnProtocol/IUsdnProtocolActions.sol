@@ -139,18 +139,14 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * Thus, calculations don't consider those anymore. The exit price (and thus profit) is not yet set definitively,
      * and will be done during the validate action.
      * The transaction must have _securityDepositValue in value.
-     * @param tick The tick containing the position to close
-     * @param tickVersion The tick version of the position to close
-     * @param index The index of the position inside the tick array
+     * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
      * @param to The address that will receive the assets
      */
     function initiateClosePosition(
-        int24 tick,
-        uint256 tickVersion,
-        uint256 index,
+        PositionId calldata posId,
         uint128 amountToClose,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,

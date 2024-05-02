@@ -308,13 +308,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatedTick(posIdToLiquidate.tick, posIdToLiquidate.tickVersion, 0, 0, 0);
 
         protocol.initiateClosePosition(
-            posIdToClose.tick,
-            posIdToClose.tickVersion,
-            posIdToClose.index,
-            1 ether,
-            abi.encode(effectivePriceForTick),
-            EMPTY_PREVIOUS_DATA,
-            address(this)
+            posIdToClose, 1 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA, address(this)
         );
     }
 

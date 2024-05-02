@@ -252,15 +252,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.initiateClosePosition(
-            posId.tick,
-            posId.tickVersion,
-            posId.index,
-            depositAmount,
-            liquidationPriceData,
-            EMPTY_PREVIOUS_DATA,
-            address(this)
-        );
+        protocol.initiateClosePosition(posId, depositAmount, liquidationPriceData, EMPTY_PREVIOUS_DATA, address(this));
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));

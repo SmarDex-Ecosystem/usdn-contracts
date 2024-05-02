@@ -142,7 +142,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint256 etherBalanceBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 1 ether }(
-            posId.tick, posId.tickVersion, posId.index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            posId, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
         );
 
         assertEq(
@@ -182,13 +182,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
         protocol.initiateClosePosition(
-            posId.tick,
-            posId.tickVersion,
-            posId.index,
-            positionAmount,
-            priceData,
-            PreviousActionsData(previousData, rawIndices),
-            USER_1
+            posId, positionAmount, priceData, PreviousActionsData(previousData, rawIndices), USER_1
         );
     }
 
@@ -205,9 +199,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         emit InitiatedClosePosition(
             address(this), address(this), posId.tick, posId.tickVersion, posId.index, positionAmount, positionAmount, 0
         );
-        protocol.initiateClosePosition(
-            posId.tick, posId.tickVersion, posId.index, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
-        );
+        protocol.initiateClosePosition(posId, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this));
     }
 
     /* -------------------------------------------------------------------------- */
