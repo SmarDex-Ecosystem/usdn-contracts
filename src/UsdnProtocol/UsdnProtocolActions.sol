@@ -1118,10 +1118,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
         }
 
-        if (amountToClose > pos.amount) {
-            revert UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
-        }
-
         // Make sure the remaining position is higher than _minLongPosition
         uint128 remainingAmount = pos.amount - amountToClose;
         if (remainingAmount > 0 && remainingAmount < _minLongPosition) {
