@@ -922,6 +922,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             timestamp: uint40(block.timestamp)
         });
         (data.posId.tickVersion, data.posId.index) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
+        _balanceLong += long.amount;
         posId_ = data.posId;
 
         securityDepositValue_ = _createOpenPendingAction(user, to, data);
@@ -1051,9 +1052,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             data.leverage = _getLeverage(data.startPrice, data.liqPriceWithoutPenalty);
 
             // move the position to its new tick, updating its total expo, and returning the new tickVersion and index
-            (uint256 tickVersion, uint256 index) = _updateLiquidationPrice(
-                data.action.tick, data.action.index, tick, data.pos, data.startPrice, data.liqPriceWithoutPenalty
+            // remove position from old tick completely
+            _removeAmountFromPosition(
+                data.action.tick, data.action.index, data.pos, data.pos.amount, data.pos.totalExpo
             );
+            // update position total expo (because of new leverage / liq price)
+            data.pos.totalExpo =
+                _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+            // insert position into new tick
+            (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, data.pos, liquidationPenalty);
+            // no long balance update is necessary (collateral didn't change)
 
             // emit LiquidationPriceUpdated
             emit LiquidationPriceUpdated(
