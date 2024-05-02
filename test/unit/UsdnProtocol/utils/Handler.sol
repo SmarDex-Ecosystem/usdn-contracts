@@ -24,6 +24,7 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -419,5 +420,14 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         returns (uint256 assetExpected_)
     {
         return _calcBurnUsdn(usdnShares, available, usdnTotalShares);
+    }
+
+    function i_unadjustPrice(
+        uint256 price,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) external pure returns (uint256) {
+        return _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
     }
 }
