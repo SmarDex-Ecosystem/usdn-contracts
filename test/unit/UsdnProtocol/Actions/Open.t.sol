@@ -101,8 +101,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
             expectedTick,
             0,
             0
-        ); // expected event
-
+        );
         (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
         );
@@ -367,51 +366,62 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
         _waitDelay();
 
-        uint128 newPrice = CURRENT_PRICE - 100 ether;
-        uint128 newLiqPrice = protocol.i_getLiquidationPrice(newPrice, uint128(protocol.getMaxLeverage()));
-        int24 newTick = protocol.getEffectiveTickForPrice(
+        testData.validatePrice = CURRENT_PRICE - 100 ether;
+        uint128 newLiqPrice = protocol.i_getLiquidationPrice(testData.validatePrice, uint128(protocol.getMaxLeverage()));
+        testData.validateTick = protocol.getEffectiveTickForPrice(
             newLiqPrice,
-            newPrice,
-            uint256(protocol.i_longTradingExpo(newPrice)),
+            testData.validatePrice,
+            uint256(protocol.i_longTradingExpo(testData.validatePrice)),
             protocol.getLiqMultiplierAccumulator(),
             protocol.getTickSpacing()
         ) + liqPenalty;
-        uint256 newTickVersion = protocol.getTickVersion(newTick);
+        testData.validateTickVersion = protocol.getTickVersion(testData.validateTick);
 
-        uint256 newIndex;
-        {
-            TickData memory tickData = protocol.getTickData(newTick);
-            newIndex = tickData.totalPos;
-        }
+        TickData memory tickData = protocol.getTickData(testData.validateTick);
+        testData.validateIndex = tickData.totalPos;
 
-        int256 longBalanceBefore = protocol.longAssetAvailableWithFunding(newPrice, uint128(block.timestamp - 1));
+        int256 longBalanceBefore =
+            protocol.longAssetAvailableWithFunding(testData.validatePrice, uint128(block.timestamp - 1));
         uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
-            newTick - liqPenalty,
-            uint256(newPrice),
+            testData.validateTick - liqPenalty,
+            uint256(testData.validatePrice),
             uint256(
                 protocol.longTradingExpoWithFunding(
-                    newPrice, tempPos.timestamp + uint128(oracleMiddleware.getValidationDelay())
+                    testData.validatePrice, tempPos.timestamp + uint128(oracleMiddleware.getValidationDelay())
                 )
             ),
             protocol.getLiqMultiplierAccumulator()
         );
-        uint128 expectedPosTotalExpo = protocol.i_calculatePositionTotalExpo(tempPos.amount, newPrice, expectedLiqPrice);
+        uint128 expectedPosTotalExpo =
+            protocol.i_calculatePositionTotalExpo(tempPos.amount, testData.validatePrice, expectedLiqPrice);
 
         vm.expectEmit();
         emit LiquidationPriceUpdated(
-            testData.tempTick, testData.tempTickVersion, testData.tempIndex, newTick, newTickVersion, newIndex
+            testData.tempTick,
+            testData.tempTickVersion,
+            testData.tempIndex,
+            testData.validateTick,
+            testData.validateTickVersion,
+            testData.validateIndex
         );
         vm.expectEmit();
         emit ValidatedOpenPosition(
-            address(this), address(this), expectedPosTotalExpo, newPrice, newTick, newTickVersion, newIndex
+            address(this),
+            address(this),
+            expectedPosTotalExpo,
+            testData.validatePrice,
+            testData.validateTick,
+            testData.validateTickVersion,
+            testData.validateIndex
         );
-        protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(abi.encode(testData.validatePrice), EMPTY_PREVIOUS_DATA);
 
-        (Position memory pos,) = protocol.getLongPosition(newTick, newTickVersion, newIndex);
+        (Position memory pos,) =
+            protocol.getLongPosition(testData.validateTick, testData.validateTickVersion, testData.validateIndex);
         assertEq(pos.user, tempPos.user, "user");
         assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
         assertEq(pos.amount, tempPos.amount, "amount");
-        assertLt(newTick, testData.tempTick, "tick");
+        assertLt(testData.validateTick, testData.tempTick, "tick");
         assertGt(pos.totalExpo, tempPos.totalExpo, "totalExpo");
         assertEq(protocol.getBalanceLong(), uint256(longBalanceBefore), "balance of long side unchanged");
     }
