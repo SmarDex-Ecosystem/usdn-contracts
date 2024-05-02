@@ -55,7 +55,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
             int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
-            // fee have the same sign as fundAsset (negative here), so we need to sub them
+            // fees have the same sign as fundAsset (negative here), so we need to sub them
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
         }
     }
@@ -139,8 +139,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                     arrayLen = i;
                 }
             } else {
-                // the pending action is not actionable (it is too recent), following actions can't be actionable
-                // either so we return
+                // the pending action is not actionable (it is too recent),
+                // following actions can't be actionable either so we return
                 break;
             }
         } while (i < maxIter);
@@ -196,7 +196,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
         int256 numerator = oldLongExpo_ - oldVaultExpo;
-        // optimization : if the numerator is zero, then return the EMA
+        // optimization: if the numerator is zero, then return the EMA
         // slither-disable-next-line incorrect-equality
         if (numerator == 0) {
             return (ema, oldLongExpo_);
@@ -244,7 +244,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
      * timestamp
-     * @dev If the provided timestamp is older than the last state update, the result will be zero.
+     * @dev If the provided timestamp is older than the last state update, the result will be zero
      * @param timestamp The current timestamp
      * @param ema The EMA of the funding rate
      * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
@@ -279,7 +279,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Calculate the PnL in asset units of the long side, considering the overall total expo and change in
-     * price.
+     * price
      * @param totalExpo The total exposure of the long side
      * @param balanceLong The (old) balance of the long side
      * @param newPrice The new price
@@ -291,7 +291,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         pure
         returns (int256 pnl_)
     {
-        // in case of negative trading expo, we can't allow calculation of PnL because it would invert the sign of the
+        // in case of a negative trading expo, we can't allow calculation of PnL because it would invert the sign of the
         // calculated amount. We thus disable any balance update due to PnL in such a case
         if (balanceLong >= totalExpo) {
             return 0;
@@ -305,7 +305,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
      * due to the price change to `currentPrice`
      * @param currentPrice The current price
-     * @return available_ The available balance in the long side
+     * @return available_ The available balance on the long side
      */
     function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
         available_ = _longAssetAvailable(_totalExpo, _balanceLong, currentPrice, _lastPrice);
@@ -317,7 +317,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param balanceLong The (old) balance of the long side
      * @param newPrice The new price
      * @param oldPrice The old price when the old balance was updated
-     * @return available_ The available balance in the long side
+     * @return available_ The available balance on the long side
      */
     function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
         internal
@@ -386,7 +386,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
-     * calculate the new liquidation multiplier and the temporary new balances for each side.
+     * calculate the new liquidation multiplier and the temporary new balances for each side
      * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
      * update the balances. This is left to the caller
      * @param currentPrice The current price
@@ -475,7 +475,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Calculate the protocol fee and apply it to the funding asset amount
-     * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to long side)
+     * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to the long
+     * side)
      * @param fund The funding factor
      * @param fundAsset The funding asset amount to be used for the fee calculation
      * @return fee_ The absolute value of the calculated fee
@@ -493,8 +494,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         fundAssetWithFee_ = fundAsset - fee_;
 
         if (fee_ < 0) {
-            // when funding is negative, the part that is taken as fee does not contribute to the liquidation multiplier
-            // adjustment, and so we should deduce it from the funding factor
+            // when funding is negative, the part that is taken as fees does not contribute to the liquidation
+            // multiplier adjustment, and so we should deduce it from the funding factor
             fundWithFee_ -= fund * protocolFeeBps / int256(BPS_DIVISOR);
             // we want to return the absolute value of the fee
             fee_ = -fee_;
@@ -597,7 +598,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
-     * are removed.
+     * are removed
      * @return action_ The first actionable pending action if any, otherwise a struct with all fields set to zero and
      * ProtocolAction.None
      * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
@@ -615,7 +616,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
         uint256 i = 0;
         do {
-            // Since we will never call `front` more than `queueLength` times, there is no risk of reverting
+            // since we will never call `front` more than `queueLength` times, there is no risk of reverting
             (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.front();
             // gas optimization
             unchecked {
@@ -639,7 +640,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
      * @dev This is only applicable to `ValidateOpenPosition` pending actions
-     * @param user The user address
+     * @param user The user's address
      * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
     function _removeStalePendingAction(address user) internal returns (uint256 securityDepositValue_) {
@@ -667,7 +668,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Add a pending action to the queue
      * @dev This reverts if there is already a pending action for this user
-     * @param user The user address
+     * @param user The user's address
      * @param action The pending action struct
      * @return securityDepositValue_ The security deposit value of the stale pending action
      */
@@ -689,8 +690,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Get the pending action for a user
      * @dev To check for the presence of a pending action, compare `action_.action` to `ProtocolAction.None`. There is
-     * a pending action only if the action is different from `ProtocolAction.None`.
-     * @param user The user address
+     * a pending action only if the action is different from `ProtocolAction.None`
+     * @param user The user's address
      * @return action_ The pending action struct if any, otherwise a zero-initialized struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
@@ -709,7 +710,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Get the pending action for a user
      * @dev This function reverts if there is no pending action for the user
-     * @param user The user address
+     * @param user The user's address
      * @return action_ The pending action struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
@@ -726,7 +727,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Clear the user pending action and return it
-     * @param user The user address
+     * @param user The user's address
      * @return action_ The cleared pending action struct
      */
     function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
@@ -738,7 +739,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Clear the pending action for a user
-     * @param user The user address
+     * @param user The user's address
      */
     function _clearPendingAction(address user) internal {
         uint256 pendingActionIndex = _pendingActions[user];
