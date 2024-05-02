@@ -913,7 +913,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             user,
             to,
             uint40(block.timestamp),
-            positionTotalExpo,
+            data.positionTotalExpo,
             amount,
             data.adjustedPrice,
             posId_.tick,
@@ -1027,21 +1027,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                     getEffectivePriceForTick(tick - int24(uint24(liquidationPenalty)) * _tickSpacing);
             }
 
-            // update position total expo
-            data.pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
+            // move the position to its new tick, updating its total expo,
+            // returning the new tickVersion, index and total expo
+            (uint256 tickVersion, uint256 index, uint128 posTotalExpo) = _updateLiquidationPrice(
+                data.action.tick, data.action.index, tick, data.pos, data.startPrice, data.liqPriceWithoutPenalty
+            );
 
             // emit LiquidationPriceUpdated
             emit LiquidationPriceUpdated(
                 data.action.tick, data.action.tickVersion, data.action.index, tick, tickVersion, index
             );
             emit ValidatedOpenPosition(
-                data.action.common.user,
-                data.action.common.to,
-                data.pos.totalExpo,
-                data.startPrice,
-                tick,
-                tickVersion,
-                index
+                data.action.common.user, data.action.common.to, posTotalExpo, data.startPrice, tick, tickVersion, index
             );
         } else {
             // Calculate the new total expo
@@ -1069,7 +1066,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             emit ValidatedOpenPosition(
                 data.action.common.user,
                 data.action.common.to,
-                data.leverage,
+                expoAfter,
                 data.startPrice,
                 data.action.tick,
                 data.action.tickVersion,

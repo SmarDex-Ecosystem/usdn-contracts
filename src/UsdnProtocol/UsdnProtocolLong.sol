@@ -494,6 +494,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param liqPriceWithoutPenalty Liquidation price of the position without the liquidation penalty
      * @return newTickVersion_ The tick version of the destination tick
      * @return newIndex_ The index of the position in the destination tick
+     * @return newPosTotalExpo_ The total expo of the position after moving to the new tick
      */
     function _updateLiquidationPrice(
         int24 fromTick,
@@ -502,7 +503,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         Position memory pos,
         uint128 startPrice,
         uint128 liqPriceWithoutPenalty
-    ) internal returns (uint256 newTickVersion_, uint256 newIndex_) {
+    ) internal returns (uint256 newTickVersion_, uint256 newIndex_, uint128 newPosTotalExpo_) {
         UpdateLiqPriceData memory data;
         (data.fromTickHash,) = _tickHash(fromTick);
         TickData storage fromTickData = _tickData[data.fromTickHash];
@@ -519,8 +520,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // Remove from tick array (set to zero to avoid shifting indices)
         delete _longPositions[data.fromTickHash][fromIndex];
         // Update the position total expo
-        pos.totalExpo = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
-        _totalExpo += pos.totalExpo - data.oldPosTotalExpo;
+        newPosTotalExpo_ = _calculatePositionTotalExpo(pos.amount, startPrice, liqPriceWithoutPenalty);
+        pos.totalExpo = newPosTotalExpo_;
+        _totalExpo += newPosTotalExpo_ - data.oldPosTotalExpo;
 
         // Add to destination tick array
         Position[] storage tickArray = _longPositions[data.toTickHash];
@@ -536,13 +538,13 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
             // first position in this tick, we need to reflect that it is populated
             _tickBitmap.set(_calcBitmapIndexFromTick(toTick));
             // we store the data for this tick
-            toTickData.totalExpo = pos.totalExpo;
+            toTickData.totalExpo = newPosTotalExpo_;
             toTickData.totalPos = 1;
             uint8 liqPenalty = _liquidationPenalty;
             toTickData.liquidationPenalty = liqPenalty;
             data.unadjustedToTickPrice = TickMath.getPriceAtTick(toTick - int24(uint24(liqPenalty)) * _tickSpacing);
         } else {
-            toTickData.totalExpo += pos.totalExpo;
+            toTickData.totalExpo += newPosTotalExpo_;
             toTickData.totalPos += 1;
             // we do not need to adjust the tick's liquidationPenalty since it remains constant
             data.unadjustedToTickPrice =
@@ -550,7 +552,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
         _liqMultiplierAccumulator = _liqMultiplierAccumulator.sub(
             HugeUint.wrap(data.unadjustedFromTickPrice * data.oldPosTotalExpo)
-        ).add(HugeUint.wrap(data.unadjustedToTickPrice * pos.totalExpo));
+        ).add(HugeUint.wrap(data.unadjustedToTickPrice * newPosTotalExpo_));
     }
 
     /// @inheritdoc IUsdnProtocolLong
