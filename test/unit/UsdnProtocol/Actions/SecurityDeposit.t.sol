@@ -19,7 +19,7 @@ import {
  * @custom:and A security deposit of 0.5 ether
  */
 contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
-    uint256 internal SECURITY_DEPOSIT_VALUE;
+    uint64 internal SECURITY_DEPOSIT_VALUE;
     bytes priceData;
 
     function setUp() public {
@@ -762,7 +762,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
     function test_securityDeposit_changeValue() public {
         uint256 balanceSenderBefore = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
-        uint256 newSecurityDepositValue = SECURITY_DEPOSIT_VALUE / 2;
+        uint64 newSecurityDepositValue = SECURITY_DEPOSIT_VALUE / 2;
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
@@ -837,7 +837,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 balanceProtocolBefore = address(protocol).balance;
         uint256 usdnBalanceUser0Before = usdn.balanceOf(address(this));
         uint256 usdnBalanceUser1Before = usdn.balanceOf(USER_1);
-        uint256 newSecurityDepositValue = SECURITY_DEPOSIT_VALUE / 2;
+        uint64 newSecurityDepositValue = SECURITY_DEPOSIT_VALUE / 2;
 
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
