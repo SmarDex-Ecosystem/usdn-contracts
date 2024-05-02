@@ -11,7 +11,6 @@ import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolA
 import {
     Position,
     ProtocolAction,
-    PendingActionCommonData,
     PendingAction,
     DepositPendingAction,
     WithdrawalPendingAction,
@@ -512,13 +511,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             (currentPrice.price - currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         DepositPendingAction memory pendingAction = DepositPendingAction({
-            common: PendingActionCommonData({
-                action: ProtocolAction.ValidateDeposit,
-                timestamp: uint40(block.timestamp),
-                user: user,
-                to: to,
-                securityDepositValue: _securityDepositValue
-            }),
+            action: ProtocolAction.ValidateDeposit,
+            timestamp: uint40(block.timestamp),
+            user: user,
+            to: to,
+            securityDepositValue: _securityDepositValue,
             _unused: 0,
             amount: amount,
             assetPrice: pendingActionPrice,
@@ -563,23 +560,22 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
-        if (pending.common.action != ProtocolAction.ValidateDeposit) {
+        if (pending.action != ProtocolAction.ValidateDeposit) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (pending.common.user != user) {
+        if (pending.user != user) {
             revert UsdnProtocolInvalidPendingAction();
         }
 
         _validateDepositWithAction(pending, priceData);
-        return pending.common.securityDepositValue;
+        return pending.securityDepositValue;
     }
 
     function _validateDepositWithAction(PendingAction memory pending, bytes calldata priceData) internal {
         DepositPendingAction memory deposit = _toDepositPendingAction(pending);
 
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.ValidateDeposit, deposit.common.timestamp, priceData);
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.ValidateDeposit, deposit.timestamp, priceData);
 
         // adjust balances
         _applyPnlAndFundingAndLiquidate(
@@ -614,10 +610,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _balanceVault += deposit.amount;
 
-        _usdn.mint(deposit.common.to, usdnToMint);
-        emit ValidatedDeposit(
-            deposit.common.user, deposit.common.to, deposit.amount, usdnToMint, deposit.common.timestamp
-        );
+        _usdn.mint(deposit.to, usdnToMint);
+        emit ValidatedDeposit(deposit.user, deposit.to, deposit.amount, usdnToMint, deposit.timestamp);
     }
 
     /**
@@ -667,13 +661,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         PendingAction memory action = _convertWithdrawalPendingAction(
             WithdrawalPendingAction({
-                common: PendingActionCommonData({
-                    action: ProtocolAction.ValidateWithdrawal,
-                    timestamp: uint40(block.timestamp),
-                    user: user,
-                    to: to,
-                    securityDepositValue: _securityDepositValue
-                }),
+                action: ProtocolAction.ValidateWithdrawal,
+                timestamp: uint40(block.timestamp),
+                user: user,
+                to: to,
+                securityDepositValue: _securityDepositValue,
                 sharesLSB: _calcWithdrawalAmountLSB(usdnShares),
                 sharesMSB: _calcWithdrawalAmountMSB(usdnShares),
                 assetPrice: data.pendingActionPrice,
@@ -726,23 +718,23 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
-        if (pending.common.action != ProtocolAction.ValidateWithdrawal) {
+        if (pending.action != ProtocolAction.ValidateWithdrawal) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (pending.common.user != user) {
+        if (pending.user != user) {
             revert UsdnProtocolInvalidPendingAction();
         }
 
         _validateWithdrawalWithAction(pending, priceData);
-        return pending.common.securityDepositValue;
+        return pending.securityDepositValue;
     }
 
     function _validateWithdrawalWithAction(PendingAction memory pending, bytes calldata priceData) internal {
         WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
 
         PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.common.timestamp, priceData);
+            _getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, priceData);
 
         _applyPnlAndFundingAndLiquidate(
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
@@ -782,15 +774,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // send the asset to the user
         if (assetToTransfer > 0) {
             _balanceVault -= assetToTransfer;
-            _asset.safeTransfer(withdrawal.common.to, assetToTransfer);
+            _asset.safeTransfer(withdrawal.to, assetToTransfer);
         }
 
         emit ValidatedWithdrawal(
-            withdrawal.common.user,
-            withdrawal.common.to,
-            assetToTransfer,
-            usdn.convertToTokens(shares),
-            withdrawal.common.timestamp
+            withdrawal.user, withdrawal.to, assetToTransfer, usdn.convertToTokens(shares), withdrawal.timestamp
         );
     }
 
@@ -847,13 +835,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (uint256 securityDepositValue_)
     {
         LongPendingAction memory action = LongPendingAction({
-            common: PendingActionCommonData({
-                action: ProtocolAction.ValidateOpenPosition,
-                timestamp: uint40(block.timestamp),
-                user: user,
-                to: to,
-                securityDepositValue: _securityDepositValue
-            }),
+            action: ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp),
+            user: user,
+            to: to,
+            securityDepositValue: _securityDepositValue,
             tick: data.posId.tick,
             closeAmount: 0,
             closePosTotalExpo: 0,
@@ -927,16 +913,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
-        if (pending.common.action != ProtocolAction.ValidateOpenPosition) {
+        if (pending.action != ProtocolAction.ValidateOpenPosition) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (pending.common.user != user) {
+        if (pending.user != user) {
             revert UsdnProtocolInvalidPendingAction();
         }
 
         _validateOpenPositionWithAction(pending, priceData);
-        return pending.common.securityDepositValue;
+        return pending.securityDepositValue;
     }
 
     /**
@@ -952,7 +938,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         data_.action = _toLongPendingAction(pending);
         PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.ValidateOpenPosition, data_.action.common.timestamp, priceData);
+            _getOraclePrice(ProtocolAction.ValidateOpenPosition, data_.action.timestamp, priceData);
         // Apply fees on price
         data_.startPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
@@ -966,7 +952,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // The current tick version doesn't match the version from the pending action.
             // This means the position has been liquidated in the mean time
             emit StalePendingActionRemoved(
-                data_.action.common.user,
+                data_.action.user,
                 PositionId({ tick: data_.action.tick, tickVersion: data_.action.tickVersion, index: data_.action.index })
             );
             return (data_, true);
@@ -1048,9 +1034,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index }),
                 newPosId
             );
-            emit ValidatedOpenPosition(
-                data.action.common.user, data.action.common.to, data.leverage, data.startPrice, newPosId
-            );
+            emit ValidatedOpenPosition(data.action.user, data.action.to, data.leverage, data.startPrice, newPosId);
             return;
         }
         // the new leverage does not exceed the max leverage
@@ -1076,8 +1060,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         emit ValidatedOpenPosition(
-            data.action.common.user,
-            data.action.common.to,
+            data.action.user,
+            data.action.to,
             data.leverage,
             data.startPrice,
             PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index })
@@ -1095,7 +1079,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      */
     function _checkInitiateClosePosition(address user, address to, uint128 amountToClose, Position memory pos)
         internal
-        pure
+        view
     {
         if (pos.user != user) {
             revert UsdnProtocolUnauthorized();
@@ -1103,6 +1087,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         if (amountToClose > pos.amount) {
             revert UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
+        }
+
+        // Make sure the remaining position is higher than _minLongPosition
+        uint128 remainingAmount = pos.amount - amountToClose;
+        if (remainingAmount > 0 && remainingAmount < _minLongPosition) {
+            revert UsdnProtocolLongPositionTooSmall();
         }
 
         if (amountToClose == 0) {
@@ -1195,13 +1185,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         ClosePositionData memory data
     ) internal returns (uint256 securityDepositValue_) {
         LongPendingAction memory action = LongPendingAction({
-            common: PendingActionCommonData({
-                action: ProtocolAction.ValidateClosePosition,
-                timestamp: uint40(block.timestamp),
-                user: user,
-                to: to,
-                securityDepositValue: data.securityDepositValue
-            }),
+            action: ProtocolAction.ValidateClosePosition,
+            timestamp: uint40(block.timestamp),
+            user: user,
+            to: to,
+            securityDepositValue: data.securityDepositValue,
             tick: posId.tick,
             closeAmount: amountToClose,
             closePosTotalExpo: data.totalExpoToClose,
@@ -1263,23 +1251,22 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PendingAction memory pending = _getAndClearPendingAction(user);
 
         // check type of action
-        if (pending.common.action != ProtocolAction.ValidateClosePosition) {
+        if (pending.action != ProtocolAction.ValidateClosePosition) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (pending.common.user != user) {
+        if (pending.user != user) {
             revert UsdnProtocolInvalidPendingAction();
         }
 
         _validateClosePositionWithAction(pending, priceData);
-        return pending.common.securityDepositValue;
+        return pending.securityDepositValue;
     }
 
     function _validateClosePositionWithAction(PendingAction memory pending, bytes calldata priceData) internal {
         LongPendingAction memory long = _toLongPendingAction(pending);
 
-        PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.ValidateClosePosition, long.common.timestamp, priceData);
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.ValidateClosePosition, long.timestamp, priceData);
 
         _applyPnlAndFundingAndLiquidate(
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
@@ -1297,7 +1284,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // Credit the full amount to the vault to preserve the total balance invariant.
             _balanceVault += long.closeBoundedPositionValue;
             emit LiquidatedPosition(
-                long.common.user,
+                long.user,
                 PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
                 currentPrice.neutralPrice,
                 liquidationPrice
@@ -1359,12 +1346,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // send the asset to the user
         if (assetToTransfer > 0) {
-            _asset.safeTransfer(long.common.to, assetToTransfer);
+            _asset.safeTransfer(long.to, assetToTransfer);
         }
 
         emit ValidatedClosePosition(
-            long.common.user,
-            long.common.to,
+            long.user,
+            long.to,
             PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
             assetToTransfer,
             assetToTransfer.toInt256() - _toInt256(long.closeAmount)
@@ -1460,7 +1447,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (bool success_, bool executed_, uint256 securityDepositValue_)
     {
         (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction();
-        if (pending.common.action == ProtocolAction.None) {
+        if (pending.action == ProtocolAction.None) {
             // no pending action
             return (true, false, 0);
         }
@@ -1477,20 +1464,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return (false, false, 0);
         }
         bytes calldata priceData = data.priceData[offset];
-        _clearPendingAction(pending.common.user);
-        if (pending.common.action == ProtocolAction.ValidateDeposit) {
+        _clearPendingAction(pending.user);
+        if (pending.action == ProtocolAction.ValidateDeposit) {
             _validateDepositWithAction(pending, priceData);
-        } else if (pending.common.action == ProtocolAction.ValidateWithdrawal) {
+        } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
             _validateWithdrawalWithAction(pending, priceData);
-        } else if (pending.common.action == ProtocolAction.ValidateOpenPosition) {
+        } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
             _validateOpenPositionWithAction(pending, priceData);
-        } else if (pending.common.action == ProtocolAction.ValidateClosePosition) {
+        } else if (pending.action == ProtocolAction.ValidateClosePosition) {
             _validateClosePositionWithAction(pending, priceData);
         }
         success_ = true;
         executed_ = true;
-        securityDepositValue_ = pending.common.securityDepositValue;
-        emit SecurityDepositRefunded(pending.common.user, msg.sender, securityDepositValue_);
+        securityDepositValue_ = pending.securityDepositValue;
+        emit SecurityDepositRefunded(pending.user, msg.sender, securityDepositValue_);
     }
 
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
