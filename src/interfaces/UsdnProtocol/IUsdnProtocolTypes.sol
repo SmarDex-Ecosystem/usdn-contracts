@@ -48,8 +48,8 @@ enum ProtocolAction {
  * @notice A pending action in the queue.
  * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
- * @param user The user address.
  * @param to The to address.
+ * @param validator The validator address.
  * @param securityDepositValue The security deposit of the pending action.
  */
 struct PendingActionCommonData {
@@ -62,7 +62,10 @@ struct PendingActionCommonData {
 
 /**
  * @notice A pending action in the queue.
- * @param common The common data for all pending actions.
+ * @param action The action type (Validate...).
+ * @param timestamp The timestamp of the initiate action.
+ * @param to The to address.
+ * @param validator The validator address.
  * @param var1 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param var2 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param var3 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
@@ -74,8 +77,8 @@ struct PendingActionCommonData {
 struct PendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
-    address user; // 20 bytes
     address to; // 20 bytes
+    address validator; // 20 bytes
     uint64 securityDepositValue; // 8 bytes
     int24 var1; // 3 bytes
     uint128 var2; // 16 bytes
@@ -90,8 +93,8 @@ struct PendingAction {
  * @notice A pending action in the queue for a vault deposit.
  * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
- * @param user The user address.
  * @param to The to address.
+ * @param validator The validator address.
  * @param securityDepositValue The security deposit of the pending action.
  * @param _unused Unused field to align the struct to `PendingAction`.
  * @param amount The amount of assets of the pending deposit.
@@ -104,8 +107,8 @@ struct PendingAction {
 struct DepositPendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
-    address user; // 20 bytes
     address to; // 20 bytes
+    address validator; // 20 bytes
     uint64 securityDepositValue; // 8 bytes
     int24 _unused; // 3 bytes
     uint128 amount; // 16 bytes
@@ -120,8 +123,8 @@ struct DepositPendingAction {
  * @notice A pending action in the queue for a vault withdrawal.
  * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
- * @param user The user address.
  * @param to The to address.
+ * @param validator The validator address.
  * @param securityDepositValue The security deposit of the pending action.
  * @param sharesLSB 3 least significant bytes of the withdrawal shares amount (uint152).
  * @param sharesMSB 16 most significant bytes of the withdrawal shares amount (uint152).
@@ -134,8 +137,8 @@ struct DepositPendingAction {
 struct WithdrawalPendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
-    address user; // 20 bytes
     address to; // 20 bytes
+    address validator; // 20 bytes
     uint64 securityDepositValue; // 8 bytes
     uint24 sharesLSB; // 3 bytes
     uint128 sharesMSB; // 16 bytes
@@ -150,8 +153,8 @@ struct WithdrawalPendingAction {
  * @notice A pending action in the queue for a long position.
  * @param action The action type (Validate...).
  * @param timestamp The timestamp of the initiate action.
- * @param user The user address.
  * @param to The to address.
+ * @param validator The validator address.
  * @param securityDepositValue The security deposit of the pending action.
  * @param tick The tick of the position.
  * @param closeAmount The amount of the pending action (only used when closing a position).
@@ -167,8 +170,8 @@ struct WithdrawalPendingAction {
 struct LongPendingAction {
     ProtocolAction action; // 1 byte
     uint40 timestamp; // 5 bytes
-    address user; // 20 bytes
     address to; // 20 bytes
+    address validator; // 20 bytes
     uint64 securityDepositValue; // 8 bytes
     int24 tick; // 3 bytes
     uint128 closeAmount; // 16 bytes

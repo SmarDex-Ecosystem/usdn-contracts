@@ -361,7 +361,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         assertEq(action.timestamp, block.timestamp, "The block timestamp should be now");
         assertEq(action.to, to, "To is wrong");
         assertEq(action.validator, address(this), "Validator is wrong");
-        assertEq(action.tick, tick, "The position tick is wrong");
+        assertEq(action.tick, posId.tick, "The position tick is wrong");
         assertEq(
             action.closePosTotalExpo,
             totalExpoToClose,

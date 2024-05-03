@@ -82,12 +82,7 @@ interface IUsdnProtocolEvents {
      * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      */
     event ValidatedOpenPosition(
-        address indexed user,
-        address indexed to,
-        address indexed validator,
-        uint128 newLeverage,
-        uint128 newStartPrice,
-        PositionId posId
+        address indexed to, address indexed validator, uint128 newLeverage, uint128 newStartPrice, PositionId posId
     );
 
     /**

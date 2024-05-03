@@ -252,8 +252,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund =
-            _initiateClosePosition(msg.sender, to, validator, posId, amountToClose, currentPriceData);
+        uint256 amountToRefund = _initiateClosePosition(to, validator, posId, amountToClose, currentPriceData);
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -527,7 +526,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         DepositPendingAction memory pendingAction = DepositPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
-            user: user,
             to: to,
             validator: validator,
             securityDepositValue: _securityDepositValue,
@@ -680,7 +678,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             WithdrawalPendingAction({
                 action: ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),
-                user: user,
                 to: to,
                 validator: validator,
                 securityDepositValue: _securityDepositValue,
@@ -800,12 +797,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         emit ValidatedWithdrawal(
-            withdrawal.user,
-            withdrawal.to,
-            withdrawal.validator,
-            assetToTransfer,
-            usdn.convertToTokens(shares),
-            withdrawal.timestamp
+            withdrawal.to, withdrawal.validator, assetToTransfer, usdn.convertToTokens(shares), withdrawal.timestamp
         );
     }
 
@@ -864,7 +856,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         LongPendingAction memory action = LongPendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
-            user: user,
             to: to,
             validator: validator,
             securityDepositValue: _securityDepositValue,
@@ -934,7 +925,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _asset.safeTransferFrom(user, address(this), amount);
 
         emit InitiatedOpenPosition(
-            user, to, validator, uint40(block.timestamp), data.leverage, amount, data.adjustedPrice, posId_
+            to, validator, uint40(block.timestamp), data.leverage, amount, data.adjustedPrice, posId_
         );
     }
 
@@ -984,7 +975,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // The current tick version doesn't match the version from the pending action.
             // This means the position has been liquidated in the mean time
             emit StalePendingActionRemoved(
-                data_.action.user,
+                data_.action.validator,
                 PositionId({ tick: data_.action.tick, tickVersion: data_.action.tickVersion, index: data_.action.index })
             );
             return (data_, true);
@@ -1489,7 +1480,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
         bytes calldata priceData = data.priceData[offset];
         _clearPendingAction(pending.validator);
-        if (pending.common.action == ProtocolAction.ValidateDeposit) {
+        if (pending.action == ProtocolAction.ValidateDeposit) {
             _validateDepositWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
             _validateWithdrawalWithAction(pending, priceData);

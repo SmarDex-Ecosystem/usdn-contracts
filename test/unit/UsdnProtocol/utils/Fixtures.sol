@@ -261,7 +261,12 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         bytes memory priceData = abi.encode(openParams.price);
 
         posId_ = protocol.initiateOpenPosition{ value: securityDepositValue }(
-            openParams.positionSize, openParams.desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA, openParams.user
+            openParams.positionSize,
+            openParams.desiredLiqPrice,
+            priceData,
+            EMPTY_PREVIOUS_DATA,
+            openParams.user,
+            openParams.user
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (posId_);
@@ -271,7 +276,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (posId_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            posId_, openParams.positionSize, priceData, EMPTY_PREVIOUS_DATA, openParams.user
+            posId_, openParams.positionSize, priceData, EMPTY_PREVIOUS_DATA, openParams.user, openParams.user
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);
