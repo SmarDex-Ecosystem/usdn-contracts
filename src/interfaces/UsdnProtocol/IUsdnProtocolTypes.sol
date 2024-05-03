@@ -50,22 +50,6 @@ enum ProtocolAction {
  * @param timestamp The timestamp of the initiate action.
  * @param to The to address.
  * @param validator The validator address.
- * @param securityDepositValue The security deposit of the pending action.
- */
-struct PendingActionCommonData {
-    ProtocolAction action; // 1 byte
-    uint40 timestamp; // 5 bytes
-    address to; // 20 bytes
-    address validator; // 20 bytes
-    uint24 securityDepositValue; // 3 bytes
-}
-
-/**
- * @notice A pending action in the queue.
- * @param action The action type (Validate...).
- * @param timestamp The timestamp of the initiate action.
- * @param to The to address.
- * @param validator The validator address.
  * @param var1 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param var2 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param var3 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
