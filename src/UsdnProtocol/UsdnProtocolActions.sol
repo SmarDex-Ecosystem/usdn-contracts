@@ -57,14 +57,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param adjustedPrice The adjusted price with position fees applied
      * @param posId The new position id
      * @param liquidationPenalty The liquidation penalty
-     * @param leverage The leverage
      * @param positionTotalExpo The total expo of the position
      */
     struct InitiateOpenPositionData {
         uint128 adjustedPrice;
         PositionId posId;
         uint8 liquidationPenalty;
-        uint128 leverage;
         uint128 positionTotalExpo;
     }
 
@@ -821,10 +819,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _getOraclePrice(ProtocolAction.InitiateOpenPosition, block.timestamp, currentPriceData);
         data_.adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
-        if (FixedPointMathLib.fullMulDiv(amount, data_.adjustedPrice, 10 ** _assetDecimals) < _minLongPosition) {
-            revert UsdnProtocolLongPositionTooSmall();
-        }
-
         uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
 
         _applyPnlAndFundingAndLiquidate(
@@ -841,8 +835,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Liquidation price must be at least x% below current price
         _checkSafetyMargin(neutralPrice, liqPrice);
 
-        (data_.leverage, data_.positionTotalExpo) =
-            _getOpenPositionLeverage(data_.posId.tick, data_.liquidationPenalty, data_.adjustedPrice, amount);
+        // remove liquidation penalty for leverage and total expo calculations
+        uint128 liqPriceWithoutPenalty =
+            getEffectivePriceForTick(_calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty));
+        _checkOpenPositionLeverage(data_.adjustedPrice, liqPriceWithoutPenalty);
+
+        data_.positionTotalExpo = _calculatePositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
         _checkImbalanceLimitOpen(data_.positionTotalExpo, amount);
     }
 
@@ -929,7 +927,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _asset.safeTransferFrom(user, address(this), amount);
 
         emit InitiatedOpenPosition(
-            to, validator, uint40(block.timestamp), data.leverage, amount, data.adjustedPrice, posId_
+            to, validator, uint40(block.timestamp), data.positionTotalExpo, amount, data.adjustedPrice, posId_
         );
     }
 
@@ -1041,8 +1039,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 data.liqPriceWithoutPenalty =
                     getEffectivePriceForTick(_calcTickWithoutPenalty(newPosId.tick, liquidationPenalty));
             }
-            // recalculate the leverage with the new liquidation price
-            data.leverage = _getLeverage(data.startPrice, data.liqPriceWithoutPenalty);
 
             // move the position to its new tick, updating its total expo, and returning the new tickVersion and index
             // remove position from old tick completely
@@ -1061,10 +1057,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index }),
                 newPosId
             );
-            emit ValidatedOpenPosition(data.action.to, data.action.validator, data.leverage, data.startPrice, newPosId);
+            emit ValidatedOpenPosition(
+                data.action.to, data.action.validator, data.pos.totalExpo, data.startPrice, newPosId
+            );
+
             return;
         }
-        // the new leverage does not exceed the max leverage
         // Calculate the new total expo
         uint128 expoBefore = data.pos.totalExpo;
         uint128 expoAfter = _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
@@ -1088,7 +1086,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit ValidatedOpenPosition(
             data.action.to,
             data.action.validator,
-            data.leverage,
+            expoAfter,
             data.startPrice,
             PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index })
         );
@@ -1379,30 +1377,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice During creation of a new long position, calculate the leverage and total exposure of the position.
-     * @param tick The tick of the position.
-     * @param liquidationPenalty The liquidation penalty of the tick.
-     * @param adjustedPrice The adjusted price of the asset.
-     * @param amount The amount of collateral.
-     * @return leverage_ The leverage of the position.
-     * @return totalExpo_ The total exposure of the position.
+     * @notice Reverts if the position's leverage is higher than max or lower than min
+     * @param adjustedPrice The adjusted price of the asset
+     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
      */
-    function _getOpenPositionLeverage(int24 tick, uint8 liquidationPenalty, uint128 adjustedPrice, uint128 amount)
-        internal
-        view
-        returns (uint128 leverage_, uint128 totalExpo_)
-    {
-        // remove liquidation penalty for leverage calculation
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(_calcTickWithoutPenalty(tick, liquidationPenalty));
-        totalExpo_ = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
-
+    function _checkOpenPositionLeverage(uint128 adjustedPrice, uint128 liqPriceWithoutPenalty) internal view {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
-        leverage_ = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
-        if (leverage_ < _minLeverage) {
+        uint128 leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+        if (leverage < _minLeverage) {
             revert UsdnProtocolLeverageTooLow();
         }
-        if (leverage_ > _maxLeverage) {
+        if (leverage > _maxLeverage) {
             revert UsdnProtocolLeverageTooHigh();
         }
     }

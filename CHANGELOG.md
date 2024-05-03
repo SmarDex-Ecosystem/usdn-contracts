@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.13.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.12.1...v0.13.0) (2024-05-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **open-pos:** The fourth argument of InitiatedOpenPosition is now the position total expo instead of its leverage
+* use `PositionId` wherever possible ([#238](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/238))
+* **types:** removed common struct in all pending actions structs ([#237](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/237))
+* **initial-close:** A position cannot be partially closed if the remaining amount of collateral is greater than 0 and lower than _minLongPosition
+* The `getMinLongPosition` function now returns an amount in `_assets`
+* removed getLiquidationMultiplier; function getEffectiveTickForPrice(uint128 price, uint256 liqMultiplier) has been replaced with getEffectiveTickForPrice(uint128 price, uint256 assetPrice, uint256 longTradingExpo, HugeUint.Uint512 memory accumulator, int24 tickSpacing); function getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) has been replaced with getEffectivePriceForTick(int24 tick, uint256 assetPrice, uint256 longTradingExpo, HugeUint.Uint512 memory accumulator); the PendingAction struct now uses a struct PendingActionCommonData for its first field, replacing action, timestamp, user to, securityDepositValue. For consistency, the amount field was renamed to var2, var2 to var3, etc.; the DepositPendingAction, WithdrawalPendingAction and LongPendingAction now use the new PendingActionCommonData struct as first field; for LongPendingAction, the field closeTotalExpo was renamed to closePosTotalExpo and is used for a different purpose.; the field closeTempTransfer was renamed to closeBoundedPositionValue.
+* **oracle-middleware:** error OracleMiddlewareInsufficientFee has been renamed OracleMiddlewareIncorrectFee
+* change the name of the function getMaxInitializedTick to getHighestPopulatedTick
+* add to parameter in main functions ([#109](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/109))
+* **initiate-close:** The event now contins the original value on the position and the amount to be subtracted from it
+
+### Features
+
+* **actions:** event when the security deposit is refunded ([#222](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/222)) ([be37f6f](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/be37f6f94e12ab59762af8446e8002b86295c10e))
+* add _calcTickWithoutPenalty ([#241](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/241)) ([77d4f86](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/77d4f864b735afcaa3268a8e7a2c7c34b3921696))
+* add `previewWithdraw` function ([#218](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/218)) ([237a474](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/237a47488938fbe03257f2a6f87e8712a28f18e7))
+* add to parameter in main functions ([#109](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/109)) ([257092f](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/257092fdf11f4aa8062c98b7c74b85dd2fcd2a9f))
+* change minLongPosition to represent the amount of collateral ([#229](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/229)) ([08f63dc](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/08f63dcf050c40f31e4b4f1338bb0d9db35e31a6))
+* **initial-close:** revert if the remaining position not greater or equal to _minLongPosition ([#236](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/236)) ([6e0c256](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/6e0c256815dee718b6e251db5f4f174494e83848))
+* **open-pos:** replace the leverage by the position total expo in the open position events ([#239](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/239)) ([9b4f5a4](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/9b4f5a437f2e54c0fb4ac6479bd8a91e5a7e8473))
+* **oracle-middleware:** make the oracle middleware revert if the validation cost is not exact ([#217](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/217)) ([e92be5d](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/e92be5d433ab2d17ba728daea6e15d860c6a2e5a))
+* reward user actions when a position is liquidated ([#205](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/205)) ([76091ee](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/76091ee27c602bbac10d7ebf4c24f61ce24b2524))
+* **rewards:** add priceData to the parameters sent to the liquidation rewards manager ([#233](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/233)) ([1b1cc88](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/1b1cc88318d79242d4753fb5cc35021539eb59fa))
+* **rewards:** apply the multiplicator only on the tick liquidation cost ([#231](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/231)) ([5eaebbd](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/5eaebbd6c1635713547fb708ecd401ab97452da7))
+
+
+### Bug Fixes
+
+* **init-open:** remove a residue of the min position value check ([#243](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/243)) ([3f9e405](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/3f9e405da6f475995b606767bea1c1fa5cac3d12))
+* outdated pyth data ([#221](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/221)) ([bf249b3](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/bf249b3b1cc3dbaf471d1ced378215cbe390d6c2))
+
+
+### Code Refactoring
+
+* **initiate-close:** change the values sent in the InitiatedClosePosition event ([#210](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/210)) ([cf67c66](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/cf67c66bb1f173da1b70f6fe0d00bf6cabf27cfd))
+* replace liquidation multiplier with accumulator ([#206](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/206)) ([d60a3a9](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/d60a3a94bb327fe527e2eed6f92f7ac8960ed57f))
+* test and rename `_maxInitializedTick` into `_highestPopulatedTick` ([#203](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/203)) ([a418d5c](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/a418d5c4a642fd7b484b32923c5fe118e21e0b44))
+* **types:** removed common struct in all pending actions structs ([#237](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/237)) ([78b2175](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/78b21757e22404d4f0255399f49f5eb0cd04d50e))
+* use `PositionId` wherever possible ([#238](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/238)) ([d0f7ee1](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/d0f7ee19b66e64282df119b0c5fda432a2c1167d))
+
 ## [0.12.1](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.12.0...v0.12.1) (2024-04-18)
 
 
