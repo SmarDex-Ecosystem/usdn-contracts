@@ -256,7 +256,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the position is deleted
      */
     function test_internalInitiateClosePositionForAnotherUser() external {
-        _internalInitiateClosePositionScenario(USER_1);
+        vm.startPrank(USER_1);
+        _internalInitiateClosePositionScenario(address(this));
+        vm.stopPrank();
     }
 
     function _internalInitiateClosePositionScenario(address to) internal {
@@ -356,16 +358,16 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------ Initiate the close action ----------------------- */
         vm.expectEmit();
         emit InitiatedClosePosition(
-            address(this), to, posId, posBefore.amount, amountToClose, posBefore.totalExpo - totalExpoToClose
+            to, to, posId, posBefore.amount, amountToClose, posBefore.totalExpo - totalExpoToClose
         );
-        protocol.i_initiateClosePosition(address(this), to, posId, amountToClose, abi.encode(params.initialPrice));
+        protocol.i_initiateClosePosition(to, to, posId, amountToClose, abi.encode(params.initialPrice));
 
         /* ------------------------- Pending action's state ------------------------- */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(to));
         assertTrue(action.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
         assertEq(action.timestamp, block.timestamp, "The block timestamp should be now");
         assertEq(action.to, to, "To is wrong");
-        assertEq(action.validator, address(this), "Validator is wrong");
+        assertEq(action.validator, to, "Validator is wrong");
         assertEq(action.tick, posId.tick, "The position tick is wrong");
         assertEq(
             action.closePosTotalExpo,
