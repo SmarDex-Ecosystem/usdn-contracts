@@ -7,7 +7,7 @@ import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 
 import { Usdn } from "src/Usdn.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -113,19 +113,19 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             posTotalExpo,
             INITIAL_POSITION,
             INITIAL_PRICE,
-            expectedTick,
-            0,
-            0
+            PositionId(expectedTick, 0, 0)
         );
         vm.expectEmit();
-        emit ValidatedOpenPosition(address(this), address(this), posTotalExpo, INITIAL_PRICE, expectedTick, 0, 0);
+        emit ValidatedOpenPosition(
+            address(this), address(this), posTotalExpo, INITIAL_PRICE, PositionId(expectedTick, 0, 0)
+        );
         protocol.i_createInitialPosition(INITIAL_POSITION, INITIAL_PRICE, tickWithoutPenalty, posTotalExpo);
 
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore - INITIAL_POSITION, "deployer wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), INITIAL_POSITION, "protocol wstETH balance");
         assertEq(protocol.getBalanceLong(), INITIAL_POSITION, "protocol long balance");
 
-        (Position memory pos,) = protocol.getLongPosition(expectedTick, 0, 0);
+        (Position memory pos,) = protocol.getLongPosition(PositionId(expectedTick, 0, 0));
         assertEq(pos.user, address(this), "position user");
         assertEq(pos.amount, INITIAL_POSITION, "position amount");
         assertEq(pos.totalExpo, posTotalExpo, "position total expo");
@@ -186,13 +186,11 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             expectedPosTotalExpo,
             INITIAL_POSITION,
             INITIAL_PRICE,
-            expectedTick,
-            0,
-            0
+            PositionId(expectedTick, 0, 0)
         );
         vm.expectEmit();
         emit ValidatedOpenPosition(
-            address(this), address(this), expectedPosTotalExpo, INITIAL_PRICE, expectedTick, 0, 0
+            address(this), address(this), expectedPosTotalExpo, INITIAL_PRICE, PositionId(expectedTick, 0, 0)
         );
         protocol.initialize(INITIAL_DEPOSIT, INITIAL_POSITION, INITIAL_PRICE / 2, abi.encode(INITIAL_PRICE));
 
@@ -205,7 +203,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
         assertEq(usdn.balanceOf(address(this)), expectedUsdnMinted, "deployer USDN balance");
         assertEq(usdn.balanceOf(protocol.DEAD_ADDRESS()), protocol.MIN_USDN_SUPPLY(), "dead address USDN balance");
 
-        (Position memory pos,) = protocol.getLongPosition(expectedTick, 0, 0);
+        (Position memory pos,) = protocol.getLongPosition(PositionId(expectedTick, 0, 0));
         assertEq(pos.user, address(this), "position user");
         assertEq(pos.amount, INITIAL_POSITION, "position amount");
         assertEq(pos.totalExpo, expectedPosTotalExpo, "position total expo");

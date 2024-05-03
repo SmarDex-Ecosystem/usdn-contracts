@@ -7,7 +7,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -379,7 +379,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
         uint8 liquidationPenalty = _liquidationPenalty;
-        tick = tick + int24(uint24(liquidationPenalty)) * _tickSpacing;
+        PositionId memory posId;
+        posId.tick = tick + int24(uint24(liquidationPenalty)) * _tickSpacing;
         Position memory long = Position({
             user: msg.sender,
             amount: amount,
@@ -387,11 +388,9 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             timestamp: uint40(block.timestamp)
         });
         // Save the position and update the state
-        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long, liquidationPenalty);
+        (posId.tickVersion, posId.index) = _saveNewPosition(posId.tick, long, liquidationPenalty);
         _balanceLong += long.amount;
-        emit InitiatedOpenPosition(
-            msg.sender, msg.sender, long.timestamp, positionTotalExpo, long.amount, price, tick, tickVersion, index
-        );
-        emit ValidatedOpenPosition(msg.sender, msg.sender, positionTotalExpo, price, tick, tickVersion, index);
+        emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, positionTotalExpo, long.amount, price, posId);
+        emit ValidatedOpenPosition(msg.sender, msg.sender, positionTotalExpo, price, posId);
     }
 }

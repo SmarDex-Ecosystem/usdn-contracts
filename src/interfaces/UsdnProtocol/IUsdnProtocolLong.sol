@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
-import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
@@ -26,16 +26,14 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
 
     /**
      * @notice Get a long position identified by its tick, tickVersion and index
-     * @param tick The tick containing the long position
-     * @param tickVersion The tick version
-     * @param index The index of the long position inside the tick array
-     * @return The position data
-     * @return The liquidation penalty for that position (and associated tick)
+     * @param posId The unique position identifier
+     * @return pos_ The position data
+     * @return liquidationPenalty_ The liquidation penalty for that position (and associated tick)
      */
-    function getLongPosition(int24 tick, uint256 tickVersion, uint256 index)
+    function getLongPosition(PositionId calldata posId)
         external
         view
-        returns (Position memory, uint8);
+        returns (Position memory pos_, uint8 liquidationPenalty_);
 
     /**
      * @notice Get the minimum acceptable desired liquidation price for a new long position
@@ -48,13 +46,12 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
      * @notice Get the value of a long position when the asset price is equal to the given price, at the given timestamp
      * @dev If the current price is smaller than the liquidation price of the position without liquidation penalty,
      * then the value of the position is negative.
-     * @param tick The tick containing the long position
-     * @param tickVersion The tick version
-     * @param index The index of the long position inside the tick array
+     * @param posId The unique position identifier
      * @param price The asset price
      * @param timestamp The timestamp of the price
+     * @return The position value in assets
      */
-    function getPositionValue(int24 tick, uint256 tickVersion, uint256 index, uint128 price, uint128 timestamp)
+    function getPositionValue(PositionId calldata posId, uint128 price, uint128 timestamp)
         external
         view
         returns (int256);

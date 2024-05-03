@@ -11,7 +11,8 @@ import {
     DepositPendingAction,
     WithdrawalPendingAction,
     LongPendingAction,
-    ProtocolAction
+    ProtocolAction,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -38,12 +39,10 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether / 2;
 
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
-        int24 expectedTick = protocol.getEffectiveTickForPrice(uint128(desiredLiqPrice));
+        int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
 
         // Price without the liquidation penalty
-        uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(
-            expectedTick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-        );
+        uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick));
         uint128 expectedPosTotalExpo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, effectiveTickPrice);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
@@ -75,7 +74,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether / 2;
         bytes memory priceData = abi.encode(2000 ether);
 
-        (int24 tick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.InitiateOpenPosition,
@@ -92,9 +91,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         protocol.testLiquidate(priceData, 0);
 
         // Price without the liquidation penalty
-        uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(
-            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-        );
+        uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick));
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
         uint128 expectedPosTotalExpo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, effectiveTickPrice);
 
@@ -125,7 +122,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = 2000 ether / 2;
 
         bytes memory priceData = abi.encode(2000 ether);
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -138,7 +135,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         uint256 balanceBefore = wstETH.balanceOf(address(this));
 
-        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateClosePosition(posId, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
@@ -146,8 +143,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
             protocol.i_positionValue(
                 uint128(2000 ether - 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR()),
                 protocol.i_getEffectivePriceForTick(
-                    tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
-                    action.closeLiqMultiplier
+                    protocol.i_calcTickWithoutPenalty(posId.tick), action.closeLiqMultiplier
                 ),
                 action.closePosTotalExpo
             )
@@ -490,7 +486,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(0); // 0% fees
 
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -502,7 +498,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
 
         skip(1 hours);
 
-        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateClosePosition(posId, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 
@@ -524,7 +520,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         vm.prank(ADMIN);
         protocol.setPositionFeeBps(100); // 1% fees
 
-        (tick, tickVersion, index) = setUpUserPositionInLong(
+        posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -535,7 +531,7 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         );
         skip(1 hours);
 
-        protocol.initiateClosePosition(tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateClosePosition(posId, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
 
         action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
 

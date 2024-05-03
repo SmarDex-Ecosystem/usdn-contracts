@@ -10,7 +10,8 @@ import {
     LongPendingAction,
     Position,
     PendingAction,
-    PreviousActionsData
+    PreviousActionsData,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -41,7 +42,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         initialPrice = params.initialPrice;
         uint128 desiredLiqPrice = uint128(initialPrice) * 9 / 10;
-        (int24 tick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -54,7 +55,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         balanceSenderBefore = wstETH.balanceOf(address(this));
         balanceProtocolBefore = wstETH.balanceOf(address(protocol));
-        liquidationPrice = protocol.getEffectivePriceForTick(tick);
+        liquidationPrice = protocol.getEffectivePriceForTick(posId.tick);
         liquidationPriceData = abi.encode(liquidationPrice);
         initialPriceData = abi.encode(initialPrice);
         expectedLiquidatorRewards = liquidationRewardsManager.getLiquidationRewards(1, 0, false, "");
@@ -237,7 +238,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_initiateClosePosition() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -251,9 +252,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit IUsdnProtocolEvents.LiquidatorRewarded(address(this), expectedLiquidatorRewards);
-        protocol.initiateClosePosition(
-            tick, tickVersion, index, depositAmount, liquidationPriceData, EMPTY_PREVIOUS_DATA, address(this)
-        );
+        protocol.initiateClosePosition(posId, depositAmount, liquidationPriceData, EMPTY_PREVIOUS_DATA, address(this));
 
         uint256 balanceSenderAfter = wstETH.balanceOf(address(this));
         uint256 balanceProtocolAfter = wstETH.balanceOf(address(protocol));
@@ -278,7 +277,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
      * @custom:then The sender should receive the liquidation rewards
      */
     function test_liquidationRewards_validateClosePosition() public {
-        (int24 tick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.InitiateClosePosition,
@@ -298,8 +297,7 @@ contract TestLiquidationRewardsUserActions is UsdnProtocolBaseFixture {
         int256 positionValue = protocol.i_positionValue(
             uint128(priceWithFees),
             protocol.i_getEffectivePriceForTick(
-                tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
-                longAction.closeLiqMultiplier
+                protocol.i_calcTickWithoutPenalty(posId.tick), longAction.closeLiqMultiplier
             ),
             longAction.closePosTotalExpo
         );
