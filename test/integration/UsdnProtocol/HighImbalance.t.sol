@@ -93,4 +93,6 @@ contract UsdnProtocolHighImbalanceTest is UsdnProtocolBaseIntegrationFixture {
 
         assertGe(protocol.longTradingExpoWithFunding(3381 ether, uint128(block.timestamp)), 0, "long expo");
     }
+
+    receive() external payable { }
 }

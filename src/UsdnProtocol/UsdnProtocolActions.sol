@@ -143,9 +143,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateDeposit(validator, depositPriceData);
-        balanceBefore -= amountToRefund;
+        // balanceBefore -= amountToRefund;
         _refoundEther(amountToRefund, validator);
-        amountToRefund = 0;
+        // amountToRefund = 0;
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -184,9 +184,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateWithdrawal(validator, withdrawalPriceData);
-        balanceBefore -= amountToRefund;
+        // balanceBefore -= amountToRefund;
         _refoundEther(amountToRefund, validator);
-        amountToRefund = 0;
+        // amountToRefund = 0;
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -229,9 +229,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateOpenPosition(validator, openPriceData);
-        balanceBefore -= amountToRefund;
-        _refoundEther(amountToRefund, validator);
-        amountToRefund = 0;
+        // balanceBefore -= amountToRefund;
+        _refoundEther(amountToRefund, validator); // refund the security deposit to validator
+        // amountToRefund = 0;
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -271,9 +271,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateClosePosition(validator, closePriceData);
-        balanceBefore -= amountToRefund;
+        // balanceBefore -= amountToRefund;
         _refoundEther(amountToRefund, validator);
-        amountToRefund = 0;
+        // amountToRefund = 0;
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -1561,6 +1561,26 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param balanceBefore The balance of the contract before the action.
      */
     function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) internal {
+        /* 
+
+            +   amountToRefund = 2 = 0.5 + 1.5
+                (send 0.5 to validator)
+                address(this).balance = 1.5
+                msg.value = 0
+
+
+            
+            -   balanceBefore = 2
+                securityDepositValue = 0
+
+            = 1.5
+
+        uint256 positive = amountToRefund + address(this).balance + msg.value;
+        uint256 negative = balanceBefore + securityDepositValue;
+
+
+         */
+
         uint256 positive = amountToRefund + address(this).balance + msg.value;
         uint256 negative = balanceBefore + securityDepositValue;
 
