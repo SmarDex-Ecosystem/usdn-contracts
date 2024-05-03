@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 
-import { Position, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The _saveNewPosition internal function of the UsdnProtocolLong contract.
@@ -42,10 +42,11 @@ contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
 
         protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
 
-        (Position memory positionInTick,) = protocol.getLongPosition(expectedTick, 0, tickDataBefore.totalPos);
+        (Position memory positionInTick,) =
+            protocol.getLongPosition(PositionId(expectedTick, 0, tickDataBefore.totalPos));
 
         // state after opening the position
-        assertEq(balanceLongBefore + LONG_AMOUNT, protocol.getBalanceLong(), "balance of long side");
+        assertEq(balanceLongBefore, protocol.getBalanceLong(), "balance of long side");
         assertEq(totalExpoBefore + LONG_AMOUNT * 3, protocol.getTotalExpo(), "total expo");
         TickData memory tickDataAfter = protocol.getTickData(expectedTick);
         assertEq(tickDataBefore.totalExpo + LONG_AMOUNT * 3, tickDataAfter.totalExpo, "total expo in tick");

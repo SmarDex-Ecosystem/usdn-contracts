@@ -51,7 +51,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     /// @dev Push a pending item to the front of the pending actions queue
     function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
         rawIndex_ = _pendingActionsQueue.pushFront(action);
-        _pendingActions[action.common.user] = uint256(rawIndex_) + 1;
+        _pendingActions[action.user] = uint256(rawIndex_) + 1;
     }
 
     /**
@@ -420,5 +420,22 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         returns (uint256 assetExpected_)
     {
         return _calcBurnUsdn(usdnShares, available, usdnTotalShares);
+    }
+
+    function i_calcTickWithoutPenalty(int24 tick, uint8 liquidationPenalty) external view returns (int24) {
+        return _calcTickWithoutPenalty(tick, liquidationPenalty);
+    }
+
+    function i_calcTickWithoutPenalty(int24 tick) external view returns (int24) {
+        return _calcTickWithoutPenalty(tick, _liquidationPenalty);
+    }
+
+    function i_unadjustPrice(
+        uint256 price,
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) external pure returns (uint256) {
+        return _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
     }
 }

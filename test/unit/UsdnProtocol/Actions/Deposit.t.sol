@@ -8,6 +8,7 @@ import {
     PendingAction,
     ProtocolAction,
     Position,
+    PositionId,
     DepositPendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -102,16 +103,16 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(actions.length, 0, "no pending action");
 
         PendingAction memory action = protocol.getUserPendingAction(address(this));
-        assertTrue(action.common.action == ProtocolAction.ValidateDeposit, "action type");
-        assertEq(action.common.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.common.user, address(this), "action user");
-        assertEq(action.common.to, to, "action to");
+        assertTrue(action.action == ProtocolAction.ValidateDeposit, "action type");
+        assertEq(action.timestamp, block.timestamp, "action timestamp");
+        assertEq(action.user, address(this), "action user");
+        assertEq(action.to, to, "action to");
         assertEq(action.var2, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (actions,) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions[0].common.user, address(this), "pending action user");
+        assertEq(actions[0].user, address(this), "pending action user");
     }
 
     /**
@@ -314,7 +315,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
 
         // user open position
-        (int24 userPosTick, uint256 userPosTickVersion,) = setUpUserPositionInLong(
+        PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
                 USER_1,
                 ProtocolAction.ValidateOpenPosition,
@@ -334,37 +335,35 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.common.action), uint256(ProtocolAction.None), "user action is initiated");
+            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is initiated");
 
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
             );
 
-            assertEq(userPosTickVersion, protocol.getTickVersion(userPosTick), "user position is liquidated");
+            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
 
             assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user loss wsteth");
         }
 
         _waitMockMiddlewarePriceDelay();
 
-        // {
-        //     uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
+        {
+            uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
-        //     protocol.initiateDeposit{ value: securityDeposit }(
-        //         POSITION_AMOUNT, abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA, address(this)
-        //     );
+            protocol.initiateDeposit{ value: securityDeposit }(
+                POSITION_AMOUNT, abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA, address(this)
+            );
 
-        //     PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        //     assertEq(
-        //         uint256(pending.common.action), uint256(ProtocolAction.ValidateDeposit), "user action is not
-        // initiated"
-        //     );
+            PendingAction memory pending = protocol.getUserPendingAction(address(this));
+            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateDeposit), "user action is not initiated");
 
-        //     assertEq(userPosTickVersion + 1, protocol.getTickVersion(userPosTick), "user position is not
-        // liquidated");
+            assertEq(
+                userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated"
+            );
 
-        //     assertGt(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user kept wsteth");
-        // }
+            assertGt(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user kept wsteth");
+        }
     }
 
     /**
@@ -390,7 +389,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
 
         // user open position
-        (int24 userPosTick, uint256 userPosTickVersion,) = setUpUserPositionInLong(
+        PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
                 USER_1,
                 ProtocolAction.ValidateOpenPosition,
@@ -410,13 +409,13 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.common.action), uint256(ProtocolAction.None), "user action is initiated");
+            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is initiated");
 
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
             );
 
-            assertEq(userPosTickVersion, protocol.getTickVersion(userPosTick), "user position is liquidated");
+            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
 
             assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user loss wsteth");
         }
@@ -429,11 +428,11 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(
-                uint256(pending.common.action), uint256(ProtocolAction.ValidateDeposit), "user action is not initiated"
-            );
+            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateDeposit), "user action is not initiated");
 
-            assertEq(userPosTickVersion + 1, protocol.getTickVersion(userPosTick), "user position is not liquidated");
+            assertEq(
+                userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated"
+            );
 
             assertGt(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user kept wsteth");
         }
@@ -462,7 +461,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
 
         // user open position
-        (int24 userPosTick, uint256 userPosTickVersion,) = setUpUserPositionInLong(
+        PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
                 USER_1,
                 ProtocolAction.ValidateOpenPosition,
@@ -482,9 +481,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(
-                uint256(pending.common.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated"
-            );
+            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated");
 
             _waitDelay();
 
@@ -493,15 +490,13 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             );
 
             pending = protocol.getUserPendingAction(address(this));
-            assertEq(
-                uint256(pending.common.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated"
-            );
+            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated");
 
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
             );
 
-            assertEq(userPosTickVersion, protocol.getTickVersion(userPosTick), "user position is liquidated");
+            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
 
             assertEq(usdnBalanceBefore, usdn.balanceOf(address(this)), "user usdn balance increased");
         }
@@ -516,9 +511,11 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.common.action), uint256(ProtocolAction.None), "user action was not validated");
+            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action was not validated");
 
-            assertEq(userPosTickVersion + 1, protocol.getTickVersion(userPosTick), "user position is not liquidated");
+            assertEq(
+                userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated"
+            );
 
             assertLt(usdnBalanceBefore, usdn.balanceOf(address(this)), "user usdn balance is lower or equal");
         }
@@ -547,7 +544,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
 
         // user open position
-        (int24 userPosTick, uint256 userPosTickVersion,) = setUpUserPositionInLong(
+        PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
                 USER_1,
                 ProtocolAction.ValidateOpenPosition,
@@ -567,9 +564,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(
-                uint256(pending.common.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated"
-            );
+            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated");
 
             _waitDelay();
 
@@ -578,15 +573,13 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             );
 
             pending = protocol.getUserPendingAction(address(this));
-            assertEq(
-                uint256(pending.common.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated"
-            );
+            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated");
 
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
             );
 
-            assertEq(userPosTickVersion, protocol.getTickVersion(userPosTick), "user position is liquidated");
+            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
 
             assertEq(usdnBalanceBefore, usdn.balanceOf(address(this)), "user usdn balance increased");
         }
@@ -599,9 +592,11 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.common.action), uint256(ProtocolAction.None), "user action was not validated");
+            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action was not validated");
 
-            assertEq(userPosTickVersion + 1, protocol.getTickVersion(userPosTick), "user position is not liquidated");
+            assertEq(
+                userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated"
+            );
 
             assertLt(usdnBalanceBefore, usdn.balanceOf(address(this)), "user usdn balance is lower or equal");
         }

@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { Position, ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, ProtocolAction, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The _removeAmountFromPosition internal function of the UsdnProtocolActions contract.
@@ -12,16 +12,14 @@ import { Position, ProtocolAction, TickData } from "src/interfaces/UsdnProtocol/
  * @custom:and a validated long position of 1 ether with 10x leverage
  */
 contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture {
-    int24 private _tick;
-    uint256 private _tickVersion;
-    uint256 private _index;
+    PositionId private _posId;
     uint128 private _positionAmount = 1 ether;
 
     function setUp() external {
         _setUp(DEFAULT_PARAMS);
 
         wstETH.mintAndApprove(address(this), 100_000 ether, address(protocol), type(uint256).max);
-        (_tick, _tickVersion, _index) = setUpUserPositionInLong(
+        _posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -40,15 +38,17 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
      * @custom:and the protocol's state should be updated
      */
     function test_removeAmountFromPosition_removingEverythingDeletesThePosition() external {
-        (Position memory posBefore,) = protocol.getLongPosition(_tick, _tickVersion, _index);
-        uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_tick);
+        (Position memory posBefore,) = protocol.getLongPosition(_posId);
+        uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_posId.tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
-        TickData memory tickData = protocol.getTickData(_tick);
-        protocol.i_removeAmountFromPosition(_tick, _tickVersion, posBefore, posBefore.amount, posBefore.totalExpo);
+        TickData memory tickData = protocol.getTickData(_posId.tick);
+        protocol.i_removeAmountFromPosition(
+            _posId.tick, _posId.tickVersion, posBefore, posBefore.amount, posBefore.totalExpo
+        );
 
         /* ----------------------------- Position State ----------------------------- */
-        TickData memory newTickData = protocol.getTickData(_tick);
-        (Position memory posAfter,) = protocol.getLongPosition(_tick, _tickVersion, _index);
+        TickData memory newTickData = protocol.getTickData(_posId.tick);
+        (Position memory posAfter,) = protocol.getLongPosition(_posId);
         assertEq(posAfter.user, address(0), "Address of the position should have been reset");
         assertEq(posAfter.timestamp, 0, "Timestamp of the position should have been reset");
         assertEq(posAfter.totalExpo, 0, "Total expo of the position should have been reset");
@@ -57,7 +57,9 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         /* ----------------------------- Protocol State ----------------------------- */
         assertEq(tickData.totalPos - 1, newTickData.totalPos, "The position should have been removed");
         assertGt(
-            bitmapIndexBefore - protocol.findLastSetInTickBitmap(_tick), 0, "The last bitmap index should have changed"
+            bitmapIndexBefore - protocol.findLastSetInTickBitmap(_posId.tick),
+            0,
+            "The last bitmap index should have changed"
         );
         assertEq(
             totalExpoBefore - protocol.getTotalExpo(),
@@ -79,20 +81,22 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
      * @custom:and the protocol's state should be updated
      */
     function test_removeAmountFromPosition_removingSomeAmountUpdatesThePosition() external {
-        (Position memory posBefore,) = protocol.getLongPosition(_tick, _tickVersion, _index);
-        uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_tick);
+        (Position memory posBefore,) = protocol.getLongPosition(_posId);
+        uint256 bitmapIndexBefore = protocol.findLastSetInTickBitmap(_posId.tick);
         uint256 totalExpoBefore = protocol.getTotalExpo();
-        TickData memory tickData = protocol.getTickData(_tick);
+        TickData memory tickData = protocol.getTickData(_posId.tick);
         uint128 amountToRemove = posBefore.amount / 2;
         uint128 totalExpoToRemove = protocol.i_calculatePositionTotalExpo(
             amountToRemove, params.initialPrice, params.initialPrice - (params.initialPrice / 5)
         );
 
-        protocol.i_removeAmountFromPosition(_tick, _tickVersion, posBefore, amountToRemove, totalExpoToRemove);
+        protocol.i_removeAmountFromPosition(
+            _posId.tick, _posId.tickVersion, posBefore, amountToRemove, totalExpoToRemove
+        );
 
         /* ----------------------------- Position State ----------------------------- */
-        TickData memory newTickData = protocol.getTickData(_tick);
-        (Position memory posAfter,) = protocol.getLongPosition(_tick, _tickVersion, _index);
+        TickData memory newTickData = protocol.getTickData(_posId.tick);
+        (Position memory posAfter,) = protocol.getLongPosition(_posId);
         assertEq(posAfter.user, posBefore.user, "Address of the position should not have changed");
         assertEq(posAfter.timestamp, posBefore.timestamp, "Timestamp of the position should not have changed");
         assertEq(
@@ -109,7 +113,9 @@ contract TestUsdnProtocolLongRemoveAmountFromPosition is UsdnProtocolBaseFixture
         /* ----------------------------- Protocol State ----------------------------- */
         assertEq(tickData.totalPos, newTickData.totalPos, "The number of positions should not have changed");
         assertEq(
-            bitmapIndexBefore - protocol.findLastSetInTickBitmap(_tick), 0, "The last bitmap index should be the same"
+            bitmapIndexBefore - protocol.findLastSetInTickBitmap(_posId.tick),
+            0,
+            "The last bitmap index should be the same"
         );
         assertEq(
             totalExpoBefore - totalExpoToRemove,

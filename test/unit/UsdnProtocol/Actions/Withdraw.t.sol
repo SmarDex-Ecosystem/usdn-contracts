@@ -8,7 +8,10 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 
 import {
-    PendingAction, ProtocolAction, WithdrawalPendingAction
+    PendingAction,
+    ProtocolAction,
+    WithdrawalPendingAction,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
@@ -101,18 +104,18 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
         WithdrawalPendingAction memory action =
             protocol.i_toWithdrawalPendingAction(protocol.getUserPendingAction(address(this)));
-        assertTrue(action.common.action == ProtocolAction.ValidateWithdrawal, "action type");
-        assertEq(action.common.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.common.user, address(this), "action user");
-        assertEq(action.common.to, to, "action to");
+        assertTrue(action.action == ProtocolAction.ValidateWithdrawal, "action type");
+        assertEq(action.timestamp, block.timestamp, "action timestamp");
+        assertEq(action.user, address(this), "action user");
+        assertEq(action.to, to, "action to");
         uint256 shares = protocol.i_mergeWithdrawalAmountParts(action.sharesLSB, action.sharesMSB);
         assertEq(shares, withdrawShares, "action shares");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions[0].common.user, address(this), "pending action user");
-        assertEq(actions[0].common.to, to, "pending action user");
+        assertEq(actions[0].user, address(this), "pending action user");
+        assertEq(actions[0].to, to, "pending action user");
         assertEq(rawIndices[0], 1, "raw index");
     }
 
@@ -138,7 +141,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
 
         // user open position
-        (int24 userPosTick, uint256 userPosTickVersion,) = setUpUserPositionInLong(
+        PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
                 USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 4, params.initialPrice
             )
@@ -154,12 +157,12 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.common.action), uint256(ProtocolAction.None), "user action is initiated");
+            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is initiated");
 
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
             );
-            assertEq(userPosTickVersion, protocol.getTickVersion(userPosTick), "user position is liquidated");
+            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
 
             assertEq(usdnBalanceBefore, usdn.balanceOf(address(this)), "usdn balance changed");
         }
@@ -176,12 +179,12 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
             assertEq(
-                uint256(pending.common.action),
-                uint256(ProtocolAction.ValidateWithdrawal),
-                "user action is not initiated"
+                uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is not initiated"
             );
 
-            assertEq(userPosTickVersion + 1, protocol.getTickVersion(userPosTick), "user position is not liquidated");
+            assertEq(
+                userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated"
+            );
 
             assertGt(usdnBalanceBefore, usdn.balanceOf(address(this)), "usdn balance not changed");
         }
@@ -210,7 +213,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
 
         // user open position
-        (int24 userPosTick, uint256 userPosTickVersion,) = setUpUserPositionInLong(
+        PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
                 USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 4, params.initialPrice
             )
@@ -226,12 +229,12 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.common.action), uint256(ProtocolAction.None), "user action is initiated");
+            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is initiated");
 
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
             );
-            assertEq(userPosTickVersion, protocol.getTickVersion(userPosTick), "user position is liquidated");
+            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
 
             assertEq(usdnBalanceBefore, usdn.balanceOf(address(this)), "usdn balance changed");
         }
@@ -246,12 +249,12 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
             assertEq(
-                uint256(pending.common.action),
-                uint256(ProtocolAction.ValidateWithdrawal),
-                "user action is not initiated"
+                uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is not initiated"
             );
 
-            assertEq(userPosTickVersion + 1, protocol.getTickVersion(userPosTick), "user position is not liquidated");
+            assertEq(
+                userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated"
+            );
 
             assertGt(usdnBalanceBefore, usdn.balanceOf(address(this)), "usdn balance not changed");
         }
@@ -279,7 +282,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
 
         // user open position
-        (int24 userPosTick, uint256 userPosTickVersion,) = setUpUserPositionInLong(
+        PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
                 USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 4, params.initialPrice
             )
@@ -297,9 +300,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
             assertEq(
-                uint256(pending.common.action),
-                uint256(ProtocolAction.ValidateWithdrawal),
-                "user action is not initiated"
+                uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is not initiated"
             );
 
             _waitDelay();
@@ -309,15 +310,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             );
 
             pending = protocol.getUserPendingAction(address(this));
-            assertEq(
-                uint256(pending.common.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is validated"
-            );
+            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is validated");
 
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
             );
 
-            assertEq(userPosTickVersion, protocol.getTickVersion(userPosTick), "user position is liquidated");
+            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
 
             assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance changed");
         }
@@ -332,9 +331,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.common.action), uint256(ProtocolAction.None), "user action is not validated");
+            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is not validated");
 
-            assertEq(userPosTickVersion + 1, protocol.getTickVersion(userPosTick), "user position is liquidated");
+            assertEq(userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
 
             assertLt(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance not changed");
         }
@@ -362,7 +361,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
 
         // user open position
-        (int24 userPosTick, uint256 userPosTickVersion,) = setUpUserPositionInLong(
+        PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
                 USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 4, params.initialPrice
             )
@@ -380,9 +379,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
             assertEq(
-                uint256(pending.common.action),
-                uint256(ProtocolAction.ValidateWithdrawal),
-                "user action is not initiated"
+                uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is not initiated"
             );
 
             _waitDelay();
@@ -392,15 +389,13 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             );
 
             pending = protocol.getUserPendingAction(address(this));
-            assertEq(
-                uint256(pending.common.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is validated"
-            );
+            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is validated");
 
             assertEq(
                 initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
             );
 
-            assertEq(userPosTickVersion, protocol.getTickVersion(userPosTick), "user position is liquidated");
+            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
 
             assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance changed");
         }
@@ -413,9 +408,9 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.common.action), uint256(ProtocolAction.None), "user action is not validated");
+            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is not validated");
 
-            assertEq(userPosTickVersion + 1, protocol.getTickVersion(userPosTick), "user position is liquidated");
+            assertEq(userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
 
             assertLt(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance not changed");
         }
@@ -562,9 +557,8 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
             vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
         }
 
-        PriceInfo memory withdrawalPrice = protocol.i_getOraclePrice(
-            ProtocolAction.ValidateWithdrawal, withdrawal.common.timestamp, abi.encode(assetPrice)
-        );
+        PriceInfo memory withdrawalPrice =
+            protocol.i_getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, abi.encode(assetPrice));
 
         // Apply fees on price
         uint256 withdrawalPriceWithFees =
@@ -596,7 +590,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         assertEq(withdrawnAmount, expectedAssetAmount, "asset amount");
 
         vm.expectEmit();
-        emit ValidatedWithdrawal(address(this), to, withdrawnAmount, USDN_AMOUNT, withdrawal.common.timestamp);
+        emit ValidatedWithdrawal(address(this), to, withdrawnAmount, USDN_AMOUNT, withdrawal.timestamp);
         protocol.validateWithdrawal(currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");

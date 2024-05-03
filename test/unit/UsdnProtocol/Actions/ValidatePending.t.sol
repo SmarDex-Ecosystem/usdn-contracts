@@ -4,8 +4,13 @@ pragma solidity 0.8.20;
 import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import {
+    PendingAction,
+    ProtocolAction,
+    PreviousActionsData,
+    PositionId
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The validateActionablePendingActions function of the USDN Protocol
@@ -28,9 +33,9 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData = _setUpFourPendingActions();
 
         vm.expectEmit(true, true, false, false);
-        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, 0, 0, 0);
+        emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, PositionId(0, 0, 0));
         vm.expectEmit(true, true, false, false);
-        emit ValidatedClosePosition(USER_2, USER_2, 0, 0, 0, 0, 0);
+        emit ValidatedClosePosition(USER_2, USER_2, PositionId(0, 0, 0), 0, 0);
         vm.expectEmit(true, true, false, false);
         emit ValidatedDeposit(USER_3, USER_3, 0, 0, 0);
         vm.expectEmit(true, true, false, false);
