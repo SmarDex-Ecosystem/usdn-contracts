@@ -819,10 +819,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // remove liquidation penalty for leverage and total expo calculations
         uint128 liqPriceWithoutPenalty =
             getEffectivePriceForTick(_calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty));
-
         _checkOpenPositionLeverage(data_.adjustedPrice, liqPriceWithoutPenalty);
-        data_.positionTotalExpo = _calculatePositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
 
+        data_.positionTotalExpo = _calculatePositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
         _checkImbalanceLimitOpen(data_.positionTotalExpo, amount);
     }
 
