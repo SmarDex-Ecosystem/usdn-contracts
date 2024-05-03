@@ -90,8 +90,8 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit InitiatedOpenPosition(
-            address(this),
             to,
+            address(this),
             uint40(block.timestamp),
             expectedLeverage,
             uint128(LONG_AMOUNT),

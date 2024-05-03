@@ -318,7 +318,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
 
         uint256 initiateDepositTimestamp = block.timestamp;
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), to, depositAmount, initiateDepositTimestamp); // expected event
+        emit InitiatedDeposit(to, address(this), depositAmount, initiateDepositTimestamp); // expected event
         protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to, address(this));
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
 
@@ -338,7 +338,7 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(mintedAmount, expectedUsdnAmount, "minted amount");
 
         vm.expectEmit();
-        emit ValidatedDeposit(address(this), to, depositAmount, mintedAmount, initiateDepositTimestamp); // expected
+        emit ValidatedDeposit(to, address(this), depositAmount, mintedAmount, initiateDepositTimestamp); // expected
             // event
         protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
 
