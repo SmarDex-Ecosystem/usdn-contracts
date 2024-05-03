@@ -5,6 +5,7 @@ import { USER_1, USER_2, USER_3, USER_4 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 /**
  * @custom:feature The validateActionablePendingActions function of the USDN Protocol
@@ -160,6 +161,32 @@ contract TestUsdnProtocolValidatePending is UsdnProtocolBaseFixture {
         uint256 balanceBefore = address(this).balance;
         protocol.validateActionablePendingActions{ value: 0.5 ether }(previousActionsData, 10);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+    }
+
+    /**
+     * @custom:scenario Validate pending actions revert when pending liquidation
+     * @custom:given The initial protocol
+     * @custom:and The initial long position
+     * @custom:and A user long position
+     * @custom:and The price drop under all long positions
+     * @custom:and The initial long position is liquidated
+     * @custom:and The user long position is pending for liquidation
+     * @custom:when The function `validateActionablePendingActions` is called
+     * @custom:then The transaction should revert
+     */
+    function test_RevertWhen_validateActionablePendingActionsLiquidationPending() public {
+        setUpUserPositionInLong(
+            OpenParams(
+                USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
+            )
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        protocol.liquidate(abi.encode(params.initialPrice / 10), 1);
+
+        vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolLiquidationPending.selector);
+        protocol.validateActionablePendingActions(EMPTY_PREVIOUS_DATA, 0);
     }
 
     /**

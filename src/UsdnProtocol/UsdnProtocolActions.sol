@@ -361,6 +361,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
         returns (uint256 validatedActions_)
     {
+        if (_lastPrice < getEffectivePriceForTick(_highestPopulatedTick)) {
+            revert UsdnProtocolLiquidationPending();
+        }
+
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund;
 

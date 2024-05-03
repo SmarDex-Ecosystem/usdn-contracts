@@ -158,4 +158,7 @@ interface IUsdnProtocolErrors {
      * price.
      */
     error UsdnProtocolZeroLongTradingExpo();
+
+    /// @dev Indicates that liquidation still pending
+    error UsdnProtocolLiquidationPending();
 }
