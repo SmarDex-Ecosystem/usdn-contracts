@@ -42,6 +42,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
+        assertEq(actions[0].to, address(this), "action to");
         assertEq(actions[0].validator, address(this), "action validator");
         assertEq(rawIndices[0], 0, "raw index");
     }
@@ -65,6 +66,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         // the pending action is actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (action, rawIndex) = protocol.i_getActionablePendingAction();
+        assertEq(action.to, address(this), "action to");
         assertEq(action.validator, address(this), "action validator");
         assertEq(rawIndex, 0, "raw index");
     }
@@ -124,6 +126,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
 
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 2, "actions length");
+        assertEq(actions[1].to, USER_3, "to");
         assertEq(actions[1].validator, USER_3, "validator");
         assertEq(rawIndices[1], 2, "raw index");
     }
@@ -142,6 +145,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
 
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
+        assertTrue(action.to == USER_3, "to");
         assertTrue(action.validator == USER_3, "validator");
         assertEq(rawIndex, 2, "raw index");
     }
@@ -165,6 +169,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
      */
     function test_internalGetActionablePendingActionEmpty() public {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getActionablePendingAction();
+        assertEq(action.to, address(0), "action to");
         assertEq(action.validator, address(0), "action validator");
         assertEq(rawIndex, 0, "raw index");
     }
@@ -195,6 +200,7 @@ contract TestUsdnProtocolPending is UsdnProtocolBaseFixture {
         skip(protocol.getValidationDeadline() + 1);
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "actions length");
+        assertEq(actions[0].to, address(this), "action to");
         assertEq(actions[0].validator, address(this), "action validator");
         assertEq(rawIndices[0], 0, "action rawIndex");
         // but if the user himself calls the function, the action should not be returned
