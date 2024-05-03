@@ -68,8 +68,8 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit(address(sdex));
         emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
         vm.expectEmit();
-        emit InitiatedDeposit(address(this), to, depositAmount, block.timestamp);
-        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to, address(this));
+        emit InitiatedDeposit(to, to, depositAmount, block.timestamp);
+        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to, to);
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
         assertEq(
@@ -93,17 +93,17 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no pending action");
 
-        PendingAction memory action = protocol.getUserPendingAction(address(this));
+        PendingAction memory action = protocol.getUserPendingAction(to);
         assertTrue(action.action == ProtocolAction.ValidateDeposit, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.to, to, "action to");
-        assertEq(action.validator, address(this), "action validator");
+        assertEq(action.validator, to, "action validator");
         assertEq(action.var2, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (actions,) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions[0].validator, address(this), "pending action validator");
+        assertEq(actions[0].validator, to, "pending action validator");
     }
 
     /**
