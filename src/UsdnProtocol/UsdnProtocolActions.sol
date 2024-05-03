@@ -1036,37 +1036,35 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             );
             emit ValidatedOpenPosition(data.action.user, data.action.to, data.pos.totalExpo, data.startPrice, newPosId);
             return;
-        } else {
-            // Calculate the new total expo
-            uint128 expoBefore = data.pos.totalExpo;
-            uint128 expoAfter =
-                _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
-
-            // Update the total expo of the position
-            _longPositions[data.tickHash][data.action.index].totalExpo = expoAfter;
-            // Update the total expo by adding the position's new expo and removing the old one.
-            // Do not use += or it will underflow
-            _totalExpo = _totalExpo + expoAfter - expoBefore;
-
-            // update the tick data and the liqMultiplierAccumulator
-            {
-                TickData storage tickData = _tickData[data.tickHash];
-                uint256 unadjustedTickPrice =
-                    TickMath.getPriceAtTick(data.action.tick - int24(uint24(data.liquidationPenalty)) * _tickSpacing);
-                tickData.totalExpo = tickData.totalExpo + expoAfter - expoBefore;
-                _liqMultiplierAccumulator = _liqMultiplierAccumulator.add(
-                    HugeUint.wrap(expoAfter * unadjustedTickPrice)
-                ).sub(HugeUint.wrap(expoBefore * unadjustedTickPrice));
-            }
-
-            emit ValidatedOpenPosition(
-                data.action.user,
-                data.action.to,
-                expoAfter,
-                data.startPrice,
-                PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index })
-            );
         }
+
+        // Calculate the new total expo
+        uint128 expoBefore = data.pos.totalExpo;
+        uint128 expoAfter = _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+
+        // Update the total expo of the position
+        _longPositions[data.tickHash][data.action.index].totalExpo = expoAfter;
+        // Update the total expo by adding the position's new expo and removing the old one.
+        // Do not use += or it will underflow
+        _totalExpo = _totalExpo + expoAfter - expoBefore;
+
+        // update the tick data and the liqMultiplierAccumulator
+        {
+            TickData storage tickData = _tickData[data.tickHash];
+            uint256 unadjustedTickPrice =
+                TickMath.getPriceAtTick(data.action.tick - int24(uint24(data.liquidationPenalty)) * _tickSpacing);
+            tickData.totalExpo = tickData.totalExpo + expoAfter - expoBefore;
+            _liqMultiplierAccumulator = _liqMultiplierAccumulator.add(HugeUint.wrap(expoAfter * unadjustedTickPrice))
+                .sub(HugeUint.wrap(expoBefore * unadjustedTickPrice));
+        }
+
+        emit ValidatedOpenPosition(
+            data.action.user,
+            data.action.to,
+            expoAfter,
+            data.startPrice,
+            PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index })
+        );
     }
 
     /**
