@@ -796,10 +796,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _getOraclePrice(ProtocolAction.InitiateOpenPosition, block.timestamp, currentPriceData);
         data_.adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
 
-        if (FixedPointMathLib.fullMulDiv(amount, data_.adjustedPrice, 10 ** _assetDecimals) < _minLongPosition) {
-            revert UsdnProtocolLongPositionTooSmall();
-        }
-
         uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
 
         _applyPnlAndFundingAndLiquidate(
