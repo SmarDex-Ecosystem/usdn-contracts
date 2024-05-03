@@ -74,7 +74,7 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when a user validates the opening of a long position
      * @param user The user address
      * @param to The address that will be the owner of the position
-     * @param totalExpo The total expo of the position.
+     * @param totalExpo The total expo of the position
      * @param newStartPrice The asset price at the moment of the position creation (final)
      * @param posId The unique position identifier
      * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too

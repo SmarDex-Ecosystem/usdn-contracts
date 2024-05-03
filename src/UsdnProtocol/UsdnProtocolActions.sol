@@ -57,14 +57,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param adjustedPrice The adjusted price with position fees applied
      * @param posId The new position id
      * @param liquidationPenalty The liquidation penalty
-     * @param leverage The leverage
      * @param positionTotalExpo The total expo of the position
      */
     struct InitiateOpenPositionData {
         uint128 adjustedPrice;
         PositionId posId;
         uint8 liquidationPenalty;
-        uint128 leverage;
         uint128 positionTotalExpo;
     }
 
@@ -818,8 +816,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // Liquidation price must be at least x% below current price
         _checkSafetyMargin(neutralPrice, liqPrice);
 
-        (data_.leverage, data_.positionTotalExpo) =
-            _getOpenPositionLeverage(data_.posId.tick, data_.liquidationPenalty, data_.adjustedPrice, amount);
+        // remove liquidation penalty for leverage calculation
+        uint128 liqPriceWithoutPenalty =
+            getEffectivePriceForTick(_calcTickWithoutPenalty(data_.posId.tick, data_.liquidationPenalty));
+        data_.positionTotalExpo = _calculatePositionTotalExpo(amount, data_.adjustedPrice, liqPriceWithoutPenalty);
+
+        _checkOpenPositionLeverage(data_.adjustedPrice, liqPriceWithoutPenalty);
         _checkImbalanceLimitOpen(data_.positionTotalExpo, amount);
     }
 
@@ -1358,30 +1360,18 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice During creation of a new long position, calculate the leverage and total exposure of the position.
-     * @param tick The tick of the position.
-     * @param liquidationPenalty The liquidation penalty of the tick.
-     * @param adjustedPrice The adjusted price of the asset.
-     * @param amount The amount of collateral.
-     * @return leverage_ The leverage of the position.
-     * @return totalExpo_ The total exposure of the position.
+     * @notice Reverts if the position's leverage is higher than max or lower than min
+     * @param adjustedPrice The adjusted price of the asset
+     * @param liqPriceWithoutPenalty The liquidation price of the position without the liquidation penalty
      */
-    function _getOpenPositionLeverage(int24 tick, uint8 liquidationPenalty, uint128 adjustedPrice, uint128 amount)
-        internal
-        view
-        returns (uint128 leverage_, uint128 totalExpo_)
-    {
-        // remove liquidation penalty for leverage calculation
-        uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(_calcTickWithoutPenalty(tick, liquidationPenalty));
-        totalExpo_ = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
-
+    function _checkOpenPositionLeverage(uint128 adjustedPrice, uint128 liqPriceWithoutPenalty) internal view {
         // calculate position leverage
         // reverts if liquidationPrice >= entryPrice
-        leverage_ = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
-        if (leverage_ < _minLeverage) {
+        uint128 leverage = _getLeverage(adjustedPrice, liqPriceWithoutPenalty);
+        if (leverage < _minLeverage) {
             revert UsdnProtocolLeverageTooLow();
         }
-        if (leverage_ > _maxLeverage) {
+        if (leverage > _maxLeverage) {
             revert UsdnProtocolLeverageTooHigh();
         }
     }
