@@ -195,7 +195,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the recipient receives the position amount
      */
     function test_internalValidateClosePositionForAnotherUser() external {
-        _internalValidateClosePositionScenario(USER_1);
+        vm.startPrank(USER_1);
+        _internalValidateClosePositionScenario(address(this));
+        vm.stopPrank();
     }
 
     function _internalValidateClosePositionScenario(address to) internal {
@@ -205,11 +207,11 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------- Initiate Close Position ------------------------ */
         (Position memory pos, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
         uint256 assetBalanceBefore = protocol.getAsset().balanceOf(to);
-        protocol.initiateClosePosition(posId, positionAmount, priceData, EMPTY_PREVIOUS_DATA, to, address(this));
+        protocol.initiateClosePosition(posId, positionAmount, priceData, EMPTY_PREVIOUS_DATA, to, to);
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(to));
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, positionAmount, pos.amount).toUint128();
 
         uint256 expectedAmountReceived = protocol.i_assetToRemove(
@@ -221,8 +223,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
 
         vm.expectEmit();
-        emit ValidatedClosePosition(address(this), to, posId, expectedAmountReceived, -1);
-        protocol.i_validateClosePosition(address(this), priceData);
+        emit ValidatedClosePosition(to, to, posId, expectedAmountReceived, -1);
+        protocol.i_validateClosePosition(to, priceData);
 
         /* ----------------------------- User's Balance ----------------------------- */
         assertApproxEqAbs(

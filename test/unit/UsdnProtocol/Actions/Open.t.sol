@@ -326,7 +326,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         uint256 initialTotalExpo = protocol.getTotalExpo();
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         PositionId memory posId = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to, address(this)
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to, to
         );
         (Position memory tempPos,) = protocol.getLongPosition(posId);
 
@@ -335,8 +335,8 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         uint128 newPrice = CURRENT_PRICE + 100 ether;
 
         vm.expectEmit(true, true, false, false);
-        emit ValidatedOpenPosition(address(this), to, 0, newPrice, posId);
-        protocol.validateOpenPosition(address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        emit ValidatedOpenPosition(to, to, 0, newPrice, posId);
+        protocol.validateOpenPosition(to, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
         (Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.user, tempPos.user, "user");

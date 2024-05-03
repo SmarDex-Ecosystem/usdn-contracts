@@ -68,7 +68,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
             uint128(FixedPointMathLib.fullMulDiv(OPEN_AMOUNT, adjustedPrice, adjustedPrice - liqPriceWithoutPenalty));
 
         vm.prank(USER_1);
-        protocol.validateOpenPosition(address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
 
         (position, liquidationPenalty) = protocol.getLongPosition(posId);
 

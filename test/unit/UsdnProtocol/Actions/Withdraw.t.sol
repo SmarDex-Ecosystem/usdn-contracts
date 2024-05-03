@@ -84,24 +84,23 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         uint256 protocolUsdnInitialShares = usdn.sharesOf(address(protocol));
 
         vm.expectEmit();
-        emit InitiatedWithdrawal(address(this), to, USDN_AMOUNT, block.timestamp); // expected event
-        protocol.initiateWithdrawal(withdrawShares, currentPrice, EMPTY_PREVIOUS_DATA, to, address(this));
+        emit InitiatedWithdrawal(to, to, USDN_AMOUNT, block.timestamp); // expected event
+        protocol.initiateWithdrawal(withdrawShares, currentPrice, EMPTY_PREVIOUS_DATA, to, to);
 
         assertEq(usdn.sharesOf(address(this)), initialUsdnShares - withdrawShares, "usdn user balance");
         assertEq(usdn.sharesOf(address(protocol)), protocolUsdnInitialShares + withdrawShares, "usdn protocol balance");
         // no wstETH should be given to the user yet
-        assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance, "wstETH user balance");
+        assertEq(wstETH.balanceOf(to), initialWstETHBalance, "wstETH user balance");
         // no USDN should be burned yet
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + initialUsdnBalance, "usdn total supply");
         // the pending action should not yet be actionable by a third party
         (PendingAction[] memory actions, uint128[] memory rawIndices) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 0, "no pending action");
 
-        WithdrawalPendingAction memory action =
-            protocol.i_toWithdrawalPendingAction(protocol.getUserPendingAction(address(this)));
+        WithdrawalPendingAction memory action = protocol.i_toWithdrawalPendingAction(protocol.getUserPendingAction(to));
         assertTrue(action.action == ProtocolAction.ValidateWithdrawal, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.validator, address(this), "action validator");
+        assertEq(action.validator, to, "action validator");
         assertEq(action.to, to, "action to");
         uint256 shares = protocol.i_mergeWithdrawalAmountParts(action.sharesLSB, action.sharesMSB);
         assertEq(shares, withdrawShares, "action shares");
@@ -109,7 +108,7 @@ contract TestUsdnProtocolWithdraw is UsdnProtocolBaseFixture {
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (actions, rawIndices) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions[0].validator, address(this), "pending action validator");
+        assertEq(actions[0].validator, to, "pending action validator");
         assertEq(actions[0].to, to, "pending action user");
         assertEq(rawIndices[0], 1, "raw index");
     }
