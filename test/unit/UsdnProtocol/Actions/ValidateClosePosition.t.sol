@@ -589,7 +589,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         posId.index = 0;
         (Position memory pos,) = protocol.getLongPosition(PositionId(posId.tick, 0, 0));
         vm.prank(DEPLOYER);
-        protocol.initiateClosePosition(posId, pos.amount, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this));
+        protocol.initiateClosePosition(posId, pos.amount, priceData, EMPTY_PREVIOUS_DATA, DEPLOYER, DEPLOYER);
 
         /* ----------------- Validate close position under liq price ---------------- */
 

@@ -1099,6 +1099,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param pos The position to close
      */
     function _checkInitiateClosePosition(address to, uint128 amountToClose, Position memory pos) internal view {
+        if (to == address(0)) {
+            revert UsdnProtocolInvalidAddressTo();
+        }
+
         if (pos.user != to) {
             revert UsdnProtocolUnauthorized();
         }
@@ -1115,10 +1119,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         if (amountToClose == 0) {
             revert UsdnProtocolAmountToCloseIsZero();
-        }
-
-        if (to == address(0)) {
-            revert UsdnProtocolInvalidAddressTo();
         }
     }
 

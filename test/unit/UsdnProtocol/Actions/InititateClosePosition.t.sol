@@ -108,7 +108,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_RevertWhen_zeroAddressTo() public {
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.i_initiateClosePosition(address(this), address(0), posId, positionAmount, priceData);
+        protocol.i_initiateClosePosition(address(0), address(this), posId, positionAmount, priceData);
     }
 
     /**
@@ -205,7 +205,12 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, PositionId(0, 0, 0));
         protocol.initiateClosePosition(
-            posId, positionAmount, priceData, PreviousActionsData(previousData, rawIndices), USER_1, address(this)
+            posId,
+            positionAmount,
+            priceData,
+            PreviousActionsData(previousData, rawIndices),
+            address(this),
+            address(this)
         );
     }
 
