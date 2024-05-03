@@ -17,7 +17,8 @@ import {
     Position,
     PendingAction,
     ProtocolAction,
-    PreviousActionsData
+    PreviousActionsData,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 import { OrderManagerHandler } from "test/unit/OrderManager/utils/Handler.sol";
@@ -182,10 +183,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         usdnTotalSupply -= usdnTotalSupply * protocol.getPositionFeeBps() / protocol.BPS_DIVISOR();
         assertEq(usdnTotalSupply, usdnInitialTotalSupply, "usdn total supply");
         assertEq(usdn.balanceOf(DEPLOYER), usdnTotalSupply - protocol.MIN_USDN_SUPPLY(), "usdn deployer balance");
-        int24 firstPosTick = protocol.getEffectiveTickForPrice(params.initialPrice / 2);
-        (Position memory firstPos,) = protocol.getLongPosition(
-            firstPosTick + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(), 0, 0
-        );
+        int24 firstPosTick = protocol.getHighestPopulatedTick();
+        (Position memory firstPos,) = protocol.getLongPosition(PositionId(firstPosTick, 0, 0));
 
         assertEq(firstPos.totalExpo, 9_919_970_269_703_463_156, "first position total expo");
         assertEq(firstPos.timestamp, block.timestamp, "first pos timestamp");
@@ -250,62 +249,44 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
      * @dev The order in which the actions are performed are defined as followed:
      * @dev InitiateOpenPosition -> ValidateOpenPosition -> InitiateClosePosition -> ValidateWithdrawal
      * @param openParams open position params
-     * @return tick_ The tick at which the position was opened
-     * @return tickVersion_ The tick version of the price tick
-     * @return index_ The index of the new position inside the tick array
+     * @return posId_ The unique position identifier
      */
     function setUpUserPositionInLong(OpenParams memory openParams)
         public
         prankUser(openParams.user)
-        returns (int24 tick_, uint256 tickVersion_, uint256 index_)
+        returns (PositionId memory posId_)
     {
         uint256 securityDepositValue = protocol.getSecurityDepositValue();
         wstETH.mintAndApprove(openParams.user, openParams.positionSize, address(protocol), openParams.positionSize);
         bytes memory priceData = abi.encode(openParams.price);
 
-        (tick_, tickVersion_, index_) = protocol.initiateOpenPosition{ value: securityDepositValue }(
-            openParams.positionSize,
-            openParams.desiredLiqPrice,
-            priceData,
-            EMPTY_PREVIOUS_DATA,
-            openParams.user,
-            openParams.user
+        posId_ = protocol.initiateOpenPosition{ value: securityDepositValue }(
+            openParams.positionSize, openParams.desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA, openParams.user
         );
         _waitDelay();
-        if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (tick_, tickVersion_, index_);
+        if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (posId_);
 
         protocol.validateOpenPosition(openParams.user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-        if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (tick_, tickVersion_, index_);
+        if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (posId_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            tick_,
-            tickVersion_,
-            index_,
-            openParams.positionSize,
-            priceData,
-            EMPTY_PREVIOUS_DATA,
-            openParams.user,
-            openParams.user
+            posId_, openParams.positionSize, priceData, EMPTY_PREVIOUS_DATA, openParams.user
         );
         _waitDelay();
-        if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (tick_, tickVersion_, index_);
+        if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);
 
         protocol.validateClosePosition(openParams.user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
-
-        return (tick_, tickVersion_, index_);
     }
 
     /**
      * @dev Helper function to initiate a new position and liquidate it before it gets validated
-     * @return tick_ The tick of the new position
-     * @return tickVersion_ The tick version of the new position
-     * @return index_ The index of the new position
+     * @return posId_ The unique position identifier
      */
-    function _createStalePendingActionHelper() internal returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+    function _createStalePendingActionHelper() internal returns (PositionId memory posId_) {
         // create a pending action with a liquidation price around $1700
-        (tick_, tickVersion_, index_) = setUpUserPositionInLong(
+        posId_ = setUpUserPositionInLong(
             OpenParams(address(this), ProtocolAction.InitiateOpenPosition, 1 ether, 1700 ether, 2000 ether)
         );
 
@@ -314,9 +295,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         protocol.liquidate(abi.encode(uint128(1500 ether)), 10);
 
         // the pending action is stale
-        uint256 currentTickVersion = protocol.getTickVersion(tick_);
+        uint256 currentTickVersion = protocol.getTickVersion(posId_.tick);
         PendingAction memory action = protocol.getUserPendingAction(address(this));
-        assertEq(action.var3, tickVersion_, "tick version");
+        assertEq(action.var3, posId_.tickVersion, "tick version");
         assertTrue(action.var3 != currentTickVersion, "current tick version");
     }
 
@@ -328,15 +309,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
      * @param err Assert message prefix
      */
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
-        assertTrue(a.common.action == b.common.action, string.concat(err, " - action type"));
-        assertEq(a.common.timestamp, b.common.timestamp, string.concat(err, " - action timestamp"));
-        assertEq(a.common.to, b.common.to, string.concat(err, " - action to"));
-        assertEq(a.common.validator, b.common.validator, string.concat(err, " - action validator"));
-        assertEq(
-            a.common.securityDepositValue,
-            b.common.securityDepositValue,
-            string.concat(err, " - action security deposit")
-        );
+        assertTrue(a.action == b.action, string.concat(err, " - action type"));
+        assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
+        assertEq(a.to, b.to, string.concat(err, " - action to"));
+        assertEq(a.validator, b.validator, string.concat(err, " - action validator"));
+        assertEq(a.securityDepositValue, b.securityDepositValue, string.concat(err, " - action security deposit"));
         assertEq(a.var1, b.var1, string.concat(err, " - action var1"));
         assertEq(a.var2, b.var2, string.concat(err, " - action var2"));
         assertEq(a.var3, b.var3, string.concat(err, " - action var3"));

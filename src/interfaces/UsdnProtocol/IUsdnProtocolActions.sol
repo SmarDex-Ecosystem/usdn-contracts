@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
@@ -107,10 +107,8 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions.
      * @param to The address that will be the owner of the position
-     * @param validator The address that will validate the open position
-     * @return tick_ The tick containing the new position
-     * @return tickVersion_ The tick version
-     * @return index_ The index of the new position inside the tick array
+     * * @param validator The address that will validate the open position
+     * @return posId_ The unique position identifier
      */
     function initiateOpenPosition(
         uint128 amount,
@@ -119,7 +117,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         PreviousActionsData calldata previousActionsData,
         address to,
         address validator
-    ) external payable returns (int24 tick_, uint256 tickVersion_, uint256 index_);
+    ) external payable returns (PositionId memory posId_);
 
     /**
      * @notice Validate a pending open position action.
@@ -156,9 +154,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * Thus, calculations don't consider those anymore. The exit price (and thus profit) is not yet set definitively,
      * and will be done during the validate action.
      * The transaction must have _securityDepositValue in value.
-     * @param tick The tick containing the position to close
-     * @param tickVersion The tick version of the position to close
-     * @param index The index of the position inside the tick array
+     * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions.
@@ -166,9 +162,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param validator The address that will validate the close position
      */
     function initiateClosePosition(
-        int24 tick,
-        uint256 tickVersion,
-        uint256 index,
+        PositionId calldata posId,
         uint128 amountToClose,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,

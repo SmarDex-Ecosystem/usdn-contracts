@@ -589,7 +589,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:then The value should be updated.
      */
     function test_setSecurityDepositValue() external adminPrank {
-        uint256 newValue = 1 ether;
+        uint64 newValue = 1 ether;
         // expected event
         vm.expectEmit();
         emit SecurityDepositValueUpdated(newValue);
@@ -597,43 +597,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setSecurityDepositValue(newValue);
         // assert that the new value is equal to the expected value
         assertEq(protocol.getSecurityDepositValue(), newValue);
-    }
-
-    /**
-     * @custom:scenario Call "setSecurityDepositValue" from admin.
-     * @custom:given The initial usdnProtocol state.
-     * @custom:when Admin wallet call function with a value inferior to SECURITY_DEPOSIT_FACTOR.
-     * @custom:then The transaction should revert.
-     */
-    function test_RevertWhen_setSecurityDepositValue_Inf() external adminPrank {
-        uint256 securityDepositFactor = protocol.SECURITY_DEPOSIT_FACTOR();
-        vm.expectRevert(UsdnProtocolInvalidSecurityDepositValue.selector);
-        // set security deposit with SECURITY_DEPOSIT_FACTOR - 1
-        protocol.setSecurityDepositValue(securityDepositFactor - 1);
-    }
-
-    /**
-     * @custom:scenario Call "setSecurityDepositValue" from admin.
-     * @custom:given The initial usdnProtocol state.
-     * @custom:when Admin wallet call function with a value superior to SECURITY_DEPOSIT_FACTOR.
-     * @custom:then The transaction should revert.
-     */
-    function test_RevertWhen_setSecurityDepositValue_Sup() external adminPrank {
-        vm.expectRevert(UsdnProtocolInvalidSecurityDepositValue.selector);
-        // set security deposit with SECURITY_DEPOSIT_FACTOR - 1
-        protocol.setSecurityDepositValue(10 ether + 1);
-    }
-
-    /**
-     * @custom:scenario Call "setSecurityDepositValue" from admin.
-     * @custom:given The initial usdnProtocol state.
-     * @custom:when Admin wallet call function with a value not multiple to SECURITY_DEPOSIT_FACTOR.
-     * @custom:then The transaction should revert.
-     */
-    function test_RevertWhen_setSecurityDepositValue_notMultiple() external adminPrank {
-        vm.expectRevert(UsdnProtocolInvalidSecurityDepositValue.selector);
-        // set security deposit with 1 ether and 1 wei
-        protocol.setSecurityDepositValue(1 ether + 1);
     }
 
     /**

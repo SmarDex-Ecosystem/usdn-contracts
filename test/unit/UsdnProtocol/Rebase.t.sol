@@ -5,7 +5,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { ADMIN } from "test/utils/Constants.sol";
 
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the rebasing of the USDN token depending on its price
@@ -258,7 +258,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
      * @custom:then The USDN token is rebased
      */
     function test_usdnRebaseWhenInitiateClosePosition() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -280,7 +280,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
         protocol.initiateClosePosition(
-            tick, tickVersion, index, 1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this), address(this)
+            posId, 1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
     }
 

@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
@@ -52,7 +52,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
         assertEq(wstETH.balanceOf(address(this)), 0, "User should have no wstETH");
 
         bytes memory priceData = abi.encode(params.initialPrice);
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -64,24 +64,17 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
 
         uint256 amountClosed;
         for (uint256 i = 0; i < iterations; ++i) {
-            (Position memory posBefore,) = protocol.getLongPosition(tick, tickVersion, index);
+            (Position memory posBefore,) = protocol.getLongPosition(posId);
             amountToClose = bound(amountToClose, 1, posBefore.amount);
             amountClosed += amountToClose;
 
             protocol.initiateClosePosition(
-                tick,
-                tickVersion,
-                index,
-                uint128(amountToClose),
-                priceData,
-                EMPTY_PREVIOUS_DATA,
-                address(this),
-                address(this)
+                posId, uint128(amountToClose), priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
             );
             _waitDelay();
             protocol.i_validateClosePosition(address(this), priceData);
 
-            (Position memory posAfter,) = protocol.getLongPosition(tick, tickVersion, index);
+            (Position memory posAfter,) = protocol.getLongPosition(posId);
             assertEq(
                 posAfter.amount,
                 posBefore.amount - amountToClose,
@@ -96,9 +89,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
         // Close the what's left of the position
         if (amountClosed != amountToOpen) {
             protocol.initiateClosePosition(
-                tick,
-                tickVersion,
-                index,
+                posId,
                 uint128(amountToOpen - amountClosed),
                 priceData,
                 EMPTY_PREVIOUS_DATA,
@@ -109,7 +100,7 @@ contract TestUsdnProtocolActionsClosePositionFuzzing is UsdnProtocolBaseFixture 
             protocol.i_validateClosePosition(address(this), priceData);
         }
 
-        (Position memory pos,) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.amount, 0, "Amount left should be 0");
         assertEq(pos.user, address(0), "Position should have been deleted from the tick array");
 

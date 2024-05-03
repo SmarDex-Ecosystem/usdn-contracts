@@ -83,9 +83,9 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         assertEq(rawIndex2, 0, "raw index 2");
 
         PendingAction memory pending;
-        pending.common.action = ProtocolAction.InitiateDeposit;
-        pending.common.validator = USER_1;
-        pending.common.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
+        pending.action = ProtocolAction.InitiateDeposit;
+        pending.validator = USER_1;
+        pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
         uint128 rawIndex1 = protocol.queuePushFront(pending);
         assertEq(rawIndex1, type(uint128).max, "raw index 1");
 
@@ -99,7 +99,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
 
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(0));
         assertEq(actions.length, 1, "one pending action left");
-        assertEq(actions[0].common.validator, address(this), "pending action user");
+        assertEq(actions[0].validator, address(this), "pending action validator");
     }
 
     /**
@@ -108,9 +108,9 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
      */
     function _addDummyPendingAction() internal returns (uint128 rawIndex_) {
         PendingAction memory pending;
-        pending.common.action = ProtocolAction.InitiateDeposit;
-        pending.common.validator = address(this);
-        pending.common.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
+        pending.action = ProtocolAction.InitiateDeposit;
+        pending.validator = address(this);
+        pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
         protocol.i_addPendingAction(address(this), pending);
         (, rawIndex_) = protocol.i_getPendingAction(address(this));
     }

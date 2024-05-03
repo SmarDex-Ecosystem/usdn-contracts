@@ -94,16 +94,16 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
         assertEq(actions.length, 0, "no pending action");
 
         PendingAction memory action = protocol.getUserPendingAction(address(this));
-        assertTrue(action.common.action == ProtocolAction.ValidateDeposit, "action type");
-        assertEq(action.common.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.common.to, to, "action to");
-        assertEq(action.common.validator, address(this), "action validator");
+        assertTrue(action.action == ProtocolAction.ValidateDeposit, "action type");
+        assertEq(action.timestamp, block.timestamp, "action timestamp");
+        assertEq(action.to, to, "action to");
+        assertEq(action.validator, address(this), "action validator");
         assertEq(action.var2, depositAmount, "action amount");
 
         // the pending action should be actionable after the validation deadline
         skip(protocol.getValidationDeadline() + 1);
         (actions,) = protocol.getActionablePendingActions(address(0));
-        assertEq(actions[0].common.validator, address(this), "pending action validator");
+        assertEq(actions[0].validator, address(this), "pending action validator");
     }
 
     /**

@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { ADMIN, DEPLOYER } from "test/utils/Constants.sol";
@@ -56,14 +56,7 @@ contract TestImbalanceLimitDeposit is UsdnProtocolBaseFixture {
 
         // initiate close
         protocol.initiateClosePosition(
-            tick,
-            0, // no liquidation
-            0, // unique long
-            params.initialLong,
-            abi.encode(params.initialPrice),
-            data,
-            DEPLOYER,
-            DEPLOYER
+            PositionId(tick, 0, 0), params.initialLong, abi.encode(params.initialPrice), data, DEPLOYER, DEPLOYER
         );
 
         // wait more than 2 blocks
