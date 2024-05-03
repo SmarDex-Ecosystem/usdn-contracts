@@ -9,42 +9,42 @@ import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
  */
 interface IUsdnProtocolEvents {
     /**
-     * @notice Emitted when a user initiates a deposit.
-     * @param to The address that will receive the USDN tokens.
-     * @param validator The address of the validator that will validate the deposit.
-     * @param amount The amount of asset that were deposited.
-     * @param timestamp The timestamp of the action.
+     * @notice Emitted when a user initiates a deposit
+     * @param to The address that will receive the USDN tokens
+     * @param validator The address of the validator that will validate the deposit
+     * @param amount The amount of asset that were deposited
+     * @param timestamp The timestamp of the action
      */
     event InitiatedDeposit(address indexed to, address indexed validator, uint256 amount, uint256 timestamp);
 
     /**
-     * @notice Emitted when a user validates a deposit.
-     * @param to The address that received the USDN tokens.
-     * @param validator The address of the validator that validated the deposit.
-     * @param amountDeposited The amount of asset that were deposited.
-     * @param usdnMinted The amount of USDN that were minted.
-     * @param timestamp The timestamp of the InitiatedDeposit action.
+     * @notice Emitted when a user validates a deposit
+     * @param to The address that received the USDN tokens
+     * @param validator The address of the validator that validated the deposit
+     * @param amountDeposited The amount of asset that were deposited
+     * @param usdnMinted The amount of USDN that were minted
+     * @param timestamp The timestamp of the InitiatedDeposit action
      */
     event ValidatedDeposit(
         address indexed to, address indexed validator, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
     );
 
     /**
-     * @notice Emitted when a user initiates a withdrawal.
-     * @param to The address that will receive the assets.
-     * @param validator The address of the validator that will validate the withdrawal.
-     * @param usdnAmount The amount of USDN that will be burned.
-     * @param timestamp The timestamp of the action.
+     * @notice Emitted when a user initiates a withdrawal
+     * @param to The address that will receive the assets
+     * @param validator The address of the validator that will validate the withdrawal
+     * @param usdnAmount The amount of USDN that will be burned
+     * @param timestamp The timestamp of the action
      */
     event InitiatedWithdrawal(address indexed to, address indexed validator, uint256 usdnAmount, uint256 timestamp);
 
     /**
-     * @notice Emitted when a user validates a withdrawal.
-     * @param to The address that received the assets.
-     * @param validator The address of the validator that validated the withdrawal.
-     * @param amountWithdrawn The amount of asset that were withdrawn.
-     * @param usdnBurned The amount of USDN that were burned.
-     * @param timestamp The timestamp of the InitiatedWithdrawal action.
+     * @notice Emitted when a user validates a withdrawal
+     * @param to The address that received the assets
+     * @param validator The address of the validator that validated the withdrawal
+     * @param amountWithdrawn The amount of asset that were withdrawn
+     * @param usdnBurned The amount of USDN that were burned
+     * @param timestamp The timestamp of the InitiatedWithdrawal action
      */
     event ValidatedWithdrawal(
         address indexed to, address indexed validator, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp
@@ -53,7 +53,7 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user initiates the opening of a long position
      * @param to The address that will be the owner of the position
-     * @param validator The address of the validator that will validate the position.
+     * @param validator The address of the validator that will validate the position
      * @param timestamp The timestamp of the action
      * @param totalExpo The initial total expo of the position (pending validation)
      * @param amount The amount of asset that were deposited as collateral
@@ -91,15 +91,15 @@ interface IUsdnProtocolEvents {
     event LiquidationPriceUpdated(PositionId indexed oldPosId, PositionId newPosId);
 
     /**
-     * @notice Emitted when a user initiates the closing of all or part of a long position.
-     * @param to The address that will receive the assets.
-     * @param validator The address of the validator that will validate the position.
+     * @notice Emitted when a user initiates the closing of all or part of a long position
+     * @param to The address that will receive the assets
+     * @param validator The address of the validator that will validate the position
      * @param posId The unique position identifier
-     * @param originalAmount The amount of collateral originally on the position.
+     * @param originalAmount The amount of collateral originally on the position
      * @param amountToClose The amount of collateral to close from the position.
-     * If the entirety of the position is being closed, this value equals originalAmount.
+     * If the entirety of the position is being closed, this value equals originalAmount
      * @param totalExpoRemaining The total expo remaining in the position.
-     * If the entirety of the position is being closed, this value is zero.
+     * If the entirety of the position is being closed, this value is zero
      */
     event InitiatedClosePosition(
         address indexed to,
@@ -113,10 +113,10 @@ interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user validates the closing of a long position
      * @param to The address that received the assets.
-     * @param validator The address of the validator that validated the position.
+     * @param validator The address of the validator that validated the position
      * @param posId The unique position identifier
-     * @param amountReceived The amount of asset that were sent to the user.
-     * @param profit The profit that the user made.
+     * @param amountReceived The amount of asset that were sent to the user
+     * @param profit The profit that the user made
      */
     event ValidatedClosePosition(
         address indexed to, address indexed validator, PositionId posId, uint256 amountReceived, int256 profit
