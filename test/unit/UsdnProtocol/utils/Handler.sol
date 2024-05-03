@@ -384,14 +384,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _createInitialDeposit(amount, price);
     }
 
-    function i_createInitialPosition(
-        uint128 amount,
-        uint128 price,
-        int24 tick,
-        uint128 leverage,
-        uint128 positionTotalExpo
-    ) external {
-        _createInitialPosition(amount, price, tick, leverage, positionTotalExpo);
+    function i_createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 positionTotalExpo) external {
+        _createInitialPosition(amount, price, tick, positionTotalExpo);
     }
 
     function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty) external {

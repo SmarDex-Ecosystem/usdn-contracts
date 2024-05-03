@@ -33,18 +33,17 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
      * @custom:and The leverage is x2
      * @custom:when The user initiates a position opening with 1 wstETH as collateral
      * @custom:then The protocol emit an event with the correct price including the fees
-     * @custom:and The protocol emit an event with the correct leverage computed with the fees
+     * @custom:and The protocol emit an event with the correct total expo computed with the fees
      */
     function test_initiateOpenPosition() public {
         uint128 desiredLiqPrice = 2000 ether / 2;
 
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
-        uint256 expectedLeverage = protocol.i_getLeverage(
-            uint128(expectedPrice),
-            protocol.getEffectivePriceForTick(
-                protocol.i_calcTickWithoutPenalty(protocol.getEffectiveTickForPrice(desiredLiqPrice))
-            )
-        );
+        int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
+
+        // Price without the liquidation penalty
+        uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick));
+        uint128 expectedPosTotalExpo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, effectiveTickPrice);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         vm.recordLogs();
@@ -55,11 +54,11 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         Vm.Log[] memory logs = vm.getRecordedLogs();
         assertEq(logs[1].topics[0], InitiatedOpenPosition.selector);
 
-        (, uint128 leverage,, uint256 price,,,) =
+        (, uint128 posTotalExpo,, uint256 price,,,) =
             abi.decode(logs[1].data, (uint40, uint128, uint128, uint128, int24, uint256, uint256));
 
         assertEq(price, expectedPrice, "assetPrice");
-        assertEq(leverage, expectedLeverage, "leverage");
+        assertEq(posTotalExpo, expectedPosTotalExpo, "posTotalExpo");
     }
 
     /**
@@ -69,15 +68,13 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
      * @custom:when The user initiates a position opening with 1 wstETH as collateral
      * @custom:and The user validate his position opening with the same price
      * @custom:then The protocol emit an event with the correct price with the fees
-     * @custom:and The protocol emit an event with the correct leverage computed with the fees
+     * @custom:and The protocol emit an event with the correct total expo computed with the fees
      */
     function test_validateOpenPosition() public {
-        skip(1 hours);
-
         uint128 desiredLiqPrice = 2000 ether / 2;
         bytes memory priceData = abi.encode(2000 ether);
 
-        setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.InitiateOpenPosition,
@@ -93,24 +90,21 @@ contract TestUsdnProtocolPositionFees is UsdnProtocolBaseFixture {
         // Call liquidate to trigger liquidation multiplier update
         protocol.testLiquidate(priceData, 0);
 
+        // Price without the liquidation penalty
+        uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick));
         uint256 expectedPrice = 2000 ether + 2000 ether * uint256(protocol.getPositionFeeBps()) / protocol.BPS_DIVISOR();
-        uint256 expectedLeverage = protocol.i_getLeverage(
-            uint128(expectedPrice),
-            protocol.getEffectivePriceForTick(
-                protocol.i_calcTickWithoutPenalty(protocol.getEffectiveTickForPrice(desiredLiqPrice))
-            )
-        );
+        uint128 expectedPosTotalExpo = protocol.i_calculatePositionTotalExpo(1 ether, 2000 ether, effectiveTickPrice);
 
         vm.recordLogs();
 
         protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        (uint128 leverage, uint256 price,,,) = abi.decode(logs[0].data, (uint128, uint128, int24, uint256, uint256));
+        (uint128 posTotalExpo, uint256 price,,,) = abi.decode(logs[0].data, (uint128, uint128, int24, uint256, uint256));
 
         assertEq(logs[0].topics[0], ValidatedOpenPosition.selector);
         assertEq(price, expectedPrice, "assetPrice");
-        assertEq(leverage, expectedLeverage, "leverage");
+        assertEq(posTotalExpo, expectedPosTotalExpo, "posTotalExpo");
     }
 
     /**
