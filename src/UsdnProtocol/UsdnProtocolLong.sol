@@ -31,6 +31,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param longTradingExpo The long trading expo
      * @param currentPrice The current price of the asset
      * @param accumulator The liquidation multiplier accumulator before the liquidation
+     * @param isLiquidationPending Is liquidation pending
      */
     struct LiquidationData {
         int256 tempLongBalance;

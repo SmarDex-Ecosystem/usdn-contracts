@@ -43,6 +43,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param balanceLong The current long balance
      * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
      * @param usdn The USDN token
+     * @param isLiquidationPending Is liquidation pending
      */
     struct WithdrawalData {
         uint128 pendingActionPrice;
@@ -60,6 +61,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param liquidationPenalty The liquidation penalty
      * @param leverage The leverage
      * @param positionTotalExpo The total expo of the position
+     * @param isLiquidationPending Is liquidation pending
      */
     struct InitiateOpenPositionData {
         uint128 adjustedPrice;
@@ -79,6 +81,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
      * @param leverage The new leverage
      * @param liquidationPenalty The liquidation penalty for the position's tick
+     * @param isLiquidationPending Is liquidation pending
      */
     struct ValidateOpenPositionData {
         LongPendingAction action;
@@ -100,7 +103,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param lastPrice The price after the last balances update
      * @param tempPositionValue The bounded value of the position that was removed from the long balance
      * @param longTradingExpo The long trading expo
+     * @param balanceBefore The balance before
+     * @param amountToRefund The amount to refund
      * @param liqMulAcc The liquidation multiplier accumulator
+     * @param isLiquidationPending Is liquidation pending
      */
     struct ClosePositionData {
         Position pos;
