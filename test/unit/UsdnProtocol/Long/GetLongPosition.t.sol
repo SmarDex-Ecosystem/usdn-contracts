@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { Position, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { Position, ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
@@ -43,7 +43,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
         uint128 totalExpo =
             uint128(FixedPointMathLib.fullMulDiv(OPEN_AMOUNT, adjustedPrice, adjustedPrice - liqPriceWithoutPenalty));
 
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.InitiateOpenPosition,
@@ -53,7 +53,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
             })
         );
 
-        (Position memory position, uint8 liquidationPenalty) = protocol.getLongPosition(tick, tickVersion, index);
+        (Position memory position, uint8 liquidationPenalty) = protocol.getLongPosition(posId);
 
         uint256 expectedTimestamp = block.timestamp - oracleMiddleware.getValidationDelay() - 1;
         assertEq(position.timestamp, expectedTimestamp, "initiate position timestamp");
@@ -70,7 +70,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
         vm.prank(USER_1);
         protocol.validateOpenPosition(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
 
-        (position, liquidationPenalty) = protocol.getLongPosition(tick, tickVersion, index);
+        (position, liquidationPenalty) = protocol.getLongPosition(posId);
 
         assertEq(position.timestamp, expectedTimestamp, "validate position timestamp");
         assertEq(position.user, USER_1, "validate position user");
@@ -90,7 +90,7 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
      * @custom:then The transaction should revert
      */
     function test_RevertWhen_getLongPositionOutdatedTick() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -104,8 +104,10 @@ contract TestGetLongPosition is UsdnProtocolBaseFixture {
         protocol.testLiquidate(abi.encode(params.initialPrice / 3), 10);
 
         vm.expectRevert(
-            abi.encodeWithSelector(IUsdnProtocolErrors.UsdnProtocolOutdatedTick.selector, tickVersion + 1, tickVersion)
+            abi.encodeWithSelector(
+                IUsdnProtocolErrors.UsdnProtocolOutdatedTick.selector, posId.tickVersion + 1, posId.tickVersion
+            )
         );
-        protocol.getLongPosition(tick, tickVersion, index);
+        protocol.getLongPosition(posId);
     }
 }

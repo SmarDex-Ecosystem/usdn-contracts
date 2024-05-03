@@ -195,7 +195,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
         address to
-    ) external payable initializedAndNonReentrant returns (int24 tick_, uint256 tickVersion_, uint256 index_) {
+    ) external payable initializedAndNonReentrant returns (PositionId memory posId_) {
         uint256 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
@@ -204,11 +204,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund;
 
-        PositionId memory posId;
-        (posId, amountToRefund) = _initiateOpenPosition(msg.sender, to, amount, desiredLiqPrice, currentPriceData);
-        tick_ = posId.tick;
-        tickVersion_ = posId.tickVersion;
-        index_ = posId.index;
+        (posId_, amountToRefund) = _initiateOpenPosition(msg.sender, to, amount, desiredLiqPrice, currentPriceData);
 
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
@@ -235,9 +231,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /// @inheritdoc IUsdnProtocolActions
     function initiateClosePosition(
-        int24 tick,
-        uint256 tickVersion,
-        uint256 index,
+        PositionId calldata posId,
         uint128 amountToClose,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
@@ -250,13 +244,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund = _initiateClosePosition(
-            msg.sender,
-            to,
-            PositionId({ tick: tick, tickVersion: tickVersion, index: index }),
-            amountToClose,
-            currentPriceData
-        );
+        uint256 amountToRefund = _initiateClosePosition(msg.sender, to, posId, amountToClose, currentPriceData);
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -915,17 +903,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _asset.safeTransferFrom(user, address(this), amount);
 
-        emit InitiatedOpenPosition(
-            user,
-            to,
-            uint40(block.timestamp),
-            data.leverage,
-            amount,
-            data.adjustedPrice,
-            posId_.tick,
-            posId_.tickVersion,
-            posId_.index
-        );
+        emit InitiatedOpenPosition(user, to, uint40(block.timestamp), data.leverage, amount, data.adjustedPrice, posId_);
     }
 
     function _validateOpenPosition(address user, bytes calldata priceData)
@@ -974,7 +952,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // The current tick version doesn't match the version from the pending action.
             // This means the position has been liquidated in the mean time
             emit StalePendingActionRemoved(
-                data_.action.user, data_.action.tick, data_.action.tickVersion, data_.action.index
+                data_.action.user,
+                PositionId({ tick: data_.action.tick, tickVersion: data_.action.tickVersion, index: data_.action.index })
             );
             return (data_, true);
         }
@@ -1012,9 +991,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             // apply liquidation penalty with the current penalty setting
             uint8 currentLiqPenalty = _liquidationPenalty;
-            int24 tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * _tickSpacing;
+            PositionId memory newPosId;
+            newPosId.tick = tickWithoutPenalty + int24(uint24(currentLiqPenalty)) * _tickSpacing;
             // retrieve the actual penalty for this tick we want to use
-            uint8 liquidationPenalty = getTickLiquidationPenalty(tick);
+            uint8 liquidationPenalty = getTickLiquidationPenalty(newPosId.tick);
             // check if the penalty for that tick is different from the current setting
             if (liquidationPenalty == currentLiqPenalty) {
                 // Since the tick's penalty is the same as what we assumed, we can use the `tickWithoutPenalty` from
@@ -1032,7 +1012,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
                 // Retrieve exact liquidation price without penalty.
                 data.liqPriceWithoutPenalty =
-                    getEffectivePriceForTick(_calcTickWithoutPenalty(tick, liquidationPenalty));
+                    getEffectivePriceForTick(_calcTickWithoutPenalty(newPosId.tick, liquidationPenalty));
             }
             // recalculate the leverage with the new liquidation price
             data.leverage = _getLeverage(data.startPrice, data.liqPriceWithoutPenalty);
@@ -1046,49 +1026,46 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             data.pos.totalExpo =
                 _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
             // insert position into new tick
-            (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, data.pos, liquidationPenalty);
+            (newPosId.tickVersion, newPosId.index) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
             // no long balance update is necessary (collateral didn't change)
 
             // emit LiquidationPriceUpdated
             emit LiquidationPriceUpdated(
-                data.action.tick, data.action.tickVersion, data.action.index, tick, tickVersion, index
+                PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index }),
+                newPosId
             );
-            emit ValidatedOpenPosition(
-                data.action.user, data.action.to, data.leverage, data.startPrice, tick, tickVersion, index
-            );
-        } else {
-            // Calculate the new total expo
-            uint128 expoBefore = data.pos.totalExpo;
-            uint128 expoAfter =
-                _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
-
-            // Update the total expo of the position
-            _longPositions[data.tickHash][data.action.index].totalExpo = expoAfter;
-            // Update the total expo by adding the position's new expo and removing the old one.
-            // Do not use += or it will underflow
-            _totalExpo = _totalExpo + expoAfter - expoBefore;
-
-            // update the tick data and the liqMultiplierAccumulator
-            {
-                TickData storage tickData = _tickData[data.tickHash];
-                uint256 unadjustedTickPrice =
-                    TickMath.getPriceAtTick(data.action.tick - int24(uint24(data.liquidationPenalty)) * _tickSpacing);
-                tickData.totalExpo = tickData.totalExpo + expoAfter - expoBefore;
-                _liqMultiplierAccumulator = _liqMultiplierAccumulator.add(
-                    HugeUint.wrap(expoAfter * unadjustedTickPrice)
-                ).sub(HugeUint.wrap(expoBefore * unadjustedTickPrice));
-            }
-
-            emit ValidatedOpenPosition(
-                data.action.user,
-                data.action.to,
-                data.leverage,
-                data.startPrice,
-                data.action.tick,
-                data.action.tickVersion,
-                data.action.index
-            );
+            emit ValidatedOpenPosition(data.action.user, data.action.to, data.leverage, data.startPrice, newPosId);
+            return;
         }
+        // the new leverage does not exceed the max leverage
+
+        // Calculate the new total expo
+        uint128 expoBefore = data.pos.totalExpo;
+        uint128 expoAfter = _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
+
+        // Update the total expo of the position
+        _longPositions[data.tickHash][data.action.index].totalExpo = expoAfter;
+        // Update the total expo by adding the position's new expo and removing the old one.
+        // Do not use += or it will underflow
+        _totalExpo = _totalExpo + expoAfter - expoBefore;
+
+        // update the tick data and the liqMultiplierAccumulator
+        {
+            TickData storage tickData = _tickData[data.tickHash];
+            uint256 unadjustedTickPrice =
+                TickMath.getPriceAtTick(data.action.tick - int24(uint24(data.liquidationPenalty)) * _tickSpacing);
+            tickData.totalExpo = tickData.totalExpo + expoAfter - expoBefore;
+            _liqMultiplierAccumulator = _liqMultiplierAccumulator.add(HugeUint.wrap(expoAfter * unadjustedTickPrice))
+                .sub(HugeUint.wrap(expoBefore * unadjustedTickPrice));
+        }
+
+        emit ValidatedOpenPosition(
+            data.action.user,
+            data.action.to,
+            data.leverage,
+            data.startPrice,
+            PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index })
+        );
     }
 
     /**
@@ -1146,7 +1123,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (ClosePositionData memory data_, bool liq_) {
-        (data_.pos, data_.liquidationPenalty) = getLongPosition(posId.tick, posId.tickVersion, posId.index);
+        (data_.pos, data_.liquidationPenalty) = getLongPosition(posId);
 
         _checkInitiateClosePosition(user, to, amountToClose, data_.pos);
 
@@ -1263,14 +1240,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _removeAmountFromPosition(posId.tick, posId.index, data.pos, amountToClose, data.totalExpoToClose);
 
         emit InitiatedClosePosition(
-            user,
-            to,
-            posId.tick,
-            posId.tickVersion,
-            posId.index,
-            data.pos.amount,
-            amountToClose,
-            data.pos.totalExpo - data.totalExpoToClose
+            user, to, posId, data.pos.amount, amountToClose, data.pos.totalExpo - data.totalExpoToClose
         );
     }
 
@@ -1314,7 +1284,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // Credit the full amount to the vault to preserve the total balance invariant.
             _balanceVault += long.closeBoundedPositionValue;
             emit LiquidatedPosition(
-                long.user, long.tick, long.tickVersion, long.index, currentPrice.neutralPrice, liquidationPrice
+                long.user,
+                PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
+                currentPrice.neutralPrice,
+                liquidationPrice
             );
             return;
         }
@@ -1379,9 +1352,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         emit ValidatedClosePosition(
             long.user,
             long.to,
-            long.tick,
-            long.tickVersion,
-            long.index,
+            PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
             assetToTransfer,
             assetToTransfer.toInt256() - _toInt256(long.closeAmount)
         );

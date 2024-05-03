@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature Test the _findHighestPopulatedTick internal function of the UsdnProtocolLong contract
@@ -31,7 +31,7 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
         int24 highestPopulatedTick = protocol.i_findHighestPopulatedTick(type(int24).max);
         assertEq(highestPopulatedTick, _initialTick, "The tick of protocol initialization should have been found");
 
-        (int24 higherTick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -43,10 +43,10 @@ contract TestUsdnProtocolLongFindHighestPopulatedTick is UsdnProtocolBaseFixture
 
         // Add a position in a higher liquidation tick to check the result changes
         highestPopulatedTick = protocol.i_findHighestPopulatedTick(type(int24).max);
-        assertEq(highestPopulatedTick, higherTick, "The tick of the newly created position should have been found");
+        assertEq(highestPopulatedTick, posId.tick, "The tick of the newly created position should have been found");
 
         // Search from lower than the higher tick previously populated
-        highestPopulatedTick = protocol.i_findHighestPopulatedTick(higherTick - protocol.getTickSpacing());
+        highestPopulatedTick = protocol.i_findHighestPopulatedTick(posId.tick - protocol.getTickSpacing());
         assertEq(
             highestPopulatedTick, _initialTick, "The tick lower than the newly created position should have been found"
         );
