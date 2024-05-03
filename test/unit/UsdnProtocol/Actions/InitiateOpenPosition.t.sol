@@ -9,7 +9,8 @@ import {
     LongPendingAction,
     Position,
     PendingAction,
-    TickData
+    TickData,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
@@ -38,9 +39,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint128 validatePrice;
         int24 validateTick;
         uint8 originalLiqPenalty;
-        int24 tempTick;
-        uint256 tempTickVersion;
-        uint256 tempIndex;
+        PositionId tempPosId;
         uint256 validateTickVersion;
         uint256 validateIndex;
         uint128 expectedLeverage;
@@ -79,15 +78,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     function _initiateOpenPositionScenario(address to) internal {
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
-        uint128 expectedLeverage = uint128(
-            (10 ** protocol.LEVERAGE_DECIMALS() * CURRENT_PRICE)
-                / (
-                    CURRENT_PRICE
-                        - protocol.getEffectivePriceForTick(
-                            expectedTick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
-                        )
-                )
-        );
+        uint128 liqPriceWithoutPenalty =
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick));
+        uint128 expectedPosTotalExpo =
+            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, liqPriceWithoutPenalty);
 
         // state before opening the position
         ValueToCheckBefore memory before = ValueToCheckBefore({
@@ -103,33 +97,26 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             address(this),
             to,
             uint40(block.timestamp),
-            expectedLeverage,
+            expectedPosTotalExpo,
             uint128(LONG_AMOUNT),
             CURRENT_PRICE,
-            expectedTick,
-            0,
-            0
-        ); // expected event
-        (int24 tick, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
+            PositionId(expectedTick, 0, 0)
         );
-        uint256 tickLiqPrice = protocol.getEffectivePriceForTick(
-            tick - int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing()
+        PositionId memory posId = protocol.initiateOpenPosition(
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
         );
 
         // check state after opening the position
-        assertEq(tick, expectedTick, "tick number");
-        assertEq(tickVersion, 0, "tick version");
-        assertEq(index, 0, "index");
+        assertEq(posId.tick, expectedTick, "tick number");
+        assertEq(posId.tickVersion, 0, "tick version");
+        assertEq(posId.index, 0, "index");
 
         assertEq(wstETH.balanceOf(address(this)), before.balance - LONG_AMOUNT, "user wstETH balance");
         assertEq(wstETH.balanceOf(address(protocol)), before.protocolBalance + LONG_AMOUNT, "protocol wstETH balance");
         assertEq(protocol.getTotalLongPositions(), before.totalPositions + 1, "total long positions");
-        uint256 positionExpo =
-            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, uint128(tickLiqPrice));
-        assertEq(protocol.getTotalExpo(), before.totalExpo + positionExpo, "protocol total expo");
+        assertEq(protocol.getTotalExpo(), before.totalExpo + expectedPosTotalExpo, "protocol total expo");
         TickData memory tickData = protocol.getTickData(expectedTick);
-        assertEq(tickData.totalExpo, positionExpo, "total expo in tick");
+        assertEq(tickData.totalExpo, expectedPosTotalExpo, "total expo in tick");
         assertEq(tickData.totalPos, 1, "positions in tick");
         assertEq(protocol.getBalanceLong(), before.balanceLong + LONG_AMOUNT, "balance of long side");
 
@@ -153,11 +140,11 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         assertEq(action.user, address(this), "pending action user");
 
         Position memory position;
-        (position,) = protocol.getLongPosition(tick, tickVersion, index);
+        (position,) = protocol.getLongPosition(posId);
         assertEq(position.user, to, "user position");
         assertEq(position.timestamp, action.timestamp, "timestamp position");
         assertEq(position.amount, uint128(LONG_AMOUNT), "amount position");
-        assertEq(position.totalExpo, positionExpo, "totalExpo position");
+        assertEq(position.totalExpo, expectedPosTotalExpo, "totalExpo position");
 
         vm.stopPrank();
     }
@@ -177,7 +164,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(storedLiqPenalty); // set a different liquidation penalty
         // this position is opened to set the liquidation penalty of the tick
-        (int24 tick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -190,20 +177,22 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         vm.prank(ADMIN);
         protocol.setLiquidationPenalty(originalLiqPenalty); // restore liquidation penalty
         assertEq(
-            protocol.getTickLiquidationPenalty(tick), storedLiqPenalty, "liquidation penalty of the tick was stored"
+            protocol.getTickLiquidationPenalty(posId.tick),
+            storedLiqPenalty,
+            "liquidation penalty of the tick was stored"
         );
 
         uint128 expectedLiqPrice =
-            protocol.getEffectivePriceForTick(tick - int24(uint24(storedLiqPenalty)) * protocol.getTickSpacing());
+            protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick, storedLiqPenalty));
         uint256 expectedTotalExpo =
             protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, expectedLiqPrice);
 
         // create position which ends up in the same tick
-        (int24 tick2, uint256 tickVersion, uint256 index) = protocol.initiateOpenPosition(
+        PositionId memory posId2 = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
         );
-        assertEq(tick2, tick, "tick is the same");
-        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(tick2, tickVersion, index);
+        assertEq(posId.tick, posId2.tick, "tick is the same");
+        (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(posId);
         assertEq(pos.totalExpo, expectedTotalExpo, "pos total expo indicates that the stored penalty was used");
         assertEq(liqPenalty, storedLiqPenalty, "pos liquidation penalty");
     }
@@ -298,13 +287,13 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:and The transaction does not revert
      */
     function test_initiateOpenPositionWithStalePendingAction() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
+        PositionId memory posId = _createStalePendingActionHelper();
 
         wstETH.approve(address(protocol), 1 ether);
         bytes memory priceData = abi.encode(uint128(1500 ether));
         // we should be able to open a new position
         vm.expectEmit();
-        emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
+        emit StalePendingActionRemoved(address(this), posId);
         protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
     }
 

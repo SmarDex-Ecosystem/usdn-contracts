@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, LiquidationsEffects, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 
 /// @custom:feature Test the _liquidatePositions internal function of the long layer
@@ -48,7 +48,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = price - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -58,18 +58,19 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             })
         );
 
-        uint128 liqPrice = protocol.getEffectivePriceForTick(tick);
+        uint128 liqPrice = protocol.getEffectivePriceForTick(posId.tick);
         int256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
         int256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
         uint256 longTradingExpo = protocol.getTotalExpo() - uint256(balanceLong);
-        uint128 effectiveTickPrice =
-            protocol.getEffectivePriceForTick(tick, liqPrice, longTradingExpo, protocol.getLiqMultiplierAccumulator());
+        uint128 effectiveTickPrice = protocol.getEffectivePriceForTick(
+            posId.tick, liqPrice, longTradingExpo, protocol.getLiqMultiplierAccumulator()
+        );
 
         // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.tickValue(tick, liqPrice);
+        int256 tickValue = protocol.tickValue(posId.tick, liqPrice);
 
         vm.expectEmit();
-        emit LiquidatedTick(tick, 0, liqPrice, effectiveTickPrice, tickValue);
+        emit LiquidatedTick(posId.tick, 0, liqPrice, effectiveTickPrice, tickValue);
 
         vm.recordLogs();
         LiquidationsEffects memory liquidationsEffects =
@@ -95,7 +96,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
 
         assertLt(
             protocol.getHighestPopulatedTick(),
-            tick,
+            posId.tick,
             "The highest populated tick should be lower than the last liquidated tick"
         );
     }
@@ -223,7 +224,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             desiredLiqPrice /= 100;
 
             // Create a long position to liquidate
-            (int24 tick,,) = setUpUserPositionInLong(
+            PositionId memory posId = setUpUserPositionInLong(
                 OpenParams({
                     user: address(this),
                     untilAction: ProtocolAction.ValidateOpenPosition,
@@ -233,10 +234,10 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
                 })
             );
 
-            liqPrice = protocol.getEffectivePriceForTick(tick);
+            liqPrice = protocol.getEffectivePriceForTick(posId.tick);
 
             // Save the tick for future checks
-            ticksToLiquidate[i] = tick;
+            ticksToLiquidate[i] = posId.tick;
         }
 
         // Expect MAX_LIQUIDATION_ITERATION events
@@ -344,7 +345,7 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
         uint128 liqPrice = protocol.getEffectivePriceForTick(desiredLiqTick);
 
         // Create a long position to liquidate
-        (int24 positionTick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -354,17 +355,17 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             })
         );
 
-        uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(positionTick);
+        uint128 liqPriceAfterFundings = protocol.getEffectivePriceForTick(posId.tick);
 
         // Get a liquidation price that would cause a bad debt
         int24 liqTick = protocol.getEffectiveTickForPrice(liqPrice - 600 ether);
         price = protocol.getEffectivePriceForTick(liqTick);
 
         // Calculate the collateral this position gives on liquidation
-        int256 tickValue = protocol.tickValue(positionTick, price);
+        int256 tickValue = protocol.tickValue(posId.tick, price);
 
         vm.expectEmit();
-        emit LiquidatedTick(positionTick, 0, price, liqPriceAfterFundings, tickValue);
+        emit LiquidatedTick(posId.tick, 0, price, liqPriceAfterFundings, tickValue);
 
         // Set the tempVaultBalance parameter to less than tickValue to make sure it sends what it can
         LiquidationsEffects memory liquidationsEffects =

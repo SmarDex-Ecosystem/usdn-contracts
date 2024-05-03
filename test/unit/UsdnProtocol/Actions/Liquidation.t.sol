@@ -5,7 +5,7 @@ import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /// @custom:feature The scenarios in `UsdnProtocolActions` which call `_liquidatePositions`
@@ -38,7 +38,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -52,12 +52,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         skip(31 minutes);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
-        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
-        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
         protocol.initiateDeposit(1 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA, address(this));
     }
 
@@ -74,7 +74,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -88,11 +88,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateDeposit, 1 ether, price);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
-        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
-        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
 
         protocol.validateDeposit(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
@@ -110,7 +110,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -127,11 +127,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         skip(31 minutes);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
-        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
-        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
 
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
@@ -154,7 +154,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -168,11 +168,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         setUpUserPositionInVault(address(this), ProtocolAction.InitiateWithdrawal, 1 ether, price);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
-        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
-        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
 
         protocol.validateWithdrawal(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
@@ -194,7 +194,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -208,12 +208,12 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         skip(31 minutes);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
-        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         wstETH.mintAndApprove(address(this), 1 ether, address(protocol), 1 ether);
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
-        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
         protocol.initiateOpenPosition(
             1 ether, desiredLiqPrice - 200 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA, address(this)
         );
@@ -233,7 +233,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tick, uint256 tickVersion,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -257,11 +257,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         );
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
-        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tick);
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posId.tick);
 
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
-        emit IUsdnProtocolEvents.LiquidatedTick(tick, tickVersion, 0, 0, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
         protocol.validateOpenPosition(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
 
@@ -279,7 +279,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) = setUpUserPositionInLong(
+        PositionId memory posIdToLiquidate = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -291,7 +291,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         // Initiates and validates the position for the other user
         desiredLiqPrice -= 200 ether;
-        (int24 tickToClose, uint256 tickVersionToClose, uint256 indexToClose) = setUpUserPositionInLong(
+        PositionId memory posIdToClose = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -305,20 +305,14 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         skip(31 minutes);
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
-        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tickToLiquidate);
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posIdToLiquidate.tick);
 
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
-        emit IUsdnProtocolEvents.LiquidatedTick(tickToLiquidate, tickVersionToLiquidate, 0, 0, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(posIdToLiquidate.tick, posIdToLiquidate.tickVersion, 0, 0, 0);
 
         protocol.initiateClosePosition(
-            tickToClose,
-            tickVersionToClose,
-            indexToClose,
-            1 ether,
-            abi.encode(effectivePriceForTick),
-            EMPTY_PREVIOUS_DATA,
-            address(this)
+            posIdToClose, 1 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA, address(this)
         );
     }
 
@@ -337,7 +331,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 desiredLiqPrice = uint128(price) - 200 ether;
 
         // Create a long position to liquidate
-        (int24 tickToLiquidate, uint256 tickVersionToLiquidate,) = setUpUserPositionInLong(
+        PositionId memory posIdToLiquidate = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -360,11 +354,11 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         );
 
         // When funding is positive, calculations will increase the liquidation price so this is enough
-        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(tickToLiquidate);
+        uint256 effectivePriceForTick = protocol.getEffectivePriceForTick(posIdToLiquidate.tick);
 
         // Check that tick has been liquidated
         vm.expectEmit(true, true, false, false);
-        emit IUsdnProtocolEvents.LiquidatedTick(tickToLiquidate, tickVersionToLiquidate, 0, 0, 0);
+        emit IUsdnProtocolEvents.LiquidatedTick(posIdToLiquidate.tick, posIdToLiquidate.tickVersion, 0, 0, 0);
 
         protocol.validateClosePosition(abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA);
     }
@@ -437,7 +431,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 price = 2000 ether;
 
         // Setup a long position from another user
-        (int24 tick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -458,13 +452,13 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint256 wstETHBalanceBeforeRewards = wstETH.balanceOf(address(this));
 
         // Get the proper liquidation price for the tick
-        price = protocol.getEffectivePriceForTick(tick);
+        price = protocol.getEffectivePriceForTick(posId.tick);
         int256 collateralLiquidated = protocol.i_tickValue(
-            tick,
+            posId.tick,
             price,
             uint256(protocol.i_longTradingExpo(price)),
             protocol.getLiqMultiplierAccumulator(),
-            protocol.getTickData(tick)
+            protocol.getTickData(posId.tick)
         );
         int256 vaultAssetAvailable = protocol.i_vaultAssetAvailable(price);
 
@@ -503,7 +497,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         uint128 endPrice = 1700 ether;
 
         // Setup a long position from another user
-        (int24 tick,,) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -534,13 +528,13 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         );
 
         // Get the proper liquidation price for the tick
-        uint128 price = protocol.getEffectivePriceForTick(tick);
+        uint128 price = protocol.getEffectivePriceForTick(posId.tick);
         int256 collateralLiquidated = protocol.i_tickValue(
-            tick,
+            posId.tick,
             price,
             uint256(protocol.i_longTradingExpo(price)),
             protocol.getLiqMultiplierAccumulator(),
-            protocol.getTickData(tick)
+            protocol.getTickData(posId.tick)
         );
         int256 vaultAssetAvailable = protocol.i_vaultAssetAvailable(price);
         uint256 expectedRewards = uint256(vaultAssetAvailable + collateralLiquidated);

@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol
@@ -53,10 +53,12 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
 
         (Position memory firstPos,) = protocol.getLongPosition(
-            protocol.getEffectiveTickForPrice(longLiqPrice)
-                + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
-            0,
-            0
+            PositionId(
+                protocol.getEffectiveTickForPrice(longLiqPrice)
+                    + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing(),
+                0,
+                0
+            )
         );
 
         int256 longPosValue = protocol.i_positionValue(params.initialPrice, longLiqPrice, firstPos.totalExpo);

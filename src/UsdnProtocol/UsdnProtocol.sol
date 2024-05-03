@@ -7,7 +7,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { ProtocolAction, Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolStorage } from "src/UsdnProtocol/UsdnProtocolStorage.sol";
 import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -75,7 +75,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
         int24 tick = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
         uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
-        uint128 leverage = _getLeverage(currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
         uint128 positionTotalExpo =
             _calculatePositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
 
@@ -83,7 +82,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _checkImbalanceLimitOpen(positionTotalExpo, longAmount);
 
         // Create long position
-        _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, leverage, positionTotalExpo);
+        _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
 
         uint256 balance = address(this).balance;
         if (balance != 0) {
@@ -370,14 +369,9 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param amount The initial position amount
      * @param price The current asset price
      * @param tick The tick corresponding to the liquidation price (without penalty)
+     * @param totalExpo The total expo of the position
      */
-    function _createInitialPosition(
-        uint128 amount,
-        uint128 price,
-        int24 tick,
-        uint128 leverage,
-        uint128 positionTotalExpo
-    ) internal {
+    function _createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 totalExpo) internal {
         _checkUninitialized(); // prevent using this function after initialization
 
         // Transfer the wstETH for the long
@@ -385,19 +379,14 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
         // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
         uint8 liquidationPenalty = _liquidationPenalty;
-        tick = tick + int24(uint24(liquidationPenalty)) * _tickSpacing;
-        Position memory long = Position({
-            user: msg.sender,
-            amount: amount,
-            totalExpo: positionTotalExpo,
-            timestamp: uint40(block.timestamp)
-        });
+        PositionId memory posId;
+        posId.tick = tick + int24(uint24(liquidationPenalty)) * _tickSpacing;
+        Position memory long =
+            Position({ user: msg.sender, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
         // Save the position and update the state
-        (uint256 tickVersion, uint256 index) = _saveNewPosition(tick, long, liquidationPenalty);
+        (posId.tickVersion, posId.index) = _saveNewPosition(posId.tick, long, liquidationPenalty);
         _balanceLong += long.amount;
-        emit InitiatedOpenPosition(
-            msg.sender, msg.sender, long.timestamp, leverage, long.amount, price, tick, tickVersion, index
-        );
-        emit ValidatedOpenPosition(msg.sender, msg.sender, leverage, price, tick, tickVersion, index);
+        emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId);
+        emit ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
     }
 }

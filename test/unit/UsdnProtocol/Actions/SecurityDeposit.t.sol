@@ -10,7 +10,8 @@ import {
     LongPendingAction,
     Position,
     PendingAction,
-    PreviousActionsData
+    PreviousActionsData,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -89,7 +90,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:and The protocol returns the security deposit to the user at the validation of the close position
      */
     function test_securityDeposit_closePosition() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -103,7 +104,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 balanceProtocolBefore = address(protocol).balance;
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            posId, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
         );
         _waitDelay();
 
@@ -257,7 +258,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with UsdnProtocolSecurityDepositTooLow
      */
     function test_RevertWhen_secDec_lt_closePosition() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -269,7 +270,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.expectRevert(UsdnProtocolSecurityDepositTooLow.selector);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE - 1 }(
-            tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            posId, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
         );
     }
 
@@ -335,7 +336,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
      * @custom:then The protocol refunds the excess to the user
      */
     function test_securityDeposit_gt_closePosition() public {
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -348,7 +349,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 balanceProtocolBefore = address(protocol).balance;
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE + 100 }(
-            tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            posId, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
         );
         _waitDelay();
 
@@ -642,7 +643,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 balanceProtocolBefore = address(protocol).balance;
         uint256 balanceUser1Before = USER_1.balance;
 
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -651,7 +652,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
                 price: params.initialPrice
             })
         );
-        (int24 tick1, uint256 tickVersion1, uint256 index1) = setUpUserPositionInLong(
+        PositionId memory posId1 = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -662,7 +663,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            posId, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
         );
         skip(protocol.getValidationDeadline() + 1);
 
@@ -676,7 +677,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.prank(USER_1);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            tick1, tickVersion1, index1, 1 ether, priceData, previousActionsData, USER_1
+            posId1, 1 ether, priceData, previousActionsData, USER_1
         );
         _waitDelay();
 
@@ -701,7 +702,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 balanceUser0Before = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
 
-        (int24 tick, uint256 tickVersion, uint256 index) = setUpUserPositionInLong(
+        PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -710,7 +711,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
                 price: params.initialPrice
             })
         );
-        (int24 tick1, uint256 tickVersion1, uint256 index1) = setUpUserPositionInLong(
+        PositionId memory posId1 = setUpUserPositionInLong(
             OpenParams({
                 user: USER_1,
                 untilAction: ProtocolAction.ValidateOpenPosition,
@@ -721,7 +722,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         );
 
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            tick, tickVersion, index, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            posId, 1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
         );
         _waitDelay();
 
@@ -729,7 +730,7 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.startPrank(USER_1);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
-            tick1, tickVersion1, index1, 1 ether, priceData, EMPTY_PREVIOUS_DATA, USER_1
+            posId1, 1 ether, priceData, EMPTY_PREVIOUS_DATA, USER_1
         );
         skip(protocol.getValidationDeadline() + 1);
 
@@ -904,13 +905,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         uint256 balanceSenderBefore = address(this).balance;
         uint256 balanceProtocolBefore = address(protocol).balance;
 
-        (int24 tick, uint256 tickVersion, uint256 index) = _createStalePendingActionHelper();
+        PositionId memory posId = _createStalePendingActionHelper();
 
         assertSecurityDepositPaid(balanceSenderBefore, balanceProtocolBefore);
 
         wstETH.approve(address(protocol), 1 ether);
         vm.expectEmit();
-        emit StalePendingActionRemoved(address(this), tick, tickVersion, index);
+        emit StalePendingActionRemoved(address(this), posId);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
         );
