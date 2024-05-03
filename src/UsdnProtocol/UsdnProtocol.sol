@@ -369,9 +369,9 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
      * @param amount The initial position amount
      * @param price The current asset price
      * @param tick The tick corresponding to the liquidation price (without penalty)
-     * @param positionTotalExpo The total expo of the position
+     * @param totalExpo The total expo of the position
      */
-    function _createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 positionTotalExpo) internal {
+    function _createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 totalExpo) internal {
         _checkUninitialized(); // prevent using this function after initialization
 
         // Transfer the wstETH for the long
@@ -381,16 +381,12 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         uint8 liquidationPenalty = _liquidationPenalty;
         PositionId memory posId;
         posId.tick = tick + int24(uint24(liquidationPenalty)) * _tickSpacing;
-        Position memory long = Position({
-            user: msg.sender,
-            amount: amount,
-            totalExpo: positionTotalExpo,
-            timestamp: uint40(block.timestamp)
-        });
+        Position memory long =
+            Position({ user: msg.sender, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
         // Save the position and update the state
         (posId.tickVersion, posId.index) = _saveNewPosition(posId.tick, long, liquidationPenalty);
         _balanceLong += long.amount;
-        emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, positionTotalExpo, long.amount, price, posId);
-        emit ValidatedOpenPosition(msg.sender, msg.sender, positionTotalExpo, price, posId);
+        emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId);
+        emit ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
     }
 }
