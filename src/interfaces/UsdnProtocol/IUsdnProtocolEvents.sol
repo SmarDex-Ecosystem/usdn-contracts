@@ -158,10 +158,16 @@ interface IUsdnProtocolEvents {
     event StalePendingActionRemoved(address indexed user, PositionId posId);
 
     /**
-     * @notice Emitted when the position fees are updated
-     * @param positionFee The new position fee (in percentage)
+     * @notice Emitted when the position fee is updated
+     * @param positionFee The new position fee (in basis points)
      */
     event PositionFeeUpdated(uint256 positionFee);
+
+    /**
+     * @notice Emitted when the vault fee is updated
+     * @param vaultFee The new vault fee (in basis points)
+     */
+    event VaultFeeUpdated(uint256 vaultFee);
 
     /**
      * @notice Emitted when the ratio of USDN to SDEX tokens to burn on deposit is updated

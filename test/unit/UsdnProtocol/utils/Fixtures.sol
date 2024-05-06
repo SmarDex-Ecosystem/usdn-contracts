@@ -119,6 +119,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);
+            protocol.setVaultFeeBps(0);
         }
         if (!testParams.flags.enableProtocolFees) {
             protocol.setProtocolFeeBps(0);

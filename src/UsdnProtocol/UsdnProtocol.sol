@@ -245,6 +245,16 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
+    function setVaultFeeBps(uint16 newVaultFee) external onlyOwner {
+        // newVaultFee greater than max 2000: 20%
+        if (newVaultFee > 2000) {
+            revert UsdnProtocolInvalidVaultFee();
+        }
+        _vaultFeeBps = newVaultFee;
+        emit PositionFeeUpdated(newVaultFee);
+    }
+
+    /// @inheritdoc IUsdnProtocol
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {
         // If newRatio is greater than 5%
         if (newRatio > SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {

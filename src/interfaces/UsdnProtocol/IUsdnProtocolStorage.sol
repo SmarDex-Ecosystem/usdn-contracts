@@ -200,10 +200,16 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getProtocolFeeBps() external view returns (uint16);
 
     /**
-     * @notice Get the fee applied when a position is opened
+     * @notice Get the fee applied when a long position is opened or closed
      * @return The position fee (in basis points)
      */
     function getPositionFeeBps() external view returns (uint16);
+
+    /**
+     * @notice Get the fee applied during a vault deposit or withdrawal
+     * @return The action fee (in basis points)
+     */
+    function getVaultFeeBps() external view returns (uint16);
 
     /**
      * @notice Get the ratio of USDN to SDEX tokens to burn on deposit
