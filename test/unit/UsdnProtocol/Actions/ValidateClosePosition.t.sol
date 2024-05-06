@@ -630,7 +630,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     function test_RevertWhen_validateClosePositionCalledWithReentrancy() public {
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.validateClosePosition(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+            protocol.validateClosePosition(address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
             return;
         }
 
@@ -648,7 +648,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateClosePosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
-        protocol.validateClosePosition{ value: 1 }(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition{ value: 1 }(address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /// @dev Allow refund tests

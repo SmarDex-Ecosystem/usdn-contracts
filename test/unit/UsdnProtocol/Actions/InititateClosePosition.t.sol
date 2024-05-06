@@ -413,7 +413,12 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
             protocol.initiateClosePosition(
-                posId, positionAmount, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this)
+                posId,
+                positionAmount,
+                abi.encode(params.initialPrice),
+                EMPTY_PREVIOUS_DATA,
+                address(this),
+                address(this)
             );
             return;
         }
@@ -433,7 +438,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateClosePosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateClosePosition{ value: 1 }(
-            posId, positionAmount, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this)
+            posId, positionAmount, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
     }
 

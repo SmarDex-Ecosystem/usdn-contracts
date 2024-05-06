@@ -103,7 +103,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             PositionId(expectedTick, 0, 0)
         );
         PositionId memory posId = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to, address(this)
         );
 
         // check state after opening the position
@@ -127,8 +127,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
         assertTrue(action.action == ProtocolAction.ValidateOpenPosition, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
-        assertEq(action.user, address(this), "action user");
         assertEq(action.to, to, "action to");
+        assertEq(action.validator, address(this), "action validator");
         assertEq(action.tick, expectedTick, "action tick");
         assertEq(action.tickVersion, 0, "action tickVersion");
         assertEq(action.index, 0, "action index");
@@ -137,7 +137,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         skip(protocol.getValidationDeadline() + 1);
         (pendingActions,) = protocol.getActionablePendingActions(address(0));
         action = protocol.i_toLongPendingAction(pendingActions[0]);
-        assertEq(action.user, address(this), "pending action user");
+        assertEq(action.to, address(this), "pending action to");
+        assertEq(action.validator, address(this), "pending action validator");
 
         Position memory position;
         (position,) = protocol.getLongPosition(posId);
@@ -189,7 +190,12 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
         // create position which ends up in the same tick
         PositionId memory posId2 = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
+            uint128(LONG_AMOUNT),
+            desiredLiqPrice,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA,
+            address(this),
+            address(this)
         );
         assertEq(posId.tick, posId2.tick, "tick is the same");
         (Position memory pos, uint8 liqPenalty) = protocol.getLongPosition(posId);
@@ -204,7 +210,9 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      */
     function test_RevertWhen_initiateOpenPositionZeroAmount() public {
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateOpenPosition(0, 2000 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateOpenPosition(
+            0, 2000 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this), address(this)
+        );
     }
 
     /**
@@ -215,7 +223,9 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      */
     function test_RevertWhen_zeroAddressTo() public {
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.initiateOpenPosition(1 ether, 2000 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(0));
+        protocol.initiateOpenPosition(
+            1 ether, 2000 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(0), address(this)
+        );
     }
 
     /**
@@ -226,7 +236,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     function test_RevertWhen_initiateOpenPositionLowLeverage() public {
         vm.expectRevert(UsdnProtocolLeverageTooLow.selector);
         protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), 100_000, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
+            uint128(LONG_AMOUNT), 100_000, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
     }
 
@@ -244,7 +254,12 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
         vm.expectRevert(UsdnProtocolLeverageTooHigh.selector);
         protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
+            uint128(LONG_AMOUNT),
+            desiredLiqPrice,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA,
+            address(this),
+            address(this)
         );
     }
 
@@ -274,7 +289,12 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             )
         );
         protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), CURRENT_PRICE, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
+            uint128(LONG_AMOUNT),
+            CURRENT_PRICE,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA,
+            address(this),
+            address(this)
         );
     }
 
@@ -294,7 +314,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         // we should be able to open a new position
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), posId);
-        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this));
     }
 
     /**
@@ -309,7 +329,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         bytes memory priceData = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition);
         protocol.initiateOpenPosition{ value: 0.5 ether }(
-            uint128(LONG_AMOUNT), 1000 ether, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            uint128(LONG_AMOUNT), 1000 ether, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
@@ -325,7 +345,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
             protocol.initiateOpenPosition(
-                1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
+                1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this), address(this)
             );
             return;
         }
@@ -335,7 +355,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateOpenPosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateOpenPosition{ value: 1 }(
-            1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
+            1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
     }
 

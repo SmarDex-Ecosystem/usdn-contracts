@@ -68,7 +68,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         uint256 initialTotalExpo = protocol.getTotalExpo();
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         PositionId memory posId = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to, address(this)
         );
         (Position memory tempPos,) = protocol.getLongPosition(posId);
 
@@ -89,7 +89,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         vm.expectEmit();
         emit ValidatedOpenPosition(address(this), to, expectedPosTotalExpo, newPrice, posId);
-        protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
         (Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.user, tempPos.user, "user");
@@ -120,7 +120,12 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         int24 liqPenalty = int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
         // leverage approx 10x
         PositionId memory posId = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), CURRENT_PRICE * 9 / 10, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
+            uint128(LONG_AMOUNT),
+            CURRENT_PRICE * 9 / 10,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA,
+            address(this),
+            address(this)
         );
         (Position memory tempPos,) = protocol.getLongPosition(posId);
 
@@ -167,7 +172,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             testData.validatePrice,
             PositionId(testData.validateTick, testData.validateTickVersion, testData.validateIndex)
         );
-        protocol.validateOpenPosition(abi.encode(testData.validatePrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), abi.encode(testData.validatePrice), EMPTY_PREVIOUS_DATA);
 
         (Position memory pos,) = protocol.getLongPosition(
             PositionId(testData.validateTick, testData.validateTickVersion, testData.validateIndex)
@@ -222,7 +227,12 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         uint128 initiateTimeStamp = uint128(block.timestamp);
         // initiate deposit with leverage close to 10x
         data.tempPosId = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), CURRENT_PRICE * 9 / 10, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
+            uint128(LONG_AMOUNT),
+            CURRENT_PRICE * 9 / 10,
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA,
+            address(this),
+            address(this)
         );
 
         _waitDelay();
@@ -273,7 +283,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             data.validatePrice,
             PositionId(data.validateTick, data.validateTickVersion, data.validateIndex)
         );
-        protocol.validateOpenPosition(abi.encode(data.validatePrice), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), abi.encode(data.validatePrice), EMPTY_PREVIOUS_DATA);
         (Position memory prevPos,) = protocol.getLongPosition(data.tempPosId);
         assertEq(prevPos.user, address(0), "The previous position should have been deleted from the original tick");
     }
@@ -293,7 +303,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         // validating the action emits the proper event
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), posId);
-        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -306,7 +316,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     function test_RevertWhen_validateOpenPositionCalledWithReentrancy() public {
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.validateOpenPosition(abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
+            protocol.validateOpenPosition(address(this), abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
             return;
         }
 
@@ -324,7 +334,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateOpenPosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
-        protocol.validateOpenPosition{ value: 1 }(abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition{ value: 1 }(address(this), abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
     }
 
     // test refunds

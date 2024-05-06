@@ -83,14 +83,16 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         assertEq(validationCost, 1);
-        protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateDeposit{ value: validationCost }(
+            1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(this)
+        );
 
         _waitDelay();
         // validate
         validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
         assertEq(validationCost, 1);
         uint256 balanceBefore = address(this).balance;
-        protocol.validateDeposit{ value: 0.5 ether }(currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: 0.5 ether }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
 
@@ -117,7 +119,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 initiateDepositTimestamp = block.timestamp;
         vm.expectEmit();
         emit InitiatedDeposit(address(this), to, depositAmount, initiateDepositTimestamp); // expected event
-        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to);
+        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to, address(this));
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation
@@ -138,7 +140,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit ValidatedDeposit(address(this), to, depositAmount, mintedAmount, initiateDepositTimestamp); // expected
             // event
-        protocol.validateDeposit(currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(usdn.balanceOf(to), mintedAmount, "USDN to balance");
         if (address(this) != to) {
@@ -159,7 +161,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.validateDeposit(currentPrice, EMPTY_PREVIOUS_DATA);
+            protocol.validateDeposit(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
             return;
         }
 
@@ -169,7 +171,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         // If a reentrancy occurred, the function should have been called 2 times
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateDeposit.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
-        protocol.validateDeposit{ value: 1 }(currentPrice, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit{ value: 1 }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     // test refunds
