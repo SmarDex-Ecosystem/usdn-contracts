@@ -16,7 +16,7 @@ import {
     TickData,
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The validate close position functions of the USDN Protocol
@@ -30,6 +30,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     uint128 private constant POSITION_AMOUNT = 1 ether;
     uint256 internal securityDeposit;
     PositionId private posId;
+    /// @notice Trigger a reentrancy after receiving ether
+    bool internal _reenter;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -477,14 +479,13 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             FixedPointMathLib.fullMulDiv(posBefore.totalExpo, amountToClose, posBefore.amount).toUint128();
         uint256 totalExpoBefore = protocol.getTotalExpo();
         uint256 balanceLongBefore = protocol.getBalanceLong();
-        HugeUint.Uint512 memory accumulator = protocol.getLiqMultiplierAccumulator();
         uint256 assetToTransfer = protocol.i_assetToRemove(
             params.initialPrice,
             protocol.getEffectivePriceForTick(
                 protocol.i_calcTickWithoutPenalty(posId.tick),
                 params.initialPrice,
                 totalExpoBefore - balanceLongBefore,
-                accumulator
+                protocol.getLiqMultiplierAccumulator()
             ),
             totalExpoToClose
         );
@@ -538,6 +539,48 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         );
     }
 
+    /**
+     * @custom:scenario The user initiates a close position action with a reentrancy attempt
+     * @custom:given A user being a smart contract that calls initiateClosePosition with too much ether
+     * @custom:and A receive() function that calls initiateClosePosition again
+     * @custom:when The user calls initiateClosePosition again from the callback
+     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     */
+    function test_RevertWhen_initiateClosePositionCalledWithReentrancy() public {
+        // If we are currently in a reentrancy
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.initiateClosePosition(
+                posId, POSITION_AMOUNT, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this)
+            );
+            return;
+        }
+
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: POSITION_AMOUNT,
+                desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
+                price: params.initialPrice
+            })
+        );
+
+        _reenter = true;
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateClosePosition.selector), 2);
+        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        protocol.initiateClosePosition{ value: 1 }(
+            posId, POSITION_AMOUNT, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this)
+        );
+    }
+
     /// @dev Allow refund tests
-    receive() external payable { }
+    receive() external payable {
+        // test reentrancy
+        if (_reenter) {
+            test_RevertWhen_initiateClosePositionCalledWithReentrancy();
+            _reenter = false;
+        }
+    }
 }

@@ -56,7 +56,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
             int256 fee = fundAsset * _toInt256(_protocolFeeBps) / int256(BPS_DIVISOR);
-            // fee have the same sign as fundAsset (negative here), so we need to sub them
+            // fees have the same sign as fundAsset (negative here), so we need to sub them
             available_ = _longAssetAvailable(currentPrice).safeSub(fundAsset - fee);
         }
     }
@@ -117,11 +117,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         uint256 i = 0;
         uint256 arrayLen = 0;
         do {
-            // Since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
+            // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
             (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.at(i);
-            // If the msg.sender is equal to the user of the pending action, then the pending action is not actionable
-            // by this user (it will get validated automatically by their action). And so we need to return the next
-            // item in the queue so that they can validate a third-party pending action (if any).
+
+            // if the msg.sender is equal to the user of the pending action, then the pending action is not actionable
+            // by this user (it will get validated automatically by their action)
+            // and so we need to return the next item in the queue so that they can validate a third-party pending
+            // action (if any)
             if (candidate.timestamp == 0 || candidate.user == currentUser) {
                 rawIndices_[i] = rawIndex;
                 // try the next one
@@ -139,8 +141,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
                     arrayLen = i;
                 }
             } else {
-                // the pending action is not actionable (it is too recent), following actions can't be actionable
-                // either so we return
+                // the pending action is not actionable (it is too recent),
+                // following actions can't be actionable either so we return
                 break;
             }
         } while (i < maxIter);
@@ -171,6 +173,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /* --------------------------  Internal functions --------------------------- */
 
+    /**
+     * @notice Calculate the funding rate and the old long exposure
+     * @param timestamp The current timestamp
+     * @param ema The EMA of the funding rate
+     * @return fund_ The funding rate
+     * @return oldLongExpo_ The old long exposure
+     */
     function _funding(uint128 timestamp, int256 ema) internal view returns (int256 fund_, int256 oldLongExpo_) {
         oldLongExpo_ = _totalExpo.toInt256().safeSub(_balanceLong.toInt256());
 
@@ -189,7 +198,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         // with denominator = vaultExpo^2 if vaultExpo > longExpo, or longExpo^2 if longExpo > vaultExpo
 
         int256 numerator = oldLongExpo_ - oldVaultExpo;
-        // optimization : if the numerator is zero, then return the EMA
+        // optimization: if the numerator is zero, then return the EMA
         // slither-disable-next-line incorrect-equality
         if (numerator == 0) {
             return (ema, oldLongExpo_);
@@ -237,7 +246,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Get the predicted value of the funding (in asset units) since the last state update for the given
      * timestamp
-     * @dev If the provided timestamp is older than the last state update, the result will be zero.
+     * @dev If the provided timestamp is older than the last state update, the result will be zero
      * @param timestamp The current timestamp
      * @param ema The EMA of the funding rate
      * @return fundingAsset_ The number of asset tokens of funding (with asset decimals)
@@ -249,6 +258,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         fundingAsset_ = fund_.safeMul(oldLongExpo) / int256(10) ** FUNDING_RATE_DECIMALS;
     }
 
+    /**
+     * @notice Calculate the new liquidation multiplier
+     * @param fund The funding rate
+     * @param liquidationMultiplier The current liquidation multiplier
+     * @return multiplier_ The new liquidation multiplier
+     */
     function _getLiquidationMultiplier(int256 fund, uint256 liquidationMultiplier)
         internal
         pure
@@ -265,32 +280,21 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Calculate the PnL in dollars of the long side, considering the overall total expo and change in price.
-     * @dev TODO: not used right now, maybe make external for front-end?
-     * @param totalExpo The total exposure of the long side
-     * @param newPrice The new price
-     * @param oldPrice The old price
-     */
-    function _pnlLong(uint256 totalExpo, uint128 newPrice, uint128 oldPrice) internal view returns (int256 pnl_) {
-        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
-        pnl_ = totalExpo.toInt256().safeMul(priceDiff) / int256(10 ** _assetDecimals); // same decimals as price feed
-    }
-
-    /**
      * @notice Calculate the PnL in asset units of the long side, considering the overall total expo and change in
-     * price.
+     * price
      * @param totalExpo The total exposure of the long side
      * @param balanceLong The (old) balance of the long side
      * @param newPrice The new price
      * @param oldPrice The old price when the old balance was updated
+     * @return pnl_ The PnL in asset units
      */
     function _pnlAsset(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
         internal
         pure
         returns (int256 pnl_)
     {
-        // in case of negative trading expo, we can't allow calculation of PnL because it would invert the sign of the
-        // calculated amount. We thus disable any balance update due to PnL in such a case.
+        // in case of a negative trading expo, we can't allow calculation of PnL because it would invert the sign of the
+        // calculated amount. We thus disable any balance update due to PnL in such a case
         if (balanceLong >= totalExpo) {
             return 0;
         }
@@ -300,9 +304,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
-     * @param currentPrice The current price
      * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
-     * due to the price change to `currentPrice`.
+     * due to the price change to `currentPrice`
+     * @param currentPrice The current price
+     * @return available_ The available balance on the long side
      */
     function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
         available_ = _longAssetAvailable(_totalExpo, _balanceLong, currentPrice, _lastPrice);
@@ -314,6 +319,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param balanceLong The (old) balance of the long side
      * @param newPrice The new price
      * @param oldPrice The old price when the old balance was updated
+     * @return available_ The available balance on the long side
      */
     function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
         internal
@@ -331,8 +337,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
-     * account).
+     * account)
      * @param currentPrice Current price
+     * @return available_ The available balance in the vault side
      */
     function _vaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
         available_ = _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, currentPrice, _lastPrice);
@@ -340,12 +347,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Available balance in the vault side if the price moves to `currentPrice` (without taking funding into
-     * account).
-     * @param totalExpo the total expo
-     * @param balanceVault the (old) balance of the vault
-     * @param balanceLong the (old) balance of the long side
-     * @param newPrice the new price
-     * @param oldPrice the old price when the old balances were updated
+     * account)
+     * @param totalExpo The total expo
+     * @param balanceVault The (old) balance of the vault
+     * @param balanceLong The (old) balance of the long side
+     * @param newPrice The new price
+     * @param oldPrice The old price when the old balances were updated
+     * @return available_ The available balance in the vault side
      */
     function _vaultAssetAvailable(
         uint256 totalExpo,
@@ -360,21 +368,29 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         available_ = totalBalance.safeSub(newLongBalance);
     }
 
-    /// @dev At the time of the last balance update (without taking funding into account)
+    /**
+     * @notice Calculate the trading exposure of the long side at the time of the last balance update and currentPrice
+     * @param currentPrice The current price
+     * @return expo_ The trading exposure of the long side
+     */
     function _longTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
         expo_ = _totalExpo.toInt256().safeSub(_longAssetAvailable(currentPrice));
     }
 
-    /// @dev At the time of the last balance update (without taking funding into account)
+    /**
+     * @notice Calculate the trading exposure of the vault side at the time of the last balance update and currentPrice
+     * @param currentPrice The current price
+     * @return expo_ The trading exposure of the vault side
+     */
     function _vaultTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
         expo_ = _vaultAssetAvailable(currentPrice);
     }
 
     /**
      * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
-     * calculate the new liquidation multiplier and the temporary new balances for each side.
+     * calculate the new liquidation multiplier and the temporary new balances for each side
      * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not
-     * update the balances. This is left to the caller.
+     * update the balances. This is left to the caller
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
      * @return priceUpdated_ Whether the price was updated
@@ -387,38 +403,38 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     {
         // cache variable for optimization
         uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
-        // If the price is not fresh, do nothing
+        // if the price is not fresh, do nothing
         if (timestamp <= lastUpdateTimestamp) {
             return (timestamp == lastUpdateTimestamp, _balanceLong.toInt256(), _balanceVault.toInt256());
         }
 
-        // Update the funding EMA
+        // update the funding EMA
         int256 ema = _updateEMA(timestamp - lastUpdateTimestamp);
 
-        // Calculate the funding
+        // calculate the funding
         (int256 fundAsset, int256 fund) = _fundingAsset(timestamp, ema);
 
-        // Take protocol fee on the funding value
+        // take protocol fee on the funding value
         (int256 fee, int256 fundWithFee, int256 fundAssetWithFee) = _calculateFee(fund, fundAsset);
 
         // we subtract the fee from the total balance
         int256 totalBalance = _balanceLong.toInt256().safeAdd(_balanceVault.toInt256()).safeSub(fee);
-        // Calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
+        // calculate new balances (for now, any bad debt has not been repaid, balances could become negative)
 
         if (fund > 0) {
-            // In case of positive funding, the vault balance must be decremented by the totality of the funding amount.
-            // However, since we deducted the fee amount from the total balance, the vault balance will be incremented
-            // only by the funding amount minus the fee amount.
+            // in case of positive funding, the vault balance must be decremented by the totality of the funding amount
+            // however, since we deducted the fee amount from the total balance, the vault balance will be incremented
+            // only by the funding amount minus the fee amount
             tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAsset);
         } else {
-            // In case of negative funding, the vault balance must be decremented by the totality of the funding amount.
-            // However, since we deducted the fee amount from the total balance, the long balance will be incremented
-            // only by the funding amount minus the fee amount.
+            // in case of negative funding, the vault balance must be decremented by the totality of the funding amount
+            // however, since we deducted the fee amount from the total balance, the long balance will be incremented
+            // only by the funding amount minus the fee amount
             tempLongBalance_ = _longAssetAvailable(currentPrice).safeSub(fundAssetWithFee);
         }
         tempVaultBalance_ = totalBalance.safeSub(tempLongBalance_);
 
-        // Update state variables
+        // update state variables
         _lastPrice = currentPrice;
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fundWithFee;
@@ -428,20 +444,32 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Update the Exponential Moving Average (EMA) of the funding
-     * @param secondsElapsed The number of seconds elapsed since the last protocol action
      * @dev This function is called every time the protocol state is updated
      * @dev All required checks are done in the caller function (_applyPnlAndFunding)
      * @dev If the number of seconds elapsed is greater than or equal to the EMA period, the EMA is updated to the last
      * funding value
+     * @param secondsElapsed The number of seconds elapsed since the last protocol action
+     * @return The new EMA value
      */
     function _updateEMA(uint128 secondsElapsed) internal returns (int256) {
         return _EMA = calcEMA(_lastFunding, secondsElapsed, _EMAPeriod, _EMA);
     }
 
+    /**
+     * @notice Convert a uint128 to an int256
+     * @param x The value to convert
+     * @return The converted value
+     */
     function _toInt256(uint128 x) internal pure returns (int256) {
         return int256(uint256(x));
     }
 
+    /**
+     * @notice Function to calculate the hash and version of a given tick
+     * @param tick The tick
+     * @return hash_ The hash of the tick
+     * @return version_ The version of the tick
+     */
     function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
         version_ = _tickVersion[tick];
         hash_ = tickHash(tick, version_);
@@ -449,7 +477,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Calculate the protocol fee and apply it to the funding asset amount
-     * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to long side)
+     * @dev The funding factor is only adjusted by the fee rate when the funding is negative (vault pays to the long
+     * side)
      * @param fund The funding factor
      * @param fundAsset The funding asset amount to be used for the fee calculation
      * @return fee_ The absolute value of the calculated fee
@@ -467,8 +496,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         fundAssetWithFee_ = fundAsset - fee_;
 
         if (fee_ < 0) {
-            // when funding is negative, the part that is taken as fee does not contribute to the liquidation multiplier
-            // adjustment, and so we should deduce it from the funding factor.
+            // when funding is negative, the part that is taken as fees does not contribute to the liquidation
+            // multiplier adjustment, and so we should deduce it from the funding factor
             fundWithFee_ -= fund * protocolFeeBps / int256(BPS_DIVISOR);
             // we want to return the absolute value of the fee
             fee_ = -fee_;
@@ -571,7 +600,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice This is the mutating version of `getActionablePendingAction`, where empty items at the front of the list
-     * are removed.
+     * are removed
      * @return action_ The first actionable pending action if any, otherwise a struct with all fields set to zero and
      * ProtocolAction.None
      * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
@@ -589,7 +618,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
         uint256 i = 0;
         do {
-            // Since we will never call `front` more than `queueLength` times, there is no risk of reverting
+            // since we will never call `front` more than `queueLength` times, there is no risk of reverting
             (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.front();
             // gas optimization
             unchecked {
@@ -613,7 +642,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Remove the pending action from the queue if its tick version doesn't match the current tick version
      * @dev This is only applicable to `ValidateOpenPosition` pending actions
-     * @param user The user address
+     * @param user The user's address
      * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
     function _removeStalePendingAction(address user) internal returns (uint256 securityDepositValue_) {
@@ -644,7 +673,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Add a pending action to the queue
      * @dev This reverts if there is already a pending action for this user
-     * @param user The user address
+     * @param user The user's address
      * @param action The pending action struct
      * @return securityDepositValue_ The security deposit value of the stale pending action
      */
@@ -666,8 +695,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Get the pending action for a user
      * @dev To check for the presence of a pending action, compare `action_.action` to `ProtocolAction.None`. There is
-     * a pending action only if the action is different from `ProtocolAction.None`.
-     * @param user The user address
+     * a pending action only if the action is different from `ProtocolAction.None`
+     * @param user The user's address
      * @return action_ The pending action struct if any, otherwise a zero-initialized struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
@@ -686,7 +715,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Get the pending action for a user
      * @dev This function reverts if there is no pending action for the user
-     * @param user The user address
+     * @param user The user's address
      * @return action_ The pending action struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
@@ -703,7 +732,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Clear the user pending action and return it
-     * @param user The user address
+     * @param user The user's address
      * @return action_ The cleared pending action struct
      */
     function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
@@ -715,7 +744,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
 
     /**
      * @notice Clear the pending action for a user
-     * @param user The user address
+     * @param user The user's address
      */
     function _clearPendingAction(address user) internal {
         uint256 pendingActionIndex = _pendingActions[user];
