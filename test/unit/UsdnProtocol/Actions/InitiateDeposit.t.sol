@@ -2,17 +2,20 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN, USER_1 } from "test/utils/Constants.sol";
+import { USER_1 } from "test/utils/Constants.sol";
 
 import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
- * @custom:feature The deposit function of the USDN Protocol
+ * @custom:feature The initiateDeposit function of the USDN Protocol
  * @custom:background Given a protocol initialized at equilibrium.
  * @custom:and A user with 10 wstETH in their wallet
  */
-contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
+    /// @notice Trigger a reentrancy after receiving ether
+    bool internal _reenter;
 
     function setUp() public {
         params = DEFAULT_PARAMS;
@@ -206,47 +209,6 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates and validates a deposit while the price of the asset increases
-     * @custom:given The user deposits 1 wstETH
-     * @custom:and The price of the asset is $2000 at the moment of initiation
-     * @custom:and The price of the asset is $2100 at the moment of validation
-     * @custom:when The user validates the deposit
-     * @custom:then The user's USDN balance increases by 2000 USDN
-     * @custom:and The USDN total supply increases by 2000 USDN
-     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
-     */
-    function test_validateDepositPriceIncrease() public {
-        _checkValidateDepositWithPrice(2000 ether, 2100 ether, 2000 ether, address(this));
-    }
-
-    /**
-     * @custom:scenario The user initiates and validates a deposit while the price of the asset decreases
-     * @custom:given The user deposits 1 wstETH
-     * @custom:and The price of the asset is $2000 at the moment of initiation
-     * @custom:and The price of the asset is $1900 at the moment of validation
-     * @custom:when The user validates the deposit
-     * @custom:then The user's USDN balance increases by 1900 USDN
-     * @custom:and The USDN total supply increases by 1900 USDN
-     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 1900 USDN
-     */
-    function test_validateDepositPriceDecrease() public {
-        _checkValidateDepositWithPrice(2000 ether, 1900 ether, 1900 ether, address(this));
-    }
-
-    /**
-     * @custom:scenario The user initiates and validates a deposit while to parameter is different from the user
-     * @custom:given The user deposits 1 wstETH
-     * @custom:and The price of the asset is $2000 at the moment of initiation and validation
-     * @custom:when The user validates the deposit
-     * @custom:and The USDN total supply increases by 2000 USDN
-     * @custom:and The USDN balance increases by 2000 USDN for the address to
-     * @custom:and The protocol emits a `ValidatedDeposit` event with the minted amount of 2000 USDN
-     */
-    function test_validateDepositForAnotherUser() public {
-        _checkValidateDepositWithPrice(2000 ether, 2000 ether, 2000 ether, USER_1);
-    }
-
-    /**
      * @custom:scenario The user sends too much ether when initiating a deposit
      * @custom:given The user deposits 1 wstETH
      * @custom:when The user sends 0.5 ether as value in the `initiateDeposit` call
@@ -262,81 +224,34 @@ contract TestUsdnProtocolDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user sends too much ether when validating a deposit
-     * @custom:given The user initiated a deposit of 1 wstETH and validates it
-     * @custom:when The user sends 0.5 ether as value in the `validateDeposit` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     * @custom:scenario The user initiates a deposit action with a reentrancy attempt
+     * @custom:given A user being a smart contract that calls initiateDeposit with too much ether
+     * @custom:and A receive() function that calls initiateDeposit again
+     * @custom:when The user calls initiateDeposit again from the callback
+     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
      */
-    function test_validateDepositEtherRefund() public {
-        oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
-        // initiate
+    function test_RevertWhen_initiateDepositCalledWithReentrancy() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
-        assertEq(validationCost, 1);
-        protocol.initiateDeposit{ value: validationCost }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
 
-        _waitDelay();
-        // validate
-        validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.ValidateDeposit);
-        assertEq(validationCost, 1);
-        uint256 balanceBefore = address(this).balance;
-        protocol.validateDeposit{ value: 0.5 ether }(currentPrice, EMPTY_PREVIOUS_DATA);
-        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
-    }
-
-    /**
-     * @dev Create a deposit at price `initialPrice`, then validate it at price `assetPrice`, then check the emitted
-     * event and the resulting state.
-     * @param initialPrice price of the asset at the time of deposit initiation
-     * @param assetPrice price of the asset at the time of deposit validation
-     * @param expectedUsdnAmount expected amount of USDN minted
-     * @param to address the minted USDN will be sent to
-     */
-    function _checkValidateDepositWithPrice(
-        uint128 initialPrice,
-        uint128 assetPrice,
-        uint256 expectedUsdnAmount,
-        address to
-    ) internal {
-        vm.prank(ADMIN);
-        protocol.setPositionFeeBps(0); // 0% fees
-
-        uint128 depositAmount = 1 ether;
-        bytes memory currentPrice = abi.encode(initialPrice); // only used to apply PnL + funding
-
-        uint256 initiateDepositTimestamp = block.timestamp;
-        vm.expectEmit();
-        emit InitiatedDeposit(address(this), to, depositAmount, initiateDepositTimestamp); // expected event
-        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to);
-        uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
-
-        // wait the required delay between initiation and validation
-        _waitDelay();
-
-        // set the effective price used for minting USDN
-        currentPrice = abi.encode(assetPrice);
-
-        // if price decreases, we need to use the new balance to calculate the minted amount
-        if (assetPrice < initialPrice) {
-            vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.initiateDeposit(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
+            return;
         }
 
-        // theoretical minted amount
-        uint256 mintedAmount = uint256(depositAmount) * usdn.totalSupply() / vaultBalance;
-        assertEq(mintedAmount, expectedUsdnAmount, "minted amount");
-
-        vm.expectEmit();
-        emit ValidatedDeposit(address(this), to, depositAmount, mintedAmount, initiateDepositTimestamp); // expected
-            // event
-        protocol.validateDeposit(currentPrice, EMPTY_PREVIOUS_DATA);
-
-        assertEq(usdn.balanceOf(to), mintedAmount, "USDN to balance");
-        if (address(this) != to) {
-            assertEq(usdn.balanceOf(address(this)), 0, "USDN user balance");
-        }
-        assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply");
+        _reenter = true;
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateDeposit.selector), 2);
+        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        protocol.initiateDeposit{ value: 1 }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
     }
 
     // test refunds
-    receive() external payable { }
+    receive() external payable {
+        // test reentrancy
+        if (_reenter) {
+            test_RevertWhen_initiateDepositCalledWithReentrancy();
+            _reenter = false;
+        }
+    }
 }

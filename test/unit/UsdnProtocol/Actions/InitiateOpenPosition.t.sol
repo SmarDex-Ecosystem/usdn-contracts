@@ -12,16 +12,20 @@ import {
     TickData,
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
- * @custom:feature The open position function of the USDN Protocol
+ * @custom:feature The initiateOpenPosition function of the UsdnProtocolActions contract
  * @custom:background Given a protocol initialized with default params
  * @custom:and A user with 10 wstETH in their wallet
  */
-contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     uint256 internal constant LONG_AMOUNT = 1 ether;
     uint128 internal constant CURRENT_PRICE = 2000 ether;
+
+    /// @notice Trigger a reentrancy after receiving ether
+    bool internal _reenter;
 
     struct ValueToCheckBefore {
         uint256 balance;
@@ -275,246 +279,6 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user validates an open position action
-     * @custom:given The user has initiated an open position with 1 wstETH and a desired liquidation price of ~1333$
-     * @custom:and the price was 2000$ at the moment of initiation
-     * @custom:and the price has increased to 2100$
-     * @custom:when The user validates the open position with the new price
-     * @custom:then The protocol validates the position and emits the ValidatedOpenPosition event
-     * @custom:and the position's leverage decreases
-     * @custom:and the rest of the state changes as expected
-     */
-    function test_validateOpenPosition() public {
-        _validateOpenPositionScenario(address(this));
-    }
-
-    /**
-     * @custom:scenario The user validates an open position action for another user
-     * @custom:given The user has initiated an open position with 1 wstETH and a desired liquidation price of ~1333$
-     * @custom:and the price was 2000$ at the moment of initiation
-     * @custom:and the price has increased to 2100$
-     * @custom:when The user validates the open position with the new price
-     * @custom:then The owner of the position is the previously defined user
-     */
-    function test_validateOpenPositionForAnotherUser() public {
-        _validateOpenPositionScenario(USER_1);
-    }
-
-    function _validateOpenPositionScenario(address to) internal {
-        uint256 initialTotalExpo = protocol.getTotalExpo();
-        uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
-        PositionId memory posId = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to
-        );
-        (Position memory tempPos,) = protocol.getLongPosition(posId);
-
-        _waitDelay();
-
-        uint128 newPrice = CURRENT_PRICE + 100 ether;
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
-            protocol.i_calcTickWithoutPenalty(posId.tick),
-            uint256(newPrice),
-            uint256(
-                protocol.longTradingExpoWithFunding(
-                    newPrice, tempPos.timestamp + uint128(oracleMiddleware.getValidationDelay())
-                )
-            ),
-            protocol.getLiqMultiplierAccumulator()
-        );
-        uint128 expectedPosTotalExpo = protocol.i_calculatePositionTotalExpo(tempPos.amount, newPrice, expectedLiqPrice);
-
-        vm.expectEmit();
-        emit ValidatedOpenPosition(address(this), to, expectedPosTotalExpo, newPrice, posId);
-        protocol.validateOpenPosition(abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
-
-        (Position memory pos,) = protocol.getLongPosition(posId);
-        assertEq(pos.user, tempPos.user, "user");
-        assertEq(pos.amount, tempPos.amount, "amount");
-        assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
-        // price increased -> total expo decreased
-        assertLt(pos.totalExpo, tempPos.totalExpo, "totalExpo should have decreased");
-        assertEq(pos.totalExpo, expectedPosTotalExpo, "totalExpo");
-
-        TickData memory tickData = protocol.getTickData(posId.tick);
-        assertEq(tickData.totalExpo, pos.totalExpo, "total expo in tick");
-        assertEq(protocol.getTotalExpo(), initialTotalExpo + pos.totalExpo, "total expo");
-    }
-
-    /**
-     * @custom:scenario The user validates an open position action with a price that would increase the leverage above
-     * the maximum allowed leverage
-     * @custom:given The user has initiated an open position with 1 wstETH and a desired liquidation price of ~1800$
-     * @custom:and the price was 2000$ at the moment of initiation
-     * @custom:and the price has decreased to 1900$
-     * @custom:when The user validates the open position with the new price
-     * @custom:then The protocol validates the position and emits the ValidatedOpenPosition event
-     * @custom:and the position is moved to another lower tick (to avoid exceeding the max leverage)
-     * @custom:and the position's leverage stays below the max leverage
-     */
-    function test_validateOpenPositionAboveMaxLeverage() public {
-        TestData memory testData;
-        int24 liqPenalty = int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
-        // leverage approx 10x
-        PositionId memory posId = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), CURRENT_PRICE * 9 / 10, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
-        );
-        (Position memory tempPos,) = protocol.getLongPosition(posId);
-
-        _waitDelay();
-
-        testData.validatePrice = CURRENT_PRICE - 100 ether;
-        uint128 newLiqPrice = protocol.i_getLiquidationPrice(testData.validatePrice, uint128(protocol.getMaxLeverage()));
-        testData.validateTick = protocol.getEffectiveTickForPrice(
-            newLiqPrice,
-            testData.validatePrice,
-            uint256(protocol.i_longTradingExpo(testData.validatePrice)),
-            protocol.getLiqMultiplierAccumulator(),
-            protocol.getTickSpacing()
-        ) + liqPenalty;
-        testData.validateTickVersion = protocol.getTickVersion(testData.validateTick);
-
-        TickData memory tickData = protocol.getTickData(testData.validateTick);
-        testData.validateIndex = tickData.totalPos;
-
-        int256 longBalanceBefore =
-            protocol.longAssetAvailableWithFunding(testData.validatePrice, uint128(block.timestamp - 1));
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
-            testData.validateTick - liqPenalty,
-            uint256(testData.validatePrice),
-            uint256(
-                protocol.longTradingExpoWithFunding(
-                    testData.validatePrice, tempPos.timestamp + uint128(oracleMiddleware.getValidationDelay())
-                )
-            ),
-            protocol.getLiqMultiplierAccumulator()
-        );
-        uint128 expectedPosTotalExpo =
-            protocol.i_calculatePositionTotalExpo(tempPos.amount, testData.validatePrice, expectedLiqPrice);
-
-        vm.expectEmit();
-        emit LiquidationPriceUpdated(
-            posId, PositionId(testData.validateTick, testData.validateTickVersion, testData.validateIndex)
-        );
-        vm.expectEmit();
-        emit ValidatedOpenPosition(
-            address(this),
-            address(this),
-            expectedPosTotalExpo,
-            testData.validatePrice,
-            PositionId(testData.validateTick, testData.validateTickVersion, testData.validateIndex)
-        );
-        protocol.validateOpenPosition(abi.encode(testData.validatePrice), EMPTY_PREVIOUS_DATA);
-
-        (Position memory pos,) = protocol.getLongPosition(
-            PositionId(testData.validateTick, testData.validateTickVersion, testData.validateIndex)
-        );
-        assertEq(pos.user, tempPos.user, "user");
-        assertEq(pos.timestamp, tempPos.timestamp, "timestamp");
-        assertEq(pos.amount, tempPos.amount, "amount");
-        assertLt(testData.validateTick, posId.tick, "tick");
-        assertGt(pos.totalExpo, tempPos.totalExpo, "totalExpo");
-        assertEq(protocol.getBalanceLong(), uint256(longBalanceBefore), "balance of long side unchanged");
-    }
-
-    /**
-     * @custom:scenario The user validates an open position action with a price that increases the leverage above the
-     * max leverage, but the target tick's penalty makes it remain above the max leverage
-     * @custom:given The user will validate a position with a price that would increase the leverage above the max
-     * leverage, in a tick which has a liquidation penalty lower than the current setting
-     * @custom:when The user validates the open position with the new price
-     * @custom:then The protocol validates the position in a new tick, but the leverage remains above the max leverage
-     */
-    function test_validateOpenPositionAboveMaxLeverageDifferentPenalty() public {
-        TestData memory data;
-        // calculate the future expected tick for the position we will validate later
-        data.validatePrice = CURRENT_PRICE - 100 ether;
-        data.validateTick = protocol.getEffectiveTickForPrice(
-            protocol.i_getLiquidationPrice(data.validatePrice, uint128(protocol.getMaxLeverage())),
-            data.validatePrice,
-            uint256(protocol.i_longTradingExpo(data.validatePrice)),
-            protocol.getLiqMultiplierAccumulator(),
-            protocol.getTickSpacing()
-        ) + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
-
-        data.originalLiqPenalty = protocol.getLiquidationPenalty();
-        // open another user position to set the tick's penalty to a lower value in storage
-        vm.prank(ADMIN);
-        protocol.setLiquidationPenalty(data.originalLiqPenalty - 1);
-        PositionId memory otherPosId = setUpUserPositionInLong(
-            OpenParams({
-                user: USER_1,
-                untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: uint128(LONG_AMOUNT),
-                desiredLiqPrice: protocol.getEffectivePriceForTick(data.validateTick),
-                price: CURRENT_PRICE
-            })
-        );
-        assertEq(otherPosId.tick, data.validateTick, "both positions in same tick");
-
-        // restore liquidation penalty to original value
-        vm.prank(ADMIN);
-        protocol.setLiquidationPenalty(data.originalLiqPenalty);
-
-        uint128 initiateTimeStamp = uint128(block.timestamp);
-        // initiate deposit with leverage close to 10x
-        data.tempPosId = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), CURRENT_PRICE * 9 / 10, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
-        );
-
-        _waitDelay();
-
-        // expected values
-        data.validateTickVersion = protocol.getTickVersion(data.validateTick);
-        data.validateIndex = protocol.getTickData(data.validateTick).totalPos;
-        data.expectedLeverage = protocol.i_getLeverage(
-            data.validatePrice,
-            protocol.getEffectivePriceForTick(
-                protocol.i_calcTickWithoutPenalty(data.validateTick, data.originalLiqPenalty - 1),
-                data.validatePrice,
-                uint256(protocol.i_longTradingExpo(data.validatePrice)),
-                protocol.getLiqMultiplierAccumulator()
-            )
-        );
-
-        uint128 expectedLiqPrice = protocol.getEffectivePriceForTick(
-            data.validateTick - int24(uint24(data.originalLiqPenalty - 1)) * protocol.getTickSpacing(),
-            uint256(data.validatePrice),
-            uint256(
-                protocol.longTradingExpoWithFunding(
-                    data.validatePrice, initiateTimeStamp + uint128(oracleMiddleware.getValidationDelay())
-                )
-            ),
-            protocol.getLiqMultiplierAccumulator()
-        );
-        uint128 expectedPosTotalExpo =
-            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), data.validatePrice, expectedLiqPrice);
-
-        {
-            // Sanity check
-            uint128 expectedLeverage = protocol.i_getLeverage(data.validatePrice, expectedLiqPrice);
-            // final leverage should be above 10x because of the stored liquidation penalty of the target tick
-            assertGt(expectedLeverage, uint128(10 * 10 ** protocol.LEVERAGE_DECIMALS()), "final leverage");
-        }
-
-        // validate deposit with a lower entry price
-        vm.expectEmit();
-        emit LiquidationPriceUpdated(
-            data.tempPosId, PositionId(data.validateTick, data.validateTickVersion, data.validateIndex)
-        );
-        vm.expectEmit();
-        emit ValidatedOpenPosition(
-            address(this),
-            address(this),
-            expectedPosTotalExpo,
-            data.validatePrice,
-            PositionId(data.validateTick, data.validateTickVersion, data.validateIndex)
-        );
-        protocol.validateOpenPosition(abi.encode(data.validatePrice), EMPTY_PREVIOUS_DATA);
-        (Position memory prevPos,) = protocol.getLongPosition(data.tempPosId);
-        assertEq(prevPos.user, address(0), "The previous position should have been deleted from the original tick");
-    }
-
-    /**
      * @custom:scenario A pending new long position gets liquidated
      * @custom:given A pending new position was liquidated before being validated
      * @custom:and The pending action is stale (tick version mismatch)
@@ -522,7 +286,7 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
      * @custom:then The protocol emits a `StalePendingActionRemoved` event
      * @custom:and The transaction does not revert
      */
-    function test_stalePendingActionReInit() public {
+    function test_initiateOpenPositionWithStalePendingAction() public {
         PositionId memory posId = _createStalePendingActionHelper();
 
         wstETH.approve(address(protocol), 1 ether);
@@ -531,24 +295,6 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit StalePendingActionRemoved(address(this), posId);
         protocol.initiateOpenPosition(1 ether, 1000 ether, priceData, EMPTY_PREVIOUS_DATA, address(this));
-    }
-
-    /**
-     * @custom:scenario A pending new long position gets liquidated and then validated
-     * @custom:given A pending new position was liquidated before being validated
-     * @custom:and The pending action is stale (tick version mismatch)
-     * @custom:when The user tries to validate the pending action
-     * @custom:then The protocol emits a `StalePendingActionRemoved` event
-     * @custom:and The transaction does not revert
-     */
-    function test_stalePendingActionValidate() public {
-        PositionId memory posId = _createStalePendingActionHelper();
-
-        bytes memory priceData = abi.encode(uint128(1500 ether));
-        // validating the action emits the proper event
-        vm.expectEmit();
-        emit StalePendingActionRemoved(address(this), posId);
-        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -569,27 +315,36 @@ contract TestUsdnProtocolOpenPosition is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user sends too much ether when validate a position opening
-     * @custom:given The user has initiated an open position
-     * @custom:when The user sends 0.5 ether as value in the `validateOpenPosition` call
-     * @custom:then The user gets refunded the excess ether (0.5 ether - validationCost)
+     * @custom:scenario The user initiates an open position action with a reentrancy attempt
+     * @custom:given A user being a smart contract that calls initiateOpenPosition with too much ether
+     * @custom:and A receive() function that calls initiateOpenPosition again
+     * @custom:when The user calls initiateOpenPosition again from the callback
+     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
      */
-    function test_validateOpenPositionEtherRefund() public {
-        oracleMiddleware.setRequireValidationCost(true); // require 1 wei per validation
+    function test_RevertWhen_initiateOpenPositionCalledWithReentrancy() public {
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.initiateOpenPosition(
+                1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
+            );
+            return;
+        }
 
-        bytes memory priceData = abi.encode(CURRENT_PRICE);
-        uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
-        protocol.initiateOpenPosition{
-            value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(uint128(LONG_AMOUNT), desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA, address(this));
-        _waitDelay();
-        uint256 balanceBefore = address(this).balance;
-        uint256 validationCost = oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition);
-        protocol.validateOpenPosition{ value: 0.5 ether }(priceData, EMPTY_PREVIOUS_DATA);
-
-        assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
+        _reenter = true;
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateOpenPosition.selector), 2);
+        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        protocol.initiateOpenPosition{ value: 1 }(
+            1 ether, 1500 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this)
+        );
     }
 
     // test refunds
-    receive() external payable { }
+    receive() external payable {
+        // test reentrancy
+        if (_reenter) {
+            test_RevertWhen_initiateOpenPositionCalledWithReentrancy();
+            _reenter = false;
+        }
+    }
 }
