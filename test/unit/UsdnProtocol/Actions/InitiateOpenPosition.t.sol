@@ -94,8 +94,8 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
         vm.expectEmit();
         emit InitiatedOpenPosition(
-            address(this),
             to,
+            address(this),
             uint40(block.timestamp),
             expectedPosTotalExpo,
             uint128(LONG_AMOUNT),
@@ -137,7 +137,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         skip(protocol.getValidationDeadline() + 1);
         (pendingActions,) = protocol.getActionablePendingActions(address(0));
         action = protocol.i_toLongPendingAction(pendingActions[0]);
-        assertEq(action.to, address(this), "pending action to");
+        assertEq(action.to, to, "pending action to");
         assertEq(action.validator, address(this), "pending action validator");
 
         Position memory position;

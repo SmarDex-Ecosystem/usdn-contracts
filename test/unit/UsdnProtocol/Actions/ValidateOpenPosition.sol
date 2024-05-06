@@ -88,7 +88,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         uint128 expectedPosTotalExpo = protocol.i_calculatePositionTotalExpo(tempPos.amount, newPrice, expectedLiqPrice);
 
         vm.expectEmit();
-        emit ValidatedOpenPosition(address(this), to, expectedPosTotalExpo, newPrice, posId);
+        emit ValidatedOpenPosition(to, address(this), expectedPosTotalExpo, newPrice, posId);
         protocol.validateOpenPosition(address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
         (Position memory pos,) = protocol.getLongPosition(posId);

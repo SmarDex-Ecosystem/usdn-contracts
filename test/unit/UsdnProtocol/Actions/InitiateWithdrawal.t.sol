@@ -85,7 +85,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         uint256 protocolUsdnInitialShares = usdn.sharesOf(address(protocol));
 
         vm.expectEmit();
-        emit InitiatedWithdrawal(address(this), to, USDN_AMOUNT, block.timestamp); // expected event
+        emit InitiatedWithdrawal(to, address(this), USDN_AMOUNT, block.timestamp); // expected event
         protocol.initiateWithdrawal(withdrawShares, currentPrice, EMPTY_PREVIOUS_DATA, to, address(this));
 
         assertEq(usdn.sharesOf(address(this)), initialUsdnShares - withdrawShares, "usdn user balance");
