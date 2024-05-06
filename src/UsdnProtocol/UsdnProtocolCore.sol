@@ -393,13 +393,13 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * update the balances. This is left to the caller
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
-     * @return priceUpdated_ Whether the price was updated
+     * @return isPriceRecent_ Whether the price was updated or is already the most recent price
      * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
      * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
      */
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         internal
-        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_)
     {
         // cache variable for optimization
         uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
@@ -439,7 +439,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fundWithFee;
 
-        priceUpdated_ = true;
+        isPriceRecent_ = true;
     }
 
     /**
