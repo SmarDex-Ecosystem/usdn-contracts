@@ -84,6 +84,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
 
         PendingAction memory pending;
         pending.action = ProtocolAction.InitiateDeposit;
+        pending.to = USER_1;
         pending.validator = USER_1;
         pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
         uint128 rawIndex1 = protocol.queuePushFront(pending);
@@ -109,6 +110,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
     function _addDummyPendingAction() internal returns (uint128 rawIndex_) {
         PendingAction memory pending;
         pending.action = ProtocolAction.InitiateDeposit;
+        pending.to = address(this);
         pending.validator = address(this);
         pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
         protocol.i_addPendingAction(address(this), pending);
