@@ -86,7 +86,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
         uint256 balance = address(this).balance;
 
-        _refoundEther(balance, msg.sender);
+        _refundEther(balance, msg.sender);
     }
 
     /// @inheritdoc IUsdnProtocol

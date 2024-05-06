@@ -141,7 +141,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateDeposit(validator, depositPriceData);
-        _refoundEther(amountToRefund, validator);
+        _refundEther(amountToRefund, validator);
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -180,7 +180,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateWithdrawal(validator, withdrawalPriceData);
-        _refoundEther(amountToRefund, validator);
+        _refundEther(amountToRefund, validator);
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -223,7 +223,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateOpenPosition(validator, openPriceData);
-        _refoundEther(amountToRefund, validator);
+        _refundEther(amountToRefund, validator);
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -263,7 +263,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateClosePosition(validator, closePriceData);
-        _refoundEther(amountToRefund, validator);
+        _refundEther(amountToRefund, validator);
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -1552,7 +1552,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             amount = positive - negative;
         }
 
-        _refoundEther(amount, msg.sender);
+        _refundEther(amount, msg.sender);
     }
 
     /**
@@ -1560,7 +1560,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param amount The amount of ether to refund.
      * @param to The address to refund ether.
      */
-    function _refoundEther(uint256 amount, address to) internal {
+    function _refundEther(uint256 amount, address to) internal {
         if (amount != 0) {
             // slither-disable-next-line arbitrary-send-eth
             (bool success,) = payable(to).call{ value: amount }("");
