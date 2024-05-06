@@ -15,6 +15,7 @@ import {
     PreviousActionsData,
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
  * @custom:feature The initiate close position functions of the USDN Protocol
@@ -44,6 +45,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
     uint128 private positionAmount = 1 ether;
     PositionId private posId;
+    /// @notice Trigger a reentrancy after receiving ether
+    bool internal _reenter;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -616,6 +619,44 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         assertEq(wstETH.balanceOf(DEPLOYER), userBalanceBefore, "user balance");
     }
 
+    /**
+     * @custom:scenario The user validates a close position action with a reentrancy attempt
+     * @custom:given A validated open position with an initiated close action done
+     * @custom:and a user being a smart contract that calls validateClosePosition with too much ether
+     * @custom:and a receive() function that calls validateClosePosition again
+     * @custom:when The user calls validateClosePosition again from the callback
+     * @custom:then The call reverts with InitializableReentrancyGuardReentrantCall
+     */
+    function test_RevertWhen_validateClosePositionCalledWithReentrancy() public {
+        if (_reenter) {
+            vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
+            protocol.validateClosePosition(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+            return;
+        }
+
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: positionAmount,
+                desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
+                price: params.initialPrice
+            })
+        );
+
+        _reenter = true;
+        // If a reentrancy occurred, the function should have been called 2 times
+        vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateClosePosition.selector), 2);
+        // The value sent will cause a refund, which will trigger the receive() function of this contract
+        protocol.validateClosePosition{ value: 1 }(abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+    }
+
     /// @dev Allow refund tests
-    receive() external payable { }
+    receive() external payable {
+        // test reentrancy
+        if (_reenter) {
+            test_RevertWhen_validateClosePositionCalledWithReentrancy();
+            _reenter = false;
+        }
+    }
 }
