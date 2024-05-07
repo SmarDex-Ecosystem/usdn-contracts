@@ -175,8 +175,10 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates and validates a deposit with another validator
+     * @custom:scenario The user initiates and validates (after the validationDeadline)
+     * a deposit with another validator
      * @custom:given The user initiated a deposit of 1 wstETH and validates it
+     * @custom:and we wait until the validation deadline is passed
      * @custom:when The user validates the deposit
      * @custom:then The security deposit is refunded to the validator
      */

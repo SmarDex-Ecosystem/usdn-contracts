@@ -652,8 +652,10 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
-     * @custom:scenario The user initiates and validates a closePosition with another validator
+     * @custom:scenario The user initiates and validates (after the validationDeadline)
+     * a close position action with another validator
      * @custom:given The user initiated a closePosition with another validator
+     * @custom:and we wait until the validation deadline is passed
      * @custom:when The user validates the closePosition
      * @custom:then The security deposit is refunded to the validator
      */

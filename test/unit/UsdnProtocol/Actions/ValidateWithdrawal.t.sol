@@ -238,8 +238,10 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates and validates a withdraw with another validator
+     * @custom:scenario The user initiates and validates (after the validationDeadline)
+     * a withdraw with another validator
      * @custom:given The user initiated a withdraw of 1000 usdn and validates it
+     * @custom:and we wait until the validation deadline is passed
      * @custom:when The user validates the withdraw
      * @custom:then The security deposit is refunded to the validator
      */
