@@ -134,9 +134,9 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario The user initiates and validates a withdraw with another validator
-     * @custom:given The user initiated a withdraw of 1 wstETH and validates it
+     * @custom:given The user initiated a withdraw of 1000 usdn and validates it
      * @custom:when The user validates the withdraw
-     * @custom:then The security withdraw is refunded to the validator
+     * @custom:then The security deposit is refunded to the validator
      */
     function test_validateWithdrawEtherRefundToValidator() public {
         vm.startPrank(ADMIN);
