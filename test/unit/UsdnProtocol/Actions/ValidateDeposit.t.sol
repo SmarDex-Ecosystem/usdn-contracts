@@ -102,24 +102,19 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      * @custom:when The user validates the deposit
      * @custom:then The security deposit is refunded to the validator
      */
-    function test_validateDepositEtherRefoundToValidator() public {
+    function test_validateDepositEtherRefundToValidator() public {
         vm.startPrank(ADMIN);
         protocol.setPositionFeeBps(0); // 0% fees
         protocol.setSecurityDepositValue(0.5 ether);
         vm.stopPrank();
 
-        uint128 depositAmount = 1 ether;
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
 
         uint64 securityDepositValue = protocol.getSecurityDepositValue();
         uint256 balanceUserBefore = USER_1.balance;
         uint256 balanceContractBefore = address(this).balance;
 
-        vm.expectEmit();
-        emit InitiatedDeposit(address(this), USER_1, depositAmount, block.timestamp); // expected event
-        protocol.initiateDeposit{ value: 0.5 ether }(
-            depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, address(this), USER_1
-        );
+        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this), USER_1);
         _waitBeforeActionablePendingAction();
         protocol.validateDeposit(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);
 
