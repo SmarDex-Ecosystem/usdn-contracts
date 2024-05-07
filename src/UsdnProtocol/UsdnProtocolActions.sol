@@ -134,9 +134,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     *  @inheritdoc IUsdnProtocolActions
-     *  @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
-     * pending action user must use another function such as validateActionablePendingActions to receive the security
+     * @inheritdoc IUsdnProtocolActions
+     * @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
+     * pending action it must use another function such as validateActionablePendingActions to receive the security
      * deposit
      */
     function validateDeposit(
@@ -182,9 +182,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     *  @inheritdoc IUsdnProtocolActions
-     *  @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
-     * pending action user must use another function such as validateActionablePendingActions to receive the security
+     * @inheritdoc IUsdnProtocolActions
+     * @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
+     * pending action it must use another function such as validateActionablePendingActions to receive the security
      * deposit
      */
     function validateWithdrawal(
@@ -234,9 +234,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     *  @inheritdoc IUsdnProtocolActions
-     *  @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
-     * pending action user must use another function such as validateActionablePendingActions to receive the security
+     * @inheritdoc IUsdnProtocolActions
+     * @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
+     * pending action it must use another function such as validateActionablePendingActions to receive the security
      * deposit
      */
     function validateOpenPosition(
@@ -283,9 +283,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     *  @inheritdoc IUsdnProtocolActions
-     *  @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
-     * pending action user must use another function such as validateActionablePendingActions to receive the security
+     * @inheritdoc IUsdnProtocolActions
+     * @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
+     * pending action it must use another function such as validateActionablePendingActions to receive the security
      * deposit
      */
     function validateClosePosition(

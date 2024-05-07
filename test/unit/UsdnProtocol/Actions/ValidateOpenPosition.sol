@@ -340,7 +340,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     /**
      * @custom:scenario The user initiates and validates a openPosition with another validator
      * @custom:given The user initiated a openPosition with 1 wstETH and a desired liquidation price of ~1333$
-     * @custom:when The user validates the withdraw
+     * @custom:when The user validates the openPosition
      * @custom:then The security deposit is refunded to the validator
      */
     function test_validateOpenPositionEtherRefundToValidator() public {

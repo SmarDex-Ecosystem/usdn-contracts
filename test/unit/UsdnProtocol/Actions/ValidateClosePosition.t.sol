@@ -653,8 +653,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario The user initiates and validates a closePosition with another validator
-     * @custom:given The user initiated a openPosition with 1 wstETH and a desired liquidation price of ~1333$
-     * @custom:when The user validates the withdraw
+     * @custom:given The user initiated a closePosition with another validator
+     * @custom:when The user validates the closePosition
      * @custom:then The security deposit is refunded to the validator
      */
     function test_validateClosePositionEtherRefundToValidator() public {
