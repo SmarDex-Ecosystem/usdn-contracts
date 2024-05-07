@@ -243,12 +243,6 @@ interface IUsdnProtocolEvents {
     event LiquidationRewardsManagerUpdated(address newAddress);
 
     /**
-     * @notice Emitted when the OrderManager contract is updated
-     * @param newAddress The address of the new (current) contract
-     */
-    event OrderManagerUpdated(address newAddress);
-
-    /**
      * @notice Emitted when the pending protocol fee is distributed
      * @param feeCollector The collector address
      * @param amount The amount of fee transferred
