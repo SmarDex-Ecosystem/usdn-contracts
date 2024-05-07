@@ -658,10 +658,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The security deposit is refunded to the validator
      */
     function test_validateClosePositionEtherRefundToValidator() public {
-        vm.startPrank(ADMIN);
-        protocol.setPositionFeeBps(0); // 0% fees
+        vm.prank(ADMIN);
         protocol.setSecurityDepositValue(0.5 ether);
-        vm.stopPrank();
 
         bytes memory priceData = abi.encode(params.initialPrice);
 
