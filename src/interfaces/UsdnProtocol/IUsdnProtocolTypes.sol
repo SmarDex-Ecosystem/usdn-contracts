@@ -50,6 +50,7 @@ enum ProtocolAction {
  * @param timestamp The timestamp of the initiate action.
  * @param to The to address.
  * @param validator The validator address.
+ * @param securityDepositValue The security deposit of the pending action.
  * @param var1 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param var2 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
  * @param var3 See `DepositPendingAction`, `WithdrawalPendingAction` and `LongPendingAction`.
