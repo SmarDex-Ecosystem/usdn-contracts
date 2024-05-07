@@ -675,13 +675,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @dev This reverts if there is already a pending action for this user
      * @param user The user's address
      * @param action The pending action struct
-     * @return securityDepositValue_ The security deposit value of the stale pending action
+     * @return amountToRefund_ The security deposit value of the stale pending action
      */
-    function _addPendingAction(address user, PendingAction memory action)
-        internal
-        returns (uint256 securityDepositValue_)
-    {
-        securityDepositValue_ = _removeStalePendingAction(user); // check if there is a pending action that was
+    function _addPendingAction(address user, PendingAction memory action) internal returns (uint256 amountToRefund_) {
+        amountToRefund_ = _removeStalePendingAction(user); // check if there is a pending action that was
             // liquidated and remove it
         if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
@@ -745,14 +742,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Clear the pending action for a user
      * @param user The user's address
+     * @param rawIndex The rawIndex of the pending position
      */
-    function _clearPendingAction(address user) internal {
-        uint256 pendingActionIndex = _pendingActions[user];
-        // slither-disable-next-line incorrect-equality
-        if (pendingActionIndex == 0) {
-            revert UsdnProtocolNoPendingAction();
-        }
-        uint128 rawIndex = uint128(pendingActionIndex - 1);
+    function _clearPendingAction(address user, uint128 rawIndex) internal {
         _pendingActionsQueue.clearAt(rawIndex);
         delete _pendingActions[user];
     }

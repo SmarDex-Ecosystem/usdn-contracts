@@ -100,10 +100,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         address to,
         PositionId memory posId,
         uint128 amountToClose,
-        uint256 balanceBefore,
+        uint64 securityDepositValue,
         bytes calldata currentPriceData
     ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_) {
-        return _initiateClosePosition(user, to, posId, amountToClose, balanceBefore, currentPriceData);
+        return _initiateClosePosition(user, to, posId, amountToClose, securityDepositValue, currentPriceData);
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
