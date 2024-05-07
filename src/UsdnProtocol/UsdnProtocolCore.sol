@@ -393,7 +393,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * update the balances. This is left to the caller
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
-     * @return isPriceRecent_ Whether the price was updated or is already the most recent price
+     * @return isPriceRecent_ Whether the price was updated or was already the most recent price
      * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
      * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
      */

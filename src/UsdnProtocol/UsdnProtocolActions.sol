@@ -267,7 +267,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PreviousActionsData calldata previousActionsData,
         address to
     ) external payable initializedAndNonReentrant {
-        uint64 securityDepositValue = uint64(_securityDepositValue);
+        uint64 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
         }
@@ -647,7 +647,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // early return in case there are still pending liquidations
         if (isLiquidationPending_) {
-            return isLiquidationPending_;
+            return true;
         }
 
         // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
@@ -839,7 +839,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // early return in case there are still pending liquidations
         if (isLiquidationPending_) {
-            return isLiquidationPending_;
+            return true;
         }
 
         // Apply fees on price
@@ -1172,7 +1172,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 newPosId
             );
             emit ValidatedOpenPosition(data.action.user, data.action.to, data.pos.totalExpo, data.startPrice, newPosId);
-            return isLiquidationPending_;
+            return false;
         }
 
         // Calculate the new total expo
@@ -1452,7 +1452,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 currentPrice.neutralPrice,
                 liquidationPrice
             );
-            return isLiquidationPending_;
+            return false;
         }
 
         int256 positionValue = _positionValue(
@@ -1663,7 +1663,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (bool isPriceRecent, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(neutralPrice.toUint128(), timestamp.toUint128());
 
-        // liquidate if the price was updated or is already the most recent
+        // liquidate if the price was updated or was already the most recent
         if (isPriceRecent) {
             LiquidationsEffects memory liquidationEffects =
                 _liquidatePositions(_lastPrice, iterations, tempLongBalance, tempVaultBalance);
