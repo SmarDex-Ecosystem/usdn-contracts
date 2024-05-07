@@ -335,6 +335,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         skip(31);
     }
 
+    function _waitBeforeActionablePendingAction() internal {
+        skip(protocol.getValidationDeadline() + 1);
+    }
+
     /// @dev Calculate proper initial values from randoms to initiate a balanced protocol
     function _randInitBalanced(uint128 initialDeposit, uint128 initialLong) internal {
         // deploy protocol at equilibrium temporarily to get access to constants and calculations
