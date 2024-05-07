@@ -1556,9 +1556,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Refunds an amount of ether to the given address.
-     * @param amount The amount of ether to refund.
-     * @param to The address to refund ether.
+     * @notice Refunds an amount of ether to the given address
+     * @param amount The amount of ether to refund
+     * @param to The address that should receive the refund
      */
     function _refundEther(uint256 amount, address to) internal {
         if (amount != 0) {

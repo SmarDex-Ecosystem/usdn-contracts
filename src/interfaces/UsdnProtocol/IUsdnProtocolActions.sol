@@ -41,7 +41,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * The security deposit will be returned to the validator
-     * @param validator The address which has the pending deposit action to validate
+     * @param validator The address that has the pending deposit action to validate
      * @param depositPriceData The price data corresponding to the sender's pending deposit action
      * @param previousActionsData The data needed to validate actionable pending actions
      */
@@ -82,7 +82,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
      * (from the oracle middleware) to the timestamp of the initiate action.
      * The security deposit will be returned to the validator
-     * @param validator The address which has the pending withdrawal action to validate.
+     * @param validator The address that has the pending withdrawal action to validate.
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action.
      * @param previousActionsData The data needed to validate actionable pending actions.
      */
@@ -131,7 +131,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * It is also possible for this operation to change the tick, tickVersion and index of the position, in which case
      * we emit the `LiquidationPriceUpdated` event.
      * The security deposit will be returned to the validator
-     * @param validator The address which has the pending open position action to validate
+     * @param validator The address that has the pending open position action to validate
      * @param openPriceData The price data corresponding to the sender's pending open position action
      * @param previousActionsData The data needed to validate actionable pending actions
      */
@@ -180,7 +180,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * (from the oracle middleware) to the timestamp of the initiate action.
      * This operation calculates the final exit price and profit of the long position and performs the payout.
      * The security deposit will be returned to the validator
-     * @param validator The address which has the pending close position action to validate
+     * @param validator The address that has the pending close position action to validate
      * @param closePriceData The price data corresponding to the sender's pending close position action
      * @param previousActionsData The data needed to validate actionable pending actions
      */

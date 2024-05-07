@@ -119,8 +119,8 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         do {
             // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
             (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.at(i);
-            // if the msg.sender is equal to the user of the pending action, then the pending action is not actionable
-            // by this user (it will get validated automatically by their action)
+            // if the msg.sender is equal to the validator of the pending action, then the pending action is not
+            // actionable by this user (it will get validated automatically by their action)
             // and so we need to return the next item in the queue so that they can validate a third-party pending
             // action (if any)
             if (candidate.timestamp == 0 || candidate.validator == currentUser) {
