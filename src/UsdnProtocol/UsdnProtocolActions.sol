@@ -622,11 +622,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        bool isLiquidationPending = _validateDepositWithAction(pending, priceData);
+        isLiquidationPending_ = _validateDepositWithAction(pending, priceData);
 
-        if (isLiquidationPending) {
-            return (0, true);
-        } else {
+        if (!isLiquidationPending_) {
             _clearPendingAction(user, rawIndex);
             return (pending.securityDepositValue, false);
         }
@@ -814,11 +812,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        bool isLiquidationPending = _validateWithdrawalWithAction(pending, priceData);
+        isLiquidationPending_ = _validateWithdrawalWithAction(pending, priceData);
 
-        if (isLiquidationPending) {
-            return (0, true);
-        } else {
+        if (!isLiquidationPending_) {
             _clearPendingAction(user, rawIndex);
             return (pending.securityDepositValue, false);
         }
@@ -1042,11 +1038,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        bool isLiquidationPending = _validateOpenPositionWithAction(pending, priceData);
+        isLiquidationPending_ = _validateOpenPositionWithAction(pending, priceData);
 
-        if (isLiquidationPending) {
-            return (0, true);
-        } else {
+        if (!isLiquidationPending_) {
             _clearPendingAction(user, rawIndex);
             return (pending.securityDepositValue, false);
         }
