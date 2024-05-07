@@ -5,7 +5,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { USER_1, DEPLOYER } from "test/utils/Constants.sol";
+import { ADMIN, USER_1, DEPLOYER } from "test/utils/Constants.sol";
 
 import {
     LongPendingAction,
@@ -649,6 +649,34 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateClosePosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.validateClosePosition{ value: 1 }(address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario The user initiates and validates a closePosition with another validator
+     * @custom:given The user initiated a openPosition with 1 wstETH and a desired liquidation price of ~1333$
+     * @custom:when The user validates the withdraw
+     * @custom:then The security deposit is refunded to the validator
+     */
+    function test_validateClosePositionEtherRefundToValidator() public {
+        vm.startPrank(ADMIN);
+        protocol.setPositionFeeBps(0); // 0% fees
+        protocol.setSecurityDepositValue(0.5 ether);
+        vm.stopPrank();
+
+        bytes memory priceData = abi.encode(params.initialPrice);
+
+        uint64 securityDepositValue = protocol.getSecurityDepositValue();
+        uint256 balanceUserBefore = USER_1.balance;
+        uint256 balanceContractBefore = address(this).balance;
+
+        protocol.initiateClosePosition{ value: 0.5 ether }(
+            posId, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this), USER_1
+        );
+        _waitBeforeActionablePendingAction();
+        protocol.validateClosePosition(USER_1, priceData, EMPTY_PREVIOUS_DATA);
+
+        assertEq(USER_1.balance, balanceUserBefore + securityDepositValue, "user balance after refund");
+        assertEq(address(this).balance, balanceContractBefore - securityDepositValue, "contract balance after refund");
     }
 
     /// @dev Allow refund tests

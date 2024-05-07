@@ -64,34 +64,6 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         _validateOpenPositionScenario(USER_1);
     }
 
-    /**
-     * @custom:scenario The user initiates and validates a openPosition with another validator
-     * @custom:given The user initiated a openPosition with 1 wstETH and a desired liquidation price of ~1333$
-     * @custom:when The user validates the withdraw
-     * @custom:then The security deposit is refunded to the validator
-     */
-    function test_validateOpenPositionEtherRefundToValidator() public {
-        vm.startPrank(ADMIN);
-        protocol.setPositionFeeBps(0); // 0% fees
-        protocol.setSecurityDepositValue(0.5 ether);
-        vm.stopPrank();
-
-        uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
-
-        uint64 securityDepositValue = protocol.getSecurityDepositValue();
-        uint256 balanceUserBefore = USER_1.balance;
-        uint256 balanceContractBefore = address(this).balance;
-
-        protocol.initiateOpenPosition{ value: 0.5 ether }(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this), USER_1
-        );
-        _waitBeforeActionablePendingAction();
-        protocol.validateOpenPosition(USER_1, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
-
-        assertEq(USER_1.balance, balanceUserBefore + securityDepositValue, "user balance after refund");
-        assertEq(address(this).balance, balanceContractBefore - securityDepositValue, "contract balance after refund");
-    }
-
     function _validateOpenPositionScenario(address to) internal {
         uint256 initialTotalExpo = protocol.getTotalExpo();
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
@@ -363,6 +335,34 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateOpenPosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.validateOpenPosition{ value: 1 }(address(this), abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario The user initiates and validates a openPosition with another validator
+     * @custom:given The user initiated a openPosition with 1 wstETH and a desired liquidation price of ~1333$
+     * @custom:when The user validates the withdraw
+     * @custom:then The security deposit is refunded to the validator
+     */
+    function test_validateOpenPositionEtherRefundToValidator() public {
+        vm.startPrank(ADMIN);
+        protocol.setPositionFeeBps(0); // 0% fees
+        protocol.setSecurityDepositValue(0.5 ether);
+        vm.stopPrank();
+
+        uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
+
+        uint64 securityDepositValue = protocol.getSecurityDepositValue();
+        uint256 balanceUserBefore = USER_1.balance;
+        uint256 balanceContractBefore = address(this).balance;
+
+        protocol.initiateOpenPosition{ value: 0.5 ether }(
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this), USER_1
+        );
+        _waitBeforeActionablePendingAction();
+        protocol.validateOpenPosition(USER_1, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
+
+        assertEq(USER_1.balance, balanceUserBefore + securityDepositValue, "user balance after refund");
+        assertEq(address(this).balance, balanceContractBefore - securityDepositValue, "contract balance after refund");
     }
 
     // test refunds

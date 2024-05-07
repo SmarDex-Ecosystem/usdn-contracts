@@ -97,32 +97,6 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates and validates a deposit with another validator
-     * @custom:given The user initiated a deposit of 1 wstETH and validates it
-     * @custom:when The user validates the deposit
-     * @custom:then The security deposit is refunded to the validator
-     */
-    function test_validateDepositEtherRefundToValidator() public {
-        vm.startPrank(ADMIN);
-        protocol.setPositionFeeBps(0); // 0% fees
-        protocol.setSecurityDepositValue(0.5 ether);
-        vm.stopPrank();
-
-        bytes memory currentPrice = abi.encode(uint128(2000 ether));
-
-        uint64 securityDepositValue = protocol.getSecurityDepositValue();
-        uint256 balanceUserBefore = USER_1.balance;
-        uint256 balanceContractBefore = address(this).balance;
-
-        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this), USER_1);
-        _waitBeforeActionablePendingAction();
-        protocol.validateDeposit(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);
-
-        assertEq(USER_1.balance, balanceUserBefore + securityDepositValue, "user balance after refund");
-        assertEq(address(this).balance, balanceContractBefore - securityDepositValue, "contract balance after refund");
-    }
-
-    /**
      * @dev Create a deposit at price `initialPrice`, then validate it at price `assetPrice`, then check the emitted
      * event and the resulting state.
      * @param initialPrice price of the asset at the time of deposit initiation
@@ -198,6 +172,32 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.validateDeposit.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.validateDeposit{ value: 1 }(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario The user initiates and validates a deposit with another validator
+     * @custom:given The user initiated a deposit of 1 wstETH and validates it
+     * @custom:when The user validates the deposit
+     * @custom:then The security deposit is refunded to the validator
+     */
+    function test_validateDepositEtherRefundToValidator() public {
+        vm.startPrank(ADMIN);
+        protocol.setPositionFeeBps(0); // 0% fees
+        protocol.setSecurityDepositValue(0.5 ether);
+        vm.stopPrank();
+
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+
+        uint64 securityDepositValue = protocol.getSecurityDepositValue();
+        uint256 balanceUserBefore = USER_1.balance;
+        uint256 balanceContractBefore = address(this).balance;
+
+        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this), USER_1);
+        _waitBeforeActionablePendingAction();
+        protocol.validateDeposit(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);
+
+        assertEq(USER_1.balance, balanceUserBefore + securityDepositValue, "user balance after refund");
+        assertEq(address(this).balance, balanceContractBefore - securityDepositValue, "contract balance after refund");
     }
 
     // test refunds
