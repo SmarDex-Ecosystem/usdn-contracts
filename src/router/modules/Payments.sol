@@ -5,8 +5,6 @@ import { Constants } from "../libraries/Constants.sol";
 import { PaymentsImmutables } from "../modules/PaymentsImmutables.sol";
 import { SafeTransferLib } from "solmate/src/utils/SafeTransferLib.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
-import { ERC721 } from "solmate/src/tokens/ERC721.sol";
-import { ERC1155 } from "solmate/src/tokens/ERC1155.sol";
 
 /// @title Payments contract
 /// @notice Performs various operations around the payment of ETH and tokens
@@ -84,25 +82,6 @@ abstract contract Payments is PaymentsImmutables {
             if (balance < amountMinimum) revert InsufficientToken();
             if (balance > 0) ERC20(token).safeTransfer(recipient, balance);
         }
-    }
-
-    /// @notice Sweeps an ERC721 to a recipient from the contract
-    /// @param token The ERC721 token to sweep
-    /// @param recipient The address that will receive payment
-    /// @param id The ID of the ERC721 to sweep
-    function sweepERC721(address token, address recipient, uint256 id) internal {
-        ERC721(token).safeTransferFrom(address(this), recipient, id);
-    }
-
-    /// @notice Sweeps all of the contract's ERC1155 to an address
-    /// @param token The ERC1155 token to sweep
-    /// @param recipient The address that will receive payment
-    /// @param id The ID of the ERC1155 to sweep
-    /// @param amountMinimum The minimum desired amount
-    function sweepERC1155(address token, address recipient, uint256 id, uint256 amountMinimum) internal {
-        uint256 balance = ERC1155(token).balanceOf(address(this), id);
-        if (balance < amountMinimum) revert InsufficientToken();
-        ERC1155(token).safeTransferFrom(address(this), recipient, id, balance, bytes(""));
     }
 
     /// @notice Wraps an amount of ETH into WETH
