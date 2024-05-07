@@ -133,7 +133,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _checkPendingFee();
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /**
+     *  @inheritdoc IUsdnProtocolActions
+     *  @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
+     * pending action user must use another function such as validateActionablePendingActions to receive the security
+     * deposit
+     */
     function validateDeposit(
         address validator,
         bytes calldata depositPriceData,
@@ -141,7 +146,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateDeposit(validator, depositPriceData);
-        _refundEther(amountToRefund, validator);
+        if (msg.sender != validator) {
+            _refundEther(amountToRefund, validator);
+            balanceBefore -= amountToRefund;
+            amountToRefund = 0;
+        }
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -172,7 +181,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _checkPendingFee();
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /**
+     *  @inheritdoc IUsdnProtocolActions
+     *  @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
+     * pending action user must use another function such as validateActionablePendingActions to receive the security
+     * deposit
+     */
     function validateWithdrawal(
         address validator,
         bytes calldata withdrawalPriceData,
@@ -180,7 +194,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateWithdrawal(validator, withdrawalPriceData);
-        _refundEther(amountToRefund, validator);
+        if (msg.sender != validator) {
+            _refundEther(amountToRefund, validator);
+            balanceBefore -= amountToRefund;
+            amountToRefund = 0;
+        }
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -215,7 +233,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _checkPendingFee();
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /**
+     *  @inheritdoc IUsdnProtocolActions
+     *  @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
+     * pending action user must use another function such as validateActionablePendingActions to receive the security
+     * deposit
+     */
     function validateOpenPosition(
         address validator,
         bytes calldata openPriceData,
@@ -223,7 +246,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateOpenPosition(validator, openPriceData);
-        _refundEther(amountToRefund, validator);
+        if (msg.sender != validator) {
+            _refundEther(amountToRefund, validator);
+            balanceBefore -= amountToRefund;
+            amountToRefund = 0;
+        }
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -255,7 +282,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _checkPendingFee();
     }
 
-    /// @inheritdoc IUsdnProtocolActions
+    /**
+     *  @inheritdoc IUsdnProtocolActions
+     *  @dev warning! This function send the security deposit to the validator. If user want to validate an actionable
+     * pending action user must use another function such as validateActionablePendingActions to receive the security
+     * deposit
+     */
     function validateClosePosition(
         address validator,
         bytes calldata closePriceData,
@@ -263,7 +295,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund = _validateClosePosition(validator, closePriceData);
-        _refundEther(amountToRefund, validator);
+        if (msg.sender != validator) {
+            _refundEther(amountToRefund, validator);
+            balanceBefore -= amountToRefund;
+            amountToRefund = 0;
+        }
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
