@@ -1404,9 +1404,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         isLiquidationPending_ = _validateClosePositionWithAction(pending, priceData);
 
-        if (isLiquidationPending_) {
-            return (0, true);
-        } else {
+        if (!isLiquidationPending_) {
             _clearPendingAction(user, rawIndex);
             return (pending.securityDepositValue, false);
         }
