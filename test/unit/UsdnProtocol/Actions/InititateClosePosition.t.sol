@@ -98,7 +98,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_RevertWhen_notUser() public {
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
-        protocol.i_initiateClosePosition(USER_1, USER_1, posId, positionAmount, priceData);
+        vm.prank(USER_1);
+        protocol.i_initiateClosePosition(address(this), address(this), posId, positionAmount, priceData);
     }
 
     /**
@@ -260,21 +261,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      */
     function test_internalInitiateClosePosition() external {
         _internalInitiateClosePositionScenario(address(this));
-    }
-
-    /**
-     * @custom:scenario Initiate close a position fully
-     * @custom:given A validated open position
-     * @custom:when The owner of the position closes all of the position at the same price as the opening
-     * @custom:and the to parameter is different from the sender
-     * @custom:then The state of the protocol is updated
-     * @custom:and an InitiatedClosePosition event is emitted
-     * @custom:and the position is deleted
-     */
-    function test_internalInitiateClosePositionForAnotherUser() external {
-        vm.startPrank(USER_1);
-        _internalInitiateClosePositionScenario(address(this));
-        vm.stopPrank();
     }
 
     function _internalInitiateClosePositionScenario(address to) internal {

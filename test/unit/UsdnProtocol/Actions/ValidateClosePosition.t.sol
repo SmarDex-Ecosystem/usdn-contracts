@@ -186,7 +186,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the user receives the position amount
      */
     function test_internalValidateClosePosition() external {
-        _internalValidateClosePositionScenario(address(this));
+        _internalValidateClosePositionScenario(address(this), address(this));
     }
 
     /**
@@ -198,12 +198,10 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the recipient receives the position amount
      */
     function test_internalValidateClosePositionForAnotherUser() external {
-        vm.startPrank(USER_1);
-        _internalValidateClosePositionScenario(address(this));
-        vm.stopPrank();
+        _internalValidateClosePositionScenario(address(this), USER_1);
     }
 
-    function _internalValidateClosePositionScenario(address to) internal {
+    function _internalValidateClosePositionScenario(address to, address validatingAddress) internal {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
@@ -227,6 +225,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit ValidatedClosePosition(to, to, posId, expectedAmountReceived, -1);
+        vm.prank(validatingAddress);
         protocol.i_validateClosePosition(to, priceData);
 
         /* ----------------------------- User's Balance ----------------------------- */
