@@ -69,6 +69,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided position fee exceeds the maximum allowed
     error UsdnProtocolInvalidPositionFee();
 
+    /// @dev Indicates that the provided vault fee exceeds the maximum allowed
+    error UsdnProtocolInvalidVaultFee();
+
     /// @dev Indicates that the provided ratio exceeds the maximum allowed
     error UsdnProtocolInvalidBurnSdexOnDepositRatio();
 

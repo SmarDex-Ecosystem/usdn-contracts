@@ -86,10 +86,16 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setProtocolFeeBps(uint16 newFeeBps) external;
 
     /**
-     * @notice Update the position fees.
-     * @param newPositionFee The new position fee (in basis points).
+     * @notice Update the position fee
+     * @param newPositionFee The new position fee (in basis points)
      */
     function setPositionFeeBps(uint16 newPositionFee) external;
+
+    /**
+     * @notice Update the vault fee
+     * @param newVaultFee The new vault fee (in basis points)
+     */
+    function setVaultFeeBps(uint16 newVaultFee) external;
 
     /**
      * @notice Update the ratio of USDN to SDEX tokens to burn on deposit.

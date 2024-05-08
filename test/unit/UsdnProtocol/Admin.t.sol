@@ -82,6 +82,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(customError);
         protocol.setMinLongPosition(100 ether);
+
+        vm.expectRevert(customError);
+        protocol.setPositionFeeBps(0);
+
+        vm.expectRevert(customError);
+        protocol.setVaultFeeBps(0);
     }
 
     /**
@@ -714,5 +720,57 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setMinLongPosition(newValue);
         // assert that the new value is equal to the expected value
         assertEq(protocol.getMinLongPosition(), newValue);
+    }
+
+    /**
+     * @custom:scenario Call `setPositionFeeBps` as admin
+     * @custom:when The admin sets the position fee between 0 and 2000 bps
+     * @custom:then The position fee should be updated
+     * @custom:and an event should be emitted with the corresponding new value
+     */
+    function test_setPositionFeeBps() external adminPrank {
+        uint16 newValue = 2000;
+        vm.expectEmit();
+        emit PositionFeeUpdated(newValue);
+        protocol.setPositionFeeBps(newValue);
+        assertEq(protocol.getPositionFeeBps(), newValue);
+        protocol.setPositionFeeBps(0);
+        assertEq(protocol.getPositionFeeBps(), 0);
+    }
+
+    /**
+     * @custom:scenario Try to set a position fee higher than the max allowed
+     * @custom:when The admin sets the position fee to 2001 bps
+     * @custom:then The transaction should revert with the corresponding error
+     */
+    function test_RevertWhen_setPositionFeeTooHigh() external adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidPositionFee.selector);
+        protocol.setPositionFeeBps(2001);
+    }
+
+    /**
+     * @custom:scenario Call `setVaultFeeBps` as admin
+     * @custom:when The admin sets the vault fee between 0 and 2000 bps
+     * @custom:then The vault fee should be updated
+     * @custom:and an event should be emitted with the corresponding new value
+     */
+    function test_setVaultFeeBps() external adminPrank {
+        uint16 newValue = 1000;
+        vm.expectEmit();
+        emit PositionFeeUpdated(newValue);
+        protocol.setVaultFeeBps(newValue);
+        assertEq(protocol.getVaultFeeBps(), newValue);
+        protocol.setVaultFeeBps(0);
+        assertEq(protocol.getVaultFeeBps(), 0);
+    }
+
+    /**
+     * @custom:scenario Try to set a vault fee higher than the max allowed
+     * @custom:when The admin sets the vault fee to 2001 bps
+     * @custom:then The transaction should revert with the corresponding error
+     */
+    function test_RevertWhen_setVaultFeeTooHigh() external adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidVaultFee.selector);
+        protocol.setVaultFeeBps(2001);
     }
 }
