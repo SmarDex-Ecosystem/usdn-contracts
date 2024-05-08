@@ -84,9 +84,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Create long position
         _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
 
-        uint256 balance = address(this).balance;
-
-        _refundEther(balance, msg.sender);
+        _refundEther(address(this).balance, msg.sender);
     }
 
     /// @inheritdoc IUsdnProtocol
