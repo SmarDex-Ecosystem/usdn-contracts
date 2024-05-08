@@ -345,8 +345,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
     }
 
-    function i_addPendingAction(address user, PendingAction memory action, bool isLiquidationPending) external {
-        _addPendingAction(user, action, isLiquidationPending);
+    function i_tryAddPendingAction(address user, PendingAction memory action, bool isLiquidationPending) external {
+        _tryAddPendingAction(user, action, isLiquidationPending);
     }
 
     function i_getPendingAction(address user) external view returns (PendingAction memory, uint128) {
@@ -388,8 +388,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _createInitialPosition(amount, price, tick, positionTotalExpo);
     }
 
-    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty) external {
-        _saveNewPosition(tick, long, liquidationPenalty);
+    function i_trySaveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty, bool isLiquidationPending)
+        external
+    {
+        _trySaveNewPosition(tick, long, liquidationPenalty, isLiquidationPending);
     }
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {

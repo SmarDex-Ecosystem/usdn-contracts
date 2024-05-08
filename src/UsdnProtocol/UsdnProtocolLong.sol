@@ -31,7 +31,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param longTradingExpo The long trading expo
      * @param currentPrice The current price of the asset
      * @param accumulator The liquidation multiplier accumulator before the liquidation
-     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+     * @param isLiquidationPending Whether there is still pending tick to liquidate
      */
     struct LiquidationData {
         int256 tempLongBalance;
@@ -379,15 +379,20 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
     }
 
     /**
-     * @notice Save a new position in the protocol, adjusting the tick data and global variables
+     * @notice Try to save a new position in the protocol, adjusting the tick data and global variables
      * @dev Note: this method does not update the long balance
+     * If there are pending liquidation the position is not saved
      * @param tick The tick to hold the new position
      * @param long The position to save
      * @param liquidationPenalty The liquidation penalty for the tick
+     * @param isLiquidationPending Whether there is still pending tick to liquidate
+     * @return saved_ Whether the position is saved
+     * @return tickVersion_ The position tick version
+     * @return index_ The position index
      */
-    function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+    function _trySaveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty, bool isLiquidationPending)
         internal
-        returns (uint256 tickVersion_, uint256 index_)
+        returns (bool saved_, uint256 tickVersion_, uint256 index_)
     {
         bytes32 tickHash;
         (tickHash, tickVersion_) = _tickHash(tick);
@@ -395,6 +400,11 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         // Add to tick array
         Position[] storage tickArray = _longPositions[tickHash];
         index_ = tickArray.length;
+
+        if (isLiquidationPending) {
+            return (false, tickVersion_, index_);
+        }
+
         if (tick > _highestPopulatedTick) {
             // keep track of the highest populated tick
             _highestPopulatedTick = tick;
@@ -427,6 +437,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         }
         // Update the accumulator with the correct tick price (depending on the liquidation penalty value)
         _liqMultiplierAccumulator = _liqMultiplierAccumulator.add(HugeUint.wrap(unadjustedTickPrice * long.totalExpo));
+        saved_ = true;
     }
 
     /**

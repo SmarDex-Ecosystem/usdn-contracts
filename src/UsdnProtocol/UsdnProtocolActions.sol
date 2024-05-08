@@ -43,7 +43,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param balanceLong The current long balance
      * @param balanceVault The vault balance, adjusted according to the pendingActionPrice
      * @param usdn The USDN token
-     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+     * @param isLiquidationPending Whether there is still pending tick to liquidate
      */
     struct WithdrawalData {
         uint128 pendingActionPrice;
@@ -60,7 +60,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param posId The new position id
      * @param liquidationPenalty The liquidation penalty
      * @param positionTotalExpo The total expo of the position
-     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+     * @param isLiquidationPending Whether there is still pending tick to liquidate
      */
     struct InitiateOpenPositionData {
         uint128 adjustedPrice;
@@ -79,7 +79,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param liqPriceWithoutPenalty The new liquidation price without penalty
      * @param leverage The new leverage
      * @param liquidationPenalty The liquidation penalty for the position's tick
-     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+     * @param isLiquidationPending Whether there is still pending tick to liquidate
      */
     struct ValidateOpenPositionData {
         LongPendingAction action;
@@ -101,7 +101,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param tempPositionValue The bounded value of the position that was removed from the long balance
      * @param longTradingExpo The long trading expo
      * @param liqMulAcc The liquidation multiplier accumulator
-     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
+     * @param isLiquidationPending Whether there is still pending tick to liquidate
      */
     struct ClosePositionData {
         Position pos;
@@ -530,7 +530,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the securityDepositValue,
      * else we'll only refund the security deposit value of the stale pending action
-     * @return isLiquidationPending_ If there are pending position to liquidate
+     * @return isLiquidationPending_ Whether there is still pending tick to liquidate
      */
     function _initiateDeposit(
         address user,
@@ -575,10 +575,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             usdnTotalSupply: _usdn.totalSupply()
         });
 
-        amountToRefund_ = _addPendingAction(user, _convertDepositPendingAction(pendingAction), isLiquidationPending_);
+        bool added;
+        (added, amountToRefund_) =
+            _tryAddPendingAction(user, _convertDepositPendingAction(pendingAction), isLiquidationPending_);
 
         // Case there are still pending liquidations
-        if (isLiquidationPending_) {
+        if (!added) {
             return (amountToRefund_ + securityDepositValue, true);
         }
 
@@ -720,6 +722,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param usdnShares The amount of USDN shares to burn
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param data The withdrawal action data
+     * @return added_ Whether the pending action was added to the queue
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createWithdrawalPendingAction(
@@ -728,7 +731,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint152 usdnShares,
         uint64 securityDepositValue,
         WithdrawalData memory data
-    ) internal returns (uint256 amountToRefund_) {
+    ) internal returns (bool added_, uint256 amountToRefund_) {
         PendingAction memory action = _convertWithdrawalPendingAction(
             WithdrawalPendingAction({
                 action: ProtocolAction.ValidateWithdrawal,
@@ -746,7 +749,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             })
         );
 
-        amountToRefund_ = _addPendingAction(user, action, data.isLiquidationPending);
+        return _tryAddPendingAction(user, action, data.isLiquidationPending);
     }
 
     /**
@@ -762,7 +765,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the securityDepositValue,
      * else we'll only refund the security deposit value of the stale pending action
-     * @return isLiquidationPending_ If there are pending position to liquidate
+     * @return isLiquidationPending_ Whether there is still pending tick to liquidate
      */
     function _initiateWithdrawal(
         address user,
@@ -779,11 +782,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         WithdrawalData memory data = _prepareWithdrawalData(usdnShares, currentPriceData);
-
-        amountToRefund_ = _createWithdrawalPendingAction(user, to, usdnShares, securityDepositValue, data);
+        bool added;
+        (added, amountToRefund_) = _createWithdrawalPendingAction(user, to, usdnShares, securityDepositValue, data);
 
         // Case there are still pending liquidations
-        if (data.isLiquidationPending) {
+        if (!added) {
             return (amountToRefund_ + securityDepositValue, true);
         }
 
@@ -946,7 +949,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             closeBoundedPositionValue: 0
         });
 
-        amountToRefund_ = _addPendingAction(user, _convertLongPendingAction(action), data.isLiquidationPending);
+        (, amountToRefund_) = _tryAddPendingAction(user, _convertLongPendingAction(action), data.isLiquidationPending);
     }
 
     /**
@@ -967,7 +970,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @return posId_ The unique index of the opened position
      * @return amountToRefund_ If there are pending liquidations we'll refund the securityDepositValue,
      * else we'll only refund the security deposit value of the stale pending action
-     * @return isLiquidationPending_ If there are pending position to liquidate
+     * @return isLiquidationPending_ Whether there is still pending tick to liquidate
      */
     function _initiateOpenPosition(
         address user,
@@ -997,15 +1000,19 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             totalExpo: data.positionTotalExpo,
             timestamp: uint40(block.timestamp)
         });
-        (data.posId.tickVersion, data.posId.index) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
-        _balanceLong += long.amount;
-        posId_ = data.posId;
+        bool saved;
+        (saved, data.posId.tickVersion, data.posId.index) =
+            _trySaveNewPosition(data.posId.tick, long, data.liquidationPenalty, data.isLiquidationPending);
+
+        if (saved) {
+            _balanceLong += long.amount;
+            posId_ = data.posId;
+        }
 
         amountToRefund_ = _createOpenPendingAction(user, to, securityDepositValue, data);
 
         // Case there are still pending liquidations
-        if (data.isLiquidationPending) {
-            _balanceLong -= long.amount;
+        if (!saved) {
             return (PositionId(0, 0, 0), amountToRefund_ + securityDepositValue, true);
         }
 
@@ -1085,6 +1092,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Validate an open position action.
      * @param pending The pending action data
      * @param priceData The current price data
+     * @return isLiquidationPending_ Whether there is still pending tick to liquidate
      */
     function _validateOpenPositionWithAction(PendingAction memory pending, bytes calldata priceData)
         internal
@@ -1093,7 +1101,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (ValidateOpenPositionData memory data, bool liquidated) = _prepareValidateOpenPositionData(pending, priceData);
 
         if (liquidated) {
-            return isLiquidationPending_;
+            return data.isLiquidationPending;
         }
 
         if (data.isLiquidationPending) {
@@ -1146,7 +1154,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             data.pos.totalExpo =
                 _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
             // insert position into new tick
-            (newPosId.tickVersion, newPosId.index) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
+            (, newPosId.tickVersion, newPosId.index) =
+                _trySaveNewPosition(newPosId.tick, data.pos, liquidationPenalty, false);
             // no long balance update is necessary (collateral didn't change)
 
             // emit LiquidationPriceUpdated
@@ -1293,6 +1302,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param data The close position data
+     * @return added_ Whether the pending action was added to the queue
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createClosePendingAction(
@@ -1302,7 +1312,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amountToClose,
         uint64 securityDepositValue,
         ClosePositionData memory data
-    ) internal returns (uint256 amountToRefund_) {
+    ) internal returns (bool added_, uint256 amountToRefund_) {
         LongPendingAction memory action = LongPendingAction({
             action: ProtocolAction.ValidateClosePosition,
             timestamp: uint40(block.timestamp),
@@ -1318,7 +1328,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             closeBoundedPositionValue: data.tempPositionValue
         });
 
-        amountToRefund_ = _addPendingAction(user, _convertLongPendingAction(action), data.isLiquidationPending);
+        return _tryAddPendingAction(user, _convertLongPendingAction(action), data.isLiquidationPending);
     }
 
     /**
@@ -1340,7 +1350,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param currentPriceData The current price data
      * @return amountToRefund_ If there are pending liquidations we'll refund the securityDepositValue,
      * else we'll only refund the security deposit value of the stale pending action
-     * @return isLiquidationPending_ If there are pending position to liquidate
+     * @return isLiquidationPending_ Whether there is still pending tick to liquidate
      */
     function _initiateClosePosition(
         address user,
@@ -1357,9 +1367,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return (0, data.isLiquidationPending);
         }
 
-        amountToRefund_ = _createClosePendingAction(user, to, posId, amountToClose, securityDepositValue, data);
+        bool added;
+        (added, amountToRefund_) = _createClosePendingAction(user, to, posId, amountToClose, securityDepositValue, data);
 
-        if (data.isLiquidationPending) {
+        if (!added) {
             return (amountToRefund_ + securityDepositValue, true);
         }
 
@@ -1626,7 +1637,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param ignoreInterval A boolean indicating whether to ignore the interval for USDN rebase.
      * @param priceData The price oracle update data.
      * @return liquidatedPositions_ The number of positions that were liquidated.
-     * @return isLiquidationPending_ If there are pending position to liquidate
+     * @return isLiquidationPending_ Whether there is still pending tick to liquidate
      * @dev If there were any liquidated positions, it sends rewards to the msg.sender.
      */
     function _applyPnlAndFundingAndLiquidate(
