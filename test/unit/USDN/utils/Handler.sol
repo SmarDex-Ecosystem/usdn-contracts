@@ -22,6 +22,11 @@ contract UsdnHandler is Usdn, Test {
 
     constructor() Usdn(address(0), address(0)) { }
 
+    /// @dev Used to generate unrealistic situations where the divisor is out of bounds
+    function setDivisor(uint256 d) external {
+        _divisor = d;
+    }
+
     function i_approve(address owner, address spender, uint256 value) external {
         _approve(owner, spender, value);
     }
@@ -48,6 +53,10 @@ contract UsdnHandler is Usdn, Test {
 
     function i_update(address from, address to, uint256 value) external {
         _update(from, to, value);
+    }
+
+    function i_convertToTokens(uint256 amountShares, Rounding rounding) external view returns (uint256) {
+        return _convertToTokens(amountShares, rounding);
     }
 
     /* ------------------ Functions used for invariant testing ------------------ */
