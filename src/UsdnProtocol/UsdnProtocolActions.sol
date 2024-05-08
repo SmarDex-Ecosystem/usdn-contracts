@@ -379,7 +379,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param openTotalExpoValue The open position expo value
      * @param openCollatValue The open position collateral value
      */
-    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) internal view {
+    // TO DO : make this internal
+    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) public view {
         int256 openExpoImbalanceLimitBps = _openExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
@@ -1465,7 +1466,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
-        internal
+        // TO DO : make this function internal
+        public
         returns (PriceInfo memory price_)
     {
         uint256 validationCost = _oracleMiddleware.validationCost(priceData, action);

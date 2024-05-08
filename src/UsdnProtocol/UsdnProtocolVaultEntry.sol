@@ -6,7 +6,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 
-abstract contract UsdnProtocolVault is UsdnProtocolBaseStorage {
+abstract contract UsdnProtocolVaultEntry is UsdnProtocolBaseStorage {
     using SafeCast for int256;
     using SafeCast for uint256;
 

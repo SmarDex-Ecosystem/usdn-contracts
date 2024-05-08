@@ -3,6 +3,8 @@ pragma solidity >=0.8.0;
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
@@ -202,4 +204,10 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         external
         payable
         returns (uint256 validatedActions_);
+
+    function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
+        external
+        returns (PriceInfo memory price_);
+
+    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view;
 }

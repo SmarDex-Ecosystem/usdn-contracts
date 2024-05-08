@@ -5,6 +5,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import {
@@ -24,7 +25,7 @@ import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 
-abstract contract UsdnProtocolActions is UsdnProtocolBaseStorage, InitializableReentrancyGuard {
+abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage, InitializableReentrancyGuard {
     using SafeERC20 for IUsdn;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -177,5 +178,23 @@ abstract contract UsdnProtocolActions is UsdnProtocolBaseStorage, InitializableR
         );
         require(success, "failed");
         validatedActions_ = abi.decode(data, (uint256));
+    }
+
+    function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
+        public
+        returns (PriceInfo memory price_)
+    {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolActions._getOraclePrice.selector, action, timestamp, priceData)
+        );
+        require(success, "failed");
+        price_ = abi.decode(data, (PriceInfo));
+    }
+
+    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) public {
+        (bool success,) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolActions._getOraclePrice.selector, openTotalExpoValue, openCollatValue)
+        );
+        require(success, "failed");
     }
 }

@@ -149,4 +149,18 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage {
         require(success, "failed");
         liquidationPenalty_ = abi.decode(data, (uint8));
     }
+
+    function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+        // TO DO : make this internal
+        public
+        returns (uint128 totalExpo_)
+    {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLong._calculatePositionTotalExpo.selector, amount, startPrice, liquidationPrice
+            )
+        );
+        require(success, "failed");
+        totalExpo_ = abi.decode(data, (uint128));
+    }
 }

@@ -20,7 +20,7 @@ import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorag
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
-abstract contract UsdnProtocolEntryCore is UsdnProtocolBaseStorage {
+abstract contract UsdnProtocolCoreEntry is UsdnProtocolBaseStorage {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
     using SafeCast for int256;
