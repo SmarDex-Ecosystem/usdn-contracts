@@ -926,6 +926,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param to The address that will be the owner of the position
      * @param securityDepositValue The value of the security deposit for the newly created pending action
      * @param data The open position action data
+     * @return added_ Whether the pending action was added to the queue
      * @return amountToRefund_ Refund The security deposit value of a stale pending action
      */
     function _createOpenPendingAction(
@@ -933,7 +934,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         address to,
         uint64 securityDepositValue,
         InitiateOpenPositionData memory data
-    ) internal returns (uint256 amountToRefund_) {
+    ) internal returns (bool added_, uint256 amountToRefund_) {
         LongPendingAction memory action = LongPendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
@@ -949,7 +950,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             closeBoundedPositionValue: 0
         });
 
-        (, amountToRefund_) = _tryAddPendingAction(user, _convertLongPendingAction(action), data.isLiquidationPending);
+        return _tryAddPendingAction(user, _convertLongPendingAction(action), data.isLiquidationPending);
     }
 
     /**
@@ -1007,10 +1008,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _balanceLong += long.amount;
             posId_ = data.posId;
         }
+        bool added;
+        (added, amountToRefund_) = _createOpenPendingAction(user, to, securityDepositValue, data);
 
-        amountToRefund_ = _createOpenPendingAction(user, to, securityDepositValue, data);
-
-        if (data.isLiquidationPending) {
+        if (!added) {
             return (posId_, amountToRefund_ + securityDepositValue, true);
         }
 
