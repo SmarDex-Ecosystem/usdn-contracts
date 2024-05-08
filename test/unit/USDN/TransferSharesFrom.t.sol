@@ -36,9 +36,10 @@ contract TestUsdnTransferSharesFrom is UsdnTokenFixture {
             usdn.rebase(divisor);
         }
 
-        uint256 userBalance = usdn.balanceOf(USER_1);
+        uint256 userShares = usdn.sharesOf(USER_1);
+        uint256 approveTokens = usdn.convertToTokensRoundUp(userShares);
         vm.prank(USER_1);
-        usdn.approve(address(this), userBalance);
+        usdn.approve(address(this), approveTokens);
 
         uint256 sharesBefore = usdn.sharesOf(USER_1);
         uint256 totalSharesBefore = usdn.totalShares();

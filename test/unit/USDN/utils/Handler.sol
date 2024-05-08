@@ -132,7 +132,7 @@ contract UsdnHandler is Usdn, Test {
         totalSharesSum += value;
         (, uint256 lastShares) = _sharesHandle.tryGet(msg.sender);
         _sharesHandle.set(msg.sender, lastShares + value);
-        _updateShares(address(0), msg.sender, value, convertToTokens(value));
+        _updateShares(address(0), msg.sender, value, _convertToTokens(value, Rounding.Closest));
     }
 
     function burnSharesTest(uint256 value) external {
@@ -146,7 +146,7 @@ contract UsdnHandler is Usdn, Test {
 
         uint256 lastShares = _sharesHandle.get(msg.sender);
         _sharesHandle.set(msg.sender, lastShares - value);
-        _burnShares(msg.sender, value, convertToTokens(value));
+        _burnShares(msg.sender, value, _convertToTokens(value, Rounding.Closest));
     }
 
     function transferSharesTest(address to, uint256 value) external {
@@ -160,6 +160,6 @@ contract UsdnHandler is Usdn, Test {
         (, uint256 toShares) = _sharesHandle.tryGet(to);
         _sharesHandle.set(to, toShares + value);
 
-        _transferShares(msg.sender, to, value, convertToTokens(value));
+        _transferShares(msg.sender, to, value, _convertToTokens(value, Rounding.Closest));
     }
 }
