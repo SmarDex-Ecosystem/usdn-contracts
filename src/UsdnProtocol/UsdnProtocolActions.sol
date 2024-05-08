@@ -993,14 +993,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         InitiateOpenPositionData memory data =
             _prepareInitiateOpenPositionData(amount, desiredLiqPrice, currentPriceData);
 
-        // Register position and adjust contract state
-        Position memory long = Position({
-            user: to,
-            amount: amount,
-            totalExpo: data.positionTotalExpo,
-            timestamp: uint40(block.timestamp)
-        });
         if (!data.isLiquidationPending) {
+            // Register position and adjust contract state
+            Position memory long = Position({
+                user: to,
+                amount: amount,
+                totalExpo: data.positionTotalExpo,
+                timestamp: uint40(block.timestamp)
+            });
+
             (data.posId.tickVersion, data.posId.index) =
                 _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
             _balanceLong += long.amount;
