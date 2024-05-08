@@ -1149,7 +1149,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolInvalidAddressValidator();
         }
 
-        if (pos.user != to) {
+        if (pos.user != msg.sender) {
             revert UsdnProtocolUnauthorized();
         }
 
