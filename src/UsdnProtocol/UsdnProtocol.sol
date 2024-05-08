@@ -384,7 +384,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         Position memory long =
             Position({ user: msg.sender, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
         // Save the position and update the state
-        (, posId.tickVersion, posId.index) = _trySaveNewPosition(posId.tick, long, liquidationPenalty, false);
+        (posId.tickVersion, posId.index) = _saveNewPosition(posId.tick, long, liquidationPenalty);
         _balanceLong += long.amount;
         emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId);
         emit ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);

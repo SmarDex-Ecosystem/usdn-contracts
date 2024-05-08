@@ -388,10 +388,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _createInitialPosition(amount, price, tick, positionTotalExpo);
     }
 
-    function i_trySaveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty, bool isLiquidationPending)
-        external
-    {
-        _trySaveNewPosition(tick, long, liquidationPenalty, isLiquidationPending);
+    function i_saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty) external {
+        _saveNewPosition(tick, long, liquidationPenalty);
     }
 
     function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {

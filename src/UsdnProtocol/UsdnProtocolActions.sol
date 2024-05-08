@@ -1000,19 +1000,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             totalExpo: data.positionTotalExpo,
             timestamp: uint40(block.timestamp)
         });
-        bool saved;
-        (saved, data.posId.tickVersion, data.posId.index) =
-            _trySaveNewPosition(data.posId.tick, long, data.liquidationPenalty, data.isLiquidationPending);
-
-        if (saved) {
+        if (!data.isLiquidationPending) {
+            (data.posId.tickVersion, data.posId.index) =
+                _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
             _balanceLong += long.amount;
             posId_ = data.posId;
         }
 
         amountToRefund_ = _createOpenPendingAction(user, to, securityDepositValue, data);
 
-        // Case there are still pending liquidations
-        if (!saved) {
+        if (data.isLiquidationPending) {
             return (posId_, amountToRefund_ + securityDepositValue, true);
         }
 
@@ -1154,8 +1151,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             data.pos.totalExpo =
                 _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
             // insert position into new tick
-            (, newPosId.tickVersion, newPosId.index) =
-                _trySaveNewPosition(newPosId.tick, data.pos, liquidationPenalty, false);
+            (newPosId.tickVersion, newPosId.index) = _saveNewPosition(newPosId.tick, data.pos, liquidationPenalty);
             // no long balance update is necessary (collateral didn't change)
 
             // emit LiquidationPriceUpdated

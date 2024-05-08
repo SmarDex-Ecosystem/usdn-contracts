@@ -7,11 +7,11 @@ import { USER_1 } from "test/utils/Constants.sol";
 import { Position, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
- * @custom:feature The _trySaveNewPosition internal function of the UsdnProtocolLong contract.
+ * @custom:feature The _saveNewPosition internal function of the UsdnProtocolLong contract.
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x
  */
-contract TestUsdnProtocolLongTrySaveNewPosition is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolLongSaveNewPosition is UsdnProtocolBaseFixture {
     uint128 internal constant LONG_AMOUNT = 1 ether;
     uint128 internal constant CURRENT_PRICE = 2000 ether;
 
@@ -30,7 +30,7 @@ contract TestUsdnProtocolLongTrySaveNewPosition is UsdnProtocolBaseFixture {
      * @custom:then The position should be created on the expected tick
      * @custom:and The protocol's state should be updated
      */
-    function test_trySaveNewPositionState() public {
+    function test_saveNewPositionState() public {
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
 
@@ -40,7 +40,7 @@ contract TestUsdnProtocolLongTrySaveNewPosition is UsdnProtocolBaseFixture {
         TickData memory tickDataBefore = protocol.getTickData(expectedTick);
         uint256 totalPositionsBefore = protocol.getTotalLongPositions();
 
-        protocol.i_trySaveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick), false);
+        protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
 
         (Position memory positionInTick,) =
             protocol.getLongPosition(PositionId(expectedTick, 0, tickDataBefore.totalPos));
@@ -67,7 +67,7 @@ contract TestUsdnProtocolLongTrySaveNewPosition is UsdnProtocolBaseFixture {
      * @custom:when The function is called with the new position
      * @custom:then The state in conditions should be modified
      */
-    function test_trySaveNewPositionConditions() public {
+    function test_saveNewPositionConditions() public {
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
 
@@ -75,7 +75,7 @@ contract TestUsdnProtocolLongTrySaveNewPosition is UsdnProtocolBaseFixture {
         uint256 tickBitmapIndexBefore = protocol.findLastSetInTickBitmap(expectedTick);
         int24 highestPopulatedTickBefore = protocol.getHighestPopulatedTick();
 
-        protocol.i_trySaveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick), false);
+        protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
         uint256 tickBitmapIndexAfter = protocol.findLastSetInTickBitmap(expectedTick);
         int24 highestPopulatedTickAfter = protocol.getHighestPopulatedTick();
 
@@ -83,7 +83,7 @@ contract TestUsdnProtocolLongTrySaveNewPosition is UsdnProtocolBaseFixture {
         assertLt(tickBitmapIndexBefore, tickBitmapIndexAfter, "first position in this tick");
         assertLt(highestPopulatedTickBefore, highestPopulatedTickAfter, "highest populated tick");
 
-        protocol.i_trySaveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick), false);
+        protocol.i_saveNewPosition(expectedTick, long, protocol.getTickLiquidationPenalty(expectedTick));
 
         // state not modified by condition after opening the position
         assertEq(tickBitmapIndexAfter, protocol.findLastSetInTickBitmap(expectedTick), "second position in this tick");
