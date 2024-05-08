@@ -1134,12 +1134,19 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @dev Reverts if the position is not owned by the user, the amount to close is higher than the position amount, or
      * the amount to close is zero.
      * @param to The address that will receive the assets
+     * @param validator The address that will validate the close position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param pos The position to close
      */
-    function _checkInitiateClosePosition(address to, uint128 amountToClose, Position memory pos) internal view {
+    function _checkInitiateClosePosition(address to, address validator, uint128 amountToClose, Position memory pos)
+        internal
+        view
+    {
         if (to == address(0)) {
             revert UsdnProtocolInvalidAddressTo();
+        }
+        if (validator == address(0)) {
+            revert UsdnProtocolInvalidAddressValidator();
         }
 
         if (pos.user != to) {
@@ -1166,6 +1173,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @dev Reverts if the imbalance limit is reached, or if any of the checks in `_checkInitiateClosePosition` fail
      * Returns without creating a pending action if the position gets liquidated in this transaction
      * @param to The address that will receive the assets
+     * @param validator The address that will validate the close position
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
@@ -1174,13 +1182,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      */
     function _prepareClosePositionData(
         address to,
+        address validator,
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (ClosePositionData memory data_, bool liq_) {
         (data_.pos, data_.liquidationPenalty) = getLongPosition(posId);
 
-        _checkInitiateClosePosition(to, amountToClose, data_.pos);
+        _checkInitiateClosePosition(to, validator, amountToClose, data_.pos);
 
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.InitiateClosePosition, block.timestamp, currentPriceData);
@@ -1281,11 +1290,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (uint256 securityDepositValue_) {
-        if (validator == address(0)) {
-            revert UsdnProtocolInvalidAddressValidator();
-        }
         (ClosePositionData memory data, bool liq) =
-            _prepareClosePositionData(to, posId, amountToClose, currentPriceData);
+            _prepareClosePositionData(to, validator, posId, amountToClose, currentPriceData);
         if (liq) {
             // position was liquidated in this transaction
             return 0;
