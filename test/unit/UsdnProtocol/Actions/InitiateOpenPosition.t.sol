@@ -218,13 +218,26 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     /**
      * @custom:scenario The user initiates an open position action with no recipient
      * @custom:given An initialized USDN protocol
-     * @custom:when The user initiates an open position with the address to at 0
+     * @custom:when The user initiates an open position with the address to at zero
      * @custom:then The protocol reverts with UsdnProtocolInvalidAddressTo
      */
     function test_RevertWhen_zeroAddressTo() public {
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.initiateOpenPosition(
             1 ether, 2000 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(0), address(this)
+        );
+    }
+
+    /**
+     * @custom:scenario The user initiates an open position action with parameter validator defined at zero
+     * @custom:given An initialized USDN protocol
+     * @custom:when The user initiates an open position with the address validator at zero
+     * @custom:then The protocol reverts with UsdnProtocolInvalidAddressValidator
+     */
+    function test_RevertWhen_zeroAddressValidator() public {
+        vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
+        protocol.initiateOpenPosition(
+            1 ether, 2000 ether, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this), address(0)
         );
     }
 

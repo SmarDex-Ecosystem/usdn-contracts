@@ -129,13 +129,25 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The user initiates a deposit with parameter to defined at zero
      * @custom:given An initialized USDN protocol
-     * @custom:when The user initiate a withdrawal with parameter to address defined at 0
+     * @custom:when The user initiate a withdrawal with parameter to address defined at zero
      * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressTo`
      */
     function test_RevertWhen_zeroAddressTo() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
         protocol.initiateWithdrawal(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(0), address(this));
+    }
+
+    /**
+     * @custom:scenario The user initiates a deposit with parameter validator defined at zero
+     * @custom:given An initialized USDN protocol
+     * @custom:when The user initiate a withdrawal with parameter validator address defined at zero
+     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressValidator`
+     */
+    function test_RevertWhen_zeroAddressValidator() public {
+        bytes memory currentPrice = abi.encode(uint128(2000 ether));
+        vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
+        protocol.initiateWithdrawal(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(0));
     }
 
     /**

@@ -124,6 +124,19 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The user initiates a deposit with parameter validator defined at zero
+     * @custom:given An initialized USDN protocol
+     * @custom:when The user initiates a deposit with parameter validator defined at zero
+     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressValidator`
+     */
+    function test_RevertWhen_zeroAddressValidator() public {
+        vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
+        protocol.initiateDeposit(
+            1 ether, abi.encode(uint128(2000 ether)), EMPTY_PREVIOUS_DATA, address(this), address(0)
+        );
+    }
+
+    /**
      * @custom:scenario The user initiates a deposit of 0 wstETH
      * @custom:when The user initiates a deposit of 0 wstETH
      * @custom:then The protocol reverts with `UsdnProtocolZeroAmount`

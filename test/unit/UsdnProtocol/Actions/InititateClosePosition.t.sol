@@ -114,6 +114,18 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
+     * @custom:scenario The user initiates a close position with parameter validator defined at zero
+     * @custom:given An initialized USDN protocol
+     * @custom:when The user initiates a close position with parameter validator defined at zero
+     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressValidator`
+     */
+    function test_RevertWhen_zeroAddressValidator() public {
+        bytes memory priceData = abi.encode(params.initialPrice);
+        vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
+        protocol.i_initiateClosePosition(address(this), address(0), posId, positionAmount, priceData);
+    }
+
+    /**
      * @custom:scenario A user tries to close a position with 0 as the amount to close
      * @custom:given A validated open position
      * @custom:when The owner of the position calls initiateClosePosition with 0 as the amount to close

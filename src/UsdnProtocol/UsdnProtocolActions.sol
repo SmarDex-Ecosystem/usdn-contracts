@@ -536,6 +536,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (to == address(0)) {
             revert UsdnProtocolInvalidAddressTo();
         }
+        if (validator == address(0)) {
+            revert UsdnProtocolInvalidAddressValidator();
+        }
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -746,6 +749,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (to == address(0)) {
             revert UsdnProtocolInvalidAddressTo();
         }
+        if (validator == address(0)) {
+            revert UsdnProtocolInvalidAddressValidator();
+        }
         if (usdnShares == 0) {
             revert UsdnProtocolZeroAmount();
         }
@@ -928,6 +934,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) internal returns (PositionId memory posId_, uint256 securityDepositValue_) {
         if (to == address(0)) {
             revert UsdnProtocolInvalidAddressTo();
+        }
+        if (validator == address(0)) {
+            revert UsdnProtocolInvalidAddressValidator();
         }
         if (amount == 0) {
             revert UsdnProtocolZeroAmount();
@@ -1272,6 +1281,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (uint256 securityDepositValue_) {
+        if (validator == address(0)) {
+            revert UsdnProtocolInvalidAddressValidator();
+        }
         (ClosePositionData memory data, bool liq) =
             _prepareClosePositionData(to, posId, amountToClose, currentPriceData);
         if (liq) {
