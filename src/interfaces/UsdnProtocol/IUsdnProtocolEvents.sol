@@ -312,9 +312,9 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a security deposit is refunded
-     * @param paidBy Address of the user who paid the security deposit
+     * @param pendingActionValidator Address of the validator
      * @param receivedBy Address of the user who received the security deposit
      * @param amount Amount of security deposit refunded
      */
-    event SecurityDepositRefunded(address indexed paidBy, address indexed receivedBy, uint256 amount);
+    event SecurityDepositRefunded(address indexed pendingActionValidator, address indexed receivedBy, uint256 amount);
 }
