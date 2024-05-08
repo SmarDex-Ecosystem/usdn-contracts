@@ -159,15 +159,13 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
      * @param to The address that will receive the assets
-     * @param validator The address that will validate the close position
      */
     function initiateClosePosition(
         PositionId calldata posId,
         uint128 amountToClose,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
-        address to,
-        address validator
+        address to
     ) external payable;
 
     /**
@@ -180,12 +178,12 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * (from the oracle middleware) to the timestamp of the initiate action.
      * This operation calculates the final exit price and profit of the long position and performs the payout.
      * The security deposit will be returned to the validator
-     * @param validator The address that has the pending close position action to validate
+     * @param owner The owner of the initial position
      * @param closePriceData The price data corresponding to the sender's pending close position action
      * @param previousActionsData The data needed to validate actionable pending actions
      */
     function validateClosePosition(
-        address validator,
+        address owner,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable;

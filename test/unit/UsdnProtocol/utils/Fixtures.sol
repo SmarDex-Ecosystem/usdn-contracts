@@ -276,7 +276,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (posId_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            posId_, openParams.positionSize, priceData, EMPTY_PREVIOUS_DATA, openParams.user, openParams.user
+            posId_, openParams.positionSize, priceData, EMPTY_PREVIOUS_DATA, openParams.user
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);

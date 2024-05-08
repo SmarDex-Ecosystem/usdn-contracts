@@ -94,7 +94,6 @@ interface IUsdnProtocolEvents {
      * @notice Emitted when a user initiates the closing of all or part of a long position
      * @param owner The owner of this position
      * @param to The address that will receive the assets
-     * @param validator The address of the validator that will validate the position
      * @param posId The unique position identifier
      * @param originalAmount The amount of collateral originally on the position
      * @param amountToClose The amount of collateral to close from the position.
@@ -105,7 +104,6 @@ interface IUsdnProtocolEvents {
     event InitiatedClosePosition(
         address indexed owner,
         address indexed to,
-        address indexed validator,
         PositionId posId,
         uint128 originalAmount,
         uint128 amountToClose,
@@ -114,14 +112,14 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user validates the closing of a long position
+     * @param owner The owner of the initial position
      * @param to The address that received the assets
-     * @param validator The address of the validator that validated the position
      * @param posId The unique position identifier
      * @param amountReceived The amount of asset that were sent to the user
      * @param profit The profit that the user made
      */
     event ValidatedClosePosition(
-        address indexed to, address indexed validator, PositionId posId, uint256 amountReceived, int256 profit
+        address indexed owner, address indexed to, PositionId posId, uint256 amountReceived, int256 profit
     );
 
     /**
@@ -143,13 +141,13 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a position is individually liquidated
-     * @param user The user address
+     * @param to The address saved in pendingActions that will receive the assets
      * @param posId The unique identifier for the position that was liquidated
      * @param liquidationPrice The asset price at the moment of liquidation
      * @param effectiveTickPrice The effective liquidated tick price
      */
     event LiquidatedPosition(
-        address indexed user, PositionId posId, uint256 liquidationPrice, uint256 effectiveTickPrice
+        address indexed to, PositionId posId, uint256 liquidationPrice, uint256 effectiveTickPrice
     );
 
     /**

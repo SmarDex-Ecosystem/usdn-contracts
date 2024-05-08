@@ -264,8 +264,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 amountToClose,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
-        address to,
-        address validator
+        address to
     ) external payable initializedAndNonReentrant {
         uint256 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
@@ -274,7 +273,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 balanceBefore = address(this).balance;
 
-        uint256 amountToRefund = _initiateClosePosition(to, validator, posId, amountToClose, currentPriceData);
+        uint256 amountToRefund = _initiateClosePosition(msg.sender, to, posId, amountToClose, currentPriceData);
         unchecked {
             amountToRefund += _executePendingActionOrRevert(previousActionsData);
         }
@@ -289,14 +288,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * `validateActionablePendingActions` to receive the security deposit
      */
     function validateClosePosition(
-        address validator,
+        address owner,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
         uint256 balanceBefore = address(this).balance;
-        uint256 amountToRefund = _validateClosePosition(validator, closePriceData);
-        if (msg.sender != validator) {
-            _refundEther(amountToRefund, validator);
+        uint256 amountToRefund = _validateClosePosition(owner, closePriceData);
+        if (msg.sender != owner) {
+            _refundEther(amountToRefund, owner);
             balanceBefore -= amountToRefund;
             amountToRefund = 0;
         }
@@ -1133,23 +1132,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Perform checks for the initiate close position action
      * @dev Reverts if the position is not owned by the user, the amount to close is higher than the position amount, or
      * the amount to close is zero.
+     * @param owner The owner of the initial position
      * @param to The address that will receive the assets
-     * @param validator The address that will validate the close position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param pos The position to close
      */
-    function _checkInitiateClosePosition(address to, address validator, uint128 amountToClose, Position memory pos)
+    function _checkInitiateClosePosition(address owner, address to, uint128 amountToClose, Position memory pos)
         internal
         view
     {
         if (to == address(0)) {
             revert UsdnProtocolInvalidAddressTo();
         }
-        if (validator == address(0)) {
-            revert UsdnProtocolInvalidAddressValidator();
-        }
 
-        if (pos.user != msg.sender) {
+        if (pos.user != owner) {
             revert UsdnProtocolUnauthorized();
         }
 
@@ -1172,8 +1168,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Update protocol balances, then prepare the data for the initiate close position action
      * @dev Reverts if the imbalance limit is reached, or if any of the checks in `_checkInitiateClosePosition` fail
      * Returns without creating a pending action if the position gets liquidated in this transaction
+     * @param owner The owner of the initial position
      * @param to The address that will receive the assets
-     * @param validator The address that will validate the close position
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
@@ -1181,15 +1177,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @return liq_ Whether the position was liquidated and the caller should return early
      */
     function _prepareClosePositionData(
+        address owner,
         address to,
-        address validator,
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (ClosePositionData memory data_, bool liq_) {
         (data_.pos, data_.liquidationPenalty) = getLongPosition(posId);
 
-        _checkInitiateClosePosition(to, validator, amountToClose, data_.pos);
+        _checkInitiateClosePosition(owner, to, amountToClose, data_.pos);
 
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.InitiateClosePosition, block.timestamp, currentPriceData);
@@ -1234,16 +1230,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice Prepare the pending action struct for the close position action and add it to the queue.
+     * @param user The owner of the initial position
      * @param to The address that will receive the assets
-     * @param validator The address that will validate the close position
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param data The close position data
      * @return securityDepositValue_ The security deposit value
      */
     function _createClosePendingAction(
+        address user,
         address to,
-        address validator,
         PositionId memory posId,
         uint128 amountToClose,
         ClosePositionData memory data
@@ -1252,7 +1248,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             action: ProtocolAction.ValidateClosePosition,
             timestamp: uint40(block.timestamp),
             to: to,
-            validator: validator,
+            validator: user,
             securityDepositValue: data.securityDepositValue,
             tick: posId.tick,
             closeAmount: amountToClose,
@@ -1262,7 +1258,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             closeLiqMultiplier: _calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
             closeBoundedPositionValue: data.tempPositionValue
         });
-        securityDepositValue_ = _addPendingAction(validator, _convertLongPendingAction(action));
+        securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(action));
     }
 
     /**
@@ -1276,56 +1272,50 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
      * during the validate action.
+     * @param owner The owner of the initial position
      * @param to The address that will receive the assets
-     * @param validator The address that will validate the close position
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param currentPriceData The current price data
      * @return securityDepositValue_ The security deposit value
      */
     function _initiateClosePosition(
+        address owner,
         address to,
-        address validator,
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (uint256 securityDepositValue_) {
         (ClosePositionData memory data, bool liq) =
-            _prepareClosePositionData(to, validator, posId, amountToClose, currentPriceData);
+            _prepareClosePositionData(owner, to, posId, amountToClose, currentPriceData);
         if (liq) {
             // position was liquidated in this transaction
             return 0;
         }
 
-        securityDepositValue_ = _createClosePendingAction(to, validator, posId, amountToClose, data);
+        securityDepositValue_ = _createClosePendingAction(owner, to, posId, amountToClose, data);
 
         _balanceLong -= data.tempPositionValue;
 
         _removeAmountFromPosition(posId.tick, posId.index, data.pos, amountToClose, data.totalExpoToClose);
 
         emit InitiatedClosePosition(
-            data.pos.user,
-            to,
-            validator,
-            posId,
-            data.pos.amount,
-            amountToClose,
-            data.pos.totalExpo - data.totalExpoToClose
+            data.pos.user, to, posId, data.pos.amount, amountToClose, data.pos.totalExpo - data.totalExpoToClose
         );
     }
 
-    function _validateClosePosition(address validator, bytes calldata priceData)
+    function _validateClosePosition(address owner, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_)
     {
-        PendingAction memory pending = _getAndClearPendingAction(validator);
+        PendingAction memory pending = _getAndClearPendingAction(owner);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateClosePosition) {
             revert UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (pending.validator != validator) {
+        if (pending.validator != owner) {
             revert UsdnProtocolInvalidPendingAction();
         }
 
@@ -1420,8 +1410,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         emit ValidatedClosePosition(
-            long.to,
             long.validator,
+            long.to,
             PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
             assetToTransfer,
             assetToTransfer.toInt256() - _toInt256(long.closeAmount)
