@@ -990,14 +990,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         InitiateOpenPositionData memory data =
             _prepareInitiateOpenPositionData(amount, desiredLiqPrice, currentPriceData);
 
-        amountToRefund_ = _createOpenPendingAction(user, to, securityDepositValue, data);
-
-        // Case there are still pending liquidations
-        if (data.isLiquidationPending) {
-            PositionId memory emptyPosId;
-            return (emptyPosId, amountToRefund_ + securityDepositValue, true);
-        }
-
         // Register position and adjust contract state
         Position memory long = Position({
             user: to,
@@ -1008,6 +1000,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (data.posId.tickVersion, data.posId.index) = _saveNewPosition(data.posId.tick, long, data.liquidationPenalty);
         _balanceLong += long.amount;
         posId_ = data.posId;
+
+        amountToRefund_ = _createOpenPendingAction(user, to, securityDepositValue, data);
+
+        // Case there are still pending liquidations
+        if (data.isLiquidationPending) {
+            _balanceLong -= long.amount;
+            return (PositionId(0, 0, 0), amountToRefund_ + securityDepositValue, true);
+        }
 
         _asset.safeTransferFrom(user, address(this), amount);
 
