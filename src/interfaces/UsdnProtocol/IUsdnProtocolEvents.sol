@@ -92,6 +92,7 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user initiates the closing of all or part of a long position
+     * @param user The address that had the position. The owner of this position
      * @param to The address that will receive the assets
      * @param validator The address of the validator that will validate the position
      * @param posId The unique position identifier
@@ -102,6 +103,7 @@ interface IUsdnProtocolEvents {
      * If the entirety of the position is being closed, this value is zero
      */
     event InitiatedClosePosition(
+        address indexed user,
         address indexed to,
         address indexed validator,
         PositionId posId,
@@ -112,14 +114,20 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user validates the closing of a long position
-     * @param to The address that received the assets.
+     * @param user The address that had the position. The owner of this position
+     * @param to The address that received the assets
      * @param validator The address of the validator that validated the position
      * @param posId The unique position identifier
      * @param amountReceived The amount of asset that were sent to the user
      * @param profit The profit that the user made
      */
     event ValidatedClosePosition(
-        address indexed to, address indexed validator, PositionId posId, uint256 amountReceived, int256 profit
+        address indexed user,
+        address indexed to,
+        address indexed validator,
+        PositionId posId,
+        uint256 amountReceived,
+        int256 profit
     );
 
     /**

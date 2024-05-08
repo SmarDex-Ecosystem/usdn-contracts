@@ -238,7 +238,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         bytes memory priceData = abi.encode(params.initialPrice);
 
         vm.expectEmit();
-        emit InitiatedClosePosition(address(this), address(this), posId, positionAmount, positionAmount, 0);
+        emit InitiatedClosePosition(
+            address(this), address(this), address(this), posId, positionAmount, positionAmount, 0
+        );
         protocol.initiateClosePosition(
             posId, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this)
         );
@@ -371,7 +373,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         /* ------------------------ Initiate the close action ----------------------- */
         vm.expectEmit();
         emit InitiatedClosePosition(
-            to, to, posId, posBefore.amount, amountToClose, posBefore.totalExpo - totalExpoToClose
+            address(this), to, to, posId, posBefore.amount, amountToClose, posBefore.totalExpo - totalExpoToClose
         );
         protocol.i_initiateClosePosition(to, to, posId, amountToClose, abi.encode(params.initialPrice));
 

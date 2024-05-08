@@ -1304,7 +1304,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _removeAmountFromPosition(posId.tick, posId.index, data.pos, amountToClose, data.totalExpoToClose);
 
         emit InitiatedClosePosition(
-            to, validator, posId, data.pos.amount, amountToClose, data.pos.totalExpo - data.totalExpoToClose
+            data.pos.user,
+            to,
+            validator,
+            posId,
+            data.pos.amount,
+            amountToClose,
+            data.pos.totalExpo - data.totalExpoToClose
         );
     }
 
