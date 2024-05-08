@@ -52,7 +52,7 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user initiates the opening of a long position
-     * @param to The address that will be the owner of the position
+     * @param owner The address that owns the position
      * @param validator The address of the validator that will validate the position
      * @param timestamp The timestamp of the action
      * @param totalExpo The initial total expo of the position (pending validation)
@@ -61,7 +61,7 @@ interface IUsdnProtocolEvents {
      * @param posId The unique position identifier
      */
     event InitiatedOpenPosition(
-        address indexed to,
+        address indexed owner,
         address indexed validator,
         uint40 timestamp,
         uint128 totalExpo,
@@ -72,7 +72,7 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user validates the opening of a long position
-     * @param to The address that will be the owner of the position
+     * @param owner The address that owns the position
      * @param validator The address of the validator that validated the position
      * @param totalExpo The total expo of the position
      * @param newStartPrice The asset price at the moment of the position creation (final)
@@ -80,7 +80,7 @@ interface IUsdnProtocolEvents {
      * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      */
     event ValidatedOpenPosition(
-        address indexed to, address indexed validator, uint128 totalExpo, uint128 newStartPrice, PositionId posId
+        address indexed owner, address indexed validator, uint128 totalExpo, uint128 newStartPrice, PositionId posId
     );
 
     /**
