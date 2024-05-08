@@ -236,6 +236,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @notice Convert an amount of shares into the corresponding amount of tokens, rounding the division according to
      * `rounding`
      * @dev The conversion never overflows as we are performing a division
+     * If rounding to the nearest integer and the result is exactly at the half-way point, we round up
      * @param amountShares The amount of shares to convert to tokens
      * @param rounding Whether to round towards zero, the closest integer, or positive infinity
      * @return tokens_ The corresponding amount of tokens
@@ -271,8 +272,8 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
             assembly {
                 half := shr(1, d) // divide `d` by 2
             }
-            // if the remainder is more than half of the divisor, we round up, else down
-            if (remainder > half) {
+            // if the remainder is equal to or larger than half of the divisor, we round up, else down
+            if (remainder >= half) {
                 tokens_ = tokensUp;
             } else {
                 tokens_ = tokensDown;

@@ -52,7 +52,7 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
      * @custom:given The USDN was rebased with a random divisor in the valid range
      * @custom:when We convert a random amount of shares to tokens rounding up
      * @custom:then The resulting amount of tokens is the result of dividing shares by the divisor and rounding up
-     * @custom:and Except when the amount of corresponding shares would exceed uint256.max
+     * @custom:but If the amount of corresponding shares would exceed uint256.max we round down
      */
     function testFuzz_convertToTokensUp(uint256 divisor, uint256 shares) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
@@ -76,7 +76,7 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
      * @custom:when We convert a random amount of shares to tokens rounding towards the closest integer
      * @custom:then The resulting amount of tokens is the result of dividing shares by the divisor and rounding to the *
      * closest integer
-     * @custom:and Except when the amount of corresponding shares would exceed uint256.max
+     * @custom:but If the amount of corresponding shares would exceed uint256.max we round down
      */
     function testFuzz_convertToTokensClosest(uint256 divisor, uint256 shares) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
@@ -93,7 +93,7 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
             uint256 tokensDown = shares / divisor;
             uint256 sharesDown = tokensDown * divisor;
             uint256 sharesUp = (tokensDown + 1) * divisor;
-            uint256 tokensClosest = sharesUp - shares < shares - sharesDown ? tokensDown + 1 : tokensDown;
+            uint256 tokensClosest = sharesUp - shares <= shares - sharesDown ? tokensDown + 1 : tokensDown;
             assertEq(tokens, tokensClosest, "regular case");
         }
     }
