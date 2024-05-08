@@ -135,9 +135,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @inheritdoc IUsdnProtocolActions
-     * @dev warning! This function always sends the security deposit of the pending action to validate to the validator
-     * If users want to validate an actionable pending action, they must use another function such as
-     * validateActionablePendingActions to receive the security deposit
+     * @dev Warning! This function always sends the security deposit of the pending action to the validator
+     * Users wanting to validate an actionable pending action must use another function such as
+     * `validateActionablePendingActions` to receive the security deposit
      */
     function validateDeposit(
         address validator,
@@ -183,9 +183,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @inheritdoc IUsdnProtocolActions
-     * @dev warning! This function always sends the security deposit of the pending action to validate to the validator
-     * If users want to validate an actionable pending action, they must use another function such as
-     * validateActionablePendingActions to receive the security deposit
+     * @dev Warning! This function always sends the security deposit of the pending action to the validator
+     * Users wanting to validate an actionable pending action must use another function such as
+     * `validateActionablePendingActions` to receive the security deposit
      */
     function validateWithdrawal(
         address validator,
@@ -235,9 +235,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @inheritdoc IUsdnProtocolActions
-     * @dev warning! This function always sends the security deposit of the pending action to validate to the validator
-     * If users want to validate an actionable pending action, they must use another function such as
-     * validateActionablePendingActions to receive the security deposit
+     * @dev Warning! This function always sends the security deposit of the pending action to the validator
+     * Users wanting to validate an actionable pending action must use another function such as
+     * `validateActionablePendingActions` to receive the security deposit
      */
     function validateOpenPosition(
         address validator,
@@ -284,9 +284,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @inheritdoc IUsdnProtocolActions
-     * @dev warning! This function always sends the security deposit of the pending action to validate to the validator
-     * If users want to validate an actionable pending action, they must use another function such as
-     * validateActionablePendingActions to receive the security deposit
+     * @dev Warning! This function always sends the security deposit of the pending action to the validator
+     * Users wanting to validate an actionable pending action must use another function such as
+     * `validateActionablePendingActions` to receive the security deposit
      */
     function validateClosePosition(
         address validator,
