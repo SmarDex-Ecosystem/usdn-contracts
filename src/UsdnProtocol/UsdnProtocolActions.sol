@@ -1609,6 +1609,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param to The address that should receive the refund
      */
     function _refundEther(uint256 amount, address to) internal {
+        if (to == address(0)) {
+            revert UsdnProtocolInvalidAddressTo();
+        }
         if (amount != 0) {
             // slither-disable-next-line arbitrary-send-eth
             (bool success,) = payable(to).call{ value: amount }("");

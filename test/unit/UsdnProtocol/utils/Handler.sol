@@ -368,6 +368,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
 
+    function i_refundEther(uint256 amount, address to) external payable {
+        _refundEther(amount, to);
+    }
+
     function i_mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB) external pure returns (uint256) {
         return _mergeWithdrawalAmountParts(sharesLSB, sharesMSB);
     }
