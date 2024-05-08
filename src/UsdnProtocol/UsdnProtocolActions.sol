@@ -1013,7 +1013,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Case there are still pending liquidations
         if (!saved) {
-            return (PositionId(0, 0, 0), amountToRefund_ + securityDepositValue, true);
+            return (posId_, amountToRefund_ + securityDepositValue, true);
         }
 
         _asset.safeTransferFrom(user, address(this), amount);
