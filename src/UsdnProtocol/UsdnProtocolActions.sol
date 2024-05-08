@@ -26,6 +26,7 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
+import { console2 } from "forge-std/Test.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -553,11 +554,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, currentPriceData
         );
 
-        // early return in case there are still pending liquidations
-        if (isLiquidationPending_) {
-            return (securityDepositValue, true);
-        }
-
         _checkImbalanceLimitDeposit(amount);
 
         // Apply fees on price
@@ -580,7 +576,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             usdnTotalSupply: _usdn.totalSupply()
         });
 
-        amountToRefund_ = _addPendingAction(user, _convertDepositPendingAction(pendingAction));
+        amountToRefund_ = _addPendingAction(user, _convertDepositPendingAction(pendingAction), isLiquidationPending_);
+
+        // Case there are still pending liquidations
+        if (isLiquidationPending_) {
+            return (amountToRefund_ + securityDepositValue, true);
+        }
 
         // Calculate the amount of SDEX tokens to burn
         uint256 usdnToMintEstimated = _calcMintUsdn(
@@ -698,11 +699,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, currentPriceData
         );
 
-        // early return in case there are still pending liquidations
-        if (data_.isLiquidationPending) {
-            return data_;
-        }
-
         // Apply fees on price
         data_.pendingActionPrice = (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
@@ -751,7 +747,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             })
         );
 
-        amountToRefund_ = _addPendingAction(user, action);
+        amountToRefund_ = _addPendingAction(user, action, data.isLiquidationPending);
     }
 
     /**
@@ -784,12 +780,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         WithdrawalData memory data = _prepareWithdrawalData(usdnShares, currentPriceData);
-
-        if (data.isLiquidationPending) {
-            return (securityDepositValue, true);
-        }
+        console2.log("data.isLiquidationPending", data.isLiquidationPending);
 
         amountToRefund_ = _createWithdrawalPendingAction(user, to, usdnShares, securityDepositValue, data);
+
+        console2.log("data.isLiquidationPending", data.isLiquidationPending);
+
+        // Case there are still pending liquidations
+        if (data.isLiquidationPending) {
+            return (amountToRefund_ + securityDepositValue, true);
+        }
 
         // retrieve the USDN tokens, checks that balance is sufficient
         data.usdn.transferSharesFrom(user, address(this), usdnShares);
@@ -902,11 +902,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             neutralPrice, currentPrice.timestamp, _liquidationIteration, false, currentPriceData
         );
 
-        // early return in case there are still pending liquidations
-        if (data_.isLiquidationPending) {
-            return data_;
-        }
-
         // we calculate the closest valid tick down for the desired liq price with liquidation penalty
         data_.posId.tick = getEffectiveTickForPrice(desiredLiqPrice);
         data_.liquidationPenalty = getTickLiquidationPenalty(data_.posId.tick);
@@ -955,7 +950,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             closeBoundedPositionValue: 0
         });
 
-        amountToRefund_ = _addPendingAction(user, _convertLongPendingAction(action));
+        amountToRefund_ = _addPendingAction(user, _convertLongPendingAction(action), data.isLiquidationPending);
     }
 
     /**
@@ -999,10 +994,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         InitiateOpenPositionData memory data =
             _prepareInitiateOpenPositionData(amount, desiredLiqPrice, currentPriceData);
 
-        if (data.isLiquidationPending) {
-            return (posId_, securityDepositValue, true);
-        }
-
         // Register position and adjust contract state
         Position memory long = Position({
             user: to,
@@ -1015,6 +1006,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         posId_ = data.posId;
 
         amountToRefund_ = _createOpenPendingAction(user, to, securityDepositValue, data);
+
+        // Case there are still pending liquidations
+        if (data.isLiquidationPending) {
+            PositionId memory emptyPosId;
+            return (emptyPosId, amountToRefund_ + securityDepositValue, true);
+        }
 
         _asset.safeTransferFrom(user, address(this), amount);
 
@@ -1066,10 +1063,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
         );
-
-        if (data_.isLiquidationPending) {
-            return (data_, liq_);
-        }
 
         uint256 version;
         (data_.tickHash, version) = _tickHash(data_.action.tick);
@@ -1264,10 +1257,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, currentPriceData
         );
 
-        if (data_.isLiquidationPending) {
-            return (data_, liq_);
-        }
-
         (, uint256 version) = _tickHash(posId.tick);
         if (version != posId.tickVersion) {
             // The current tick version doesn't match the version from the position,
@@ -1333,7 +1322,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             closeBoundedPositionValue: data.tempPositionValue
         });
 
-        amountToRefund_ = _addPendingAction(user, _convertLongPendingAction(action));
+        amountToRefund_ = _addPendingAction(user, _convertLongPendingAction(action), data.isLiquidationPending);
     }
 
     /**
@@ -1372,11 +1361,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return (0, data.isLiquidationPending);
         }
 
-        if (data.isLiquidationPending) {
-            return (securityDepositValue, true);
-        }
-
         amountToRefund_ = _createClosePendingAction(user, to, posId, amountToClose, securityDepositValue, data);
+
+        if (data.isLiquidationPending) {
+            return (amountToRefund_ + securityDepositValue, true);
+        }
 
         _balanceLong -= data.tempPositionValue;
 

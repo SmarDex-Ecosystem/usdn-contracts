@@ -111,7 +111,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         pending.action = ProtocolAction.InitiateDeposit;
         pending.user = address(this);
         pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
-        protocol.i_addPendingAction(address(this), pending);
+        protocol.i_addPendingAction(address(this), pending, false);
         (, rawIndex_) = protocol.i_getPendingAction(address(this));
     }
 }

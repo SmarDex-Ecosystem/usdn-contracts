@@ -677,16 +677,22 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @param action The pending action struct
      * @return amountToRefund_ The security deposit value of the stale pending action
      */
-    function _addPendingAction(address user, PendingAction memory action) internal returns (uint256 amountToRefund_) {
+    function _addPendingAction(address user, PendingAction memory action, bool isLiquidationPending)
+        internal
+        returns (uint256 amountToRefund_)
+    {
         amountToRefund_ = _removeStalePendingAction(user); // check if there is a pending action that was
-            // liquidated and remove it
+        // liquidated and remove it
         if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
         }
-        // Add the action to the queue
-        uint128 rawIndex = _pendingActionsQueue.pushBack(action);
-        // Store the index shifted by one, so that zero means no pending action
-        _pendingActions[user] = uint256(rawIndex) + 1;
+
+        if (!isLiquidationPending) {
+            // Add the action to the queue
+            uint128 rawIndex = _pendingActionsQueue.pushBack(action);
+            // Store the index shifted by one, so that zero means no pending action
+            _pendingActions[user] = uint256(rawIndex) + 1;
+        }
     }
 
     /**
