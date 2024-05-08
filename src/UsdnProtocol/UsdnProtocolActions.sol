@@ -26,7 +26,6 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
-import { console2 } from "forge-std/Test.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -780,11 +779,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         WithdrawalData memory data = _prepareWithdrawalData(usdnShares, currentPriceData);
-        console2.log("data.isLiquidationPending", data.isLiquidationPending);
 
         amountToRefund_ = _createWithdrawalPendingAction(user, to, usdnShares, securityDepositValue, data);
-
-        console2.log("data.isLiquidationPending", data.isLiquidationPending);
 
         // Case there are still pending liquidations
         if (data.isLiquidationPending) {
