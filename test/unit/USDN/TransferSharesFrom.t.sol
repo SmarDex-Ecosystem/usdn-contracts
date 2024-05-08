@@ -87,4 +87,24 @@ contract TestUsdnTransferSharesFrom is UsdnTokenFixture {
         );
         usdn.transferSharesFrom(USER_1, address(this), sharesAmount);
     }
+
+    /**
+     * @custom:scenario Transfer shares from another user when the amount corresponds to less than 1 wei of token
+     * @custom:given User 1 has approved this contract to transfer 1 wei of tokens
+     * @custom:when We try to transfer 100 shares which equate to 0 tokens
+     * @custom:then The allowance is decreased by 1 wei
+     */
+    function test_transferSharesFromLessThanOneWei() public {
+        vm.prank(USER_1);
+        usdn.approve(address(this), 1);
+        uint256 allowanceBefore = usdn.allowance(USER_1, address(this));
+        assertEq(allowanceBefore, 1, "allowance before");
+
+        uint256 sharesAmount = 100;
+        uint256 tokenAmount = usdn.convertToTokens(sharesAmount);
+        assertEq(tokenAmount, 0, "token amount");
+
+        usdn.transferSharesFrom(USER_1, address(this), sharesAmount);
+        assertEq(usdn.allowance(USER_1, address(this)), allowanceBefore - 1, "allowance after");
+    }
 }
