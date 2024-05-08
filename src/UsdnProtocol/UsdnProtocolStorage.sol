@@ -143,8 +143,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     int256 internal _closeExpoImbalanceLimitBps = 600;
 
-    /// @notice The position fee in basis point
+    /// @notice The position fee in basis points
     uint16 internal _positionFeeBps = 4; // 0.04%
+
+    /// @notice The fee for vault deposits and withdrawals, in basis points
+    uint16 internal _vaultFeeBps = 4; // 0.04%
 
     /// @notice The ratio of USDN to SDEX tokens to burn on deposit
     uint32 internal _sdexBurnOnDepositRatio = 1e6; // 1%
@@ -395,6 +398,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getPositionFeeBps() external view returns (uint16) {
         return _positionFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getVaultFeeBps() external view returns (uint16) {
+        return _vaultFeeBps;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
