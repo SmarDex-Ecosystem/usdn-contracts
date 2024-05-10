@@ -55,8 +55,8 @@ contract UsdnHandler is Usdn, Test {
         _update(from, to, value);
     }
 
-    function i_convertToTokens(uint256 amountShares, Rounding rounding) external view returns (uint256) {
-        return _convertToTokens(amountShares, rounding);
+    function i_convertToTokens(uint256 amountShares, Rounding rounding, uint256 d) external view returns (uint256) {
+        return _convertToTokens(amountShares, rounding, d);
     }
 
     /* ------------------ Functions used for invariant testing ------------------ */
@@ -141,7 +141,7 @@ contract UsdnHandler is Usdn, Test {
         totalSharesSum += value;
         (, uint256 lastShares) = _sharesHandle.tryGet(msg.sender);
         _sharesHandle.set(msg.sender, lastShares + value);
-        _updateShares(address(0), msg.sender, value, _convertToTokens(value, Rounding.Closest));
+        _updateShares(address(0), msg.sender, value, _convertToTokens(value, Rounding.Closest, _divisor));
     }
 
     function burnSharesTest(uint256 value) external {
@@ -155,7 +155,7 @@ contract UsdnHandler is Usdn, Test {
 
         uint256 lastShares = _sharesHandle.get(msg.sender);
         _sharesHandle.set(msg.sender, lastShares - value);
-        _burnShares(msg.sender, value, _convertToTokens(value, Rounding.Closest));
+        _burnShares(msg.sender, value, _convertToTokens(value, Rounding.Closest, _divisor));
     }
 
     function transferSharesTest(address to, uint256 value) external {
@@ -169,6 +169,6 @@ contract UsdnHandler is Usdn, Test {
         (, uint256 toShares) = _sharesHandle.tryGet(to);
         _sharesHandle.set(to, toShares + value);
 
-        _transferShares(msg.sender, to, value, _convertToTokens(value, Rounding.Closest));
+        _transferShares(msg.sender, to, value, _convertToTokens(value, Rounding.Closest, _divisor));
     }
 }

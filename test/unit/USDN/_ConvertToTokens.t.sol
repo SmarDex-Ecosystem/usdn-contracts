@@ -11,7 +11,6 @@ import { Usdn } from "src/Usdn.sol";
 contract TestUsdnConvertToTokens is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
-        usdn.grantRole(usdn.REBASER_ROLE(), address(this));
     }
 
     /**
@@ -20,15 +19,11 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
      * @custom:then The conversion reverts with the `UsdnInvalidDivisor` error
      */
     function test_RevertWhen_divisorIsTooSmall() public {
-        usdn.setDivisor(0);
+        vm.expectRevert(UsdnInvalidDivisor.selector);
+        usdn.i_convertToTokens(1 ether, Usdn.Rounding.Down, 0);
 
         vm.expectRevert(UsdnInvalidDivisor.selector);
-        usdn.i_convertToTokens(1 ether, Usdn.Rounding.Down);
-
-        usdn.setDivisor(1);
-
-        vm.expectRevert(UsdnInvalidDivisor.selector);
-        usdn.i_convertToTokens(1 ether, Usdn.Rounding.Down);
+        usdn.i_convertToTokens(1 ether, Usdn.Rounding.Down, 1);
     }
 
     /**
@@ -39,11 +34,8 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
      */
     function testFuzz_convertToTokensDown(uint256 divisor, uint256 shares) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
-        if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.rebase(divisor);
-        }
 
-        uint256 tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Down);
+        uint256 tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Down, divisor);
         assertEq(tokens, shares / divisor);
     }
 
@@ -56,11 +48,8 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
      */
     function testFuzz_convertToTokensUp(uint256 divisor, uint256 shares) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
-        if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.rebase(divisor);
-        }
 
-        uint256 tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Up);
+        uint256 tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Up, divisor);
 
         if (shares / divisor >= type(uint256).max / divisor) {
             // the amount of tokens cannot be equivalent to a number of shares larger than uint256.max
@@ -80,11 +69,8 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
      */
     function testFuzz_convertToTokensClosest(uint256 divisor, uint256 shares) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
-        if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.rebase(divisor);
-        }
 
-        uint256 tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Closest);
+        uint256 tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Closest, divisor);
 
         if (shares / divisor >= type(uint256).max / divisor) {
             // the amount of tokens cannot be equivalent to a number of shares larger than uint256.max
@@ -109,16 +95,13 @@ contract TestUsdnConvertToTokens is UsdnTokenFixture {
     function testFuzz_convertToTokensNoRemainder(uint256 divisor, uint256 multiple) public {
         divisor = bound(divisor, usdn.MIN_DIVISOR(), usdn.MAX_DIVISOR());
         multiple = bound(multiple, 0, type(uint256).max / divisor);
-        if (divisor < usdn.MAX_DIVISOR()) {
-            usdn.rebase(divisor);
-        }
 
         uint256 shares = multiple * divisor;
-        uint256 tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Up);
+        uint256 tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Up, divisor);
         assertEq(tokens, multiple);
-        tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Closest);
+        tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Closest, divisor);
         assertEq(tokens, multiple);
-        tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Down);
+        tokens = usdn.i_convertToTokens(shares, Usdn.Rounding.Down, divisor);
         assertEq(tokens, multiple);
     }
 }

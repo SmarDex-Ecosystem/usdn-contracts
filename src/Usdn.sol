@@ -92,12 +92,12 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
 
     /// @inheritdoc IERC20
     function totalSupply() public view override(ERC20, IERC20) returns (uint256) {
-        return _convertToTokens(_totalShares, Rounding.Closest);
+        return _convertToTokens(_totalShares, Rounding.Closest, _divisor);
     }
 
     /// @inheritdoc IERC20
     function balanceOf(address account) public view override(ERC20, IERC20) returns (uint256) {
-        return _convertToTokens(sharesOf(account), Rounding.Closest);
+        return _convertToTokens(sharesOf(account), Rounding.Closest, _divisor);
     }
 
     /**
@@ -138,12 +138,12 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
 
     /// @inheritdoc IUsdn
     function convertToTokens(uint256 amountShares) external view returns (uint256 tokens_) {
-        tokens_ = _convertToTokens(amountShares, Rounding.Closest);
+        tokens_ = _convertToTokens(amountShares, Rounding.Closest, _divisor);
     }
 
     /// @inheritdoc IUsdn
     function convertToTokensRoundUp(uint256 amountShares) external view returns (uint256 tokens_) {
-        tokens_ = _convertToTokens(amountShares, Rounding.Up);
+        tokens_ = _convertToTokens(amountShares, Rounding.Up, _divisor);
     }
 
     /// @inheritdoc IUsdn
@@ -167,33 +167,35 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @inheritdoc IUsdn
     function transferShares(address to, uint256 value) external returns (bool) {
         address owner = _msgSender();
-        _transferShares(owner, to, value, _convertToTokens(value, Rounding.Closest));
+        _transferShares(owner, to, value, _convertToTokens(value, Rounding.Closest, _divisor));
         return true;
     }
 
     /// @inheritdoc IUsdn
     function transferSharesFrom(address from, address to, uint256 value) external returns (bool) {
         address spender = _msgSender();
+        uint256 d = _divisor;
         // to make sure we spend 1 wei of allowance in case the amount of shares is less than 1 wei of tokens,
         // we round up
-        _spendAllowance(from, spender, _convertToTokens(value, Rounding.Up));
+        _spendAllowance(from, spender, _convertToTokens(value, Rounding.Up, d));
         // the amount of tokens below is only used for emitting an event, we round to the closest value
-        _transferShares(from, to, value, _convertToTokens(value, Rounding.Closest));
+        _transferShares(from, to, value, _convertToTokens(value, Rounding.Closest, d));
         return true;
     }
 
     /// @inheritdoc IUsdn
     function burnShares(uint256 value) external virtual {
-        _burnShares(_msgSender(), value, _convertToTokens(value, Rounding.Closest));
+        _burnShares(_msgSender(), value, _convertToTokens(value, Rounding.Closest, _divisor));
     }
 
     /// @inheritdoc IUsdn
     function burnSharesFrom(address account, uint256 value) public virtual {
+        uint256 d = _divisor;
         // to make sure we spend 1 wei of allowance in case the amount of shares is less than 1 wei of tokens,
         // we round up
-        _spendAllowance(account, _msgSender(), _convertToTokens(value, Rounding.Up));
+        _spendAllowance(account, _msgSender(), _convertToTokens(value, Rounding.Up, d));
         // the amount of tokens below is only used for emitting an event, we round to the closest value
-        _burnShares(account, value, _convertToTokens(value, Rounding.Closest));
+        _burnShares(account, value, _convertToTokens(value, Rounding.Closest, d));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -210,7 +212,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
         if (to == address(0)) {
             revert ERC20InvalidReceiver(address(0));
         }
-        _updateShares(address(0), to, amount, _convertToTokens(amount, Rounding.Closest));
+        _updateShares(address(0), to, amount, _convertToTokens(amount, Rounding.Closest, _divisor));
     }
 
     /// @inheritdoc IUsdn
@@ -239,10 +241,14 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * If rounding to the nearest integer and the result is exactly at the half-way point, we round up
      * @param amountShares The amount of shares to convert to tokens
      * @param rounding Whether to round towards zero, the closest integer, or positive infinity
+     * @param d Current value of the divisor
      * @return tokens_ The corresponding amount of tokens
      */
-    function _convertToTokens(uint256 amountShares, Rounding rounding) internal view returns (uint256 tokens_) {
-        uint256 d = _divisor;
+    function _convertToTokens(uint256 amountShares, Rounding rounding, uint256 d)
+        internal
+        pure
+        returns (uint256 tokens_)
+    {
         if (d <= 1) {
             // this should never happen, but the check allows to perform unchecked math below
             revert UsdnInvalidDivisor();
