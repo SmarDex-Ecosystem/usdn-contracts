@@ -579,7 +579,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (added, amountToRefund_) =
             _tryAddPendingAction(user, _convertDepositPendingAction(pendingAction), isLiquidationPending_);
 
-        // Case there are still pending liquidations
+        // Case position was not added
         if (!added) {
             return (amountToRefund_ + securityDepositValue, true);
         }
@@ -785,7 +785,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bool added;
         (added, amountToRefund_) = _createWithdrawalPendingAction(user, to, usdnShares, securityDepositValue, data);
 
-        // Case there are still pending liquidations
+        // Case position was not added
         if (!added) {
             return (amountToRefund_ + securityDepositValue, true);
         }
@@ -1011,6 +1011,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bool added;
         (added, amountToRefund_) = _createOpenPendingAction(user, to, securityDepositValue, data);
 
+        // Case position was not added
         if (!added) {
             return (posId_, amountToRefund_ + securityDepositValue, true);
         }
@@ -1368,6 +1369,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bool added;
         (added, amountToRefund_) = _createClosePendingAction(user, to, posId, amountToClose, securityDepositValue, data);
 
+        // Case position was not added
         if (!added) {
             return (amountToRefund_ + securityDepositValue, true);
         }
