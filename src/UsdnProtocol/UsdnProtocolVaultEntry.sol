@@ -42,4 +42,17 @@ abstract contract UsdnProtocolVaultEntry is UsdnProtocolBaseStorage {
         require(success, "failed");
         assetExpected_ = abi.decode(data, (uint256));
     }
+
+    function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
+        public
+        returns (uint256 toMint_)
+    {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolVault._calcMintUsdn.selector, amount, vaultBalance, usdnTotalSupply, price
+            )
+        );
+        require(success, "failed");
+        toMint_ = abi.decode(data, (uint256));
+    }
 }

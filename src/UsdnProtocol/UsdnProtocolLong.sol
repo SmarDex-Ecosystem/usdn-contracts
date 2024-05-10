@@ -385,7 +385,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param liquidationPenalty The liquidation penalty for the tick
      */
     function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
-        internal
+        public
         returns (uint256 tickVersion_, uint256 index_)
     {
         bytes32 tickHash;

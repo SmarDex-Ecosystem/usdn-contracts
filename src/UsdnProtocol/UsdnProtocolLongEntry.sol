@@ -163,4 +163,15 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage {
         require(success, "failed");
         totalExpo_ = abi.decode(data, (uint128));
     }
+
+    function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+        internal
+        returns (uint256 tickVersion_, uint256 index_)
+    {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolLong._saveNewPosition.selector, tick, long, liquidationPenalty)
+        );
+        require(success, "failed");
+        (tickVersion_, index_) = abi.decode(data, (uint256, uint256));
+    }
 }

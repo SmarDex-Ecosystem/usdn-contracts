@@ -36,4 +36,9 @@ interface IUsdnProtocolVault is IUsdnProtocolCore {
         external
         view
         returns (uint256 assetExpected_);
+
+    function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
+        external
+        view
+        returns (uint256 toMint_);
 }

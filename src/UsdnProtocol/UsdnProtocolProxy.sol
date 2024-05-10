@@ -26,10 +26,10 @@ contract UsdnProtocol is
     Ownable,
     InitializableReentrancyGuard,
     UsdnProtocolLongEntry,
-    IUsdnProtocolEvents,
     UsdnProtocolActionsEntry,
     UsdnProtocolCoreEntry,
-    UsdnProtocolVaultEntry
+    UsdnProtocolVaultEntry,
+    IUsdnProtocolEvents
 {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
@@ -346,16 +346,16 @@ contract UsdnProtocol is
 
         // Calculate the total minted amount of USDN (vault balance and total supply are zero for now, we assume the
         // USDN price to be $1)
-        // uint256 usdnToMint = _calcMintUsdn(amount, 0, 0, price);
+        uint256 usdnToMint = _calcMintUsdn(amount, 0, 0, price);
         // Mint the min amount and send to dead address so it can never be removed from the total supply
         s._usdn.mint(s.DEAD_ADDRESS, s.MIN_USDN_SUPPLY);
         // Mint the user's share
-        // uint256 mintToUser = usdnToMint - s.MIN_USDN_SUPPLY;
-        // s._usdn.mint(msg.sender, mintToUser);
+        uint256 mintToUser = usdnToMint - s.MIN_USDN_SUPPLY;
+        s._usdn.mint(msg.sender, mintToUser);
 
         // Emit events
         emit ValidatedDeposit(s.DEAD_ADDRESS, s.DEAD_ADDRESS, 0, s.MIN_USDN_SUPPLY, block.timestamp);
-        // emit ValidatedDeposit(msg.sender, msg.sender, amount, mintToUser, block.timestamp);
+        emit ValidatedDeposit(msg.sender, msg.sender, amount, mintToUser, block.timestamp);
     }
 
     /**
@@ -379,7 +379,7 @@ contract UsdnProtocol is
         Position memory long =
             Position({ user: msg.sender, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
         // Save the position and update the state
-        // (posId.tickVersion, posId.index) = _saveNewPosition(posId.tick, long, liquidationPenalty);
+        (posId.tickVersion, posId.index) = _saveNewPosition(posId.tick, long, liquidationPenalty);
         s._balanceLong += long.amount;
         emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId);
         emit ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);

@@ -119,4 +119,8 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
         external
         pure
         returns (uint128 totalExpo_);
+
+    function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+        external
+        returns (uint256 tickVersion_, uint256 index_);
 }
