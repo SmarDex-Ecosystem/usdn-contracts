@@ -29,8 +29,9 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IUsdnProtocolVaultProxy } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultProxy.sol";
 
-contract UsdnProtocolVaultProxy is UsdnProtocolCommon {
+contract UsdnProtocolVaultProxy is UsdnProtocolCommon, IUsdnProtocolVaultProxy {
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
     using SafeCast for uint256;
