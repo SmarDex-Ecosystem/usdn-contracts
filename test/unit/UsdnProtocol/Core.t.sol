@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PendingAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol
@@ -351,5 +351,16 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 ts = protocol.getLastUpdateTimestamp();
         vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
         protocol.vaultAssetAvailableWithFunding(0, ts - 1);
+    }
+
+    /**
+     * @custom:scenario The `getPendingAction` function returns no pending action
+     * @custom:when There is no pending action
+     * @custom:then The function should return `None` as the action and 0 as the rawIndex
+     */
+    function test_emptyPendingAction() public {
+        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        assertEq(action.action, PendingAction.ProtocolAction.None, "pending action should be None");
+        assertEq(rawIndex, 0, "rawIndex should be 0");
     }
 }
