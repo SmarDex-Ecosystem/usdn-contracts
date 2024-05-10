@@ -7,9 +7,6 @@ import { IOrderManagerTypes } from "src/interfaces/OrderManager/IOrderManagerTyp
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents, IOrderManagerTypes {
-    /// @notice Amount of decimals a multiplier has
-    function MULTIPLIER_DECIMALS() external view returns (uint256);
-
     /// @notice Returns the address of the USDN protocol
     function getUsdnProtocol() external view returns (IUsdnProtocol);
 

@@ -17,9 +17,6 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 contract OrderManager is Ownable, IOrderManager {
     using SafeERC20 for IERC20Metadata;
 
-    /// @inheritdoc IOrderManager
-    uint256 public constant MULTIPLIER_DECIMALS = 18;
-
     /// @notice The address of the asset used by the USDN protocol
     IERC20Metadata internal immutable _asset;
 
@@ -34,12 +31,6 @@ contract OrderManager is Ownable, IOrderManager {
 
     /// @notice The data about the assets an address deposited in this contract
     mapping(address => UserDeposit) internal _userDeposit;
-
-    /**
-     * @notice The data for the specific version of the position
-     * @dev position iteration => position version => position data
-     */
-    mapping(uint256 => mapping(uint256 => PositionData)) internal _positionData;
 
     /// @param usdnProtocol The address of the USDN protocol
     constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) {
@@ -75,7 +66,7 @@ contract OrderManager is Ownable, IOrderManager {
 
         uint128 currentVersion = _positionVersion;
         UserDeposit storage depositData = _userDeposit[to];
-        if (depositData.entryPositionVersion < currentVersion) {
+        if (depositData.amount != 0 && depositData.entryPositionVersion < currentVersion) {
             revert OrderManagerUserNotPending();
         }
 
