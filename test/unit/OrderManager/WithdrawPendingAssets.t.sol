@@ -6,13 +6,13 @@ import { USER_1 } from "test/utils/Constants.sol";
 
 /**
  * @custom:feature The withdrawPendingAssets function of the order manager contract
- * @custom:background Given a protocol instance that was initialized with default params
- * @custom:and an order manager contract
+ * @custom:background Given an order manager contract
  */
 contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
     function setUp() public {
         super._setUp();
 
+        orderManager.incrementPositionVersion();
         wstETH.mintAndApprove(address(this), 10_000 ether, address(orderManager), type(uint256).max);
         orderManager.depositAssets(1 ether, address(this));
     }
@@ -20,7 +20,7 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
     /**
      * @custom:scenario The user tries to withdraw assets to the zero address
      * @custom:given A user with deposited assets
-     * @custom:when The user tries to withdraw funds with to as the zero address
+     * @custom:when The user tries to withdraw assets with to as the zero address
      * @custom:then The call reverts with an OrderManagerInvalidAddressTo error
      */
     function test_RevertWhen_withdrawPendingAssetsToTheZeroAddress() external {
@@ -31,7 +31,7 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
     /**
      * @custom:scenario The user tries to withdraw assets without having any deposited
      * @custom:given A user with no deposited assets
-     * @custom:when The user tries to withdraw funds without having deposited first
+     * @custom:when The user tries to withdraw assets without having deposited first
      * @custom:then The call reverts with an OrderManagerUserNotPending error
      */
     function test_RevertWhen_withdrawPendingAssetsWithNoDeposit() external {
@@ -44,7 +44,7 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
      * @custom:scenario The user tries to withdraw assets after a position version change
      * @custom:given A user with deposited assets
      * @custom:when The position version gets incremented
-     * @custom:and The user tries to withdraw funds
+     * @custom:and The user tries to withdraw assets
      * @custom:then The call reverts with an OrderManagerUserNotPending error
      */
     function test_RevertWhen_withdrawPendingAssetsWithVersionChanged() external {
@@ -68,8 +68,9 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
     /**
      * @custom:scenario The user withdraw its assets
      * @custom:given A user with deposited assets
-     * @custom:when The user withdraw its assets with another address as the to address
-     * @custom:then The user receives its assets
+     * @custom:when The user withdraw all its assets with another address as the to address
+     * @custom:then The to address receives the expected amount
+     * @custom:and the user's data in the contract is removed
      */
     function test_withdrawPendingAssets() external {
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
@@ -88,9 +89,10 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
             userBalanceBefore + 1 ether, wstETH.balanceOf(USER_1), "The to address should have received the assets"
         );
 
+        // Check that the user is not in the contract anymore
         UserDeposit memory userDeposit = orderManager.getUserDepositData(address(this));
-        assertEq(userDeposit.entryPositionVersion, 0);
-        assertEq(userDeposit.amount, 0);
+        assertEq(userDeposit.entryPositionVersion, 0, "The position version be back to 0");
+        assertEq(userDeposit.amount, 0, "The amount should be 0");
     }
 
     /**
@@ -100,6 +102,7 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
      * @custom:then The user receives the expected amount
      */
     function test_withdrawPendingAssetsWithAmountLessThanDeposited() external {
+        uint256 positionVersion = orderManager.getCurrentPositionVersion();
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
@@ -119,7 +122,7 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
         );
 
         UserDeposit memory userDeposit = orderManager.getUserDepositData(address(this));
-        assertEq(userDeposit.entryPositionVersion, 0);
-        assertEq(userDeposit.amount, 0.4 ether);
+        assertEq(userDeposit.entryPositionVersion, positionVersion, "The position version should not have changed");
+        assertEq(userDeposit.amount, 0.4 ether, "The amount withdrawn should have been subtracted");
     }
 }

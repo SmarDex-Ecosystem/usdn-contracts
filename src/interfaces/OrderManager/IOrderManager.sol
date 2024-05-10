@@ -17,13 +17,13 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents, IOrderManag
      * @notice Deposit assets into this contract to be included in the next position
      * @dev If the user is already in a position, he needs to get out of it before adding more assets
      * @param amount The amount to deposit (in _assetDecimals)
-     * @param to The address to assign the position to
+     * @param to The address to assign the deposit to
      */
     function depositAssets(uint128 amount, address to) external;
 
     /**
      * @notice Withdraw assets if the user is not in a position yet
-     * @dev if the entry position version of the user is lower than the current one, the transaction will revert
+     * @dev If the entry position version of the user is lower than the current one, the transaction will revert
      * @param amount The amount to withdraw (in _assetDecimals)
      * @param to The address to send the assets to
      */

@@ -5,8 +5,7 @@ import { OrderManagerFixture } from "test/unit/OrderManager/utils/Fixtures.sol";
 
 /**
  * @custom:feature The depositAssets function of the order manager contract
- * @custom:background Given a protocol instance that was initialized with default params
- * @custom:and an order manager contract
+ * @custom:background Given an order manager contract
  */
 contract TestOrderManagerDepositAssets is OrderManagerFixture {
     function setUp() public {
@@ -16,10 +15,10 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
     }
 
     /**
-     * @custom:scenario The user tries to deposit more funds after the position version has changed
-     * @custom:given A user that deposited funds in the contract
+     * @custom:scenario The user tries to deposit more assets after the position version has changed
+     * @custom:given A user that deposited assets in the contract
      * @custom:when The position version is incremented
-     * @custom:and The user tries to deposit more funds
+     * @custom:and The user tries to deposit more assets
      * @custom:then The call reverts with a OrderManagerUserNotPending error
      */
     function test_RevertWhen_depositAssetsAfterVersionChanged() external {
@@ -31,9 +30,9 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
     }
 
     /**
-     * @custom:scenario The user tries to deposit funds to the zero address
+     * @custom:scenario The user tries to deposit assets with to as the zero address
      * @custom:given A user with assets
-     * @custom:when The user tries to deposit funds with to as the zero address
+     * @custom:when The user tries to deposit assets with to as the zero address
      * @custom:then The call reverts with a OrderManagerInvalidAddressTo error
      */
     function test_RevertWhen_depositAssetsToTheZeroAddress() external {
@@ -42,9 +41,9 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
     }
 
     /**
-     * @custom:scenario The user deposit funds
+     * @custom:scenario The user deposit assets
      * @custom:given A user with assets
-     * @custom:when The user deposit funds with his address as the to address
+     * @custom:when The user deposit assets with his address as the to address
      * @custom:then His assets are transferred to the contract
      */
     function test_depositAssets() external {
@@ -58,12 +57,16 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
         assertEq(
             orderManagerBalanceBefore + 1 ether,
             wstETH.balanceOf(address(orderManager)),
-            "The order manager should have receive the assets"
+            "The order manager should have received the assets"
         );
         assertEq(userBalanceBefore - 1 ether, wstETH.balanceOf(address(this)), "The user should have sent the assets");
 
         UserDeposit memory userDeposit = orderManager.getUserDepositData(address(this));
-        assertEq(userDeposit.entryPositionVersion, orderManager.getCurrentPositionVersion());
-        assertEq(userDeposit.amount, 1 ether);
+        assertEq(
+            userDeposit.entryPositionVersion,
+            orderManager.getCurrentPositionVersion(),
+            "The position version should be the current one"
+        );
+        assertEq(userDeposit.amount, 1 ether, "The amount should have been saved");
     }
 }

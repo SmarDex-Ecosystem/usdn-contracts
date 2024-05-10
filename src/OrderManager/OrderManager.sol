@@ -10,10 +10,9 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @title OrderManager
- * @notice The goal of this contract is to re-balance the USDN protocol when there is too much
- * trading expo available in the USDN Protocol
- * This contract will manage only one position with enough trading expo to re-balance the protocol after liquidations
- * and close/open again with new and existing funds
+ * @notice The goal of this contract is to re-balance the USDN protocol when there is too much trading expo available
+ * It will manage only one position with enough trading expo to re-balance the protocol after liquidations
+ * and close/open again with new and existing funds when the imbalance reach a certain threshold
  */
 contract OrderManager is Ownable, IOrderManager {
     using SafeERC20 for IERC20Metadata;
@@ -33,7 +32,7 @@ contract OrderManager is Ownable, IOrderManager {
     /// @notice The current position version (0 means no position open)
     uint128 internal _positionVersion;
 
-    /// @notice The funds an address deposited in this contract
+    /// @notice The data about the assets an address deposited in this contract
     mapping(address => UserDeposit) internal _userDeposit;
 
     /**
@@ -75,15 +74,15 @@ contract OrderManager is Ownable, IOrderManager {
         }
 
         uint128 currentVersion = _positionVersion;
-        UserDeposit memory depositData = _userDeposit[to];
+        UserDeposit storage depositData = _userDeposit[to];
         if (depositData.entryPositionVersion < currentVersion) {
             revert OrderManagerUserNotPending();
         }
 
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
-        // TODO check if cheaper to only write what's needed (should not)
-        _userDeposit[to] = UserDeposit({ amount: amount + depositData.amount, entryPositionVersion: currentVersion });
+        depositData.amount = amount;
+        depositData.entryPositionVersion = currentVersion;
 
         emit AssetsDeposited(amount, to, currentVersion);
     }
@@ -103,13 +102,16 @@ contract OrderManager is Ownable, IOrderManager {
             revert OrderManagerNotEnoughAssetsToWithdraw();
         }
 
-        _asset.safeTransfer(to, amount);
-
+        // If the amount to withdraw is equal to the deposited funds by this user, delete the mapping entry
         if (amount == depositData.amount) {
             delete _userDeposit[msg.sender];
-        } else {
+        }
+        // If not, simply subtract the amount withdrawn from the user's balance
+        else {
             _userDeposit[msg.sender].amount -= amount;
         }
+
+        _asset.safeTransfer(to, amount);
 
         emit PendingAssetsWithdrawn(amount, to);
     }

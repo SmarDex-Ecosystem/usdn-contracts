@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0;
 
 interface IOrderManagerErrors {
-    /// @dev The user funds are in a position
+    /// @dev The user assets are used   in a position
     error OrderManagerUserNotPending();
 
     /// @dev The `to` address is invalid
