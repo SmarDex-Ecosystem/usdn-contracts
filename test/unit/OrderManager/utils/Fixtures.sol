@@ -12,13 +12,6 @@ import { WstETH } from "test/utils/WstEth.sol";
 import { IOrderManagerEvents } from "src/interfaces/OrderManager/IOrderManagerEvents.sol";
 import { IOrderManagerErrors } from "src/interfaces/OrderManager/IOrderManagerErrors.sol";
 import { IOrderManagerTypes } from "src/interfaces/OrderManager/IOrderManagerTypes.sol";
-import {
-    Position,
-    PendingAction,
-    ProtocolAction,
-    PreviousActionsData,
-    PositionId
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { Usdn } from "src/Usdn.sol";
@@ -35,18 +28,7 @@ contract OrderManagerFixture is BaseFixture, IOrderManagerTypes, IOrderManagerEr
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
     OrderManagerHandler public orderManager;
-    UsdnProtocol public protocol;
-    uint256 public usdnInitialTotalSupply;
-    address[] public users;
-
-    PreviousActionsData internal EMPTY_PREVIOUS_DATA =
-        PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
-
-    modifier prankUser(address user) {
-        vm.startPrank(user);
-        _;
-        vm.stopPrank();
-    }
+    UsdnProtocol public usdnProtocol;
 
     function _setUp() public virtual {
         vm.startPrank(DEPLOYER);
@@ -57,7 +39,7 @@ contract OrderManagerFixture is BaseFixture, IOrderManagerTypes, IOrderManagerEr
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
 
-        protocol = new UsdnProtocol(
+        usdnProtocol = new UsdnProtocol(
             usdn,
             sdex,
             wstETH,
@@ -66,16 +48,13 @@ contract OrderManagerFixture is BaseFixture, IOrderManagerTypes, IOrderManagerEr
             100, // tick spacing 100 = 1%
             ADMIN // Fee collector
         );
-        orderManager = new OrderManagerHandler(protocol);
+        orderManager = new OrderManagerHandler(usdnProtocol);
 
-        usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
-        usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));
-        wstETH.approve(address(protocol), type(uint256).max);
+        usdn.grantRole(usdn.MINTER_ROLE(), address(usdnProtocol));
+        usdn.grantRole(usdn.REBASER_ROLE(), address(usdnProtocol));
 
         // separate the roles ADMIN and DEPLOYER
-        protocol.transferOwnership(ADMIN);
+        usdnProtocol.transferOwnership(ADMIN);
         vm.stopPrank();
-
-        usdnInitialTotalSupply = usdn.totalSupply();
     }
 }
