@@ -25,8 +25,11 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
+import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
+import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
-abstract contract UsdnProtocolLongProxy is UsdnProtocolCommon {
+contract UsdnProtocolLongProxy is UsdnProtocolCommon {
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
     using SafeCast for uint256;
@@ -34,6 +37,19 @@ abstract contract UsdnProtocolLongProxy is UsdnProtocolCommon {
     using LibBitmap for LibBitmap.Bitmap;
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
+
+    constructor()
+        UsdnProtocolBaseStorage(
+            IUsdn(address(0)),
+            IERC20Metadata(address(0)),
+            IERC20Metadata(address(0)),
+            IOracleMiddleware(address(0)),
+            ILiquidationRewardsManager(address(0)),
+            0,
+            address(0),
+            address(0)
+        )
+    { }
 
     /**
      * @dev Structure to hold the transient data during `_initiateClosePosition`

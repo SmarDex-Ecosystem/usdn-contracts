@@ -29,8 +29,14 @@ import { HugeUint } from "src/libraries/HugeUint.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+import { IUsdnProtocolCommon } from "src/interfaces/UsdnProtocol/IUsdnProtocolCommon.sol";
 
-abstract contract UsdnProtocolCommon is UsdnProtocolBaseStorage, IUsdnProtocolEvents, InitializableReentrancyGuard {
+abstract contract UsdnProtocolCommon is
+    UsdnProtocolBaseStorage,
+    IUsdnProtocolCommon,
+    IUsdnProtocolEvents,
+    InitializableReentrancyGuard
+{
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
     using SafeCast for uint256;
