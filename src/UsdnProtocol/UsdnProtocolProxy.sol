@@ -23,13 +23,13 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 
 contract UsdnProtocol is
     UsdnProtocolBaseStorage,
-    Ownable,
     InitializableReentrancyGuard,
     UsdnProtocolLongEntry,
     UsdnProtocolActionsEntry,
     UsdnProtocolCoreEntry,
     UsdnProtocolVaultEntry,
-    IUsdnProtocolEvents
+    IUsdnProtocolEvents,
+    Ownable
 {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
