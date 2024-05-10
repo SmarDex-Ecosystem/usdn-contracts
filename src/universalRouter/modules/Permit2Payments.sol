@@ -1,7 +1,7 @@
 pragma solidity ^0.8.17;
 
-import { IAllowanceTransfer } from "src/router/interfaces/IAllowanceTransfer.sol";
-import { SafeCast160 } from "src/router/libraries/SafeCast160.sol";
+import { IAllowanceTransfer } from "src/universalRouter/interfaces/IAllowanceTransfer.sol";
+import { SafeCast160 } from "src/universalRouter/libraries/SafeCast160.sol";
 import { Payments } from "./Payments.sol";
 
 /// @title Payments through Permit2
