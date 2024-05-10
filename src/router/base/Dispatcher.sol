@@ -6,17 +6,18 @@ import { V3SwapRouter } from "../modules/uniswap/v3/V3SwapRouter.sol";
 import { BytesLib } from "../modules/uniswap/v3/BytesLib.sol";
 import { Payments } from "../modules/Payments.sol";
 import { PaymentsImmutables } from "../modules/PaymentsImmutables.sol";
+import { NFTImmutables } from "../modules/NFTImmutables.sol";
+import { Callbacks } from "../base/Callbacks.sol";
 import { Commands } from "../libraries/Commands.sol";
 import { LockAndMsgSender } from "./LockAndMsgSender.sol";
 import { ERC721 } from "solmate/src/tokens/ERC721.sol";
 import { ERC1155 } from "solmate/src/tokens/ERC1155.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
-import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
-import { ICryptoPunksMarket } from "../interfaces/external/ICryptoPunksMarket.sol";
+import { IAllowanceTransfer } from "src/router/interfaces/IAllowanceTransfer.sol";
 
 /// @title Decodes and Executes Commands
 /// @notice Called by the UniversalRouter contract to efficiently decode and execute a singular command
-abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsgSender {
+abstract contract Dispatcher is NFTImmutables, Payments, V2SwapRouter, V3SwapRouter, Callbacks, LockAndMsgSender {
     using BytesLib for bytes;
 
     error InvalidCommandType(uint256 commandType);
@@ -210,48 +211,7 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsg
             } else {
                 // 0x10 <= command < 0x18
                 if (command < Commands.THIRD_IF_BOUNDARY) {
-                    if (command == Commands.SEAPORT_V1_5) {
-                        /// @dev Seaport 1.4 and 1.5 allow for orders to be created by contracts.
-                        ///     These orders pass control to the contract offerers during fufillment,
-                        ///         allowing them to perform any number of destructive actions as a holder of the NFT.
-                        ///     Integrators should be aware that in some scenarios: e.g. purchasing an NFT that allows
-                        /// the holder
-                        ///         to claim another NFT, the contract offerer can "steal" the claim during order
-                        /// fufillment.
-                        ///     For some such purchases, an OWNER_CHECK command can be prepended to ensure that all
-                        /// tokens have the desired owner at the end of the transaction.
-                        ///     This is also outlined in the Seaport documentation:
-                        /// https://github.com/ProjectOpenSea/seaport/blob/main/docs/SeaportDocumentation.md
-                        (uint256 value, bytes calldata data) = getValueAndData(inputs);
-                        (success, output) = SEAPORT_V1_5.call{ value: value }(data);
-                    } else if (command == Commands.LOOKS_RARE_V2) {
-                        // equivalent: abi.decode(inputs, (uint256, bytes))
-                        uint256 value;
-                        assembly {
-                            value := calldataload(inputs.offset)
-                        }
-                        bytes calldata data = inputs.toBytes(1);
-                        (success, output) = LOOKS_RARE_V2.call{ value: value }(data);
-                    } else if (command == Commands.NFTX) {
-                        // equivalent: abi.decode(inputs, (uint256, bytes))
-                        (uint256 value, bytes calldata data) = getValueAndData(inputs);
-                        (success, output) = NFTX_ZAP.call{ value: value }(data);
-                    } else if (command == Commands.CRYPTOPUNKS) {
-                        // equivalent: abi.decode(inputs, (uint256, address, uint256))
-                        uint256 punkId;
-                        address recipient;
-                        uint256 value;
-                        assembly {
-                            punkId := calldataload(inputs.offset)
-                            recipient := calldataload(add(inputs.offset, 0x20))
-                            value := calldataload(add(inputs.offset, 0x40))
-                        }
-                        (success, output) = CRYPTOPUNKS.call{ value: value }(
-                            abi.encodeWithSelector(ICryptoPunksMarket.buyPunk.selector, punkId)
-                        );
-                        if (success) ICryptoPunksMarket(CRYPTOPUNKS).transferPunk(map(recipient), punkId);
-                        else output = abi.encodePacked(BuyPunkFailed.selector);
-                    } else if (command == Commands.OWNER_CHECK_721) {
+                    if (command == Commands.OWNER_CHECK_721) {
                         // equivalent: abi.decode(inputs, (address, address, uint256))
                         address owner;
                         address token;
@@ -277,51 +237,12 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsg
                         }
                         success = (ERC1155(token).balanceOf(owner, id) >= minBalance);
                         if (!success) output = abi.encodePacked(InvalidOwnerERC1155.selector);
-                    } else if (command == Commands.SWEEP_ERC721) {
-                        // equivalent: abi.decode(inputs, (address, address, uint256))
-                        address token;
-                        address recipient;
-                        uint256 id;
-                        assembly {
-                            token := calldataload(inputs.offset)
-                            recipient := calldataload(add(inputs.offset, 0x20))
-                            id := calldataload(add(inputs.offset, 0x40))
-                        }
-                        Payments.sweepERC721(token, map(recipient), id);
                     }
-                    // 0x18 <= command < 0x1f
                 } else {
-                    if (command == Commands.X2Y2_721) {
-                        (success, output) = callAndTransfer721(inputs, X2Y2);
-                    } else if (command == Commands.SUDOSWAP) {
+                    if (command == Commands.SUDOSWAP) {
                         // equivalent: abi.decode(inputs, (uint256, bytes))
                         (uint256 value, bytes calldata data) = getValueAndData(inputs);
                         (success, output) = SUDOSWAP.call{ value: value }(data);
-                    } else if (command == Commands.NFT20) {
-                        // equivalent: abi.decode(inputs, (uint256, bytes))
-                        (uint256 value, bytes calldata data) = getValueAndData(inputs);
-                        (success, output) = NFT20_ZAP.call{ value: value }(data);
-                    } else if (command == Commands.X2Y2_1155) {
-                        (success, output) = callAndTransfer1155(inputs, X2Y2);
-                    } else if (command == Commands.FOUNDATION) {
-                        (success, output) = callAndTransfer721(inputs, FOUNDATION);
-                    } else if (command == Commands.SWEEP_ERC1155) {
-                        // equivalent: abi.decode(inputs, (address, address, uint256, uint256))
-                        address token;
-                        address recipient;
-                        uint256 id;
-                        uint256 amount;
-                        assembly {
-                            token := calldataload(inputs.offset)
-                            recipient := calldataload(add(inputs.offset, 0x20))
-                            id := calldataload(add(inputs.offset, 0x40))
-                            amount := calldataload(add(inputs.offset, 0x60))
-                        }
-                        Payments.sweepERC1155(token, map(recipient), id, amount);
-                    } else if (command == Commands.ELEMENT_MARKET) {
-                        // equivalent: abi.decode(inputs, (uint256, bytes))
-                        (uint256 value, bytes calldata data) = getValueAndData(inputs);
-                        (success, output) = ELEMENT_MARKET.call{ value: value }(data);
                     } else {
                         // placeholder for command 0x1f
                         revert InvalidCommandType(command);
@@ -330,20 +251,7 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsg
             }
             // 0x20 <= command
         } else {
-            if (command == Commands.SEAPORT_V1_4) {
-                /// @dev Seaport 1.4 and 1.5 allow for orders to be created by contracts.
-                ///     These orders pass control to the contract offerers during fufillment,
-                ///         allowing them to perform any number of destructive actions as a holder of the NFT.
-                ///     Integrators should be aware that in some scenarios: e.g. purchasing an NFT that allows the
-                /// holder
-                ///         to claim another NFT, the contract offerer can "steal" the claim during order fufillment.
-                ///     For some such purchases, an OWNER_CHECK command can be prepended to ensure that all tokens have
-                /// the desired owner at the end of the transaction.
-                ///     This is also outlined in the Seaport documentation:
-                /// https://github.com/ProjectOpenSea/seaport/blob/main/docs/SeaportDocumentation.md
-                (uint256 value, bytes calldata data) = getValueAndData(inputs);
-                (success, output) = SEAPORT_V1_4.call{ value: value }(data);
-            } else if (command == Commands.EXECUTE_SUB_PLAN) {
+            if (command == Commands.EXECUTE_SUB_PLAN) {
                 bytes calldata _commands = inputs.toBytes(0);
                 bytes[] calldata _inputs = inputs.toBytesArray(1);
                 (success, output) =
