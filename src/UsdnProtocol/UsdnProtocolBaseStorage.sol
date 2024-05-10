@@ -268,6 +268,10 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         return s._positionFeeBps;
     }
 
+    function getVaultFeeBps() external view returns (uint16) {
+        return s._vaultFeeBps;
+    }
+
     function getSdexBurnOnDepositRatio() external view returns (uint32) {
         return s._sdexBurnOnDepositRatio;
     }
