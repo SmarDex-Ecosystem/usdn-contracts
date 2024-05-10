@@ -13,7 +13,7 @@ import { LockAndMsgSender } from "./LockAndMsgSender.sol";
 import { ERC721 } from "solmate/src/tokens/ERC721.sol";
 import { ERC1155 } from "solmate/src/tokens/ERC1155.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
-import { IAllowanceTransfer } from "src/universalRouter/interfaces/IAllowanceTransfer.sol";
+import { IAllowanceTransfer } from "src/UniversalRouter/interfaces/IAllowanceTransfer.sol";
 
 /// @title Decodes and Executes Commands
 /// @notice Called by the UniversalRouter contract to efficiently decode and execute a singular command
