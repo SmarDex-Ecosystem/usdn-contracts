@@ -31,7 +31,7 @@ import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
-abstract contract UsdnProtocolVaultProxy is UsdnProtocolCommon, InitializableReentrancyGuard {
+abstract contract UsdnProtocolVaultProxy is UsdnProtocolCommon {
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
     using SafeCast for uint256;
