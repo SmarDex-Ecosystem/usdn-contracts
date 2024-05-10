@@ -1,22 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
+import { IUsdnProtocolCommon } from "src/interfaces/UsdnProtocol/IUsdnProtocolCommon.sol";
 import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { HugeUint } from "src/libraries/HugeUint.sol";
+import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title IUsdnProtocolLong
  * @notice Interface for the long side layer of the USDN protocol.
  */
-interface IUsdnProtocolLongProxy is IUsdnProtocolVault {
-    /**
-     * @notice Get the value of the lowest usable tick, taking into account the tick spacing
-     * @dev Note that the effective minimum tick of a newly open long position also depends on the minimum allowed
-     * leverage value and the current value of the liquidation price multiplier.
-     */
-    function minTick() external view returns (int24);
-
+interface IUsdnProtocolLongProxy is IUsdnProtocolCommon {
     /**
      * @notice Get the value of the highest usable tick, taking into account the tick spacing
      * @dev Note that the effective maximum tick of a newly open long position also depends on the maximum allowed
@@ -56,71 +49,43 @@ interface IUsdnProtocolLongProxy is IUsdnProtocolVault {
         view
         returns (int256);
 
-    /**
-     * @notice Get the tick number corresponding to a given price
-     * @dev Uses the values from storage for the various variables
-     * @param price The price
-     * @return The tick number, a multiple of the tick spacing
-     */
-    function getEffectiveTickForPrice(uint128 price) external view returns (int24);
+    function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_);
 
-    /**
-     * @notice Get the tick number corresponding to a given price
-     * @dev This takes into account the effects of the funding and respects the tick spacing
-     * @param price The price
-     * @param assetPrice The current price of the asset
-     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
-     * @param accumulator The liquidation multiplier accumulator
-     * @param tickSpacing The tick spacing
-     * @return The tick number, a multiple of the tick spacing
-     */
-    function getEffectiveTickForPrice(
-        uint128 price,
-        uint256 assetPrice,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator,
-        int24 tickSpacing
-    ) external view returns (int24);
-
-    /**
-     * @notice Get the liquidation price corresponding to a given tick number
-     * @dev Uses the values from storage for the various variables
-     * Note that ticks that are not a multiple of the tick spacing cannot contain a long position.
-     * @param tick The tick number
-     * @return The liquidation price
-     */
-    function getEffectivePriceForTick(int24 tick) external view returns (uint128);
-
-    /**
-     * @notice Get the liquidation price corresponding to a given tick number, taking into account the effect of funding
-     * @dev Note that ticks that are not a multiple of the tick spacing cannot contain a long position.
-     * @param tick The tick number
-     * @param assetPrice The current price of the asset
-     * @param longTradingExpo The trading expo of the long side (total expo - balance long)
-     * @param accumulator The liquidation multiplier accumulator
-     * @return The liquidation price
-     */
-    function getEffectivePriceForTick(
-        int24 tick,
-        uint256 assetPrice,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator
-    ) external view returns (uint128);
-
-    /**
-     * @notice Retrieve the liquidation penalty assigned to `tick` if there are positions in it, otherwise retrieve the
-     * current setting value from storage.
-     * @param tick The tick number
-     * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
-     */
-    function getTickLiquidationPenalty(int24 tick) external view returns (uint8);
-
-    function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
         external
-        pure
-        returns (uint128 totalExpo_);
+        payable
+        returns (uint256 validatedActions_);
 
-    function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+    function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
-        returns (uint256 tickVersion_, uint256 index_);
+        payable
+        returns (uint256 liquidatedPositions_);
+
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
+
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
+
+    function initiateOpenPosition(
+        uint128 amount,
+        uint128 desiredLiqPrice,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData,
+        address to
+    ) external payable returns (PositionId memory posId_);
+
+    function validateOpenPosition(bytes calldata openPriceData, PreviousActionsData calldata previousActionsData)
+        external
+        payable;
+
+    function initiateClosePosition(
+        PositionId calldata posId,
+        uint128 amountToClose,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData,
+        address to
+    ) external payable;
+
+    function validateClosePosition(bytes calldata closePriceData, PreviousActionsData calldata previousActionsData)
+        external
+        payable;
 }
