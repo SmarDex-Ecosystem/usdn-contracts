@@ -33,6 +33,8 @@ abstract contract Dispatcher is NFTImmutables, Payments, V2SwapRouter, V3SwapRou
     /// @return success True on success of the command, false on failure
     /// @return output The outputs or error messages, if any, from the command
     function dispatch(bytes1 commandType, bytes calldata inputs) internal returns (bool success, bytes memory output) {
+        // TODO CHECK IF USEFUL
+        output = "";
         uint256 command = uint8(commandType & Commands.COMMAND_TYPE_MASK);
 
         success = true;
@@ -186,77 +188,18 @@ abstract contract Dispatcher is NFTImmutables, Payments, V2SwapRouter, V3SwapRou
                             amountMin := calldataload(add(inputs.offset, 0x20))
                         }
                         Payments.unwrapWETH9(map(recipient), amountMin);
-                    } else if (command == Commands.PERMIT2_TRANSFER_FROM_BATCH) {
-                        (IAllowanceTransfer.AllowanceTransferDetails[] memory batchDetails) =
-                            abi.decode(inputs, (IAllowanceTransfer.AllowanceTransferDetails[]));
-                        permit2TransferFrom(batchDetails, lockedBy);
-                    } else if (command == Commands.BALANCE_CHECK_ERC20) {
-                        // equivalent: abi.decode(inputs, (address, address, uint256))
-                        address owner;
-                        address token;
-                        uint256 minBalance;
-                        assembly {
-                            owner := calldataload(inputs.offset)
-                            token := calldataload(add(inputs.offset, 0x20))
-                            minBalance := calldataload(add(inputs.offset, 0x40))
-                        }
-                        success = (ERC20(token).balanceOf(owner) >= minBalance);
-                        if (!success) output = abi.encodePacked(BalanceTooLow.selector);
                     } else {
                         // placeholder area for command 0x0f
                         revert InvalidCommandType(command);
                     }
                 }
-                // 0x10 <= command
             } else {
-                // 0x10 <= command < 0x18
-                if (command < Commands.THIRD_IF_BOUNDARY) {
-                    if (command == Commands.OWNER_CHECK_721) {
-                        // equivalent: abi.decode(inputs, (address, address, uint256))
-                        address owner;
-                        address token;
-                        uint256 id;
-                        assembly {
-                            owner := calldataload(inputs.offset)
-                            token := calldataload(add(inputs.offset, 0x20))
-                            id := calldataload(add(inputs.offset, 0x40))
-                        }
-                        success = (ERC721(token).ownerOf(id) == owner);
-                        if (!success) output = abi.encodePacked(InvalidOwnerERC721.selector);
-                    } else if (command == Commands.OWNER_CHECK_1155) {
-                        // equivalent: abi.decode(inputs, (address, address, uint256, uint256))
-                        address owner;
-                        address token;
-                        uint256 id;
-                        uint256 minBalance;
-                        assembly {
-                            owner := calldataload(inputs.offset)
-                            token := calldataload(add(inputs.offset, 0x20))
-                            id := calldataload(add(inputs.offset, 0x40))
-                            minBalance := calldataload(add(inputs.offset, 0x60))
-                        }
-                        success = (ERC1155(token).balanceOf(owner, id) >= minBalance);
-                        if (!success) output = abi.encodePacked(InvalidOwnerERC1155.selector);
-                    }
-                } else {
-                    if (command == Commands.SUDOSWAP) {
-                        // equivalent: abi.decode(inputs, (uint256, bytes))
-                        (uint256 value, bytes calldata data) = getValueAndData(inputs);
-                        (success, output) = SUDOSWAP.call{ value: value }(data);
-                    } else {
-                        // placeholder for command 0x1f
-                        revert InvalidCommandType(command);
-                    }
-                }
+                // placeholder for command 0x1f
+                revert InvalidCommandType(command);
             }
             // 0x20 <= command
         } else {
-            if (command == Commands.EXECUTE_SUB_PLAN) {
-                bytes calldata _commands = inputs.toBytes(0);
-                bytes[] calldata _inputs = inputs.toBytesArray(1);
-                (success, output) =
-                    (address(this)).call(abi.encodeWithSelector(Dispatcher.execute.selector, _commands, _inputs));
-            } else if (command == Commands.APPROVE_ERC20) {
+            if (command == Commands.APPROVE_ERC20) {
                 ERC20 token;
                 PaymentsImmutables.Spenders spender;
                 assembly {
