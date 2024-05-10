@@ -51,6 +51,7 @@ struct Storage {
     int256 _depositExpoImbalanceLimitBps;
     int256 _closeExpoImbalanceLimitBps;
     uint16 _positionFeeBps;
+    uint16 _vaultFeeBps;
     uint32 _sdexBurnOnDepositRatio;
     address _feeCollector;
     uint64 _securityDepositValue;
@@ -82,6 +83,8 @@ struct Storage {
     LibBitmap.Bitmap _tickBitmap;
     // implementations
     address _protocol;
+    address _protocolLong;
+    address _protocolVault;
 }
 
 contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
@@ -138,6 +141,7 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         s._depositExpoImbalanceLimitBps = 200;
         s._closeExpoImbalanceLimitBps = 600;
         s._positionFeeBps = 4; // 0.04%
+        s._vaultFeeBps = 4; // 0.04%
         s._sdexBurnOnDepositRatio = 1e6; // 1%
         s._securityDepositValue = 0.5 ether;
         s._usdnRebaseInterval = 0;
