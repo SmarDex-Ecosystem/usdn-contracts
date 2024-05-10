@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { Position, LiquidationsEffects, TickData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -78,6 +77,55 @@ abstract contract UsdnProtocolLongProxy is UsdnProtocolCommon {
         PositionId posId;
         uint8 liquidationPenalty;
         uint128 positionTotalExpo;
+    }
+
+    // TO DO : here or vault ? (not used except tests)
+    function funding(uint128 timestamp) public view returns (int256 fund_, int256 oldLongExpo_) {
+        (fund_, oldLongExpo_) = _funding(timestamp, s._EMA);
+    }
+
+    // TO DO : here or vault ?
+    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
+        external
+        payable
+        initializedAndNonReentrant
+        returns (uint256 validatedActions_)
+    {
+        uint256 balanceBefore = address(this).balance;
+        uint256 amountToRefund;
+
+        if (maxValidations > previousActionsData.rawIndices.length) {
+            maxValidations = previousActionsData.rawIndices.length;
+        }
+        do {
+            (, bool executed, uint256 securityDepositValue) = _executePendingAction(previousActionsData);
+            if (!executed) {
+                break;
+            }
+            unchecked {
+                validatedActions_++;
+                amountToRefund += securityDepositValue;
+            }
+        } while (validatedActions_ < maxValidations);
+        _refundExcessEther(0, amountToRefund, balanceBefore);
+        _checkPendingFee();
+    }
+
+    function liquidate(bytes calldata currentPriceData, uint16 iterations)
+        external
+        payable
+        initializedAndNonReentrant
+        returns (uint256 liquidatedPositions_)
+    {
+        uint256 balanceBefore = address(this).balance;
+        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, 0, currentPriceData);
+
+        liquidatedPositions_ = _applyPnlAndFundingAndLiquidate(
+            currentPrice.neutralPrice, currentPrice.timestamp, iterations, true, currentPriceData
+        );
+
+        _refundExcessEther(0, 0, balanceBefore);
+        _checkPendingFee();
     }
 
     function maxTick() public view returns (int24 tick_) {

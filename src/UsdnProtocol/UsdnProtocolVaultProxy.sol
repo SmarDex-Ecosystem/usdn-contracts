@@ -29,7 +29,7 @@ import { UsdnProtocolCommon } from "src/UsdnProtocol/UsdnProtocolCommon.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 abstract contract UsdnProtocolVaultProxy is UsdnProtocolCommon {
     using SafeERC20 for IERC20Metadata;
@@ -39,6 +39,7 @@ abstract contract UsdnProtocolVaultProxy is UsdnProtocolCommon {
     using LibBitmap for LibBitmap.Bitmap;
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
+    using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /**
      * @dev Structure to hold the transient data during `_initiateWithdrawal`
@@ -67,6 +68,77 @@ abstract contract UsdnProtocolVaultProxy is UsdnProtocolCommon {
 
     function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
         price_ = usdnPrice(currentPrice, uint128(block.timestamp));
+    }
+
+    // TO DO : not used except in tests
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
+        (action_,) = _getPendingAction(user);
+    }
+
+    // TO DO : not used except in tests
+    function getActionablePendingActions(address currentUser)
+        external
+        view
+        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
+    {
+        uint256 queueLength = s._pendingActionsQueue.length();
+        if (queueLength == 0) {
+            // empty queue, early return
+            return (actions_, rawIndices_);
+        }
+        actions_ = new PendingAction[](s.MAX_ACTIONABLE_PENDING_ACTIONS);
+        rawIndices_ = new uint128[](s.MAX_ACTIONABLE_PENDING_ACTIONS);
+        uint256 maxIter = s.MAX_ACTIONABLE_PENDING_ACTIONS;
+        if (queueLength < maxIter) {
+            maxIter = queueLength;
+        }
+
+        uint256 i = 0;
+        uint256 arrayLen = 0;
+        do {
+            // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
+            (PendingAction memory candidate, uint128 rawIndex) = s._pendingActionsQueue.at(i);
+
+            // if the msg.sender is equal to the user of the pending action, then the pending action is not actionable
+            // by this user (it will get validated automatically by their action)
+            // and so we need to return the next item in the queue so that they can validate a third-party pending
+            // action (if any)
+            if (candidate.timestamp == 0 || candidate.user == currentUser) {
+                rawIndices_[i] = rawIndex;
+                // try the next one
+                unchecked {
+                    i++;
+                }
+            } else if (candidate.timestamp + s._validationDeadline < block.timestamp) {
+                // we found an actionable pending action
+                actions_[i] = candidate;
+                rawIndices_[i] = rawIndex;
+
+                // continue looking
+                unchecked {
+                    i++;
+                    arrayLen = i;
+                }
+            } else {
+                // the pending action is not actionable (it is too recent),
+                // following actions can't be actionable either so we return
+                break;
+            }
+        } while (i < maxIter);
+        assembly {
+            // shrink the size of the arrays
+            mstore(actions_, arrayLen)
+            mstore(rawIndices_, arrayLen)
+        }
+    }
+
+    // TO DO : not used
+    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (int256 expo_)
+    {
+        expo_ = vaultAssetAvailableWithFunding(currentPrice, timestamp);
     }
 
     /**
