@@ -25,6 +25,7 @@ struct Storage {
     uint16 MAX_LIQUIDATION_ITERATION;
     address DEAD_ADDRESS;
     uint256 MIN_USDN_SUPPLY;
+    uint256 MAX_ACTIONABLE_PENDING_ACTIONS;
     // immutable
     int24 _tickSpacing;
     IERC20Metadata _asset;
@@ -124,6 +125,7 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         s.MAX_LIQUIDATION_ITERATION = 10;
         s.DEAD_ADDRESS = address(0xdead);
         s.MIN_USDN_SUPPLY = 1000;
+        s.MAX_ACTIONABLE_PENDING_ACTIONS = 20;
 
         // Parameters
         s._minLeverage = 10 ** s.LEVERAGE_DECIMALS + 10 ** 12;
