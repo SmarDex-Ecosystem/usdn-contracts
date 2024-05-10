@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import { IWETH9 } from "../interfaces/external/IWETH9.sol";
-import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
+import { IAllowanceTransfer } from "../libraries/permit2/interfaces/IAllowanceTransfer.sol";
 
 struct PaymentsParameters {
     address permit2;
