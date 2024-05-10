@@ -50,6 +50,7 @@ contract UsdnProtocolVaultProxy is UsdnProtocolCommon, IUsdnProtocolVaultProxy {
             ILiquidationRewardsManager(address(0)),
             0,
             address(0),
+            address(0),
             address(0)
         )
     { }

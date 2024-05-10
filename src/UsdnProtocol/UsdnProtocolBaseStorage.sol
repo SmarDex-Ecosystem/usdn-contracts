@@ -112,7 +112,8 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        address protocol
+        address protocolLong,
+        address protocolVault
     ) {
         // constants
         s.LEVERAGE_DECIMALS = 21;
@@ -150,7 +151,9 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         // Long positions
         s._EMA = int256(3 * 10 ** (s.FUNDING_RATE_DECIMALS - 4));
 
-        s._protocol = protocol;
+        s._protocol = address(this);
+        s._protocolLong = protocolLong;
+        s._protocolVault = protocolVault;
 
         // Since all USDN must be minted by the protocol, we check that the total supply is 0
         if (usdn.totalSupply() != 0) {
