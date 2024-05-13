@@ -102,7 +102,7 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
      * @custom:then The user receives the expected amount
      */
     function test_withdrawPendingAssetsWithAmountLessThanDeposited() external {
-        uint256 expectedPositionVersion = orderManager.getCurrentPositionVersion() + 1;
+        uint256 expectedPositionVersion = orderManager.getPositionVersion() + 1;
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 

@@ -44,7 +44,7 @@ contract OrderManager is Ownable, IOrderManager {
     }
 
     /// @inheritdoc IOrderManager
-    function getCurrentPositionVersion() external view returns (uint128) {
+    function getPositionVersion() external view returns (uint128) {
         return _positionVersion;
     }
 

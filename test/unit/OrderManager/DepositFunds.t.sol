@@ -47,7 +47,7 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
      * @custom:then His assets are transferred to the contract
      */
     function test_depositAssets() external {
-        uint128 expectedPositionVersion = orderManager.getCurrentPositionVersion() + 1;
+        uint128 expectedPositionVersion = orderManager.getPositionVersion() + 1;
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
@@ -77,7 +77,7 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
      * @custom:and the sum of deposits is saved
      */
     function test_depositAssetsTwice() external {
-        uint128 expectedPositionVersion = orderManager.getCurrentPositionVersion() + 1;
+        uint128 expectedPositionVersion = orderManager.getPositionVersion() + 1;
         uint128 firstDepositAmount = 1 ether;
         orderManager.depositAssets(firstDepositAmount, address(this));
 

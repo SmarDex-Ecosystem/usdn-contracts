@@ -28,7 +28,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents, IOrderManag
     function withdrawPendingAssets(uint128 amount, address to) external;
 
     /// @notice Returns the version of the current position (0 means no position open)
-    function getCurrentPositionVersion() external view returns (uint128);
+    function getPositionVersion() external view returns (uint128);
 
     /// @notice Returns the number of time the position of te order manager was liquidated
     function getLiquidationCount() external view returns (uint128);
