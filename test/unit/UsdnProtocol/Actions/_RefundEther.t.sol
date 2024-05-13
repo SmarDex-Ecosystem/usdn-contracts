@@ -5,7 +5,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 /**
  * @custom:feature Test of the protocol `_refundEther` function
- * @custom:background Increase the balance of the protocol
+ * @custom:background Given a protocol with a balance of 0.1 ether
  */
 contract TestRefundEther is UsdnProtocolBaseFixture {
     function setUp() public {
