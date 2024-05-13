@@ -359,7 +359,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:when getPendingAction is called
      * @custom:then it returns an empty action and 0 as the rawIndex
      */
-    function test_emptyPendingAction() public {
+    function test_getPendingActionWithoutPendingAction() public {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
         assertTrue(action.action == ProtocolAction.None, "action should be None");
         assertEq(action.user, address(0), "user should be empty");
