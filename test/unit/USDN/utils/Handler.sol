@@ -55,7 +55,7 @@ contract UsdnHandler is Usdn, Test {
         _update(from, to, value);
     }
 
-    function i_convertToTokens(uint256 amountShares, Rounding rounding, uint256 d) external view returns (uint256) {
+    function i_convertToTokens(uint256 amountShares, Rounding rounding, uint256 d) external pure returns (uint256) {
         return _convertToTokens(amountShares, rounding, d);
     }
 
