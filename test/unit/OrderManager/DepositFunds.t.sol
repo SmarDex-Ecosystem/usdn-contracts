@@ -47,11 +47,12 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
      * @custom:then His assets are transferred to the contract
      */
     function test_depositAssets() external {
+        uint128 expectedPositionVersion = orderManager.getCurrentPositionVersion() + 1;
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit AssetsDeposited(1 ether, address(this), 0);
+        emit AssetsDeposited(1 ether, address(this), expectedPositionVersion);
         orderManager.depositAssets(1 ether, address(this));
 
         assertEq(
@@ -63,9 +64,7 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
 
         UserDeposit memory userDeposit = orderManager.getUserDepositData(address(this));
         assertEq(
-            userDeposit.entryPositionVersion,
-            orderManager.getCurrentPositionVersion(),
-            "The position version should be the current one"
+            userDeposit.entryPositionVersion, expectedPositionVersion, "The position version should be the expected one"
         );
         assertEq(userDeposit.amount, 1 ether, "The amount should have been saved");
     }
@@ -78,6 +77,7 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
      * @custom:and the sum of deposits is saved
      */
     function test_depositAssetsTwice() external {
+        uint128 expectedPositionVersion = orderManager.getCurrentPositionVersion() + 1;
         uint128 firstDepositAmount = 1 ether;
         orderManager.depositAssets(firstDepositAmount, address(this));
 
@@ -85,7 +85,7 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
         vm.expectEmit();
-        emit AssetsDeposited(secondDepositAmount, address(this), 0);
+        emit AssetsDeposited(secondDepositAmount, address(this), expectedPositionVersion);
         orderManager.depositAssets(secondDepositAmount, address(this));
 
         assertEq(
@@ -101,9 +101,7 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
 
         UserDeposit memory userDeposit = orderManager.getUserDepositData(address(this));
         assertEq(
-            userDeposit.entryPositionVersion,
-            orderManager.getCurrentPositionVersion(),
-            "The position version should be the current one"
+            userDeposit.entryPositionVersion, expectedPositionVersion, "The position version should be the expected one"
         );
         assertEq(
             userDeposit.amount, firstDepositAmount + secondDepositAmount, "The sum of amounts should have been saved"

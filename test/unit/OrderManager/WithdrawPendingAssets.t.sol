@@ -91,7 +91,7 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
 
         // Check that the user is not in the contract anymore
         UserDeposit memory userDeposit = orderManager.getUserDepositData(address(this));
-        assertEq(userDeposit.entryPositionVersion, 0, "The position version be back to 0");
+        assertEq(userDeposit.entryPositionVersion, 0, "The position version should be back to 0");
         assertEq(userDeposit.amount, 0, "The amount should be 0");
     }
 
@@ -102,7 +102,7 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
      * @custom:then The user receives the expected amount
      */
     function test_withdrawPendingAssetsWithAmountLessThanDeposited() external {
-        uint256 positionVersion = orderManager.getCurrentPositionVersion();
+        uint256 expectedPositionVersion = orderManager.getCurrentPositionVersion() + 1;
         uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
@@ -122,7 +122,9 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
         );
 
         UserDeposit memory userDeposit = orderManager.getUserDepositData(address(this));
-        assertEq(userDeposit.entryPositionVersion, positionVersion, "The position version should not have changed");
+        assertEq(
+            userDeposit.entryPositionVersion, expectedPositionVersion, "The position version should not have changed"
+        );
         assertEq(userDeposit.amount, 0.4 ether, "The amount withdrawn should have been subtracted");
     }
 }

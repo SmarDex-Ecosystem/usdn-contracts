@@ -66,19 +66,19 @@ contract OrderManager is Ownable, IOrderManager {
 
         uint128 currentVersion = _positionVersion;
         UserDeposit storage depositData = _userDeposit[to];
-        if (depositData.amount != 0 && depositData.entryPositionVersion < currentVersion) {
+        if (depositData.amount != 0 && depositData.entryPositionVersion <= currentVersion) {
             revert OrderManagerUserNotPending();
         }
 
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         if (depositData.amount == 0) {
-            depositData.entryPositionVersion = currentVersion;
+            depositData.entryPositionVersion = currentVersion + 1;
         }
 
         depositData.amount += amount;
 
-        emit AssetsDeposited(amount, to, currentVersion);
+        emit AssetsDeposited(amount, to, currentVersion + 1);
     }
 
     /// @inheritdoc IOrderManager
@@ -88,7 +88,7 @@ contract OrderManager is Ownable, IOrderManager {
         }
 
         UserDeposit memory depositData = _userDeposit[msg.sender];
-        if (depositData.amount == 0 || depositData.entryPositionVersion < _positionVersion) {
+        if (depositData.amount == 0 || depositData.entryPositionVersion <= _positionVersion) {
             revert OrderManagerUserNotPending();
         }
 
