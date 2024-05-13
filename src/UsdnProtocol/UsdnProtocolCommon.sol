@@ -203,7 +203,7 @@ abstract contract UsdnProtocolCommon is
      * @return hash_ The hash of the tick
      * @return version_ The version of the tick
      */
-    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+    function _tickHash(int24 tick) public view returns (bytes32 hash_, uint256 version_) {
         version_ = s._tickVersion[tick];
         hash_ = tickHash(tick, version_);
     }
@@ -238,7 +238,7 @@ abstract contract UsdnProtocolCommon is
      * @param currentPrice The current price
      * @return available_ The available balance on the long side
      */
-    function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
+    function _longAssetAvailable(uint128 currentPrice) public view returns (int256 available_) {
         available_ = _longAssetAvailable(s._totalExpo, s._balanceLong, currentPrice, s._lastPrice);
     }
 
@@ -272,7 +272,10 @@ abstract contract UsdnProtocolCommon is
      *      - the initialization security deposit in case of a validation action.
      * @param balanceBefore The balance of the contract before the action.
      */
-    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) internal {
+    function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore)
+        public
+        payable
+    {
         uint256 positive = amountToRefund + address(this).balance + msg.value;
         uint256 negative = balanceBefore + securityDepositValue;
 
@@ -310,7 +313,7 @@ abstract contract UsdnProtocolCommon is
      * @return securityDepositValue_ The security deposit value of the executed action
      */
     function _executePendingActionOrRevert(PreviousActionsData calldata data)
-        internal
+        public
         returns (uint256 securityDepositValue_)
     {
         bool success;
@@ -328,7 +331,7 @@ abstract contract UsdnProtocolCommon is
      * @return securityDepositValue_ The security deposit value of the executed action
      */
     function _executePendingAction(PreviousActionsData calldata data)
-        internal
+        public
         returns (bool success_, bool executed_, uint256 securityDepositValue_)
     {
         (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction();
@@ -494,7 +497,7 @@ abstract contract UsdnProtocolCommon is
      * penalty, then the position value is negative (bad debt)
      */
     function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
-        internal
+        public
         pure
         returns (int256 value_)
     {
@@ -612,7 +615,7 @@ abstract contract UsdnProtocolCommon is
      * @param startPrice Entry price of the position
      * @param leverage Leverage of the position
      */
-    function _getLiquidationPrice(uint128 startPrice, uint128 leverage) internal view returns (uint128 price_) {
+    function _getLiquidationPrice(uint128 startPrice, uint128 leverage) public view returns (uint128 price_) {
         price_ = (startPrice - ((uint256(10) ** s.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
     }
 
@@ -672,7 +675,7 @@ abstract contract UsdnProtocolCommon is
         Position memory pos,
         uint128 amountToRemove,
         uint128 totalExpoToRemove
-    ) internal {
+    ) public {
         (bytes32 tickHash,) = _tickHash(tick);
         TickData storage tickData = s._tickData[tickHash];
         uint256 unadjustedTickPrice =
@@ -842,7 +845,7 @@ abstract contract UsdnProtocolCommon is
     }
 
     /// @dev This does not take into account the liquidation penalty
-    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) internal view returns (uint128 leverage_) {
+    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) public view returns (uint128 leverage_) {
         if (startPrice <= liquidationPrice) {
             // this situation is not allowed (newly open position must be solvent)
             // Also, calculation below would underflow
@@ -911,7 +914,7 @@ abstract contract UsdnProtocolCommon is
      * @return usdnShares_ The amount of USDN shares
      */
     function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB)
-        internal
+        public
         pure
         returns (uint256 usdnShares_)
     {
@@ -926,7 +929,7 @@ abstract contract UsdnProtocolCommon is
      * @return assetExpected_ The expected amount of asset to be received
      */
     function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
-        internal
+        public
         pure
         returns (uint256 assetExpected_)
     {
@@ -1019,7 +1022,7 @@ abstract contract UsdnProtocolCommon is
         uint256 balanceLong,
         uint128 newPrice,
         uint128 oldPrice
-    ) internal pure returns (int256 available_) {
+    ) public pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
         int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
 
@@ -1033,7 +1036,7 @@ abstract contract UsdnProtocolCommon is
      * ProtocolAction.None
      * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
      */
-    function _getActionablePendingAction() internal returns (PendingAction memory action_, uint128 rawIndex_) {
+    function _getActionablePendingAction() public returns (PendingAction memory action_, uint128 rawIndex_) {
         uint256 queueLength = s._pendingActionsQueue.length();
         if (queueLength == 0) {
             // empty queue, early return
@@ -1088,7 +1091,7 @@ abstract contract UsdnProtocolCommon is
      * @return vaultAction_ The converted deposit pending action
      */
     function _toDepositPendingAction(PendingAction memory action)
-        internal
+        public
         pure
         returns (DepositPendingAction memory vaultAction_)
     {
@@ -1103,7 +1106,7 @@ abstract contract UsdnProtocolCommon is
      * @return vaultAction_ The converted withdrawal pending action
      */
     function _toWithdrawalPendingAction(PendingAction memory action)
-        internal
+        public
         pure
         returns (WithdrawalPendingAction memory vaultAction_)
     {
@@ -1118,7 +1121,7 @@ abstract contract UsdnProtocolCommon is
      * @return longAction_ The converted long pending action
      */
     function _toLongPendingAction(PendingAction memory action)
-        internal
+        public
         pure
         returns (LongPendingAction memory longAction_)
     {
@@ -1133,7 +1136,7 @@ abstract contract UsdnProtocolCommon is
      * @return pendingAction_ The converted untyped pending action
      */
     function _convertDepositPendingAction(DepositPendingAction memory action)
-        internal
+        public
         pure
         returns (PendingAction memory pendingAction_)
     {
@@ -1210,7 +1213,7 @@ abstract contract UsdnProtocolCommon is
         uint16 iteration,
         int256 tempLongBalance,
         int256 tempVaultBalance
-    ) internal returns (LiquidationsEffects memory effects_) {
+    ) public returns (LiquidationsEffects memory effects_) {
         int256 longTradingExpo = s._totalExpo.toInt256() - tempLongBalance;
         if (longTradingExpo <= 0) {
             // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become
@@ -1332,7 +1335,7 @@ abstract contract UsdnProtocolCommon is
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
         TickData memory tickData
-    ) internal view returns (int256 value_) {
+    ) public view returns (int256 value_) {
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(
             _calcTickWithoutPenalty(tick, tickData.liquidationPenalty), currentPrice, longTradingExpo, accumulator
         );
@@ -1357,7 +1360,7 @@ abstract contract UsdnProtocolCommon is
      * @param liquidationPenalty The liquidation penalty of the tick
      * @return tick_ The tick corresponding to the liquidation price without penalty
      */
-    function _calcTickWithoutPenalty(int24 tick, uint8 liquidationPenalty) internal view returns (int24 tick_) {
+    function _calcTickWithoutPenalty(int24 tick, uint8 liquidationPenalty) public view returns (int24 tick_) {
         tick_ = tick - int24(uint24(liquidationPenalty)) * s._tickSpacing;
     }
 
@@ -1436,7 +1439,7 @@ abstract contract UsdnProtocolCommon is
      * @param searchStart The tick from which to start searching
      * @return tick_ The next highest tick below `searchStart`
      */
-    function _findHighestPopulatedTick(int24 searchStart) internal view returns (int24 tick_) {
+    function _findHighestPopulatedTick(int24 searchStart) public view returns (int24 tick_) {
         uint256 index = s._tickBitmap.findLastSet(_calcBitmapIndexFromTick(searchStart));
         if (index == LibBitmap.NOT_FOUND) {
             tick_ = minTick();
@@ -1450,7 +1453,7 @@ abstract contract UsdnProtocolCommon is
      * @param index The index into the Bitmap
      * @return tick_ The tick corresponding to the index, a multiple of the tick spacing
      */
-    function _calcTickFromBitmapIndex(uint256 index) internal view returns (int24 tick_) {
+    function _calcTickFromBitmapIndex(uint256 index) public view returns (int24 tick_) {
         tick_ = _calcTickFromBitmapIndex(index, s._tickSpacing);
     }
 
@@ -1460,7 +1463,7 @@ abstract contract UsdnProtocolCommon is
      * @param tickSpacing The tick spacing to use
      * @return tick_ The tick corresponding to the index, a multiple of `tickSpacing`
      */
-    function _calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) internal pure returns (int24 tick_) {
+    function _calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) public pure returns (int24 tick_) {
         tick_ = int24( // cast to int24 is safe as index + TickMath.MIN_TICK cannot be above or below int24 limits
             (
                 int256(index) // cast to int256 is safe as the index is lower than type(int24).max
@@ -1479,7 +1482,7 @@ abstract contract UsdnProtocolCommon is
      * @param tick The tick to convert, a multiple of the tick spacing
      * @return index_ The index into the Bitmap
      */
-    function _calcBitmapIndexFromTick(int24 tick) internal view returns (uint256 index_) {
+    function _calcBitmapIndexFromTick(int24 tick) public view returns (uint256 index_) {
         index_ = _calcBitmapIndexFromTick(tick, s._tickSpacing);
     }
 
@@ -1489,7 +1492,7 @@ abstract contract UsdnProtocolCommon is
      * @param tickSpacing The tick spacing to use
      * @return index_ The index into the Bitmap
      */
-    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) internal pure returns (uint256 index_) {
+    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) public pure returns (uint256 index_) {
         index_ = uint256( // cast is safe as the min tick is always above TickMath.MIN_TICK
             (int256(tick) - TickMath.MIN_TICK) // shift into positive
                 / tickSpacing
@@ -1540,7 +1543,7 @@ abstract contract UsdnProtocolCommon is
      * happened
      * @return rebased_ Whether a rebase was performed
      */
-    function _usdnRebase(uint128 assetPrice, bool ignoreInterval) internal returns (bool rebased_) {
+    function _usdnRebase(uint128 assetPrice, bool ignoreInterval) public returns (bool rebased_) {
         if (!ignoreInterval && block.timestamp - s._lastRebaseCheck < s._usdnRebaseInterval) {
             return false;
         }
@@ -1574,7 +1577,7 @@ abstract contract UsdnProtocolCommon is
      * @return price_ The price of the USDN token
      */
     function _calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
-        internal
+        public
         view
         returns (uint256 price_)
     {
@@ -1592,7 +1595,7 @@ abstract contract UsdnProtocolCommon is
      * @return totalSupply_ The required total supply to achieve `targetPrice`
      */
     function _calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
-        internal
+        public
         view
         returns (uint256 totalSupply_)
     {
@@ -1648,7 +1651,7 @@ abstract contract UsdnProtocolCommon is
      * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
      */
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
-        internal
+        public
         returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
     {
         // cache variable for optimization
@@ -1732,7 +1735,7 @@ abstract contract UsdnProtocolCommon is
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
      * @return The new EMA value
      */
-    function _updateEMA(uint128 secondsElapsed) internal returns (int256) {
+    function _updateEMA(uint128 secondsElapsed) public returns (int256) {
         return s._EMA = calcEMA(s._lastFunding, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 
@@ -1774,7 +1777,7 @@ abstract contract UsdnProtocolCommon is
      * @return action_ The pending action struct if any, otherwise a zero-initialized struct
      * @return rawIndex_ The raw index of the pending action in the queue
      */
-    function _getPendingAction(address user) internal view returns (PendingAction memory action_, uint128 rawIndex_) {
+    function _getPendingAction(address user) public view returns (PendingAction memory action_, uint128 rawIndex_) {
         uint256 pendingActionIndex = s._pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
@@ -1794,7 +1797,7 @@ abstract contract UsdnProtocolCommon is
      * @return securityDepositValue_ The security deposit value of the stale pending action
      */
     function _addPendingAction(address user, PendingAction memory action)
-        internal
+        public
         returns (uint256 securityDepositValue_)
     {
         securityDepositValue_ = _removeStalePendingAction(user); // check if there is a pending action that was

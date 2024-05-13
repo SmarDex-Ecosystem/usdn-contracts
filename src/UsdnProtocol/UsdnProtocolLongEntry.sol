@@ -5,7 +5,9 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
-import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    Position, PositionId, LongPendingAction, PendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolCommonEntry } from "src/UsdnProtocol/UsdnProtocolCommonEntry.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
@@ -241,5 +243,98 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry {
         );
         require(success, "failed");
         (tickVersion_, index_) = abi.decode(data, (uint256, uint256));
+    }
+
+    function _calcFixedPrecisionMultiplier(
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) internal returns (uint256 multiplier_) {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongImplementation._calcFixedPrecisionMultiplier.selector,
+                assetPrice,
+                longTradingExpo,
+                accumulator
+            )
+        );
+        require(success, "failed");
+        return abi.decode(data, (uint256));
+    }
+
+    function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal {
+        (bool success,) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongImplementation._checkSafetyMargin.selector, currentPrice, liquidationPrice
+            )
+        );
+        require(success, "failed");
+    }
+
+    function _checkImbalanceLimitClose(uint256 closePosTotalExpoValue, uint256 closeCollatValue) internal {
+        (bool success,) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongImplementation._checkImbalanceLimitClose.selector,
+                closePosTotalExpoValue,
+                closeCollatValue
+            )
+        );
+        require(success, "failed");
+    }
+
+    function _assetToRemove(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
+        internal
+        returns (uint256 boundedPosValue_)
+    {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongImplementation._assetToRemove.selector, priceWithFees, liqPriceWithoutPenalty, posExpo
+            )
+        );
+        require(success, "failed");
+        boundedPosValue_ = abi.decode(data, (uint256));
+    }
+
+    function _convertLongPendingAction(LongPendingAction memory action)
+        internal
+        returns (PendingAction memory pendingAction_)
+    {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolLongImplementation._convertLongPendingAction.selector, action)
+        );
+        require(success, "failed");
+        pendingAction_ = abi.decode(data, (PendingAction));
+    }
+
+    function _validateClosePosition(address user, bytes calldata priceData)
+        internal
+        returns (uint256 securityDepositValue_)
+    {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolLongImplementation._validateClosePosition.selector, user, priceData)
+        );
+        require(success, "failed");
+        securityDepositValue_ = abi.decode(data, (uint256));
+    }
+
+    function _initiateClosePosition(
+        address user,
+        address to,
+        PositionId memory posId,
+        uint128 amountToClose,
+        bytes calldata currentPriceData
+    ) internal returns (uint256 securityDepositValue_) {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongImplementation._initiateClosePosition.selector,
+                user,
+                to,
+                posId,
+                amountToClose,
+                currentPriceData
+            )
+        );
+        require(success, "failed");
+        securityDepositValue_ = abi.decode(data, (uint256));
     }
 }

@@ -18,7 +18,7 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-contract UsdnProtocol is UsdnProtocolLongEntry, UsdnProtocolVaultEntry, IUsdnProtocolEvents, Ownable {
+contract UsdnProtocolProxy is UsdnProtocolLongEntry, UsdnProtocolVaultEntry, IUsdnProtocolEvents, Ownable {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 

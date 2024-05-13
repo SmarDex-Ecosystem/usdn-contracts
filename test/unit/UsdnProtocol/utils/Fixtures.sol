@@ -21,6 +21,8 @@ import {
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
+import { UsdnProtocolLongImplementation } from "src/UsdnProtocol/UsdnProtocolLongImplementation.sol";
+import { UsdnProtocolVaultImplementation } from "src/UsdnProtocol/UsdnProtocolVaultImplementation.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -80,6 +82,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
     MockOracleMiddleware public oracleMiddleware;
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
+    UsdnProtocolLongImplementation public protocolLong;
+    UsdnProtocolVaultImplementation public protocolVault;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
@@ -103,6 +107,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         chainlinkGasPriceFeed = new MockChainlinkOnChain();
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
 
+        protocolLong = new UsdnProtocolLongImplementation();
+        protocolVault = new UsdnProtocolVaultImplementation();
+
         protocol = new UsdnProtocolHandler(
             usdn,
             sdex,
@@ -110,7 +117,9 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
             oracleMiddleware,
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
-            ADMIN // Fee collector
+            ADMIN, // Fee collector
+            protocolLong,
+            protocolVault
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));

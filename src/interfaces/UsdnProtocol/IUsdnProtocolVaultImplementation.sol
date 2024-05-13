@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { IUsdnProtocolCommon } from "src/interfaces/UsdnProtocol/IUsdnProtocolCommon.sol";
-import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PreviousActionsData, WithdrawalPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
@@ -51,4 +51,21 @@ interface IUsdnProtocolVaultImplementation is IUsdnProtocolCommon {
     function validateWithdrawal(bytes calldata withdrawalPriceData, PreviousActionsData calldata previousActionsData)
         external
         payable;
+
+    function _calcWithdrawalAmountMSB(uint152 usdnShares) external pure returns (uint128 sharesMSB_);
+
+    function _calcWithdrawalAmountLSB(uint152 usdnShares) external pure returns (uint24 sharesLSB_);
+
+    function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view;
+
+    function _checkImbalanceLimitDeposit(uint256 depositValue) external view;
+
+    function _vaultAssetAvailable(uint128 currentPrice) external view returns (int256 available_);
+
+    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external view returns (uint256 sdexToBurn_);
+
+    function _convertWithdrawalPendingAction(WithdrawalPendingAction memory action)
+        external
+        pure
+        returns (PendingAction memory pendingAction_);
 }

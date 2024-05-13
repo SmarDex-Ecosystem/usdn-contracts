@@ -3,9 +3,12 @@ pragma solidity 0.8.20;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
 import { IUsdnProtocolVaultImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultImplementation.sol";
-import { PendingAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction,
+    PreviousActionsData,
+    WithdrawalPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolCommonEntry } from "src/UsdnProtocol/UsdnProtocolCommonEntry.sol";
 
 abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry {
@@ -68,7 +71,9 @@ abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry {
         returns (uint256 assetExpected_)
     {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolVault.previewWithdraw.selector, usdnShares, price, timestamp)
+            abi.encodeWithSelector(
+                IUsdnProtocolVaultImplementation.previewWithdraw.selector, usdnShares, price, timestamp
+            )
         );
         require(success, "failed");
         assetExpected_ = abi.decode(data, (uint256));
@@ -149,16 +154,62 @@ abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry {
         require(success, "failed");
     }
 
-    function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
-        public
-        returns (uint256 toMint_)
-    {
+    function _calcWithdrawalAmountMSB(uint152 usdnShares) internal returns (uint128 sharesMSB_) {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._calcWithdrawalAmountMSB.selector, usdnShares)
+        );
+        require(success, "failed");
+        sharesMSB_ = abi.decode(data, (uint128));
+    }
+
+    function _calcWithdrawalAmountLSB(uint152 usdnShares) internal returns (uint24 sharesLSB_) {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._calcWithdrawalAmountLSB.selector, usdnShares)
+        );
+        require(success, "failed");
+        sharesLSB_ = abi.decode(data, (uint24));
+    }
+
+    function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal {
+        (bool success,) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolVault._calcMintUsdn.selector, amount, vaultBalance, usdnTotalSupply, price
+                IUsdnProtocolVaultImplementation._checkImbalanceLimitWithdrawal.selector, withdrawalValue, totalExpo
             )
         );
         require(success, "failed");
-        toMint_ = abi.decode(data, (uint256));
+    }
+
+    function _checkImbalanceLimitDeposit(uint256 depositValue) internal {
+        (bool success,) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._checkImbalanceLimitDeposit.selector, depositValue)
+        );
+        require(success, "failed");
+    }
+
+    function _vaultAssetAvailable(uint128 currentPrice) internal returns (int256 available_) {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._vaultAssetAvailable.selector, currentPrice)
+        );
+        require(success, "failed");
+        available_ = abi.decode(data, (int256));
+    }
+
+    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) internal returns (uint256 sdexToBurn_) {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._calcSdexToBurn.selector, usdnAmount, sdexBurnRatio)
+        );
+        require(success, "failed");
+        sdexToBurn_ = abi.decode(data, (uint256));
+    }
+
+    function _convertWithdrawalPendingAction(WithdrawalPendingAction memory action)
+        internal
+        returns (PendingAction memory pendingAction_)
+    {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._convertWithdrawalPendingAction.selector, action)
+        );
+        require(success, "failed");
+        pendingAction_ = abi.decode(data, (PendingAction));
     }
 }

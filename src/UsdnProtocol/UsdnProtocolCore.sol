@@ -378,15 +378,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Calculate the trading exposure of the vault side at the time of the last balance update and currentPrice
-     * @param currentPrice The current price
-     * @return expo_ The trading exposure of the vault side
-     */
-    function _vaultTradingExpo(uint128 currentPrice) internal view returns (int256 expo_) {
-        expo_ = _vaultAssetAvailable(currentPrice);
-    }
-
-    /**
      * @notice Calculate the profits and losses of the long side, calculate the funding and apply protocol fees,
      * calculate the new liquidation multiplier and the temporary new balances for each side
      * @dev This function updates the state of `_lastPrice`, `_lastUpdateTimestamp`, `_lastFunding`, but does not

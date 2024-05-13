@@ -182,7 +182,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
      * @param sdexBurnRatio The ratio of SDEX to burn for each minted USDN
      * @return sdexToBurn_ The amount of SDEX to burn for the given USDN amount
      */
-    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) internal view returns (uint256 sdexToBurn_) {
+    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) public view returns (uint256 sdexToBurn_) {
         sdexToBurn_ = FixedPointMathLib.fullMulDiv(usdnAmount, sdexBurnRatio, s.SDEX_BURN_ON_DEPOSIT_DIVISOR);
     }
 
@@ -191,7 +191,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
      * @param usdnShares The amount of USDN shares
      * @return sharesLSB_ The 24 least significant bits of the USDN shares
      */
-    function _calcWithdrawalAmountLSB(uint152 usdnShares) internal pure returns (uint24 sharesLSB_) {
+    function _calcWithdrawalAmountLSB(uint152 usdnShares) public pure returns (uint24 sharesLSB_) {
         sharesLSB_ = uint24(usdnShares);
     }
 
@@ -200,7 +200,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
      * @param usdnShares The amount of USDN shares
      * @return sharesMSB_ The 128 most significant bits of the USDN shares
      */
-    function _calcWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
+    function _calcWithdrawalAmountMSB(uint152 usdnShares) public pure returns (uint128 sharesMSB_) {
         sharesMSB_ = uint128(usdnShares >> 24);
     }
 
@@ -230,7 +230,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
      * @param currentPrice Current price
      * @return available_ The available balance in the vault side
      */
-    function _vaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
+    function _vaultAssetAvailable(uint128 currentPrice) public view returns (int256 available_) {
         available_ = _vaultAssetAvailable(s._totalExpo, s._balanceVault, s._balanceLong, currentPrice, s._lastPrice);
     }
 
@@ -360,7 +360,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
      * @return pendingAction_ The converted untyped pending action
      */
     function _convertWithdrawalPendingAction(WithdrawalPendingAction memory action)
-        internal
+        public
         pure
         returns (PendingAction memory pendingAction_)
     {
@@ -410,7 +410,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
      * @param withdrawalValue The withdrawal value in asset
      * @param totalExpo The current total expo
      */
-    function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal view {
+    function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) public view {
         int256 withdrawalExpoImbalanceLimitBps = s._withdrawalExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
@@ -554,7 +554,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
      * the deposit limit on vault side, otherwise revert
      * @param depositValue the deposit value in asset
      */
-    function _checkImbalanceLimitDeposit(uint256 depositValue) internal view {
+    function _checkImbalanceLimitDeposit(uint256 depositValue) public view {
         int256 depositExpoImbalanceLimitBps = s._depositExpoImbalanceLimitBps;
 
         // early return in case limit is disabled

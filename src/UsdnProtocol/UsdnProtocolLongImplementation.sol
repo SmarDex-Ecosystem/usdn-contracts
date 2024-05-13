@@ -195,7 +195,7 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) internal view returns (uint256 multiplier_) {
+    ) public view returns (uint256 multiplier_) {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
             return 10 ** s.LIQUIDATION_MULTIPLIER_DECIMALS;
@@ -206,7 +206,7 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
         multiplier_ = numerator.div(accumulator);
     }
 
-    function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {
+    function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) public view {
         uint128 maxLiquidationPrice = (currentPrice * (s.BPS_DIVISOR - s._safetyMarginBps) / s.BPS_DIVISOR).toUint128();
         if (liquidationPrice >= maxLiquidationPrice) {
             revert UsdnProtocolLiquidationPriceSafetyMargin(liquidationPrice, maxLiquidationPrice);
@@ -353,7 +353,7 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
      * @return pendingAction_ The converted untyped pending action
      */
     function _convertLongPendingAction(LongPendingAction memory action)
-        internal
+        public
         pure
         returns (PendingAction memory pendingAction_)
     {
@@ -533,7 +533,7 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
-    ) internal returns (uint256 securityDepositValue_) {
+    ) public returns (uint256 securityDepositValue_) {
         (ClosePositionData memory data, bool liq) =
             _prepareClosePositionData(user, to, posId, amountToClose, currentPriceData);
         if (liq) {
@@ -659,7 +659,7 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
      * long balance
      */
     function _assetToRemove(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
-        internal
+        public
         view
         returns (uint256 boundedPosValue_)
     {
@@ -687,7 +687,7 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
      * @param closePosTotalExpoValue The close position total expo value
      * @param closeCollatValue The close position collateral value
      */
-    function _checkImbalanceLimitClose(uint256 closePosTotalExpoValue, uint256 closeCollatValue) internal view {
+    function _checkImbalanceLimitClose(uint256 closePosTotalExpoValue, uint256 closeCollatValue) public view {
         int256 closeExpoImbalanceLimitBps = s._closeExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
@@ -764,7 +764,7 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
     }
 
     function _validateClosePosition(address user, bytes calldata priceData)
-        internal
+        public
         returns (uint256 securityDepositValue_)
     {
         PendingAction memory pending = _getAndClearPendingAction(user);

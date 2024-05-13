@@ -3,7 +3,13 @@ pragma solidity >=0.8.0;
 
 import { IUsdnProtocolCommon } from "src/interfaces/UsdnProtocol/IUsdnProtocolCommon.sol";
 import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PreviousActionsData,
+    PositionId,
+    LongPendingAction,
+    PendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
  * @title IUsdnProtocolLong
@@ -90,4 +96,36 @@ interface IUsdnProtocolLongImplementation is IUsdnProtocolCommon {
     function validateClosePosition(bytes calldata closePriceData, PreviousActionsData calldata previousActionsData)
         external
         payable;
+
+    function _calcFixedPrecisionMultiplier(
+        uint256 assetPrice,
+        uint256 longTradingExpo,
+        HugeUint.Uint512 memory accumulator
+    ) external view returns (uint256 multiplier_);
+
+    function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view;
+
+    function _checkImbalanceLimitClose(uint256 closePosTotalExpoValue, uint256 closeCollatValue) external view;
+
+    function _assetToRemove(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
+        external
+        view
+        returns (uint256 boundedPosValue_);
+
+    function _convertLongPendingAction(LongPendingAction memory action)
+        external
+        pure
+        returns (PendingAction memory pendingAction_);
+
+    function _validateClosePosition(address user, bytes calldata priceData)
+        external
+        returns (uint256 securityDepositValue_);
+
+    function _initiateClosePosition(
+        address user,
+        address to,
+        PositionId memory posId,
+        uint128 amountToClose,
+        bytes calldata currentPriceData
+    ) external returns (uint256 securityDepositValue_);
 }
