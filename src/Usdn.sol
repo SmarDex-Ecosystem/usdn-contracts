@@ -27,7 +27,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /**
      * @dev Control the rounding when converting from shares to tokens
      * @param Down Round down (towards zero)
-     * @param Closest Round to the closest integer
+     * @param Closest Round towards the closest integer (0.5 rounds up)
      * @param Up Round up (towards positive infinity)
      */
     enum Rounding {
