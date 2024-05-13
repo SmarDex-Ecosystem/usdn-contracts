@@ -727,6 +727,7 @@ abstract contract UsdnProtocolCommon is UsdnProtocolBaseStorage, IUsdnProtocolCo
      */
     function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
         public
+        payable
         returns (uint256 tickVersion_, uint256 index_)
     {
         bytes32 tickHash;
@@ -781,7 +782,7 @@ abstract contract UsdnProtocolCommon is UsdnProtocolBaseStorage, IUsdnProtocolCo
     function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
         // TO DO : make this internal
         public
-        pure
+        payable
         returns (uint128 totalExpo_)
     {
         if (startPrice <= liquidationPrice) {

@@ -55,7 +55,7 @@ abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage, Initializa
         (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
             // TO DO : same
             abi.encodeWithSignature(
-                "getEffectiveTickForPrice(uint128,uint256,uint256,HugeUint.Uint512,int24",
+                "getEffectiveTickForPrice(uint128,uint256,uint256,(uint256,uint256),int24)",
                 price,
                 assetPrice,
                 longTradingExpo,

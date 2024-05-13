@@ -411,7 +411,7 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
      * @param openCollatValue The open position collateral value
      */
     // TO DO : make this internal
-    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) public view {
+    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) public payable {
         int256 openExpoImbalanceLimitBps = s._openExpoImbalanceLimitBps;
 
         // early return in case limit is disabled
