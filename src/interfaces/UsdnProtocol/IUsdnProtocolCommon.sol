@@ -32,11 +32,11 @@ interface IUsdnProtocolCommon {
         int24 tickSpacing
     ) external returns (int24 tick_);
 
-    function getEffectiveTickForPrice(uint128 price) external returns (int24 tick_);
+    function getEffectiveTickForPrice(uint128 price) external payable returns (int24 tick_);
 
     function getTickLiquidationPenalty(int24 tick) external returns (uint8 liquidationPenalty_);
 
-    function getEffectivePriceForTick(int24 tick) external returns (uint128 price_);
+    function getEffectivePriceForTick(int24 tick) external payable returns (uint128 price_);
 
     function getEffectivePriceForTick(
         int24 tick,
@@ -49,6 +49,7 @@ interface IUsdnProtocolCommon {
 
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
         external
+        payable
         returns (PriceInfo memory price_);
 
     function _unadjustPrice(
@@ -66,7 +67,7 @@ interface IUsdnProtocolCommon {
 
     function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
         external
-        view
+        payable
         returns (uint256 toMint_);
 
     function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) external view returns (uint128 price_);

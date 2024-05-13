@@ -28,15 +28,9 @@ import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { IUsdnProtocolCommon } from "src/interfaces/UsdnProtocol/IUsdnProtocolCommon.sol";
 
-abstract contract UsdnProtocolCommon is
-    UsdnProtocolBaseStorage,
-    IUsdnProtocolCommon,
-    IUsdnProtocolEvents,
-    InitializableReentrancyGuard
-{
+abstract contract UsdnProtocolCommon is UsdnProtocolBaseStorage, IUsdnProtocolCommon, IUsdnProtocolEvents {
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
     using SafeCast for uint256;
@@ -619,7 +613,7 @@ abstract contract UsdnProtocolCommon is
         price_ = (startPrice - ((uint256(10) ** s.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
     }
 
-    function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
+    function getEffectiveTickForPrice(uint128 price) public payable returns (int24 tick_) {
         tick_ = getEffectiveTickForPrice(
             price, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator, s._tickSpacing
         );
@@ -839,7 +833,7 @@ abstract contract UsdnProtocolCommon is
         data_.leverage = _getLeverage(data_.startPrice, data_.liqPriceWithoutPenalty);
     }
 
-    function getEffectivePriceForTick(int24 tick) public view returns (uint128 price_) {
+    function getEffectivePriceForTick(int24 tick) public payable returns (uint128 price_) {
         price_ =
             getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
     }
@@ -994,7 +988,7 @@ abstract contract UsdnProtocolCommon is
      */
     function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
         public
-        view
+        payable
         returns (uint256 toMint_)
     {
         if (vaultBalance == 0) {
@@ -1148,6 +1142,7 @@ abstract contract UsdnProtocolCommon is
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
         // TO DO : make this function internal
         public
+        payable
         returns (PriceInfo memory price_)
     {
         uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);

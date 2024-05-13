@@ -39,7 +39,7 @@ interface IUsdnProtocolLongImplementation is IUsdnProtocolCommon {
      * @dev This takes into account the current value of the liquidation price multiplier and the minimum leverage value
      * @param price The current asset price
      */
-    function getMinLiquidationPrice(uint128 price) external view returns (uint128);
+    function getMinLiquidationPrice(uint128 price) external returns (uint128);
 
     /**
      * @notice Get the value of a long position when the asset price is equal to the given price, at the given timestamp

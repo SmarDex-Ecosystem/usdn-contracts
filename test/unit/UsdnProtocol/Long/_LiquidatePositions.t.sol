@@ -240,16 +240,16 @@ contract TestUsdnProtocolLongLiquidatePositions is UsdnProtocolBaseFixture {
             ticksToLiquidate[i] = posId.tick;
         }
 
+        // Set a price below all others
+        liqPrice = desiredLiqPrice - 100 ether;
+        int256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
+        int256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
+
         // Expect MAX_LIQUIDATION_ITERATION events
         for (uint256 i = 0; i < maxIterations; ++i) {
             vm.expectEmit(true, true, false, false);
             emit LiquidatedTick(ticksToLiquidate[i], 0, 0, 0, 0);
         }
-
-        // Set a price below all others
-        liqPrice = desiredLiqPrice - 100 ether;
-        int256 balanceLong = protocol.longAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
-        int256 balanceVault = protocol.vaultAssetAvailableWithFunding(liqPrice, uint128(block.timestamp));
 
         // Make sure no more than MAX_LIQUIDATION_ITERATION events have been emitted
         vm.recordLogs();

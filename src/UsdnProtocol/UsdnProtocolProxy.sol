@@ -11,6 +11,8 @@ import { ProtocolAction, Position, PositionId } from "src/interfaces/UsdnProtoco
 import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 import { UsdnProtocolLongEntry } from "src/UsdnProtocol/UsdnProtocolLongEntry.sol";
 import { UsdnProtocolVaultEntry } from "src/UsdnProtocol/UsdnProtocolVaultEntry.sol";
+import { IUsdnProtocolLongImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongImplementation.sol";
+import { IUsdnProtocolVaultImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultImplementation.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -42,8 +44,8 @@ contract UsdnProtocolProxy is UsdnProtocolLongEntry, UsdnProtocolVaultEntry, IUs
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        address protocolLong,
-        address protocolVault
+        IUsdnProtocolLongImplementation protocolLong,
+        IUsdnProtocolVaultImplementation protocolVault
     )
         Ownable(msg.sender)
         UsdnProtocolBaseStorage(
@@ -55,7 +57,8 @@ contract UsdnProtocolProxy is UsdnProtocolLongEntry, UsdnProtocolVaultEntry, IUs
             tickSpacing,
             feeCollector,
             protocolLong,
-            protocolVault
+            protocolVault,
+            true
         )
     { }
 
@@ -235,6 +238,15 @@ contract UsdnProtocolProxy is UsdnProtocolLongEntry, UsdnProtocolVaultEntry, IUs
         }
         s._positionFeeBps = newPositionFee;
         emit PositionFeeUpdated(newPositionFee);
+    }
+
+    function setVaultFeeBps(uint16 newVaultFee) external onlyOwner {
+        // newVaultFee greater than max 2000: 20%
+        if (newVaultFee > 2000) {
+            revert UsdnProtocolInvalidVaultFee();
+        }
+        s._vaultFeeBps = newVaultFee;
+        emit PositionFeeUpdated(newVaultFee);
     }
 
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {

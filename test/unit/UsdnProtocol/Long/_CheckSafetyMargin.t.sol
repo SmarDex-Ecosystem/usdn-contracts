@@ -48,7 +48,7 @@ contract TestUsdnProtocolLongCheckSafetyMargin is UsdnProtocolBaseFixture {
      * @custom:when The value of liquidationPrice is lower than the maxLiquidationPrice calculated
      * @custom:then It does not revert
      */
-    function test_setLiquidationPriceOverTheLimit() public view {
+    function test_setLiquidationPriceOverTheLimit() public {
         uint128 currentPrice = 100 ether;
         uint128 liquidationPrice = 98 ether - 1;
 

@@ -8,6 +8,8 @@ import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { Usdn } from "src/Usdn.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { UsdnProtocolLongImplementation } from "src/UsdnProtocol/UsdnProtocolLongImplementation.sol";
+import { UsdnProtocolVaultImplementation } from "src/UsdnProtocol/UsdnProtocolVaultImplementation.sol";
 
 /**
  * @custom:feature Test the functions linked to initialization of the protocol
@@ -30,7 +32,9 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             oracleMiddleware,
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
-            ADMIN // Fee collector
+            ADMIN, // Fee collector
+            protocolLong,
+            protocolVault
         );
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
         usdn.grantRole(usdn.REBASER_ROLE(), address(protocol));

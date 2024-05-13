@@ -27,7 +27,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitClose` function is called with a value below the close limit
      * @custom:then The transaction should not revert
      */
-    function test_checkImbalanceLimitClose() public view {
+    function test_checkImbalanceLimitClose() public {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseLimitValues();
         protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit, longAmount);
     }
@@ -115,7 +115,6 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
     function _getCloseLimitValues()
         private
-        view
         returns (int256 closeLimitBps_, uint256 longAmount_, uint256 totalExpoValueToLimit_)
     {
         // current long expo

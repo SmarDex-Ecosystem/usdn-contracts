@@ -22,6 +22,7 @@ import {
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolCommon } from "src/UsdnProtocol/UsdnProtocolCommon.sol";
 import { IUsdnProtocolLongImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongImplementation.sol";
+import { IUsdnProtocolVaultImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultImplementation.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
@@ -48,8 +49,9 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
             ILiquidationRewardsManager(address(0)),
             0,
             address(0),
-            address(0),
-            address(0)
+            IUsdnProtocolLongImplementation(address(0)),
+            IUsdnProtocolVaultImplementation(address(0)),
+            false
         )
     { }
 
@@ -98,7 +100,6 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
         external
         payable
-        initializedAndNonReentrant
         returns (uint256 validatedActions_)
     {
         uint256 balanceBefore = address(this).balance;
@@ -124,7 +125,6 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
         external
         payable
-        initializedAndNonReentrant
         returns (uint256 liquidatedPositions_)
     {
         uint256 balanceBefore = address(this).balance;
@@ -156,7 +156,7 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
     }
 
     // slither-disable-next-line write-after-write
-    function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
+    function getMinLiquidationPrice(uint128 price) public returns (uint128 liquidationPrice_) {
         liquidationPrice_ = _getLiquidationPrice(price, uint128(s._minLeverage));
         int24 tick = getEffectiveTickForPrice(liquidationPrice_);
         liquidationPrice_ = getEffectivePriceForTick(tick + s._tickSpacing);
@@ -244,7 +244,7 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
         address to
-    ) external payable initializedAndNonReentrant returns (PositionId memory posId_) {
+    ) external payable returns (PositionId memory posId_) {
         uint256 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
@@ -456,7 +456,6 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
     function validateOpenPosition(bytes calldata openPriceData, PreviousActionsData calldata previousActionsData)
         external
         payable
-        initializedAndNonReentrant
     {
         uint256 balanceBefore = address(this).balance;
 
@@ -493,7 +492,7 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
         address to
-    ) external payable initializedAndNonReentrant {
+    ) external payable {
         uint256 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
@@ -751,7 +750,6 @@ contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLong
     function validateClosePosition(bytes calldata closePriceData, PreviousActionsData calldata previousActionsData)
         external
         payable
-        initializedAndNonReentrant
     {
         uint256 balanceBefore = address(this).balance;
 

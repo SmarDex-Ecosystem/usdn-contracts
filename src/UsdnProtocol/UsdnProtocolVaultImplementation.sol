@@ -30,6 +30,7 @@ import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorag
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { IUsdnProtocolVaultImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultImplementation.sol";
+import { IUsdnProtocolLongImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongImplementation.sol";
 
 contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVaultImplementation {
     using SafeERC20 for IERC20Metadata;
@@ -50,8 +51,9 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
             ILiquidationRewardsManager(address(0)),
             0,
             address(0),
-            address(0),
-            address(0)
+            IUsdnProtocolLongImplementation(address(0)),
+            IUsdnProtocolVaultImplementation(address(0)),
+            false
         )
     { }
 
@@ -239,7 +241,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
         address to
-    ) external payable initializedAndNonReentrant {
+    ) external payable {
         uint256 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
@@ -257,7 +259,6 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
     function validateDeposit(bytes calldata depositPriceData, PreviousActionsData calldata previousActionsData)
         external
         payable
-        initializedAndNonReentrant
     {
         uint256 balanceBefore = address(this).balance;
 
@@ -274,7 +275,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData,
         address to
-    ) external payable initializedAndNonReentrant {
+    ) external payable {
         uint256 securityDepositValue = s._securityDepositValue;
         if (msg.value < securityDepositValue) {
             revert UsdnProtocolSecurityDepositTooLow();
@@ -437,7 +438,6 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
     function validateWithdrawal(bytes calldata withdrawalPriceData, PreviousActionsData calldata previousActionsData)
         external
         payable
-        initializedAndNonReentrant
     {
         uint256 balanceBefore = address(this).balance;
 

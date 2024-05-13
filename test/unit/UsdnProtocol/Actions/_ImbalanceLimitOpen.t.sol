@@ -25,7 +25,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitOpen` function is called with a value below the open limit
      * @custom:then The transaction should not revert
      */
-    function test_checkImbalanceLimitOpen() public view {
+    function test_checkImbalanceLimitOpen() public {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getOpenLimitValues();
         protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit, longAmount);
     }
@@ -77,7 +77,6 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
 
     function _getOpenLimitValues()
         private
-        view
         returns (int256 openLimitBps_, uint256 longAmount_, uint256 totalExpoValueToLimit_)
     {
         // current vault expo

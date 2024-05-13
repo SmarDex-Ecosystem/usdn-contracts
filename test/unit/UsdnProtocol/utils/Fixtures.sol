@@ -23,6 +23,7 @@ import {
 import { Usdn } from "src/Usdn.sol";
 import { UsdnProtocolLongImplementation } from "src/UsdnProtocol/UsdnProtocolLongImplementation.sol";
 import { UsdnProtocolVaultImplementation } from "src/UsdnProtocol/UsdnProtocolVaultImplementation.sol";
+import { Storage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -109,7 +110,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         protocolLong = new UsdnProtocolLongImplementation();
         protocolVault = new UsdnProtocolVaultImplementation();
-
         protocol = new UsdnProtocolHandler(
             usdn,
             sdex,
@@ -179,6 +179,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
     function test_setUp() public {
         _setUp(DEFAULT_PARAMS);
+
         assertGt(protocol.getTickSpacing(), 1, "tickSpacing"); // we want to test all functions for a tickSpacing > 1
         assertEq(
             wstETH.balanceOf(address(protocol)), params.initialDeposit + params.initialLong, "wstETH protocol balance"

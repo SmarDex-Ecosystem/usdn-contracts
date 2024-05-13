@@ -6,6 +6,8 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
+import { IUsdnProtocolLongImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongImplementation.sol";
+import { IUsdnProtocolVaultImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultImplementation.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -83,9 +85,10 @@ struct Storage {
     uint256 _totalLongPositions;
     LibBitmap.Bitmap _tickBitmap;
     // implementations
+    // TO DO : address -> IUsdnProtocolProxy
     address _protocol;
-    address _protocolLong;
-    address _protocolVault;
+    IUsdnProtocolLongImplementation _protocolLong;
+    IUsdnProtocolVaultImplementation _protocolVault;
 }
 
 contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
@@ -112,9 +115,14 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        address protocolLong,
-        address protocolVault
+        IUsdnProtocolLongImplementation protocolLong,
+        IUsdnProtocolVaultImplementation protocolVault,
+        bool initialize
     ) {
+        if (!initialize) {
+            return;
+        }
+
         // constants
         s.LEVERAGE_DECIMALS = 21;
         s.FUNDING_RATE_DECIMALS = 18;
@@ -185,6 +193,46 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         s._targetUsdnPrice = uint128(10_087 * 10 ** (s._priceFeedDecimals - 4)); // $1.0087
         s._usdnRebaseThreshold = uint128(1009 * 10 ** (s._priceFeedDecimals - 3)); // $1.009
         s._minLongPosition = 2 * 10 ** s._assetDecimals;
+    }
+
+    function DEAD_ADDRESS() external view returns (address) {
+        return s.DEAD_ADDRESS;
+    }
+
+    function MIN_USDN_SUPPLY() external view returns (uint256) {
+        return s.MIN_USDN_SUPPLY;
+    }
+
+    function BPS_DIVISOR() external view returns (uint256) {
+        return s.BPS_DIVISOR;
+    }
+
+    function SDEX_BURN_ON_DEPOSIT_DIVISOR() external view returns (uint256) {
+        return s.SDEX_BURN_ON_DEPOSIT_DIVISOR;
+    }
+
+    function LEVERAGE_DECIMALS() external view returns (uint8) {
+        return s.LEVERAGE_DECIMALS;
+    }
+
+    function MAX_LIQUIDATION_ITERATION() external view returns (uint16) {
+        return s.MAX_LIQUIDATION_ITERATION;
+    }
+
+    function FUNDING_SF_DECIMALS() external view returns (uint8) {
+        return s.FUNDING_SF_DECIMALS;
+    }
+
+    function FUNDING_RATE_DECIMALS() external view returns (uint8) {
+        return s.FUNDING_RATE_DECIMALS;
+    }
+
+    function TOKENS_DECIMALS() external view returns (uint8) {
+        return s.TOKENS_DECIMALS;
+    }
+
+    function LIQUIDATION_MULTIPLIER_DECIMALS() external view returns (uint8) {
+        return s.LIQUIDATION_MULTIPLIER_DECIMALS;
     }
 
     /* -------------------------------------------------------------------------- */

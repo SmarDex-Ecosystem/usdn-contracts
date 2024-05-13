@@ -33,6 +33,8 @@ import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolEr
 import { ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { UsdnProtocolLongImplementation } from "src/UsdnProtocol/UsdnProtocolLongImplementation.sol";
+import { UsdnProtocolVaultImplementation } from "src/UsdnProtocol/UsdnProtocolVaultImplementation.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
     struct SetUpParams {
@@ -59,6 +61,8 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     Usdn public usdn;
     Sdex public sdex;
     UsdnProtocolHandler public protocol;
+    UsdnProtocolLongImplementation public protocolLong;
+    UsdnProtocolVaultImplementation public protocolVault;
     WstETH public wstETH;
     MockPyth public mockPyth;
     MockChainlinkOnChain public mockChainlinkOnChain;
@@ -103,6 +107,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn = new Usdn(address(0), address(0));
         AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
+
+        protocolLong = new UsdnProtocolLongImplementation();
+        protocolVault = new UsdnProtocolVaultImplementation();
         protocol = new UsdnProtocolHandler(
             usdn,
             sdex,
@@ -110,7 +117,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             oracleMiddleware,
             liquidationRewardsManager,
             100, // tick spacing 100 = 1%
-            ADMIN
+            ADMIN,
+            protocolLong,
+            protocolVault
         );
 
         usdn.grantRole(usdn.MINTER_ROLE(), address(protocol));
