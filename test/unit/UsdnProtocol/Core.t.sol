@@ -384,9 +384,9 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             })
         );
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
-        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "error in action");
-        assertEq(action.user, address(this), "error in user");
-        assertEq(action.to, address(this), "error in to");
-        assertEq(rawIndex, 1, "error in rawIndex");
+        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "action should be ValidateClosePosition");
+        assertEq(action.user, address(this), "user should be this contract");
+        assertEq(action.to, address(this), "to should be this contract");
+        assertEq(rawIndex, 1, "rawIndex should be 1");
     }
 }
