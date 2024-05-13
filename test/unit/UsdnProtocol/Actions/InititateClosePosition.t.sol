@@ -242,6 +242,19 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         _internalInitiateClosePositionScenario(address(this));
     }
 
+    /**
+     * @custom:scenario Initiate close a position fully
+     * @custom:given A validated open position
+     * @custom:when The owner of the position closes all of the position at the same price as the opening
+     * @custom:and the to parameter is different from the sender
+     * @custom:then The state of the protocol is updated
+     * @custom:and an InitiatedClosePosition event is emitted
+     * @custom:and the position is deleted
+     */
+    function test_internalInitiateClosePositionForAnotherUser() external {
+        _internalInitiateClosePositionScenario(USER_1);
+    }
+
     function _internalInitiateClosePositionScenario(address to) internal {
         uint256 totalLongPositionBefore = protocol.getTotalLongPositions();
         TickData memory tickData = protocol.getTickData(posId.tick);
@@ -343,11 +356,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         protocol.i_initiateClosePosition(address(this), to, posId, amountToClose, abi.encode(params.initialPrice));
 
         /* ------------------------- Pending action's state ------------------------- */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(to));
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(posBefore.user));
         assertTrue(action.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
         assertEq(action.timestamp, block.timestamp, "The block timestamp should be now");
         assertEq(action.to, to, "To is wrong");
-        assertEq(action.validator, to, "Validator is wrong");
+        assertEq(action.validator, posBefore.user, "Validator is wrong");
         assertEq(action.tick, posId.tick, "The position tick is wrong");
         assertEq(
             action.closePosTotalExpo,
