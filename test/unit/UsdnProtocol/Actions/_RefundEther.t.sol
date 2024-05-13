@@ -3,8 +3,6 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-
 /**
  * @custom:feature Test of the protocol `_refundEther` function
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
@@ -13,21 +11,11 @@ import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.s
  */
 contract TestRefundEther is UsdnProtocolBaseFixture {
     function setUp() public {
-        params = DEFAULT_PARAMS;
-        params.flags.enableSecurityDeposit = true;
-        super._setUp(params);
-        setUpUserPositionInLong(
-            OpenParams({
-                user: address(this),
-                untilAction: ProtocolAction.InitiateOpenPosition,
-                positionSize: 1 ether,
-                desiredLiqPrice: params.initialPrice - (params.initialPrice / 5),
-                price: params.initialPrice
-            })
-        );
+        super._setUp(DEFAULT_PARAMS);
+        vm.deal(address(protocol), 0.1 ether);
     }
 
-    function test_refoundEther() public {
+    function test_refundEther() public {
         uint256 protocolBalance = address(protocol).balance;
         uint256 userBalance = address(this).balance;
         uint256 amount = 0.1 ether;
