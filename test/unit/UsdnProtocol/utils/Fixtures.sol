@@ -20,7 +20,7 @@ import {
     PreviousActionsData,
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Usdn } from "src/Usdn.sol";
+import { Usdn } from "src/Usdn/Usdn.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
