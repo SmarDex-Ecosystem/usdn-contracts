@@ -4,7 +4,10 @@ Parameters
 
 Licensor:             RA2 Tech SA
 Licensed Work:        USDN Protocol. The Licensed Work is (c) 2023 RA2 Tech SA
-Additional Use Grant: None
+Additional Use Grant: The following source files are provided under the terms of the MIT License:
+                      - the interfaces in `src/interfaces`
+                      - the `DoubleEndedQueue` library in `src/libraries`
+                      - the `InitializableReentrancyGuard` library in `src/utils`
 Change Date:          Four years from the date the Licensed Work is published.
 Change License:       GPL-2.0-or-later
 
