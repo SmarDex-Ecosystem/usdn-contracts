@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -27,13 +26,13 @@ contract TestRefundEther is UsdnProtocolBaseFixture {
 
     function test_refoundEther() public {
         uint256 protocolBalance = address(protocol).balance;
-        uint256 userBalance = USER_1.balance;
+        uint256 userBalance = address(this).balance;
         uint256 amount = 0.1 ether;
 
-        protocol.i_refundEther(amount, USER_1);
+        protocol.i_refundEther(amount, address(this));
 
         assertEq(address(protocol).balance, protocolBalance - amount, "balance of the protocol");
-        assertEq(USER_1.balance, userBalance + amount, "balance of the user");
+        assertEq(address(this).balance, userBalance + amount, "balance of the user");
     }
 
     /**
@@ -55,4 +54,7 @@ contract TestRefundEther is UsdnProtocolBaseFixture {
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
         protocol.i_refundEther{ value: 0.1 ether }(1 ether, address(1));
     }
+
+    // receive ether refunds
+    receive() external payable { }
 }
