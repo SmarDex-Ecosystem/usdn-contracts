@@ -131,7 +131,7 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * Caller must have the `REBASER_ROLE`
      * @return rebased_ Whether a rebase happened
      * @return oldDivisor_ The previous value of the divisor
-     * @return callbackResult_ The result of the callback, if a rebase happened and a callback address is defined
+     * @return callbackResult_ The result of the callback, if a rebase happened and a callback handler is defined
      */
     function rebase(uint256 divisor)
         external
