@@ -104,6 +104,6 @@ contract OrderManager is Ownable, IOrderManager {
 
         _asset.safeTransfer(to, amount);
 
-        emit PendingAssetsWithdrawn(amount, to);
+        emit PendingAssetsWithdrawn(msg.sender, amount, to);
     }
 }

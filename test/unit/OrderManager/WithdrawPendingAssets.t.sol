@@ -77,7 +77,7 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
         uint256 userBalanceBefore = wstETH.balanceOf(USER_1);
 
         vm.expectEmit();
-        emit PendingAssetsWithdrawn(1 ether, USER_1);
+        emit PendingAssetsWithdrawn(address(this), 1 ether, USER_1);
         orderManager.withdrawPendingAssets(1 ether, USER_1);
 
         assertEq(
@@ -107,7 +107,7 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit PendingAssetsWithdrawn(0.6 ether, address(this));
+        emit PendingAssetsWithdrawn(address(this), 0.6 ether, address(this));
         orderManager.withdrawPendingAssets(0.6 ether, address(this));
 
         assertEq(

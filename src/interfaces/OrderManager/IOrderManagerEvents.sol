@@ -12,8 +12,9 @@ interface IOrderManagerEvents {
 
     /**
      * @notice Emitted when pending assets are withdrawn from the contract
+     * @param user The original owner of the position
      * @param amount The amount of assets withdrawn
      * @param to The address the assets will be sent to
      */
-    event PendingAssetsWithdrawn(uint256 amount, address to);
+    event PendingAssetsWithdrawn(address user, uint256 amount, address to);
 }
