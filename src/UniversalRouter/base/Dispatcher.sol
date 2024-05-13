@@ -34,178 +34,192 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsg
         success = true;
 
         if (command < Commands.FOURTH_IF_BOUNDARY) {
-            if (command < Commands.SECOND_IF_BOUNDARY) {
-                if (command < Commands.FIRST_IF_BOUNDARY) {
-                    if (command == Commands.V3_SWAP_EXACT_IN) {
-                        // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
-                        address recipient;
-                        uint256 amountIn;
-                        uint256 amountOutMin;
-                        bool payerIsUser;
-                        assembly {
-                            recipient := calldataload(inputs.offset)
-                            amountIn := calldataload(add(inputs.offset, 0x20))
-                            amountOutMin := calldataload(add(inputs.offset, 0x40))
-                            // 0x60 offset is the path, decoded below
-                            payerIsUser := calldataload(add(inputs.offset, 0x80))
+            if (command < Commands.THIRD_IF_BOUNDARY) {
+                if (command < Commands.SECOND_IF_BOUNDARY) {
+                    if (command < Commands.FIRST_IF_BOUNDARY) {
+                        if (command == Commands.V3_SWAP_EXACT_IN) {
+                            // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
+                            address recipient;
+                            uint256 amountIn;
+                            uint256 amountOutMin;
+                            bool payerIsUser;
+                            assembly {
+                                recipient := calldataload(inputs.offset)
+                                amountIn := calldataload(add(inputs.offset, 0x20))
+                                amountOutMin := calldataload(add(inputs.offset, 0x40))
+                                // 0x60 offset is the path, decoded below
+                                payerIsUser := calldataload(add(inputs.offset, 0x80))
+                            }
+                            bytes calldata path = inputs.toBytes(3);
+                            address payer = payerIsUser ? lockedBy : address(this);
+                            v3SwapExactInput(map(recipient), amountIn, amountOutMin, path, payer);
+                        } else if (command == Commands.V3_SWAP_EXACT_OUT) {
+                            // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
+                            address recipient;
+                            uint256 amountOut;
+                            uint256 amountInMax;
+                            bool payerIsUser;
+                            assembly {
+                                recipient := calldataload(inputs.offset)
+                                amountOut := calldataload(add(inputs.offset, 0x20))
+                                amountInMax := calldataload(add(inputs.offset, 0x40))
+                                // 0x60 offset is the path, decoded below
+                                payerIsUser := calldataload(add(inputs.offset, 0x80))
+                            }
+                            bytes calldata path = inputs.toBytes(3);
+                            address payer = payerIsUser ? lockedBy : address(this);
+                            v3SwapExactOutput(map(recipient), amountOut, amountInMax, path, payer);
+                        } else if (command == Commands.PERMIT2_TRANSFER_FROM) {
+                            // equivalent: abi.decode(inputs, (address, address, uint160))
+                            address token;
+                            address recipient;
+                            uint160 amount;
+                            assembly {
+                                token := calldataload(inputs.offset)
+                                recipient := calldataload(add(inputs.offset, 0x20))
+                                amount := calldataload(add(inputs.offset, 0x40))
+                            }
+                            permit2TransferFrom(token, lockedBy, map(recipient), amount);
+                        } else if (command == Commands.PERMIT2_PERMIT_BATCH) {
+                            (IAllowanceTransfer.PermitBatch memory permitBatch,) =
+                                abi.decode(inputs, (IAllowanceTransfer.PermitBatch, bytes));
+                            bytes calldata data = inputs.toBytes(1);
+                            PERMIT2.permit(lockedBy, permitBatch, data);
+                        } else if (command == Commands.SWEEP) {
+                            // equivalent:  abi.decode(inputs, (address, address, uint256))
+                            address token;
+                            address recipient;
+                            uint160 amountMin;
+                            assembly {
+                                token := calldataload(inputs.offset)
+                                recipient := calldataload(add(inputs.offset, 0x20))
+                                amountMin := calldataload(add(inputs.offset, 0x40))
+                            }
+                            Payments.sweep(token, map(recipient), amountMin);
+                        } else if (command == Commands.TRANSFER) {
+                            // equivalent:  abi.decode(inputs, (address, address, uint256))
+                            address token;
+                            address recipient;
+                            uint256 value;
+                            assembly {
+                                token := calldataload(inputs.offset)
+                                recipient := calldataload(add(inputs.offset, 0x20))
+                                value := calldataload(add(inputs.offset, 0x40))
+                            }
+                            Payments.pay(token, map(recipient), value);
+                        } else if (command == Commands.PAY_PORTION) {
+                            // equivalent:  abi.decode(inputs, (address, address, uint256))
+                            address token;
+                            address recipient;
+                            uint256 bips;
+                            assembly {
+                                token := calldataload(inputs.offset)
+                                recipient := calldataload(add(inputs.offset, 0x20))
+                                bips := calldataload(add(inputs.offset, 0x40))
+                            }
+                            Payments.payPortion(token, map(recipient), bips);
+                        } else {
+                            revert InvalidCommandType(command);
                         }
-                        bytes calldata path = inputs.toBytes(3);
-                        address payer = payerIsUser ? lockedBy : address(this);
-                        v3SwapExactInput(map(recipient), amountIn, amountOutMin, path, payer);
-                    } else if (command == Commands.V3_SWAP_EXACT_OUT) {
-                        // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
-                        address recipient;
-                        uint256 amountOut;
-                        uint256 amountInMax;
-                        bool payerIsUser;
-                        assembly {
-                            recipient := calldataload(inputs.offset)
-                            amountOut := calldataload(add(inputs.offset, 0x20))
-                            amountInMax := calldataload(add(inputs.offset, 0x40))
-                            // 0x60 offset is the path, decoded below
-                            payerIsUser := calldataload(add(inputs.offset, 0x80))
-                        }
-                        bytes calldata path = inputs.toBytes(3);
-                        address payer = payerIsUser ? lockedBy : address(this);
-                        v3SwapExactOutput(map(recipient), amountOut, amountInMax, path, payer);
-                    } else if (command == Commands.PERMIT2_TRANSFER_FROM) {
-                        // equivalent: abi.decode(inputs, (address, address, uint160))
-                        address token;
-                        address recipient;
-                        uint160 amount;
-                        assembly {
-                            token := calldataload(inputs.offset)
-                            recipient := calldataload(add(inputs.offset, 0x20))
-                            amount := calldataload(add(inputs.offset, 0x40))
-                        }
-                        permit2TransferFrom(token, lockedBy, map(recipient), amount);
-                    } else if (command == Commands.PERMIT2_PERMIT_BATCH) {
-                        (IAllowanceTransfer.PermitBatch memory permitBatch,) =
-                            abi.decode(inputs, (IAllowanceTransfer.PermitBatch, bytes));
-                        bytes calldata data = inputs.toBytes(1);
-                        PERMIT2.permit(lockedBy, permitBatch, data);
-                    } else if (command == Commands.SWEEP) {
-                        // equivalent:  abi.decode(inputs, (address, address, uint256))
-                        address token;
-                        address recipient;
-                        uint160 amountMin;
-                        assembly {
-                            token := calldataload(inputs.offset)
-                            recipient := calldataload(add(inputs.offset, 0x20))
-                            amountMin := calldataload(add(inputs.offset, 0x40))
-                        }
-                        Payments.sweep(token, map(recipient), amountMin);
-                    } else if (command == Commands.TRANSFER) {
-                        // equivalent:  abi.decode(inputs, (address, address, uint256))
-                        address token;
-                        address recipient;
-                        uint256 value;
-                        assembly {
-                            token := calldataload(inputs.offset)
-                            recipient := calldataload(add(inputs.offset, 0x20))
-                            value := calldataload(add(inputs.offset, 0x40))
-                        }
-                        Payments.pay(token, map(recipient), value);
-                    } else if (command == Commands.PAY_PORTION) {
-                        // equivalent:  abi.decode(inputs, (address, address, uint256))
-                        address token;
-                        address recipient;
-                        uint256 bips;
-                        assembly {
-                            token := calldataload(inputs.offset)
-                            recipient := calldataload(add(inputs.offset, 0x20))
-                            bips := calldataload(add(inputs.offset, 0x40))
-                        }
-                        Payments.payPortion(token, map(recipient), bips);
                     } else {
-                        revert InvalidCommandType(command);
+                        if (command == Commands.V2_SWAP_EXACT_IN) {
+                            // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
+                            address recipient;
+                            uint256 amountIn;
+                            uint256 amountOutMin;
+                            bool payerIsUser;
+                            assembly {
+                                recipient := calldataload(inputs.offset)
+                                amountIn := calldataload(add(inputs.offset, 0x20))
+                                amountOutMin := calldataload(add(inputs.offset, 0x40))
+                                // 0x60 offset is the path, decoded below
+                                payerIsUser := calldataload(add(inputs.offset, 0x80))
+                            }
+                            address[] calldata path = inputs.toAddressArray(3);
+                            address payer = payerIsUser ? lockedBy : address(this);
+                            v2SwapExactInput(map(recipient), amountIn, amountOutMin, path, payer);
+                        } else if (command == Commands.V2_SWAP_EXACT_OUT) {
+                            // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
+                            address recipient;
+                            uint256 amountOut;
+                            uint256 amountInMax;
+                            bool payerIsUser;
+                            assembly {
+                                recipient := calldataload(inputs.offset)
+                                amountOut := calldataload(add(inputs.offset, 0x20))
+                                amountInMax := calldataload(add(inputs.offset, 0x40))
+                                // 0x60 offset is the path, decoded below
+                                payerIsUser := calldataload(add(inputs.offset, 0x80))
+                            }
+                            address[] calldata path = inputs.toAddressArray(3);
+                            address payer = payerIsUser ? lockedBy : address(this);
+                            v2SwapExactOutput(map(recipient), amountOut, amountInMax, path, payer);
+                        } else if (command == Commands.PERMIT2_PERMIT) {
+                            // equivalent: abi.decode(inputs, (IAllowanceTransfer.PermitSingle, bytes))
+                            IAllowanceTransfer.PermitSingle calldata permitSingle;
+                            assembly {
+                                permitSingle := inputs.offset
+                            }
+                            bytes calldata data = inputs.toBytes(6); // PermitSingle takes first 6 slots (0..5)
+                            PERMIT2.permit(lockedBy, permitSingle, data);
+                        } else if (command == Commands.WRAP_ETH) {
+                            // equivalent: abi.decode(inputs, (address, uint256))
+                            address recipient;
+                            uint256 amountMin;
+                            assembly {
+                                recipient := calldataload(inputs.offset)
+                                amountMin := calldataload(add(inputs.offset, 0x20))
+                            }
+                            Payments.wrapETH(map(recipient), amountMin);
+                        } else if (command == Commands.UNWRAP_WETH) {
+                            // equivalent: abi.decode(inputs, (address, uint256))
+                            address recipient;
+                            uint256 amountMin;
+                            assembly {
+                                recipient := calldataload(inputs.offset)
+                                amountMin := calldataload(add(inputs.offset, 0x20))
+                            }
+                            Payments.unwrapWETH9(map(recipient), amountMin);
+                        } else if (command == Commands.PERMIT2_TRANSFER_FROM_BATCH) {
+                            // TODO PERMIT2_TRANSFER_FROM_BATCH
+                        } else {
+                            revert InvalidCommandType(command);
+                        }
                     }
                 } else {
-                    if (command == Commands.V2_SWAP_EXACT_IN) {
-                        // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
-                        address recipient;
-                        uint256 amountIn;
-                        uint256 amountOutMin;
-                        bool payerIsUser;
-                        assembly {
-                            recipient := calldataload(inputs.offset)
-                            amountIn := calldataload(add(inputs.offset, 0x20))
-                            amountOutMin := calldataload(add(inputs.offset, 0x40))
-                            // 0x60 offset is the path, decoded below
-                            payerIsUser := calldataload(add(inputs.offset, 0x80))
-                        }
-                        address[] calldata path = inputs.toAddressArray(3);
-                        address payer = payerIsUser ? lockedBy : address(this);
-                        v2SwapExactInput(map(recipient), amountIn, amountOutMin, path, payer);
-                    } else if (command == Commands.V2_SWAP_EXACT_OUT) {
-                        // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
-                        address recipient;
-                        uint256 amountOut;
-                        uint256 amountInMax;
-                        bool payerIsUser;
-                        assembly {
-                            recipient := calldataload(inputs.offset)
-                            amountOut := calldataload(add(inputs.offset, 0x20))
-                            amountInMax := calldataload(add(inputs.offset, 0x40))
-                            // 0x60 offset is the path, decoded below
-                            payerIsUser := calldataload(add(inputs.offset, 0x80))
-                        }
-                        address[] calldata path = inputs.toAddressArray(3);
-                        address payer = payerIsUser ? lockedBy : address(this);
-                        v2SwapExactOutput(map(recipient), amountOut, amountInMax, path, payer);
-                    } else if (command == Commands.PERMIT2_PERMIT) {
-                        // equivalent: abi.decode(inputs, (IAllowanceTransfer.PermitSingle, bytes))
-                        IAllowanceTransfer.PermitSingle calldata permitSingle;
-                        assembly {
-                            permitSingle := inputs.offset
-                        }
-                        bytes calldata data = inputs.toBytes(6); // PermitSingle takes first 6 slots (0..5)
-                        PERMIT2.permit(lockedBy, permitSingle, data);
-                    } else if (command == Commands.WRAP_ETH) {
-                        // equivalent: abi.decode(inputs, (address, uint256))
-                        address recipient;
-                        uint256 amountMin;
-                        assembly {
-                            recipient := calldataload(inputs.offset)
-                            amountMin := calldataload(add(inputs.offset, 0x20))
-                        }
-                        Payments.wrapETH(map(recipient), amountMin);
-                    } else if (command == Commands.UNWRAP_WETH) {
-                        // equivalent: abi.decode(inputs, (address, uint256))
-                        address recipient;
-                        uint256 amountMin;
-                        assembly {
-                            recipient := calldataload(inputs.offset)
-                            amountMin := calldataload(add(inputs.offset, 0x20))
-                        }
-                        Payments.unwrapWETH9(map(recipient), amountMin);
-                    } else if (command == Commands.PERMIT2_TRANSFER_FROM_BATCH) {
-                        // TODO PERMIT2_TRANSFER_FROM_BATCH
+                    if (command == Commands.INITIATE_DEPOSIT) {
+                        // TODO INITIATE_DEPOSIT
+                    } else if (command == Commands.INITIATE_WITHDRAW) {
+                        // TODO INITIATE_WITHDRAW
+                    } else if (command == Commands.INITIATE_OPEN) {
+                        // TODO INITIATE_OPEN
+                    } else if (command == Commands.INITIATE_CLOSE) {
+                        // TODO INITIATE_CLOSE
+                    } else if (command == Commands.VALIDATE_DEPOSIT) {
+                        // TODO VALIDATE_DEPOSIT
+                    } else if (command == Commands.VALIDATE_WITHDRAW) {
+                        // TODO VALIDATE_WITHDRAW
+                    } else if (command == Commands.VALIDATE_OPEN) {
+                        // TODO VALIDATE_OPEN
+                    } else if (command == Commands.VALIDATE_CLOSE) {
+                        // TODO VALIDATE_CLOSE
+                    } else if (command == Commands.LIQUIDATE) {
+                        // TODO LIQUIDATE
+                    } else if (command == Commands.VALIDATE_PENDING) {
+                        // TODO VALIDATE_PENDING
                     } else {
                         revert InvalidCommandType(command);
                     }
                 }
             } else {
-                if (command == Commands.INITIATE_DEPOSIT) {
-                    // TODO INITIATE_DEPOSIT
-                } else if (command == Commands.INITIATE_WITHDRAW) {
-                    // TODO INITIATE_WITHDRAW
-                } else if (command == Commands.INITIATE_OPEN) {
-                    // TODO INITIATE_OPEN
-                } else if (command == Commands.INITIATE_CLOSE) {
-                    // TODO INITIATE_CLOSE
-                } else if (command == Commands.VALIDATE_DEPOSIT) {
-                    // TODO VALIDATE_DEPOSIT
-                } else if (command == Commands.VALIDATE_WITHDRAW) {
-                    // TODO VALIDATE_WITHDRAW
-                } else if (command == Commands.VALIDATE_OPEN) {
-                    // TODO VALIDATE_OPEN
-                } else if (command == Commands.VALIDATE_CLOSE) {
-                    // TODO VALIDATE_CLOSE
-                } else if (command == Commands.LIQUIDATE) {
-                    // TODO LIQUIDATE
-                } else if (command == Commands.VALIDATE_PENDING) {
-                    // TODO VALIDATE_PENDING
+                if (command == Commands.WRAP_USDN) {
+                    // TODO WRAP_USDN
+                } else if (command == Commands.UNWRAP_WUSDN) {
+                    // TODO UNWRAP_WUSDN
+                } else if (command == Commands.WRAP_STETH) {
+                    // TODO WRAP_STETH
+                } else if (command == Commands.UNWRAP_WSTETH) {
+                    // TODO UNWRAP_WSTETH
                 } else {
                     revert InvalidCommandType(command);
                 }
