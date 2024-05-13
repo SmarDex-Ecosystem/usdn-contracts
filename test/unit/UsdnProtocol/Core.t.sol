@@ -354,9 +354,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `getPendingAction` function returns no pending action
-     * @custom:when There is no pending action
-     * @custom:then The function should return an empty action and 0 as the rawIndex
+     * @custom:scenario The `getPendingAction` function returns an empty pending action when there is none
+     * @custom:given There is no pending action for this user
+     * @custom:when getPendingAction is called
+     * @custom:then it returns an empty action and 0 as the rawIndex
      */
     function test_emptyPendingAction() public {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
@@ -367,7 +368,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `getPendingAction` function returns the action
+     * @custom:scenario The `getPendingAction` function returns the action when there is one
+     * @custom:given There is a pending action for this user
      * @custom:when There is a pending action
      * @custom:then The function should return the action and the rawIndex
      */
