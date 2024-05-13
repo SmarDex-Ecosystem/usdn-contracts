@@ -370,7 +370,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The `getPendingAction` function returns the action when there is one
      * @custom:given There is a pending action for this user
-     * @custom:when There is a pending action
+     * @custom:when getPendingAction is called
      * @custom:then The function should return the action and the rawIndex
      */
     function test_getPendingAction() public {
