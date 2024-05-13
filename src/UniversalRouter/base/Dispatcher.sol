@@ -37,7 +37,6 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsg
 
         if (command < Commands.FOURTH_IF_BOUNDARY) {
             if (command < Commands.SECOND_IF_BOUNDARY) {
-                // 0x00 <= command < 0x08
                 if (command < Commands.FIRST_IF_BOUNDARY) {
                     if (command == Commands.V3_SWAP_EXACT_IN) {
                         // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
@@ -121,10 +120,8 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsg
                         }
                         Payments.payPortion(token, map(recipient), bips);
                     } else {
-                        // placeholder area for command 0x07
                         revert InvalidCommandType(command);
                     }
-                    // 0x08 <= command < 0x10
                 } else {
                     if (command == Commands.V2_SWAP_EXACT_IN) {
                         // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
@@ -184,26 +181,43 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsg
                             amountMin := calldataload(add(inputs.offset, 0x20))
                         }
                         Payments.unwrapWETH9(map(recipient), amountMin);
+                    } else if (command == Commands.PERMIT2_TRANSFER_FROM_BATCH) {
+                        // TODO PERMIT2_TRANSFER_FROM_BATCH
                     } else {
-                        // placeholder area for command 0x0f
                         revert InvalidCommandType(command);
                     }
                 }
             } else {
-                // placeholder for command 0x1f
-                revert InvalidCommandType(command);
+                if (command == Commands.INITIATE_DEPOSIT) {
+                    // TODO INITIATE_DEPOSIT
+                } else if (command == Commands.INITIATE_WITHDRAW) {
+                    // TODO INITIATE_WITHDRAW
+                } else if (command == Commands.INITIATE_OPEN) {
+                    // TODO INITIATE_OPEN
+                } else if (command == Commands.INITIATE_CLOSE) {
+                    // TODO INITIATE_CLOSE
+                } else if (command == Commands.VALIDATE_DEPOSIT) {
+                    // TODO VALIDATE_DEPOSIT
+                } else if (command == Commands.VALIDATE_WITHDRAW) {
+                    // TODO VALIDATE_WITHDRAW
+                } else if (command == Commands.VALIDATE_OPEN) {
+                    // TODO VALIDATE_OPEN
+                } else if (command == Commands.VALIDATE_CLOSE) {
+                    // TODO VALIDATE_CLOSE
+                } else if (command == Commands.LIQUIDATE) {
+                    // TODO LIQUIDATE
+                } else if (command == Commands.VALIDATE_PENDING) {
+                    // TODO VALIDATE_PENDING
+                } else {
+                    revert InvalidCommandType(command);
+                }
             }
         } else {
-            if (command == Commands.APPROVE_ERC20) {
-                ERC20 token;
-                PaymentsImmutables.Spenders spender;
-                assembly {
-                    token := calldataload(inputs.offset)
-                    spender := calldataload(add(inputs.offset, 0x20))
-                }
-                Payments.approveERC20(token, spender);
+            if (command == Commands.SMARDEX_SWAP_EXACT_IN) {
+                // TODO SMARDEX_SWAP_EXACT_IN
+            } else if (command == Commands.SMARDEX_SWAP_EXACT_OUT) {
+                // TODO SMARDEX_SWAP_EXACT_OUT
             } else {
-                // placeholder area for commands 0x23-0x3f
                 revert InvalidCommandType(command);
             }
         }
