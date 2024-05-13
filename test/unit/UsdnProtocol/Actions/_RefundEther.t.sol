@@ -5,9 +5,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 /**
  * @custom:feature Test of the protocol `_refundEther` function
- * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
- * leverage of ~2x
- * @custom:and a validated long position of 1 ether with 10x leverage
+ * @custom:background Increase the balance of the protocol
  */
 contract TestRefundEther is UsdnProtocolBaseFixture {
     function setUp() public {
