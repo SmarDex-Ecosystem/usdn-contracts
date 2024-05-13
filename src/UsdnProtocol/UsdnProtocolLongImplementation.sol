@@ -21,7 +21,7 @@ import {
     TickData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolCommon } from "src/UsdnProtocol/UsdnProtocolCommon.sol";
-import { IUsdnProtocolLongProxy } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongProxy.sol";
+import { IUsdnProtocolLongImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongImplementation.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
@@ -30,7 +30,7 @@ import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorag
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
-contract UsdnProtocolLongProxy is UsdnProtocolCommon, IUsdnProtocolLongProxy {
+contract UsdnProtocolLongImplementation is UsdnProtocolCommon, IUsdnProtocolLongImplementation {
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
     using SafeCast for uint256;

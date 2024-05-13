@@ -17,8 +17,13 @@ import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorag
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { IUsdnProtocolCommon } from "src/interfaces/UsdnProtocol/IUsdnProtocolCommon.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
-abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage, IUsdnProtocolCommon {
+abstract contract UsdnProtocolCommonEntry is
+    UsdnProtocolBaseStorage,
+    IUsdnProtocolCommon,
+    InitializableReentrancyGuard
+{
     function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         public
         returns (int256)

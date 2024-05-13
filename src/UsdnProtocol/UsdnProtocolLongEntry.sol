@@ -6,19 +6,13 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 import { UsdnProtocolCommonEntry } from "src/UsdnProtocol/UsdnProtocolCommonEntry.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
-import { IUsdnProtocolLongProxy } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongProxy.sol";
+import { IUsdnProtocolLongImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongImplementation.sol";
 
-abstract contract UsdnProtocolLongEntry is
-    UsdnProtocolBaseStorage,
-    UsdnProtocolCommonEntry,
-    InitializableReentrancyGuard
-{
+abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -52,7 +46,7 @@ abstract contract UsdnProtocolLongEntry is
 
     function funding(uint128 timestamp) public returns (int256 fund_, int256 oldLongExpo_) {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLongProxy.funding.selector, timestamp)
+            abi.encodeWithSelector(IUsdnProtocolLongImplementation.funding.selector, timestamp)
         );
         require(success, "failed");
         (fund_, oldLongExpo_) = abi.decode(data, (int256, int256));
@@ -66,7 +60,9 @@ abstract contract UsdnProtocolLongEntry is
     {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolLongProxy.validateActionablePendingActions.selector, previousActionsData, maxValidations
+                IUsdnProtocolLongImplementation.validateActionablePendingActions.selector,
+                previousActionsData,
+                maxValidations
             )
         );
         require(success, "failed");
@@ -80,7 +76,7 @@ abstract contract UsdnProtocolLongEntry is
         returns (uint256 liquidatedPositions_)
     {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLongProxy.liquidate.selector, currentPriceData, iterations)
+            abi.encodeWithSelector(IUsdnProtocolLongImplementation.liquidate.selector, currentPriceData, iterations)
         );
         require(success, "failed");
         liquidatedPositions_ = abi.decode(data, (uint256));
@@ -125,7 +121,9 @@ abstract contract UsdnProtocolLongEntry is
 
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public returns (int256 expo_) {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLongProxy.longTradingExpoWithFunding.selector, currentPrice, timestamp)
+            abi.encodeWithSelector(
+                IUsdnProtocolLongImplementation.longTradingExpoWithFunding.selector, currentPrice, timestamp
+            )
         );
         require(success, "failed");
         expo_ = abi.decode(data, (int256));
@@ -137,7 +135,7 @@ abstract contract UsdnProtocolLongEntry is
     {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolLongProxy.longAssetAvailableWithFunding.selector, currentPrice, timestamp
+                IUsdnProtocolLongImplementation.longAssetAvailableWithFunding.selector, currentPrice, timestamp
             )
         );
         require(success, "failed");
@@ -153,7 +151,7 @@ abstract contract UsdnProtocolLongEntry is
     ) external payable initializedAndNonReentrant returns (PositionId memory posId_) {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolLongProxy.initiateOpenPosition.selector,
+                IUsdnProtocolLongImplementation.initiateOpenPosition.selector,
                 amount,
                 desiredLiqPrice,
                 currentPriceData,
@@ -172,7 +170,7 @@ abstract contract UsdnProtocolLongEntry is
     {
         (bool success,) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolLongProxy.validateOpenPosition.selector, openPriceData, previousActionsData
+                IUsdnProtocolLongImplementation.validateOpenPosition.selector, openPriceData, previousActionsData
             )
         );
         require(success, "failed");
@@ -181,7 +179,7 @@ abstract contract UsdnProtocolLongEntry is
     function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) public {
         (bool success,) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolLongProxy._checkImbalanceLimitOpen.selector, openTotalExpoValue, openCollatValue
+                IUsdnProtocolLongImplementation._checkImbalanceLimitOpen.selector, openTotalExpoValue, openCollatValue
             )
         );
         require(success, "failed");
@@ -196,7 +194,7 @@ abstract contract UsdnProtocolLongEntry is
     ) external payable initializedAndNonReentrant {
         (bool success,) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolLongProxy.initiateClosePosition.selector,
+                IUsdnProtocolLongImplementation.initiateClosePosition.selector,
                 posId,
                 amountToClose,
                 currentPriceData,
@@ -214,7 +212,7 @@ abstract contract UsdnProtocolLongEntry is
     {
         (bool success,) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolLongProxy.validateClosePosition.selector, closePriceData, previousActionsData
+                IUsdnProtocolLongImplementation.validateClosePosition.selector, closePriceData, previousActionsData
             )
         );
         require(success, "failed");

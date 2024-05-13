@@ -4,17 +4,11 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IUsdnProtocolVault } from "src/interfaces/UsdnProtocol/IUsdnProtocolVault.sol";
-import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
-import { IUsdnProtocolVaultProxy } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultProxy.sol";
+import { IUsdnProtocolVaultImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultImplementation.sol";
 import { PendingAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolCommonEntry } from "src/UsdnProtocol/UsdnProtocolCommonEntry.sol";
 
-abstract contract UsdnProtocolVaultEntry is
-    UsdnProtocolBaseStorage,
-    UsdnProtocolCommonEntry,
-    InitializableReentrancyGuard
-{
+abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry {
     using SafeCast for int256;
     using SafeCast for uint256;
 
@@ -35,7 +29,7 @@ abstract contract UsdnProtocolVaultEntry is
 
     function getUserPendingAction(address user) external returns (PendingAction memory action_) {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolVaultProxy.getUserPendingAction.selector, user)
+            abi.encodeWithSelector(IUsdnProtocolVaultImplementation.getUserPendingAction.selector, user)
         );
         require(success, "failed");
         action_ = abi.decode(data, (PendingAction));
@@ -46,7 +40,7 @@ abstract contract UsdnProtocolVaultEntry is
         returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolVaultProxy.getActionablePendingActions.selector, currentUser)
+            abi.encodeWithSelector(IUsdnProtocolVaultImplementation.getActionablePendingActions.selector, currentUser)
         );
         require(success, "failed");
         (actions_, rawIndices_) = abi.decode(data, (PendingAction[], uint128[]));
@@ -55,7 +49,7 @@ abstract contract UsdnProtocolVaultEntry is
     function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external returns (int256 expo_) {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolVaultProxy.vaultTradingExpoWithFunding.selector, currentPrice, timestamp
+                IUsdnProtocolVaultImplementation.vaultTradingExpoWithFunding.selector, currentPrice, timestamp
             )
         );
         require(success, "failed");
@@ -86,7 +80,7 @@ abstract contract UsdnProtocolVaultEntry is
     {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolVaultProxy.vaultAssetAvailableWithFunding.selector, currentPrice, timestamp
+                IUsdnProtocolVaultImplementation.vaultAssetAvailableWithFunding.selector, currentPrice, timestamp
             )
         );
         require(success, "failed");
@@ -101,7 +95,11 @@ abstract contract UsdnProtocolVaultEntry is
     ) external payable initializedAndNonReentrant {
         (bool success,) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolVaultProxy.initiateDeposit.selector, amount, currentPriceData, previousActionsData, to
+                IUsdnProtocolVaultImplementation.initiateDeposit.selector,
+                amount,
+                currentPriceData,
+                previousActionsData,
+                to
             )
         );
         require(success, "failed");
@@ -114,7 +112,7 @@ abstract contract UsdnProtocolVaultEntry is
     {
         (bool success,) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolVaultProxy.validateDeposit.selector, depositPriceData, previousActionsData
+                IUsdnProtocolVaultImplementation.validateDeposit.selector, depositPriceData, previousActionsData
             )
         );
         require(success, "failed");
@@ -128,7 +126,7 @@ abstract contract UsdnProtocolVaultEntry is
     ) external payable initializedAndNonReentrant {
         (bool success,) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolVaultProxy.initiateWithdrawal.selector,
+                IUsdnProtocolVaultImplementation.initiateWithdrawal.selector,
                 usdnShares,
                 currentPriceData,
                 previousActionsData,
@@ -145,7 +143,7 @@ abstract contract UsdnProtocolVaultEntry is
     {
         (bool success,) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(
-                IUsdnProtocolVaultProxy.validateWithdrawal.selector, withdrawalPriceData, previousActionsData
+                IUsdnProtocolVaultImplementation.validateWithdrawal.selector, withdrawalPriceData, previousActionsData
             )
         );
         require(success, "failed");

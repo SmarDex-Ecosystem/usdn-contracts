@@ -8,7 +8,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { ProtocolAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 import { UsdnProtocolLongEntry } from "src/UsdnProtocol/UsdnProtocolLongEntry.sol";
 import { UsdnProtocolVaultEntry } from "src/UsdnProtocol/UsdnProtocolVaultEntry.sol";
@@ -19,14 +18,7 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
-contract UsdnProtocol is
-    UsdnProtocolBaseStorage,
-    InitializableReentrancyGuard,
-    UsdnProtocolLongEntry,
-    UsdnProtocolVaultEntry,
-    IUsdnProtocolEvents,
-    Ownable
-{
+contract UsdnProtocol is UsdnProtocolLongEntry, UsdnProtocolVaultEntry, IUsdnProtocolEvents, Ownable {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 

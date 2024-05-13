@@ -9,7 +9,7 @@ import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.so
  * @title IUsdnProtocolLong
  * @notice Interface for the long side layer of the USDN protocol.
  */
-interface IUsdnProtocolVaultProxy is IUsdnProtocolCommon {
+interface IUsdnProtocolVaultImplementation is IUsdnProtocolCommon {
     function usdnPrice(uint128 currentPrice) external view returns (uint256);
 
     function usdnPrice(uint128 currentPrice, uint128 timestamp) external view returns (uint256);

@@ -9,7 +9,7 @@ import { PreviousActionsData, PositionId } from "src/interfaces/UsdnProtocol/IUs
  * @title IUsdnProtocolLong
  * @notice Interface for the long side layer of the USDN protocol.
  */
-interface IUsdnProtocolLongProxy is IUsdnProtocolCommon {
+interface IUsdnProtocolLongImplementation is IUsdnProtocolCommon {
     /**
      * @notice Get the value of the highest usable tick, taking into account the tick spacing
      * @dev Note that the effective maximum tick of a newly open long position also depends on the maximum allowed
