@@ -356,11 +356,35 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario The `getPendingAction` function returns no pending action
      * @custom:when There is no pending action
-     * @custom:then The function should return `None` as the action and 0 as the rawIndex
+     * @custom:then The function should return an empty action and 0 as the rawIndex
      */
     function test_emptyPendingAction() public {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
-        assertEq(action.action, PendingAction.ProtocolAction.None, "pending action should be None");
+        assertTrue(action.action == ProtocolAction.None, "action should be None");
+        assertEq(action.user, address(0), "user should be empty");
+        assertEq(action.to, address(0), "to should be empty");
         assertEq(rawIndex, 0, "rawIndex should be 0");
+    }
+
+    /**
+     * @custom:scenario The `getPendingAction` function returns the action
+     * @custom:when There is a pending action
+     * @custom:then The function should return the action and the rawIndex
+     */
+    function test_getPendingAction() public {
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 2000 ether / 2,
+                price: 2000 ether
+            })
+        );
+        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "error in action");
+        assertEq(action.user, address(this), "error in user");
+        assertEq(action.to, address(this), "error in to");
+        assertEq(rawIndex, 1, "error in rawIndex");
     }
 }
