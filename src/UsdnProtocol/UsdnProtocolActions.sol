@@ -1344,7 +1344,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // Credit the full amount to the vault to preserve the total balance invariant.
             _balanceVault += long.closeBoundedPositionValue;
             emit LiquidatedPosition(
-                long.to,
+                pending.validator, // position owner
                 PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
                 currentPrice.neutralPrice,
                 liquidationPrice

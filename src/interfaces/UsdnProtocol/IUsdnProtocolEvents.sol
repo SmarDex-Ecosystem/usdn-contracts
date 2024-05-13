@@ -141,13 +141,13 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a position is individually liquidated
-     * @param to The address saved in pendingActions that will receive the assets
+     * @param user the address of the user that owned the position
      * @param posId The unique identifier for the position that was liquidated
      * @param liquidationPrice The asset price at the moment of liquidation
      * @param effectiveTickPrice The effective liquidated tick price
      */
     event LiquidatedPosition(
-        address indexed to, PositionId posId, uint256 liquidationPrice, uint256 effectiveTickPrice
+        address indexed user, PositionId posId, uint256 liquidationPrice, uint256 effectiveTickPrice
     );
 
     /**
