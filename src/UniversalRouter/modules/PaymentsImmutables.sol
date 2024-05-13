@@ -7,9 +7,9 @@ import { IAllowanceTransfer } from "src/UniversalRouter/interfaces/IAllowanceTra
 struct PaymentsParameters {
     address permit2;
     address weth9;
-    address openseaConduit;
-    address sudoswap;
 }
+// address openseaConduit;
+// address sudoswap;
 
 contract PaymentsImmutables {
     /// @dev WETH9 address
@@ -18,12 +18,7 @@ contract PaymentsImmutables {
     /// @dev Permit2 address
     IAllowanceTransfer internal immutable PERMIT2;
 
-    /// @dev The address of OpenSea's conduit used in both Seaport 1.4 and Seaport 1.5
-    address internal immutable OPENSEA_CONDUIT;
-
-    // @dev The address of Sudoswap's router
-    address internal immutable SUDOSWAP;
-
+    // TODO check if useful
     enum Spenders {
         OSConduit,
         Sudoswap
@@ -32,7 +27,7 @@ contract PaymentsImmutables {
     constructor(PaymentsParameters memory params) {
         WETH9 = IWETH9(params.weth9);
         PERMIT2 = IAllowanceTransfer(params.permit2);
-        OPENSEA_CONDUIT = params.openseaConduit;
-        SUDOSWAP = params.sudoswap;
+        // OPENSEA_CONDUIT = params.openseaConduit;
+        // SUDOSWAP = params.sudoswap;
     }
 }

@@ -36,18 +36,19 @@ abstract contract Payments is PaymentsImmutables {
     }
 
     /// @notice Approves a protocol to spend ERC20s in the router
-    /// @param token The token to approve
-    /// @param spender Which protocol to approve
-    function approveERC20(ERC20 token, Spenders spender) internal {
+    /*     /// @param token The token to approve
+    /// @param spender Which protocol to approve */
+    function approveERC20(ERC20, Spenders) internal pure {
         // check spender is one of our approved spenders
-        address spenderAddress;
+        // address spenderAddress;
         /// @dev use 0 = Opensea Conduit for both Seaport v1.4 and v1.5
-        if (spender == Spenders.OSConduit) spenderAddress = OPENSEA_CONDUIT;
+        /*  if (spender == Spenders.OSConduit) spenderAddress = OPENSEA_CONDUIT;
         else if (spender == Spenders.Sudoswap) spenderAddress = SUDOSWAP;
-        else revert InvalidSpender();
+        else */
+        revert InvalidSpender();
 
         // set approval
-        token.safeApprove(spenderAddress, type(uint256).max);
+        // token.safeApprove(spenderAddress, type(uint256).max);
     }
 
     /// @notice Pays a proportion of the contract's ETH or ERC20 to a recipient
