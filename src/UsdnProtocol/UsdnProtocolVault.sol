@@ -139,8 +139,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         }
         uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, _targetUsdnPrice, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
-        usdn.rebase(newDivisor);
-        rebased_ = true;
+        (rebased_,,) = usdn.rebase(newDivisor);
     }
 
     /**
