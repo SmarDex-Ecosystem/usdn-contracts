@@ -8,6 +8,6 @@ interface IOrderManagerErrors {
     /// @dev The `to` address is invalid
     error OrderManagerInvalidAddressTo();
 
-    /// @dev There are not enough assets to be withdrawn
-    error OrderManagerNotEnoughAssetsToWithdraw();
+    /// @dev The amount to withdraw is greater than the amount deposited
+    error OrderManagerWithdrawAmountGreaterThanDeposited();
 }

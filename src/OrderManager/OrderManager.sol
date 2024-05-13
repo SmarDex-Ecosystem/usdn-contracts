@@ -90,7 +90,7 @@ contract OrderManager is Ownable, IOrderManager {
         }
 
         if (depositData.amount < amount) {
-            revert OrderManagerNotEnoughAssetsToWithdraw();
+            revert OrderManagerWithdrawAmountGreaterThanDeposited();
         }
 
         // If the amount to withdraw is equal to the deposited funds by this user, delete the mapping entry
