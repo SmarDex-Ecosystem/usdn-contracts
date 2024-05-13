@@ -8,8 +8,13 @@ import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorag
 import { IUsdnProtocolVaultProxy } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultProxy.sol";
 import { PendingAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+import { UsdnProtocolCommonEntry } from "src/UsdnProtocol/UsdnProtocolCommonEntry.sol";
 
-abstract contract UsdnProtocolVaultEntry is UsdnProtocolBaseStorage, InitializableReentrancyGuard {
+abstract contract UsdnProtocolVaultEntry is
+    UsdnProtocolBaseStorage,
+    UsdnProtocolCommonEntry,
+    InitializableReentrancyGuard
+{
     using SafeCast for int256;
     using SafeCast for uint256;
 

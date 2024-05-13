@@ -11,8 +11,6 @@ import { ProtocolAction, Position, PositionId } from "src/interfaces/UsdnProtoco
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 import { UsdnProtocolLongEntry } from "src/UsdnProtocol/UsdnProtocolLongEntry.sol";
-import { UsdnProtocolActionsEntry } from "src/UsdnProtocol/UsdnProtocolActionsEntry.sol";
-import { UsdnProtocolCoreEntry } from "src/UsdnProtocol/UsdnProtocolCoreEntry.sol";
 import { UsdnProtocolVaultEntry } from "src/UsdnProtocol/UsdnProtocolVaultEntry.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
@@ -25,8 +23,6 @@ contract UsdnProtocol is
     UsdnProtocolBaseStorage,
     InitializableReentrancyGuard,
     UsdnProtocolLongEntry,
-    UsdnProtocolActionsEntry,
-    UsdnProtocolCoreEntry,
     UsdnProtocolVaultEntry,
     IUsdnProtocolEvents,
     Ownable

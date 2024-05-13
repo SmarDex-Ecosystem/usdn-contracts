@@ -7,13 +7,18 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolCommonEntry } from "src/UsdnProtocol/UsdnProtocolCommonEntry.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { IUsdnProtocolLongProxy } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongProxy.sol";
 
-abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage, InitializableReentrancyGuard {
+abstract contract UsdnProtocolLongEntry is
+    UsdnProtocolBaseStorage,
+    UsdnProtocolCommonEntry,
+    InitializableReentrancyGuard
+{
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -79,13 +84,6 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage, Initializabl
         );
         require(success, "failed");
         liquidatedPositions_ = abi.decode(data, (uint256));
-    }
-
-    function minTick() public returns (int24 tick_) {
-        (bool success, bytes memory data) =
-            address(s._protocol).delegatecall(abi.encodeWithSelector(IUsdnProtocolLong.minTick.selector, tick_));
-        require(success, "failed");
-        tick_ = abi.decode(data, (int24));
     }
 
     function maxTick() public returns (int24 tick_) {
@@ -220,70 +218,6 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage, Initializabl
             )
         );
         require(success, "failed");
-    }
-
-    function getEffectiveTickForPrice(uint128 price) public returns (int24 tick_) {
-        (bool success, bytes memory data) =
-        // TO DO : check if we can use selector
-         address(s._protocol).delegatecall(abi.encodeWithSignature("getEffectiveTickForPrice(uint128)", price));
-        require(success, "failed");
-        tick_ = abi.decode(data, (int24));
-    }
-
-    function getEffectiveTickForPrice(
-        uint128 price,
-        uint256 assetPrice,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator,
-        int24 tickSpacing
-    ) public returns (int24 tick_) {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            // TO DO : same
-            abi.encodeWithSignature(
-                "getEffectiveTickForPrice(uint128,uint256,uint256,HugeUint.Uint512,int24",
-                price,
-                assetPrice,
-                longTradingExpo,
-                accumulator,
-                tickSpacing
-            )
-        );
-        require(success, "failed");
-        tick_ = abi.decode(data, (int24));
-    }
-
-    function getEffectivePriceForTick(int24 tick) public returns (uint128 price_) {
-        (bool success, bytes memory data) =
-            address(s._protocol).delegatecall(abi.encodeWithSignature("getEffectivePriceForTick(int24)", tick));
-        require(success, "failed");
-        price_ = abi.decode(data, (uint128));
-    }
-
-    function getEffectivePriceForTick(
-        int24 tick,
-        uint256 assetPrice,
-        uint256 longTradingExpo,
-        HugeUint.Uint512 memory accumulator
-    ) public returns (uint128 price_) {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSignature(
-                "getEffectivePriceForTick(int24,uint256,uint256,HugeUint.Uint512)",
-                tick,
-                assetPrice,
-                longTradingExpo,
-                accumulator
-            )
-        );
-        require(success, "failed");
-        price_ = abi.decode(data, (uint128));
-    }
-
-    function getTickLiquidationPenalty(int24 tick) public returns (uint8 liquidationPenalty_) {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLong.getTickLiquidationPenalty.selector, tick)
-        );
-        require(success, "failed");
-        liquidationPenalty_ = abi.decode(data, (uint8));
     }
 
     function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
