@@ -5,10 +5,8 @@ import { V2SwapRouter } from "../modules/uniswap/v2/V2SwapRouter.sol";
 import { V3SwapRouter } from "../modules/uniswap/v3/V3SwapRouter.sol";
 import { BytesLib } from "../modules/uniswap/v3/BytesLib.sol";
 import { Payments } from "../modules/Payments.sol";
-import { PaymentsImmutables } from "../modules/PaymentsImmutables.sol";
 import { Commands } from "../libraries/Commands.sol";
 import { LockAndMsgSender } from "./LockAndMsgSender.sol";
-import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { IAllowanceTransfer } from "src/UniversalRouter/interfaces/IAllowanceTransfer.sol";
 
 /// @title Decodes and Executes Commands

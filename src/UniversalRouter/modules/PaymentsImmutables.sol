@@ -8,8 +8,6 @@ struct PaymentsParameters {
     address permit2;
     address weth9;
 }
-// address openseaConduit;
-// address sudoswap;
 
 contract PaymentsImmutables {
     /// @dev WETH9 address
@@ -18,16 +16,8 @@ contract PaymentsImmutables {
     /// @dev Permit2 address
     IAllowanceTransfer internal immutable PERMIT2;
 
-    // TODO check if useful
-    enum Spenders {
-        OSConduit,
-        Sudoswap
-    }
-
     constructor(PaymentsParameters memory params) {
         WETH9 = IWETH9(params.weth9);
         PERMIT2 = IAllowanceTransfer(params.permit2);
-        // OPENSEA_CONDUIT = params.openseaConduit;
-        // SUDOSWAP = params.sudoswap;
     }
 }
