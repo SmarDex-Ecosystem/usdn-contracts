@@ -10,7 +10,7 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
  * @title OrderManager
- * @notice The goal of this contract is to re-balance the USDN protocol when there is too much trading expo available
+ * @notice The goal of this contract is to re-balance the USDN protocol when liquidations reduce the long trading expo
  * It will manage only one position with enough trading expo to re-balance the protocol after liquidations
  * and close/open again with new and existing funds when the imbalance reach a certain threshold
  */
@@ -23,13 +23,13 @@ contract OrderManager is Ownable, IOrderManager {
     /// @notice The address of the USDN protocol
     IUsdnProtocol internal immutable _usdnProtocol;
 
-    /// @notice The number of time the order manager position got liquidated
+    /// @notice The number of times the order manager position got liquidated
     uint128 internal _liquidationCount;
 
     /// @notice The current position version
     uint128 internal _positionVersion;
 
-    /// @notice The data about the assets an address deposited in this contract
+    /// @notice The data about the assets deposited in this contract by users
     mapping(address => UserDeposit) internal _userDeposit;
 
     /// @param usdnProtocol The address of the USDN protocol

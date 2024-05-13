@@ -20,7 +20,8 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents, IOrderManag
 
     /**
      * @notice Withdraw assets if the user is not in a position yet
-     * @dev If the entry position version of the user is lower than the current one, the transaction will revert
+     * @dev If the entry position version of the user is lower than or equal to the current one,
+     * the transaction will revert
      * @param amount The amount to withdraw (in _assetDecimals)
      * @param to The address to send the assets to
      */
