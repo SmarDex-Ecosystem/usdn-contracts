@@ -26,7 +26,7 @@ contract OrderManager is Ownable, IOrderManager {
     /// @notice The number of time the order manager position got liquidated
     uint128 internal _liquidationCount;
 
-    /// @notice The current position version (0 means no position open)
+    /// @notice The current position version
     uint128 internal _positionVersion;
 
     /// @notice The data about the assets an address deposited in this contract
