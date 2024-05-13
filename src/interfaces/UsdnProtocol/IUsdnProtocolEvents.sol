@@ -152,10 +152,10 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user's position was liquidated while pending validation and we remove the pending action
-     * @param user The user address
+     * @param validator The validator address
      * @param posId The unique position identifier
      */
-    event StalePendingActionRemoved(address indexed user, PositionId posId);
+    event StalePendingActionRemoved(address indexed validator, PositionId posId);
 
     /**
      * @notice Emitted when the position fees are updated
