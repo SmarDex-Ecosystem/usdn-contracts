@@ -13,7 +13,6 @@ contract TestRefundEther is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Test that the function reverts when to defined at zero
-     * @custom:given A zero balance of the protocol
      * @custom:when The function is called with to defined at zero
      * @custom:then The transaction reverts with `UsdnProtocolInvalidAddressTo`
      */
@@ -24,7 +23,6 @@ contract TestRefundEther is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Test that the function reverts when call fails
-     * @custom:given A zero balance of the protocol
      * @custom:when The function is called without enough ether in the contract
      * @custom:then The transaction reverts with `UsdnProtocolEtherRefundFailed`
      */
