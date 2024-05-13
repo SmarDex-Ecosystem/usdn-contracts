@@ -2,6 +2,8 @@
 pragma solidity >=0.8.0;
 
 import { HugeUint } from "src/libraries/HugeUint.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 /**
  * @title IUsdnProtocolLong
@@ -35,4 +37,8 @@ interface IUsdnProtocolCommon {
     ) external pure returns (uint128 price_);
 
     function minTick() external view returns (int24 tick_);
+
+    function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
+        external
+        returns (PriceInfo memory price_);
 }

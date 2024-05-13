@@ -9,8 +9,11 @@ import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolT
 import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
+import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+import { IUsdnProtocolLongProxy } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongProxy.sol";
 
-abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage {
+abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage, InitializableReentrancyGuard {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -40,6 +43,42 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage {
         uint256 longTradingExpo;
         uint256 currentPrice;
         HugeUint.Uint512 accumulator;
+    }
+
+    function funding(uint128 timestamp) public returns (int256 fund_, int256 oldLongExpo_) {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolLongProxy.funding.selector, timestamp)
+        );
+        require(success, "failed");
+        (fund_, oldLongExpo_) = abi.decode(data, (int256, int256));
+    }
+
+    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
+        external
+        payable
+        initializedAndNonReentrant
+        returns (uint256 validatedActions_)
+    {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongProxy.validateActionablePendingActions.selector, previousActionsData, maxValidations
+            )
+        );
+        require(success, "failed");
+        validatedActions_ = abi.decode(data, (uint256));
+    }
+
+    function liquidate(bytes calldata currentPriceData, uint16 iterations)
+        external
+        payable
+        initializedAndNonReentrant
+        returns (uint256 liquidatedPositions_)
+    {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolLongProxy.liquidate.selector, currentPriceData, iterations)
+        );
+        require(success, "failed");
+        liquidatedPositions_ = abi.decode(data, (uint256));
     }
 
     function minTick() public returns (int24 tick_) {
@@ -84,6 +123,103 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage {
         );
         require(success, "failed");
         value_ = abi.decode(data, (int256));
+    }
+
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public returns (int256 expo_) {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(IUsdnProtocolLongProxy.longTradingExpoWithFunding.selector, currentPrice, timestamp)
+        );
+        require(success, "failed");
+        expo_ = abi.decode(data, (int256));
+    }
+
+    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
+        public
+        returns (int256 available_)
+    {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongProxy.longAssetAvailableWithFunding.selector, currentPrice, timestamp
+            )
+        );
+        require(success, "failed");
+        available_ = abi.decode(data, (int256));
+    }
+
+    function initiateOpenPosition(
+        uint128 amount,
+        uint128 desiredLiqPrice,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData,
+        address to
+    ) external payable initializedAndNonReentrant returns (PositionId memory posId_) {
+        (bool success, bytes memory data) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongProxy.initiateOpenPosition.selector,
+                amount,
+                desiredLiqPrice,
+                currentPriceData,
+                previousActionsData,
+                to
+            )
+        );
+        require(success, "failed");
+        posId_ = abi.decode(data, (PositionId));
+    }
+
+    function validateOpenPosition(bytes calldata openPriceData, PreviousActionsData calldata previousActionsData)
+        external
+        payable
+        initializedAndNonReentrant
+    {
+        (bool success,) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongProxy.validateOpenPosition.selector, openPriceData, previousActionsData
+            )
+        );
+        require(success, "failed");
+    }
+
+    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) public {
+        (bool success,) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongProxy._checkImbalanceLimitOpen.selector, openTotalExpoValue, openCollatValue
+            )
+        );
+        require(success, "failed");
+    }
+
+    function initiateClosePosition(
+        PositionId calldata posId,
+        uint128 amountToClose,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData,
+        address to
+    ) external payable initializedAndNonReentrant {
+        (bool success,) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongProxy.initiateClosePosition.selector,
+                posId,
+                amountToClose,
+                currentPriceData,
+                previousActionsData,
+                to
+            )
+        );
+        require(success, "failed");
+    }
+
+    function validateClosePosition(bytes calldata closePriceData, PreviousActionsData calldata previousActionsData)
+        external
+        payable
+        initializedAndNonReentrant
+    {
+        (bool success,) = address(s._protocol).delegatecall(
+            abi.encodeWithSelector(
+                IUsdnProtocolLongProxy.validateClosePosition.selector, closePriceData, previousActionsData
+            )
+        );
+        require(success, "failed");
     }
 
     function getEffectiveTickForPrice(uint128 price) public returns (int24 tick_) {

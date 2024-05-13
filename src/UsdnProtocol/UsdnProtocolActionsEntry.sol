@@ -33,101 +33,6 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage, Initializ
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
 
-    function initiateOpenPosition(
-        uint128 amount,
-        uint128 desiredLiqPrice,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
-        address to
-    ) external payable initializedAndNonReentrant returns (PositionId memory posId_) {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolActions.initiateOpenPosition.selector,
-                amount,
-                desiredLiqPrice,
-                currentPriceData,
-                previousActionsData,
-                to
-            )
-        );
-        require(success, "failed");
-        posId_ = abi.decode(data, (PositionId));
-    }
-
-    function validateOpenPosition(bytes calldata openPriceData, PreviousActionsData calldata previousActionsData)
-        external
-        payable
-        initializedAndNonReentrant
-    {
-        (bool success,) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolActions.validateOpenPosition.selector, openPriceData, previousActionsData
-            )
-        );
-        require(success, "failed");
-    }
-
-    function initiateClosePosition(
-        PositionId calldata posId,
-        uint128 amountToClose,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
-        address to
-    ) external payable initializedAndNonReentrant {
-        (bool success,) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolActions.initiateClosePosition.selector,
-                posId,
-                amountToClose,
-                currentPriceData,
-                previousActionsData,
-                to
-            )
-        );
-        require(success, "failed");
-    }
-
-    function validateClosePosition(bytes calldata closePriceData, PreviousActionsData calldata previousActionsData)
-        external
-        payable
-        initializedAndNonReentrant
-    {
-        (bool success,) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolActions.validateClosePosition.selector, closePriceData, previousActionsData
-            )
-        );
-        require(success, "failed");
-    }
-
-    function liquidate(bytes calldata currentPriceData, uint16 iterations)
-        external
-        payable
-        initializedAndNonReentrant
-        returns (uint256 liquidatedPositions_)
-    {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolActions.liquidate.selector, currentPriceData, iterations)
-        );
-        require(success, "failed");
-        liquidatedPositions_ = abi.decode(data, (uint256));
-    }
-
-    function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
-        external
-        payable
-        initializedAndNonReentrant
-        returns (uint256 validatedActions_)
-    {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolActions.validateActionablePendingActions.selector, previousActionsData, maxValidations
-            )
-        );
-        require(success, "failed");
-        validatedActions_ = abi.decode(data, (uint256));
-    }
-
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
         public
         returns (PriceInfo memory price_)
@@ -137,12 +42,5 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage, Initializ
         );
         require(success, "failed");
         price_ = abi.decode(data, (PriceInfo));
-    }
-
-    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) public {
-        (bool success,) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolActions._getOraclePrice.selector, openTotalExpoValue, openCollatValue)
-        );
-        require(success, "failed");
     }
 }

@@ -65,6 +65,8 @@ interface IUsdnProtocolLongProxy is IUsdnProtocolCommon {
 
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp) external view returns (int256);
 
+    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view;
+
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,

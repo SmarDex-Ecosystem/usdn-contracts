@@ -31,32 +31,6 @@ abstract contract UsdnProtocolCoreEntry is UsdnProtocolBaseStorage {
 
     /* -------------------------- Public  functions ------------------------- */
 
-    function funding(uint128 timestamp) public returns (int256 fund_, int256 oldLongExpo_) {
-        (bool success, bytes memory data) =
-            address(s._protocol).delegatecall(abi.encodeWithSelector(IUsdnProtocolCore.funding.selector, timestamp));
-        require(success, "failed");
-        (fund_, oldLongExpo_) = abi.decode(data, (int256, int256));
-    }
-
-    function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        public
-        returns (int256 available_)
-    {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCore.longAssetAvailableWithFunding.selector, currentPrice, timestamp)
-        );
-        require(success, "failed");
-        available_ = abi.decode(data, (int256));
-    }
-
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public returns (int256 expo_) {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCore.longTradingExpoWithFunding.selector, currentPrice, timestamp)
-        );
-        require(success, "failed");
-        expo_ = abi.decode(data, (int256));
-    }
-
     function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         public
         returns (int256)
