@@ -72,8 +72,11 @@ contract OrderManager is Ownable, IOrderManager {
 
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
-        depositData.amount = amount;
-        depositData.entryPositionVersion = currentVersion;
+        if (depositData.amount == 0) {
+            depositData.entryPositionVersion = currentVersion;
+        }
+
+        depositData.amount += amount;
 
         emit AssetsDeposited(amount, to, currentVersion);
     }

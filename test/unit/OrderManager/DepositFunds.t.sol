@@ -69,4 +69,44 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
         );
         assertEq(userDeposit.amount, 1 ether, "The amount should have been saved");
     }
+
+    /**
+     * @custom:scenario The user deposit assets again
+     * @custom:given A user with assets already deposited
+     * @custom:when The user deposit assets again with his address as the to address
+     * @custom:then His assets are transferred to the contract
+     * @custom:and the sum of deposits is saved
+     */
+    function test_depositAssetsTwice() external {
+        uint128 firstDepositAmount = 1 ether;
+        orderManager.depositAssets(firstDepositAmount, address(this));
+
+        uint128 secondDepositAmount = 0.5 ether;
+        uint256 orderManagerBalanceBefore = wstETH.balanceOf(address(orderManager));
+        uint256 userBalanceBefore = wstETH.balanceOf(address(this));
+        vm.expectEmit();
+        emit AssetsDeposited(secondDepositAmount, address(this), 0);
+        orderManager.depositAssets(secondDepositAmount, address(this));
+
+        assertEq(
+            orderManagerBalanceBefore + secondDepositAmount,
+            wstETH.balanceOf(address(orderManager)),
+            "The order manager should have received the assets"
+        );
+        assertEq(
+            userBalanceBefore - secondDepositAmount,
+            wstETH.balanceOf(address(this)),
+            "The user should have sent the assets"
+        );
+
+        UserDeposit memory userDeposit = orderManager.getUserDepositData(address(this));
+        assertEq(
+            userDeposit.entryPositionVersion,
+            orderManager.getCurrentPositionVersion(),
+            "The position version should be the current one"
+        );
+        assertEq(
+            userDeposit.amount, firstDepositAmount + secondDepositAmount, "The sum of amounts should have been saved"
+        );
+    }
 }

@@ -12,7 +12,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents, IOrderManag
 
     /**
      * @notice Deposit assets into this contract to be included in the next position
-     * @dev If the user is already in a position, he needs to get out of it before adding more assets
+     * @dev If `to` is already in a position, they need to close it completely before adding more assets
      * @param amount The amount to deposit (in _assetDecimals)
      * @param to The address to assign the deposit to
      */
