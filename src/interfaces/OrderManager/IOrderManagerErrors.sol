@@ -9,5 +9,5 @@ interface IOrderManagerErrors {
     error OrderManagerInvalidAddressTo();
 
     /// @dev The amount to withdraw is greater than the amount deposited
-    error OrderManagerWithdrawAmountGreaterThanDeposited();
+    error OrderManagerWithdrawAmountTooLarge();
 }

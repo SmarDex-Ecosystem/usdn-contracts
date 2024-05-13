@@ -61,7 +61,7 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
      * @custom:then The call reverts with an OrderManagerUserNotPending error
      */
     function test_RevertWhen_withdrawPendingAssetsWithAmountHigherThanAssetsDeposited() external {
-        vm.expectRevert(OrderManagerWithdrawAmountGreaterThanDeposited.selector);
+        vm.expectRevert(OrderManagerWithdrawAmountTooLarge.selector);
         orderManager.withdrawPendingAssets(2 ether, address(this));
     }
 
