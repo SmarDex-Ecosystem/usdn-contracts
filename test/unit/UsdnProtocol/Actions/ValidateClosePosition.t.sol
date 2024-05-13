@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { console2 } from "forge-std/Test.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
@@ -180,7 +181,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the user receives the position amount
      */
     function test_internalValidateClosePosition() external {
-        _internalValidateClosePositionScenario(address(this), address(this));
+        _internalValidateClosePositionScenario(address(this));
     }
 
     /**
@@ -192,10 +193,10 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:and the recipient receives the position amount
      */
     function test_internalValidateClosePositionForAnotherUser() external {
-        _internalValidateClosePositionScenario(address(this), USER_1);
+        _internalValidateClosePositionScenario(USER_1);
     }
 
-    function _internalValidateClosePositionScenario(address to, address validatingAddress) internal {
+    function _internalValidateClosePositionScenario(address to) internal {
         uint128 price = params.initialPrice;
         bytes memory priceData = abi.encode(price);
 
@@ -206,7 +207,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         _waitDelay();
 
         /* ------------------------- Validate Close Position ------------------------ */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(to));
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(pos.user));
         uint128 totalExpoToClose = FixedPointMathLib.fullMulDiv(pos.totalExpo, positionAmount, pos.amount).toUint128();
 
         uint256 expectedAmountReceived = protocol.i_assetToRemove(
@@ -218,9 +219,8 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         );
 
         vm.expectEmit();
-        emit ValidatedClosePosition(to, to, posId, expectedAmountReceived, -1);
-        vm.prank(validatingAddress);
-        protocol.i_validateClosePosition(to, priceData);
+        emit ValidatedClosePosition(pos.user, to, posId, expectedAmountReceived, -1);
+        protocol.i_validateClosePosition(pos.user, priceData);
 
         /* ----------------------------- User's Balance ----------------------------- */
         assertApproxEqAbs(
