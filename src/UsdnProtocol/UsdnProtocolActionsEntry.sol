@@ -33,58 +33,6 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage, Initializ
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
 
-    function initiateDeposit(
-        uint128 amount,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
-        address to
-    ) external payable initializedAndNonReentrant {
-        (bool success,) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolActions.initiateDeposit.selector, amount, currentPriceData, previousActionsData, to
-            )
-        );
-        require(success, "failed");
-    }
-
-    function validateDeposit(bytes calldata depositPriceData, PreviousActionsData calldata previousActionsData)
-        external
-        payable
-        initializedAndNonReentrant
-    {
-        (bool success,) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolActions.validateDeposit.selector, depositPriceData, previousActionsData)
-        );
-        require(success, "failed");
-    }
-
-    function initiateWithdrawal(
-        uint152 usdnShares,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
-        address to
-    ) external payable initializedAndNonReentrant {
-        (bool success,) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolActions.initiateWithdrawal.selector, usdnShares, currentPriceData, previousActionsData, to
-            )
-        );
-        require(success, "failed");
-    }
-
-    function validateWithdrawal(bytes calldata withdrawalPriceData, PreviousActionsData calldata previousActionsData)
-        external
-        payable
-        initializedAndNonReentrant
-    {
-        (bool success,) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolActions.validateWithdrawal.selector, withdrawalPriceData, previousActionsData
-            )
-        );
-        require(success, "failed");
-    }
-
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,

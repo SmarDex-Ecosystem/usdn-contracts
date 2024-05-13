@@ -49,50 +49,12 @@ abstract contract UsdnProtocolCoreEntry is UsdnProtocolBaseStorage {
         available_ = abi.decode(data, (int256));
     }
 
-    function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
-        public
-        returns (int256 available_)
-    {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCore.vaultAssetAvailableWithFunding.selector, currentPrice, timestamp)
-        );
-        require(success, "failed");
-        available_ = abi.decode(data, (int256));
-    }
-
     function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public returns (int256 expo_) {
         (bool success, bytes memory data) = address(s._protocol).delegatecall(
             abi.encodeWithSelector(IUsdnProtocolCore.longTradingExpoWithFunding.selector, currentPrice, timestamp)
         );
         require(success, "failed");
         expo_ = abi.decode(data, (int256));
-    }
-
-    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external returns (int256 expo_) {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCore.vaultTradingExpoWithFunding.selector, currentPrice, timestamp)
-        );
-        require(success, "failed");
-        expo_ = abi.decode(data, (int256));
-    }
-
-    function getActionablePendingActions(address currentUser)
-        external
-        returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
-    {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCore.getActionablePendingActions.selector, currentUser)
-        );
-        require(success, "failed");
-        (actions_, rawIndices_) = abi.decode(data, (PendingAction[], uint128[]));
-    }
-
-    function getUserPendingAction(address user) external returns (PendingAction memory action_) {
-        (bool success, bytes memory data) = address(s._protocol).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCore.getUserPendingAction.selector, user)
-        );
-        require(success, "failed");
-        action_ = abi.decode(data, (PendingAction));
     }
 
     function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)

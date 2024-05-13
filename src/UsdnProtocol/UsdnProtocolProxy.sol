@@ -54,7 +54,8 @@ contract UsdnProtocol is
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector,
-        address protocol
+        address protocolLong,
+        address protocolVault
     )
         Ownable(msg.sender)
         UsdnProtocolBaseStorage(
@@ -65,7 +66,8 @@ contract UsdnProtocol is
             liquidationRewardsManager,
             tickSpacing,
             feeCollector,
-            protocol
+            protocolLong,
+            protocolVault
         )
     { }
 
