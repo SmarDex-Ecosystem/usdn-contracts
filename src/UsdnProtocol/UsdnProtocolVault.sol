@@ -118,28 +118,32 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @param assetPrice The current price of the underlying asset
      * @param ignoreInterval If true, then the price check will be performed regardless of when the last check happened
      * @return rebased_ Whether a rebase was performed
+     * @return callbackResult_ The rebase callback result, if any
      */
-    function _usdnRebase(uint128 assetPrice, bool ignoreInterval) internal returns (bool rebased_) {
+    function _usdnRebase(uint128 assetPrice, bool ignoreInterval)
+        internal
+        returns (bool rebased_, bytes memory callbackResult_)
+    {
         if (!ignoreInterval && block.timestamp - _lastRebaseCheck < _usdnRebaseInterval) {
-            return false;
+            return (false, callbackResult_);
         }
         _lastRebaseCheck = block.timestamp;
         IUsdn usdn = _usdn;
         uint256 divisor = usdn.divisor();
         if (divisor <= _usdnMinDivisor) {
             // no need to rebase, the USDN divisor cannot go lower
-            return false;
+            return (false, callbackResult_);
         }
         uint256 balanceVault = _balanceVault;
         uint8 assetDecimals = _assetDecimals;
         uint256 usdnTotalSupply = usdn.totalSupply();
         uint256 uPrice = _calcUsdnPrice(balanceVault, assetPrice, usdnTotalSupply, assetDecimals);
         if (uPrice <= _usdnRebaseThreshold) {
-            return false;
+            return (false, callbackResult_);
         }
         uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, _targetUsdnPrice, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
-        (rebased_,,) = usdn.rebase(newDivisor);
+        (rebased_,, callbackResult_) = usdn.rebase(newDivisor);
     }
 
     /**

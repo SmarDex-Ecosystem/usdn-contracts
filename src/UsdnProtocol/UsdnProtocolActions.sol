@@ -438,23 +438,26 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     }
 
     /**
-     * @notice Send rewards to the liquidator.
+     * @notice Send rewards to the liquidator
      * @dev Should still emit an event if liquidationRewards = 0 to better keep track of those anomalies as rewards for
-     * those will be managed off-chain.
-     * @param liquidatedTicks The number of ticks that were liquidated.
-     * @param remainingCollateral The amount of collateral remaining after liquidations.
-     * @param rebased Whether a USDN rebase was performed.
-     * @param priceData The price oracle update data.
+     * those will be managed off-chain
+     * @param liquidatedTicks The number of ticks that were liquidated
+     * @param remainingCollateral The amount of collateral remaining after liquidations
+     * @param rebased Whether a USDN rebase was performed
+     * @param rebaseCallbackResult The rebase callback result, if any
+     * @param priceData The price oracle update data
      */
     function _sendRewardsToLiquidator(
         uint16 liquidatedTicks,
         int256 remainingCollateral,
         bool rebased,
+        bytes memory rebaseCallbackResult,
         bytes memory priceData
     ) internal {
         // Get how much we should give to the liquidator as rewards
-        uint256 liquidationRewards =
-            _liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, remainingCollateral, rebased, priceData);
+        uint256 liquidationRewards = _liquidationRewardsManager.getLiquidationRewards(
+            liquidatedTicks, remainingCollateral, rebased, rebaseCallbackResult, priceData
+        );
 
         // Avoid underflows in situation of extreme bad debt
         if (_balanceVault < liquidationRewards) {
@@ -1503,12 +1506,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _balanceLong = liquidationEffects.newLongBalance;
             _balanceVault = liquidationEffects.newVaultBalance;
 
-            bool rebased = _usdnRebase(uint128(neutralPrice), ignoreInterval); // safecast not needed since already done
-                // earlier
+            // safecast not needed since done above
+            (bool rebased, bytes memory callbackResult) = _usdnRebase(uint128(neutralPrice), ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
                 _sendRewardsToLiquidator(
-                    liquidationEffects.liquidatedTicks, liquidationEffects.remainingCollateral, rebased, priceData
+                    liquidationEffects.liquidatedTicks,
+                    liquidationEffects.remainingCollateral,
+                    rebased,
+                    callbackResult,
+                    priceData
                 );
             }
 

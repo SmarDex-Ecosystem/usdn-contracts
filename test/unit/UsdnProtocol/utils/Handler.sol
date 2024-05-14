@@ -325,7 +325,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _updateEMA(secondsElapsed);
     }
 
-    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool) {
+    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory) {
         return _usdnRebase(assetPrice, ignoreInterval);
     }
 
