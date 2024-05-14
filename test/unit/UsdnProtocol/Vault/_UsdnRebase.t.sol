@@ -5,6 +5,7 @@ import { Vm } from "forge-std/Vm.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { DEPLOYER, ADMIN } from "test/utils/Constants.sol";
+import { RebaseHandler } from "test/unit/USDN/utils/RebaseHandler.sol";
 
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 
@@ -14,11 +15,17 @@ import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
  * @custom:and A USDN rebase interval of 12 hours
  */
 contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
+    RebaseHandler rebaseHandler;
+
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.initialLong = 10 ether;
         params.flags.enableUsdnRebase = true;
         super._setUp(params);
+
+        rebaseHandler = new RebaseHandler();
+        vm.prank(DEPLOYER);
+        usdn.setRebaseHandler(rebaseHandler);
 
         vm.prank(ADMIN);
         protocol.setUsdnRebaseInterval(12 hours);
@@ -27,9 +34,68 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
     }
 
     /**
+     * @custom:scenario USDN rebase
+     * @custom:given An initial USDN price of $1
+     * @custom:when The price of the asset is decreased by $100
+     * @custom:and The `_usdnRebase` function is called
+     * @custom:then The USDN token is rebased
+     * @custom:and The callback handler is called
+     * @custom:and The USDN price is lower than before
+     */
+    function test_rebase() public {
+        uint256 usdnPrice = protocol.usdnPrice(params.initialPrice);
+        assertEq(usdnPrice, 1 ether, "initial price");
+
+        skip(1 hours);
+        uint128 newPrice = params.initialPrice - 100 ether;
+        protocol.updateBalances(newPrice);
+
+        usdnPrice = protocol.usdnPrice(newPrice);
+        assertGt(usdnPrice, 1 ether, "new USDN price compared to initial price");
+
+        (bool rebased, bytes memory result) = protocol.i_usdnRebase(newPrice, true);
+        assertTrue(rebased, "rebased");
+        (uint256 oldDivisor, uint256 newDivisor) = abi.decode(result, (uint256, uint256));
+        assertLt(newDivisor, oldDivisor, "callback worked");
+
+        uint256 finalUsdnPrice = protocol.usdnPrice(newPrice);
+        assertLt(finalUsdnPrice, usdnPrice, "final USDN price");
+    }
+
+    /**
+     * @custom:scenario USDN rebase
+     * @custom:given An initial USDN price of $1
+     * @custom:and A callback handler that always fails
+     * @custom:when The price of the asset is decreased by $100
+     * @custom:and The `_usdnRebase` function is called
+     * @custom:then The USDN token is not rebased
+     * @custom:and The USDN price stays the same
+     */
+    function test_rebaseCallbackFails() public {
+        rebaseHandler.setShouldFail(true);
+
+        uint256 usdnPrice = protocol.usdnPrice(params.initialPrice);
+        assertEq(usdnPrice, 1 ether, "initial price");
+
+        skip(1 hours);
+        uint128 newPrice = params.initialPrice - 100 ether;
+        protocol.updateBalances(newPrice);
+
+        usdnPrice = protocol.usdnPrice(newPrice);
+        assertGt(usdnPrice, 1 ether, "new USDN price compared to initial price");
+
+        (bool rebased, bytes memory result) = protocol.i_usdnRebase(newPrice, true);
+        assertEq(rebased, false, "rebased");
+        assertEq(result, "", "callback result");
+
+        uint256 finalUsdnPrice = protocol.usdnPrice(newPrice);
+        assertEq(finalUsdnPrice, usdnPrice, "final USDN price");
+    }
+
+    /**
      * @custom:scenario USDN rebase before the interval has passed
      * @custom:given An initial USDN price of $1 and a recent rebase check
-     * @custom:when The price of the asset is reduced by $100 but we wait less than the rebase interval
+     * @custom:when The price of the asset is decreased by $100 but we wait less than the rebase interval
      * @custom:then The USDN token is not rebased
      */
     function test_rebaseCheckInterval() public {
@@ -45,17 +111,13 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         uint128 newPrice = params.initialPrice - 100 ether;
 
         skip(protocol.getUsdnRebaseInterval() - 1);
+        protocol.updateBalances(newPrice);
 
-        // update balances
-        protocol.i_applyPnlAndFunding(newPrice, uint128(block.timestamp));
+        usdnPrice = protocol.usdnPrice(newPrice);
+        assertGt(usdnPrice, 1 ether, "new USDN price compared to initial price");
         // since we checked more recently than `_usdnRebaseInterval`, we do not rebase
-        vm.recordLogs();
-        protocol.i_usdnRebase(newPrice, false);
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-        for (uint256 i; i < logs.length; i++) {
-            // no log is a rebase log
-            assertTrue(logs[i].topics[0] != Rebase.selector, "log topic");
-        }
+        (bool rebased,) = protocol.i_usdnRebase(newPrice, false);
+        assertEq(rebased, false, "no rebase");
     }
 
     /**
@@ -70,19 +132,14 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.stopPrank();
         usdn.rebase(usdn.MIN_DIVISOR());
 
-        vm.recordLogs();
-        protocol.i_usdnRebase(params.initialPrice, true);
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-        for (uint256 i; i < logs.length; i++) {
-            // no log is a rebase log
-            assertTrue(logs[i].topics[0] != Rebase.selector, "log topic");
-        }
+        (bool rebased,) = protocol.i_usdnRebase(params.initialPrice, true);
+        assertEq(rebased, false, "no rebase");
     }
 
     /**
      * @custom:scenario USDN rebase when the price is lower than the threshold
      * @custom:given An initial USDN price of $1
-     * @custom:when The price of the asset is reduced by $10
+     * @custom:when The price of the asset is reduced by $15
      * @custom:and The price of USDN increases but is still lower than the rebase threshold
      * @custom:then The USDN token is not rebased
      */
@@ -98,21 +155,14 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
 
         assertGt(block.timestamp, protocol.getLastRebaseCheck() + protocol.getUsdnRebaseInterval(), "time elapsed");
 
-        uint128 newPrice = params.initialPrice - 10 ether;
+        uint128 newPrice = params.initialPrice - 15 ether;
+        protocol.updateBalances(newPrice);
         usdnPrice = protocol.usdnPrice(newPrice);
         assertGt(usdnPrice, 1 ether, "new USDN price compared to initial price");
         assertLt(usdnPrice, protocol.getUsdnRebaseThreshold(), "new USDN price compared to threshold");
 
-        // update balances
-        protocol.i_applyPnlAndFunding(newPrice, uint128(block.timestamp));
-
         // since the price of USDN didn't reach the threshold, we do not rebase
-        vm.recordLogs();
-        protocol.i_usdnRebase(newPrice, true);
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-        for (uint256 i; i < logs.length; i++) {
-            // no log is a rebase log
-            assertTrue(logs[i].topics[0] != Rebase.selector, "log topic");
-        }
+        (bool rebased,) = protocol.i_usdnRebase(newPrice, true);
+        assertEq(rebased, false, "no rebase");
     }
 }

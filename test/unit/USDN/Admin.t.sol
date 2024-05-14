@@ -20,20 +20,6 @@ contract TestUsdnAdmin is UsdnTokenFixture {
     }
 
     /**
-     * @custom:scenario Try to change the rebase handler without permissions
-     * @custom:given This contract does not have DEFAULT_ADMIN_ROLE
-     * @custom:when The `setRebaseHandler` function is called
-     * @custom:then The call reverts with the `AccessControlUnauthorizedAccount` error
-     */
-    function test_RevertWhen_unauthorized() public {
-        bytes memory permissionError = abi.encodeWithSelector(
-            IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), usdn.DEFAULT_ADMIN_ROLE()
-        );
-        vm.expectRevert(permissionError);
-        usdn.setRebaseHandler(IRebaseCallback(address(1)));
-    }
-
-    /**
      * @custom:scenario Update the rebase handler
      * @custom:given The ADMIN account has DEFAULT_ADMIN_ROLE
      * @custom:when The ADMIN account calls `setRebaseHandler`

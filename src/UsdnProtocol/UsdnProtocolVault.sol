@@ -143,7 +143,12 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         }
         uint256 targetTotalSupply = _calcRebaseTotalSupply(balanceVault, assetPrice, _targetUsdnPrice, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
-        (rebased_,, callbackResult_) = usdn.rebase(newDivisor);
+        // since the USDN token can call a handler after the rebase, we want to make sure we do not block the user
+        // action in case the rebase fails
+        try usdn.rebase(newDivisor) returns (bool rebased, uint256, bytes memory callbackResult) {
+            rebased_ = rebased;
+            callbackResult_ = callbackResult;
+        } catch { }
     }
 
     /**

@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {
     PendingAction,
@@ -33,6 +34,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 contract UsdnProtocolHandler is UsdnProtocol, Test {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
+    using SafeCast for int256;
 
     constructor(
         IUsdn usdn,
@@ -94,6 +96,16 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function emptyVault() external {
         _balanceLong += _balanceVault;
         _balanceVault = 0;
+    }
+
+    function updateBalances(uint128 currentPrice) external {
+        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
+            _applyPnlAndFunding(currentPrice, uint128(block.timestamp));
+        if (!priceUpdated) {
+            revert("price was not updated");
+        }
+        _balanceLong = tempLongBalance.toUint256();
+        _balanceVault = tempVaultBalance.toUint256();
     }
 
     function i_initiateClosePosition(

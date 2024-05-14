@@ -15,4 +15,6 @@ interface IEventsErrors {
 
     /* ----------------------------- IRebaseCallback ---------------------------- */
     event TestCallback();
+
+    error RebaseHandlerFailure();
 }
