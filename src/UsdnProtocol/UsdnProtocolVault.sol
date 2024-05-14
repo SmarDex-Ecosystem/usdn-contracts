@@ -156,7 +156,7 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * amountUsdn = amountAsset * totalSupply / vaultBalance.
      */
     function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
-        public
+        internal
         view
         returns (uint256 toMint_)
     {
