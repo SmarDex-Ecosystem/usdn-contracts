@@ -13,8 +13,10 @@ import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { IUsdnProtocolLongImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongImplementation.sol";
+import { UsdnProtocolCommonLibrary as lib } from "src/UsdnProtocol/UsdnProtocolCommonLibrary.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
-abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry {
+abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry, InitializableReentrancyGuard {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -44,16 +46,6 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry {
         uint256 longTradingExpo;
         uint256 currentPrice;
         HugeUint.Uint512 accumulator;
-    }
-
-    function funding(uint128 timestamp) public returns (int256 fund_, int256 oldLongExpo_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLongImplementation.funding.selector, timestamp)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        (fund_, oldLongExpo_) = abi.decode(data, (int256, int256));
     }
 
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
@@ -247,35 +239,6 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry {
         if (!success) {
             revert(string(data));
         }
-    }
-
-    function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
-        // TO DO : make this internal
-        public
-        returns (uint128 totalExpo_)
-    {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLong._calculatePositionTotalExpo.selector, amount, startPrice, liquidationPrice
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        totalExpo_ = abi.decode(data, (uint128));
-    }
-
-    function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
-        internal
-        returns (uint256 tickVersion_, uint256 index_)
-    {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLong._saveNewPosition.selector, tick, long, liquidationPenalty)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        (tickVersion_, index_) = abi.decode(data, (uint256, uint256));
     }
 
     function _calcFixedPrecisionMultiplier(

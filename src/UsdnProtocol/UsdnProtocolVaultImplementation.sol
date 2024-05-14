@@ -21,7 +21,6 @@ import {
     PositionId,
     TickData
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolCommon } from "src/UsdnProtocol/UsdnProtocolCommon.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
@@ -31,8 +30,14 @@ import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiq
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { IUsdnProtocolVaultImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultImplementation.sol";
 import { IUsdnProtocolLongImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongImplementation.sol";
+import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
+import { UsdnProtocolCommonLibrary as lib } from "src/UsdnProtocol/UsdnProtocolCommonLibrary.sol";
 
-contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVaultImplementation {
+contract UsdnProtocolVaultImplementation is
+    UsdnProtocolBaseStorage,
+    IUsdnProtocolEvents,
+    IUsdnProtocolVaultImplementation
+{
     using SafeERC20 for IERC20Metadata;
     using SafeERC20 for IUsdn;
     using SafeCast for uint256;
@@ -74,7 +79,8 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
     }
 
     function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
-        price_ = _calcUsdnPrice(
+        price_ = lib._calcUsdnPrice(
+            s,
             vaultAssetAvailableWithFunding(currentPrice, timestamp).toUint256(),
             currentPrice,
             s._usdn.totalSupply(),
@@ -88,7 +94,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
 
     // TO DO : not used except in tests
     function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
-        (action_,) = _getPendingAction(user);
+        (action_,) = lib._getPendingAction(s, user);
     }
 
     // TO DO : not used except in tests
@@ -175,7 +181,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
         if (available < 0) {
             return 0;
         }
-        assetExpected_ = _calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
+        assetExpected_ = lib._calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
     }
 
     /**
@@ -215,13 +221,13 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
             revert UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
-        (int256 fundAsset,) = _fundingAsset(timestamp, ema);
+        int256 ema = lib.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
+        (int256 fundAsset,) = lib._fundingAsset(s, timestamp, ema);
 
         if (fundAsset < 0) {
             available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset);
         } else {
-            int256 fee = fundAsset * _toInt256(s._protocolFeeBps) / int256(s.BPS_DIVISOR);
+            int256 fee = fundAsset * lib._toInt256(s._protocolFeeBps) / int256(s.BPS_DIVISOR);
             available_ = _vaultAssetAvailable(currentPrice).safeAdd(fundAsset - fee);
         }
     }
@@ -233,7 +239,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
      * @return available_ The available balance in the vault side
      */
     function _vaultAssetAvailable(uint128 currentPrice) public view returns (int256 available_) {
-        available_ = _vaultAssetAvailable(s._totalExpo, s._balanceVault, s._balanceLong, currentPrice, s._lastPrice);
+        available_ = lib._vaultAssetAvailable(s._totalExpo, s._balanceVault, s._balanceLong, currentPrice, s._lastPrice);
     }
 
     function initiateDeposit(
@@ -250,10 +256,10 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
 
         uint256 amountToRefund = _initiateDeposit(msg.sender, to, amount, currentPriceData);
         unchecked {
-            amountToRefund += _executePendingActionOrRevert(previousActionsData);
+            amountToRefund += lib._executePendingActionOrRevert(s, previousActionsData);
         }
-        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        lib._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        lib._checkPendingFee(s);
     }
 
     function validateDeposit(bytes calldata depositPriceData, PreviousActionsData calldata previousActionsData)
@@ -264,10 +270,10 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
 
         uint256 amountToRefund = _validateDeposit(msg.sender, depositPriceData);
         unchecked {
-            amountToRefund += _executePendingActionOrRevert(previousActionsData);
+            amountToRefund += lib._executePendingActionOrRevert(s, previousActionsData);
         }
-        _refundExcessEther(0, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        lib._refundExcessEther(0, amountToRefund, balanceBefore);
+        lib._checkPendingFee(s);
     }
 
     function initiateWithdrawal(
@@ -285,10 +291,10 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
 
         uint256 amountToRefund = _initiateWithdrawal(msg.sender, to, usdnShares, currentPriceData);
         unchecked {
-            amountToRefund += _executePendingActionOrRevert(previousActionsData);
+            amountToRefund += lib._executePendingActionOrRevert(s, previousActionsData);
         }
-        _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        lib._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        lib._checkPendingFee(s);
     }
 
     /**
@@ -352,7 +358,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
                 usdnTotalShares: data.usdn.totalShares()
             })
         );
-        securityDepositValue_ = _addPendingAction(user, action);
+        securityDepositValue_ = lib._addPendingAction(s, user, action);
     }
 
     /**
@@ -382,10 +388,10 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
         returns (WithdrawalData memory data_)
     {
         PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateWithdrawal, block.timestamp, currentPriceData);
+            lib._getOraclePrice(s, ProtocolAction.InitiateWithdrawal, block.timestamp, currentPriceData);
 
-        _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice, currentPrice.timestamp, s._liquidationIteration, false, currentPriceData
+        lib._applyPnlAndFundingAndLiquidate(
+            s, currentPrice.neutralPrice, currentPrice.timestamp, s._liquidationIteration, false, currentPriceData
         );
 
         // Apply fees on price
@@ -394,7 +400,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = _vaultAssetAvailable(
+        data_.balanceVault = lib._vaultAssetAvailable(
             data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
         ).toUint256();
         data_.usdn = s._usdn;
@@ -443,17 +449,17 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
 
         uint256 amountToRefund = _validateWithdrawal(msg.sender, withdrawalPriceData);
         unchecked {
-            amountToRefund += _executePendingActionOrRevert(previousActionsData);
+            amountToRefund += lib._executePendingActionOrRevert(s, previousActionsData);
         }
-        _refundExcessEther(0, amountToRefund, balanceBefore);
-        _checkPendingFee();
+        lib._refundExcessEther(0, amountToRefund, balanceBefore);
+        lib._checkPendingFee(s);
     }
 
     function _validateWithdrawal(address user, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_)
     {
-        PendingAction memory pending = _getAndClearPendingAction(user);
+        PendingAction memory pending = lib._getAndClearPendingAction(s, user);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateWithdrawal) {
@@ -464,7 +470,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        _validateWithdrawalWithAction(pending, priceData);
+        lib._validateWithdrawalWithAction(s, pending, priceData);
         return pending.securityDepositValue;
     }
 
@@ -492,10 +498,10 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
         }
 
         PriceInfo memory currentPrice =
-            _getOraclePrice(ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
+            lib._getOraclePrice(s, ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
 
-        _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice, currentPrice.timestamp, s._liquidationIteration, false, currentPriceData
+        lib._applyPnlAndFundingAndLiquidate(
+            s, currentPrice.neutralPrice, currentPrice.timestamp, s._liquidationIteration, false, currentPriceData
         );
 
         _checkImbalanceLimitDeposit(amount);
@@ -514,18 +520,18 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
             amount: amount,
             assetPrice: pendingActionPrice,
             totalExpo: s._totalExpo,
-            balanceVault: _vaultAssetAvailable(
+            balanceVault: lib._vaultAssetAvailable(
                 s._totalExpo, s._balanceVault, s._balanceLong, pendingActionPrice, s._lastPrice
                 ).toUint256(),
             balanceLong: s._balanceLong,
             usdnTotalSupply: s._usdn.totalSupply()
         });
 
-        securityDepositValue_ = _addPendingAction(user, _convertDepositPendingAction(pendingAction));
+        securityDepositValue_ = lib._addPendingAction(s, user, lib._convertDepositPendingAction(pendingAction));
 
         // Calculate the amount of SDEX tokens to burn
-        uint256 usdnToMintEstimated = _calcMintUsdn(
-            pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
+        uint256 usdnToMintEstimated = lib._calcMintUsdn(
+            s, pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
         );
         uint32 burnRatio = s._sdexBurnOnDepositRatio;
         uint256 sdexToBurn = _calcSdexToBurn(usdnToMintEstimated, burnRatio);
@@ -582,7 +588,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
         internal
         returns (uint256 securityDepositValue_)
     {
-        PendingAction memory pending = _getAndClearPendingAction(user);
+        PendingAction memory pending = lib._getAndClearPendingAction(s, user);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateDeposit) {
@@ -593,7 +599,7 @@ contract UsdnProtocolVaultImplementation is UsdnProtocolCommon, IUsdnProtocolVau
             revert UsdnProtocolInvalidPendingAction();
         }
 
-        _validateDepositWithAction(pending, priceData);
+        lib._validateDepositWithAction(s, pending, priceData);
         return pending.securityDepositValue;
     }
 }

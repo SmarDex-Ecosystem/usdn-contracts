@@ -115,6 +115,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
     function _getCloseLimitValues()
         private
+        view
         returns (int256 closeLimitBps_, uint256 longAmount_, uint256 totalExpoValueToLimit_)
     {
         // current long expo

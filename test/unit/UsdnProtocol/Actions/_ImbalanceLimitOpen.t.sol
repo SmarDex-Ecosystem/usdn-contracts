@@ -77,6 +77,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
 
     function _getOpenLimitValues()
         private
+        view
         returns (int256 openLimitBps_, uint256 longAmount_, uint256 totalExpoValueToLimit_)
     {
         // current vault expo

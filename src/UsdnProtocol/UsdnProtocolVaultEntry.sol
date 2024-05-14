@@ -10,8 +10,9 @@ import {
     WithdrawalPendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolCommonEntry } from "src/UsdnProtocol/UsdnProtocolCommonEntry.sol";
+import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
-abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry {
+abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry, InitializableReentrancyGuard {
     using SafeCast for int256;
     using SafeCast for uint256;
 

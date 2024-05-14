@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolCommon } from "src/interfaces/UsdnProtocol/IUsdnProtocolCommon.sol";
 import { Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import {
     PreviousActionsData,
@@ -15,7 +14,7 @@ import { HugeUint } from "src/libraries/HugeUint.sol";
  * @title IUsdnProtocolLong
  * @notice Interface for the long side layer of the USDN protocol.
  */
-interface IUsdnProtocolLongImplementation is IUsdnProtocolCommon {
+interface IUsdnProtocolLongImplementation {
     /**
      * @notice Get the value of the highest usable tick, taking into account the tick spacing
      * @dev Note that the effective maximum tick of a newly open long position also depends on the maximum allowed
@@ -54,8 +53,6 @@ interface IUsdnProtocolLongImplementation is IUsdnProtocolCommon {
         external
         view
         returns (int256);
-
-    function funding(uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_);
 
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)
         external

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { IUsdnProtocolCommon } from "src/interfaces/UsdnProtocol/IUsdnProtocolCommon.sol";
 import { PreviousActionsData, WithdrawalPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
@@ -9,7 +8,7 @@ import { PendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.so
  * @title IUsdnProtocolLong
  * @notice Interface for the long side layer of the USDN protocol.
  */
-interface IUsdnProtocolVaultImplementation is IUsdnProtocolCommon {
+interface IUsdnProtocolVaultImplementation {
     function usdnPrice(uint128 currentPrice) external view returns (uint256);
 
     function usdnPrice(uint128 currentPrice, uint128 timestamp) external view returns (uint256);

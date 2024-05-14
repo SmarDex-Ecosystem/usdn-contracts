@@ -15,34 +15,24 @@ import {
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
-import { IUsdnProtocolCommon } from "src/interfaces/UsdnProtocol/IUsdnProtocolCommon.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
-import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+import { UsdnProtocolCommonLibrary as lib } from "src/UsdnProtocol/UsdnProtocolCommonLibrary.sol";
 
-abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage, InitializableReentrancyGuard {
+abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage {
     function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
         public
+        pure
         returns (int256)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolCommon.calcEMA.selector, lastFunding, secondsElapsed, emaPeriod, previousEMA
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (int256));
+        return lib.calcEMA(lastFunding, secondsElapsed, emaPeriod, previousEMA);
     }
 
-    function getEffectiveTickForPrice(uint128 price) public returns (int24 tick_) {
-        (bool success, bytes memory data) =
-        // TO DO : check if we can use selector
-         address(s._protocolLong).delegatecall(abi.encodeWithSignature("getEffectiveTickForPrice(uint128)", price));
-        if (!success) {
-            revert(string(data));
-        }
-        tick_ = abi.decode(data, (int24));
+    function getEffectiveTickForPrice(uint128 price) public view returns (int24 tick_) {
+        return lib.getEffectiveTickForPrice(s, price);
+    }
+
+    function funding(uint128 timestamp) public view returns (int256 fund_, int256 oldLongExpo_) {
+        return lib.funding(s, timestamp);
     }
 
     function getEffectiveTickForPrice(
@@ -51,41 +41,31 @@ abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage, Initializa
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
         int24 tickSpacing
-    ) public returns (int24 tick_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            // TO DO : same
-            abi.encodeWithSignature(
-                "getEffectiveTickForPrice(uint128,uint256,uint256,(uint256,uint256),int24)",
-                price,
-                assetPrice,
-                longTradingExpo,
-                accumulator,
-                tickSpacing
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        tick_ = abi.decode(data, (int24));
+    ) public pure returns (int24 tick_) {
+        return lib.getEffectiveTickForPrice(price, assetPrice, longTradingExpo, accumulator, tickSpacing);
     }
 
-    function getTickLiquidationPenalty(int24 tick) public returns (uint8 liquidationPenalty_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon.getTickLiquidationPenalty.selector, tick)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        liquidationPenalty_ = abi.decode(data, (uint8));
+    function getTickLiquidationPenalty(int24 tick) public view returns (uint8 liquidationPenalty_) {
+        return lib.getTickLiquidationPenalty(s, tick);
     }
 
-    function getEffectivePriceForTick(int24 tick) public returns (uint128 price_) {
-        (bool success, bytes memory data) =
-            address(s._protocolLong).delegatecall(abi.encodeWithSignature("getEffectivePriceForTick(int24)", tick));
-        if (!success) {
-            revert(string(data));
-        }
-        price_ = abi.decode(data, (uint128));
+    function getEffectivePriceForTick(int24 tick) public view returns (uint128 price_) {
+        return lib.getEffectivePriceForTick(s, tick);
+    }
+
+    function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
+        public
+        pure
+        returns (uint128 totalExpo_)
+    {
+        return lib._calculatePositionTotalExpo(amount, startPrice, liquidationPrice);
+    }
+
+    function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
+        internal
+        returns (uint256 tickVersion_, uint256 index_)
+    {
+        return lib._saveNewPosition(s, tick, long, liquidationPenalty);
     }
 
     function getEffectivePriceForTick(
@@ -93,42 +73,19 @@ abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage, Initializa
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) public returns (uint128 price_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSignature(
-                "getEffectivePriceForTick(int24,uint256,uint256,(uint256,uint256))",
-                tick,
-                assetPrice,
-                longTradingExpo,
-                accumulator
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        price_ = abi.decode(data, (uint128));
+    ) public pure returns (uint128 price_) {
+        return lib.getEffectivePriceForTick(tick, assetPrice, longTradingExpo, accumulator);
     }
 
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
         public
         returns (PriceInfo memory price_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._getOraclePrice.selector, action, timestamp, priceData)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        price_ = abi.decode(data, (PriceInfo));
+        return lib._getOraclePrice(s, action, timestamp, priceData);
     }
 
-    function minTick() public returns (int24 tick_) {
-        (bool success, bytes memory data) =
-            address(s._protocolLong).delegatecall(abi.encodeWithSelector(IUsdnProtocolCommon.minTick.selector, tick_));
-        if (!success) {
-            revert(string(data));
-        }
-        tick_ = abi.decode(data, (int24));
+    function minTick() public view returns (int24 tick_) {
+        return lib.minTick(s);
     }
 
     function _unadjustPrice(
@@ -136,257 +93,121 @@ abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage, Initializa
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) internal returns (uint256 unadjustedPrice_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolCommon._unadjustPrice.selector, price, assetPrice, longTradingExpo, accumulator
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint256));
+    ) internal pure returns (uint256 unadjustedPrice_) {
+        return lib._unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
     }
 
-    function _calcTickWithoutPenalty(int24 tick, uint8 liquidationPenalty) internal returns (int24 tick_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._calcTickWithoutPenalty.selector, tick, liquidationPenalty)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (int24));
+    function _calcTickWithoutPenalty(int24 tick, uint8 liquidationPenalty) internal view returns (int24 tick_) {
+        return lib._calcTickWithoutPenalty(s, tick, liquidationPenalty);
     }
 
     function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
         internal
+        pure
         returns (uint256 assetExpected_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._calcBurnUsdn.selector, usdnShares, available, usdnTotalShares)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint256));
+        return lib._calcBurnUsdn(usdnShares, available, usdnTotalShares);
     }
 
-    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) internal returns (uint128 price_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._getEffectivePriceForTick.selector, tick, liqMultiplier)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint128));
+    function _getEffectivePriceForTick(int24 tick, uint256 liqMultiplier) internal view returns (uint128 price_) {
+        return lib._getEffectivePriceForTick(s, tick, liqMultiplier);
     }
 
     function _calcMintUsdn(uint256 amount, uint256 vaultBalance, uint256 usdnTotalSupply, uint256 price)
         internal
+        view
         returns (uint256 toMint_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolCommon._calcMintUsdn.selector, amount, vaultBalance, usdnTotalSupply, price
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint256));
+        return lib._calcMintUsdn(s, amount, vaultBalance, usdnTotalSupply, price);
     }
 
-    function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB) internal returns (uint256 usdnShares_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._mergeWithdrawalAmountParts.selector, sharesLSB, sharesMSB)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint256));
+    function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB)
+        internal
+        pure
+        returns (uint256 usdnShares_)
+    {
+        return lib._mergeWithdrawalAmountParts(sharesLSB, sharesMSB);
     }
 
     function _refundExcessEther(uint256 securityDepositValue, uint256 amountToRefund, uint256 balanceBefore) internal {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolCommon._refundExcessEther.selector, securityDepositValue, amountToRefund, balanceBefore
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+        return lib._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
 
     function _executePendingActionOrRevert(PreviousActionsData calldata data)
         internal
         returns (uint256 securityDepositValue_)
     {
-        (bool success, bytes memory returnedData) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._executePendingActionOrRevert.selector, data)
-        );
-        if (!success) {
-            revert(string(returnedData));
-        }
-        return abi.decode(returnedData, (uint256));
+        return lib._executePendingActionOrRevert(s, data);
     }
 
     function _executePendingAction(PreviousActionsData calldata data)
         internal
         returns (bool success_, bool executed_, uint256 securityDepositValue_)
     {
-        (bool success, bytes memory returnedData) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._executePendingAction.selector, data)
-        );
-        if (!success) {
-            revert(string(returnedData));
-        }
-        return abi.decode(returnedData, (bool, bool, uint256));
+        return lib._executePendingAction(s, data);
     }
 
-    function _getPendingAction(address user) internal returns (PendingAction memory action_, uint128 rawIndex_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._getPendingAction.selector, user)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (PendingAction, uint128));
+    function _getPendingAction(address user) internal view returns (PendingAction memory action_, uint128 rawIndex_) {
+        return lib._getPendingAction(s, user);
     }
 
     function _addPendingAction(address user, PendingAction memory action)
         internal
         returns (uint256 securityDepositValue_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._addPendingAction.selector, user, action)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint256));
+        return lib._addPendingAction(s, user, action);
     }
 
     function _calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
         internal
+        view
         returns (uint256 totalSupply_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolCommon._calcRebaseTotalSupply.selector,
-                vaultBalance,
-                assetPrice,
-                targetPrice,
-                assetDecimals
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint256));
+        return lib._calcRebaseTotalSupply(s, vaultBalance, assetPrice, targetPrice, assetDecimals);
     }
 
     function _calcUsdnPrice(uint256 vaultBalance, uint128 assetPrice, uint256 usdnTotalSupply, uint8 assetDecimals)
         internal
+        view
         returns (uint256 price_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolCommon._calcUsdnPrice.selector, vaultBalance, assetPrice, usdnTotalSupply, assetDecimals
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint256));
+        return lib._calcUsdnPrice(s, vaultBalance, assetPrice, usdnTotalSupply, assetDecimals);
     }
 
     function _usdnRebase(uint128 assetPrice, bool ignoreInterval) internal returns (bool rebased_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._usdnRebase.selector, assetPrice, ignoreInterval)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (bool));
+        return lib._usdnRebase(s, assetPrice, ignoreInterval);
     }
 
     function _updateEMA(uint128 secondsElapsed) internal returns (int256) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._updateEMA.selector, secondsElapsed)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (int256));
+        return lib._updateEMA(s, secondsElapsed);
     }
 
-    function _calcBitmapIndexFromTick(int24 tick) internal returns (uint256 index_) {
-        (bool success, bytes memory data) =
-            address(s._protocolLong).delegatecall(abi.encodeWithSignature("_calcBitmapIndexFromTick(int24)", tick));
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint256));
+    function _calcBitmapIndexFromTick(int24 tick) internal view returns (uint256 index_) {
+        return lib._calcBitmapIndexFromTick(s, tick);
     }
 
-    function _findHighestPopulatedTick(int24 searchStart) internal returns (int24 tick_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._findHighestPopulatedTick.selector, searchStart)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (int24));
+    function _findHighestPopulatedTick(int24 searchStart) internal view returns (int24 tick_) {
+        return lib._findHighestPopulatedTick(s, searchStart);
     }
 
-    function _calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) internal returns (int24 tick_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSignature("_calcTickFromBitmapIndex(uint256,int24)", index, tickSpacing)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (int24));
+    function _calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) internal pure returns (int24 tick_) {
+        return lib._calcTickFromBitmapIndex(index, tickSpacing);
     }
 
-    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) internal returns (uint128 leverage_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._getLeverage.selector, startPrice, liquidationPrice)
-        );
-
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint128));
+    function _getLeverage(uint128 startPrice, uint128 liquidationPrice) internal view returns (uint128 leverage_) {
+        return lib._getLeverage(s, startPrice, liquidationPrice);
     }
 
-    function _getLiquidationPrice(uint128 startPrice, uint128 leverage) internal returns (uint128 price_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._getLiquidationPrice.selector, startPrice, leverage)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint128));
+    function _getLiquidationPrice(uint128 startPrice, uint128 leverage) internal view returns (uint128 price_) {
+        return lib._getLiquidationPrice(s, startPrice, leverage);
     }
 
-    function _longAssetAvailable(uint128 currentPrice) internal returns (int256 available_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._longAssetAvailable.selector, currentPrice)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (int256));
+    function _longAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
+        return lib._longAssetAvailable(s, currentPrice);
     }
 
-    function _tickHash(int24 tick) internal returns (bytes32 hash_, uint256 version_) {
-        (bool success, bytes memory data) =
-            address(s._protocolLong).delegatecall(abi.encodeWithSelector(IUsdnProtocolCommon._tickHash.selector, tick));
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (bytes32, uint256));
+    function _tickHash(int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+        return lib._tickHash(s, tick);
     }
 
     function _tickValue(
@@ -395,68 +216,40 @@ abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage, Initializa
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
         TickData memory tickData
-    ) internal returns (int256 value_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolCommon._tickValue.selector, tick, currentPrice, longTradingExpo, accumulator, tickData
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (int256));
+    ) internal view returns (int256 value_) {
+        return lib._tickValue(s, tick, currentPrice, longTradingExpo, accumulator, tickData);
     }
 
     function _convertDepositPendingAction(DepositPendingAction memory action)
         internal
+        pure
         returns (PendingAction memory pendingAction_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._convertDepositPendingAction.selector, action)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (PendingAction));
+        return lib._convertDepositPendingAction(action);
     }
 
     function _toDepositPendingAction(PendingAction memory action)
         internal
+        pure
         returns (DepositPendingAction memory vaultAction_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._toDepositPendingAction.selector, action)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (DepositPendingAction));
+        return lib._toDepositPendingAction(action);
     }
 
     function _toWithdrawalPendingAction(PendingAction memory action)
         internal
+        pure
         returns (WithdrawalPendingAction memory vaultAction_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._toWithdrawalPendingAction.selector, action)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (WithdrawalPendingAction));
+        return lib._toWithdrawalPendingAction(action);
     }
 
     function _toLongPendingAction(PendingAction memory action)
         internal
+        pure
         returns (LongPendingAction memory longAction_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._toLongPendingAction.selector, action)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (LongPendingAction));
+        return lib._toLongPendingAction(action);
     }
 
     function _liquidatePositions(
@@ -465,57 +258,26 @@ abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage, Initializa
         int256 tempLongBalance,
         int256 tempVaultBalance
     ) internal returns (LiquidationsEffects memory effects_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolCommon._liquidatePositions.selector,
-                currentPrice,
-                iteration,
-                tempLongBalance,
-                tempVaultBalance
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (LiquidationsEffects));
+        return lib._liquidatePositions(s, currentPrice, iteration, tempLongBalance, tempVaultBalance);
     }
 
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         internal
         returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._applyPnlAndFunding.selector, currentPrice, timestamp)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (bool, int256, int256));
+        return lib._applyPnlAndFunding(s, currentPrice, timestamp);
     }
 
     function _getActionablePendingAction() internal returns (PendingAction memory action_, uint128 rawIndex_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolCommon._getActionablePendingAction.selector)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (PendingAction, uint128));
+        return lib._getActionablePendingAction(s);
     }
 
     function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
         internal
+        pure
         returns (int256 value_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolCommon._positionValue.selector, currentPrice, liqPriceWithoutPenalty, positionTotalExpo
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (int256));
+        return lib._positionValue(currentPrice, liqPriceWithoutPenalty, positionTotalExpo);
     }
 
     function _removeAmountFromPosition(
@@ -525,19 +287,7 @@ abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage, Initializa
         uint128 amountToRemove,
         uint128 totalExpoToRemove
     ) internal {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolCommon._removeAmountFromPosition.selector,
-                tick,
-                index,
-                pos,
-                amountToRemove,
-                totalExpoToRemove
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+        return lib._removeAmountFromPosition(s, tick, index, pos, amountToRemove, totalExpoToRemove);
     }
 
     function _vaultAssetAvailable(
@@ -546,39 +296,15 @@ abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage, Initializa
         uint256 balanceLong,
         uint128 newPrice,
         uint128 oldPrice
-    ) internal returns (int256 available_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolCommon._vaultAssetAvailable.selector,
-                totalExpo,
-                balanceVault,
-                balanceLong,
-                newPrice,
-                oldPrice
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (int256));
+    ) internal pure returns (int256 available_) {
+        return lib._vaultAssetAvailable(totalExpo, balanceVault, balanceLong, newPrice, oldPrice);
     }
 
-    function _calcTickFromBitmapIndex(uint256 index) internal returns (int24 tick_) {
-        (bool success, bytes memory data) =
-            address(s._protocolLong).delegatecall(abi.encodeWithSignature("_calcTickFromBitmapIndex(uint256)", index));
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (int24));
+    function _calcTickFromBitmapIndex(uint256 index) internal view returns (int24 tick_) {
+        return lib._calcTickFromBitmapIndex(s, index);
     }
 
-    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) internal returns (uint256 index_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSignature("_calcBitmapIndexFromTick(int24,int24)", tick, tickSpacing)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint256));
+    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) internal pure returns (uint256 index_) {
+        return lib._calcBitmapIndexFromTick(tick, tickSpacing);
     }
 }
