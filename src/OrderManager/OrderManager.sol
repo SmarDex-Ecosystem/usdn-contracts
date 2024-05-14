@@ -65,7 +65,7 @@ contract OrderManager is Ownable, IOrderManager {
         }
 
         uint128 currentVersion = _positionVersion;
-        UserDeposit storage depositData = _userDeposit[to];
+        UserDeposit memory depositData = _userDeposit[to];
         if (depositData.amount != 0 && depositData.entryPositionVersion <= currentVersion) {
             revert OrderManagerUserNotPending();
         }
@@ -77,6 +77,7 @@ contract OrderManager is Ownable, IOrderManager {
         }
 
         depositData.amount += amount;
+        _userDeposit[to] = depositData;
 
         emit AssetsDeposited(amount, to, currentVersion + 1);
     }
