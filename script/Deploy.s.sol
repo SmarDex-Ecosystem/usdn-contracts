@@ -13,6 +13,7 @@ import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEth
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
+import { OrderManager } from "src/OrderManager/OrderManager.sol";
 import { Usdn } from "src/Usdn.sol";
 
 contract Deploy is Script {
@@ -22,6 +23,7 @@ contract Deploy is Script {
      * @return Sdex_ The SDEX token
      * @return WstEthOracleMiddleware_ The WstETH oracle middleware
      * @return LiquidationRewardsManager_ The liquidation rewards manager
+     * @return OrderManager_ The order manager
      * @return Usdn_ The USDN token
      * @return UsdnProtocol_ The USDN protocol
      */
@@ -32,6 +34,7 @@ contract Deploy is Script {
             Sdex Sdex_,
             WstEthOracleMiddleware WstEthOracleMiddleware_,
             LiquidationRewardsManager LiquidationRewardsManager_,
+            OrderManager OrderManager_,
             Usdn Usdn_,
             UsdnProtocol UsdnProtocol_
         )
@@ -60,6 +63,12 @@ contract Deploy is Script {
             100,
             vm.envAddress("FEE_COLLECTOR")
         );
+
+        // Deploy the order manager
+        OrderManager_ = _deployOrderManager(UsdnProtocol_);
+
+        // Set the order manager on the USDN protocol
+        UsdnProtocol_.setOrderManager(OrderManager_);
 
         // Grant USDN minter & rebaser roles to protocol and approve wstETH spending
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
@@ -187,6 +196,21 @@ contract Deploy is Script {
             }
         } else {
             wstEth_ = new WstETH();
+        }
+    }
+
+    /**
+     * @notice Deploy the OrderManager contract if necessary
+     * @dev Will return the already deployed one if an address is in the env variables
+     * @param usdnProtocol the USDN protocol
+     * @return orderManager_ the deployed contract
+     */
+    function _deployOrderManager(UsdnProtocol usdnProtocol) internal returns (OrderManager orderManager_) {
+        address orderManagerAddress = vm.envOr("ORDER_MANAGER_ADDRESS", address(0));
+        if (orderManagerAddress != address(0)) {
+            orderManager_ = OrderManager(orderManagerAddress);
+        } else {
+            orderManager_ = new OrderManager(usdnProtocol);
         }
     }
 
