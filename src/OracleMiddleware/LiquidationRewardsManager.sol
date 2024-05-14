@@ -38,9 +38,14 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      */
     RewardsParameters private _rewardsParameters;
 
-    constructor(address chainlinkGasPriceFeed, IWstETH wstETH, uint256 chainlinkElapsedTimeLimit)
+    /**
+     * @param chainlinkGasPriceFeed The address of the Chainlink gas price feed
+     * @param wstETH The address of the wstETH token
+     * @param chainlinkTimeElapsedLimit Time after which the price feed data is considered stale
+     */
+    constructor(address chainlinkGasPriceFeed, IWstETH wstETH, uint256 chainlinkTimeElapsedLimit)
         Ownable(msg.sender)
-        ChainlinkOracle(chainlinkGasPriceFeed, chainlinkElapsedTimeLimit)
+        ChainlinkOracle(chainlinkGasPriceFeed, chainlinkTimeElapsedLimit)
     {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
@@ -119,6 +124,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /**
      * @notice Get the gas price from Chainlink or tx.gasprice, the lesser of the 2 values
      * @dev This function cannot return a value higher than the _gasPriceLimit storage variable
+     * @param rewardsParameters The rewards parameters
      * @return gasPrice_ The gas price
      */
     function _getGasPrice(RewardsParameters memory rewardsParameters) internal view returns (uint256 gasPrice_) {
