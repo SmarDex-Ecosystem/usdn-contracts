@@ -81,6 +81,19 @@ library UsdnProtocolLongLibrary {
     );
 
     /**
+     * @notice Emitted when a user validates the opening of a long position
+     * @param user The user address
+     * @param to The address that will be the owner of the position
+     * @param totalExpo The total expo of the position
+     * @param newStartPrice The asset price at the moment of the position creation (final)
+     * @param posId The unique position identifier
+     * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
+     */
+    event ValidatedOpenPosition(
+        address indexed user, address indexed to, uint128 totalExpo, uint128 newStartPrice, PositionId posId
+    );
+
+    /**
      * @dev Structure to hold the transient data during `_initiateClosePosition`
      * @param pos The position to close
      * @param liquidationPenalty The liquidation penalty
@@ -828,5 +841,24 @@ library UsdnProtocolLongLibrary {
 
         actionsLib._validateClosePositionWithAction(s, pending, priceData);
         return pending.securityDepositValue;
+    }
+
+    function _createInitialPosition(Storage storage s, uint128 amount, uint128 price, int24 tick, uint128 totalExpo)
+        external
+    {
+        // Transfer the wstETH for the long
+        s._asset.safeTransferFrom(msg.sender, address(this), amount);
+
+        // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
+        uint8 liquidationPenalty = s._liquidationPenalty;
+        PositionId memory posId;
+        posId.tick = tick + int24(uint24(liquidationPenalty)) * s._tickSpacing;
+        Position memory long =
+            Position({ user: msg.sender, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
+        // Save the position and update the state
+        (posId.tickVersion, posId.index) = commonLib._saveNewPosition(s, posId.tick, long, liquidationPenalty);
+        s._balanceLong += long.amount;
+        emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId);
+        emit ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
     }
 }

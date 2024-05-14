@@ -26,6 +26,7 @@ struct Storage {
     address DEAD_ADDRESS;
     uint256 MIN_USDN_SUPPLY;
     uint256 MAX_ACTIONABLE_PENDING_ACTIONS;
+    uint256 MIN_INIT_DEPOSIT;
     // immutable
     int24 _tickSpacing;
     IERC20Metadata _asset;
@@ -121,6 +122,7 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         s.DEAD_ADDRESS = address(0xdead);
         s.MIN_USDN_SUPPLY = 1000;
         s.MAX_ACTIONABLE_PENDING_ACTIONS = 20;
+        s.MIN_INIT_DEPOSIT = 1 ether;
 
         // Parameters
         s._minLeverage = 10 ** s.LEVERAGE_DECIMALS + 10 ** 12;
@@ -215,6 +217,10 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
 
     function LIQUIDATION_MULTIPLIER_DECIMALS() external view returns (uint8) {
         return s.LIQUIDATION_MULTIPLIER_DECIMALS;
+    }
+
+    function MIN_INIT_DEPOSIT() external view returns (uint256) {
+        return s.MIN_INIT_DEPOSIT;
     }
 
     /* -------------------------------------------------------------------------- */

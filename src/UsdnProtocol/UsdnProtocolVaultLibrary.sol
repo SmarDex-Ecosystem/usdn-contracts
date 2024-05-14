@@ -30,6 +30,7 @@ import { UsdnProtocolCommonLibrary as commonLib } from "src/UsdnProtocol/UsdnPro
 import { UsdnProtocolActionsLibrary as actionsLib } from "src/UsdnProtocol/UsdnProtocolActionsLibrary.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { Storage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolLongLibrary as longLib } from "src/UsdnProtocol/UsdnProtocolLongLibrary.sol";
 
 library UsdnProtocolVaultLibrary {
     using SafeERC20 for IERC20Metadata;
@@ -40,6 +41,18 @@ library UsdnProtocolVaultLibrary {
     using SignedMath for int256;
     using HugeUint for HugeUint.Uint512;
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
+
+    /**
+     * @notice Emitted when a user validates a deposit
+     * @param user The user address
+     * @param to The address that received the USDN tokens
+     * @param amountDeposited The amount of asset that were deposited
+     * @param usdnMinted The amount of USDN that were minted
+     * @param timestamp The timestamp of the InitiatedDeposit action
+     */
+    event ValidatedDeposit(
+        address indexed user, address indexed to, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
+    );
 
     /**
      * @notice Emitted when a user initiates a withdrawal
@@ -173,7 +186,7 @@ library UsdnProtocolVaultLibrary {
      * @return assetExpected_ The expected amount of asset to be received
      */
     function previewWithdraw(Storage storage s, uint256 usdnShares, uint256 price, uint128 timestamp)
-        public
+        external
         view
         returns (uint256 assetExpected_)
     {
@@ -325,7 +338,7 @@ library UsdnProtocolVaultLibrary {
         address to,
         uint152 usdnShares,
         bytes calldata currentPriceData
-    ) internal returns (uint256 securityDepositValue_) {
+    ) public returns (uint256 securityDepositValue_) {
         if (to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -357,7 +370,7 @@ library UsdnProtocolVaultLibrary {
         address to,
         uint152 usdnShares,
         WithdrawalData memory data
-    ) internal returns (uint256 securityDepositValue_) {
+    ) public returns (uint256 securityDepositValue_) {
         PendingAction memory action = _convertWithdrawalPendingAction(
             WithdrawalPendingAction({
                 action: ProtocolAction.ValidateWithdrawal,
@@ -400,7 +413,7 @@ library UsdnProtocolVaultLibrary {
      * @return data_ The withdrawal data struct
      */
     function _prepareWithdrawalData(Storage storage s, uint152 usdnShares, bytes calldata currentPriceData)
-        internal
+        public
         returns (WithdrawalData memory data_)
     {
         PriceInfo memory currentPrice =
@@ -476,7 +489,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     function _validateWithdrawal(Storage storage s, address user, bytes calldata priceData)
-        internal
+        public
         returns (uint256 securityDepositValue_)
     {
         PendingAction memory pending = actionsLib._getAndClearPendingAction(s, user);
@@ -519,7 +532,7 @@ library UsdnProtocolVaultLibrary {
         address to,
         uint128 amount,
         bytes calldata currentPriceData
-    ) internal returns (uint256 securityDepositValue_) {
+    ) public returns (uint256 securityDepositValue_) {
         if (to == address(0)) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
         }
@@ -628,7 +641,7 @@ library UsdnProtocolVaultLibrary {
     }
 
     function _validateDeposit(Storage storage s, address user, bytes calldata priceData)
-        internal
+        public
         returns (uint256 securityDepositValue_)
     {
         PendingAction memory pending = actionsLib._getAndClearPendingAction(s, user);
@@ -644,5 +657,81 @@ library UsdnProtocolVaultLibrary {
 
         actionsLib._validateDepositWithAction(s, pending, priceData);
         return pending.securityDepositValue;
+    }
+
+    /**
+     * @notice Create initial deposit
+     * @dev To be called from `initialize`
+     * @param amount The initial deposit amount
+     * @param price The current asset price
+     */
+    function _createInitialDeposit(Storage storage s, uint128 amount, uint128 price) public {
+        // Transfer the wstETH for the deposit
+        s._asset.safeTransferFrom(msg.sender, address(this), amount);
+        s._balanceVault += amount;
+        emit InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp);
+
+        // Calculate the total minted amount of USDN (vault balance and total supply are zero for now, we assume the
+        // USDN price to be $1)
+        uint256 usdnToMint = commonLib._calcMintUsdn(s, amount, 0, 0, price);
+        // Mint the min amount and send to dead address so it can never be removed from the total supply
+        s._usdn.mint(s.DEAD_ADDRESS, s.MIN_USDN_SUPPLY);
+        // Mint the user's share
+        uint256 mintToUser = usdnToMint - s.MIN_USDN_SUPPLY;
+        s._usdn.mint(msg.sender, mintToUser);
+
+        // Emit events
+        emit ValidatedDeposit(s.DEAD_ADDRESS, s.DEAD_ADDRESS, 0, s.MIN_USDN_SUPPLY, block.timestamp);
+        emit ValidatedDeposit(msg.sender, msg.sender, amount, mintToUser, block.timestamp);
+    }
+
+    function initialize(
+        Storage storage s,
+        uint128 depositAmount,
+        uint128 longAmount,
+        uint128 desiredLiqPrice,
+        bytes calldata currentPriceData
+    ) external {
+        if (depositAmount < s.MIN_INIT_DEPOSIT) {
+            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(s.MIN_INIT_DEPOSIT);
+        }
+        if (longAmount < s.MIN_INIT_DEPOSIT) {
+            revert IUsdnProtocolErrors.UsdnProtocolMinInitAmount(s.MIN_INIT_DEPOSIT);
+        }
+        // Since all USDN must be minted by the protocol, we check that the total supply is 0
+        IUsdn usdn = s._usdn;
+        if (usdn.totalSupply() != 0) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidUsdn(address(usdn));
+        }
+
+        PriceInfo memory currentPrice =
+            commonLib._getOraclePrice(s, ProtocolAction.Initialize, block.timestamp, currentPriceData);
+
+        // Create vault deposit
+        _createInitialDeposit(s, depositAmount, currentPrice.price.toUint128());
+
+        s._lastUpdateTimestamp = uint128(block.timestamp);
+        s._lastPrice = currentPrice.price.toUint128();
+
+        int24 tick = commonLib.getEffectiveTickForPrice(s, desiredLiqPrice); // without penalty
+        uint128 liquidationPriceWithoutPenalty = commonLib.getEffectivePriceForTick(s, tick);
+        uint128 positionTotalExpo = commonLib._calculatePositionTotalExpo(
+            longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty
+        );
+
+        // verify expo is not imbalanced on long side
+        longLib._checkImbalanceLimitOpen(s, positionTotalExpo, longAmount);
+
+        // Create long position
+        longLib._createInitialPosition(s, longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
+
+        uint256 balance = address(this).balance;
+        if (balance != 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = payable(msg.sender).call{ value: balance }("");
+            if (!success) {
+                revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
+            }
+        }
     }
 }

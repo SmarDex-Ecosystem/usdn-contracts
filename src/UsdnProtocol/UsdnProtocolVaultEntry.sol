@@ -132,4 +132,18 @@ abstract contract UsdnProtocolVaultEntry is UsdnProtocolBaseStorage, Initializab
     {
         return vaultLib._convertWithdrawalPendingAction(action);
     }
+
+    function _createInitialDeposit(uint128 amount, uint128 price) internal {
+        _checkUninitialized(); // prevent using this function after initialization
+        vaultLib._createInitialDeposit(s, amount, price);
+    }
+
+    function initialize(
+        uint128 depositAmount,
+        uint128 longAmount,
+        uint128 desiredLiqPrice,
+        bytes calldata currentPriceData
+    ) external payable initializer {
+        vaultLib.initialize(s, depositAmount, longAmount, desiredLiqPrice, currentPriceData);
+    }
 }

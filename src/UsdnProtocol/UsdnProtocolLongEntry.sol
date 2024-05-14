@@ -189,4 +189,9 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage, Initializabl
     ) internal returns (uint256 securityDepositValue_) {
         return longLib._initiateClosePosition(s, user, to, posId, amountToClose, currentPriceData);
     }
+
+    function _createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 totalExpo) internal {
+        _checkUninitialized(); // prevent using this function after initialization
+        longLib._createInitialPosition(s, amount, price, tick, totalExpo);
+    }
 }

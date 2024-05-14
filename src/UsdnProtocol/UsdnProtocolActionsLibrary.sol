@@ -340,7 +340,7 @@ library UsdnProtocolActionsLibrary {
         uint16 iteration,
         int256 tempLongBalance,
         int256 tempVaultBalance
-    ) public returns (LiquidationsEffects memory effects_) {
+    ) external returns (LiquidationsEffects memory effects_) {
         int256 longTradingExpo = s._totalExpo.toInt256() - tempLongBalance;
         if (longTradingExpo <= 0) {
             // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become

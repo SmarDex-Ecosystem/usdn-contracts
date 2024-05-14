@@ -31,8 +31,6 @@ contract UsdnProtocolProxy is
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
-    uint256 public constant MIN_INIT_DEPOSIT = 1 ether;
-
     /**
      * @notice Constructor.
      * @param usdn The USDN ERC20 contract.
@@ -55,53 +53,6 @@ contract UsdnProtocolProxy is
         Ownable(msg.sender)
         UsdnProtocolBaseStorage(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector)
     { }
-
-    function initialize(
-        uint128 depositAmount,
-        uint128 longAmount,
-        uint128 desiredLiqPrice,
-        bytes calldata currentPriceData
-    ) external payable initializer {
-        if (depositAmount < MIN_INIT_DEPOSIT) {
-            revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
-        }
-        if (longAmount < MIN_INIT_DEPOSIT) {
-            revert UsdnProtocolMinInitAmount(MIN_INIT_DEPOSIT);
-        }
-        // Since all USDN must be minted by the protocol, we check that the total supply is 0
-        IUsdn usdn = s._usdn;
-        if (usdn.totalSupply() != 0) {
-            revert UsdnProtocolInvalidUsdn(address(usdn));
-        }
-
-        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Initialize, block.timestamp, currentPriceData);
-
-        // Create vault deposit
-        _createInitialDeposit(depositAmount, currentPrice.price.toUint128());
-
-        s._lastUpdateTimestamp = uint128(block.timestamp);
-        s._lastPrice = currentPrice.price.toUint128();
-
-        int24 tick = getEffectiveTickForPrice(desiredLiqPrice); // without penalty
-        uint128 liquidationPriceWithoutPenalty = getEffectivePriceForTick(tick);
-        uint128 positionTotalExpo =
-            _calculatePositionTotalExpo(longAmount, currentPrice.price.toUint128(), liquidationPriceWithoutPenalty);
-
-        // verify expo is not imbalanced on long side
-        _checkImbalanceLimitOpen(positionTotalExpo, longAmount);
-
-        // Create long position
-        _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
-
-        uint256 balance = address(this).balance;
-        if (balance != 0) {
-            // slither-disable-next-line arbitrary-send-eth
-            (bool success,) = payable(msg.sender).call{ value: balance }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
-    }
 
     function setOracleMiddleware(IOracleMiddleware newOracleMiddleware) external onlyOwner {
         // check address zero middleware
@@ -324,60 +275,5 @@ contract UsdnProtocolProxy is
     function setMinLongPosition(uint256 newMinLongPosition) external onlyOwner {
         s._minLongPosition = newMinLongPosition;
         emit MinLongPositionUpdated(newMinLongPosition);
-    }
-
-    /**
-     * @notice Create initial deposit
-     * @dev To be called from `initialize`
-     * @param amount The initial deposit amount
-     * @param price The current asset price
-     */
-    function _createInitialDeposit(uint128 amount, uint128 price) internal {
-        _checkUninitialized(); // prevent using this function after initialization
-
-        // Transfer the wstETH for the deposit
-        s._asset.safeTransferFrom(msg.sender, address(this), amount);
-        s._balanceVault += amount;
-        emit InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp);
-
-        // Calculate the total minted amount of USDN (vault balance and total supply are zero for now, we assume the
-        // USDN price to be $1)
-        uint256 usdnToMint = _calcMintUsdn(amount, 0, 0, price);
-        // Mint the min amount and send to dead address so it can never be removed from the total supply
-        s._usdn.mint(s.DEAD_ADDRESS, s.MIN_USDN_SUPPLY);
-        // Mint the user's share
-        uint256 mintToUser = usdnToMint - s.MIN_USDN_SUPPLY;
-        s._usdn.mint(msg.sender, mintToUser);
-
-        // Emit events
-        emit ValidatedDeposit(s.DEAD_ADDRESS, s.DEAD_ADDRESS, 0, s.MIN_USDN_SUPPLY, block.timestamp);
-        emit ValidatedDeposit(msg.sender, msg.sender, amount, mintToUser, block.timestamp);
-    }
-
-    /**
-     * @notice Create initial long position
-     * @dev To be called from `initialize`
-     * @param amount The initial position amount
-     * @param price The current asset price
-     * @param tick The tick corresponding to the liquidation price (without penalty)
-     * @param totalExpo The total expo of the position
-     */
-    function _createInitialPosition(uint128 amount, uint128 price, int24 tick, uint128 totalExpo) internal {
-        _checkUninitialized(); // prevent using this function after initialization
-
-        // Transfer the wstETH for the long
-        s._asset.safeTransferFrom(msg.sender, address(this), amount);
-
-        // apply liquidation penalty to the deployer's liquidationPriceWithoutPenalty
-        uint8 liquidationPenalty = s._liquidationPenalty;
-        PositionId memory posId;
-        posId.tick = tick + int24(uint24(liquidationPenalty)) * s._tickSpacing;
-        Position memory long =
-            Position({ user: msg.sender, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
-        // Save the position and update the state
-        (posId.tickVersion, posId.index) = _saveNewPosition(posId.tick, long, liquidationPenalty);
-        s._balanceLong += long.amount;
-        emit InitiatedOpenPosition(msg.sender, msg.sender, long.timestamp, totalExpo, long.amount, price, posId);
-        emit ValidatedOpenPosition(msg.sender, msg.sender, totalExpo, price, posId);
     }
 }
