@@ -6,6 +6,7 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
+import { OrderManagerHandler } from "test/unit/OrderManager/utils/Handler.sol";
 import { IEvents } from "test/utils/IEvents.sol";
 import { Sdex } from "test/utils/Sdex.sol";
 import { WstETH } from "test/utils/WstEth.sol";
@@ -36,6 +37,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         bool enableSecurityDeposit;
         bool enableSdexBurnOnDeposit;
         bool enableLongLimit;
+        bool enableOrderManager;
     }
 
     struct SetUpParams {
@@ -62,7 +64,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
             enableUsdnRebase: false,
             enableSecurityDeposit: false,
             enableSdexBurnOnDeposit: false,
-            enableLongLimit: false
+            enableLongLimit: false,
+            enableOrderManager: false
         })
     });
 
@@ -80,6 +83,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
     MockOracleMiddleware public oracleMiddleware;
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
+    OrderManagerHandler public orderManager;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
@@ -152,6 +156,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         wstETH.approve(address(protocol), type(uint256).max);
 
+        orderManager = new OrderManagerHandler(protocol);
+        if (testParams.flags.enableOrderManager) {
+            protocol.setOrderManager(orderManager);
+        }
+
         // leverage approx 2x
         protocol.initialize(
             testParams.initialDeposit,
@@ -161,6 +170,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         );
 
         // separate the roles ADMIN and DEPLOYER
+        orderManager.transferOwnership(ADMIN);
         protocol.transferOwnership(ADMIN);
         vm.stopPrank();
 
