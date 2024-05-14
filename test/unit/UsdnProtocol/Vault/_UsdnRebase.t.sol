@@ -85,7 +85,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         assertGt(usdnPrice, 1 ether, "new USDN price compared to initial price");
 
         (bool rebased, bytes memory result) = protocol.i_usdnRebase(newPrice, true);
-        assertEq(rebased, false, "rebased");
+        assertFalse(rebased, "rebased");
         assertEq(result, "", "callback result");
 
         uint256 finalUsdnPrice = protocol.usdnPrice(newPrice);
@@ -117,7 +117,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         assertGt(usdnPrice, 1 ether, "new USDN price compared to initial price");
         // since we checked more recently than `_usdnRebaseInterval`, we do not rebase
         (bool rebased,) = protocol.i_usdnRebase(newPrice, false);
-        assertEq(rebased, false, "no rebase");
+        assertFalse(rebased, "no rebase");
     }
 
     /**
@@ -133,7 +133,7 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         usdn.rebase(usdn.MIN_DIVISOR());
 
         (bool rebased,) = protocol.i_usdnRebase(params.initialPrice, true);
-        assertEq(rebased, false, "no rebase");
+        assertFalse(rebased, "no rebase");
     }
 
     /**
@@ -163,6 +163,6 @@ contract TestUsdnProtocolUsdnRebase is UsdnProtocolBaseFixture, IUsdnEvents {
 
         // since the price of USDN didn't reach the threshold, we do not rebase
         (bool rebased,) = protocol.i_usdnRebase(newPrice, true);
-        assertEq(rebased, false, "no rebase");
+        assertFalse(rebased, "no rebase");
     }
 }
