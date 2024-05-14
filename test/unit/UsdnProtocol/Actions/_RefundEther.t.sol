@@ -63,7 +63,7 @@ contract TestRefundEther is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_refundEther_noReceive() public {
         vm.expectRevert(UsdnProtocolEtherRefundFailed.selector);
-        protocol.i_refundEther{ value: 0.1 ether }(1 ether, address(1));
+        protocol.i_refundEther(1 ether, address(1));
     }
 
     // receive ether refunds
