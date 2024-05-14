@@ -193,12 +193,12 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /// @inheritdoc IUsdn
-    function burnShares(uint256 value) external virtual {
+    function burnShares(uint256 value) external {
         _burnShares(_msgSender(), value, _convertToTokens(value, Rounding.Closest, _divisor));
     }
 
     /// @inheritdoc IUsdn
-    function burnSharesFrom(address account, uint256 value) public virtual {
+    function burnSharesFrom(address account, uint256 value) public {
         uint256 d = _divisor;
         // to make sure we spend 1 wei of allowance in case the amount of shares is less than 1 wei of tokens,
         // we round up
@@ -353,7 +353,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @param value The number of shares to transfer
      * @param tokenValue The value converted to tokens, for inclusion in the `Transfer` event
      */
-    function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal virtual {
+    function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
             // Overflow check required: The rest of the code assumes that totalShares never overflows
             _totalShares += value;
