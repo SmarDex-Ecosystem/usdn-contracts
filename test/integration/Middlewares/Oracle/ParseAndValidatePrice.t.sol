@@ -48,8 +48,8 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 getMockedPythSignatureStETH();
             // Apply conf ratio to pyth confidence
             pythConf = (
-                pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatio()
-            ) / oracleMiddleware.getConfRatioDenom();
+                pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatioBps()
+            ) / oracleMiddleware.BPS_DIVISOR();
 
             // middleware data
             PriceInfo memory middlewarePrice;
@@ -167,8 +167,8 @@ contract TestOracleMiddlewareParseAndValidatePriceRealData is OracleMiddlewareBa
                 getHermesApiSignature(PYTH_STETH_USD, block.timestamp);
             // Apply conf ratio to pyth confidence
             pythConf = (
-                pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatio()
-            ) / oracleMiddleware.getConfRatioDenom();
+                pythConf * 10 ** (oracleMiddleware.getDecimals() - pythDecimals) * oracleMiddleware.getConfRatioBps()
+            ) / oracleMiddleware.BPS_DIVISOR();
 
             // middleware data
             PriceInfo memory middlewarePrice;

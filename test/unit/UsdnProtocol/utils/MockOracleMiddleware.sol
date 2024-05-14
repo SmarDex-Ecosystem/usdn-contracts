@@ -11,10 +11,11 @@ import {
 } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware, Ownable {
+    uint16 public constant BPS_DIVISOR = 10_000;
+    uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
     uint8 internal constant DECIMALS = 18;
-    uint16 private constant CONF_RATIO_DENOM = 10_000;
-    uint16 private constant MAX_CONF_RATIO = CONF_RATIO_DENOM * 2;
-    uint16 private _confRatio = 4000; // to divide by CONF_RATIO_DENOM
+
+    uint16 internal _confRatioBps = 4000;
     uint256 internal _validationDelay = 24 seconds;
     uint256 internal _timeElapsedLimit = 1 hours;
     // if true, then the middleware requires a payment of 1 wei for any action
@@ -68,18 +69,8 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getMaxConfRatio() external pure returns (uint16) {
-        return MAX_CONF_RATIO;
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function getConfRatioDenom() external pure returns (uint16) {
-        return CONF_RATIO_DENOM;
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function getConfRatio() external view returns (uint16) {
-        return _confRatio;
+    function getConfRatioBps() external view returns (uint16) {
+        return _confRatioBps;
     }
 
     /// @inheritdoc IOracleMiddleware
@@ -93,7 +84,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         if (newConfRatio > MAX_CONF_RATIO) {
             revert IOracleMiddlewareErrors.OracleMiddlewareConfRatioTooHigh();
         }
-        _confRatio = newConfRatio;
+        _confRatioBps = newConfRatio;
     }
 
     /// @inheritdoc IOracleMiddleware
