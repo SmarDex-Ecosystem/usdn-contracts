@@ -204,10 +204,4 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         external
         payable
         returns (uint256 validatedActions_);
-
-    function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
-        external
-        returns (PriceInfo memory price_);
-
-    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view;
 }

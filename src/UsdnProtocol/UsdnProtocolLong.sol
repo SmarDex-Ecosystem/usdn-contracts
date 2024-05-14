@@ -358,7 +358,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @return totalExpo_ The total exposure of a position
      */
     function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
-        public
+        internal
         pure
         returns (uint128 totalExpo_)
     {
@@ -384,7 +384,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param liquidationPenalty The liquidation penalty for the tick
      */
     function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
-        public
+        internal
         returns (uint256 tickVersion_, uint256 index_)
     {
         bytes32 tickHash;

@@ -114,13 +114,4 @@ interface IUsdnProtocolLong is IUsdnProtocolVault {
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
      */
     function getTickLiquidationPenalty(int24 tick) external view returns (uint8);
-
-    function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
-        external
-        pure
-        returns (uint128 totalExpo_);
-
-    function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
-        external
-        returns (uint256 tickVersion_, uint256 index_);
 }

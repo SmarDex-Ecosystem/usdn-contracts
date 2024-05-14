@@ -26,7 +26,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
      * @custom:when The `_checkImbalanceLimitWithdrawal` function is called with a value below the withdrawal limit
      * @custom:then The transaction should not revert
      */
-    function test_checkImbalanceLimitWithdrawal() public {
+    function test_checkImbalanceLimitWithdrawal() public view {
         (, uint256 withdrawalValueToLimit) = _getWithdrawalLimitValues();
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit, protocol.getTotalExpo());
     }
