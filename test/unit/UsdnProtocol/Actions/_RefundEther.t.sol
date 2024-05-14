@@ -13,6 +13,12 @@ contract TestRefundEther is UsdnProtocolBaseFixture {
         vm.deal(address(protocol), 0.1 ether);
     }
 
+    /**
+     * @custom:scenario Test that the function refunds ether to the user
+     * @custom:when The function is called with 0.1 ether and the user address
+     * @custom:then The balance of the protocol is decreased by 0.1 ether and the balance of the user is increased by
+     * 0.1 ether
+     */
     function test_refundEther() public {
         uint256 protocolBalance = address(protocol).balance;
         uint256 userBalance = address(this).balance;
