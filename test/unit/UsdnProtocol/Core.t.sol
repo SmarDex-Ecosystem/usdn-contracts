@@ -397,16 +397,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with `UsdnProtocolPendingAction`
      */
     function test_RevertWhen_addPendingActionAlreadyHavePendingAction() public {
-        setUpUserPositionInLong(
-            OpenParams({
-                user: address(this),
-                untilAction: ProtocolAction.InitiateClosePosition,
-                positionSize: 1 ether,
-                desiredLiqPrice: 2000 ether / 2,
-                price: 2000 ether
-            })
-        );
-
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
@@ -421,6 +411,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             var6: 0,
             var7: 0
         });
+        protocol.i_addPendingAction(address(this), pendingAction);
+
         vm.expectRevert(UsdnProtocolPendingAction.selector);
         protocol.i_addPendingAction(address(this), pendingAction);
     }
