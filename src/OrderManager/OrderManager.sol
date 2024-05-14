@@ -56,6 +56,10 @@ contract OrderManager is Ownable, IOrderManager {
             revert OrderManagerInvalidAddressTo();
         }
 
+        if (amount == 0) {
+            revert OrderManagerInvalidAmount();
+        }
+
         uint128 currentVersion = _positionVersion;
         UserDeposit memory depositData = _userDeposit[to];
         if (depositData.amount != 0 && depositData.entryPositionVersion <= currentVersion) {
@@ -78,6 +82,10 @@ contract OrderManager is Ownable, IOrderManager {
     function withdrawPendingAssets(uint128 amount, address to) external {
         if (to == address(0)) {
             revert OrderManagerInvalidAddressTo();
+        }
+
+        if (amount == 0) {
+            revert OrderManagerInvalidAmount();
         }
 
         UserDeposit memory depositData = _userDeposit[msg.sender];

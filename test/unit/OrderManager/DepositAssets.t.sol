@@ -41,6 +41,16 @@ contract TestOrderManagerDepositAssets is OrderManagerFixture {
     }
 
     /**
+     * @custom:scenario The user tries to deposit assets with 0 as the amount
+     * @custom:when depositAssets is called with 0 as the amount
+     * @custom:then The call reverts with a OrderManagerInvalidAmount error
+     */
+    function test_RevertWhen_depositAssetsWithAmountZero() external {
+        vm.expectRevert(OrderManagerInvalidAmount.selector);
+        orderManager.depositAssets(0, address(this));
+    }
+
+    /**
      * @custom:scenario The user deposit assets
      * @custom:given A user with assets
      * @custom:when The user deposit assets with his address as the to address

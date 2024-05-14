@@ -66,6 +66,16 @@ contract TestOrderManagerWithdrawPendingAssets is OrderManagerFixture {
     }
 
     /**
+     * @custom:scenario The user tries to withdraw assets with 0 as the amount
+     * @custom:when withdrawPendingAssets is called with 0 as the amount
+     * @custom:then The call reverts with a OrderManagerInvalidAmount error
+     */
+    function test_RevertWhen_depositAssetsWithAmountZero() external {
+        vm.expectRevert(OrderManagerInvalidAmount.selector);
+        orderManager.withdrawPendingAssets(0, address(this));
+    }
+
+    /**
      * @custom:scenario The user withdraw its assets
      * @custom:given A user with deposited assets
      * @custom:when The user withdraw all its assets with another address as the to address
