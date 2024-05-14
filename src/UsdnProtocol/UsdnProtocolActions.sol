@@ -1132,7 +1132,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Perform checks for the initiate close position action
      * @dev Reverts if the position is not owned by the user, the amount to close is higher than the position amount, or
      * the amount to close is zero.
-     * @param owner The owner of the initial position
+     * @param owner The owner of the position
      * @param to The address that will receive the assets
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param pos The position to close
@@ -1168,7 +1168,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @notice Update protocol balances, then prepare the data for the initiate close position action
      * @dev Reverts if the imbalance limit is reached, or if any of the checks in `_checkInitiateClosePosition` fail
      * Returns without creating a pending action if the position gets liquidated in this transaction
-     * @param owner The owner of the initial position
+     * @param owner The owner of the position
      * @param to The address that will receive the assets
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
@@ -1272,7 +1272,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * The position is taken out of the tick and put in a pending state during this operation. Thus, calculations don't
      * consider this position anymore. The exit price (and thus profit) is not yet set definitively, and will be done
      * during the validate action.
-     * @param owner The owner of the initial position
+     * @param owner The owner of the position
      * @param to The address that will receive the assets
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount

@@ -139,7 +139,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates a deposit with parameter validator defined at zero
+     * @custom:scenario The user initiates a withdrawal with parameter validator defined at zero
      * @custom:given An initialized USDN protocol
      * @custom:when The user initiate a withdrawal with parameter validator address defined at zero
      * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressValidator`

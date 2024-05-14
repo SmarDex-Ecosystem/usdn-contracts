@@ -339,8 +339,8 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
     /**
      * @custom:scenario The user initiates and validates (after the validationDeadline)
-     * a openPosition with another validator
-     * @custom:given The user initiated a openPosition with 1 wstETH and a desired liquidation price of ~1333$
+     * an openPosition action with another validator
+     * @custom:given The user initiated an openPosition with 1 wstETH and a desired liquidation price of ~1333$
      * @custom:and we wait until the validation deadline is passed
      * @custom:when The user validates the openPosition
      * @custom:then The security deposit is refunded to the validator
@@ -363,7 +363,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         _waitBeforeActionablePendingAction();
         protocol.validateOpenPosition(USER_1, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
 
-        assertEq(USER_1.balance, balanceUserBefore + securityDepositValue, "user balance after refund");
+        assertEq(USER_1.balance, balanceUserBefore + securityDepositValue, "validator balance after refund");
         assertEq(address(this).balance, balanceContractBefore - securityDepositValue, "contract balance after refund");
     }
 
