@@ -28,7 +28,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /**
      * @dev Control the rounding when converting from shares to tokens
      * @param Down Round down (towards zero)
-     * @param Closest Round to the closest integer
+     * @param Closest Round towards the closest integer (0.5 rounds up)
      * @param Up Round up (towards positive infinity)
      */
     enum Rounding {
@@ -302,10 +302,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
             }
 
             // below, we round to the closest integer
-            uint256 half;
-            assembly {
-                half := shr(1, d) // divide `d` by 2
-            }
+            uint256 half = d >> 1; // divide `d` by 2
             // if the remainder is equal to or larger than half of the divisor, we round up, else down
             if (remainder >= half) {
                 tokens_ = tokensUp;
