@@ -103,7 +103,9 @@ contract OrderManager is Ownable, IOrderManager {
         }
         // If not, simply subtract the amount withdrawn from the user's balance
         else {
-            _userDeposit[msg.sender].amount -= amount;
+            unchecked {
+                _userDeposit[msg.sender].amount -= amount;
+            }
         }
 
         _asset.safeTransfer(to, amount);
