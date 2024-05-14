@@ -192,12 +192,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             return _adjustPythPrice(latestPythPrice, dir);
         }
 
-        // if the price equals PRICE_TOO_OLD then the tolerated time elapsed for price validity was exceeded, revert.
+        // if the price equals PRICE_TOO_OLD then the tolerated time elapsed for price validity was exceeded, revert
         if (chainlinkOnChainPrice.price == PRICE_TOO_OLD) {
             revert OracleMiddlewarePriceTooOld(chainlinkOnChainPrice.timestamp);
         }
 
-        // if the price is negative or zero, revert.
+        // if the price is negative or zero, revert
         if (chainlinkOnChainPrice.price <= 0) {
             revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
         }
