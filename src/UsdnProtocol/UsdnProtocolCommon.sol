@@ -780,7 +780,6 @@ abstract contract UsdnProtocolCommon is UsdnProtocolBaseStorage, IUsdnProtocolCo
      * @return totalExpo_ The total exposure of a position
      */
     function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
-        // TO DO : make this internal
         public
         payable
         returns (uint128 totalExpo_)
@@ -1141,7 +1140,6 @@ abstract contract UsdnProtocolCommon is UsdnProtocolBaseStorage, IUsdnProtocolCo
     }
 
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
-        // TO DO : make this function internal
         public
         payable
         returns (PriceInfo memory price_)

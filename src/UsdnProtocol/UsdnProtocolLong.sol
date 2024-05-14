@@ -358,7 +358,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @return totalExpo_ The total exposure of a position
      */
     function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
-        // TO DO : make this internal
         public
         pure
         returns (uint128 totalExpo_)

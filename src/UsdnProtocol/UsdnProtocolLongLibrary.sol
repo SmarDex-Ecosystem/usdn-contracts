@@ -115,7 +115,6 @@ library UsdnProtocolLongLibrary {
         uint128 positionTotalExpo;
     }
 
-    // TO DO : here or vault ?
     function validateActionablePendingActions(
         Storage storage s,
         PreviousActionsData calldata previousActionsData,
@@ -438,7 +437,6 @@ library UsdnProtocolLongLibrary {
      * @param openTotalExpoValue The open position expo value
      * @param openCollatValue The open position collateral value
      */
-    // TO DO : make this internal
     function _checkImbalanceLimitOpen(Storage storage s, uint256 openTotalExpoValue, uint256 openCollatValue)
         public
         view

@@ -1958,7 +1958,6 @@ library UsdnProtocolCommonLibrary {
             .toUint128();
     }
 
-    // TO DO : here or vault ? (not used except tests)
     function funding(Storage storage s, uint128 timestamp) external view returns (int256 fund_, int256 oldLongExpo_) {
         (fund_, oldLongExpo_) = _funding(s, timestamp, s._EMA);
     }

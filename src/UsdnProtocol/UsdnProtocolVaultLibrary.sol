@@ -92,7 +92,6 @@ library UsdnProtocolVaultLibrary {
         price_ = usdnPrice(s, currentPrice, uint128(block.timestamp));
     }
 
-    // TO DO : not used except in tests
     function getUserPendingAction(Storage storage s, address user)
         external
         view
@@ -101,7 +100,6 @@ library UsdnProtocolVaultLibrary {
         (action_,) = lib._getPendingAction(s, user);
     }
 
-    // TO DO : not used except in tests
     function getActionablePendingActions(Storage storage s, address currentUser)
         external
         view
@@ -158,7 +156,6 @@ library UsdnProtocolVaultLibrary {
         }
     }
 
-    // TO DO : not used
     function vaultTradingExpoWithFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
         external
         view
