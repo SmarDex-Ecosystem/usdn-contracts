@@ -105,6 +105,15 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function convertToTokens(uint256 amountShares) external view returns (uint256 tokens_);
 
     /**
+     * @notice Convert a number of shares to the corresponding amount of tokens, rounding up
+     * @dev Use this function to determine the amount of a token approval, as we always round up when deducting from
+     * a token transfer allowance
+     * @param amountShares The amount of shares to convert to tokens
+     * @return tokens_ The corresponding amount of tokens, rounded up
+     */
+    function convertToTokensRoundUp(uint256 amountShares) external view returns (uint256 tokens_);
+
+    /**
      * @notice View function returning the current maximum tokens supply, given the current divisor
      * @dev This function is used to check if a conversion operation would overflow
      * @return maxTokens_ The maximum number of tokens that can exist

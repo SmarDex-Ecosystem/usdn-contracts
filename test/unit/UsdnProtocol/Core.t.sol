@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PendingAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol
@@ -351,5 +351,42 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 ts = protocol.getLastUpdateTimestamp();
         vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
         protocol.vaultAssetAvailableWithFunding(0, ts - 1);
+    }
+
+    /**
+     * @custom:scenario The `getPendingAction` function returns an empty pending action when there is none
+     * @custom:given There is no pending action for this user
+     * @custom:when getPendingAction is called
+     * @custom:then it returns an empty action and 0 as the rawIndex
+     */
+    function test_getPendingActionWithoutPendingAction() public {
+        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        assertTrue(action.action == ProtocolAction.None, "action should be None");
+        assertEq(action.user, address(0), "user should be empty");
+        assertEq(action.to, address(0), "to should be empty");
+        assertEq(rawIndex, 0, "rawIndex should be 0");
+    }
+
+    /**
+     * @custom:scenario The `getPendingAction` function returns the action when there is one
+     * @custom:given There is a pending action for this user
+     * @custom:when getPendingAction is called
+     * @custom:then The function should return the action and the rawIndex
+     */
+    function test_getPendingAction() public {
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 2000 ether / 2,
+                price: 2000 ether
+            })
+        );
+        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "action should be ValidateClosePosition");
+        assertEq(action.user, address(this), "user should be this contract");
+        assertEq(action.to, address(this), "to should be this contract");
+        assertEq(rawIndex, 1, "rawIndex should be 1");
     }
 }
