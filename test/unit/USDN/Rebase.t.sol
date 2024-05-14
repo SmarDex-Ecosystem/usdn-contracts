@@ -15,8 +15,6 @@ contract TestUsdnRebase is UsdnTokenFixture {
     uint256 internal maxDivisor;
     uint256 internal minDivisor;
 
-    event TestCallback();
-
     function setUp() public override {
         super.setUp();
         maxDivisor = usdn.MAX_DIVISOR();

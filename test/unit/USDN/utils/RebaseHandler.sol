@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { IEventsErrors } from "test/utils/IEventsErrors.sol";
+
 import { IRebaseCallback } from "src/interfaces/Usdn/IRebaseCallback.sol";
 
 /// @dev Mock rebase handler for testing
-contract RebaseHandler is IRebaseCallback {
-    event TestCallback();
-
+contract RebaseHandler is IRebaseCallback, IEventsErrors {
     function rebaseCallback(uint256 oldDivisor, uint256 newDivisor) external returns (bytes memory result_) {
         emit TestCallback();
         return abi.encode(oldDivisor, newDivisor);
