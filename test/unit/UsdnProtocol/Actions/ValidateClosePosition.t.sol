@@ -632,25 +632,27 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario The user initiates and validates (after the validationDeadline)
-     * a close position action with another validator
-     * @custom:given The user initiated a closePosition with another validator
-     * @custom:and we wait until the validation deadline is passed
-     * @custom:when The user validates the closePosition
-     * @custom:then The security deposit is refunded to the validator
+     * a close position action with another msg.sender
+     * @custom:given The user initiated a closePosition
+     * @custom:when The another user validates the closePosition
+     * @custom:then The security deposit is refunded to the owner
      */
-    function test_validateClosePositionEtherRefundToUser() public {
+    function test_validateClosePositionEtherRefundToOwner() public {
         vm.prank(ADMIN);
         protocol.setSecurityDepositValue(0.5 ether);
 
         bytes memory priceData = abi.encode(params.initialPrice);
+        uint256 balanceUserBefore = USER_1.balance;
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 0.5 ether }(
-            posId, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            posId, positionAmount, priceData, EMPTY_PREVIOUS_DATA, USER_1
         );
-        _waitBeforeActionablePendingAction();
+        _waitDelay();
+        vm.prank(USER_1);
         protocol.validateClosePosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
 
+        assertEq(USER_1.balance, balanceUserBefore, "validator balance after refund");
         assertEq(address(this).balance, balanceContractBefore, "contract balance after refund");
     }
 
