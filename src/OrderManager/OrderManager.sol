@@ -23,9 +23,6 @@ contract OrderManager is Ownable, IOrderManager {
     /// @notice The address of the USDN protocol
     IUsdnProtocol internal immutable _usdnProtocol;
 
-    /// @notice The number of times the order manager position got liquidated
-    uint128 internal _liquidationCount;
-
     /// @notice The current position version
     uint128 internal _positionVersion;
 
@@ -46,11 +43,6 @@ contract OrderManager is Ownable, IOrderManager {
     /// @inheritdoc IOrderManager
     function getPositionVersion() external view returns (uint128) {
         return _positionVersion;
-    }
-
-    /// @inheritdoc IOrderManager
-    function getLiquidationCount() external view returns (uint128) {
-        return _liquidationCount;
     }
 
     /// @inheritdoc IOrderManager

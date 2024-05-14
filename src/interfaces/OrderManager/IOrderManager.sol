@@ -30,9 +30,6 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents, IOrderManag
     /// @notice Returns the version of the current position (0 means no position open)
     function getPositionVersion() external view returns (uint128);
 
-    /// @notice Returns the number of time the position of te order manager was liquidated
-    function getLiquidationCount() external view returns (uint128);
-
     /// @notice Returns the data regarding the assets deposited by the provided user
     function getUserDepositData(address user) external view returns (UserDeposit memory userDeposit_);
 }
