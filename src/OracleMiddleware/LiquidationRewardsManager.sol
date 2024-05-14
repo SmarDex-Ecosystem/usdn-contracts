@@ -54,7 +54,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
 
     /**
      * @inheritdoc ILiquidationRewardsManager
-     * @dev In the current implementation, the `int256 remainingCollateral`, `bytes calldata rebaseCallbackResult`$
+     * @dev In the current implementation, the `int256 remainingCollateral`, `bytes calldata rebaseCallbackResult`
      * and `bytes calldata priceData` parameters are not used
      */
     function getLiquidationRewards(uint16 tickAmount, int256, bool rebased, bytes calldata, bytes calldata)
