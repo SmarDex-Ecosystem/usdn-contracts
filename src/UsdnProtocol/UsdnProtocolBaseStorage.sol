@@ -6,8 +6,6 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
-import { IUsdnProtocolLongImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongImplementation.sol";
-import { IUsdnProtocolVaultImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultImplementation.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -84,11 +82,6 @@ struct Storage {
     int24 _highestPopulatedTick;
     uint256 _totalLongPositions;
     LibBitmap.Bitmap _tickBitmap;
-    // implementations
-    // TO DO : address -> IUsdnProtocolProxy
-    address _protocol;
-    IUsdnProtocolLongImplementation _protocolLong;
-    IUsdnProtocolVaultImplementation _protocolVault;
 }
 
 contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
@@ -114,15 +107,8 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
-        address feeCollector,
-        IUsdnProtocolLongImplementation protocolLong,
-        IUsdnProtocolVaultImplementation protocolVault,
-        bool initialize
+        address feeCollector
     ) {
-        if (!initialize) {
-            return;
-        }
-
         // constants
         s.LEVERAGE_DECIMALS = 21;
         s.FUNDING_RATE_DECIMALS = 18;
@@ -158,10 +144,6 @@ contract UsdnProtocolBaseStorage is IUsdnProtocolErrors {
         s._usdnRebaseInterval = 0;
         // Long positions
         s._EMA = int256(3 * 10 ** (s.FUNDING_RATE_DECIMALS - 4));
-
-        s._protocol = address(this);
-        s._protocolLong = protocolLong;
-        s._protocolVault = protocolVault;
 
         // Since all USDN must be minted by the protocol, we check that the total supply is 0
         if (usdn.totalSupply() != 0) {

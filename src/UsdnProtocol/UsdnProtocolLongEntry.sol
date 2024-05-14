@@ -4,19 +4,17 @@ pragma solidity 0.8.20;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { IUsdnProtocolLong } from "src/interfaces/UsdnProtocol/IUsdnProtocolLong.sol";
 import {
     Position, PositionId, LongPendingAction, PendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolCommonEntry } from "src/UsdnProtocol/UsdnProtocolCommonEntry.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { IUsdnProtocolLongImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongImplementation.sol";
-import { UsdnProtocolCommonLibrary as lib } from "src/UsdnProtocol/UsdnProtocolCommonLibrary.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+import { UsdnProtocolLongLibrary as longLib } from "src/UsdnProtocol/UsdnProtocolLongLibrary.sol";
+import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 
-abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry, InitializableReentrancyGuard {
+abstract contract UsdnProtocolLongEntry is UsdnProtocolBaseStorage, InitializableReentrancyGuard {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SafeCast for int256;
@@ -54,17 +52,7 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry, Initializabl
         initializedAndNonReentrant
         returns (uint256 validatedActions_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation.validateActionablePendingActions.selector,
-                previousActionsData,
-                maxValidations
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        validatedActions_ = abi.decode(data, (uint256));
+        return longLib.validateActionablePendingActions(s, previousActionsData, maxValidations);
     }
 
     function liquidate(bytes calldata currentPriceData, uint16 iterations)
@@ -73,86 +61,44 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry, Initializabl
         initializedAndNonReentrant
         returns (uint256 liquidatedPositions_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLongImplementation.liquidate.selector, currentPriceData, iterations)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        liquidatedPositions_ = abi.decode(data, (uint256));
+        return longLib.liquidate(s, currentPriceData, iterations);
     }
 
-    function maxTick() public returns (int24 tick_) {
-        (bool success, bytes memory data) =
-            address(s._protocolLong).delegatecall(abi.encodeWithSelector(IUsdnProtocolLong.maxTick.selector, tick_));
-        if (!success) {
-            revert(string(data));
-        }
-        tick_ = abi.decode(data, (int24));
+    function maxTick() public view returns (int24 tick_) {
+        return longLib.maxTick(s);
     }
 
     function getLongPosition(PositionId memory posId)
         public
+        view
         returns (Position memory pos_, uint8 liquidationPenalty_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLong.getLongPosition.selector, posId)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        (pos_, liquidationPenalty_) = abi.decode(data, (Position, uint8));
+        return longLib.getLongPosition(s, posId);
     }
 
     // slither-disable-next-line write-after-write
-    function getMinLiquidationPrice(uint128 price) public returns (uint128 liquidationPrice_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLong.getMinLiquidationPrice.selector, price)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        liquidationPrice_ = abi.decode(data, (uint128));
+    function getMinLiquidationPrice(uint128 price) public view returns (uint128 liquidationPrice_) {
+        return longLib.getMinLiquidationPrice(s, price);
     }
 
     function getPositionValue(PositionId calldata posId, uint128 price, uint128 timestamp)
         external
+        view
         returns (int256 value_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLong.getPositionValue.selector, posId, price, timestamp)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        value_ = abi.decode(data, (int256));
+        return longLib.getPositionValue(s, posId, price, timestamp);
     }
 
-    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public returns (int256 expo_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation.longTradingExpoWithFunding.selector, currentPrice, timestamp
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        expo_ = abi.decode(data, (int256));
+    function longTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) public view returns (int256 expo_) {
+        return longLib.longTradingExpoWithFunding(s, currentPrice, timestamp);
     }
 
     function longAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
+        view
         returns (int256 available_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation.longAssetAvailableWithFunding.selector, currentPrice, timestamp
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        available_ = abi.decode(data, (int256));
+        return longLib.longAssetAvailableWithFunding(s, currentPrice, timestamp);
     }
 
     function initiateOpenPosition(
@@ -162,20 +108,7 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry, Initializabl
         PreviousActionsData calldata previousActionsData,
         address to
     ) external payable initializedAndNonReentrant returns (PositionId memory posId_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation.initiateOpenPosition.selector,
-                amount,
-                desiredLiqPrice,
-                currentPriceData,
-                previousActionsData,
-                to
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        posId_ = abi.decode(data, (PositionId));
+        return longLib.initiateOpenPosition(s, amount, desiredLiqPrice, currentPriceData, previousActionsData, to);
     }
 
     function validateOpenPosition(bytes calldata openPriceData, PreviousActionsData calldata previousActionsData)
@@ -183,25 +116,11 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry, Initializabl
         payable
         initializedAndNonReentrant
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation.validateOpenPosition.selector, openPriceData, previousActionsData
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+        return longLib.validateOpenPosition(s, openPriceData, previousActionsData);
     }
 
-    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) public {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation._checkImbalanceLimitOpen.selector, openTotalExpoValue, openCollatValue
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+    function _checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) public view {
+        return longLib._checkImbalanceLimitOpen(s, openTotalExpoValue, openCollatValue);
     }
 
     function initiateClosePosition(
@@ -211,19 +130,7 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry, Initializabl
         PreviousActionsData calldata previousActionsData,
         address to
     ) external payable initializedAndNonReentrant {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation.initiateClosePosition.selector,
-                posId,
-                amountToClose,
-                currentPriceData,
-                previousActionsData,
-                to
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+        longLib.initiateClosePosition(s, posId, amountToClose, currentPriceData, previousActionsData, to);
     }
 
     function validateClosePosition(bytes calldata closePriceData, PreviousActionsData calldata previousActionsData)
@@ -231,98 +138,46 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry, Initializabl
         payable
         initializedAndNonReentrant
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation.validateClosePosition.selector, closePriceData, previousActionsData
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+        longLib.validateClosePosition(s, closePriceData, previousActionsData);
     }
 
     function _calcFixedPrecisionMultiplier(
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) internal returns (uint256 multiplier_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation._calcFixedPrecisionMultiplier.selector,
-                assetPrice,
-                longTradingExpo,
-                accumulator
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        return abi.decode(data, (uint256));
+    ) internal view returns (uint256 multiplier_) {
+        return longLib._calcFixedPrecisionMultiplier(s, assetPrice, longTradingExpo, accumulator);
     }
 
-    function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation._checkSafetyMargin.selector, currentPrice, liquidationPrice
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+    function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {
+        longLib._checkSafetyMargin(s, currentPrice, liquidationPrice);
     }
 
-    function _checkImbalanceLimitClose(uint256 closePosTotalExpoValue, uint256 closeCollatValue) internal {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation._checkImbalanceLimitClose.selector,
-                closePosTotalExpoValue,
-                closeCollatValue
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+    function _checkImbalanceLimitClose(uint256 closePosTotalExpoValue, uint256 closeCollatValue) internal view {
+        longLib._checkImbalanceLimitClose(s, closePosTotalExpoValue, closeCollatValue);
     }
 
     function _assetToRemove(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
         internal
+        view
         returns (uint256 boundedPosValue_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation._assetToRemove.selector, priceWithFees, liqPriceWithoutPenalty, posExpo
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        boundedPosValue_ = abi.decode(data, (uint256));
+        return longLib._assetToRemove(s, priceWithFees, liqPriceWithoutPenalty, posExpo);
     }
 
     function _convertLongPendingAction(LongPendingAction memory action)
         internal
+        pure
         returns (PendingAction memory pendingAction_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLongImplementation._convertLongPendingAction.selector, action)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        pendingAction_ = abi.decode(data, (PendingAction));
+        return longLib._convertLongPendingAction(action);
     }
 
     function _validateClosePosition(address user, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_)
     {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolLongImplementation._validateClosePosition.selector, user, priceData)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        securityDepositValue_ = abi.decode(data, (uint256));
+        return longLib._validateClosePosition(s, user, priceData);
     }
 
     function _initiateClosePosition(
@@ -332,19 +187,6 @@ abstract contract UsdnProtocolLongEntry is UsdnProtocolCommonEntry, Initializabl
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) internal returns (uint256 securityDepositValue_) {
-        (bool success, bytes memory data) = address(s._protocolLong).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolLongImplementation._initiateClosePosition.selector,
-                user,
-                to,
-                posId,
-                amountToClose,
-                currentPriceData
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        securityDepositValue_ = abi.decode(data, (uint256));
+        return longLib._initiateClosePosition(s, user, to, posId, amountToClose, currentPriceData);
     }
 }

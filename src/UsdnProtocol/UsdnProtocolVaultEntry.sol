@@ -3,71 +3,45 @@ pragma solidity 0.8.20;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { IUsdnProtocolVaultImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultImplementation.sol";
 import {
     PendingAction,
     PreviousActionsData,
     WithdrawalPendingAction
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { UsdnProtocolCommonEntry } from "src/UsdnProtocol/UsdnProtocolCommonEntry.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
+import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
+import { UsdnProtocolVaultLibrary as vaultLib } from "src/UsdnProtocol/UsdnProtocolVaultLibrary.sol";
 
-abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry, InitializableReentrancyGuard {
+abstract contract UsdnProtocolVaultEntry is UsdnProtocolBaseStorage, InitializableReentrancyGuard {
     using SafeCast for int256;
     using SafeCast for uint256;
 
-    function usdnPrice(uint128 currentPrice, uint128 timestamp) public returns (uint256 price_) {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSignature("usdnPrice(uint128,uint128)", currentPrice, timestamp)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        price_ = abi.decode(data, (uint256));
+    function usdnPrice(uint128 currentPrice, uint128 timestamp) public view returns (uint256 price_) {
+        return vaultLib.usdnPrice(s, currentPrice, timestamp);
     }
 
-    function usdnPrice(uint128 currentPrice) external returns (uint256 price_) {
-        (bool success, bytes memory data) =
-            address(s._protocolVault).delegatecall(abi.encodeWithSignature("usdnPrice(uint128)", currentPrice));
-        if (!success) {
-            revert(string(data));
-        }
-        price_ = abi.decode(data, (uint256));
+    function usdnPrice(uint128 currentPrice) external view returns (uint256 price_) {
+        return vaultLib.usdnPrice(s, currentPrice);
     }
 
-    function getUserPendingAction(address user) external returns (PendingAction memory action_) {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolVaultImplementation.getUserPendingAction.selector, user)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        action_ = abi.decode(data, (PendingAction));
+    function getUserPendingAction(address user) external view returns (PendingAction memory action_) {
+        return vaultLib.getUserPendingAction(s, user);
     }
 
     function getActionablePendingActions(address currentUser)
         external
+        view
         returns (PendingAction[] memory actions_, uint128[] memory rawIndices_)
     {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolVaultImplementation.getActionablePendingActions.selector, currentUser)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        (actions_, rawIndices_) = abi.decode(data, (PendingAction[], uint128[]));
+        return vaultLib.getActionablePendingActions(s, currentUser);
     }
 
-    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp) external returns (int256 expo_) {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolVaultImplementation.vaultTradingExpoWithFunding.selector, currentPrice, timestamp
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        expo_ = abi.decode(data, (int256));
+    function vaultTradingExpoWithFunding(uint128 currentPrice, uint128 timestamp)
+        external
+        view
+        returns (int256 expo_)
+    {
+        return vaultLib.vaultTradingExpoWithFunding(s, currentPrice, timestamp);
     }
 
     /**
@@ -79,32 +53,18 @@ abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry, Initializab
      */
     function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
         public
+        view
         returns (uint256 assetExpected_)
     {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolVaultImplementation.previewWithdraw.selector, usdnShares, price, timestamp
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        assetExpected_ = abi.decode(data, (uint256));
+        return vaultLib.previewWithdraw(s, usdnShares, price, timestamp);
     }
 
     function vaultAssetAvailableWithFunding(uint128 currentPrice, uint128 timestamp)
         public
+        view
         returns (int256 available_)
     {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolVaultImplementation.vaultAssetAvailableWithFunding.selector, currentPrice, timestamp
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        available_ = abi.decode(data, (int256));
+        return vaultLib.vaultAssetAvailableWithFunding(s, currentPrice, timestamp);
     }
 
     function initiateDeposit(
@@ -113,18 +73,7 @@ abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry, Initializab
         PreviousActionsData calldata previousActionsData,
         address to
     ) external payable initializedAndNonReentrant {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolVaultImplementation.initiateDeposit.selector,
-                amount,
-                currentPriceData,
-                previousActionsData,
-                to
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+        vaultLib.initiateDeposit(s, amount, currentPriceData, previousActionsData, to);
     }
 
     function validateDeposit(bytes calldata depositPriceData, PreviousActionsData calldata previousActionsData)
@@ -132,14 +81,7 @@ abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry, Initializab
         payable
         initializedAndNonReentrant
     {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolVaultImplementation.validateDeposit.selector, depositPriceData, previousActionsData
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+        vaultLib.validateDeposit(s, depositPriceData, previousActionsData);
     }
 
     function initiateWithdrawal(
@@ -148,18 +90,7 @@ abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry, Initializab
         PreviousActionsData calldata previousActionsData,
         address to
     ) external payable initializedAndNonReentrant {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolVaultImplementation.initiateWithdrawal.selector,
-                usdnShares,
-                currentPriceData,
-                previousActionsData,
-                to
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+        vaultLib.initiateWithdrawal(s, usdnShares, currentPriceData, previousActionsData, to);
     }
 
     function validateWithdrawal(bytes calldata withdrawalPriceData, PreviousActionsData calldata previousActionsData)
@@ -167,86 +98,38 @@ abstract contract UsdnProtocolVaultEntry is UsdnProtocolCommonEntry, Initializab
         payable
         initializedAndNonReentrant
     {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolVaultImplementation.validateWithdrawal.selector, withdrawalPriceData, previousActionsData
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+        vaultLib.validateWithdrawal(s, withdrawalPriceData, previousActionsData);
     }
 
-    function _calcWithdrawalAmountMSB(uint152 usdnShares) internal returns (uint128 sharesMSB_) {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._calcWithdrawalAmountMSB.selector, usdnShares)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        sharesMSB_ = abi.decode(data, (uint128));
+    function _calcWithdrawalAmountMSB(uint152 usdnShares) internal pure returns (uint128 sharesMSB_) {
+        return vaultLib._calcWithdrawalAmountMSB(usdnShares);
     }
 
-    function _calcWithdrawalAmountLSB(uint152 usdnShares) internal returns (uint24 sharesLSB_) {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._calcWithdrawalAmountLSB.selector, usdnShares)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        sharesLSB_ = abi.decode(data, (uint24));
+    function _calcWithdrawalAmountLSB(uint152 usdnShares) internal pure returns (uint24 sharesLSB_) {
+        return vaultLib._calcWithdrawalAmountLSB(usdnShares);
     }
 
-    function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(
-                IUsdnProtocolVaultImplementation._checkImbalanceLimitWithdrawal.selector, withdrawalValue, totalExpo
-            )
-        );
-        if (!success) {
-            revert(string(data));
-        }
+    function _checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) internal view {
+        vaultLib._checkImbalanceLimitWithdrawal(s, withdrawalValue, totalExpo);
     }
 
-    function _checkImbalanceLimitDeposit(uint256 depositValue) internal {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._checkImbalanceLimitDeposit.selector, depositValue)
-        );
-        if (!success) {
-            revert(string(data));
-        }
+    function _checkImbalanceLimitDeposit(uint256 depositValue) internal view {
+        vaultLib._checkImbalanceLimitDeposit(s, depositValue);
     }
 
-    function _vaultAssetAvailable(uint128 currentPrice) internal returns (int256 available_) {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._vaultAssetAvailable.selector, currentPrice)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        available_ = abi.decode(data, (int256));
+    function _vaultAssetAvailable(uint128 currentPrice) internal view returns (int256 available_) {
+        return vaultLib._vaultAssetAvailable(s, currentPrice);
     }
 
-    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) internal returns (uint256 sdexToBurn_) {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._calcSdexToBurn.selector, usdnAmount, sdexBurnRatio)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        sdexToBurn_ = abi.decode(data, (uint256));
+    function _calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) internal view returns (uint256 sdexToBurn_) {
+        return vaultLib._calcSdexToBurn(s, usdnAmount, sdexBurnRatio);
     }
 
     function _convertWithdrawalPendingAction(WithdrawalPendingAction memory action)
         internal
+        pure
         returns (PendingAction memory pendingAction_)
     {
-        (bool success, bytes memory data) = address(s._protocolVault).delegatecall(
-            abi.encodeWithSelector(IUsdnProtocolVaultImplementation._convertWithdrawalPendingAction.selector, action)
-        );
-        if (!success) {
-            revert(string(data));
-        }
-        pendingAction_ = abi.decode(data, (PendingAction));
+        return vaultLib._convertWithdrawalPendingAction(action);
     }
 }

@@ -202,7 +202,7 @@ library UsdnProtocolCommonLibrary {
      * @param x The value to convert
      * @return The converted value
      */
-    function _toInt256(uint128 x) internal pure returns (int256) {
+    function _toInt256(uint128 x) public pure returns (int256) {
         return int256(uint256(x));
     }
 
@@ -216,7 +216,7 @@ library UsdnProtocolCommonLibrary {
      * @return fund_ The magnitude of the funding (with `FUNDING_RATE_DECIMALS` decimals)
      */
     function _fundingAsset(Storage storage s, uint128 timestamp, int256 ema)
-        internal
+        public
         view
         returns (int256 fundingAsset_, int256 fund_)
     {
@@ -226,7 +226,7 @@ library UsdnProtocolCommonLibrary {
     }
 
     function calcEMA(int256 lastFunding, uint128 secondsElapsed, uint128 emaPeriod, int256 previousEMA)
-        internal
+        public
         pure
         returns (int256)
     {
@@ -243,12 +243,12 @@ library UsdnProtocolCommonLibrary {
      * @return hash_ The hash of the tick
      * @return version_ The version of the tick
      */
-    function _tickHash(Storage storage s, int24 tick) internal view returns (bytes32 hash_, uint256 version_) {
+    function _tickHash(Storage storage s, int24 tick) public view returns (bytes32 hash_, uint256 version_) {
         version_ = s._tickVersion[tick];
         hash_ = calcTickHash(tick, version_);
     }
 
-    function calcTickHash(int24 tick, uint256 version) internal pure returns (bytes32) {
+    function calcTickHash(int24 tick, uint256 version) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(tick, version));
     }
 
@@ -262,7 +262,7 @@ library UsdnProtocolCommonLibrary {
      * @return pnl_ The PnL in asset units
      */
     function _pnlAsset(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        internal
+        public
         pure
         returns (int256 pnl_)
     {
@@ -282,7 +282,7 @@ library UsdnProtocolCommonLibrary {
      * @param currentPrice The current price
      * @return available_ The available balance on the long side
      */
-    function _longAssetAvailable(Storage storage s, uint128 currentPrice) internal view returns (int256 available_) {
+    function _longAssetAvailable(Storage storage s, uint128 currentPrice) public view returns (int256 available_) {
         available_ = _longAssetAvailable(s._totalExpo, s._balanceLong, currentPrice, s._lastPrice);
     }
 
@@ -295,7 +295,7 @@ library UsdnProtocolCommonLibrary {
      * @return available_ The available balance on the long side
      */
     function _longAssetAvailable(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        internal
+        public
         pure
         returns (int256 available_)
     {
@@ -372,7 +372,7 @@ library UsdnProtocolCommonLibrary {
      * @return securityDepositValue_ The security deposit value of the executed action
      */
     function _executePendingAction(Storage storage s, PreviousActionsData calldata data)
-        internal
+        public
         returns (bool success_, bool executed_, uint256 securityDepositValue_)
     {
         (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction(s);
@@ -410,7 +410,7 @@ library UsdnProtocolCommonLibrary {
     }
 
     function _validateClosePositionWithAction(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        internal
+        public
     {
         LongPendingAction memory long = _toLongPendingAction(pending);
 
@@ -521,7 +521,7 @@ library UsdnProtocolCommonLibrary {
      * @return price_ The adjusted price for the tick
      */
     function _getEffectivePriceForTick(Storage storage s, int24 tick, uint256 liqMultiplier)
-        internal
+        public
         view
         returns (uint128 price_)
     {
@@ -537,7 +537,7 @@ library UsdnProtocolCommonLibrary {
      * penalty, then the position value is negative (bad debt)
      */
     function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)
-        internal
+        public
         pure
         returns (int256 value_)
     {
@@ -557,7 +557,7 @@ library UsdnProtocolCommonLibrary {
      * @param priceData The current price data
      */
     function _validateOpenPositionWithAction(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        internal
+        public
     {
         (ValidateOpenPositionData memory data, bool liquidated) =
             _prepareValidateOpenPositionData(s, pending, priceData);
@@ -659,14 +659,14 @@ library UsdnProtocolCommonLibrary {
      * @param leverage Leverage of the position
      */
     function _getLiquidationPrice(Storage storage s, uint128 startPrice, uint128 leverage)
-        internal
+        public
         view
         returns (uint128 price_)
     {
         price_ = (startPrice - ((uint256(10) ** s.LEVERAGE_DECIMALS * startPrice) / leverage)).toUint128();
     }
 
-    function getEffectiveTickForPrice(Storage storage s, uint128 price) internal view returns (int24 tick_) {
+    function getEffectiveTickForPrice(Storage storage s, uint128 price) public view returns (int24 tick_) {
         tick_ = getEffectiveTickForPrice(
             price, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator, s._tickSpacing
         );
@@ -678,7 +678,7 @@ library UsdnProtocolCommonLibrary {
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
         int24 tickSpacing
-    ) internal pure returns (int24 tick_) {
+    ) public pure returns (int24 tick_) {
         // unadjust price with liquidation multiplier
         uint256 unadjustedPrice = _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
 
@@ -723,7 +723,7 @@ library UsdnProtocolCommonLibrary {
         Position memory pos,
         uint128 amountToRemove,
         uint128 totalExpoToRemove
-    ) internal {
+    ) public {
         (bytes32 tickHash,) = _tickHash(s, tick);
         TickData storage tickData = s._tickData[tickHash];
         uint256 unadjustedTickPrice =
@@ -754,11 +754,7 @@ library UsdnProtocolCommonLibrary {
             s._liqMultiplierAccumulator.sub(HugeUint.wrap(unadjustedTickPrice * totalExpoToRemove));
     }
 
-    function getTickLiquidationPenalty(Storage storage s, int24 tick)
-        internal
-        view
-        returns (uint8 liquidationPenalty_)
-    {
+    function getTickLiquidationPenalty(Storage storage s, int24 tick) public view returns (uint8 liquidationPenalty_) {
         (bytes32 tickHash,) = _tickHash(s, tick);
         liquidationPenalty_ = _getTickLiquidationPenalty(s, tickHash);
     }
@@ -772,7 +768,7 @@ library UsdnProtocolCommonLibrary {
      * @return liquidationPenalty_ The liquidation penalty, in tick spacing units
      */
     function _getTickLiquidationPenalty(Storage storage s, bytes32 tickHash)
-        internal
+        public
         view
         returns (uint8 liquidationPenalty_)
     {
@@ -788,7 +784,7 @@ library UsdnProtocolCommonLibrary {
      * @param liquidationPenalty The liquidation penalty for the tick
      */
     function _saveNewPosition(Storage storage s, int24 tick, Position memory long, uint8 liquidationPenalty)
-        internal
+        public
         returns (uint256 tickVersion_, uint256 index_)
     {
         bytes32 tickHash;
@@ -841,7 +837,7 @@ library UsdnProtocolCommonLibrary {
      * @return totalExpo_ The total exposure of a position
      */
     function _calculatePositionTotalExpo(uint128 amount, uint128 startPrice, uint128 liquidationPrice)
-        internal
+        public
         pure
         returns (uint128 totalExpo_)
     {
@@ -860,7 +856,7 @@ library UsdnProtocolCommonLibrary {
      * @return liq_ Whether the position was liquidated and the caller should return early
      */
     function _prepareValidateOpenPositionData(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        internal
+        public
         returns (ValidateOpenPositionData memory data_, bool liq_)
     {
         data_.action = _toLongPendingAction(pending);
@@ -894,14 +890,14 @@ library UsdnProtocolCommonLibrary {
         data_.leverage = _getLeverage(s, data_.startPrice, data_.liqPriceWithoutPenalty);
     }
 
-    function getEffectivePriceForTick(Storage storage s, int24 tick) internal view returns (uint128 price_) {
+    function getEffectivePriceForTick(Storage storage s, int24 tick) public view returns (uint128 price_) {
         price_ =
             getEffectivePriceForTick(tick, s._lastPrice, s._totalExpo - s._balanceLong, s._liqMultiplierAccumulator);
     }
 
     /// @dev This does not take into account the liquidation penalty
     function _getLeverage(Storage storage s, uint128 startPrice, uint128 liquidationPrice)
-        internal
+        public
         view
         returns (uint128 leverage_)
     {
@@ -915,7 +911,7 @@ library UsdnProtocolCommonLibrary {
     }
 
     function _validateWithdrawalWithAction(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        internal
+        public
     {
         WithdrawalPendingAction memory withdrawal = _toWithdrawalPendingAction(pending);
 
@@ -975,7 +971,7 @@ library UsdnProtocolCommonLibrary {
      * @return usdnShares_ The amount of USDN shares
      */
     function _mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB)
-        internal
+        public
         pure
         returns (uint256 usdnShares_)
     {
@@ -990,7 +986,7 @@ library UsdnProtocolCommonLibrary {
      * @return assetExpected_ The expected amount of asset to be received
      */
     function _calcBurnUsdn(uint256 usdnShares, uint256 available, uint256 usdnTotalShares)
-        internal
+        public
         pure
         returns (uint256 assetExpected_)
     {
@@ -1000,7 +996,7 @@ library UsdnProtocolCommonLibrary {
     }
 
     function _validateDepositWithAction(Storage storage s, PendingAction memory pending, bytes calldata priceData)
-        internal
+        public
     {
         DepositPendingAction memory deposit = _toDepositPendingAction(pending);
 
@@ -1062,7 +1058,7 @@ library UsdnProtocolCommonLibrary {
         uint256 vaultBalance,
         uint256 usdnTotalSupply,
         uint256 price
-    ) internal view returns (uint256 toMint_) {
+    ) public view returns (uint256 toMint_) {
         if (vaultBalance == 0) {
             // initialization, we consider the USDN price to be 1 USD
             return FixedPointMathLib.fullMulDiv(
@@ -1088,7 +1084,7 @@ library UsdnProtocolCommonLibrary {
         uint256 balanceLong,
         uint128 newPrice,
         uint128 oldPrice
-    ) internal pure returns (int256 available_) {
+    ) public pure returns (int256 available_) {
         int256 totalBalance = balanceLong.toInt256().safeAdd(balanceVault.toInt256());
         int256 newLongBalance = _longAssetAvailable(totalExpo, balanceLong, newPrice, oldPrice);
 
@@ -1103,7 +1099,7 @@ library UsdnProtocolCommonLibrary {
      * @return rawIndex_ The raw index in the queue for the returned pending action, or zero
      */
     function _getActionablePendingAction(Storage storage s)
-        internal
+        public
         returns (PendingAction memory action_, uint128 rawIndex_)
     {
         uint256 queueLength = s._pendingActionsQueue.length();
@@ -1143,7 +1139,7 @@ library UsdnProtocolCommonLibrary {
      * @notice Clear the pending action for a user
      * @param user The user's address
      */
-    function _clearPendingAction(Storage storage s, address user) internal {
+    function _clearPendingAction(Storage storage s, address user) public {
         uint256 pendingActionIndex = s._pendingActions[user];
         // slither-disable-next-line incorrect-equality
         if (pendingActionIndex == 0) {
@@ -1160,7 +1156,7 @@ library UsdnProtocolCommonLibrary {
      * @return vaultAction_ The converted deposit pending action
      */
     function _toDepositPendingAction(PendingAction memory action)
-        internal
+        public
         pure
         returns (DepositPendingAction memory vaultAction_)
     {
@@ -1175,7 +1171,7 @@ library UsdnProtocolCommonLibrary {
      * @return vaultAction_ The converted withdrawal pending action
      */
     function _toWithdrawalPendingAction(PendingAction memory action)
-        internal
+        public
         pure
         returns (WithdrawalPendingAction memory vaultAction_)
     {
@@ -1190,7 +1186,7 @@ library UsdnProtocolCommonLibrary {
      * @return longAction_ The converted long pending action
      */
     function _toLongPendingAction(PendingAction memory action)
-        internal
+        public
         pure
         returns (LongPendingAction memory longAction_)
     {
@@ -1215,7 +1211,7 @@ library UsdnProtocolCommonLibrary {
     }
 
     function _getOraclePrice(Storage storage s, ProtocolAction action, uint256 timestamp, bytes calldata priceData)
-        internal
+        public
         returns (PriceInfo memory price_)
     {
         uint256 validationCost = s._oracleMiddleware.validationCost(priceData, action);
@@ -1243,7 +1239,7 @@ library UsdnProtocolCommonLibrary {
         uint16 iterations,
         bool ignoreInterval,
         bytes memory priceData
-    ) internal returns (uint256 liquidatedPositions_) {
+    ) public returns (uint256 liquidatedPositions_) {
         // adjust balances
         (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
@@ -1284,7 +1280,7 @@ library UsdnProtocolCommonLibrary {
         uint16 iteration,
         int256 tempLongBalance,
         int256 tempVaultBalance
-    ) internal returns (LiquidationsEffects memory effects_) {
+    ) public returns (LiquidationsEffects memory effects_) {
         int256 longTradingExpo = s._totalExpo.toInt256() - tempLongBalance;
         if (longTradingExpo <= 0) {
             // In case the long balance is equal to the total expo (or exceeds it), the trading expo will become
@@ -1375,7 +1371,7 @@ library UsdnProtocolCommonLibrary {
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) internal pure returns (uint256 unadjustedPrice_) {
+    ) public pure returns (uint256 unadjustedPrice_) {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
             return price;
@@ -1407,7 +1403,7 @@ library UsdnProtocolCommonLibrary {
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator,
         TickData memory tickData
-    ) internal view returns (int256 value_) {
+    ) public view returns (int256 value_) {
         uint128 liqPriceWithoutPenalty = getEffectivePriceForTick(
             _calcTickWithoutPenalty(s, tick, tickData.liquidationPenalty), currentPrice, longTradingExpo, accumulator
         );
@@ -1433,7 +1429,7 @@ library UsdnProtocolCommonLibrary {
      * @return tick_ The tick corresponding to the liquidation price without penalty
      */
     function _calcTickWithoutPenalty(Storage storage s, int24 tick, uint8 liquidationPenalty)
-        internal
+        public
         view
         returns (int24 tick_)
     {
@@ -1445,7 +1441,7 @@ library UsdnProtocolCommonLibrary {
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) internal pure returns (uint128 price_) {
+    ) public pure returns (uint128 price_) {
         price_ = _adjustPrice(TickMath.getPriceAtTick(tick), assetPrice, longTradingExpo, accumulator);
     }
 
@@ -1463,7 +1459,7 @@ library UsdnProtocolCommonLibrary {
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) internal pure returns (uint128 price_) {
+    ) public pure returns (uint128 price_) {
         if (accumulator.hi == 0 && accumulator.lo == 0) {
             // no position in long, we assume a liquidation multiplier of 1.0
             return unadjustedPrice.toUint128();
@@ -1486,7 +1482,7 @@ library UsdnProtocolCommonLibrary {
         Storage storage s,
         LiquidationData memory data,
         LiquidationsEffects memory effects
-    ) internal returns (LiquidationData memory) {
+    ) public returns (LiquidationData memory) {
         // update the state
         s._totalLongPositions -= effects.liquidatedPositions;
         s._totalExpo -= data.totalExpoToRemove;
@@ -1516,7 +1512,7 @@ library UsdnProtocolCommonLibrary {
      * @param searchStart The tick from which to start searching
      * @return tick_ The next highest tick below `searchStart`
      */
-    function _findHighestPopulatedTick(Storage storage s, int24 searchStart) internal view returns (int24 tick_) {
+    function _findHighestPopulatedTick(Storage storage s, int24 searchStart) public view returns (int24 tick_) {
         uint256 index = s._tickBitmap.findLastSet(_calcBitmapIndexFromTick(s, searchStart));
         if (index == LibBitmap.NOT_FOUND) {
             tick_ = minTick(s);
@@ -1530,7 +1526,7 @@ library UsdnProtocolCommonLibrary {
      * @param index The index into the Bitmap
      * @return tick_ The tick corresponding to the index, a multiple of the tick spacing
      */
-    function _calcTickFromBitmapIndex(Storage storage s, uint256 index) internal view returns (int24 tick_) {
+    function _calcTickFromBitmapIndex(Storage storage s, uint256 index) public view returns (int24 tick_) {
         tick_ = _calcTickFromBitmapIndex(index, s._tickSpacing);
     }
 
@@ -1540,7 +1536,7 @@ library UsdnProtocolCommonLibrary {
      * @param tickSpacing The tick spacing to use
      * @return tick_ The tick corresponding to the index, a multiple of `tickSpacing`
      */
-    function _calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) internal pure returns (int24 tick_) {
+    function _calcTickFromBitmapIndex(uint256 index, int24 tickSpacing) public pure returns (int24 tick_) {
         tick_ = int24( // cast to int24 is safe as index + TickMath.MIN_TICK cannot be above or below int24 limits
             (
                 int256(index) // cast to int256 is safe as the index is lower than type(int24).max
@@ -1550,7 +1546,7 @@ library UsdnProtocolCommonLibrary {
         );
     }
 
-    function minTick(Storage storage s) internal view returns (int24 tick_) {
+    function minTick(Storage storage s) public view returns (int24 tick_) {
         tick_ = TickMath.minUsableTick(s._tickSpacing);
     }
 
@@ -1559,7 +1555,7 @@ library UsdnProtocolCommonLibrary {
      * @param tick The tick to convert, a multiple of the tick spacing
      * @return index_ The index into the Bitmap
      */
-    function _calcBitmapIndexFromTick(Storage storage s, int24 tick) internal view returns (uint256 index_) {
+    function _calcBitmapIndexFromTick(Storage storage s, int24 tick) public view returns (uint256 index_) {
         index_ = _calcBitmapIndexFromTick(tick, s._tickSpacing);
     }
 
@@ -1569,7 +1565,7 @@ library UsdnProtocolCommonLibrary {
      * @param tickSpacing The tick spacing to use
      * @return index_ The index into the Bitmap
      */
-    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) internal pure returns (uint256 index_) {
+    function _calcBitmapIndexFromTick(int24 tick, int24 tickSpacing) public pure returns (uint256 index_) {
         index_ = uint256( // cast is safe as the min tick is always above TickMath.MIN_TICK
             (int256(tick) - TickMath.MIN_TICK) // shift into positive
                 / tickSpacing
@@ -1588,7 +1584,7 @@ library UsdnProtocolCommonLibrary {
      * @return vaultBalance_ The new vault balance after rebalancing
      */
     function _handleNegativeBalances(int256 tempLongBalance, int256 tempVaultBalance)
-        internal
+        public
         pure
         returns (uint256 longBalance_, uint256 vaultBalance_)
     {
@@ -1620,7 +1616,7 @@ library UsdnProtocolCommonLibrary {
      * happened
      * @return rebased_ Whether a rebase was performed
      */
-    function _usdnRebase(Storage storage s, uint128 assetPrice, bool ignoreInterval) internal returns (bool rebased_) {
+    function _usdnRebase(Storage storage s, uint128 assetPrice, bool ignoreInterval) public returns (bool rebased_) {
         if (!ignoreInterval && block.timestamp - s._lastRebaseCheck < s._usdnRebaseInterval) {
             return false;
         }
@@ -1660,7 +1656,7 @@ library UsdnProtocolCommonLibrary {
         uint128 assetPrice,
         uint256 usdnTotalSupply,
         uint8 assetDecimals
-    ) internal view returns (uint256 price_) {
+    ) public view returns (uint256 price_) {
         price_ = FixedPointMathLib.fullMulDiv(
             vaultBalance, uint256(assetPrice) * 10 ** s.TOKENS_DECIMALS, usdnTotalSupply * 10 ** assetDecimals
         );
@@ -1680,7 +1676,7 @@ library UsdnProtocolCommonLibrary {
         uint128 assetPrice,
         uint128 targetPrice,
         uint8 assetDecimals
-    ) internal view returns (uint256 totalSupply_) {
+    ) public view returns (uint256 totalSupply_) {
         totalSupply_ = FixedPointMathLib.fullMulDiv(
             vaultBalance, uint256(assetPrice) * 10 ** s.TOKENS_DECIMALS, uint256(targetPrice) * 10 ** assetDecimals
         );
@@ -1701,7 +1697,7 @@ library UsdnProtocolCommonLibrary {
         int256 remainingCollateral,
         bool rebased,
         bytes memory priceData
-    ) internal {
+    ) public {
         // Get how much we should give to the liquidator as rewards
         uint256 liquidationRewards =
             s._liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, remainingCollateral, rebased, priceData);
@@ -1744,7 +1740,7 @@ library UsdnProtocolCommonLibrary {
      * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
      */
     function _applyPnlAndFunding(Storage storage s, uint128 currentPrice, uint128 timestamp)
-        internal
+        public
         returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
     {
         ApllyPnlAndFundingData memory data;
@@ -1800,7 +1796,7 @@ library UsdnProtocolCommonLibrary {
      * @return fundAssetWithFee_ The updated funding asset amount after applying the fee
      */
     function _calculateFee(Storage storage s, int256 fund, int256 fundAsset)
-        internal
+        public
         returns (int256 fee_, int256 fundWithFee_, int256 fundAssetWithFee_)
     {
         int256 protocolFeeBps = _toInt256(s._protocolFeeBps);
@@ -1829,7 +1825,7 @@ library UsdnProtocolCommonLibrary {
      * @param secondsElapsed The number of seconds elapsed since the last protocol action
      * @return The new EMA value
      */
-    function _updateEMA(Storage storage s, uint128 secondsElapsed) internal returns (int256) {
+    function _updateEMA(Storage storage s, uint128 secondsElapsed) public returns (int256) {
         return s._EMA = calcEMA(s._lastFunding, secondsElapsed, s._EMAPeriod, s._EMA);
     }
 
@@ -1856,7 +1852,7 @@ library UsdnProtocolCommonLibrary {
      * @return rawIndex_ The raw index of the pending action in the queue
      */
     function _getPendingActionOrRevert(Storage storage s, address user)
-        internal
+        public
         view
         returns (PendingAction memory action_, uint128 rawIndex_)
     {
@@ -1875,7 +1871,7 @@ library UsdnProtocolCommonLibrary {
      * @return rawIndex_ The raw index of the pending action in the queue
      */
     function _getPendingAction(Storage storage s, address user)
-        internal
+        public
         view
         returns (PendingAction memory action_, uint128 rawIndex_)
     {
@@ -1919,7 +1915,7 @@ library UsdnProtocolCommonLibrary {
      * @return securityDepositValue_ The security deposit value of the removed stale pending action
      */
     function _removeStalePendingAction(Storage storage s, address user)
-        internal
+        public
         returns (uint256 securityDepositValue_)
     {
         // slither-disable-next-line incorrect-equality
@@ -1953,7 +1949,7 @@ library UsdnProtocolCommonLibrary {
      * @return price_ The adjusted price for the tick
      */
     function _adjustPrice(Storage storage s, uint256 unadjustedPrice, uint256 liqMultiplier)
-        internal
+        public
         view
         returns (uint128 price_)
     {
@@ -1975,7 +1971,7 @@ library UsdnProtocolCommonLibrary {
      * @return oldLongExpo_ The old long exposure
      */
     function _funding(Storage storage s, uint128 timestamp, int256 ema)
-        internal
+        public
         view
         returns (int256 fund_, int256 oldLongExpo_)
     {

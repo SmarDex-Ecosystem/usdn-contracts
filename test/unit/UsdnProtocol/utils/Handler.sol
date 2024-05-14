@@ -47,22 +47,8 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         IOracleMiddleware oracleMiddleware,
         ILiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
-        address feeCollector,
-        IUsdnProtocolLongImplementation protocolLong,
-        IUsdnProtocolVaultImplementation protocolVault
-    )
-        UsdnProtocolProxy(
-            usdn,
-            sdex,
-            asset,
-            oracleMiddleware,
-            liquidationRewardsManager,
-            tickSpacing,
-            feeCollector,
-            protocolLong,
-            protocolVault
-        )
-    { }
+        address feeCollector
+    ) UsdnProtocolProxy(usdn, sdex, asset, oracleMiddleware, liquidationRewardsManager, tickSpacing, feeCollector) { }
 
     /// @dev Useful to completely disable funding, which is normally initialized with a positive bias value
     function resetEMA() external {
@@ -93,7 +79,7 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         require(s._lastUpdateTimestamp > lastUpdateTimestampBefore, "UsdnProtocolHandler: liq price is not fresh");
     }
 
-    function tickValue(int24 tick, uint256 currentPrice) external returns (int256) {
+    function tickValue(int24 tick, uint256 currentPrice) external view returns (int256) {
         int256 longTradingExpo = longTradingExpoWithFunding(uint128(currentPrice), uint128(block.timestamp));
         if (longTradingExpo < 0) {
             longTradingExpo = 0;
@@ -165,7 +151,7 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         return _getActionablePendingAction();
     }
 
-    function i_vaultTradingExpo(uint128 currentPrice) external returns (int256) {
+    function i_vaultTradingExpo(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
     }
 
@@ -223,17 +209,19 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
 
     function i_convertWithdrawalPendingAction(WithdrawalPendingAction memory action)
         external
+        pure
         returns (PendingAction memory)
     {
         return _convertWithdrawalPendingAction(action);
     }
 
-    function i_convertLongPendingAction(LongPendingAction memory action) external returns (PendingAction memory) {
+    function i_convertLongPendingAction(LongPendingAction memory action) external pure returns (PendingAction memory) {
         return _convertLongPendingAction(action);
     }
 
     function i_assetToRemove(uint128 priceWithFees, uint128 liqPriceWithoutPenalty, uint128 posExpo)
         external
+        view
         returns (uint256)
     {
         return _assetToRemove(priceWithFees, liqPriceWithoutPenalty, posExpo);
@@ -265,7 +253,7 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         return _calcMintUsdn(amount, vaultBalance, usdnTotalSupply, price);
     }
 
-    function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external returns (uint256) {
+    function i_calcSdexToBurn(uint256 usdnAmount, uint32 sdexBurnRatio) external view returns (uint256) {
         return _calcSdexToBurn(usdnAmount, sdexBurnRatio);
     }
 
@@ -279,7 +267,7 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         return _vaultAssetAvailable(totalExpo, balanceVault, balanceLong, newPrice, oldPrice);
     }
 
-    function i_vaultAssetAvailable(uint128 currentPrice) external returns (int256) {
+    function i_vaultAssetAvailable(uint128 currentPrice) external view returns (int256) {
         return _vaultAssetAvailable(currentPrice);
     }
 
@@ -295,19 +283,19 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         return _getLiquidationPrice(startPrice, leverage);
     }
 
-    function i_checkImbalanceLimitDeposit(uint256 depositValue) external {
+    function i_checkImbalanceLimitDeposit(uint256 depositValue) external view {
         _checkImbalanceLimitDeposit(depositValue);
     }
 
-    function i_checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external {
+    function i_checkImbalanceLimitWithdrawal(uint256 withdrawalValue, uint256 totalExpo) external view {
         _checkImbalanceLimitWithdrawal(withdrawalValue, totalExpo);
     }
 
-    function i_checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external {
+    function i_checkImbalanceLimitOpen(uint256 openTotalExpoValue, uint256 openCollatValue) external view {
         _checkImbalanceLimitOpen(openTotalExpoValue, openCollatValue);
     }
 
-    function i_checkImbalanceLimitClose(uint256 closeExpoValue, uint256 closeCollatValue) external {
+    function i_checkImbalanceLimitClose(uint256 closeExpoValue, uint256 closeCollatValue) external view {
         _checkImbalanceLimitClose(closeExpoValue, closeCollatValue);
     }
 
@@ -390,11 +378,11 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         return _mergeWithdrawalAmountParts(sharesLSB, sharesMSB);
     }
 
-    function i_calcWithdrawalAmountLSB(uint152 usdnShares) external returns (uint24) {
+    function i_calcWithdrawalAmountLSB(uint152 usdnShares) external pure returns (uint24) {
         return _calcWithdrawalAmountLSB(usdnShares);
     }
 
-    function i_calcWithdrawalAmountMSB(uint152 usdnShares) external returns (uint128) {
+    function i_calcWithdrawalAmountMSB(uint152 usdnShares) external pure returns (uint128) {
         return _calcWithdrawalAmountMSB(usdnShares);
     }
 
@@ -410,7 +398,7 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         _saveNewPosition(tick, long, liquidationPenalty);
     }
 
-    function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external {
+    function i_checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) external view {
         _checkSafetyMargin(currentPrice, liquidationPrice);
     }
 
@@ -422,7 +410,7 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         uint256 assetPrice,
         uint256 longTradingExpo,
         HugeUint.Uint512 memory accumulator
-    ) external returns (uint256) {
+    ) external view returns (uint256) {
         return _calcFixedPrecisionMultiplier(assetPrice, longTradingExpo, accumulator);
     }
 
