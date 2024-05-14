@@ -170,7 +170,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
     function test_setUp() public {
         _setUp(DEFAULT_PARAMS);
-
         assertGt(protocol.getTickSpacing(), 1, "tickSpacing"); // we want to test all functions for a tickSpacing > 1
         assertEq(
             wstETH.balanceOf(address(protocol)), params.initialDeposit + params.initialLong, "wstETH protocol balance"

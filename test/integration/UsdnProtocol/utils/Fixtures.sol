@@ -103,7 +103,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
         usdn = new Usdn(address(0), address(0));
         AggregatorV3Interface chainlinkGasPriceFeed = AggregatorV3Interface(CHAINLINK_ORACLE_GAS);
         liquidationRewardsManager = new LiquidationRewardsManager(address(chainlinkGasPriceFeed), wstETH, 2 days);
-
         protocol = new UsdnProtocolHandler(
             usdn,
             sdex,

@@ -27,8 +27,6 @@ import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
-import { IUsdnProtocolLongImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolLongImplementation.sol";
-import { IUsdnProtocolVaultImplementation } from "src/interfaces/UsdnProtocol/IUsdnProtocolVaultImplementation.sol";
 
 /**
  * @title UsdnProtocolHandler

@@ -12,6 +12,7 @@ import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorag
 import { UsdnProtocolLongEntry } from "src/UsdnProtocol/UsdnProtocolLongEntry.sol";
 import { UsdnProtocolCommonEntry } from "src/UsdnProtocol/UsdnProtocolCommonEntry.sol";
 import { UsdnProtocolVaultEntry } from "src/UsdnProtocol/UsdnProtocolVaultEntry.sol";
+import { UsdnProtocolActionsEntry } from "src/UsdnProtocol/UsdnProtocolActionsEntry.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
@@ -23,6 +24,7 @@ contract UsdnProtocolProxy is
     UsdnProtocolLongEntry,
     UsdnProtocolVaultEntry,
     UsdnProtocolCommonEntry,
+    UsdnProtocolActionsEntry,
     IUsdnProtocolEvents,
     Ownable
 {

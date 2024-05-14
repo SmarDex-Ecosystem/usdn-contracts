@@ -133,31 +133,6 @@ abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage {
         return lib._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
     }
 
-    function _executePendingActionOrRevert(PreviousActionsData calldata data)
-        internal
-        returns (uint256 securityDepositValue_)
-    {
-        return lib._executePendingActionOrRevert(s, data);
-    }
-
-    function _executePendingAction(PreviousActionsData calldata data)
-        internal
-        returns (bool success_, bool executed_, uint256 securityDepositValue_)
-    {
-        return lib._executePendingAction(s, data);
-    }
-
-    function _getPendingAction(address user) internal view returns (PendingAction memory action_, uint128 rawIndex_) {
-        return lib._getPendingAction(s, user);
-    }
-
-    function _addPendingAction(address user, PendingAction memory action)
-        internal
-        returns (uint256 securityDepositValue_)
-    {
-        return lib._addPendingAction(s, user, action);
-    }
-
     function _calcRebaseTotalSupply(uint256 vaultBalance, uint128 assetPrice, uint128 targetPrice, uint8 assetDecimals)
         internal
         view
@@ -220,56 +195,11 @@ abstract contract UsdnProtocolCommonEntry is UsdnProtocolBaseStorage {
         return lib._tickValue(s, tick, currentPrice, longTradingExpo, accumulator, tickData);
     }
 
-    function _convertDepositPendingAction(DepositPendingAction memory action)
-        internal
-        pure
-        returns (PendingAction memory pendingAction_)
-    {
-        return lib._convertDepositPendingAction(action);
-    }
-
-    function _toDepositPendingAction(PendingAction memory action)
-        internal
-        pure
-        returns (DepositPendingAction memory vaultAction_)
-    {
-        return lib._toDepositPendingAction(action);
-    }
-
-    function _toWithdrawalPendingAction(PendingAction memory action)
-        internal
-        pure
-        returns (WithdrawalPendingAction memory vaultAction_)
-    {
-        return lib._toWithdrawalPendingAction(action);
-    }
-
-    function _toLongPendingAction(PendingAction memory action)
-        internal
-        pure
-        returns (LongPendingAction memory longAction_)
-    {
-        return lib._toLongPendingAction(action);
-    }
-
-    function _liquidatePositions(
-        uint256 currentPrice,
-        uint16 iteration,
-        int256 tempLongBalance,
-        int256 tempVaultBalance
-    ) internal returns (LiquidationsEffects memory effects_) {
-        return lib._liquidatePositions(s, currentPrice, iteration, tempLongBalance, tempVaultBalance);
-    }
-
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         internal
         returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
     {
         return lib._applyPnlAndFunding(s, currentPrice, timestamp);
-    }
-
-    function _getActionablePendingAction() internal returns (PendingAction memory action_, uint128 rawIndex_) {
-        return lib._getActionablePendingAction(s);
     }
 
     function _positionValue(uint128 currentPrice, uint128 liqPriceWithoutPenalty, uint128 positionTotalExpo)

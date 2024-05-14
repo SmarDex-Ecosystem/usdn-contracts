@@ -26,7 +26,8 @@ import { SignedMath } from "src/libraries/SignedMath.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { UsdnProtocolBaseStorage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
-import { UsdnProtocolCommonLibrary as lib } from "src/UsdnProtocol/UsdnProtocolCommonLibrary.sol";
+import { UsdnProtocolCommonLibrary as commonLib } from "src/UsdnProtocol/UsdnProtocolCommonLibrary.sol";
+import { UsdnProtocolActionsLibrary as actionsLib } from "src/UsdnProtocol/UsdnProtocolActionsLibrary.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { Storage } from "src/UsdnProtocol/UsdnProtocolBaseStorage.sol";
 
@@ -79,7 +80,7 @@ library UsdnProtocolVaultLibrary {
         view
         returns (uint256 price_)
     {
-        price_ = lib._calcUsdnPrice(
+        price_ = commonLib._calcUsdnPrice(
             s,
             vaultAssetAvailableWithFunding(s, currentPrice, timestamp).toUint256(),
             currentPrice,
@@ -97,7 +98,7 @@ library UsdnProtocolVaultLibrary {
         view
         returns (PendingAction memory action_)
     {
-        (action_,) = lib._getPendingAction(s, user);
+        (action_,) = actionsLib._getPendingAction(s, user);
     }
 
     function getActionablePendingActions(Storage storage s, address currentUser)
@@ -182,7 +183,7 @@ library UsdnProtocolVaultLibrary {
         if (available < 0) {
             return 0;
         }
-        assetExpected_ = lib._calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
+        assetExpected_ = commonLib._calcBurnUsdn(usdnShares, uint256(available), s._usdn.totalShares());
     }
 
     /**
@@ -226,13 +227,13 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolTimestampTooOld();
         }
 
-        int256 ema = lib.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
-        (int256 fundAsset,) = lib._fundingAsset(s, timestamp, ema);
+        int256 ema = commonLib.calcEMA(s._lastFunding, timestamp - s._lastUpdateTimestamp, s._EMAPeriod, s._EMA);
+        (int256 fundAsset,) = commonLib._fundingAsset(s, timestamp, ema);
 
         if (fundAsset < 0) {
             available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset);
         } else {
-            int256 fee = fundAsset * lib._toInt256(s._protocolFeeBps) / int256(s.BPS_DIVISOR);
+            int256 fee = fundAsset * commonLib._toInt256(s._protocolFeeBps) / int256(s.BPS_DIVISOR);
             available_ = _vaultAssetAvailable(s, currentPrice).safeAdd(fundAsset - fee);
         }
     }
@@ -244,7 +245,8 @@ library UsdnProtocolVaultLibrary {
      * @return available_ The available balance in the vault side
      */
     function _vaultAssetAvailable(Storage storage s, uint128 currentPrice) public view returns (int256 available_) {
-        available_ = lib._vaultAssetAvailable(s._totalExpo, s._balanceVault, s._balanceLong, currentPrice, s._lastPrice);
+        available_ =
+            commonLib._vaultAssetAvailable(s._totalExpo, s._balanceVault, s._balanceLong, currentPrice, s._lastPrice);
     }
 
     function initiateDeposit(
@@ -262,10 +264,10 @@ library UsdnProtocolVaultLibrary {
 
         uint256 amountToRefund = _initiateDeposit(s, msg.sender, to, amount, currentPriceData);
         unchecked {
-            amountToRefund += lib._executePendingActionOrRevert(s, previousActionsData);
+            amountToRefund += actionsLib._executePendingActionOrRevert(s, previousActionsData);
         }
-        lib._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        lib._checkPendingFee(s);
+        commonLib._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        commonLib._checkPendingFee(s);
     }
 
     function validateDeposit(
@@ -277,10 +279,10 @@ library UsdnProtocolVaultLibrary {
 
         uint256 amountToRefund = _validateDeposit(s, msg.sender, depositPriceData);
         unchecked {
-            amountToRefund += lib._executePendingActionOrRevert(s, previousActionsData);
+            amountToRefund += actionsLib._executePendingActionOrRevert(s, previousActionsData);
         }
-        lib._refundExcessEther(0, amountToRefund, balanceBefore);
-        lib._checkPendingFee(s);
+        commonLib._refundExcessEther(0, amountToRefund, balanceBefore);
+        commonLib._checkPendingFee(s);
     }
 
     function initiateWithdrawal(
@@ -299,10 +301,10 @@ library UsdnProtocolVaultLibrary {
 
         uint256 amountToRefund = _initiateWithdrawal(s, msg.sender, to, usdnShares, currentPriceData);
         unchecked {
-            amountToRefund += lib._executePendingActionOrRevert(s, previousActionsData);
+            amountToRefund += actionsLib._executePendingActionOrRevert(s, previousActionsData);
         }
-        lib._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
-        lib._checkPendingFee(s);
+        commonLib._refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+        commonLib._checkPendingFee(s);
     }
 
     /**
@@ -372,7 +374,7 @@ library UsdnProtocolVaultLibrary {
                 usdnTotalShares: data.usdn.totalShares()
             })
         );
-        securityDepositValue_ = lib._addPendingAction(s, user, action);
+        securityDepositValue_ = actionsLib._addPendingAction(s, user, action);
     }
 
     /**
@@ -402,9 +404,9 @@ library UsdnProtocolVaultLibrary {
         returns (WithdrawalData memory data_)
     {
         PriceInfo memory currentPrice =
-            lib._getOraclePrice(s, ProtocolAction.InitiateWithdrawal, block.timestamp, currentPriceData);
+            commonLib._getOraclePrice(s, ProtocolAction.InitiateWithdrawal, block.timestamp, currentPriceData);
 
-        lib._applyPnlAndFundingAndLiquidate(
+        commonLib._applyPnlAndFundingAndLiquidate(
             s, currentPrice.neutralPrice, currentPrice.timestamp, s._liquidationIteration, false, currentPriceData
         );
 
@@ -414,7 +416,7 @@ library UsdnProtocolVaultLibrary {
 
         data_.totalExpo = s._totalExpo;
         data_.balanceLong = s._balanceLong;
-        data_.balanceVault = lib._vaultAssetAvailable(
+        data_.balanceVault = commonLib._vaultAssetAvailable(
             data_.totalExpo, s._balanceVault, data_.balanceLong, data_.pendingActionPrice, s._lastPrice
         ).toUint256();
         data_.usdn = s._usdn;
@@ -467,17 +469,17 @@ library UsdnProtocolVaultLibrary {
 
         uint256 amountToRefund = _validateWithdrawal(s, msg.sender, withdrawalPriceData);
         unchecked {
-            amountToRefund += lib._executePendingActionOrRevert(s, previousActionsData);
+            amountToRefund += actionsLib._executePendingActionOrRevert(s, previousActionsData);
         }
-        lib._refundExcessEther(0, amountToRefund, balanceBefore);
-        lib._checkPendingFee(s);
+        commonLib._refundExcessEther(0, amountToRefund, balanceBefore);
+        commonLib._checkPendingFee(s);
     }
 
     function _validateWithdrawal(Storage storage s, address user, bytes calldata priceData)
         internal
         returns (uint256 securityDepositValue_)
     {
-        PendingAction memory pending = lib._getAndClearPendingAction(s, user);
+        PendingAction memory pending = actionsLib._getAndClearPendingAction(s, user);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateWithdrawal) {
@@ -488,7 +490,7 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
 
-        lib._validateWithdrawalWithAction(s, pending, priceData);
+        actionsLib._validateWithdrawalWithAction(s, pending, priceData);
         return pending.securityDepositValue;
     }
 
@@ -526,9 +528,10 @@ library UsdnProtocolVaultLibrary {
         }
         InitiateDepositData memory data;
 
-        data.currentPrice = lib._getOraclePrice(s, ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
+        data.currentPrice =
+            commonLib._getOraclePrice(s, ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
 
-        lib._applyPnlAndFundingAndLiquidate(
+        commonLib._applyPnlAndFundingAndLiquidate(
             s,
             data.currentPrice.neutralPrice,
             data.currentPrice.timestamp,
@@ -543,7 +546,7 @@ library UsdnProtocolVaultLibrary {
         data.pendingActionPrice =
             (data.currentPrice.price - data.currentPrice.price * s._vaultFeeBps / s.BPS_DIVISOR).toUint128();
 
-        data.balanceVault = lib._vaultAssetAvailable(
+        data.balanceVault = commonLib._vaultAssetAvailable(
             s._totalExpo, s._balanceVault, s._balanceLong, data.pendingActionPrice, s._lastPrice
         ).toUint256();
 
@@ -562,10 +565,11 @@ library UsdnProtocolVaultLibrary {
             usdnTotalSupply: s._usdn.totalSupply()
         });
 
-        securityDepositValue_ = lib._addPendingAction(s, user, lib._convertDepositPendingAction(data.pendingAction));
+        securityDepositValue_ =
+            actionsLib._addPendingAction(s, user, actionsLib._convertDepositPendingAction(data.pendingAction));
 
         // Calculate the amount of SDEX tokens to burn
-        uint256 usdnToMintEstimated = lib._calcMintUsdn(
+        uint256 usdnToMintEstimated = commonLib._calcMintUsdn(
             s,
             data.pendingAction.amount,
             data.pendingAction.balanceVault,
@@ -627,7 +631,7 @@ library UsdnProtocolVaultLibrary {
         internal
         returns (uint256 securityDepositValue_)
     {
-        PendingAction memory pending = lib._getAndClearPendingAction(s, user);
+        PendingAction memory pending = actionsLib._getAndClearPendingAction(s, user);
 
         // check type of action
         if (pending.action != ProtocolAction.ValidateDeposit) {
@@ -638,7 +642,7 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
 
-        lib._validateDepositWithAction(s, pending, priceData);
+        actionsLib._validateDepositWithAction(s, pending, priceData);
         return pending.securityDepositValue;
     }
 }
