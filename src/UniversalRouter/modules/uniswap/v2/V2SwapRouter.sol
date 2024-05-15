@@ -6,7 +6,7 @@ import { UniswapV2Library } from "@uniswap/universal-router/contracts/modules/un
 import { UniswapImmutables } from "@uniswap/universal-router/contracts/modules/uniswap/UniswapImmutables.sol";
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
-import { ERC20 } from "solmate/src/tokens/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Router for Uniswap v2 Trades
 abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
@@ -46,7 +46,7 @@ abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
                 (data.reserveInput, data.reserveOutput) =
                     data.input == token0 ? (data.reserve0, data.reserve1) : (data.reserve1, data.reserve0);
 
-                data.amountInput = ERC20(data.input).balanceOf(pair) - data.reserveInput;
+                data.amountInput = IERC20(data.input).balanceOf(pair) - data.reserveInput;
 
                 data.amountOutput =
                     UniswapV2Library.getAmountOut(data.amountInput, data.reserveInput, data.reserveOutput);
@@ -85,7 +85,7 @@ abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
             payOrPermit2Transfer(path[0], payer, firstPair, amountIn);
         }
 
-        ERC20 tokenOut = ERC20(path[path.length - 1]);
+        IERC20 tokenOut = IERC20(path[path.length - 1]);
         uint256 balanceBefore = tokenOut.balanceOf(recipient);
 
         _v2Swap(path, recipient, firstPair);
