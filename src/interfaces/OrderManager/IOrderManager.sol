@@ -45,7 +45,7 @@ interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents, IOrderManag
 
     /**
      * @notice Sets the target long imbalance to the provided value
-     * @dev The provided value needs to be greater than the USDN protocol close position imbalance limits
+     * @dev The provided value needs to be greater than the USDN protocol close position imbalance limit
      * @param targetLongImbalanceBps The new target imbalance (in basis points)
      */
     function setTargetLongImbalanceBps(int256 targetLongImbalanceBps) external;
