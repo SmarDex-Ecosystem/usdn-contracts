@@ -61,9 +61,7 @@ contract OrderManager is Ownable, IOrderManager {
 
     /// @inheritdoc IOrderManager
     function setTargetLongImbalanceBps(int256 targetLongImbalanceBps) external onlyOwner {
-        // TODO optimize this, 4 SLOADs for one value
-        (,,, int256 _closeExpoImbalanceLimitBps) = _usdnProtocol.getExpoImbalanceLimits();
-
+        int256 _closeExpoImbalanceLimitBps = _usdnProtocol.getCloseExpoImbalanceLimitBps();
         if (targetLongImbalanceBps >= _closeExpoImbalanceLimitBps) {
             revert OrderManagerImbalanceTargetTooHigh();
         }

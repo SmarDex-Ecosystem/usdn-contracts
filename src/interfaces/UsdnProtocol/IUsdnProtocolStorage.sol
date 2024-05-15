@@ -253,6 +253,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
         );
 
     /**
+     * @notice Get the expo imbalance limits when closing a position (in basis points)
+     * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
+     */
+    function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_);
+
+    /**
      * @notice Get the nominal (target) price of USDN
      * @return The price of the USDN token after a rebase (in _priceFeedDecimals)
      */
