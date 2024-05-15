@@ -15,7 +15,7 @@ contract TestOrderManagerAdmin is OrderManagerFixture {
 
     function setUp() public {
         super._setUp();
-        (,,, _closeImbalanceLimitBps) = usdnProtocol.getExpoImbalanceLimits();
+        _closeImbalanceLimitBps = usdnProtocol.getCloseExpoImbalanceLimitBps();
     }
 
     /**
