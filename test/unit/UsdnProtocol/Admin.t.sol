@@ -84,6 +84,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(customError);
         protocol.setVaultFeeBps(0);
+
+        vm.expectRevert(customError);
+        protocol.setOrderManagerBonusBps(0);
     }
 
     /**
@@ -721,7 +724,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function test_setVaultFeeBps() external adminPrank {
         uint16 newValue = 1000;
         vm.expectEmit();
-        emit PositionFeeUpdated(newValue);
+        emit VaultFeeUpdated(newValue);
         protocol.setVaultFeeBps(newValue);
         assertEq(protocol.getVaultFeeBps(), newValue);
         protocol.setVaultFeeBps(0);
@@ -736,5 +739,31 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function test_RevertWhen_setVaultFeeTooHigh() external adminPrank {
         vm.expectRevert(UsdnProtocolInvalidVaultFee.selector);
         protocol.setVaultFeeBps(2001);
+    }
+
+    /**
+     * @custom:scenario Call `setOrderManagerBonusBps` as admin
+     * @custom:when The admin sets the bonus between 0 and 8000 bps
+     * @custom:then The bonus should be updated
+     * @custom:and an event should be emitted with the corresponding new value
+     */
+    function test_setOrderManagerBonusBps() external adminPrank {
+        uint16 newValue = 8000;
+        vm.expectEmit();
+        emit OrderManagerBonusUpdated(newValue);
+        protocol.setOrderManagerBonusBps(newValue);
+        assertEq(protocol.getOrderManagerBonusBps(), newValue);
+        protocol.setOrderManagerBonusBps(0);
+        assertEq(protocol.getOrderManagerBonusBps(), 0);
+    }
+
+    /**
+     * @custom:scenario Try to set an order manager bonus higher than the max allowed
+     * @custom:when The admin sets the bonus to 8001 bps
+     * @custom:then The transaction should revert with the corresponding error
+     */
+    function test_RevertWhen_setOrderManagerBonusTooHigh() external adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidOrderManagerBonus.selector);
+        protocol.setOrderManagerBonusBps(8001);
     }
 }

@@ -72,6 +72,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided vault fee exceeds the maximum allowed
     error UsdnProtocolInvalidVaultFee();
 
+    /// @dev Indicates that the provided order manager bonus exceeds the maximum allowed
+    error UsdnProtocolInvalidOrderManagerBonus();
+
     /// @dev Indicates that the provided ratio exceeds the maximum allowed
     error UsdnProtocolInvalidBurnSdexOnDepositRatio();
 

@@ -91,6 +91,12 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setVaultFeeBps(uint16 newVaultFee) external;
 
     /**
+     * @notice Update the order manager bonus
+     * @param newBonus The bonus (in basis points)
+     */
+    function setOrderManagerBonusBps(uint16 newBonus) external;
+
+    /**
      * @notice Update the ratio of USDN to SDEX tokens to burn on deposit.
      * @param newRatio The new ratio.
      */
