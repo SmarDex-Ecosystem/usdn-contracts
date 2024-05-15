@@ -33,7 +33,7 @@ contract OrderManager is Ownable, IOrderManager {
      * @notice The target imbalance on the long side (in basis points)
      * @dev This value will be used to calculate how much of the missing trading expo the position will compensate
      */
-    int256 internal _targetLongImbalanceBps;
+    int256 internal _targetLongImbalanceBps = 300;
 
     /// @notice The data about the assets deposited in this contract by users
     mapping(address => UserDeposit) internal _userDeposit;
