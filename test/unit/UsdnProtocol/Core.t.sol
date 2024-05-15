@@ -389,4 +389,80 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertEq(action.to, address(this), "to should be this contract");
         assertEq(rawIndex, 1, "rawIndex should be 1");
     }
+
+    /**
+     * @custom:scenario The `addPendingAction` function revert when there are multiple pending actions
+     * @custom:given There is a pending action for this user
+     * @custom:when addPendingAction is called
+     * @custom:then The protocol reverts with `UsdnProtocolPendingAction`
+     */
+    function test_RevertWhen_addPendingActionAlreadyHavePendingAction() public {
+        PendingAction memory pendingAction = PendingAction({
+            action: ProtocolAction.ValidateDeposit,
+            timestamp: uint40(block.timestamp),
+            user: address(this),
+            to: address(this),
+            securityDepositValue: 0.1 ether,
+            var1: 0,
+            var2: 0,
+            var3: 0,
+            var4: 0,
+            var5: 0,
+            var6: 0,
+            var7: 0
+        });
+        protocol.i_addPendingAction(address(this), pendingAction);
+
+        vm.expectRevert(UsdnProtocolPendingAction.selector);
+        protocol.i_addPendingAction(address(this), pendingAction);
+    }
+
+    /**
+     * @custom:scenario The `addPendingAction` function return the security deposit value and save the action
+     * @custom:given There is a pending action that can be deleted for this user
+     * @custom:when addPendingAction is called
+     * @custom:then Return the security deposit value and save the expected action
+     */
+    function test_addPendingAction() public {
+        PendingAction memory pendingAction = PendingAction({
+            action: ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp),
+            user: address(this),
+            to: address(this),
+            securityDepositValue: 0.01 ether,
+            var1: 0,
+            var2: 0,
+            var3: 0,
+            var4: 1,
+            var5: 0,
+            var6: 0,
+            var7: 0
+        });
+        protocol.i_addPendingAction(address(this), pendingAction);
+        _waitDelay();
+
+        (, uint128 rawIndexBefore) = protocol.i_getPendingAction(address(this));
+
+        uint256 securityDepositValue = protocol.i_addPendingAction(address(this), pendingAction);
+
+        (, uint128 rawIndexAfter) = protocol.i_getPendingAction(address(this));
+        PendingAction memory actionSaved = protocol.getPendingActionAt(rawIndexAfter - 1);
+
+        assertEq(securityDepositValue, 0.01 ether, "securityDepositValue should be 0.01 ether");
+        assertEq(rawIndexBefore + 1, rawIndexAfter, "rawIndex should be incremented by 1");
+        assertTrue(actionSaved.action == pendingAction.action, "action saved(action)");
+        assertEq(actionSaved.timestamp, pendingAction.timestamp, "action saved(timestamp)");
+        assertEq(actionSaved.user, pendingAction.user, "action saved(user)");
+        assertEq(actionSaved.to, pendingAction.to, "action saved(to)");
+        assertEq(
+            actionSaved.securityDepositValue, pendingAction.securityDepositValue, "action saved(securityDepositValue)"
+        );
+        assertEq(actionSaved.var1, pendingAction.var1, "action saved(var1)");
+        assertEq(actionSaved.var2, pendingAction.var2, "action saved(var2)");
+        assertEq(actionSaved.var3, pendingAction.var3, "action saved(var3)");
+        assertEq(actionSaved.var4, pendingAction.var4, "action saved(var4)");
+        assertEq(actionSaved.var5, pendingAction.var5, "action saved(var5)");
+        assertEq(actionSaved.var6, pendingAction.var6, "action saved(var6)");
+        assertEq(actionSaved.var7, pendingAction.var7, "action saved(var7)");
+    }
 }
