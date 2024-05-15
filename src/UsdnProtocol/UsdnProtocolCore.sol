@@ -280,29 +280,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Calculate the PnL in asset units of the long side, considering the overall total expo and change in
-     * price
-     * @param totalExpo The total exposure of the long side
-     * @param balanceLong The (old) balance of the long side
-     * @param newPrice The new price
-     * @param oldPrice The old price when the old balance was updated
-     * @return pnl_ The PnL in asset units
-     */
-    function _pnlAsset(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        internal
-        pure
-        returns (int256 pnl_)
-    {
-        // in case of a negative trading expo, we can't allow calculation of PnL because it would invert the sign of the
-        // calculated amount. We thus disable any balance update due to PnL in such a case
-        if (balanceLong >= totalExpo) {
-            return 0;
-        }
-        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
-        pnl_ = totalExpo.toInt256().safeSub(balanceLong.toInt256()).safeMul(priceDiff).safeDiv(_toInt256(newPrice));
-    }
-
-    /**
      * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
      * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
      * due to the price change to `currentPrice`
@@ -326,13 +303,21 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         pure
         returns (int256 available_)
     {
-        // Avoid division by zero
-        // slither-disable-next-line incorrect-equality
-        if (totalExpo == 0) {
-            return 0;
+        int256 pnl;
+        // if balanceLong == totalExpo or the long trading expo is negative (theoretically impossible), the PnL is
+        // zero
+        // we can't calculate a proper PnL value if the long trading expo is negative because it would invert the
+        // sign of the amount
+        if (balanceLong < totalExpo) {
+            int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
+            uint256 tradingExpo;
+            unchecked {
+                tradingExpo = totalExpo - balanceLong;
+            }
+            pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(_toInt256(newPrice));
         }
 
-        available_ = balanceLong.toInt256().safeAdd(_pnlAsset(totalExpo, balanceLong, newPrice, oldPrice));
+        available_ = balanceLong.toInt256().safeAdd(pnl);
     }
 
     /**
