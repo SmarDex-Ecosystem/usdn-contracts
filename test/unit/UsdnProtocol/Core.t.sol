@@ -457,12 +457,12 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertEq(
             actionSaved.securityDepositValue, pendingAction.securityDepositValue, "action saved(securityDepositValue)"
         );
-        assertTrue(
-            actionSaved.var1 == pendingAction.var1 && actionSaved.var2 == pendingAction.var2
-                && actionSaved.var3 == pendingAction.var3 && actionSaved.var4 == pendingAction.var4
-                && actionSaved.var5 == pendingAction.var5 && actionSaved.var6 == pendingAction.var6
-                && actionSaved.var7 == pendingAction.var7,
-            "action saved(var)"
-        );
+        assertEq(actionSaved.var1, pendingAction.var1, "action saved(var1)");
+        assertEq(actionSaved.var2, pendingAction.var2, "action saved(var2)");
+        assertEq(actionSaved.var3, pendingAction.var3, "action saved(var3)");
+        assertEq(actionSaved.var4, pendingAction.var4, "action saved(var4)");
+        assertEq(actionSaved.var5, pendingAction.var5, "action saved(var5)");
+        assertEq(actionSaved.var6, pendingAction.var6, "action saved(var6)");
+        assertEq(actionSaved.var7, pendingAction.var7, "action saved(var7)");
     }
 }
