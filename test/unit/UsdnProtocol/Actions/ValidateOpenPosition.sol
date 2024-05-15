@@ -49,7 +49,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:and the rest of the state changes as expected
      */
     function test_validateOpenPosition() public {
-        _validateOpenPositionScenario(address(this));
+        _validateOpenPositionScenario(address(this), address(this));
     }
 
     /**
@@ -61,14 +61,26 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:then The owner of the position is the previously defined user
      */
     function test_validateOpenPositionForAnotherUser() public {
-        _validateOpenPositionScenario(USER_1);
+        _validateOpenPositionScenario(USER_1, USER_1);
     }
 
-    function _validateOpenPositionScenario(address to) internal {
+    /**
+     * @custom:scenario The user validates an open position action with a different validator
+     * @custom:given The user has initiated an open position with 1 wstETH and a desired liquidation price of ~1333$
+     * @custom:and the price was 2000$ at the moment of initiation
+     * @custom:and the price has increased to 2100$
+     * @custom:when The user validates the open position with the new price
+     * @custom:then The owner of the position is the previously defined user
+     */
+    function test_validateOpenPositionDifferentValidator() public {
+        _validateOpenPositionScenario(address(this), USER_1);
+    }
+
+    function _validateOpenPositionScenario(address to, address validator) internal {
         uint256 initialTotalExpo = protocol.getTotalExpo();
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         PositionId memory posId = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to, address(this)
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to, validator
         );
         (Position memory tempPos,) = protocol.getLongPosition(posId);
 
@@ -88,8 +100,8 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         uint128 expectedPosTotalExpo = protocol.i_calculatePositionTotalExpo(tempPos.amount, newPrice, expectedLiqPrice);
 
         vm.expectEmit();
-        emit ValidatedOpenPosition(to, address(this), expectedPosTotalExpo, newPrice, posId);
-        protocol.validateOpenPosition(address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        emit ValidatedOpenPosition(to, validator, expectedPosTotalExpo, newPrice, posId);
+        protocol.validateOpenPosition(validator, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
 
         (Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.user, tempPos.user, "user");
