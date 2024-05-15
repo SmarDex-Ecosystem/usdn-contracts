@@ -19,6 +19,7 @@ remappings = [
     "@pythnetwork=node_modules/@pythnetwork/",
     "solady/src/=node_modules/solady/src/",
     "@uniswap/v2-core/=node_modules/@uniswap/v2-core/",
+    "@uniswap/v3-core/=node_modules/@uniswap/v3-core/",
     "@uniswap/universal-router/=node_modules/@uniswap/universal-router/",
     "permit2/=node_modules/@uniswap/permit2/",
     "solmate/=node_modules/solmate/",
