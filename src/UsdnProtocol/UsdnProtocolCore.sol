@@ -490,7 +490,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     {
         int256 protocolFeeBps = _toInt256(_protocolFeeBps);
         fundWithFee_ = fund;
-        fee_ = (fundAsset * protocolFeeBps) / int256(BPS_DIVISOR);
+        fee_ = fundAsset * protocolFeeBps / int256(BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
         fundAssetWithFee_ = fundAsset - fee_;
 

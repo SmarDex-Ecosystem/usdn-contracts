@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 /**
@@ -71,6 +71,9 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided position fee exceeds the maximum allowed
     error UsdnProtocolInvalidPositionFee();
+
+    /// @dev Indicates that the provided vault fee exceeds the maximum allowed
+    error UsdnProtocolInvalidVaultFee();
 
     /// @dev Indicates that the provided ratio exceeds the maximum allowed
     error UsdnProtocolInvalidBurnSdexOnDepositRatio();

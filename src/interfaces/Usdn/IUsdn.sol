@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -103,6 +103,15 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * @return tokens_ The corresponding amount of tokens
      */
     function convertToTokens(uint256 amountShares) external view returns (uint256 tokens_);
+
+    /**
+     * @notice Convert a number of shares to the corresponding amount of tokens, rounding up
+     * @dev Use this function to determine the amount of a token approval, as we always round up when deducting from
+     * a token transfer allowance
+     * @param amountShares The amount of shares to convert to tokens
+     * @return tokens_ The corresponding amount of tokens, rounded up
+     */
+    function convertToTokensRoundUp(uint256 amountShares) external view returns (uint256 tokens_);
 
     /**
      * @notice View function returning the current maximum tokens supply, given the current divisor

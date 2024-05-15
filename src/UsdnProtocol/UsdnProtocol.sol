@@ -13,7 +13,6 @@ import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
@@ -106,13 +105,6 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _liquidationRewardsManager = newLiquidationRewardsManager;
 
         emit LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
-    }
-
-    /// @inheritdoc IUsdnProtocol
-    function setOrderManager(IOrderManager newOrderManager) external onlyOwner {
-        _orderManager = newOrderManager;
-
-        emit OrderManagerUpdated(address(newOrderManager));
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -235,6 +227,16 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _positionFeeBps = newPositionFee;
         emit PositionFeeUpdated(newPositionFee);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setVaultFeeBps(uint16 newVaultFee) external onlyOwner {
+        // newVaultFee greater than max 2000: 20%
+        if (newVaultFee > 2000) {
+            revert UsdnProtocolInvalidVaultFee();
+        }
+        _vaultFeeBps = newVaultFee;
+        emit PositionFeeUpdated(newVaultFee);
     }
 
     /// @inheritdoc IUsdnProtocol

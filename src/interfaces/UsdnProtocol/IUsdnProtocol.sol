@@ -1,10 +1,9 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 
 /**
  * @title IUsdnProtocol
@@ -47,12 +46,6 @@ interface IUsdnProtocol is IUsdnProtocolActions {
      */
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external;
 
-    /**
-     * @notice Replace the OrderManager contract with a new implementation.
-     * @param newOrderManager the address of the new contract.
-     */
-    function setOrderManager(IOrderManager newOrderManager) external;
-
     /// @notice Set the new minimum leverage for a position.
     function setMinLeverage(uint256 newMinLeverage) external;
 
@@ -86,10 +79,16 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setProtocolFeeBps(uint16 newFeeBps) external;
 
     /**
-     * @notice Update the position fees.
-     * @param newPositionFee The new position fee (in basis points).
+     * @notice Update the position fee
+     * @param newPositionFee The new position fee (in basis points)
      */
     function setPositionFeeBps(uint16 newPositionFee) external;
+
+    /**
+     * @notice Update the vault fee
+     * @param newVaultFee The new vault fee (in basis points)
+     */
+    function setVaultFeeBps(uint16 newVaultFee) external;
 
     /**
      * @notice Update the ratio of USDN to SDEX tokens to burn on deposit.

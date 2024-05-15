@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -9,7 +9,6 @@ import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolEr
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { Position, PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
@@ -136,12 +135,6 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager);
 
     /**
-     * @notice Get the order manager contract
-     * @return The address of the order manager contract
-     */
-    function getOrderManager() external view returns (IOrderManager);
-
-    /**
      * @notice Get the lowest leverage used to open a position
      * @return The minimum leverage (with LEVERAGE_DECIMALS decimals)
      */
@@ -200,10 +193,16 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getProtocolFeeBps() external view returns (uint16);
 
     /**
-     * @notice Get the fee applied when a position is opened
+     * @notice Get the fee applied when a long position is opened or closed
      * @return The position fee (in basis points)
      */
     function getPositionFeeBps() external view returns (uint16);
+
+    /**
+     * @notice Get the fee applied during a vault deposit or withdrawal
+     * @return The action fee (in basis points)
+     */
+    function getVaultFeeBps() external view returns (uint16);
 
     /**
      * @notice Get the ratio of USDN to SDEX tokens to burn on deposit

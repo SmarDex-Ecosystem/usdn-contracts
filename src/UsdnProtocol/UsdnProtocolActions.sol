@@ -552,8 +552,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _checkImbalanceLimitDeposit(amount);
 
         // Apply fees on price
-        uint128 pendingActionPrice =
-            (currentPrice.price - currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
+        uint128 pendingActionPrice = (currentPrice.price - currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
         DepositPendingAction memory pendingAction = DepositPendingAction({
             action: ProtocolAction.ValidateDeposit,
@@ -630,7 +629,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
         // action, or the current price provided for validation. We will use the lower of the two amounts to mint.
         // Apply fees on price
-        uint128 priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+        uint128 priceWithFees = (currentPrice.price - currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
         uint256 usdnToMint1 =
             _calcMintUsdn(deposit.amount, deposit.balanceVault, deposit.usdnTotalSupply, deposit.assetPrice);
@@ -678,7 +677,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         );
 
         // Apply fees on price
-        data_.pendingActionPrice = (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
+        data_.pendingActionPrice = (currentPrice.price + currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
         data_.totalExpo = _totalExpo;
         data_.balanceLong = _balanceLong;
@@ -796,7 +795,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // Apply fees on price
         uint128 withdrawalPriceWithFees =
-            (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+            (currentPrice.price + currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
         // We calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
@@ -850,7 +849,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     {
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.InitiateOpenPosition, block.timestamp, currentPriceData);
-        data_.adjustedPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+        data_.adjustedPrice = (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
 
@@ -1001,7 +1000,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.ValidateOpenPosition, data_.action.timestamp, priceData);
         // Apply fees on price
-        data_.startPrice = (currentPrice.price + (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+        data_.startPrice = (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         _applyPnlAndFundingAndLiquidate(
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
@@ -1333,7 +1332,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         );
 
         // Apply fees on price
-        uint128 priceWithFees = (currentPrice.price - (currentPrice.price * _positionFeeBps) / BPS_DIVISOR).toUint128();
+        uint128 priceWithFees = (currentPrice.price - currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         // get liquidation price (with liq penalty) to check if position was valid at `timestamp + validationDelay`
         uint128 liquidationPrice = _getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);

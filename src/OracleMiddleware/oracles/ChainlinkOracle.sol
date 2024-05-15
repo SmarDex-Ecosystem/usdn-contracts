@@ -10,10 +10,10 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
 /**
  * @title ChainlinkOracle contract
  * @notice This contract is used to get the price of an asset from Chainlink. It is used by the USDN protocol to get the
- * price of the USDN underlying asset, and by the LiquidationRewardsManager to get the price of the gas.
+ * price of the USDN underlying asset, and by the LiquidationRewardsManager to get the price of the gas
  */
 abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
-    /// @notice Price that indicates that the data returned by the oracle is too old
+    /// @inheritdoc IChainlinkOracle
     int256 public constant PRICE_TOO_OLD = type(int256).min;
 
     /// @notice Chainlink price feed aggregator contract

@@ -6,7 +6,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
@@ -72,9 +71,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(this)));
 
         vm.expectRevert(customError);
-        protocol.setOrderManager(IOrderManager(address(this)));
-
-        vm.expectRevert(customError);
         protocol.setSecurityDepositValue(0);
 
         vm.expectRevert(customError);
@@ -82,6 +78,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(customError);
         protocol.setMinLongPosition(100 ether);
+
+        vm.expectRevert(customError);
+        protocol.setPositionFeeBps(0);
+
+        vm.expectRevert(customError);
+        protocol.setVaultFeeBps(0);
     }
 
     /**
@@ -551,38 +553,6 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @dev As tolerating the zero address is unusual, this test is relevant even though it doesn't increase the
-     * coverage
-     * @custom:scenario Call "setOrderManager" from admin with the zero address.
-     * @custom:given The initial usdnProtocol state from admin wallet.
-     * @custom:when Admin wallet trigger admin contract function.
-     * @custom:then Order manager is now the zero address.
-     */
-    function test_setOrderManagerWithZeroAddress() external adminPrank {
-        vm.expectEmit();
-        emit OrderManagerUpdated(address(0));
-        protocol.setOrderManager(IOrderManager(address(0)));
-
-        assertEq(address(protocol.getOrderManager()), address(address(0)));
-    }
-
-    /**
-     * @custom:scenario Call "setOrderManager" from admin.
-     * @custom:given The initial usdnProtocol state from admin wallet.
-     * @custom:when Admin wallet trigger admin contract function.
-     * @custom:then Value should be updated.
-     */
-    function test_setOrderManager() external adminPrank {
-        IOrderManager expectedNewValue = IOrderManager(address(this));
-
-        vm.expectEmit();
-        emit OrderManagerUpdated(address(this));
-        protocol.setOrderManager(expectedNewValue);
-
-        assertEq(address(protocol.getOrderManager()), address(expectedNewValue));
-    }
-
-    /**
      * @custom:scenario Call "setSecurityDepositValue" from admin.
      * @custom:given The initial usdnProtocol state.
      * @custom:when Admin wallet trigger the function.
@@ -714,5 +684,57 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setMinLongPosition(newValue);
         // assert that the new value is equal to the expected value
         assertEq(protocol.getMinLongPosition(), newValue);
+    }
+
+    /**
+     * @custom:scenario Call `setPositionFeeBps` as admin
+     * @custom:when The admin sets the position fee between 0 and 2000 bps
+     * @custom:then The position fee should be updated
+     * @custom:and an event should be emitted with the corresponding new value
+     */
+    function test_setPositionFeeBps() external adminPrank {
+        uint16 newValue = 2000;
+        vm.expectEmit();
+        emit PositionFeeUpdated(newValue);
+        protocol.setPositionFeeBps(newValue);
+        assertEq(protocol.getPositionFeeBps(), newValue);
+        protocol.setPositionFeeBps(0);
+        assertEq(protocol.getPositionFeeBps(), 0);
+    }
+
+    /**
+     * @custom:scenario Try to set a position fee higher than the max allowed
+     * @custom:when The admin sets the position fee to 2001 bps
+     * @custom:then The transaction should revert with the corresponding error
+     */
+    function test_RevertWhen_setPositionFeeTooHigh() external adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidPositionFee.selector);
+        protocol.setPositionFeeBps(2001);
+    }
+
+    /**
+     * @custom:scenario Call `setVaultFeeBps` as admin
+     * @custom:when The admin sets the vault fee between 0 and 2000 bps
+     * @custom:then The vault fee should be updated
+     * @custom:and an event should be emitted with the corresponding new value
+     */
+    function test_setVaultFeeBps() external adminPrank {
+        uint16 newValue = 1000;
+        vm.expectEmit();
+        emit PositionFeeUpdated(newValue);
+        protocol.setVaultFeeBps(newValue);
+        assertEq(protocol.getVaultFeeBps(), newValue);
+        protocol.setVaultFeeBps(0);
+        assertEq(protocol.getVaultFeeBps(), 0);
+    }
+
+    /**
+     * @custom:scenario Try to set a vault fee higher than the max allowed
+     * @custom:when The admin sets the vault fee to 2001 bps
+     * @custom:then The transaction should revert with the corresponding error
+     */
+    function test_RevertWhen_setVaultFeeTooHigh() external adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidVaultFee.selector);
+        protocol.setVaultFeeBps(2001);
     }
 }
