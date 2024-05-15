@@ -55,6 +55,7 @@ contract OrderManagerFixture is BaseFixture, IOrderManagerTypes, IOrderManagerEr
 
         // separate the roles ADMIN and DEPLOYER
         usdnProtocol.transferOwnership(ADMIN);
+        orderManager.transferOwnership(ADMIN);
         vm.stopPrank();
     }
 }

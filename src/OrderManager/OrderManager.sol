@@ -17,6 +17,9 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 contract OrderManager is Ownable, IOrderManager {
     using SafeERC20 for IERC20Metadata;
 
+    /// @inheritdoc IOrderManager
+    uint32 public constant BPS_DIVISOR = 10_000;
+
     /// @notice The address of the asset used by the USDN protocol
     IERC20Metadata internal immutable _asset;
 
@@ -25,6 +28,12 @@ contract OrderManager is Ownable, IOrderManager {
 
     /// @notice The current position version
     uint128 internal _positionVersion;
+
+    /**
+     * @notice The target imbalance on the long side (in basis points)
+     * @dev This value will be used to calculate how much of the missing trading expo the position will compensate
+     */
+    int256 internal _targetLongImbalanceBps;
 
     /// @notice The data about the assets deposited in this contract by users
     mapping(address => UserDeposit) internal _userDeposit;
@@ -43,6 +52,25 @@ contract OrderManager is Ownable, IOrderManager {
     /// @inheritdoc IOrderManager
     function getPositionVersion() external view returns (uint128) {
         return _positionVersion;
+    }
+
+    /// @inheritdoc IOrderManager
+    function getTargetLongImbalanceBps() external view returns (int256 targetLongImbalance_) {
+        targetLongImbalance_ = _targetLongImbalanceBps;
+    }
+
+    /// @inheritdoc IOrderManager
+    function setTargetLongImbalanceBps(int256 targetLongImbalanceBps) external onlyOwner {
+        // TODO optimize this, 4 SLOADs for one value
+        (,,, int256 _closeExpoImbalanceLimitBps) = _usdnProtocol.getExpoImbalanceLimits();
+
+        if (targetLongImbalanceBps >= _closeExpoImbalanceLimitBps) {
+            revert OrderManagerImbalanceTargetTooHigh();
+        }
+
+        _targetLongImbalanceBps = targetLongImbalanceBps;
+
+        emit TargetLongImbalanceUpdated(targetLongImbalanceBps);
     }
 
     /// @inheritdoc IOrderManager

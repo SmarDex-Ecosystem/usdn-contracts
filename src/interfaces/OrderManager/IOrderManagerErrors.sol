@@ -13,4 +13,7 @@ interface IOrderManagerErrors {
 
     /// @dev The amount to withdraw is greater than the amount deposited
     error OrderManagerWithdrawAmountTooLarge();
+
+    /// @dev The imbalance target is too high
+    error OrderManagerImbalanceTargetTooHigh();
 }
