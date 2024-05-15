@@ -59,7 +59,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:and the state changes are as expected
      */
     function test_initiateOpenPosition() public {
-        _initiateOpenPositionScenario(address(this));
+        _initiateOpenPositionScenario(address(this), address(this));
     }
 
     /**
@@ -71,11 +71,23 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
      * user and emits the InitiatedOpenPosition event
      * @custom:and the state changes are as expected
      */
-    function test_initiateOpenPositionForAnotherAddress() public {
-        _initiateOpenPositionScenario(USER_1);
+    function test_initiateOpenPositionForAnotherUser() public {
+        _initiateOpenPositionScenario(USER_1, USER_1);
     }
 
-    function _initiateOpenPositionScenario(address to) internal {
+    /**
+     * @custom:scenario The user initiates an open position action with a different validator
+     * @custom:given The amount of collateral is 1 wstETH and the current price is 2000$
+     * @custom:when The user initiates an open position with 1 wstETH and a desired liquidation price of ~1333$
+     * (approx 3x leverage) and a different validator
+     * @custom:then The protocol creates the position and emits the InitiatedOpenPosition event
+     * @custom:and the state changes are as expected
+     */
+    function test_initiateOpenPositionDifferentValidator() public {
+        _initiateOpenPositionScenario(address(this), USER_1);
+    }
+
+    function _initiateOpenPositionScenario(address to, address validator) internal {
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         int24 expectedTick = protocol.getEffectiveTickForPrice(desiredLiqPrice);
         uint128 liqPriceWithoutPenalty =
@@ -95,7 +107,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         vm.expectEmit();
         emit InitiatedOpenPosition(
             to,
-            address(this),
+            validator,
             uint40(block.timestamp),
             expectedPosTotalExpo,
             uint128(LONG_AMOUNT),
@@ -103,7 +115,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             PositionId(expectedTick, 0, 0)
         );
         PositionId memory posId = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to, address(this)
+            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to, validator
         );
 
         // check state after opening the position
@@ -124,11 +136,11 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         (PendingAction[] memory pendingActions,) = protocol.getActionablePendingActions(address(0));
         assertEq(pendingActions.length, 0, "no pending action");
 
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(validator));
         assertTrue(action.action == ProtocolAction.ValidateOpenPosition, "action type");
         assertEq(action.timestamp, block.timestamp, "action timestamp");
         assertEq(action.to, to, "action to");
-        assertEq(action.validator, address(this), "action validator");
+        assertEq(action.validator, validator, "action validator");
         assertEq(action.tick, expectedTick, "action tick");
         assertEq(action.tickVersion, 0, "action tickVersion");
         assertEq(action.index, 0, "action index");
@@ -138,7 +150,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         (pendingActions,) = protocol.getActionablePendingActions(address(0));
         action = protocol.i_toLongPendingAction(pendingActions[0]);
         assertEq(action.to, to, "pending action to");
-        assertEq(action.validator, address(this), "pending action validator");
+        assertEq(action.validator, validator, "pending action validator");
 
         Position memory position;
         (position,) = protocol.getLongPosition(posId);
