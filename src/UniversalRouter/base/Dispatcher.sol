@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import { V2SwapRouter } from "../modules/uniswap/v2/V2SwapRouter.sol";
-import { V3SwapRouter } from "../modules/uniswap/v3/V3SwapRouter.sol";
-import { BytesLib } from "../modules/uniswap/v3/BytesLib.sol";
-import { Payments } from "../modules/Payments.sol";
-import { Commands } from "../libraries/Commands.sol";
-import { LockAndMsgSender } from "./LockAndMsgSender.sol";
-import { IAllowanceTransfer } from "src/UniversalRouter/interfaces/IAllowanceTransfer.sol";
+import { LockAndMsgSender } from "@uniswap/universal-router/contracts/base/LockAndMsgSender.sol";
+import { Payments } from "@uniswap/universal-router/contracts/modules/Payments.sol";
+import { BytesLib } from "@uniswap/universal-router/contracts/modules/uniswap/v3/BytesLib.sol";
+import { V3SwapRouter } from "@uniswap/universal-router/contracts/modules/uniswap/v3/V3SwapRouter.sol";
+import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
+
+import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
+import { V2SwapRouter } from "src/UniversalRouter/modules/uniswap/v2/V2SwapRouter.sol";
 
 /// @title Decodes and Executes Commands
 /// @notice Called by the UniversalRouter contract to efficiently decode and execute a singular command

@@ -2,11 +2,11 @@
 pragma solidity ^0.8.17;
 
 import { IUniswapV2Pair } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
-import { UniswapV2Library } from "./UniswapV2Library.sol";
-import { UniswapImmutables } from "../UniswapImmutables.sol";
-import { Permit2Payments } from "../../Permit2Payments.sol";
-import { Constants } from "../../../libraries/Constants.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { UniswapV2Library } from "@uniswap/universal-router/contracts/modules/uniswap/v2/UniswapV2Library.sol";
+import { UniswapImmutables } from "@uniswap/universal-router/contracts/modules/uniswap/UniswapImmutables.sol";
+import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
+import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
+import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 
 /// @title Router for Uniswap v2 Trades
 abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {

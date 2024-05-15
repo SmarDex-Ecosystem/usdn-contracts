@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-// Command implementations
-import { Dispatcher } from "./base/Dispatcher.sol";
-import { RouterParameters } from "./base/RouterImmutables.sol";
-import { PaymentsImmutables, PaymentsParameters } from "./modules/PaymentsImmutables.sol";
-import { UniswapImmutables, UniswapParameters } from "./modules/uniswap/UniswapImmutables.sol";
-import { Commands } from "./libraries/Commands.sol";
-import { IUniversalRouter } from "./interfaces/IUniversalRouter.sol";
+import {
+    UniswapImmutables,
+    UniswapParameters
+} from "@uniswap/universal-router/contracts/modules/uniswap/UniswapImmutables.sol";
+import {
+    PaymentsImmutables, PaymentsParameters
+} from "@uniswap/universal-router/contracts/modules/PaymentsImmutables.sol";
+
+import { Dispatcher } from "src/UniversalRouter/base/Dispatcher.sol";
+import { IUniversalRouter } from "src/UniversalRouter/interfaces/IUniversalRouter.sol";
+import { RouterParameters } from "src/UniversalRouter/base/RouterImmutables.sol";
+import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 
 contract UniversalRouter is IUniversalRouter, Dispatcher {
     modifier checkDeadline(uint256 deadline) {
@@ -19,7 +24,7 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
         UniswapImmutables(
             UniswapParameters(params.v2Factory, params.v3Factory, params.pairInitCodeHash, params.poolInitCodeHash)
         )
-        PaymentsImmutables(PaymentsParameters(params.permit2, params.weth9))
+        PaymentsImmutables(PaymentsParameters(params.permit2, params.weth9, address(0), address(0)))
     { }
 
     /// @inheritdoc IUniversalRouter
