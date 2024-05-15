@@ -14,7 +14,7 @@ import { IOrderManagerErrors } from "src/interfaces/OrderManager/IOrderManagerEr
 import { IOrderManagerTypes } from "src/interfaces/OrderManager/IOrderManagerTypes.sol";
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { Usdn } from "src/Usdn.sol";
+import { Usdn } from "src/Usdn/Usdn.sol";
 
 /**
  * @title OrderManagerFixture
