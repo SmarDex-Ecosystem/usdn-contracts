@@ -310,9 +310,9 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         if (balanceLong >= totalExpo) {
             return balanceLong.toInt256();
         }
-        // below, balanceLong is stringly inferior to totalExpo
         int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
         uint256 tradingExpo;
+        // balanceLong is strictly inferior to totalExpo
         unchecked {
             tradingExpo = totalExpo - balanceLong;
         }
