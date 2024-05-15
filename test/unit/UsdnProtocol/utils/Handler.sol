@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {
     PendingAction,
@@ -33,6 +34,7 @@ import { TickMath } from "src/libraries/TickMath.sol";
 contract UsdnProtocolHandler is UsdnProtocol, Test {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
     using LibBitmap for LibBitmap.Bitmap;
+    using SafeCast for int256;
 
     constructor(
         IUsdn usdn,
@@ -94,6 +96,16 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function emptyVault() external {
         _balanceLong += _balanceVault;
         _balanceVault = 0;
+    }
+
+    function updateBalances(uint128 currentPrice) external {
+        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
+            _applyPnlAndFunding(currentPrice, uint128(block.timestamp));
+        if (!priceUpdated) {
+            revert("price was not updated");
+        }
+        _balanceLong = tempLongBalance.toUint256();
+        _balanceVault = tempVaultBalance.toUint256();
     }
 
     function i_initiateClosePosition(
@@ -325,7 +337,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _updateEMA(secondsElapsed);
     }
 
-    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool) {
+    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory) {
         return _usdnRebase(assetPrice, ignoreInterval);
     }
 
@@ -345,8 +357,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
     }
 
-    function i_addPendingAction(address user, PendingAction memory action) external {
-        _addPendingAction(user, action);
+    function i_addPendingAction(address user, PendingAction memory action) external returns (uint256) {
+        return _addPendingAction(user, action);
     }
 
     function i_getPendingAction(address user) external view returns (PendingAction memory, uint128) {

@@ -14,7 +14,7 @@ import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewar
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
 import { OrderManager } from "src/OrderManager/OrderManager.sol";
-import { Usdn } from "src/Usdn.sol";
+import { Usdn } from "src/Usdn/Usdn.sol";
 
 contract Deploy is Script {
     /**
