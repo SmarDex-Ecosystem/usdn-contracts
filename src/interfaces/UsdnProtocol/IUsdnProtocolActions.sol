@@ -14,9 +14,9 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
      * @notice Initiate a deposit of assets into the vault to mint USDN
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.InitiateDeposit` action.
+     * the `ProtocolAction.InitiateDeposit` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware.
+     * of the middleware
      * The transaction must have _securityDepositValue in value
      * @param amount The amount of wstETH to deposit
      * @param to The address that will receive the USDN tokens
@@ -33,14 +33,17 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     ) external payable;
 
     /**
-     * @notice Validate a pending deposit action.
+     * @notice Validate a pending deposit action
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.ValidateDeposit` action.
+     * the `ProtocolAction.ValidateDeposit` action
      * The price validation might require payment according to the return value of the `validationCost` function
-     * of the middleware.
+     * of the middleware
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
-     * (from the oracle middleware) to the timestamp of the initiate action.
-     * The security deposit will be returned to the validator
+     * (from the oracle middleware) to the timestamp of the initiate action
+     * Note: this function always sends the security deposit of the validator's pending action to the validator, even
+     * if the validation deadline has passed
+     * Users wanting to validate an actionable pending action must use another function such as
+     * `validateActionablePendingActions` to earn the corresponding security deposit
      * @param validator The address that has the pending deposit action to validate
      * @param depositPriceData The price data corresponding to the sender's pending deposit action
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -54,10 +57,10 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
      * @notice Initiate a withdrawal of assets from the vault by providing USDN tokens
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.InitiateWithdrawal` action.
+     * the `ProtocolAction.InitiateWithdrawal` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware.
-     * The transaction must have _securityDepositValue in value.
+     * of the middleware
+     * The transaction must have _securityDepositValue in value
      * @param usdnShares The amount of USDN shares to burn (Max 5708990770823839524233143877797980545530986495 which is
      * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
      * @param to The address that will receive the assets
@@ -76,15 +79,18 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
      * @notice Validate a pending withdrawal action
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.ValidateWithdrawal` action.
+     * the `ProtocolAction.ValidateWithdrawal` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware.
+     * of the middleware
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
-     * (from the oracle middleware) to the timestamp of the initiate action.
-     * The security deposit will be returned to the validator
-     * @param validator The address that has the pending withdrawal action to validate.
-     * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action.
-     * @param previousActionsData The data needed to validate actionable pending actions.
+     * (from the oracle middleware) to the timestamp of the initiate action
+     * Note: this function always sends the security deposit of the validator's pending action to the validator, even
+     * if the validation deadline has passed
+     * Users wanting to validate an actionable pending action must use another function such as
+     * `validateActionablePendingActions` to earn the corresponding security deposit
+     * @param validator The address that has the pending withdrawal action to validate
+     * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action
+     * @param previousActionsData The data needed to validate actionable pending actions
      */
     function validateWithdrawal(
         address validator,
@@ -95,19 +101,19 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
      * @notice Initiate an open position action
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.InitiateOpenPosition` action.
+     * the `ProtocolAction.InitiateOpenPosition` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware.
+     * of the middleware
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
-     * leverage). The validation operation then updates the entry price and leverage with fresher data.
-     * The transaction must have _securityDepositValue in value.
+     * leverage). The validation operation then updates the entry price and leverage with fresher data
+     * The transaction must have _securityDepositValue in value
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param to The address that will be the owner of the position
      * @param validator The address that will validate the open position
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
-     * @param previousActionsData The data needed to validate actionable pending actions.
+     * @param previousActionsData The data needed to validate actionable pending actions
      * @return posId_ The unique position identifier
      */
     function initiateOpenPosition(
@@ -122,15 +128,18 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
      * @notice Validate a pending open position action
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.ValidateOpenPosition` action.
+     * the `ProtocolAction.ValidateOpenPosition` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware.
+     * of the middleware
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
-     * (from the oracle middleware) to the timestamp of the initiate action.
-     * This operation adjusts the entry price and initial leverage of the position.
+     * (from the oracle middleware) to the timestamp of the initiate action
+     * This operation adjusts the entry price and initial leverage of the position
      * It is also possible for this operation to change the tick, tickVersion and index of the position, in which case
-     * we emit the `LiquidationPriceUpdated` event.
-     * The security deposit will be returned to the validator
+     * we emit the `LiquidationPriceUpdated` event
+     * Note: this function always sends the security deposit of the validator's pending action to the validator, even
+     * if the validation deadline has passed
+     * Users wanting to validate an actionable pending action must use another function such as
+     * `validateActionablePendingActions` to earn the corresponding security deposit
      * @param validator The address that has the pending open position action to validate
      * @param openPriceData The price data corresponding to the sender's pending open position action
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -143,17 +152,17 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
 
     /**
      * @notice Initiate a close position action
-     * @dev Currently, the `msg.sender` must match the positions' user address.
+     * @dev Currently, the `msg.sender` must match the positions' user address
      * Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.InitiateClosePosition` action.
+     * the `ProtocolAction.InitiateClosePosition` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware.
+     * of the middleware
      * If the current tick version is greater than the tick version of the position (when it was opened), then the
-     * position has been liquidated and the transaction will revert.
-     * The appropriate amount and total expo are taken out of the tick and put in a pending state during this operation.
+     * position has been liquidated and the transaction will revert
+     * The appropriate amount and total expo are taken out of the tick and put in a pending state during this operation
      * Thus, calculations don't consider those anymore. The exit price (and thus profit) is not yet set definitively,
-     * and will be done during the validate action.
-     * The transaction must have _securityDepositValue in value.
+     * and will be done during the validate action
+     * The transaction must have _securityDepositValue in value
      * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param to The address that will receive the assets
@@ -171,13 +180,16 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
      * @notice Validate a pending close position action
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.ValidateClosePosition` action.
+     * the `ProtocolAction.ValidateClosePosition` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware.
+     * of the middleware
      * The timestamp corresponding to the price data is calculated by adding the mandatory `validationDelay`
-     * (from the oracle middleware) to the timestamp of the initiate action.
-     * This operation calculates the final exit price and profit of the long position and performs the payout.
-     * The security deposit will be returned to the validator
+     * (from the oracle middleware) to the timestamp of the initiate action
+     * This operation calculates the final exit price and profit of the long position and performs the payout
+     * Note: this function always sends the security deposit of the validator's pending action to the validator, even
+     * if the validation deadline has passed
+     * Users wanting to validate an actionable pending action must use another function such as
+     * `validateActionablePendingActions` to earn the corresponding security deposit
      * @param owner The owner of the initial position
      * @param closePriceData The price data corresponding to the sender's pending close position action
      * @param previousActionsData The data needed to validate actionable pending actions
@@ -191,11 +203,11 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
      * @notice Liquidate positions according to the current asset price, limited to a maximum of `iterations` ticks
      * @dev Consult the current oracle middleware implementation to know the expected format for the price data, using
-     * the `ProtocolAction.Liquidation` action.
+     * the `ProtocolAction.Liquidation` action
      * The price validation might require payment according to the return value of the `getValidationCost` function
-     * of the middleware.
-     * Each tick is liquidated in constant time. The tick version is incremented for each tick that was liquidated.
-     * At least one tick will be liquidated, even if the `iterations` parameter is zero.
+     * of the middleware
+     * Each tick is liquidated in constant time. The tick version is incremented for each tick that was liquidated
+     * At least one tick will be liquidated, even if the `iterations` parameter is zero
      * @param currentPriceData The most recent price data
      * @param iterations The maximum number of ticks to liquidate
      * @return liquidatedPositions_ The number of positions that were liquidated
@@ -208,12 +220,12 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
     /**
      * @notice Manually validate one or more actionable pending actions
      * @dev The price validation might require payment according to the return value of the `getValidationCost`
-     * function of the middleware.
+     * function of the middleware
      * The timestamp for the price data of each actionable pending action is calculated by adding the mandatory
-     * `validationDelay` (from the oracle middleware) to the timestamp of the pending action.
+     * `validationDelay` (from the oracle middleware) to the timestamp of the pending action
      * @param previousActionsData The data needed to validate actionable pending actions
      * @param maxValidations The maximum number of actionable pending actions to validate. Even if zero, at least one
-     * validation will be performed.
+     * validation will be performed
      * @return validatedActions_ The number of validated actionable pending actions
      */
     function validateActionablePendingActions(PreviousActionsData calldata previousActionsData, uint256 maxValidations)

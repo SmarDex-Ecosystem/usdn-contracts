@@ -133,12 +133,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _checkPendingFee();
     }
 
-    /**
-     * @inheritdoc IUsdnProtocolActions
-     * @dev Warning! This function always sends the security deposit of the pending action to the validator
-     * Users wanting to validate an actionable pending action must use another function such as
-     * `validateActionablePendingActions` to receive the security deposit
-     */
+    /// @inheritdoc IUsdnProtocolActions
     function validateDeposit(
         address validator,
         bytes calldata depositPriceData,
@@ -181,12 +176,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _checkPendingFee();
     }
 
-    /**
-     * @inheritdoc IUsdnProtocolActions
-     * @dev Warning! This function always sends the security deposit of the pending action to the validator
-     * Users wanting to validate an actionable pending action must use another function such as
-     * `validateActionablePendingActions` to receive the security deposit
-     */
+    /// @inheritdoc IUsdnProtocolActions
     function validateWithdrawal(
         address validator,
         bytes calldata withdrawalPriceData,
@@ -233,12 +223,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _checkPendingFee();
     }
 
-    /**
-     * @inheritdoc IUsdnProtocolActions
-     * @dev Warning! This function always sends the security deposit of the pending action to the validator
-     * Users wanting to validate an actionable pending action must use another function such as
-     * `validateActionablePendingActions` to receive the security deposit
-     */
+    /// @inheritdoc IUsdnProtocolActions
     function validateOpenPosition(
         address validator,
         bytes calldata openPriceData,
@@ -281,12 +266,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _checkPendingFee();
     }
 
-    /**
-     * @inheritdoc IUsdnProtocolActions
-     * @dev Warning! This function always sends the security deposit of the pending action to the validator
-     * Users wanting to validate an actionable pending action must use another function such as
-     * `validateActionablePendingActions` to receive the security deposit
-     */
+    /// @inheritdoc IUsdnProtocolActions
     function validateClosePosition(
         address owner,
         bytes calldata closePriceData,
