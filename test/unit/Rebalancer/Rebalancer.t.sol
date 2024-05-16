@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ADMIN } from "test/utils/Constants.sol";
 
 import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
@@ -13,18 +12,16 @@ import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
 contract TestRebalancer is RebalancerFixture {
     function setUp() public {
         super._setUp();
-
-        wstETH.mintAndApprove(address(this), 10_000 ether, address(rebalancer), type(uint256).max);
     }
 
     /**
      * @custom:scenario Check the _asset value of the rebalancer contract
      * @custom:given A deployed rebalancer contract
      * @custom:when The getAsset function is called
-     * @custom:then The value of the asset should be equal to the wstETH contract address
+     * @custom:then The value of the asset should be equal to the USDN protocol asset contract
      */
     function test_asset() public {
-        assertEq(address(wstETH), address(rebalancer.getAsset()));
+        assertEq(address(usdnProtocol.getAsset()), address(rebalancer.getAsset()));
     }
 
     /**
@@ -53,7 +50,7 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:when The getMinAssetDeposit function is called
      * @custom:then The value of the _minAssetDeposit should be equal to the protocol _minLongPosition
      */
-    function test_MinAssetDeposit() public {
+    function test_minAssetDeposit() public {
         assertEq(usdnProtocol.getMinLongPosition(), rebalancer.getMinAssetDeposit());
     }
 
@@ -74,9 +71,10 @@ contract TestRebalancer is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario Set of the _minAssetDeposit value of the rebalancer contract
+     * @custom:scenario Try to set the _minAssetDeposit value to an amount lower than the USDN Protocol
+     * getMinLongPosition
      * @custom:given A deployed rebalancer contract
-     * @custom:when The setter is called with a valid new value
+     * @custom:when The setter is called with a value lower than protocol.getMinLongPosition()
      * @custom:then The transaction reverts
      */
     function test_RevertWhen_setMinAssetDeposit_Invalid() public {
