@@ -743,12 +743,12 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Call `setOrderManagerBonusBps` as admin
-     * @custom:when The admin sets the bonus between 0 and 8000 bps
+     * @custom:when The admin sets the bonus between 0 and 10000 bps
      * @custom:then The bonus should be updated
      * @custom:and an event should be emitted with the corresponding new value
      */
     function test_setOrderManagerBonusBps() external adminPrank {
-        uint16 newValue = 8000;
+        uint16 newValue = 10_000;
         vm.expectEmit();
         emit OrderManagerBonusUpdated(newValue);
         protocol.setOrderManagerBonusBps(newValue);
@@ -759,11 +759,11 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario Try to set an order manager bonus higher than the max allowed
-     * @custom:when The admin sets the bonus to 8001 bps
+     * @custom:when The admin sets the bonus to 10001 bps
      * @custom:then The transaction should revert with the corresponding error
      */
     function test_RevertWhen_setOrderManagerBonusTooHigh() external adminPrank {
         vm.expectRevert(UsdnProtocolInvalidOrderManagerBonus.selector);
-        protocol.setOrderManagerBonusBps(8001);
+        protocol.setOrderManagerBonusBps(10_001);
     }
 }

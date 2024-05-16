@@ -248,8 +248,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
 
     /// @inheritdoc IUsdnProtocol
     function setOrderManagerBonusBps(uint16 newBonus) external onlyOwner {
-        // newBonus greater than max 80%
-        if (newBonus > 8000) {
+        // newBonus greater than max 100%
+        if (newBonus > BPS_DIVISOR) {
             revert UsdnProtocolInvalidOrderManagerBonus();
         }
         _orderManagerBonusBps = newBonus;

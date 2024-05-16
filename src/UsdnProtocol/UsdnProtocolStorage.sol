@@ -108,7 +108,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * in basis points
      * @dev The rest is sent to the Vault balance
      */
-    uint16 internal _orderManagerBonusBps = 5000; // 50%
+    uint16 internal _orderManagerBonusBps = 8000; // 80%
 
     /// @notice The liquidation penalty (in tick spacing units)
     uint8 internal _liquidationPenalty = 2; // 200 ticks -> ~2.02%
