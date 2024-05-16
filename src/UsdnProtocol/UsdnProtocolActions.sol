@@ -1103,7 +1103,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         );
 
         if (data_.isLiquidationPending) {
-            return (data_, liq_);
+            return (data_, false);
         }
 
         uint256 version;
@@ -1139,7 +1139,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         (ValidateOpenPositionData memory data, bool liquidated) = _prepareValidateOpenPositionData(pending, priceData);
 
         if (liquidated) {
-            return isLiquidationPending_;
+            return data.isLiquidationPending;
         }
 
         if (data.isLiquidationPending) {
@@ -1302,7 +1302,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         );
 
         if (data_.isLiquidationPending) {
-            return (data_, liq_);
+            return (data_, false);
         }
 
         (, uint256 version) = _tickHash(posId.tick);
