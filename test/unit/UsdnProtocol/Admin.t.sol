@@ -758,7 +758,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Try to set a rebalncer bonus higher than the max allowed
+     * @custom:scenario Try to set a rebalancer bonus higher than the max allowed
      * @custom:when The admin sets the bonus to 10001 bps
      * @custom:then The transaction should revert with the corresponding error
      */
