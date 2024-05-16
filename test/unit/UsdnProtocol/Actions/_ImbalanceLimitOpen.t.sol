@@ -83,7 +83,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
         // current vault expo
         uint256 vaultExpo = protocol.getBalanceVault();
         // open limit bps
-        (openLimitBps_,,,) = protocol.getExpoImbalanceLimits();
+        openLimitBps_ = protocol.getOpenExpoImbalanceLimitBps();
         // current long expo value to unbalance protocol
         uint256 longExpoValueToLimit = vaultExpo * uint256(openLimitBps_) / protocol.BPS_DIVISOR();
         // long amount for vaultExpoValueToLimit and any leverage

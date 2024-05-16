@@ -72,7 +72,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
      */
     function test_RevertWhen_checkImbalanceLimitCloseZeroLongExpo() public {
         // initial limit
-        (,,, int256 initialCloseLimit) = protocol.getExpoImbalanceLimits();
+        int256 initialCloseLimit = protocol.getCloseExpoImbalanceLimitBps();
 
         // disable limits
         vm.prank(ADMIN);
@@ -122,7 +122,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
 
         // close limit bps
-        (,,, closeLimitBps_) = protocol.getExpoImbalanceLimits();
+        closeLimitBps_ = protocol.getCloseExpoImbalanceLimitBps();
 
         // the imbalance ratio: must be scaled for calculation
         uint256 scaledImbalanceRatio = FixedPointMathLib.divWad(uint256(closeLimitBps_), protocol.BPS_DIVISOR());

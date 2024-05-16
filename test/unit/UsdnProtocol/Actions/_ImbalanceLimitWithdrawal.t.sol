@@ -87,7 +87,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
         uint256 longExpo = protocol.getTotalExpo() - protocol.getBalanceLong();
 
         // withdrawal limit bps
-        (,, withdrawalLimitBps_,) = protocol.getExpoImbalanceLimits();
+        withdrawalLimitBps_ = protocol.getWithdrawalExpoImbalanceLimitBps();
 
         // the imbalance ratio: must be scaled for calculation
         uint256 scaledWithdrawalImbalanceRatio =

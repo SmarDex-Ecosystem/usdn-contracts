@@ -243,24 +243,25 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getMiddlewareValidationDelay() external view returns (uint256);
 
     /**
-     * @notice Get expo imbalance limits (in basis points)
-     * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
+     * @notice Get the expo imbalance limit when depositing assets (in basis points)
      * @return depositExpoImbalanceLimitBps_ The deposit expo imbalance limit
-     * @return withdrawalExpoImbalanceLimitBps_ The withdrawal expo imbalance limit
-     * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
      */
-    function getExpoImbalanceLimits()
-        external
-        view
-        returns (
-            int256 openExpoImbalanceLimitBps_,
-            int256 depositExpoImbalanceLimitBps_,
-            int256 withdrawalExpoImbalanceLimitBps_,
-            int256 closeExpoImbalanceLimitBps_
-        );
+    function getDepositExpoImbalanceLimitBps() external view returns (int256 depositExpoImbalanceLimitBps_);
 
     /**
-     * @notice Get the expo imbalance limits when closing a position (in basis points)
+     * @notice Get the expo imbalance limit when withdrawing assets (in basis points)
+     * @return withdrawalExpoImbalanceLimitBps_ The withdrawal expo imbalance limit
+     */
+    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256 withdrawalExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Get the expo imbalance limit when opening a position (in basis points)
+     * @return openExpoImbalanceLimitBps_ The close expo imbalance limit
+     */
+    function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Get the expo imbalance limit when closing a position (in basis points)
      * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
      */
     function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_);

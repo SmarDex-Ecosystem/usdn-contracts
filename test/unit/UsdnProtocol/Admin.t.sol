@@ -669,15 +669,11 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
             expectedNewLimitBps, expectedNewLimitBps, expectedNewLimitBps, expectedNewLimitBps
         );
 
-        // get signed limits basis point
-        (int256 openLimitBps, int256 depositLimitBps, int256 withdrawalLimitBps, int256 closeLimitBps) =
-            protocol.getExpoImbalanceLimits();
-
         // assert values are updated
-        assertEq(openLimitBps, expectedSignedLimitBps);
-        assertEq(depositLimitBps, expectedSignedLimitBps);
-        assertEq(withdrawalLimitBps, expectedSignedLimitBps);
-        assertEq(closeLimitBps, expectedSignedLimitBps);
+        assertEq(protocol.getDepositExpoImbalanceLimitBps(), expectedSignedLimitBps);
+        assertEq(protocol.getWithdrawalExpoImbalanceLimitBps(), expectedSignedLimitBps);
+        assertEq(protocol.getOpenExpoImbalanceLimitBps(), expectedSignedLimitBps);
+        assertEq(protocol.getCloseExpoImbalanceLimitBps(), expectedSignedLimitBps);
     }
 
     /**
@@ -690,7 +686,8 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setExpoImbalanceLimits(2, 2, 0, 0);
 
         // open and deposit limits basis point
-        (int256 openLimitBps, int256 depositLimitBps,,) = protocol.getExpoImbalanceLimits();
+        int256 openLimitBps = protocol.getOpenExpoImbalanceLimitBps();
+        int256 depositLimitBps = protocol.getDepositExpoImbalanceLimitBps();
 
         uint256 withdrawalLimitBpsBelowOpen = uint256(openLimitBps - 1);
         // expected revert
