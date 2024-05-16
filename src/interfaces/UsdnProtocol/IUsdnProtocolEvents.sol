@@ -249,10 +249,10 @@ interface IUsdnProtocolEvents {
     event LiquidationRewardsManagerUpdated(address newAddress);
 
     /**
-     * @notice Emitted when the OrderManager contract is updated
+     * @notice Emitted when the Rebalancer contract is updated
      * @param newAddress The address of the new (current) contract
      */
-    event OrderManagerUpdated(address newAddress);
+    event RebalancerUpdated(address newAddress);
 
     /**
      * @notice Emitted when the pending protocol fee is distributed

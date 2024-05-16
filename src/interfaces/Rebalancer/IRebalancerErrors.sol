@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-interface IOrderManagerErrors {
+interface IRebalancerErrors {
     /// @dev The user assets are used in a position
-    error OrderManagerUserNotPending();
+    error RebalancerUserNotPending();
 
     /// @dev The `to` address is invalid
-    error OrderManagerInvalidAddressTo();
+    error RebalancerInvalidAddressTo();
 
     /// @dev The amount of assets is invalid
-    error OrderManagerInvalidAmount();
+    error RebalancerInvalidAmount();
 
     /// @dev The amount to withdraw is greater than the amount deposited
-    error OrderManagerWithdrawAmountTooLarge();
+    error RebalancerWithdrawAmountTooLarge();
 }

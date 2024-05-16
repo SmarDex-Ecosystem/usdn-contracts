@@ -13,7 +13,7 @@ import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEth
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { OrderManager } from "src/OrderManager/OrderManager.sol";
+import { Rebalancer } from "src/Rebalancer/Rebalancer.sol";
 import { Usdn } from "src/Usdn/Usdn.sol";
 
 contract Deploy is Script {
@@ -23,7 +23,7 @@ contract Deploy is Script {
      * @return Sdex_ The SDEX token
      * @return WstEthOracleMiddleware_ The WstETH oracle middleware
      * @return LiquidationRewardsManager_ The liquidation rewards manager
-     * @return OrderManager_ The order manager
+     * @return Rebalancer_ The rebalancer
      * @return Usdn_ The USDN token
      * @return UsdnProtocol_ The USDN protocol
      */
@@ -34,7 +34,7 @@ contract Deploy is Script {
             Sdex Sdex_,
             WstEthOracleMiddleware WstEthOracleMiddleware_,
             LiquidationRewardsManager LiquidationRewardsManager_,
-            OrderManager OrderManager_,
+            Rebalancer Rebalancer_,
             Usdn Usdn_,
             UsdnProtocol UsdnProtocol_
         )
@@ -64,11 +64,11 @@ contract Deploy is Script {
             vm.envAddress("FEE_COLLECTOR")
         );
 
-        // Deploy the order manager
-        OrderManager_ = _deployOrderManager(UsdnProtocol_);
+        // Deploy the rebalancer
+        Rebalancer_ = _deployRebalancer(UsdnProtocol_);
 
-        // Set the order manager on the USDN protocol
-        UsdnProtocol_.setOrderManager(OrderManager_);
+        // Set the rebalancer on the USDN protocol
+        UsdnProtocol_.setRebalancer(Rebalancer_);
 
         // Grant USDN minter & rebaser roles to protocol and approve wstETH spending
         Usdn_.grantRole(Usdn_.MINTER_ROLE(), address(UsdnProtocol_));
@@ -200,17 +200,17 @@ contract Deploy is Script {
     }
 
     /**
-     * @notice Deploy the OrderManager contract if necessary
+     * @notice Deploy the Rebalancer contract if necessary
      * @dev Will return the already deployed one if an address is in the env variables
      * @param usdnProtocol the USDN protocol
-     * @return orderManager_ the deployed contract
+     * @return Rebalancer_ the deployed contract
      */
-    function _deployOrderManager(UsdnProtocol usdnProtocol) internal returns (OrderManager orderManager_) {
-        address orderManagerAddress = vm.envOr("ORDER_MANAGER_ADDRESS", address(0));
-        if (orderManagerAddress != address(0)) {
-            orderManager_ = OrderManager(orderManagerAddress);
+    function _deployRebalancer(UsdnProtocol usdnProtocol) internal returns (Rebalancer Rebalancer_) {
+        address rebalancerAddress = vm.envOr("REBALANCER_ADDRESS", address(0));
+        if (rebalancerAddress != address(0)) {
+            Rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
-            orderManager_ = new OrderManager(usdnProtocol);
+            Rebalancer_ = new Rebalancer(usdnProtocol);
         }
     }
 

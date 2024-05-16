@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 
 /**
  * @title IUsdnProtocol
@@ -48,10 +48,10 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external;
 
     /**
-     * @notice Replace the OrderManager contract with a new implementation.
-     * @param newOrderManager the address of the new contract.
+     * @notice Replace the Rebalancer contract with a new implementation.
+     * @param newRebalancer the address of the new contract.
      */
-    function setOrderManager(IOrderManager newOrderManager) external;
+    function setRebalancer(IRebalancer newRebalancer) external;
 
     /// @notice Set the new minimum leverage for a position.
     function setMinLeverage(uint256 newMinLeverage) external;

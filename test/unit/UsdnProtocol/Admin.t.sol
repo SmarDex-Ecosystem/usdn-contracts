@@ -6,7 +6,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
@@ -72,7 +72,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(this)));
 
         vm.expectRevert(customError);
-        protocol.setOrderManager(IOrderManager(address(this)));
+        protocol.setRebalancer(IRebalancer(address(this)));
 
         vm.expectRevert(customError);
         protocol.setSecurityDepositValue(0);
@@ -559,33 +559,33 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @dev As tolerating the zero address is unusual, this test is relevant even though it doesn't increase the
      * coverage
-     * @custom:scenario Call "setOrderManager" from admin with the zero address
+     * @custom:scenario Call "setRebalancer" from admin with the zero address
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet trigger admin contract function
-     * @custom:then Order manager is now the zero address
+     * @custom:then getRebalancer returns the zero address
      */
-    function test_setOrderManagerWithZeroAddress() external adminPrank {
+    function test_setRebalancerWithZeroAddress() external adminPrank {
         vm.expectEmit();
-        emit OrderManagerUpdated(address(0));
-        protocol.setOrderManager(IOrderManager(address(0)));
+        emit RebalancerUpdated(address(0));
+        protocol.setRebalancer(IRebalancer(address(0)));
 
-        assertEq(address(protocol.getOrderManager()), address(address(0)));
+        assertEq(address(protocol.getRebalancer()), address(address(0)));
     }
 
     /**
-     * @custom:scenario Call "setOrderManager" from admin
+     * @custom:scenario Call "setRebalancer" from admin
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet trigger admin contract function
      * @custom:then Value should be updated
      */
-    function test_setOrderManager() external adminPrank {
-        IOrderManager expectedNewValue = IOrderManager(address(this));
+    function test_setRebalancer() external adminPrank {
+        IRebalancer expectedNewValue = IRebalancer(address(this));
 
         vm.expectEmit();
-        emit OrderManagerUpdated(address(this));
-        protocol.setOrderManager(expectedNewValue);
+        emit RebalancerUpdated(address(this));
+        protocol.setRebalancer(expectedNewValue);
 
-        assertEq(address(protocol.getOrderManager()), address(expectedNewValue));
+        assertEq(address(protocol.getRebalancer()), address(expectedNewValue));
     }
 
     /**
