@@ -123,6 +123,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the soft longExpo imbalance limit provided is invalid
     error UsdnProtocolInvalidExpoImbalanceLimit();
 
+    /// @dev The imbalance target on the long side is too high
+    error UsdnProtocolLongImbalanceTargetTooHigh();
+
     /// @dev Indicates that the protocol imbalance limit is reached
     error UsdnProtocolImbalanceLimitReached(int256 imbalanceBps);
 

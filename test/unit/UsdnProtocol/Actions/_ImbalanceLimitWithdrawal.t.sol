@@ -16,7 +16,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
         // we enable only open limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 600, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 600, 0, -1);
     }
 
     /**
@@ -57,7 +57,7 @@ contract TestExpoLimitsWithdrawal is UsdnProtocolBaseFixture {
 
         // disable withdrawal limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(200, 200, 0, 600);
+        protocol.setExpoImbalanceLimits(200, 200, 0, 600, 300);
 
         protocol.i_checkImbalanceLimitWithdrawal(withdrawalValueToLimit + 1, protocol.getTotalExpo());
     }

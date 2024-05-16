@@ -13,7 +13,4 @@ interface IRebalancerErrors {
 
     /// @dev The amount to withdraw is greater than the amount deposited
     error RebalancerWithdrawAmountTooLarge();
-
-    /// @dev The imbalance target is too high
-    error RebalancerImbalanceTargetTooHigh();
 }

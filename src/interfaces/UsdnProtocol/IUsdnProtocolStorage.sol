@@ -267,6 +267,13 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_);
 
     /**
+     * @notice Returns the target imbalance to have on the long side after the creation of a position
+     * @dev The creation of the position aims for this target, but does not guarantee hitting it
+     * @return targetLongImbalance_ The target long imbalance
+     */
+    function getLongImbalanceTargetBps() external view returns (int256 targetLongImbalance_);
+
+    /**
      * @notice Get the nominal (target) price of USDN
      * @return The price of the USDN token after a rebase (in _priceFeedDecimals)
      */

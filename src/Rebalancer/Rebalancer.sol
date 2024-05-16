@@ -29,12 +29,6 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @notice The current position version
     uint128 internal _positionVersion;
 
-    /**
-     * @notice The target imbalance on the long side (in basis points)
-     * @dev This value will be used to calculate how much of the missing trading expo the position will compensate
-     */
-    int256 internal _targetLongImbalanceBps = 300;
-
     /// @notice The data about the assets deposited in this contract by users
     mapping(address => UserDeposit) internal _userDeposit;
 
@@ -52,23 +46,6 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @inheritdoc IRebalancer
     function getPositionVersion() external view returns (uint128 positionVersion_) {
         positionVersion_ = _positionVersion;
-    }
-
-    /// @inheritdoc IRebalancer
-    function getTargetLongImbalanceBps() external view returns (int256 targetLongImbalance_) {
-        targetLongImbalance_ = _targetLongImbalanceBps;
-    }
-
-    /// @inheritdoc IRebalancer
-    function setTargetLongImbalanceBps(int256 targetLongImbalanceBps) external onlyOwner {
-        int256 _closeExpoImbalanceLimitBps = _usdnProtocol.getCloseExpoImbalanceLimitBps();
-        if (targetLongImbalanceBps >= _closeExpoImbalanceLimitBps) {
-            revert RebalancerImbalanceTargetTooHigh();
-        }
-
-        _targetLongImbalanceBps = targetLongImbalanceBps;
-
-        emit TargetLongImbalanceUpdated(targetLongImbalanceBps);
     }
 
     /// @inheritdoc IRebalancer

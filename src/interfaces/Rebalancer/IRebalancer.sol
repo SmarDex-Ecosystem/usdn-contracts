@@ -43,20 +43,6 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function getPositionVersion() external view returns (uint128 positionVersion_);
 
     /**
-     * @notice Returns the target imbalance to have on the long side after the creation of a position
-     * @dev The creation of the position aims for this target, but does not guarantee hitting it
-     * @return targetLongImbalance_ The target long imbalance
-     */
-    function getTargetLongImbalanceBps() external view returns (int256 targetLongImbalance_);
-
-    /**
-     * @notice Sets the target long imbalance to the provided value
-     * @dev The provided value needs to be greater than the USDN protocol close position imbalance limit
-     * @param targetLongImbalanceBps The new target imbalance (in basis points)
-     */
-    function setTargetLongImbalanceBps(int256 targetLongImbalanceBps) external;
-
-    /**
      * @notice Returns the data regarding the assets deposited by the provided user
      * @return userDeposit_ The data regarding the assets deposited by the user
      */

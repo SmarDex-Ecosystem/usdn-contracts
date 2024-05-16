@@ -17,7 +17,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // we enable only close limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 600);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 600, 300);
     }
 
     /**
@@ -57,8 +57,8 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
         (, uint256 longAmount, uint256 totalExpoValueToLimit) = _getCloseLimitValues();
 
         vm.prank(ADMIN);
-        // disable limit
-        protocol.setExpoImbalanceLimits(200, 200, 600, 0);
+        // disable close limit
+        protocol.setExpoImbalanceLimits(200, 200, 600, 0, -1);
 
         protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
     }
@@ -76,7 +76,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // disable limits
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, -1);
 
         // the initialized tick
         int24 tick = protocol.getHighestPopulatedTick();
@@ -106,7 +106,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // reassign limit to activate verification
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, uint256(initialCloseLimit));
+        protocol.setExpoImbalanceLimits(0, 0, 0, uint256(initialCloseLimit), 300);
 
         // should revert
         vm.expectRevert(IUsdnProtocolErrors.UsdnProtocolInvalidLongExpo.selector);

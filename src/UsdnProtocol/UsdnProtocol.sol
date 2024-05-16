@@ -292,7 +292,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         uint256 newOpenLimitBps,
         uint256 newDepositLimitBps,
         uint256 newWithdrawalLimitBps,
-        uint256 newCloseLimitBps
+        uint256 newCloseLimitBps,
+        int256 newLongImbalanceTargetBps
     ) external onlyOwner {
         _openExpoImbalanceLimitBps = newOpenLimitBps.toInt256();
         _depositExpoImbalanceLimitBps = newDepositLimitBps.toInt256();
@@ -309,7 +310,16 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
 
-        emit ImbalanceLimitsUpdated(newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps);
+        // Cast is safe here as newCloseLimitBps cannot be higher than type(int256).max
+        if (newLongImbalanceTargetBps >= int256(newCloseLimitBps)) {
+            revert UsdnProtocolLongImbalanceTargetTooHigh();
+        }
+
+        _longImbalanceTargetBps = newLongImbalanceTargetBps;
+
+        emit ImbalanceLimitsUpdated(
+            newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
+        );
     }
 
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {

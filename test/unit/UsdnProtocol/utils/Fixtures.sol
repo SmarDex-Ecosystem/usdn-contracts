@@ -141,7 +141,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // disable imbalance limits
         if (!testParams.flags.enableLimits) {
-            protocol.setExpoImbalanceLimits(0, 0, 0, 0);
+            protocol.setExpoImbalanceLimits(0, 0, 0, 0, -1);
         }
 
         // disable burn sdex on deposit

@@ -147,6 +147,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     int256 internal _closeExpoImbalanceLimitBps = 600;
 
+    /**
+     * @notice The target imbalance on the long side (in basis points)
+     * @dev This value will be used to calculate how much of the missing trading expo
+     * the rebalancer position will try to compensate
+     */
+    int256 internal _longImbalanceTargetBps = 300;
+
     /// @notice The position fee in basis points
     uint16 internal _positionFeeBps = 4; // 0.04%
 
@@ -575,5 +582,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_) {
         closeExpoImbalanceLimitBps_ = _closeExpoImbalanceLimitBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getLongImbalanceTargetBps() external view returns (int256 longImbalanceTargetBps_) {
+        longImbalanceTargetBps_ = _longImbalanceTargetBps;
     }
 }

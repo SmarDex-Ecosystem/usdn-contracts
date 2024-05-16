@@ -15,7 +15,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
 
         // we enable only open limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(200, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(200, 0, 0, 0, -1);
     }
 
     /**
@@ -41,7 +41,7 @@ contract TestExpoLimitsOpen is UsdnProtocolBaseFixture {
 
         // disable open limit
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 200, 600, 600);
+        protocol.setExpoImbalanceLimits(0, 200, 600, 600, 300);
 
         protocol.i_checkImbalanceLimitOpen(totalExpoValueToLimit + 1, longAmount);
     }
