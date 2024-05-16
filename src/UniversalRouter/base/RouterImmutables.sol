@@ -6,6 +6,10 @@ struct RouterParameters {
     address weth9;
     address v2Factory;
     address v3Factory;
+    address sdex;
+    address usdn;
+    address wusdn;
+    address usdnProtocol;
     bytes32 pairInitCodeHash;
     bytes32 poolInitCodeHash;
 }

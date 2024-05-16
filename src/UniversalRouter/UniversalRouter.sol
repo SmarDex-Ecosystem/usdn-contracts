@@ -14,6 +14,8 @@ import { IUniversalRouter } from "src/UniversalRouter/interfaces/IUniversalRoute
 import { RouterParameters } from "src/UniversalRouter/base/RouterImmutables.sol";
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 
+import { SmardexImmutables, SmardexParameters } from "src/UniversalRouter/modules/smardex/SmardexImmutables.sol";
+
 contract UniversalRouter is IUniversalRouter, Dispatcher {
     modifier checkDeadline(uint256 deadline) {
         if (block.timestamp > deadline) revert TransactionDeadlinePassed();
@@ -25,6 +27,7 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
             UniswapParameters(params.v2Factory, params.v3Factory, params.pairInitCodeHash, params.poolInitCodeHash)
         )
         PaymentsImmutables(PaymentsParameters(params.permit2, params.weth9, address(0), address(0)))
+        SmardexImmutables(SmardexParameters(params.sdex, params.usdn, params.wusdn, params.usdnProtocol))
     { }
 
     /// @inheritdoc IUniversalRouter
