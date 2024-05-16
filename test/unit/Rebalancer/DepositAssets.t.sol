@@ -33,7 +33,7 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
     }
 
     /**
-     * @custom:scenario The user tries to deposit assets with to as the zero address
+     * @custom:scenario The user tries to deposit assets with 'to' as the zero address
      * @custom:given A user with assets
      * @custom:when The user tries to deposit assets with to as the zero address
      * @custom:then The call reverts with a RebalancerInvalidAddressTo error
@@ -67,7 +67,7 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
     /**
      * @custom:scenario The user deposit assets
      * @custom:given A user with assets
-     * @custom:when The user deposit assets with his address as the to address
+     * @custom:when The user deposits assets with his address as the 'to' address
      * @custom:then His assets are transferred to the contract
      */
     function test_depositAssets() external {
@@ -98,7 +98,7 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
     /**
      * @custom:scenario The user deposit assets again
      * @custom:given A user with assets already deposited
-     * @custom:when The user deposit assets again with his address as the to address
+     * @custom:when The user deposits assets again with his address as the 'to' address
      * @custom:then His assets are transferred to the contract
      * @custom:and the sum of deposits is saved
      */
