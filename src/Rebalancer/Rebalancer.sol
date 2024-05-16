@@ -94,7 +94,8 @@ contract Rebalancer is Ownable, IRebalancer {
     function depositAssets(uint128 amount, address to) external {
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
-        } else if (amount == 0) {
+        }
+        if (amount == 0) {
             revert RebalancerInvalidAmount();
         }
 
@@ -105,7 +106,8 @@ contract Rebalancer is Ownable, IRebalancer {
 
         if (totDeposit < _minAssetDeposit) {
             revert RebalancerInsufficientAmount();
-        } else if (depositData.amount != 0 && depositData.entryPositionVersion <= positionVersion) {
+        }
+        if (depositData.amount != 0 && depositData.entryPositionVersion <= positionVersion) {
             revert RebalancerUserNotPending();
         }
 
@@ -122,7 +124,8 @@ contract Rebalancer is Ownable, IRebalancer {
     function withdrawPendingAssets(uint128 amount, address to) external {
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
-        } else if (amount == 0) {
+        }
+        if (amount == 0) {
             revert RebalancerInvalidAmount();
         }
 
@@ -130,18 +133,19 @@ contract Rebalancer is Ownable, IRebalancer {
 
         if (depositData.amount == 0 || depositData.entryPositionVersion <= _positionVersion) {
             revert RebalancerUserNotPending();
-        } else if (depositData.amount < amount) {
+        }
+        if (depositData.amount < amount) {
             revert RebalancerWithdrawAmountTooLarge();
-        } else if (depositData.amount - amount < _minAssetDeposit) {
+        }
+        if (depositData.amount - amount < _minAssetDeposit) {
             revert RebalancerInsufficientAmount();
         }
 
-        // If the amount to withdraw is equal to the deposited funds by this user, delete the mapping entry
         if (amount == depositData.amount) {
+            // If the amount to withdraw is equal to the deposited funds by this user, delete the mapping entry
             delete _userDeposit[msg.sender];
-        }
-        // If not, simply subtract the amount withdrawn from the user's balance
-        else {
+        } else {
+            // If not, simply subtract the amount withdrawn from the user's balance
             unchecked {
                 _userDeposit[msg.sender].amount -= amount;
             }
