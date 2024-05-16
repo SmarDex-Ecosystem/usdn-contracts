@@ -8,8 +8,6 @@ import { IRebalancerTypes } from "src/interfaces/Rebalancer/IRebalancerTypes.sol
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes {
-    /// @notice Returns the address of the asset used by the USDN protocol
-
     /**
      * @notice Returns the address of the asset used by the USDN protocol
      * @return The address of the asset used by the USDN protocol
