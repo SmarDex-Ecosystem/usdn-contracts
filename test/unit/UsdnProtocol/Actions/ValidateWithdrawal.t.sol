@@ -72,7 +72,6 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * <<<<<<< HEAD:test/unit/UsdnProtocol/Actions/Withdraw.t.sol
      * @custom:scenario A initiate withdrawal liquidates a pending tick but is not validated
      * because a tick still need to be liquidated
      * @custom:given The initial open position
@@ -417,8 +416,6 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * =======
-     * >>>>>>> main:test/unit/UsdnProtocol/Actions/ValidateWithdrawal.t.sol
      * @custom:scenario The user validates a withdrawal for 1000 USDN while the price increases
      * @custom:given The user initiated a withdrawal for 1000 USDN
      * @custom:and The price of the asset is $2500 at the moment of initiation
