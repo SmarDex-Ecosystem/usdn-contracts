@@ -630,19 +630,19 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(safecastError);
         // set open expo  imbalance limit above max int
-        protocol.setExpoImbalanceLimits(aboveSignedMax, 0, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(aboveSignedMax, 0, 0, 0, -1);
 
         vm.expectRevert(safecastError);
         // set deposit expo imbalance limit above max int
-        protocol.setExpoImbalanceLimits(0, aboveSignedMax, 0, 0, 0);
+        protocol.setExpoImbalanceLimits(0, aboveSignedMax, 0, 0, -1);
 
         vm.expectRevert(safecastError);
         // set withdrawal expo imbalance limit above max int
-        protocol.setExpoImbalanceLimits(0, 0, aboveSignedMax, 0, 0);
+        protocol.setExpoImbalanceLimits(0, 0, aboveSignedMax, 0, -1);
 
         vm.expectRevert(safecastError);
         // set close expo imbalance limit above max int
-        protocol.setExpoImbalanceLimits(0, 0, 0, aboveSignedMax, 0);
+        protocol.setExpoImbalanceLimits(0, 0, 0, aboveSignedMax, -1);
     }
 
     /**
