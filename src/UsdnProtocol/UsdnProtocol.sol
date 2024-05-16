@@ -14,6 +14,7 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 
 contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     using SafeERC20 for IERC20Metadata;
@@ -112,6 +113,13 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _liquidationRewardsManager = newLiquidationRewardsManager;
 
         emit LiquidationRewardsManagerUpdated(address(newLiquidationRewardsManager));
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setRebalancer(IRebalancer newRebalancer) external onlyOwner {
+        _rebalancer = newRebalancer;
+
+        emit RebalancerUpdated(address(newRebalancer));
     }
 
     /// @inheritdoc IUsdnProtocol

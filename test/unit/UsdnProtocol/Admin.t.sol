@@ -6,6 +6,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
@@ -69,6 +70,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(customError);
         protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(this)));
+
+        vm.expectRevert(customError);
+        protocol.setRebalancer(IRebalancer(address(this)));
 
         vm.expectRevert(customError);
         protocol.setSecurityDepositValue(0);
@@ -550,6 +554,38 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setLiquidationRewardsManager(expectedNewValue);
         // assert new liquidation reward manager equal expectedNewValue
         assertEq(address(protocol.getLiquidationRewardsManager()), address(expectedNewValue));
+    }
+
+    /**
+     * @dev As tolerating the zero address is unusual, this test is relevant even though it doesn't increase the
+     * coverage
+     * @custom:scenario Call "setRebalancer" from admin with the zero address
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet trigger admin contract function
+     * @custom:then getRebalancer returns the zero address
+     */
+    function test_setRebalancerWithZeroAddress() external adminPrank {
+        vm.expectEmit();
+        emit RebalancerUpdated(address(0));
+        protocol.setRebalancer(IRebalancer(address(0)));
+
+        assertEq(address(protocol.getRebalancer()), address(address(0)));
+    }
+
+    /**
+     * @custom:scenario Call "setRebalancer" from admin
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet trigger admin contract function
+     * @custom:then Value should be updated
+     */
+    function test_setRebalancer() external adminPrank {
+        IRebalancer expectedNewValue = IRebalancer(address(this));
+
+        vm.expectEmit();
+        emit RebalancerUpdated(address(this));
+        protocol.setRebalancer(expectedNewValue);
+
+        assertEq(address(protocol.getRebalancer()), address(expectedNewValue));
     }
 
     /**

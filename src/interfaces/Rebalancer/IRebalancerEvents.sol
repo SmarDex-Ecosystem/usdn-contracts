@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-interface IOrderManagerEvents {
+interface IRebalancerEvents {
     /**
      * @notice Emitted when the target imbalance on the long side has been updated
      * @param newTargetLongImbalance The new target long imbalance

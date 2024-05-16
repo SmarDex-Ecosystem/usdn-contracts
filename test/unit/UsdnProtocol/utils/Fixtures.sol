@@ -6,7 +6,8 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { IEvents } from "test/utils/IEvents.sol";
+import { RebalancerHandler } from "test/unit/Rebalancer/utils/Handler.sol";
+import { IEventsErrors } from "test/utils/IEventsErrors.sol";
 import { Sdex } from "test/utils/Sdex.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
@@ -20,13 +21,13 @@ import {
     PreviousActionsData,
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Usdn } from "src/Usdn.sol";
+import { Usdn } from "src/Usdn/Usdn.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
  * @dev Utils for testing the USDN Protocol
  */
-contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, IUsdnProtocolEvents {
+contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErrors, IUsdnProtocolEvents {
     struct Flags {
         bool enablePositionFees;
         bool enableProtocolFees;
@@ -36,6 +37,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         bool enableSecurityDeposit;
         bool enableSdexBurnOnDeposit;
         bool enableLongLimit;
+        bool enableRebalancer;
     }
 
     struct SetUpParams {
@@ -62,7 +64,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
             enableUsdnRebase: false,
             enableSecurityDeposit: false,
             enableSdexBurnOnDeposit: false,
-            enableLongLimit: false
+            enableLongLimit: false,
+            enableRebalancer: false
         })
     });
 
@@ -80,6 +83,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
     MockOracleMiddleware public oracleMiddleware;
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
+    RebalancerHandler public rebalancer;
     UsdnProtocolHandler public protocol;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
@@ -152,6 +156,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         wstETH.approve(address(protocol), type(uint256).max);
 
+        rebalancer = new RebalancerHandler(protocol);
+        if (testParams.flags.enableRebalancer) {
+            protocol.setRebalancer(rebalancer);
+        }
+
         // leverage approx 2x
         protocol.initialize(
             testParams.initialDeposit,
@@ -161,6 +170,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         );
 
         // separate the roles ADMIN and DEPLOYER
+        rebalancer.transferOwnership(ADMIN);
         protocol.transferOwnership(ADMIN);
         vm.stopPrank();
 
