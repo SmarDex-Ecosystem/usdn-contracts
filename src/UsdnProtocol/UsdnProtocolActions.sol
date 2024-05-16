@@ -1207,7 +1207,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                 data.action.to, data.action.validator, data.pos.totalExpo, data.startPrice, newPosId
             );
 
-            return false;
+            return (false, false);
         }
         // calculate the new total expo
         uint128 expoBefore = data.pos.totalExpo;
