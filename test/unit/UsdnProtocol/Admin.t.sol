@@ -752,9 +752,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit RebalancerBonusUpdated(newValue);
         protocol.setRebalancerBonusBps(newValue);
-        assertEq(protocol.getRebalanacerBonusBps(), newValue);
+        assertEq(protocol.getRebalancerBonusBps(), newValue);
         protocol.setRebalancerBonusBps(0);
-        assertEq(protocol.getRebalanacerBonusBps(), 0);
+        assertEq(protocol.getRebalancerBonusBps(), 0);
     }
 
     /**
