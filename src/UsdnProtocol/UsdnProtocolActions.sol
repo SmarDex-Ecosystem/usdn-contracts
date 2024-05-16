@@ -1212,7 +1212,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
     /**
      * @notice Prepare the pending action struct for the close position action and add it to the queue
-     * @param user The owner of the initial position
+     * @param owner The owner of the initial position
      * @param to The address that will receive the assets
      * @param posId The unique identifier of the position
      * @param amountToClose The amount of collateral to remove from the position's amount
@@ -1220,7 +1220,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @return securityDepositValue_ The security deposit value
      */
     function _createClosePendingAction(
-        address user,
+        address owner,
         address to,
         PositionId memory posId,
         uint128 amountToClose,
@@ -1230,7 +1230,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             action: ProtocolAction.ValidateClosePosition,
             timestamp: uint40(block.timestamp),
             to: to,
-            validator: user,
+            validator: owner,
             securityDepositValue: data.securityDepositValue,
             tick: posId.tick,
             closeAmount: amountToClose,
@@ -1240,7 +1240,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             closeLiqMultiplier: _calcFixedPrecisionMultiplier(data.lastPrice, data.longTradingExpo, data.liqMulAcc),
             closeBoundedPositionValue: data.tempPositionValue
         });
-        securityDepositValue_ = _addPendingAction(user, _convertLongPendingAction(action));
+        securityDepositValue_ = _addPendingAction(owner, _convertLongPendingAction(action));
     }
 
     /**
@@ -1326,7 +1326,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             // credit the full amount to the vault to preserve the total balance invariant
             _balanceVault += long.closeBoundedPositionValue;
             emit LiquidatedPosition(
-                pending.validator, // position owner
+                long.validator, // position owner
                 PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
                 currentPrice.neutralPrice,
                 liquidationPrice
@@ -1392,7 +1392,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         emit ValidatedClosePosition(
-            long.validator,
+            long.validator, // position owner
             long.to,
             PositionId({ tick: long.tick, tickVersion: long.tickVersion, index: long.index }),
             assetToTransfer,
