@@ -118,21 +118,24 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
      * @custom:then The user receives the expected amount
      */
     function test_withdrawPendingAssetsWithAmountLessThanDeposited() external {
+        rebalancer.depositAssets(2 * INITIAL_DEPOSIT, address(this));
+        uint128 totDeposit = INITIAL_DEPOSIT * 3;
+
         uint256 expectedPositionVersion = rebalancer.getPositionVersion() + 1;
         uint256 rebalancerBalanceBefore = wstETH.balanceOf(address(rebalancer));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();
-        emit PendingAssetsWithdrawn(address(this), INITIAL_DEPOSIT * 6 / 10, address(this));
-        rebalancer.withdrawPendingAssets(INITIAL_DEPOSIT * 6 / 10, address(this));
+        emit PendingAssetsWithdrawn(address(this), totDeposit * 6 / 10, address(this));
+        rebalancer.withdrawPendingAssets(totDeposit * 6 / 10, address(this));
 
         assertEq(
-            rebalancerBalanceBefore - INITIAL_DEPOSIT * 6 / 10,
+            rebalancerBalanceBefore - totDeposit * 6 / 10,
             wstETH.balanceOf(address(rebalancer)),
             "The rebalancer should have sent the assets"
         );
         assertEq(
-            userBalanceBefore + INITIAL_DEPOSIT * 6 / 10,
+            userBalanceBefore + totDeposit * 6 / 10,
             wstETH.balanceOf(address(this)),
             "The user address should have received the assets"
         );
@@ -141,6 +144,17 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
         assertEq(
             userDeposit.entryPositionVersion, expectedPositionVersion, "The position version should not have changed"
         );
-        assertEq(userDeposit.amount, INITIAL_DEPOSIT * 4 / 10, "The amount withdrawn should have been subtracted");
+        assertEq(userDeposit.amount, totDeposit * 4 / 10, "The amount withdrawn should have been subtracted");
+    }
+
+    /**
+     * @custom:scenario The user withdraws some of the assets it deposited and leaves less than the minimum required
+     * @custom:given A user with deposited assets
+     * @custom:when The user withdraws its assets with an amount lower than the amount it deposited
+     * @custom:then The transaction reverts with a RebalancerInsufficientAmount error
+     */
+    function test_RevertWhen_partialWithdraw_leftLessThanMin() external {
+        vm.expectRevert(RebalancerInsufficientAmount.selector);
+        rebalancer.withdrawPendingAssets(INITIAL_DEPOSIT / 2, address(this));
     }
 }
