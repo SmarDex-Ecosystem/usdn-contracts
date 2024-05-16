@@ -13,7 +13,7 @@ import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEth
 import { LiquidationRewardsManager } from "src/OracleMiddleware/LiquidationRewardsManager.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
 import { UsdnProtocol } from "src/UsdnProtocol/UsdnProtocol.sol";
-import { Usdn } from "src/Usdn.sol";
+import { Usdn } from "src/Usdn/Usdn.sol";
 
 contract Deploy is Script {
     /**

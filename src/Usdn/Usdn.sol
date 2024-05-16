@@ -9,6 +9,7 @@ import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { IRebaseCallback } from "src/interfaces/Usdn/IRebaseCallback.sol";
 
 /**
  * @title USDN token contract
@@ -70,6 +71,9 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
 
     /// @notice Divisor used to convert between shares and tokens
     uint256 internal _divisor = MAX_DIVISOR;
+
+    /// @notice A contract that will be called whenever a rebase happens
+    IRebaseCallback internal _rebaseHandler;
 
     /**
      * @notice Create an instance of the USDN token
@@ -160,6 +164,11 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /// @inheritdoc IUsdn
+    function rebaseHandler() external view returns (IRebaseCallback) {
+        return _rebaseHandler;
+    }
+
+    /// @inheritdoc IUsdn
     function maxTokens() public view returns (uint256) {
         return type(uint256).max / _divisor;
     }
@@ -184,12 +193,12 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /// @inheritdoc IUsdn
-    function burnShares(uint256 value) external virtual {
+    function burnShares(uint256 value) external {
         _burnShares(_msgSender(), value, _convertToTokens(value, Rounding.Closest, _divisor));
     }
 
     /// @inheritdoc IUsdn
-    function burnSharesFrom(address account, uint256 value) public virtual {
+    function burnSharesFrom(address account, uint256 value) public {
         uint256 d = _divisor;
         // to make sure we spend 1 wei of allowance in case the amount of shares is less than 1 wei of tokens,
         // we round up
@@ -216,18 +225,37 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /// @inheritdoc IUsdn
-    function rebase(uint256 newDivisor) external onlyRole(REBASER_ROLE) {
-        uint256 oldDivisor = _divisor;
-        if (newDivisor > oldDivisor) {
+    function rebase(uint256 newDivisor)
+        external
+        onlyRole(REBASER_ROLE)
+        returns (bool rebased_, uint256 oldDivisor_, bytes memory callbackResult_)
+    {
+        oldDivisor_ = _divisor;
+        if (newDivisor > oldDivisor_) {
             // Divisor can only be decreased
-            newDivisor = oldDivisor;
+            newDivisor = oldDivisor_;
         } else if (newDivisor < MIN_DIVISOR) {
+            // Divisor cannot be lower than `MIN_DIVISOR`
             newDivisor = MIN_DIVISOR;
         }
-        if (newDivisor != oldDivisor) {
-            emit Rebase(oldDivisor, newDivisor);
-            _divisor = newDivisor;
+        if (newDivisor == oldDivisor_) {
+            // No rebase necessary
+            return (false, oldDivisor_, callbackResult_);
         }
+
+        _divisor = newDivisor;
+        rebased_ = true;
+        IRebaseCallback handler = _rebaseHandler;
+        if (address(handler) != address(0)) {
+            callbackResult_ = handler.rebaseCallback(oldDivisor_, newDivisor);
+        }
+        emit Rebase(oldDivisor_, newDivisor);
+    }
+
+    /// @inheritdoc IUsdn
+    function setRebaseHandler(IRebaseCallback newHandler) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _rebaseHandler = newHandler;
+        emit RebaseHandlerUpdated(newHandler);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -325,7 +353,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @param value The number of shares to transfer
      * @param tokenValue The value converted to tokens, for inclusion in the `Transfer` event
      */
-    function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal virtual {
+    function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
             // Overflow check required: The rest of the code assumes that totalShares never overflows
             _totalShares += value;

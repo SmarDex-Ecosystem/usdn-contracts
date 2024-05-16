@@ -5,16 +5,16 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 /**
- * @title OrderManager
+ * @title Rebalancer
  * @notice The goal of this contract is to re-balance the USDN protocol when liquidations reduce the long trading expo
  * It will manage only one position with enough trading expo to re-balance the protocol after liquidations
  * and close/open again with new and existing funds when the imbalance reach a certain threshold
  */
-contract OrderManager is Ownable, IOrderManager {
+contract Rebalancer is Ownable, IRebalancer {
     using SafeERC20 for IERC20Metadata;
 
     /// @notice The address of the asset used by the USDN protocol
@@ -35,35 +35,35 @@ contract OrderManager is Ownable, IOrderManager {
         _asset = usdnProtocol.getAsset();
     }
 
-    /// @inheritdoc IOrderManager
+    /// @inheritdoc IRebalancer
     function getUsdnProtocol() external view returns (IUsdnProtocol) {
         return _usdnProtocol;
     }
 
-    /// @inheritdoc IOrderManager
+    /// @inheritdoc IRebalancer
     function getPositionVersion() external view returns (uint128) {
         return _positionVersion;
     }
 
-    /// @inheritdoc IOrderManager
+    /// @inheritdoc IRebalancer
     function getUserDepositData(address user) external view returns (UserDeposit memory userDeposit_) {
         userDeposit_ = _userDeposit[user];
     }
 
-    /// @inheritdoc IOrderManager
+    /// @inheritdoc IRebalancer
     function depositAssets(uint128 amount, address to) external {
         if (to == address(0)) {
-            revert OrderManagerInvalidAddressTo();
+            revert RebalancerInvalidAddressTo();
         }
 
         if (amount == 0) {
-            revert OrderManagerInvalidAmount();
+            revert RebalancerInvalidAmount();
         }
 
         uint128 positionVersion = _positionVersion;
         UserDeposit memory depositData = _userDeposit[to];
         if (depositData.amount != 0 && depositData.entryPositionVersion <= positionVersion) {
-            revert OrderManagerUserNotPending();
+            revert RebalancerUserNotPending();
         }
 
         _asset.safeTransferFrom(msg.sender, address(this), amount);
@@ -75,23 +75,23 @@ contract OrderManager is Ownable, IOrderManager {
         emit AssetsDeposited(amount, to, positionVersion + 1);
     }
 
-    /// @inheritdoc IOrderManager
+    /// @inheritdoc IRebalancer
     function withdrawPendingAssets(uint128 amount, address to) external {
         if (to == address(0)) {
-            revert OrderManagerInvalidAddressTo();
+            revert RebalancerInvalidAddressTo();
         }
 
         if (amount == 0) {
-            revert OrderManagerInvalidAmount();
+            revert RebalancerInvalidAmount();
         }
 
         UserDeposit memory depositData = _userDeposit[msg.sender];
         if (depositData.amount == 0 || depositData.entryPositionVersion <= _positionVersion) {
-            revert OrderManagerUserNotPending();
+            revert RebalancerUserNotPending();
         }
 
         if (depositData.amount < amount) {
-            revert OrderManagerWithdrawAmountTooLarge();
+            revert RebalancerWithdrawAmountTooLarge();
         }
 
         // If the amount to withdraw is equal to the deposited funds by this user, delete the mapping entry

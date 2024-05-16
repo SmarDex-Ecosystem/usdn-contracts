@@ -188,6 +188,10 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
+        vm.expectEmit();
+        emit SecurityDepositRefunded(USER_1, address(this), SECURITY_DEPOSIT_VALUE);
+        vm.expectEmit();
+        emit SecurityDepositRefunded(USER_2, address(this), SECURITY_DEPOSIT_VALUE);
         protocol.validateActionablePendingActions(previousActionsData, 10);
 
         assertEq(
@@ -390,6 +394,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
+        vm.expectEmit();
+        emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateDeposit{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, priceData, previousActionsData, USER_1, USER_1
@@ -443,6 +449,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
+        vm.expectEmit();
+        emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.validateDeposit(USER_1, priceData, previousActionsData);
 
@@ -489,9 +497,13 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
 
         vm.startPrank(USER_1);
         usdn.approve(address(protocol), 2);
+
+        vm.expectEmit();
+        emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         protocol.initiateWithdrawal{ value: SECURITY_DEPOSIT_VALUE }(
             1e18, priceData, previousActionsData, USER_1, USER_1
         );
+
         _waitDelay();
 
         assertRefundEthToUser1(balanceUser0Before, balanceUser1Before, balanceProtocolBefore);
@@ -549,6 +561,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
+        vm.expectEmit();
+        emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         protocol.validateWithdrawal(USER_1, priceData, previousActionsData);
         vm.stopPrank();
 
@@ -586,6 +600,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
+        vm.expectEmit();
+        emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateOpenPosition{ value: SECURITY_DEPOSIT_VALUE }(
             1 ether, params.initialPrice / 2, priceData, previousActionsData, USER_1, USER_1
@@ -634,6 +650,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
+        vm.expectEmit();
+        emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.validateOpenPosition(USER_1, priceData, previousActionsData);
 
@@ -685,6 +703,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
+        vm.expectEmit();
+        emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateClosePosition{ value: SECURITY_DEPOSIT_VALUE }(
             posId1, 1 ether, priceData, previousActionsData, USER_1
@@ -752,6 +772,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
+        vm.expectEmit();
+        emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         protocol.validateClosePosition(USER_1, priceData, previousActionsData);
         vm.stopPrank();
 
@@ -873,6 +895,8 @@ contract TestUsdnProtocolSecurityDeposit is UsdnProtocolBaseFixture {
         PreviousActionsData memory previousActionsData =
             PreviousActionsData({ priceData: previousPriceData, rawIndices: rawIndices });
 
+        vm.expectEmit();
+        emit SecurityDepositRefunded(address(this), USER_1, SECURITY_DEPOSIT_VALUE);
         vm.prank(USER_1);
         protocol.initiateDeposit{ value: newSecurityDepositValue }(
             1 ether, priceData, previousActionsData, USER_1, USER_1

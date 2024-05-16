@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 import { WusdnHandler } from "test/unit/WUSDN/utils/Handler.sol";
 
-import { Wusdn } from "src/Wusdn.sol";
+import { Wusdn } from "src/Usdn/Wusdn.sol";
 
 /**
  * @title WusdnTokenFixture
