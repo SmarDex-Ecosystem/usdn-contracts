@@ -138,15 +138,15 @@ contract Rebalancer is Ownable, IRebalancer {
             revert RebalancerWithdrawAmountTooLarge();
         }
 
-        uint128 newAmount;
+        uint128 newAmount = depositData.amount;
         unchecked {
-            newAmount = depositData.amount - amount;
+            newAmount -= amount;
         }
         if (newAmount == 0) {
             // If the new amount after the withdraw is equal to 0, delete the mapping entry
             delete _userDeposit[msg.sender];
         } else {
-            if (depositData.amount - amount < _minAssetDeposit) {
+            if (newAmount < _minAssetDeposit) {
                 revert RebalancerInsufficientAmount();
             }
             // If not, the amount is updated
