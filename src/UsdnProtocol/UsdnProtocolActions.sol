@@ -484,13 +484,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param currentPriceData The current price data
      * @return securityDepositValue_ The security deposit value
      */
-    function _initiateDeposit(
-        address user,
-        address to,
-        uint128 amount,
-        bytes calldata currentPriceData,
-        bytes calldata permit2Signature
-    ) internal returns (uint256 securityDepositValue_) {
+    function _initiateDeposit(address user, address to, uint128 amount, bytes calldata currentPriceData)
+        internal
+        returns (uint256 securityDepositValue_)
+    {
         if (to == address(0)) {
             revert UsdnProtocolInvalidAddressTo();
         }
@@ -547,12 +544,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _sdex.safeTransferFrom(user, DEAD_ADDRESS, sdexToBurn);
         }
 
-        if (permit2Signature.length > 0) {
-            permit2.permitTransferFrom();
-        } else {
-            // Transfer assets
-            _asset.safeTransferFrom(user, address(this), amount);
-        }
+        // Transfer assets
+        _asset.safeTransferFrom(user, address(this), amount);
 
         emit InitiatedDeposit(user, to, amount, block.timestamp);
     }
