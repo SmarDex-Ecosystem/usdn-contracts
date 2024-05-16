@@ -257,9 +257,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.initiateOpenPosition(
                 uint128(LONG_AMOUNT),
                 params.initialPrice / 30,
+                address(this),
+                address(this),
                 abi.encode(params.initialPrice / 10),
-                EMPTY_PREVIOUS_DATA,
-                address(this)
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -282,9 +283,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.initiateOpenPosition(
                 uint128(LONG_AMOUNT),
                 params.initialPrice / 30,
+                address(this),
+                address(this),
                 abi.encode(params.initialPrice / 10),
-                EMPTY_PREVIOUS_DATA,
-                address(this)
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -339,9 +341,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.initiateOpenPosition(
                 uint128(LONG_AMOUNT),
                 params.initialPrice / 30,
+                address(this),
+                address(this),
                 abi.encode(params.initialPrice / 10),
-                EMPTY_PREVIOUS_DATA,
-                address(this)
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -362,9 +365,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.initiateOpenPosition(
                 uint128(LONG_AMOUNT),
                 params.initialPrice / 30,
+                address(this),
+                address(this),
                 abi.encode(params.initialPrice / 10),
-                EMPTY_PREVIOUS_DATA,
-                address(this)
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -417,9 +421,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.initiateOpenPosition{ value: securityDeposit }(
                 uint128(LONG_AMOUNT),
                 params.initialPrice / 30,
+                address(this),
+                address(this),
                 abi.encode(params.initialPrice),
-                EMPTY_PREVIOUS_DATA,
-                address(this)
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -430,7 +435,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             _waitDelay();
 
             protocol.validateOpenPosition{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             pending = protocol.getUserPendingAction(address(this));
@@ -447,7 +452,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
         {
             protocol.validateOpenPosition{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -499,9 +504,10 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.initiateOpenPosition{ value: securityDeposit }(
                 uint128(LONG_AMOUNT),
                 params.initialPrice / 30,
+                address(this),
+                address(this),
                 abi.encode(params.initialPrice),
-                EMPTY_PREVIOUS_DATA,
-                address(this)
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -512,7 +518,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             _waitDelay();
 
             protocol.validateOpenPosition{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             pending = protocol.getUserPendingAction(address(this));
@@ -527,7 +533,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
         {
             protocol.validateOpenPosition{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));

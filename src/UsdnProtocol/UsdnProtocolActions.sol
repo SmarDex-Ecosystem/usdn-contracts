@@ -132,7 +132,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 balanceBefore = address(this).balance;
 
         (uint256 amountToRefund, bool isLiquidationPending) =
-            _initiateDeposit(msg.sender, to, validator, amount, currentPriceData);
+            _initiateDeposit(msg.sender, to, validator, amount, securityDepositValue, currentPriceData);
 
         if (!isLiquidationPending) {
             unchecked {
@@ -184,7 +184,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 balanceBefore = address(this).balance;
 
         (uint256 amountToRefund, bool isLiquidationPending) =
-            _initiateWithdrawal(msg.sender, to, validator, usdnShares, currentPriceData);
+            _initiateWithdrawal(msg.sender, to, validator, usdnShares, securityDepositValue, currentPriceData);
 
         if (!isLiquidationPending) {
             unchecked {
@@ -238,8 +238,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 amountToRefund;
         bool isLiquidationPending;
 
-        (posId_, amountToRefund, isLiquidationPending) =
-            _initiateOpenPosition(msg.sender, to, validator, amount, desiredLiqPrice, securityDeposit, currentPriceData);
+        (posId_, amountToRefund, isLiquidationPending) = _initiateOpenPosition(
+            msg.sender, to, validator, amount, desiredLiqPrice, securityDepositValue, currentPriceData
+        );
 
         if (!isLiquidationPending) {
             unchecked {
@@ -651,7 +652,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         isLiquidationPending_ = _validateDepositWithAction(pending, priceData);
 
         if (!isLiquidationPending_) {
-            _clearPendingAction(user, rawIndex);
+            _clearPendingAction(validator, rawIndex);
             return (pending.securityDepositValue, false);
         }
     }
@@ -802,7 +803,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint152 usdnShares,
         uint64 securityDepositValue,
         bytes calldata currentPriceData
-    ) internal returns (uint256 securityDepositValue_) {
+    ) internal returns (uint256 amountToRefund_, bool isLiquidationPending_) {
         if (to == address(0)) {
             revert UsdnProtocolInvalidAddressTo();
         }
@@ -819,7 +820,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return (securityDepositValue, true);
         }
 
-        amountToRefund_ = _createWithdrawalPendingAction(to, validator, usdnShares, data);
+        amountToRefund_ = _createWithdrawalPendingAction(to, validator, usdnShares, securityDepositValue, data);
 
         // retrieve the USDN tokens, checks that balance is sufficient
         data.usdn.transferSharesFrom(user, address(this), usdnShares);
@@ -845,7 +846,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         isLiquidationPending_ = _validateWithdrawalWithAction(pending, priceData);
 
         if (!isLiquidationPending_) {
-            _clearPendingAction(user, rawIndex);
+            _clearPendingAction(validator, rawIndex);
             return (pending.securityDepositValue, false);
         }
     }
@@ -1075,7 +1076,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         isLiquidationPending_ = _validateOpenPositionWithAction(pending, priceData);
 
         if (!isLiquidationPending_) {
-            _clearPendingAction(user, rawIndex);
+            _clearPendingAction(validator, rawIndex);
             return (pending.securityDepositValue, false);
         }
     }
@@ -1411,7 +1412,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return (securityDepositValue, true);
         }
 
-        amountToRefund_ = _createClosePendingAction(owner, to, posId, amountToClose, data);
+        amountToRefund_ = _createClosePendingAction(owner, to, posId, amountToClose, securityDepositValue, data);
 
         _balanceLong -= data.tempPositionValue;
 
@@ -1440,7 +1441,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         isLiquidationPending_ = _validateClosePositionWithAction(pending, priceData);
 
         if (!isLiquidationPending_) {
-            _clearPendingAction(user, rawIndex);
+            _clearPendingAction(owner, rawIndex);
             return (pending.securityDepositValue, false);
         }
     }

@@ -378,7 +378,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         {
             protocol.initiateClosePosition{ value: securityDeposit }(
-                userPosId, POSITION_AMOUNT, abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA, address(this)
+                userPosId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -395,7 +395,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         {
             protocol.initiateClosePosition{ value: securityDeposit }(
-                userPosId, POSITION_AMOUNT, abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA, address(this)
+                userPosId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -445,7 +445,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         {
             protocol.initiateClosePosition{ value: securityDeposit }(
-                userPosId, POSITION_AMOUNT, abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA, address(this)
+                userPosId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -460,7 +460,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         {
             protocol.initiateClosePosition{ value: securityDeposit }(
-                userPosId, POSITION_AMOUNT, abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA, address(this)
+                userPosId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));

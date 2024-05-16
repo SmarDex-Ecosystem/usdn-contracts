@@ -106,7 +106,11 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
 
             protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA, address(this)
+                uint128(usdnBalanceBefore),
+                address(this),
+                address(this),
+                abi.encode(params.initialPrice / 10),
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -127,7 +131,11 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
             // should be completed
             protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA, address(this)
+                uint128(usdnBalanceBefore),
+                address(this),
+                address(this),
+                abi.encode(params.initialPrice / 10),
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -178,7 +186,11 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
 
             protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA, address(this)
+                uint128(usdnBalanceBefore),
+                address(this),
+                address(this),
+                abi.encode(params.initialPrice / 10),
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -197,7 +209,11 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
             // should be completed
             protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA, address(this)
+                uint128(usdnBalanceBefore),
+                address(this),
+                address(this),
+                abi.encode(params.initialPrice / 10),
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -248,7 +264,11 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
             protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this)
+                uint128(usdnBalanceBefore),
+                address(this),
+                address(this),
+                abi.encode(params.initialPrice),
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -259,7 +279,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             _waitDelay();
 
             protocol.validateWithdrawal{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             pending = protocol.getUserPendingAction(address(this));
@@ -280,7 +300,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
             protocol.validateWithdrawal{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -327,7 +347,11 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
             protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this)
+                uint128(usdnBalanceBefore),
+                address(this),
+                address(this),
+                abi.encode(params.initialPrice),
+                EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -338,7 +362,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             _waitDelay();
 
             protocol.validateWithdrawal{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             pending = protocol.getUserPendingAction(address(this));
@@ -357,7 +381,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
             protocol.validateWithdrawal{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -377,7 +401,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAmount() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateWithdrawal(0, currentPrice, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateWithdrawal(0, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -389,7 +413,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAddressTo() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.initiateWithdrawal(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(0));
+        protocol.initiateWithdrawal(1 ether, address(0), address(0), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**

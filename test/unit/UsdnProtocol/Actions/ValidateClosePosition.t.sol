@@ -635,7 +635,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         {
             protocol.initiateClosePosition{ value: securityDeposit }(
-                userPosId, POSITION_AMOUNT, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this)
+                userPosId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -644,7 +644,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             _waitDelay();
 
             protocol.validateClosePosition{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             pending = protocol.getUserPendingAction(address(this));
@@ -661,7 +661,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
             protocol.validateClosePosition{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -712,7 +712,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         {
             protocol.initiateClosePosition{ value: securityDeposit }(
-                userPosId, POSITION_AMOUNT, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this)
+                userPosId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -721,7 +721,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             _waitDelay();
 
             protocol.validateClosePosition{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             pending = protocol.getUserPendingAction(address(this));
@@ -736,7 +736,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
             protocol.validateClosePosition{ value: securityDeposit }(
-                abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
             );
 
             PendingAction memory pending = protocol.getUserPendingAction(address(this));
@@ -798,7 +798,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 0.5 ether }(
-            posId, positionAmount, USER_1, priceData, EMPTY_PREVIOUS_DATA
+            posId, POSITION_AMOUNT, USER_1, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         vm.prank(USER_1);
