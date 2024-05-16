@@ -12,7 +12,7 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
  * @title Rebalancer
  * @notice The goal of this contract is to re-balance the USDN protocol when liquidations reduce the long trading expo
  * It will manage only one position with enough trading expo to re-balance the protocol after liquidations
- * and close/open again with new and existing funds when the imbalance reach a certain threshold
+ * and close/open again with new and existing funds when the imbalance reaches a certain threshold
  */
 contract Rebalancer is Ownable, IRebalancer {
     using SafeERC20 for IERC20Metadata;
