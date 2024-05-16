@@ -8,12 +8,6 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes {
     /**
-     * @notice Get the divisor for basis point values
-     * @return The basis points divisor
-     */
-    function BPS_DIVISOR() external returns (uint32);
-
-    /**
      * @notice Returns the address of the USDN protocol
      * @return usdnProtocol_ The address of the USDN protocol
      */

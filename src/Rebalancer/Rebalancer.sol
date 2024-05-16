@@ -17,9 +17,6 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 contract Rebalancer is Ownable, IRebalancer {
     using SafeERC20 for IERC20Metadata;
 
-    /// @inheritdoc IRebalancer
-    uint32 public constant BPS_DIVISOR = 10_000;
-
     /// @notice The address of the asset used by the USDN protocol
     IERC20Metadata internal immutable _asset;
 
