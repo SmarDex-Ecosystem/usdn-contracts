@@ -9,6 +9,11 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes {
     /// @notice Returns the address of the asset used by the USDN protocol
+
+    /**
+     * @notice Returns the address of the asset used by the USDN protocol
+     * @return The address of the asset used by the USDN protocol
+     */
     function getAsset() external view returns (IERC20Metadata);
 
     /**
@@ -17,10 +22,16 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      */
     function getUsdnProtocol() external view returns (IUsdnProtocol usdnProtocol_);
 
-    /// @notice Returns the version of the current position (0 means no position open)
+    /**
+     * @notice Returns the version of the current position (0 means no position open)
+     * @return The version of the current position
+     */
     function getPositionVersion() external view returns (uint128);
 
-    /// @notice Returns the minimum amount of assets to be deposited by a user
+    /**
+     * @notice Returns the minimum amount of assets to be deposited by a user
+     * @return The minimum amount of assets to be deposited by a user
+     */
     function getMinAssetDeposit() external view returns (uint256);
 
     /**
@@ -30,7 +41,11 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      */
     function setMinAssetDeposit(uint256 minAssetDeposit) external;
 
-    /// @notice Returns the data regarding the assets deposited by the provided user
+    /**
+     * @notice Returns the data regarding the assets deposited by the provided user
+     * @param user The address of the user
+     * @return userDeposit_ The data regarding the assets deposited by the provided user
+     */
     function getUserDepositData(address user) external view returns (UserDeposit memory userDeposit_);
 
     /**
