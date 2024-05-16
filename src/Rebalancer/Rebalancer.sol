@@ -94,24 +94,25 @@ contract Rebalancer is Ownable, IRebalancer {
     function depositAssets(uint128 amount, address to) external {
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
-        }
-
-        if (amount == 0) {
+        } else if (amount == 0) {
             revert RebalancerInvalidAmount();
-        } else if (amount < _minAssetDeposit) {
-            revert RebalancerInsufficientAmount();
         }
 
         uint128 positionVersion = _positionVersion;
         UserDeposit memory depositData = _userDeposit[to];
-        if (depositData.amount != 0 && depositData.entryPositionVersion <= positionVersion) {
+
+        uint128 totDeposit = depositData.amount + amount;
+
+        if (totDeposit < _minAssetDeposit) {
+            revert RebalancerInsufficientAmount();
+        } else if (depositData.amount != 0 && depositData.entryPositionVersion <= positionVersion) {
             revert RebalancerUserNotPending();
         }
 
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         depositData.entryPositionVersion = positionVersion + 1;
-        depositData.amount += amount;
+        depositData.amount = totDeposit;
         _userDeposit[to] = depositData;
 
         emit AssetsDeposited(amount, to, positionVersion + 1);
@@ -121,19 +122,18 @@ contract Rebalancer is Ownable, IRebalancer {
     function withdrawPendingAssets(uint128 amount, address to) external {
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
-        }
-
-        if (amount == 0) {
+        } else if (amount == 0) {
             revert RebalancerInvalidAmount();
         }
 
         UserDeposit memory depositData = _userDeposit[msg.sender];
+
         if (depositData.amount == 0 || depositData.entryPositionVersion <= _positionVersion) {
             revert RebalancerUserNotPending();
-        }
-
-        if (depositData.amount < amount) {
+        } else if (depositData.amount < amount) {
             revert RebalancerWithdrawAmountTooLarge();
+        } else if (depositData.amount - amount < _minAssetDeposit) {
+            revert RebalancerInsufficientAmount();
         }
 
         // If the amount to withdraw is equal to the deposited funds by this user, delete the mapping entry
