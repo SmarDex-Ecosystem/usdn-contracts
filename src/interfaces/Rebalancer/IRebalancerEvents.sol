@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-interface IOrderManagerEvents {
+interface IRebalancerEvents {
     /**
      * @notice Emitted when assets are deposited in the contract
      * @param amount The amount of assets deposited

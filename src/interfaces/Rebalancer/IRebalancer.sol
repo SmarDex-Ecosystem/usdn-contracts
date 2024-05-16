@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.0;
 
-import { IOrderManagerErrors } from "src/interfaces/OrderManager/IOrderManagerErrors.sol";
-import { IOrderManagerEvents } from "src/interfaces/OrderManager/IOrderManagerEvents.sol";
-import { IOrderManagerTypes } from "src/interfaces/OrderManager/IOrderManagerTypes.sol";
+import { IRebalancerErrors } from "src/interfaces/Rebalancer/IRebalancerErrors.sol";
+import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
+import { IRebalancerTypes } from "src/interfaces/Rebalancer/IRebalancerTypes.sol";
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
-interface IOrderManager is IOrderManagerErrors, IOrderManagerEvents, IOrderManagerTypes {
+interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes {
     /// @notice Returns the address of the USDN protocol
     function getUsdnProtocol() external view returns (IUsdnProtocol);
 
