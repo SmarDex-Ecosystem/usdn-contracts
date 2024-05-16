@@ -13,4 +13,7 @@ interface IRebalancerErrors {
 
     /// @dev The amount to withdraw is greater than the amount deposited
     error RebalancerWithdrawAmountTooLarge();
+
+    /// @dev The wanted minimum asset deposit is invalid
+    error RebalancerInvalidMinAssetDeposit();
 }

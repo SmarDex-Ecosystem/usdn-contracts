@@ -26,6 +26,9 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @notice The current position version
     uint128 internal _positionVersion;
 
+    /// @notice The minimum amount of assets to be deposited by a user
+    uint256 internal _minAssetDeposit;
+
     /// @notice The data about the assets deposited in this contract by users
     mapping(address => UserDeposit) internal _userDeposit;
 
@@ -33,11 +36,25 @@ contract Rebalancer is Ownable, IRebalancer {
     constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) {
         _usdnProtocol = usdnProtocol;
         _asset = usdnProtocol.getAsset();
+        _minAssetDeposit = usdnProtocol.getMinLongPosition();
     }
 
     /// @inheritdoc IRebalancer
     function getUsdnProtocol() external view returns (IUsdnProtocol) {
         return _usdnProtocol;
+    }
+
+    /// @inheritdoc IRebalancer
+    function getMinAssetDeposit() external view returns (uint256) {
+        return _minAssetDeposit;
+    }
+
+    /// @inheritdoc IRebalancer
+    function setMinAssetDeposit(uint256 minAssetDeposit) external {
+        if (_usdnProtocol.getMinLongPosition() > minAssetDeposit) {
+            revert RebalancerInvalidMinAssetDeposit();
+        }
+        _minAssetDeposit = minAssetDeposit;
     }
 
     /// @inheritdoc IRebalancer

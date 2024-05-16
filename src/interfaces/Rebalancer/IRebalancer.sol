@@ -10,6 +10,15 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     /// @notice Returns the address of the USDN protocol
     function getUsdnProtocol() external view returns (IUsdnProtocol);
 
+    /// @notice Returns the minimum amount of assets to be deposited by a user
+    function getMinAssetDeposit() external view returns (uint256);
+
+    /**
+     * @notice Sets the minimum amount of assets to be deposited by a user
+     * @param minAssetDeposit The new minimum amount of assets to be deposited
+     */
+    function setMinAssetDeposit(uint256 minAssetDeposit) external;
+
     /**
      * @notice Deposit assets into this contract to be included in the next position
      * @dev If `to` is already in a position, they need to close it completely before adding more assets
