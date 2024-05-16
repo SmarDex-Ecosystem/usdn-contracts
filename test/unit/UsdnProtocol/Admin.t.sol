@@ -641,10 +641,10 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
             protocol.getExpoImbalanceLimits();
 
         // assert values are updated
-        assertEq(openLimitBps, expectedSignedLimitBps);
-        assertEq(depositLimitBps, expectedSignedLimitBps);
-        assertEq(withdrawalLimitBps, expectedSignedLimitBps);
-        assertEq(closeLimitBps, expectedSignedLimitBps);
+        assertEq(openLimitBps, expectedSignedLimitBps, "open limit");
+        assertEq(depositLimitBps, expectedSignedLimitBps, "deposit limit");
+        assertEq(withdrawalLimitBps, expectedSignedLimitBps, "withdrawal limit");
+        assertEq(closeLimitBps, expectedSignedLimitBps, "close limit");
     }
 
     /**
@@ -700,9 +700,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit PositionFeeUpdated(newValue);
         protocol.setPositionFeeBps(newValue);
-        assertEq(protocol.getPositionFeeBps(), newValue);
+        assertEq(protocol.getPositionFeeBps(), newValue, "max");
         protocol.setPositionFeeBps(0);
-        assertEq(protocol.getPositionFeeBps(), 0);
+        assertEq(protocol.getPositionFeeBps(), 0, "zero");
     }
 
     /**
@@ -722,13 +722,13 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:and an event should be emitted with the corresponding new value
      */
     function test_setVaultFeeBps() external adminPrank {
-        uint16 newValue = 1000;
+        uint16 newValue = 2000;
         vm.expectEmit();
         emit VaultFeeUpdated(newValue);
         protocol.setVaultFeeBps(newValue);
-        assertEq(protocol.getVaultFeeBps(), newValue);
+        assertEq(protocol.getVaultFeeBps(), newValue, "max");
         protocol.setVaultFeeBps(0);
-        assertEq(protocol.getVaultFeeBps(), 0);
+        assertEq(protocol.getVaultFeeBps(), 0, "zero");
     }
 
     /**
@@ -752,9 +752,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit RebalancerBonusUpdated(newValue);
         protocol.setRebalancerBonusBps(newValue);
-        assertEq(protocol.getRebalancerBonusBps(), newValue);
+        assertEq(protocol.getRebalancerBonusBps(), newValue, "max");
         protocol.setRebalancerBonusBps(0);
-        assertEq(protocol.getRebalancerBonusBps(), 0);
+        assertEq(protocol.getRebalancerBonusBps(), 0, "zero");
     }
 
     /**
