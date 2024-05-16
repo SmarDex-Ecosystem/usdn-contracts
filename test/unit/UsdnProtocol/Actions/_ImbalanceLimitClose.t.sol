@@ -58,7 +58,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         vm.prank(ADMIN);
         // disable close limit
-        protocol.setExpoImbalanceLimits(200, 200, 600, 0, -1);
+        protocol.setExpoImbalanceLimits(200, 200, 600, 0, 0);
 
         protocol.i_checkImbalanceLimitClose(totalExpoValueToLimit + 1, longAmount);
     }
@@ -76,7 +76,7 @@ contract TestImbalanceLimitClose is UsdnProtocolBaseFixture {
 
         // disable limits
         vm.prank(ADMIN);
-        protocol.setExpoImbalanceLimits(0, 0, 0, 0, -1);
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
 
         // the initialized tick
         int24 tick = protocol.getHighestPopulatedTick();

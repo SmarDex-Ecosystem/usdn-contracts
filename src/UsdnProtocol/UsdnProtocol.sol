@@ -313,9 +313,12 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
 
-        // Cast is safe here as newCloseLimitBps cannot be higher than type(int256).max
-        if (newLongImbalanceTargetBps >= int256(newCloseLimitBps)) {
-            revert UsdnProtocolLongImbalanceTargetTooHigh();
+        // Casts are safe here as values are safe casted earlier
+        if (
+            newLongImbalanceTargetBps > int256(newCloseLimitBps)
+                || newLongImbalanceTargetBps < -int256(newWithdrawalLimitBps)
+        ) {
+            revert UsdnProtocolInvalidLongImbalanceTarget();
         }
 
         _longImbalanceTargetBps = newLongImbalanceTargetBps;
