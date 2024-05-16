@@ -47,6 +47,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     uint16 public constant MAX_LIQUIDATION_ITERATION = 10;
 
+    /// @inheritdoc
+    int24 public constant INVALID_TICK = type(int24).min;
+
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables                                 */
     /* -------------------------------------------------------------------------- */

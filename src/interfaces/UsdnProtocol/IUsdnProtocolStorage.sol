@@ -70,6 +70,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      */
     function MAX_LIQUIDATION_ITERATION() external pure returns (uint16);
 
+    /**
+     * @notice Get an invalid tick
+     * @return The invalid tick
+     */
+    function INVALID_TICK() external pure returns (int24);
+
     /* -------------------------------------------------------------------------- */
     /*                                 Immutables getters                         */
     /* -------------------------------------------------------------------------- */
