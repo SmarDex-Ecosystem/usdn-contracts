@@ -6,7 +6,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
@@ -72,7 +72,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setLiquidationRewardsManager(ILiquidationRewardsManager(address(this)));
 
         vm.expectRevert(customError);
-        protocol.setOrderManager(IOrderManager(address(this)));
+        protocol.setRebalancer(IRebalancer(address(this)));
 
         vm.expectRevert(customError);
         protocol.setSecurityDepositValue(0);
@@ -82,6 +82,15 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(customError);
         protocol.setMinLongPosition(100 ether);
+
+        vm.expectRevert(customError);
+        protocol.setPositionFeeBps(0);
+
+        vm.expectRevert(customError);
+        protocol.setVaultFeeBps(0);
+
+        vm.expectRevert(customError);
+        protocol.setRebalancerBonusBps(0);
     }
 
     /**
@@ -553,33 +562,33 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     /**
      * @dev As tolerating the zero address is unusual, this test is relevant even though it doesn't increase the
      * coverage
-     * @custom:scenario Call "setOrderManager" from admin with the zero address.
-     * @custom:given The initial usdnProtocol state from admin wallet.
-     * @custom:when Admin wallet trigger admin contract function.
-     * @custom:then Order manager is now the zero address.
+     * @custom:scenario Call "setRebalancer" from admin with the zero address
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet trigger admin contract function
+     * @custom:then getRebalancer returns the zero address
      */
-    function test_setOrderManagerWithZeroAddress() external adminPrank {
+    function test_setRebalancerWithZeroAddress() external adminPrank {
         vm.expectEmit();
-        emit OrderManagerUpdated(address(0));
-        protocol.setOrderManager(IOrderManager(address(0)));
+        emit RebalancerUpdated(address(0));
+        protocol.setRebalancer(IRebalancer(address(0)));
 
-        assertEq(address(protocol.getOrderManager()), address(address(0)));
+        assertEq(address(protocol.getRebalancer()), address(address(0)));
     }
 
     /**
-     * @custom:scenario Call "setOrderManager" from admin.
-     * @custom:given The initial usdnProtocol state from admin wallet.
-     * @custom:when Admin wallet trigger admin contract function.
-     * @custom:then Value should be updated.
+     * @custom:scenario Call "setRebalancer" from admin
+     * @custom:given The initial usdnProtocol state from admin wallet
+     * @custom:when Admin wallet trigger admin contract function
+     * @custom:then Value should be updated
      */
-    function test_setOrderManager() external adminPrank {
-        IOrderManager expectedNewValue = IOrderManager(address(this));
+    function test_setRebalancer() external adminPrank {
+        IRebalancer expectedNewValue = IRebalancer(address(this));
 
         vm.expectEmit();
-        emit OrderManagerUpdated(address(this));
-        protocol.setOrderManager(expectedNewValue);
+        emit RebalancerUpdated(address(this));
+        protocol.setRebalancer(expectedNewValue);
 
-        assertEq(address(protocol.getOrderManager()), address(expectedNewValue));
+        assertEq(address(protocol.getRebalancer()), address(expectedNewValue));
     }
 
     /**
@@ -668,10 +677,10 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
             protocol.getExpoImbalanceLimits();
 
         // assert values are updated
-        assertEq(openLimitBps, expectedSignedLimitBps);
-        assertEq(depositLimitBps, expectedSignedLimitBps);
-        assertEq(withdrawalLimitBps, expectedSignedLimitBps);
-        assertEq(closeLimitBps, expectedSignedLimitBps);
+        assertEq(openLimitBps, expectedSignedLimitBps, "open limit");
+        assertEq(depositLimitBps, expectedSignedLimitBps, "deposit limit");
+        assertEq(withdrawalLimitBps, expectedSignedLimitBps, "withdrawal limit");
+        assertEq(closeLimitBps, expectedSignedLimitBps, "close limit");
     }
 
     /**
@@ -714,5 +723,83 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setMinLongPosition(newValue);
         // assert that the new value is equal to the expected value
         assertEq(protocol.getMinLongPosition(), newValue);
+    }
+
+    /**
+     * @custom:scenario Call `setPositionFeeBps` as admin
+     * @custom:when The admin sets the position fee between 0 and 2000 bps
+     * @custom:then The position fee should be updated
+     * @custom:and an event should be emitted with the corresponding new value
+     */
+    function test_setPositionFeeBps() external adminPrank {
+        uint16 newValue = 2000;
+        vm.expectEmit();
+        emit PositionFeeUpdated(newValue);
+        protocol.setPositionFeeBps(newValue);
+        assertEq(protocol.getPositionFeeBps(), newValue, "max");
+        protocol.setPositionFeeBps(0);
+        assertEq(protocol.getPositionFeeBps(), 0, "zero");
+    }
+
+    /**
+     * @custom:scenario Try to set a position fee higher than the max allowed
+     * @custom:when The admin sets the position fee to 2001 bps
+     * @custom:then The transaction should revert with the corresponding error
+     */
+    function test_RevertWhen_setPositionFeeTooHigh() external adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidPositionFee.selector);
+        protocol.setPositionFeeBps(2001);
+    }
+
+    /**
+     * @custom:scenario Call `setVaultFeeBps` as admin
+     * @custom:when The admin sets the vault fee between 0 and 2000 bps
+     * @custom:then The vault fee should be updated
+     * @custom:and an event should be emitted with the corresponding new value
+     */
+    function test_setVaultFeeBps() external adminPrank {
+        uint16 newValue = 2000;
+        vm.expectEmit();
+        emit VaultFeeUpdated(newValue);
+        protocol.setVaultFeeBps(newValue);
+        assertEq(protocol.getVaultFeeBps(), newValue, "max");
+        protocol.setVaultFeeBps(0);
+        assertEq(protocol.getVaultFeeBps(), 0, "zero");
+    }
+
+    /**
+     * @custom:scenario Try to set a vault fee higher than the max allowed
+     * @custom:when The admin sets the vault fee to 2001 bps
+     * @custom:then The transaction should revert with the corresponding error
+     */
+    function test_RevertWhen_setVaultFeeTooHigh() external adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidVaultFee.selector);
+        protocol.setVaultFeeBps(2001);
+    }
+
+    /**
+     * @custom:scenario Call `setRebalancerBonusBps` as admin
+     * @custom:when The admin sets the bonus between 0 and 10000 bps
+     * @custom:then The bonus should be updated
+     * @custom:and an event should be emitted with the corresponding new value
+     */
+    function test_setRebalancerBonusBps() external adminPrank {
+        uint16 newValue = 10_000;
+        vm.expectEmit();
+        emit RebalancerBonusUpdated(newValue);
+        protocol.setRebalancerBonusBps(newValue);
+        assertEq(protocol.getRebalancerBonusBps(), newValue, "max");
+        protocol.setRebalancerBonusBps(0);
+        assertEq(protocol.getRebalancerBonusBps(), 0, "zero");
+    }
+
+    /**
+     * @custom:scenario Try to set a rebalancer bonus higher than the max allowed
+     * @custom:when The admin sets the bonus to 10001 bps
+     * @custom:then The transaction should revert with the corresponding error
+     */
+    function test_RevertWhen_setRebalancerBonusTooHigh() external adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidRebalancerBonus.selector);
+        protocol.setRebalancerBonusBps(10_001);
     }
 }

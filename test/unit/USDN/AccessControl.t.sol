@@ -4,6 +4,9 @@ pragma solidity 0.8.20;
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
+import { ADMIN } from "test/utils/Constants.sol";
+
+import { IRebaseCallback } from "src/interfaces/Usdn/IRebaseCallback.sol";
 
 /**
  * @custom:feature The privileged functions of USDN
@@ -12,6 +15,8 @@ import { UsdnTokenFixture } from "test/unit/USDN/utils/Fixtures.sol";
 contract TestUsdnAccessControl is UsdnTokenFixture {
     function setUp() public override {
         super.setUp();
+        usdn.grantRole(usdn.DEFAULT_ADMIN_ROLE(), ADMIN);
+        usdn.revokeRole(usdn.DEFAULT_ADMIN_ROLE(), address(this));
     }
 
     /**
@@ -26,6 +31,9 @@ contract TestUsdnAccessControl is UsdnTokenFixture {
         bytes memory rebaserUnauthorizedError = abi.encodeWithSelector(
             IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), usdn.REBASER_ROLE()
         );
+        bytes memory adminUnauthorizedError = abi.encodeWithSelector(
+            IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), usdn.DEFAULT_ADMIN_ROLE()
+        );
 
         vm.expectRevert(minterUnauthorizedError);
         usdn.mint(address(this), 100 ether);
@@ -36,5 +44,8 @@ contract TestUsdnAccessControl is UsdnTokenFixture {
         uint256 maxDivisor = usdn.MAX_DIVISOR();
         vm.expectRevert(rebaserUnauthorizedError);
         usdn.rebase(maxDivisor / 2);
+
+        vm.expectRevert(adminUnauthorizedError);
+        usdn.setRebaseHandler(IRebaseCallback(address(1)));
     }
 }

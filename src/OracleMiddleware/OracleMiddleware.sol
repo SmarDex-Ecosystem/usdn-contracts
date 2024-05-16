@@ -16,29 +16,34 @@ import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddle
 
 /**
  * @title OracleMiddleware contract
- * @notice This contract is used to get the price of an asset from different price oracle.
- * It is used by the USDN protocol to get the price of the USDN underlying asset.
- * @dev This contract is a middleware between the USDN protocol and the price oracles.
+ * @notice This contract is used to get the price of an asset from different price oracle
+ * It is used by the USDN protocol to get the price of the USDN underlying asset
+ * @dev This contract is a middleware between the USDN protocol and the price oracles
  */
 contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Ownable {
-    uint256 internal _validationDelay = 24 seconds;
+    /// @inheritdoc IOracleMiddleware
+    uint16 public constant BPS_DIVISOR = 10_000;
 
-    /// @notice confidence ratio denominator
-    uint16 private constant CONF_RATIO_DENOM = 10_000;
-    /// @notice confidence ratio: up to 200%
-    uint16 private constant MAX_CONF_RATIO = CONF_RATIO_DENOM * 2;
-
-    /// @notice confidence ratio: default 40%
-    uint16 private _confRatio = 4000; // to divide by CONF_RATIO_DENOM
+    /// @inheritdoc IOracleMiddleware
+    uint16 public constant MAX_CONF_RATIO = BPS_DIVISOR * 2;
 
     /// @notice The number of decimals for the returned price
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
 
     /**
+     * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
+     * price data used to validate that action
+     */
+    uint256 internal _validationDelay = 24 seconds;
+
+    /// @notice confidence ratio in basis points: default 40%
+    uint16 internal _confRatioBps = 4000; // to divide by BPS_DIVISOR
+
+    /**
      * @param pythContract Address of the Pyth contract
      * @param pythPriceID The price ID of the asset in Pyth
      * @param chainlinkPriceFeed Address of the Chainlink price feed
-     * @param chainlinkTimeElapsedLimit Elapsed time tolerated for chainlink's data validity
+     * @param chainlinkTimeElapsedLimit The duration after which a Chainlink price is considered stale
      */
     constructor(
         address pythContract,
@@ -111,18 +116,8 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /// @inheritdoc IOracleMiddleware
-    function getMaxConfRatio() external pure returns (uint16) {
-        return MAX_CONF_RATIO;
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function getConfRatioDenom() external pure returns (uint16) {
-        return CONF_RATIO_DENOM;
-    }
-
-    /// @inheritdoc IOracleMiddleware
-    function getConfRatio() external view returns (uint16) {
-        return _confRatio;
+    function getConfRatioBps() external view returns (uint16) {
+        return _confRatioBps;
     }
 
     /// @inheritdoc IOracleMiddleware
@@ -138,11 +133,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
     /**
      * @dev Get the price from the low-latency oracle (at the moment only Pyth, later maybe others might be supported).
-     * @param data The signed price update data.
+     * @param data The signed price update data
      * @param actionTimestamp The timestamp of the action corresponding to the price. If zero, then we must accept all
-     * recent prices according to `_recentPriceDelay`.
-     * @param dir The direction for the confidence interval adjusted price.
-     * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction.
+     * recent prices according to `_recentPriceDelay`
+     * @param dir The direction for the confidence interval adjusted price
+     * @return price_ The price from the low-latency oracle, adjusted according to the confidence interval direction
      */
     function _getLowLatencyPrice(bytes calldata data, uint128 actionTimestamp, ConfidenceInterval dir)
         internal
@@ -160,11 +155,11 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /**
-     * @notice Get the price for an initiate action of the protocol.
+     * @notice Get the price for an initiate action of the protocol
      * @dev If the data parameter is not empty, validate the price with PythOracle. Else, get the on-chain price from
      * Chainlink and compare its timestamp with the latest seen Pyth price (cached). If Pyth is more recent, we return
      * it. Otherwise we return the chainlink price. In case of chainlink price, we don't have a confidence interval and
-     * so both `neutralPrice` and `price` are equal.
+     * so both `neutralPrice` and `price` are equal
      * @param data An optional VAA from Pyth
      * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
      * @return price_ The price to use for the user action
@@ -173,14 +168,14 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         internal
         returns (PriceInfo memory price_)
     {
-        // If data is not empty, use pyth
+        // if data is not empty, use pyth
         if (data.length > 0) {
             // since we use this function for `initiate` type actions which pass `targetTimestamp = block.timestamp`,
             // we should pass `0` to the function below to signal that we accept any recent price
             return _getLowLatencyPrice(data, 0, dir);
         }
 
-        // Chainlink calls do not require a fee
+        // chainlink calls do not require a fee
         if (msg.value > 0) {
             revert OracleMiddlewareIncorrectFee();
         }
@@ -190,19 +185,19 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         // check if the cached pyth price is more recent and return it instead
         FormattedPythPrice memory latestPythPrice = _getLatestStoredPythPrice(MIDDLEWARE_DECIMALS);
         if (chainlinkOnChainPrice.timestamp <= latestPythPrice.publishTime) {
-            // We use the same price age limit as for chainlink here
+            // we use the same price age limit as for chainlink here
             if (latestPythPrice.publishTime < block.timestamp - _timeElapsedLimit) {
                 revert OracleMiddlewarePriceTooOld(latestPythPrice.publishTime);
             }
             return _adjustPythPrice(latestPythPrice, dir);
         }
 
-        // If the price equals PRICE_TOO_OLD then the tolerated time elapsed for price validity was exceeded, revert.
+        // if the price equals PRICE_TOO_OLD then the tolerated time elapsed for price validity was exceeded, revert
         if (chainlinkOnChainPrice.price == PRICE_TOO_OLD) {
             revert OracleMiddlewarePriceTooOld(chainlinkOnChainPrice.timestamp);
         }
 
-        // If the price is negative or zero, revert.
+        // if the price is negative or zero, revert
         if (chainlinkOnChainPrice.price <= 0) {
             revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
         }
@@ -215,9 +210,10 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     }
 
     /**
-     * @notice Apply the confidence interval in the `dir` direction, scaling it by the configured `_confRatio`.
-     * @param pythPrice The formatted Pyth price object.
-     * @param dir The direction to apply the confidence interval.
+     * @notice Apply the confidence interval in the `dir` direction, scaling it by the configured `_confRatioBps`
+     * @param pythPrice The formatted Pyth price object
+     * @param dir The direction to apply the confidence interval
+     * @return price_ The adjusted price according to the confidence interval and confidence ratio
      */
     function _adjustPythPrice(FormattedPythPrice memory pythPrice, ConfidenceInterval dir)
         internal
@@ -225,7 +221,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         returns (PriceInfo memory price_)
     {
         if (dir == ConfidenceInterval.Down) {
-            uint256 adjust = (pythPrice.conf * _confRatio) / CONF_RATIO_DENOM;
+            uint256 adjust = (pythPrice.conf * _confRatioBps) / BPS_DIVISOR;
             if (adjust >= pythPrice.price) {
                 // avoid underflow or zero price due to confidence interval adjustment
                 price_.price = 1;
@@ -236,7 +232,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
                 }
             }
         } else if (dir == ConfidenceInterval.Up) {
-            price_.price = pythPrice.price + ((pythPrice.conf * _confRatio) / CONF_RATIO_DENOM);
+            price_.price = pythPrice.price + ((pythPrice.conf * _confRatioBps) / BPS_DIVISOR);
         } else {
             price_.price = pythPrice.price;
         }
@@ -283,7 +279,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             revert OracleMiddlewareConfRatioTooHigh();
         }
 
-        _confRatio = newConfRatio;
+        _confRatioBps = newConfRatio;
 
         emit ConfRatioUpdated(newConfRatio);
     }

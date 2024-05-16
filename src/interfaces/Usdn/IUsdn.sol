@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -7,6 +7,7 @@ import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import { IUsdnEvents } from "src/interfaces/Usdn/IUsdnEvents.sol";
 import { IUsdnErrors } from "src/interfaces/Usdn/IUsdnErrors.sol";
+import { IRebaseCallback } from "src/interfaces/Usdn/IRebaseCallback.sol";
 
 /**
  * @title USDN token interface
@@ -105,6 +106,15 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     function convertToTokens(uint256 amountShares) external view returns (uint256 tokens_);
 
     /**
+     * @notice Convert a number of shares to the corresponding amount of tokens, rounding up
+     * @dev Use this function to determine the amount of a token approval, as we always round up when deducting from
+     * a token transfer allowance
+     * @param amountShares The amount of shares to convert to tokens
+     * @return tokens_ The corresponding amount of tokens, rounded up
+     */
+    function convertToTokensRoundUp(uint256 amountShares) external view returns (uint256 tokens_);
+
+    /**
      * @notice View function returning the current maximum tokens supply, given the current divisor
      * @dev This function is used to check if a conversion operation would overflow
      * @return maxTokens_ The maximum number of tokens that can exist
@@ -114,10 +124,27 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
     /**
      * @notice Restricted function to decrease the global divisor, which effectively grows all balances and the total
      * supply
-     * @param divisor The new divisor, must be strictly smaller than the current one and greater or equal to
-     * MIN_DIVISOR
+     * @dev If the provided divisor is larger than or equal to the current divisor value, no rebase will happen
+     * If the new divisor is smaller than `MIN_DIVISOR`, the value will be clamped to `MIN_DIVISOR`
+     * @param divisor The new divisor, should be strictly smaller than the current one and greater or equal to
+     * `MIN_DIVISOR`
+     * Caller must have the `REBASER_ROLE`
+     * @return rebased_ Whether a rebase happened
+     * @return oldDivisor_ The previous value of the divisor
+     * @return callbackResult_ The result of the callback, if a rebase happened and a callback handler is defined
      */
-    function rebase(uint256 divisor) external;
+    function rebase(uint256 divisor)
+        external
+        returns (bool rebased_, uint256 oldDivisor_, bytes memory callbackResult_);
+
+    /**
+     * @notice Restricted function to set the address of the rebase handler
+     * @dev Emits a `RebaseHandlerUpdated` event
+     * If set to the zero address, no handler will be called after a rebase
+     * Caller must have the `DEFAULT_ADMIN_ROLE`
+     * @param newHandler The new handler address
+     */
+    function setRebaseHandler(IRebaseCallback newHandler) external;
 
     /* -------------------------------------------------------------------------- */
     /*                             Dev view functions                             */
@@ -128,6 +155,12 @@ interface IUsdn is IERC20, IERC20Metadata, IERC20Permit, IUsdnEvents, IUsdnError
      * @return The current divisor
      */
     function divisor() external view returns (uint256);
+
+    /**
+     * @notice The address of the rebase handler, which is called whenever a rebase happens
+     * @return The rebase handler address
+     */
+    function rebaseHandler() external view returns (IRebaseCallback);
 
     /**
      * @notice Minter role signature
