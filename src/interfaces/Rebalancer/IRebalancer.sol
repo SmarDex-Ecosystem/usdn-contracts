@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import { IRebalancerErrors } from "src/interfaces/Rebalancer/IRebalancerErrors.sol";
 import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancerTypes } from "src/interfaces/Rebalancer/IRebalancerTypes.sol";
