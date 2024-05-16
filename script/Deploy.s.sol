@@ -203,14 +203,14 @@ contract Deploy is Script {
      * @notice Deploy the Rebalancer contract if necessary
      * @dev Will return the already deployed one if an address is in the env variables
      * @param usdnProtocol the USDN protocol
-     * @return Rebalancer_ the deployed contract
+     * @return rebalancer_ the deployed contract
      */
-    function _deployRebalancer(UsdnProtocol usdnProtocol) internal returns (Rebalancer Rebalancer_) {
+    function _deployRebalancer(UsdnProtocol usdnProtocol) internal returns (Rebalancer rebalancer_) {
         address rebalancerAddress = vm.envOr("REBALANCER_ADDRESS", address(0));
         if (rebalancerAddress != address(0)) {
-            Rebalancer_ = Rebalancer(rebalancerAddress);
+            rebalancer_ = Rebalancer(rebalancerAddress);
         } else {
-            Rebalancer_ = new Rebalancer(usdnProtocol);
+            rebalancer_ = new Rebalancer(usdnProtocol);
         }
     }
 
