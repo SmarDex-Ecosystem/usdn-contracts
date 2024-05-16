@@ -1074,12 +1074,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         if (pending.validator != validator) {
             revert UsdnProtocolInvalidPendingAction();
         }
+        bool liquidated;
+        (isLiquidationPending_, liquidated) = _validateOpenPositionWithAction(pending, priceData);
 
-        isLiquidationPending_ = _validateOpenPositionWithAction(pending, priceData);
-
-        if (!isLiquidationPending_) {
+        if (!isLiquidationPending_ || liquidated) {
             _clearPendingAction(validator, rawIndex);
-            return (pending.securityDepositValue, false);
+            return (pending.securityDepositValue, isLiquidationPending_);
         }
     }
 
@@ -1104,10 +1104,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
         );
 
-        if (data_.isLiquidationPending) {
-            return (data_, false);
-        }
-
         uint256 version;
         (data_.tickHash, version) = _tickHash(data_.action.tick);
         if (version != data_.action.tickVersion) {
@@ -1119,6 +1115,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             );
             return (data_, true);
         }
+
+        if (data_.isLiquidationPending) {
+            return (data_, false);
+        }
+
         // get the position
         data_.pos = _longPositions[data_.tickHash][data_.action.index];
         // re-calculate leverage
@@ -1136,16 +1137,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      */
     function _validateOpenPositionWithAction(PendingAction memory pending, bytes calldata priceData)
         internal
-        returns (bool isLiquidationPending_)
+        returns (bool isLiquidationPending_, bool liquidated_)
     {
         (ValidateOpenPositionData memory data, bool liquidated) = _prepareValidateOpenPositionData(pending, priceData);
 
         if (liquidated) {
-            return data.isLiquidationPending;
+            return (data.isLiquidationPending, true);
         }
 
         if (data.isLiquidationPending) {
-            return true;
+            return (true, false);
         }
 
         // leverage is always greater than 1 (liquidationPrice is positive)
