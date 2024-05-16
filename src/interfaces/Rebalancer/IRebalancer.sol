@@ -11,8 +11,11 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     /// @notice Returns the address of the asset used by the USDN protocol
     function getAsset() external view returns (IERC20Metadata);
 
-    /// @notice Returns the address of the USDN protocol
-    function getUsdnProtocol() external view returns (IUsdnProtocol);
+    /**
+     * @notice Returns the address of the USDN protocol
+     * @return usdnProtocol_ The address of the USDN protocol
+     */
+    function getUsdnProtocol() external view returns (IUsdnProtocol usdnProtocol_);
 
     /// @notice Returns the version of the current position (0 means no position open)
     function getPositionVersion() external view returns (uint128);

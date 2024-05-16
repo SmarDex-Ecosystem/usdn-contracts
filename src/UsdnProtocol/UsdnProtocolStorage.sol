@@ -9,6 +9,7 @@ import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyG
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
@@ -84,6 +85,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The liquidation rewards manager contract.
     ILiquidationRewardsManager internal _liquidationRewardsManager;
+
+    /// @notice The rebalancer contract.
+    IRebalancer internal _rebalancer;
 
     /// @notice The minimum leverage for a position (1.000000001)
     uint256 internal _minLeverage = 10 ** LEVERAGE_DECIMALS + 10 ** 12;
@@ -348,6 +352,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager) {
         return _liquidationRewardsManager;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getRebalancer() external view returns (IRebalancer) {
+        return _rebalancer;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
