@@ -60,7 +60,7 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    function setMinAssetDeposit(uint256 minAssetDeposit) external {
+    function setMinAssetDeposit(uint256 minAssetDeposit) external onlyOwner {
         if (_usdnProtocol.getMinLongPosition() > minAssetDeposit) {
             revert RebalancerInvalidMinAssetDeposit();
         }
