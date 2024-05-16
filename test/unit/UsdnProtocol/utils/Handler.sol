@@ -345,8 +345,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
     }
 
-    function i_tryAddPendingAction(address user, PendingAction memory action, bool isLiquidationPending) external {
-        _tryAddPendingAction(user, action, isLiquidationPending);
+    function i_addPendingAction(address user, PendingAction memory action) external {
+        _addPendingAction(user, action);
     }
 
     function i_getPendingAction(address user) external view returns (PendingAction memory, uint128) {

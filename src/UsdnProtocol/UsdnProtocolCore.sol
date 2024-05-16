@@ -671,33 +671,22 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Remove any stale pending action for the user and try to add a pending action to the queue
+     * @notice Add a pending action to the queue
      * @dev This reverts if there is already a pending action for this user
-     * If there are pending liquidation the action is not added to the queue
-     * @param validator The validator's address
+     * @param user The user's address
      * @param action The pending action struct
-     * @return added_ Whether the pending action was added to the queue
-     * @return amountToRefund_ The security deposit value of the stale pending action that was removed
+     * @return amountToRefund_ The security deposit value of the stale pending action
      */
-    function _tryAddPendingAction(address validator, PendingAction memory action, bool isLiquidationPending)
-        internal
-        returns (bool added_, uint256 amountToRefund_)
-    {
-        amountToRefund_ = _removeStalePendingAction(validator); // check if there is a pending action that was
-        // liquidated and remove it
-        if (_pendingActions[validator] > 0) {
+    function _addPendingAction(address user, PendingAction memory action) internal returns (uint256 amountToRefund_) {
+        amountToRefund_ = _removeStalePendingAction(user); // check if there is a pending action that was
+            // liquidated and remove it
+        if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
         }
-
-        if (isLiquidationPending) {
-            return (false, amountToRefund_);
-        }
-
         // Add the action to the queue
         uint128 rawIndex = _pendingActionsQueue.pushBack(action);
         // Store the index shifted by one, so that zero means no pending action
-        _pendingActions[validator] = uint256(rawIndex) + 1;
-        added_ = true;
+        _pendingActions[user] = uint256(rawIndex) + 1;
     }
 
     /**

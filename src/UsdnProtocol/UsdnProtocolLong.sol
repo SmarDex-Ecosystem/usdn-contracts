@@ -31,7 +31,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param longTradingExpo The long trading expo
      * @param currentPrice The current price of the asset
      * @param accumulator The liquidation multiplier accumulator before the liquidation
-     * @param isLiquidationPending Whether there is still pending tick to liquidate
+     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
      */
     struct LiquidationData {
         int256 tempLongBalance;
@@ -384,8 +384,6 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param tick The tick to hold the new position
      * @param long The position to save
      * @param liquidationPenalty The liquidation penalty for the tick
-     * @return tickVersion_ The position tick version
-     * @return index_ The position index
      */
     function _saveNewPosition(int24 tick, Position memory long, uint8 liquidationPenalty)
         internal
