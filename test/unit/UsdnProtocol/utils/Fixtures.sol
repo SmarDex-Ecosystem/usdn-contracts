@@ -227,24 +227,26 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateDeposit{ value: securityDepositValue }(positionSize, priceData, EMPTY_PREVIOUS_DATA, user);
+        protocol.initiateDeposit{ value: securityDepositValue }(
+            positionSize, user, user, priceData, EMPTY_PREVIOUS_DATA
+        );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
-        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
         uint256 balanceOf = usdn.balanceOf(user);
         usdn.approve(address(protocol), balanceOf);
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA, user
+            uint128(balanceOf), user, user, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
 
-        protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
     }
 
@@ -265,22 +267,27 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bytes memory priceData = abi.encode(openParams.price);
 
         posId_ = protocol.initiateOpenPosition{ value: securityDepositValue }(
-            openParams.positionSize, openParams.desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA, openParams.user
+            openParams.positionSize,
+            openParams.desiredLiqPrice,
+            openParams.user,
+            openParams.user,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (posId_);
 
-        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(openParams.user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (posId_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            posId_, openParams.positionSize, priceData, EMPTY_PREVIOUS_DATA, openParams.user
+            posId_, openParams.positionSize, openParams.user, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);
 
-        protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(openParams.user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
     }
 
@@ -315,7 +322,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
-        assertEq(a.user, b.user, string.concat(err, " - action user"));
+        assertEq(a.to, b.to, string.concat(err, " - action to"));
+        assertEq(a.validator, b.validator, string.concat(err, " - action validator"));
         assertEq(a.securityDepositValue, b.securityDepositValue, string.concat(err, " - action security deposit"));
         assertEq(a.var1, b.var1, string.concat(err, " - action var1"));
         assertEq(a.var2, b.var2, string.concat(err, " - action var2"));
@@ -331,6 +339,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
     function _waitBeforeLiquidation() internal {
         skip(31);
+    }
+
+    function _waitBeforeActionablePendingAction() internal {
+        skip(protocol.getValidationDeadline() + 1);
     }
 
     /// @dev Calculate proper initial values from randoms to initiate a balanced protocol

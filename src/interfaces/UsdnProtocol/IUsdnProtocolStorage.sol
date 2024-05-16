@@ -212,6 +212,13 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getVaultFeeBps() external view returns (uint16);
 
     /**
+     * @notice Get the part of the remaining collateral that is given as bonus to the Rebalancer upon liquidation of a
+     * tick
+     * @return The collateral bonus for the Rebalancer (in basis points)
+     */
+    function getRebalancerBonusBps() external view returns (uint16);
+
+    /**
      * @notice Get the ratio of USDN to SDEX tokens to burn on deposit
      * @return The ratio (to be divided by SDEX_BURN_ON_DEPOSIT_DIVISOR)
      */

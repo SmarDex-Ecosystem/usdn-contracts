@@ -84,14 +84,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Create long position
         _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
 
-        uint256 balance = address(this).balance;
-        if (balance != 0) {
-            // slither-disable-next-line arbitrary-send-eth
-            (bool success,) = payable(msg.sender).call{ value: balance }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        _refundEther(address(this).balance, msg.sender);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -251,7 +244,17 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidVaultFee();
         }
         _vaultFeeBps = newVaultFee;
-        emit PositionFeeUpdated(newVaultFee);
+        emit VaultFeeUpdated(newVaultFee);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setRebalancerBonusBps(uint16 newBonus) external onlyOwner {
+        // newBonus greater than max 100%
+        if (newBonus > BPS_DIVISOR) {
+            revert UsdnProtocolInvalidRebalancerBonus();
+        }
+        _rebalancerBonusBps = newBonus;
+        emit RebalancerBonusUpdated(newBonus);
     }
 
     /// @inheritdoc IUsdnProtocol
