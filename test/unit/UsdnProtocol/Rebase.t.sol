@@ -124,7 +124,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateDeposit(1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this), address(this));
+        protocol.initiateDeposit(1 ether, address(this), address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -170,7 +170,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateWithdrawal(100 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this), address(this));
+        protocol.initiateWithdrawal(100 ether, address(this), address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -216,7 +216,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
         protocol.initiateOpenPosition(
-            1 ether, params.initialPrice / 2, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this), address(this)
+            1 ether, params.initialPrice / 2, address(this), address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -279,7 +279,7 @@ contract TestUsdnProtocolRebase is UsdnProtocolBaseFixture, IUsdnEvents {
         // rebase
         vm.expectEmit(false, false, false, false);
         emit Rebase(0, 0);
-        protocol.initiateClosePosition(posId, 1 ether, abi.encode(newPrice), EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateClosePosition(posId, 1 ether, address(this), abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
     }
 
     /**

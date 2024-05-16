@@ -84,7 +84,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateDeposit);
         assertEq(validationCost, 1);
         protocol.initiateDeposit{ value: validationCost }(
-            1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(this)
+            1 ether, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -119,7 +119,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 initiateDepositTimestamp = block.timestamp;
         vm.expectEmit();
         emit InitiatedDeposit(to, address(this), depositAmount, initiateDepositTimestamp); // expected event
-        protocol.initiateDeposit(depositAmount, currentPrice, EMPTY_PREVIOUS_DATA, to, address(this));
+        protocol.initiateDeposit(depositAmount, to, address(this), currentPrice, EMPTY_PREVIOUS_DATA);
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
 
         // wait the required delay between initiation and validation
@@ -194,7 +194,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         uint256 balanceUserBefore = USER_1.balance;
         uint256 balanceContractBefore = address(this).balance;
 
-        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this), USER_1);
+        protocol.initiateDeposit{ value: 0.5 ether }(1 ether, address(this), USER_1, currentPrice, EMPTY_PREVIOUS_DATA);
         _waitBeforeActionablePendingAction();
         protocol.validateDeposit(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);
 

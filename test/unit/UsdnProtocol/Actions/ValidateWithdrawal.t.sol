@@ -121,7 +121,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(
-            USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(this)
+            USDN_AMOUNT, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -149,7 +149,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         protocol.setPositionFeeBps(0); // 0% fees
 
         bytes memory currentPrice = abi.encode(initialPrice);
-        protocol.initiateWithdrawal(withdrawShares, currentPrice, EMPTY_PREVIOUS_DATA, to, address(this));
+        protocol.initiateWithdrawal(withdrawShares, to, address(this), currentPrice, EMPTY_PREVIOUS_DATA);
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         WithdrawalPendingAction memory withdrawal = protocol.i_toWithdrawalPendingAction(pending);
@@ -258,7 +258,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateWithdrawal{ value: 0.5 ether }(
-            withdrawShares, currentPrice, EMPTY_PREVIOUS_DATA, address(this), USER_1
+            withdrawShares, address(this), USER_1, currentPrice, EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
         protocol.validateWithdrawal(USER_1, currentPrice, EMPTY_PREVIOUS_DATA);

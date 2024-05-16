@@ -19,17 +19,17 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * of the middleware.
      * The transaction must have _securityDepositValue in value
      * @param amount The amount of wstETH to deposit
-     * @param currentPriceData The current price data
-     * @param previousActionsData The data needed to validate actionable pending actions
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
+     * @param currentPriceData The current price data
+     * @param previousActionsData The data needed to validate actionable pending actions
      */
     function initiateDeposit(
         uint128 amount,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
         address to,
-        address validator
+        address validator,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
     ) external payable;
 
     /**
@@ -60,17 +60,17 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The transaction must have _securityDepositValue in value.
      * @param usdnShares The amount of USDN shares to burn (Max 5708990770823839524233143877797980545530986495 which is
      * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
-     * @param currentPriceData The current price data
-     * @param previousActionsData The data needed to validate actionable pending actions
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
+     * @param currentPriceData The current price data
+     * @param previousActionsData The data needed to validate actionable pending actions
      */
     function initiateWithdrawal(
         uint152 usdnShares,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
         address to,
-        address validator
+        address validator,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
     ) external payable;
 
     /**
@@ -103,20 +103,20 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The transaction must have _securityDepositValue in value.
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
+     * @param to The address that will be the owner of the position
+     * @param validator The address that will validate the open position
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions.
-     * @param to The address that will be the owner of the position
-     * @param validator The address that will validate the open position
      * @return posId_ The unique position identifier
      */
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
         address to,
-        address validator
+        address validator,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
     ) external payable returns (PositionId memory posId_);
 
     /**
@@ -156,16 +156,16 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The transaction must have _securityDepositValue in value.
      * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
+     * @param to The address that will receive the assets
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @param to The address that will receive the assets
      */
     function initiateClosePosition(
         PositionId calldata posId,
         uint128 amountToClose,
+        address to,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
-        address to
+        PreviousActionsData calldata previousActionsData
     ) external payable;
 
     /**

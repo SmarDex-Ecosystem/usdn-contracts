@@ -114,10 +114,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     /// @inheritdoc IUsdnProtocolActions
     function initiateDeposit(
         uint128 amount,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
         address to,
-        address validator
+        address validator,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
         uint256 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
@@ -161,10 +161,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     /// @inheritdoc IUsdnProtocolActions
     function initiateWithdrawal(
         uint152 usdnShares,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
         address to,
-        address validator
+        address validator,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
         uint256 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
@@ -210,10 +210,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function initiateOpenPosition(
         uint128 amount,
         uint128 desiredLiqPrice,
-        bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
         address to,
-        address validator
+        address validator,
+        bytes calldata currentPriceData,
+        PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant returns (PositionId memory posId_) {
         uint256 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {
@@ -262,9 +262,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     function initiateClosePosition(
         PositionId calldata posId,
         uint128 amountToClose,
+        address to,
         bytes calldata currentPriceData,
-        PreviousActionsData calldata previousActionsData,
-        address to
+        PreviousActionsData calldata previousActionsData
     ) external payable initializedAndNonReentrant {
         uint256 securityDepositValue = _securityDepositValue;
         if (msg.value < securityDepositValue) {

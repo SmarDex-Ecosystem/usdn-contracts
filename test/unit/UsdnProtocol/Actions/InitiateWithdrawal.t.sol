@@ -86,7 +86,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit InitiatedWithdrawal(to, address(this), USDN_AMOUNT, block.timestamp); // expected event
-        protocol.initiateWithdrawal(withdrawShares, currentPrice, EMPTY_PREVIOUS_DATA, to, address(this));
+        protocol.initiateWithdrawal(withdrawShares, to, address(this), currentPrice, EMPTY_PREVIOUS_DATA);
 
         assertEq(usdn.sharesOf(address(this)), initialUsdnShares - withdrawShares, "usdn user balance");
         assertEq(usdn.sharesOf(address(protocol)), protocolUsdnInitialShares + withdrawShares, "usdn protocol balance");
@@ -123,7 +123,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAmount() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateWithdrawal(0, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(this));
+        protocol.initiateWithdrawal(0, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -135,7 +135,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAddressTo() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.initiateWithdrawal(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(0), address(this));
+        protocol.initiateWithdrawal(1 ether, address(0), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -147,7 +147,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     function test_RevertWhen_zeroAddressValidator() public {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         vm.expectRevert(UsdnProtocolInvalidAddressValidator.selector);
-        protocol.initiateWithdrawal(1 ether, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(0));
+        protocol.initiateWithdrawal(1 ether, address(this), address(0), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**
@@ -162,7 +162,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         uint256 validationCost = oracleMiddleware.validationCost(currentPrice, ProtocolAction.InitiateWithdrawal);
         protocol.initiateWithdrawal{ value: validationCost }(
-            USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(this)
+            USDN_AMOUNT, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
         );
         assertEq(address(this).balance, balanceBefore - validationCost, "user balance after refund");
     }
@@ -179,7 +179,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
-            protocol.initiateWithdrawal(USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(this));
+            protocol.initiateWithdrawal(USDN_AMOUNT, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
             return;
         }
 
@@ -190,7 +190,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateWithdrawal.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateWithdrawal{ value: 1 }(
-            USDN_AMOUNT, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(this)
+            USDN_AMOUNT, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA
         );
     }
 

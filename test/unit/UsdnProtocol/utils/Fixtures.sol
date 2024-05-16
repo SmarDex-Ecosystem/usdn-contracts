@@ -218,7 +218,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         bytes memory priceData = abi.encode(price);
 
         protocol.initiateDeposit{ value: securityDepositValue }(
-            positionSize, priceData, EMPTY_PREVIOUS_DATA, user, user
+            positionSize, user, user, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
@@ -230,7 +230,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         uint256 balanceOf = usdn.balanceOf(user);
         usdn.approve(address(protocol), balanceOf);
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA, user, user
+            uint128(balanceOf), user, user, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
@@ -259,10 +259,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         posId_ = protocol.initiateOpenPosition{ value: securityDepositValue }(
             openParams.positionSize,
             openParams.desiredLiqPrice,
-            priceData,
-            EMPTY_PREVIOUS_DATA,
             openParams.user,
-            openParams.user
+            openParams.user,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (posId_);
@@ -272,7 +272,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (posId_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            posId_, openParams.positionSize, priceData, EMPTY_PREVIOUS_DATA, openParams.user
+            posId_, openParams.positionSize, openParams.user, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);

@@ -69,7 +69,7 @@ contract TestUsdnProtocolPreviewWithdraw is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(uint128(2000 ether));
         shares = uint152(bound(shares, 1, usdn.sharesOf(address(this))));
 
-        protocol.initiateWithdrawal(shares, currentPrice, EMPTY_PREVIOUS_DATA, address(this), address(this));
+        protocol.initiateWithdrawal(shares, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
         // calculate the expected asset to be received
         uint256 assetExpected = protocol.previewWithdraw(shares, 2000 ether, protocol.getLastUpdateTimestamp());
         // wait the required delay between initiation and validation

@@ -97,10 +97,10 @@ contract TestUsdnProtocolLongLong is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             uint128(minLongPositionSize) - 1,
             1000 ether,
-            abi.encode(2000 ether),
-            EMPTY_PREVIOUS_DATA,
             address(this),
-            address(this)
+            address(this),
+            abi.encode(2000 ether),
+            EMPTY_PREVIOUS_DATA
         );
     }
 

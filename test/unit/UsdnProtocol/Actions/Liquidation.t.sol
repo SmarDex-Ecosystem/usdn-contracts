@@ -59,7 +59,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         vm.expectEmit(true, true, false, false);
         emit IUsdnProtocolEvents.LiquidatedTick(posId.tick, posId.tickVersion, 0, 0, 0);
         protocol.initiateDeposit(
-            1 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA, address(this), address(this)
+            1 ether, address(this), address(this), abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -137,10 +137,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
 
         protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
-            abi.encode(effectivePriceForTick),
-            EMPTY_PREVIOUS_DATA,
             address(this),
-            address(this)
+            address(this),
+            abi.encode(effectivePriceForTick),
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -220,10 +220,10 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         protocol.initiateOpenPosition(
             1 ether,
             desiredLiqPrice - 200 ether,
-            abi.encode(effectivePriceForTick),
-            EMPTY_PREVIOUS_DATA,
             address(this),
-            address(this)
+            address(this),
+            abi.encode(effectivePriceForTick),
+            EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -320,7 +320,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         emit IUsdnProtocolEvents.LiquidatedTick(posIdToLiquidate.tick, posIdToLiquidate.tickVersion, 0, 0, 0);
 
         protocol.initiateClosePosition(
-            posIdToClose, 1 ether, abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA, address(this)
+            posIdToClose, 1 ether, address(this), abi.encode(effectivePriceForTick), EMPTY_PREVIOUS_DATA
         );
     }
 
@@ -579,7 +579,7 @@ contract TestUsdnProtocolLiquidation is UsdnProtocolBaseFixture {
         // create high risk position
         protocol.initiateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.InitiateOpenPosition)
-        }(5 ether, 9 * currentPrice / 10, priceData, EMPTY_PREVIOUS_DATA, address(this), address(this));
+        }(5 ether, 9 * currentPrice / 10, address(this), address(this), priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         protocol.validateOpenPosition{
             value: oracleMiddleware.validationCost(priceData, ProtocolAction.ValidateOpenPosition)

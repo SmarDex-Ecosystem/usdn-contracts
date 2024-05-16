@@ -80,7 +80,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         uint256 initialTotalExpo = protocol.getTotalExpo();
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
         PositionId memory posId = protocol.initiateOpenPosition(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, to, validator
+            uint128(LONG_AMOUNT), desiredLiqPrice, to, validator, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
         (Position memory tempPos,) = protocol.getLongPosition(posId);
 
@@ -134,10 +134,10 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         PositionId memory posId = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
-            abi.encode(CURRENT_PRICE),
-            EMPTY_PREVIOUS_DATA,
             address(this),
-            address(this)
+            address(this),
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA
         );
         (Position memory tempPos,) = protocol.getLongPosition(posId);
 
@@ -241,10 +241,10 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         data.tempPosId = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
-            abi.encode(CURRENT_PRICE),
-            EMPTY_PREVIOUS_DATA,
             address(this),
-            address(this)
+            address(this),
+            abi.encode(CURRENT_PRICE),
+            EMPTY_PREVIOUS_DATA
         );
 
         _waitDelay();
@@ -370,7 +370,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         uint256 balanceContractBefore = address(this).balance;
 
         protocol.initiateOpenPosition{ value: 0.5 ether }(
-            uint128(LONG_AMOUNT), desiredLiqPrice, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA, address(this), USER_1
+            uint128(LONG_AMOUNT), desiredLiqPrice, address(this), USER_1, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
         _waitBeforeActionablePendingAction();
         protocol.validateOpenPosition(USER_1, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA);
