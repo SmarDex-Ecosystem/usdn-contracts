@@ -18,6 +18,9 @@ interface IUsdnProtocolErrors {
     /// @dev Indicates that the provided to address is invalid
     error UsdnProtocolInvalidAddressTo();
 
+    /// @dev Indicates that the provided validator address is invalid
+    error UsdnProtocolInvalidAddressValidator();
+
     /// @dev Indicates that the initialization deposit is too low
     error UsdnProtocolMinInitAmount(uint256 minInitAmount);
 
@@ -71,6 +74,9 @@ interface IUsdnProtocolErrors {
 
     /// @dev Indicates that the provided vault fee exceeds the maximum allowed
     error UsdnProtocolInvalidVaultFee();
+
+    /// @dev Indicates that the provided Rebalancer bonus exceeds the maximum allowed
+    error UsdnProtocolInvalidRebalancerBonus();
 
     /// @dev Indicates that the provided ratio exceeds the maximum allowed
     error UsdnProtocolInvalidBurnSdexOnDepositRatio();
