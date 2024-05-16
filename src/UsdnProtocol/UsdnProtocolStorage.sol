@@ -107,6 +107,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The protocol fee percentage (in bps)
     uint16 internal _protocolFeeBps = 10;
 
+    /**
+     * @notice Part of the remaining collateral that is given as bonus to the Rebalancer upon liquidation of a tick,
+     * in basis points
+     * @dev The rest is sent to the Vault balance
+     */
+    uint16 internal _rebalancerBonusBps = 8000; // 80%
+
     /// @notice The liquidation penalty (in tick spacing units)
     uint8 internal _liquidationPenalty = 2; // 200 ticks -> ~2.02%
 
@@ -412,6 +419,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getVaultFeeBps() external view returns (uint16) {
         return _vaultFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getRebalancerBonusBps() external view returns (uint16) {
+        return _rebalancerBonusBps;
     }
 
     /// @inheritdoc IUsdnProtocolStorage

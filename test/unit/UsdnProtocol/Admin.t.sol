@@ -88,6 +88,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
 
         vm.expectRevert(customError);
         protocol.setVaultFeeBps(0);
+
+        vm.expectRevert(customError);
+        protocol.setRebalancerBonusBps(0);
     }
 
     /**
@@ -674,10 +677,10 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
             protocol.getExpoImbalanceLimits();
 
         // assert values are updated
-        assertEq(openLimitBps, expectedSignedLimitBps);
-        assertEq(depositLimitBps, expectedSignedLimitBps);
-        assertEq(withdrawalLimitBps, expectedSignedLimitBps);
-        assertEq(closeLimitBps, expectedSignedLimitBps);
+        assertEq(openLimitBps, expectedSignedLimitBps, "open limit");
+        assertEq(depositLimitBps, expectedSignedLimitBps, "deposit limit");
+        assertEq(withdrawalLimitBps, expectedSignedLimitBps, "withdrawal limit");
+        assertEq(closeLimitBps, expectedSignedLimitBps, "close limit");
     }
 
     /**
@@ -733,9 +736,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         vm.expectEmit();
         emit PositionFeeUpdated(newValue);
         protocol.setPositionFeeBps(newValue);
-        assertEq(protocol.getPositionFeeBps(), newValue);
+        assertEq(protocol.getPositionFeeBps(), newValue, "max");
         protocol.setPositionFeeBps(0);
-        assertEq(protocol.getPositionFeeBps(), 0);
+        assertEq(protocol.getPositionFeeBps(), 0, "zero");
     }
 
     /**
@@ -755,13 +758,13 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
      * @custom:and an event should be emitted with the corresponding new value
      */
     function test_setVaultFeeBps() external adminPrank {
-        uint16 newValue = 1000;
+        uint16 newValue = 2000;
         vm.expectEmit();
-        emit PositionFeeUpdated(newValue);
+        emit VaultFeeUpdated(newValue);
         protocol.setVaultFeeBps(newValue);
-        assertEq(protocol.getVaultFeeBps(), newValue);
+        assertEq(protocol.getVaultFeeBps(), newValue, "max");
         protocol.setVaultFeeBps(0);
-        assertEq(protocol.getVaultFeeBps(), 0);
+        assertEq(protocol.getVaultFeeBps(), 0, "zero");
     }
 
     /**
@@ -772,5 +775,31 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     function test_RevertWhen_setVaultFeeTooHigh() external adminPrank {
         vm.expectRevert(UsdnProtocolInvalidVaultFee.selector);
         protocol.setVaultFeeBps(2001);
+    }
+
+    /**
+     * @custom:scenario Call `setRebalancerBonusBps` as admin
+     * @custom:when The admin sets the bonus between 0 and 10000 bps
+     * @custom:then The bonus should be updated
+     * @custom:and an event should be emitted with the corresponding new value
+     */
+    function test_setRebalancerBonusBps() external adminPrank {
+        uint16 newValue = 10_000;
+        vm.expectEmit();
+        emit RebalancerBonusUpdated(newValue);
+        protocol.setRebalancerBonusBps(newValue);
+        assertEq(protocol.getRebalancerBonusBps(), newValue, "max");
+        protocol.setRebalancerBonusBps(0);
+        assertEq(protocol.getRebalancerBonusBps(), 0, "zero");
+    }
+
+    /**
+     * @custom:scenario Try to set a rebalancer bonus higher than the max allowed
+     * @custom:when The admin sets the bonus to 10001 bps
+     * @custom:then The transaction should revert with the corresponding error
+     */
+    function test_RevertWhen_setRebalancerBonusTooHigh() external adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidRebalancerBonus.selector);
+        protocol.setRebalancerBonusBps(10_001);
     }
 }

@@ -251,7 +251,17 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidVaultFee();
         }
         _vaultFeeBps = newVaultFee;
-        emit PositionFeeUpdated(newVaultFee);
+        emit VaultFeeUpdated(newVaultFee);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setRebalancerBonusBps(uint16 newBonus) external onlyOwner {
+        // newBonus greater than max 100%
+        if (newBonus > BPS_DIVISOR) {
+            revert UsdnProtocolInvalidRebalancerBonus();
+        }
+        _rebalancerBonusBps = newBonus;
+        emit RebalancerBonusUpdated(newBonus);
     }
 
     /// @inheritdoc IUsdnProtocol
