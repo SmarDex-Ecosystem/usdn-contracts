@@ -17,9 +17,9 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
 
     /**
      * @notice Returns the address of the USDN protocol
-     * @return usdnProtocol_ The address of the USDN protocol
+     * @return The address of the USDN protocol
      */
-    function getUsdnProtocol() external view returns (IUsdnProtocol usdnProtocol_);
+    function getUsdnProtocol() external view returns (IUsdnProtocol);
 
     /**
      * @notice Returns the version of the current position (0 means no position open)
@@ -43,9 +43,9 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     /**
      * @notice Returns the data regarding the assets deposited by the provided user
      * @param user The address of the user
-     * @return userDeposit_ The data regarding the assets deposited by the provided user
+     * @return The data regarding the assets deposited by the provided user
      */
-    function getUserDepositData(address user) external view returns (UserDeposit memory userDeposit_);
+    function getUserDepositData(address user) external view returns (UserDeposit memory);
 
     /**
      * @notice Deposit assets into this contract to be included in the next position

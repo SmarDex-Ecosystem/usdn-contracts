@@ -61,13 +61,13 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    function getUsdnProtocol() external view returns (IUsdnProtocol usdnProtocol_) {
-        usdnProtocol_ = _usdnProtocol;
+    function getUsdnProtocol() external view returns (IUsdnProtocol) {
+        return _usdnProtocol;
     }
 
     /// @inheritdoc IRebalancer
-    function getPositionVersion() external view returns (uint128 positionVersion_) {
-        positionVersion_ = _positionVersion;
+    function getPositionVersion() external view returns (uint128) {
+        return _positionVersion;
     }
 
     /// @inheritdoc IRebalancer
@@ -86,8 +86,8 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    function getUserDepositData(address user) external view returns (UserDeposit memory userDeposit_) {
-        userDeposit_ = _userDeposit[user];
+    function getUserDepositData(address user) external view returns (UserDeposit memory) {
+        return _userDeposit[user];
     }
 
     /// @inheritdoc IRebalancer
