@@ -36,13 +36,13 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    function getUsdnProtocol() external view returns (IUsdnProtocol) {
-        return _usdnProtocol;
+    function getUsdnProtocol() external view returns (IUsdnProtocol usdnProtocol_) {
+        usdnProtocol_ = _usdnProtocol;
     }
 
     /// @inheritdoc IRebalancer
-    function getPositionVersion() external view returns (uint128) {
-        return _positionVersion;
+    function getPositionVersion() external view returns (uint128 positionVersion_) {
+        positionVersion_ = _positionVersion;
     }
 
     /// @inheritdoc IRebalancer

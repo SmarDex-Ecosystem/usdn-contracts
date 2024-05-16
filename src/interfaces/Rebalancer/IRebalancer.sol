@@ -7,8 +7,11 @@ import { IRebalancerTypes } from "src/interfaces/Rebalancer/IRebalancerTypes.sol
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes {
-    /// @notice Returns the address of the USDN protocol
-    function getUsdnProtocol() external view returns (IUsdnProtocol);
+    /**
+     * @notice Returns the address of the USDN protocol
+     * @return usdnProtocol_ The address of the USDN protocol
+     */
+    function getUsdnProtocol() external view returns (IUsdnProtocol usdnProtocol_);
 
     /**
      * @notice Deposit assets into this contract to be included in the next position
@@ -27,9 +30,15 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      */
     function withdrawPendingAssets(uint128 amount, address to) external;
 
-    /// @notice Returns the version of the current position (0 means no position open)
-    function getPositionVersion() external view returns (uint128);
+    /**
+     * @notice Returns the version of the current position (0 means no position open)
+     * @return positionVersion_ The current position version
+     */
+    function getPositionVersion() external view returns (uint128 positionVersion_);
 
-    /// @notice Returns the data regarding the assets deposited by the provided user
+    /**
+     * @notice Returns the data regarding the assets deposited by the provided user
+     * @return userDeposit_ The data regarding the assets deposited by the user
+     */
     function getUserDepositData(address user) external view returns (UserDeposit memory userDeposit_);
 }
