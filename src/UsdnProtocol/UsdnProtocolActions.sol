@@ -1036,7 +1036,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         if (data.isLiquidationPending) {
             // value to indicate the action is not initiated
-            posId_.tick = INVALID_TICK;
+            posId_.tick = NO_POSITION_TICK;
             return (posId_, securityDepositValue, true);
         }
 
