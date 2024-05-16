@@ -1035,7 +1035,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _prepareInitiateOpenPositionData(amount, desiredLiqPrice, currentPriceData);
 
         if (data.isLiquidationPending) {
-            // value to indicate the action is not initiated
+            // value to indicate the position was not created
             posId_.tick = NO_POSITION_TICK;
             return (posId_, securityDepositValue, true);
         }
@@ -1304,15 +1304,15 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, currentPriceData
         );
 
-        if (data_.isLiquidationPending) {
-            return (data_, false);
-        }
-
         (, uint256 version) = _tickHash(posId.tick);
         if (version != posId.tickVersion) {
             // the current tick version doesn't match the version from the position,
             // that means that the position has been liquidated in this transaction
             return (data_, true);
+        }
+
+        if (data_.isLiquidationPending) {
+            return (data_, false);
         }
 
         data_.totalExpoToClose = (uint256(data_.pos.totalExpo) * amountToClose / data_.pos.amount).toUint128();
@@ -1406,13 +1406,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
     ) internal returns (uint256 amountToRefund_, bool isLiquidationPending_) {
         (ClosePositionData memory data, bool liq) =
             _prepareClosePositionData(owner, to, posId, amountToClose, currentPriceData);
-        if (liq) {
-            // position was liquidated in this transaction
-            return (0, data.isLiquidationPending);
-        }
 
-        if (data.isLiquidationPending) {
-            return (securityDepositValue, true);
+        if (liq || data.isLiquidationPending) {
+            // position was liquidated in this transaction or liquidations are pending
+            return (securityDepositValue, data.isLiquidationPending);
         }
 
         amountToRefund_ = _createClosePendingAction(owner, to, posId, amountToClose, securityDepositValue, data);
