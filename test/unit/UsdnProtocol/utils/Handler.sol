@@ -54,7 +54,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     /// @dev Push a pending item to the front of the pending actions queue
     function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
         rawIndex_ = _pendingActionsQueue.pushFront(action);
-        _pendingActions[action.user] = uint256(rawIndex_) + 1;
+        _pendingActions[action.validator] = uint256(rawIndex_) + 1;
     }
 
     /**
@@ -109,13 +109,13 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     }
 
     function i_initiateClosePosition(
-        address user,
+        address owner,
         address to,
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) external returns (uint256 securityDepositValue_) {
-        return _initiateClosePosition(user, to, posId, amountToClose, currentPriceData);
+        return _initiateClosePosition(owner, to, posId, amountToClose, currentPriceData);
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
@@ -378,6 +378,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         payable
     {
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+    }
+
+    function i_refundEther(uint256 amount, address to) external payable {
+        _refundEther(amount, to);
     }
 
     function i_mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB) external pure returns (uint256) {

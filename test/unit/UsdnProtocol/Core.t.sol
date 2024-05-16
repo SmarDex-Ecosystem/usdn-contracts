@@ -362,7 +362,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function test_getPendingActionWithoutPendingAction() public {
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
         assertTrue(action.action == ProtocolAction.None, "action should be None");
-        assertEq(action.user, address(0), "user should be empty");
+        assertEq(action.validator, address(0), "user should be empty");
         assertEq(action.to, address(0), "to should be empty");
         assertEq(rawIndex, 0, "rawIndex should be 0");
     }
@@ -385,8 +385,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         );
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
         assertTrue(action.action == ProtocolAction.ValidateClosePosition, "action should be ValidateClosePosition");
-        assertEq(action.user, address(this), "user should be this contract");
         assertEq(action.to, address(this), "to should be this contract");
+        assertEq(action.validator, address(this), "validator should be this contract");
         assertEq(rawIndex, 1, "rawIndex should be 1");
     }
 
@@ -400,8 +400,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
-            user: address(this),
             to: address(this),
+            validator: address(this),
             securityDepositValue: 0.1 ether,
             var1: 0,
             var2: 0,
@@ -427,8 +427,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
-            user: address(this),
             to: address(this),
+            validator: address(this),
             securityDepositValue: 0.01 ether,
             var1: 0,
             var2: 0,
@@ -452,8 +452,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertEq(rawIndexBefore + 1, rawIndexAfter, "rawIndex should be incremented by 1");
         assertTrue(actionSaved.action == pendingAction.action, "action saved(action)");
         assertEq(actionSaved.timestamp, pendingAction.timestamp, "action saved(timestamp)");
-        assertEq(actionSaved.user, pendingAction.user, "action saved(user)");
         assertEq(actionSaved.to, pendingAction.to, "action saved(to)");
+        assertEq(actionSaved.validator, pendingAction.validator, "action saved(validator)");
         assertEq(
             actionSaved.securityDepositValue, pendingAction.securityDepositValue, "action saved(securityDepositValue)"
         );
