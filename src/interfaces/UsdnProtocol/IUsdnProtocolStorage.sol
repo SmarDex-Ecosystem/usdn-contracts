@@ -274,7 +274,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_);
 
     /**
-     * @notice Returns the target imbalance to have on the long side after the creation of a position
+     * @notice Returns the target imbalance to have on the long side after the creation of a rebalancer position
      * @dev The creation of the rebalancer position aims for this target, but does not guarantee hitting it
      * @return targetLongImbalance_ The target long imbalance
      */
