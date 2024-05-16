@@ -80,6 +80,8 @@ contract Rebalancer is Ownable, IRebalancer {
 
         if (amount == 0) {
             revert RebalancerInvalidAmount();
+        } else if (amount < _minAssetDeposit) {
+            revert RebalancerInsufficientAmount();
         }
 
         uint128 positionVersion = _positionVersion;

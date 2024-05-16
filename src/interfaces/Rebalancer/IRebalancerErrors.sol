@@ -16,4 +16,7 @@ interface IRebalancerErrors {
 
     /// @dev The wanted minimum asset deposit is invalid
     error RebalancerInvalidMinAssetDeposit();
+
+    /// @dev The amount to deposit is insufficient
+    error RebalancerInsufficientAmount();
 }
