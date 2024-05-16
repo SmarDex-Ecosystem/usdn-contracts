@@ -474,22 +474,22 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         bytes memory rebaseCallbackResult,
         bytes memory priceData
     ) internal {
-        // Get how much we should give to the liquidator as rewards
+        // get how much we should give to the liquidator as rewards
         uint256 liquidationRewards = _liquidationRewardsManager.getLiquidationRewards(
             liquidatedTicks, remainingCollateral, rebased, rebaseCallbackResult, priceData
         );
 
-        // Avoid underflows in situation of extreme bad debt
+        // avoid underflows in situation of extreme bad debt
         if (_balanceVault < liquidationRewards) {
             liquidationRewards = _balanceVault;
         }
 
-        // Update the vault's balance
+        // update the vault's balance
         unchecked {
             _balanceVault -= liquidationRewards;
         }
 
-        // Transfer rewards (wsteth) to the liquidator
+        // transfer rewards (wsteth) to the liquidator
         _asset.safeTransfer(msg.sender, liquidationRewards);
 
         emit LiquidatorRewarded(msg.sender, liquidationRewards);
@@ -534,7 +534,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         _checkImbalanceLimitDeposit(amount);
 
-        // Apply fees on price
+        // apply fees on price
         uint128 pendingActionPrice = (currentPrice.price - currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
         DepositPendingAction memory pendingAction = DepositPendingAction({
@@ -555,26 +555,26 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         securityDepositValue_ = _addPendingAction(validator, _convertDepositPendingAction(pendingAction));
 
-        // Calculate the amount of SDEX tokens to burn
+        // calculate the amount of SDEX tokens to burn
         uint256 usdnToMintEstimated = _calcMintUsdn(
             pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
         );
         uint32 burnRatio = _sdexBurnOnDepositRatio;
         uint256 sdexToBurn = _calcSdexToBurn(usdnToMintEstimated, burnRatio);
-        // We want to at least mint 1 wei of USDN
+        // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
             revert UsdnProtocolDepositTooSmall();
         }
-        // We want to at least burn 1 wei of SDEX if SDEX burning is enabled
+        // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
         if (burnRatio != 0 && sdexToBurn == 0) {
             revert UsdnProtocolDepositTooSmall();
         }
         if (sdexToBurn > 0) {
-            // Send SDEX to the dead address
+            // send SDEX to the dead address
             _sdex.safeTransferFrom(user, DEAD_ADDRESS, sdexToBurn);
         }
 
-        // Transfer assets
+        // transfer assets
         _asset.safeTransferFrom(user, address(this), amount);
 
         emit InitiatedDeposit(to, validator, amount, block.timestamp);
@@ -609,9 +609,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
         );
 
-        // We calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
+        // we calculate the amount of USDN to mint, either considering the asset price at the time of the initiate
         // action, or the current price provided for validation. We will use the lower of the two amounts to mint
-        // Apply fees on price
+        // apply fees on price
         uint128 priceWithFees = (currentPrice.price - currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
         uint256 usdnToMint1 =
@@ -619,7 +619,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         uint256 usdnToMint2 = _calcMintUsdn(
             deposit.amount,
-            // Calculate the available balance in the vault side if the price moves to `priceWithFees`
+            // calculate the available balance in the vault side if the price moves to `priceWithFees`
             _vaultAssetAvailable(
                 deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
             ).toUint256(),
@@ -628,7 +628,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         );
 
         uint256 usdnToMint;
-        // We use the lower of the two amounts to mint
+        // we use the lower of the two amounts to mint
         if (usdnToMint1 <= usdnToMint2) {
             usdnToMint = usdnToMint1;
         } else {
@@ -659,7 +659,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, currentPriceData
         );
 
-        // Apply fees on price
+        // apply fees on price
         data_.pendingActionPrice = (currentPrice.price + currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
         data_.totalExpo = _totalExpo;
@@ -776,11 +776,11 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
         );
 
-        // Apply fees on price
+        // apply fees on price
         uint128 withdrawalPriceWithFees =
             (currentPrice.price + currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
-        // We calculate the available balance of the vault side, either considering the asset price at the time of the
+        // we calculate the available balance of the vault side, either considering the asset price at the time of the
         // initiate action, or the current price provided for validation. We will use the lower of the two amounts to
         // redeem the underlying asset share
         uint256 available1 = withdrawal.balanceVault;
@@ -844,10 +844,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         data_.posId.tick = getEffectiveTickForPrice(desiredLiqPrice);
         data_.liquidationPenalty = getTickLiquidationPenalty(data_.posId.tick);
 
-        // Calculate effective liquidation price
+        // calculate effective liquidation price
         uint128 liqPrice = getEffectivePriceForTick(data_.posId.tick);
 
-        // Liquidation price must be at least x% below current price
+        // liquidation price must be at least x% below current price
         _checkSafetyMargin(neutralPrice, liqPrice);
 
         // remove liquidation penalty for leverage and total expo calculations
@@ -929,7 +929,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         InitiateOpenPositionData memory data =
             _prepareInitiateOpenPositionData(amount, desiredLiqPrice, currentPriceData);
 
-        // Register position and adjust contract state
+        // register position and adjust contract state
         Position memory long = Position({
             user: to,
             amount: amount,
@@ -982,7 +982,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         data_.action = _toLongPendingAction(pending);
         PriceInfo memory currentPrice =
             _getOraclePrice(ProtocolAction.ValidateOpenPosition, data_.action.timestamp, priceData);
-        // Apply fees on price
+        // apply fees on price
         data_.startPrice = (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         _applyPnlAndFundingAndLiquidate(
@@ -992,17 +992,17 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 version;
         (data_.tickHash, version) = _tickHash(data_.action.tick);
         if (version != data_.action.tickVersion) {
-            // The current tick version doesn't match the version from the pending action
-            // This means the position has been liquidated in the mean time
+            // the current tick version doesn't match the version from the pending action
+            // this means the position has been liquidated in the mean time
             emit StalePendingActionRemoved(
                 data_.action.validator,
                 PositionId({ tick: data_.action.tick, tickVersion: data_.action.tickVersion, index: data_.action.index })
             );
             return (data_, true);
         }
-        // Get the position
+        // get the position
         data_.pos = _longPositions[data_.tickHash][data_.action.index];
-        // Re-calculate leverage
+        // re-calculate leverage
         data_.liquidationPenalty = _tickData[data_.tickHash].liquidationPenalty;
         data_.liqPriceWithoutPenalty =
             getEffectivePriceForTick(_calcTickWithoutPenalty(data_.action.tick, data_.liquidationPenalty));
@@ -1021,9 +1021,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return;
         }
 
-        // Leverage is always greater than 1 (liquidationPrice is positive)
-        // Even if it drops below _minLeverage between the initiate and validate actions, we still allow it
-        // However, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
+        // leverage is always greater than 1 (liquidationPrice is positive)
+        // even if it drops below _minLeverage between the initiate and validate actions, we still allow it
+        // however, if the leverage exceeds max leverage, then we adjust the liquidation price (tick) to have a leverage
         // of _maxLeverage
         uint128 maxLeverage = uint128(_maxLeverage);
         if (data.leverage > maxLeverage) {
@@ -1040,20 +1040,20 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             uint8 liquidationPenalty = getTickLiquidationPenalty(newPosId.tick);
             // check if the penalty for that tick is different from the current setting
             if (liquidationPenalty == currentLiqPenalty) {
-                // Since the tick's penalty is the same as what we assumed, we can use the `tickWithoutPenalty` from
+                // since the tick's penalty is the same as what we assumed, we can use the `tickWithoutPenalty` from
                 // above
-                // Retrieve exact liquidation price without penalty
+                // retrieve exact liquidation price without penalty
                 data.liqPriceWithoutPenalty = getEffectivePriceForTick(tickWithoutPenalty);
             } else {
-                // The tick's imposed penalty is different from the current setting, so the `tickWithoutPenalty` we
+                // the tick's imposed penalty is different from the current setting, so the `tickWithoutPenalty` we
                 // calculated above can't be used to calculate the leverage
-                // We must instead use the tick's penalty to find the new `liqPriceWithoutPenalty` and calculate the
+                // we must instead use the tick's penalty to find the new `liqPriceWithoutPenalty` and calculate the
                 // leverage
 
-                // Note: In case the tick liquidation penalty is lower than the current setting, it might lead to a
+                // note: In case the tick liquidation penalty is lower than the current setting, it might lead to a
                 // leverage that exceeds the max leverage slightly. We allow this behavior in this rare occurrence
 
-                // Retrieve exact liquidation price without penalty
+                // retrieve exact liquidation price without penalty
                 data.liqPriceWithoutPenalty =
                     getEffectivePriceForTick(_calcTickWithoutPenalty(newPosId.tick, liquidationPenalty));
             }
@@ -1081,14 +1081,14 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             return;
         }
-        // Calculate the new total expo
+        // calculate the new total expo
         uint128 expoBefore = data.pos.totalExpo;
         uint128 expoAfter = _calculatePositionTotalExpo(data.pos.amount, data.startPrice, data.liqPriceWithoutPenalty);
 
-        // Update the total expo of the position
+        // update the total expo of the position
         _longPositions[data.tickHash][data.action.index].totalExpo = expoAfter;
-        // Update the total expo by adding the position's new expo and removing the old one
-        // Do not use += or it will underflow
+        // update the total expo by adding the position's new expo and removing the old one
+        // do not use += or it will underflow
         _totalExpo = _totalExpo + expoAfter - expoBefore;
 
         // update the tick data and the liqMultiplierAccumulator
@@ -1135,7 +1135,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             revert UsdnProtocolAmountToCloseHigherThanPositionAmount(amountToClose, pos.amount);
         }
 
-        // Make sure the remaining position is higher than _minLongPosition
+        // make sure the remaining position is higher than _minLongPosition
         uint128 remainingAmount = pos.amount - amountToClose;
         if (remainingAmount > 0 && remainingAmount < _minLongPosition) {
             revert UsdnProtocolLongPositionTooSmall();
@@ -1178,7 +1178,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         (, uint256 version) = _tickHash(posId.tick);
         if (version != posId.tickVersion) {
-            // The current tick version doesn't match the version from the position,
+            // the current tick version doesn't match the version from the position,
             // that means that the position has been liquidated in this transaction
             return (data_, true);
         }
@@ -1191,10 +1191,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         data_.liqMulAcc = _liqMultiplierAccumulator;
         data_.lastPrice = _lastPrice;
 
-        // The approximate value position to remove is calculated with `_lastPrice`, so not taking into account
+        // the approximate value position to remove is calculated with `_lastPrice`, so not taking into account
         // any fees. This way, the removal of the position doesn't affect the liquidation multiplier calculations
 
-        // In order to have the maximum precision, we do not pre-compute the liquidation multiplier with a fixed
+        // in order to have the maximum precision, we do not pre-compute the liquidation multiplier with a fixed
         // precision just now, we will store it in the pending action later, to be used in the validate action
         data_.tempPositionValue = _assetToRemove(
             data_.lastPrice,
@@ -1314,16 +1314,16 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
         );
 
-        // Apply fees on price
+        // apply fees on price
         uint128 priceWithFees = (currentPrice.price - currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         // get liquidation price (with liq penalty) to check if position was valid at `timestamp + validationDelay`
         uint128 liquidationPrice = _getEffectivePriceForTick(long.tick, long.closeLiqMultiplier);
 
         if (currentPrice.neutralPrice <= liquidationPrice) {
-            // Position should be liquidated, we don't transfer assets to the user
-            // Position was already removed from tick so no additional bookkeeping is necessary
-            // Credit the full amount to the vault to preserve the total balance invariant
+            // position should be liquidated, we don't transfer assets to the user
+            // position was already removed from tick so no additional bookkeeping is necessary
+            // credit the full amount to the vault to preserve the total balance invariant
             _balanceVault += long.closeBoundedPositionValue;
             emit LiquidatedPosition(
                 pending.validator, // position owner
@@ -1344,10 +1344,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 assetToTransfer;
         if (positionValue > 0) {
             assetToTransfer = uint256(positionValue);
-            // Normally, the position value should be smaller than `long.closeBoundedPositionValue` (due to the position
+            // normally, the position value should be smaller than `long.closeBoundedPositionValue` (due to the position
             // fee)
-            // We can send the difference (any remaining collateral) to the vault
-            // If the price increased since the initiate, it's possible that the position value is higher than the
+            // we can send the difference (any remaining collateral) to the vault
+            // if the price increased since the initiate, it's possible that the position value is higher than the
             // `long.closeBoundedPositionValue`. In that case, we need to take the missing assets from the vault
             if (assetToTransfer < long.closeBoundedPositionValue) {
                 uint256 remainingCollateral;
@@ -1365,7 +1365,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                     missingValue = assetToTransfer - long.closeBoundedPositionValue;
                 }
                 uint256 balanceVault = _balanceVault;
-                // If the vault does not have enough balance left to pay out the missing value, we take what we can
+                // if the vault does not have enough balance left to pay out the missing value, we take what we can
                 if (missingValue > balanceVault) {
                     _balanceVault = 0;
                     unchecked {
@@ -1431,10 +1431,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         view
         returns (uint256 boundedPosValue_)
     {
-        // The available amount of asset on the long side (with the current balance)
+        // the available amount of asset on the long side (with the current balance)
         uint256 available = _balanceLong;
 
-        // Calculate position value
+        // calculate position value
         int256 positionValue = _positionValue(priceWithFees, liqPriceWithoutPenalty, posExpo);
 
         if (positionValue <= 0) {
