@@ -40,8 +40,18 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
+    function getAsset() external view returns (IERC20Metadata) {
+        return _asset;
+    }
+
+    /// @inheritdoc IRebalancer
     function getUsdnProtocol() external view returns (IUsdnProtocol) {
         return _usdnProtocol;
+    }
+
+    /// @inheritdoc IRebalancer
+    function getPositionVersion() external view returns (uint128) {
+        return _positionVersion;
     }
 
     /// @inheritdoc IRebalancer
@@ -55,11 +65,6 @@ contract Rebalancer is Ownable, IRebalancer {
             revert RebalancerInvalidMinAssetDeposit();
         }
         _minAssetDeposit = minAssetDeposit;
-    }
-
-    /// @inheritdoc IRebalancer
-    function getPositionVersion() external view returns (uint128) {
-        return _positionVersion;
     }
 
     /// @inheritdoc IRebalancer
