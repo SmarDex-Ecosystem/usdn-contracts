@@ -247,13 +247,13 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setOrderManagerBonusBps(uint16 newBonus) external onlyOwner {
+    function setRebalancerBonusBps(uint16 newBonus) external onlyOwner {
         // newBonus greater than max 100%
         if (newBonus > BPS_DIVISOR) {
-            revert UsdnProtocolInvalidOrderManagerBonus();
+            revert UsdnProtocolInvalidRebalancerBonus();
         }
-        _orderManagerBonusBps = newBonus;
-        emit OrderManagerBonusUpdated(newBonus);
+        _rebalancerBonusBps = newBonus;
+        emit RebalancerBonusUpdated(newBonus);
     }
 
     /// @inheritdoc IUsdnProtocol

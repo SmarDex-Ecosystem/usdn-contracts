@@ -86,7 +86,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setVaultFeeBps(0);
 
         vm.expectRevert(customError);
-        protocol.setOrderManagerBonusBps(0);
+        protocol.setRebalancerBonusBps(0);
     }
 
     /**
@@ -742,28 +742,28 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Call `setOrderManagerBonusBps` as admin
+     * @custom:scenario Call `setRebalancerBonusBps` as admin
      * @custom:when The admin sets the bonus between 0 and 10000 bps
      * @custom:then The bonus should be updated
      * @custom:and an event should be emitted with the corresponding new value
      */
-    function test_setOrderManagerBonusBps() external adminPrank {
+    function test_setRebalancerBonusBps() external adminPrank {
         uint16 newValue = 10_000;
         vm.expectEmit();
-        emit OrderManagerBonusUpdated(newValue);
-        protocol.setOrderManagerBonusBps(newValue);
-        assertEq(protocol.getOrderManagerBonusBps(), newValue);
-        protocol.setOrderManagerBonusBps(0);
-        assertEq(protocol.getOrderManagerBonusBps(), 0);
+        emit RebalancerBonusUpdated(newValue);
+        protocol.setRebalancerBonusBps(newValue);
+        assertEq(protocol.getRebalanacerBonusBps(), newValue);
+        protocol.setRebalancerBonusBps(0);
+        assertEq(protocol.getRebalanacerBonusBps(), 0);
     }
 
     /**
-     * @custom:scenario Try to set an order manager bonus higher than the max allowed
+     * @custom:scenario Try to set a rebalncer bonus higher than the max allowed
      * @custom:when The admin sets the bonus to 10001 bps
      * @custom:then The transaction should revert with the corresponding error
      */
-    function test_RevertWhen_setOrderManagerBonusTooHigh() external adminPrank {
-        vm.expectRevert(UsdnProtocolInvalidOrderManagerBonus.selector);
-        protocol.setOrderManagerBonusBps(10_001);
+    function test_RevertWhen_setRebalancerBonusTooHigh() external adminPrank {
+        vm.expectRevert(UsdnProtocolInvalidRebalancerBonus.selector);
+        protocol.setRebalancerBonusBps(10_001);
     }
 }

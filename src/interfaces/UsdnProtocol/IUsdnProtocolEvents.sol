@@ -170,10 +170,10 @@ interface IUsdnProtocolEvents {
     event VaultFeeUpdated(uint256 vaultFee);
 
     /**
-     * @notice Emitted when the order manager bonus is updated
+     * @notice Emitted when the rebalancer bonus is updated
      * @param bonus The new bonus (in basis points)
      */
-    event OrderManagerBonusUpdated(uint256 bonus);
+    event RebalancerBonusUpdated(uint256 bonus);
     /**
      * @notice Emitted when the ratio of USDN to SDEX tokens to burn on deposit is updated
      * @param newRatio The new ratio
