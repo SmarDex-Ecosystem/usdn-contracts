@@ -28,7 +28,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:then Each function should revert with the same custom Ownable error
      */
     function test_RevertWhen_nonAdminWalletCallAdminFunctions() external {
-        // Ownable contract custom error
+        // ownable contract custom error
         bytes memory customError = abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this));
 
         vm.expectRevert(customError);
@@ -567,7 +567,7 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
      * @custom:scenario Call "setRebalancer" from admin with the zero address
      * @custom:given The initial usdnProtocol state from admin wallet
      * @custom:when Admin wallet triggers admin contract function
-     * @custom:then getRebalancer returns the zero address
+     * @custom:then GetRebalancer returns the zero address
      */
     function test_setRebalancerWithZeroAddress() external adminPrank {
         vm.expectEmit();
