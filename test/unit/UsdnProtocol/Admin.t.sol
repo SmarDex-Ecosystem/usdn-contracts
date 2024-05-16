@@ -720,13 +720,13 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Call "setExpoImbalanceLimits" from admin with the target long imbalance
-     * greater than and equal to the close limit
+     * @custom:scenario Call "setExpoImbalanceLimits" from admin with a target long imbalance too high
      * @custom:given The initial usdnProtocol state from admin wallet
-     * @custom:when Admin calls setExpoImbalanceLimits with the long target imbalance being close imbalance - 1
+     * @custom:when The long target imbalance is greater than close imbalance
+     * @custom:and the long target imbalance is equal to close imbalance
      * @custom:then transaction should revert with an UsdnProtocolLongImbalanceTargetTooHigh error
      */
-    function test_RevertWhen_setExpoImbalanceLimitsWithLongImbalanceTargetLowerThanCloseLimit() external adminPrank {
+    function test_RevertWhen_setExpoImbalanceLimitsWithLongImbalanceTargetTooHigh() external adminPrank {
         int256 openLimitBps = protocol.getOpenExpoImbalanceLimitBps();
         int256 depositLimitBps = protocol.getDepositExpoImbalanceLimitBps();
         int256 closeLimitBps = protocol.getCloseExpoImbalanceLimitBps();

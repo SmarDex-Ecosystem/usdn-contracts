@@ -126,7 +126,7 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Set imbalance limits basis point
-     * @dev newLongImbalanceTargetBps needs to be greater than newCloseLimitBps
+     * @dev newLongImbalanceTargetBps needs to be lower than newCloseLimitBps
      * @param newOpenLimitBps The new open limit
      * @param newDepositLimitBps The new deposit limit
      * @param newWithdrawalLimitBps The new withdrawal limit
