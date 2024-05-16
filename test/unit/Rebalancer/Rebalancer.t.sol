@@ -67,6 +67,8 @@ contract TestRebalancer is RebalancerFixture {
         uint256 newValue = usdnProtocol.getMinLongPosition() + 1 ether;
 
         vm.prank(ADMIN);
+        vm.expectEmit();
+        emit MinAssetDepositUpdated(newValue);
         rebalancer.setMinAssetDeposit(newValue);
         assertEq(newValue, rebalancer.getMinAssetDeposit());
     }
@@ -93,9 +95,7 @@ contract TestRebalancer is RebalancerFixture {
      * @custom:then The transaction reverts
      */
     function test_RevertWhen_setMinAssetDeposit_NotAdmin() public {
-        bytes memory customError = abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this));
-
-        vm.expectRevert(customError);
+        vm.expectRevert(RebalancerUnauthorized.selector);
         rebalancer.setMinAssetDeposit(1);
     }
 }

@@ -11,12 +11,15 @@ interface IRebalancerErrors {
     /// @dev The amount of assets is invalid
     error RebalancerInvalidAmount();
 
+    /// @dev The amount to deposit is insufficient
+    error RebalancerInsufficientAmount();
+
     /// @dev The amount to withdraw is greater than the amount deposited
     error RebalancerWithdrawAmountTooLarge();
 
     /// @dev The wanted minimum asset deposit is invalid
     error RebalancerInvalidMinAssetDeposit();
 
-    /// @dev The amount to deposit is insufficient
-    error RebalancerInsufficientAmount();
+    /// @dev The caller is not authorized to perform the action
+    error RebalancerUnauthorized();
 }

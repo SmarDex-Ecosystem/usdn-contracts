@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { ADMIN } from "test/utils/Constants.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
 
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
@@ -14,7 +16,7 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
  * @custom:feature The admin functions of the protocol
  * @custom:background Given a protocol instance that was initialized with default params
  */
-contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
+contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
     }
@@ -723,6 +725,35 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture {
         protocol.setMinLongPosition(newValue);
         // assert that the new value is equal to the expected value
         assertEq(protocol.getMinLongPosition(), newValue);
+    }
+
+    /**
+     * @custom:scenario Call "setMinLongPosition" from admin that will call rebalancer minimum deposit update
+     * @custom:given The initial usdnProtocol state
+     * @custom:when Admin wallet trigger the function
+     * @custom:then The value should be updated
+     */
+    function test_setMinLongPosition_rebalancerUpdate() external {
+        params = DEFAULT_PARAMS;
+        params.flags.enableRebalancer = true;
+        params.flags.enableLongLimit = true;
+        _setUp(params);
+
+        uint256 newValue = 1 ether;
+        assertGt(rebalancer.getMinAssetDeposit(), newValue);
+
+        // expected event
+        vm.expectEmit();
+        emit MinLongPositionUpdated(newValue);
+        vm.expectEmit();
+        emit MinAssetDepositUpdated(newValue);
+
+        // set minimum long position
+        vm.prank(ADMIN);
+        protocol.setMinLongPosition(newValue);
+        // assert that the new value is equal to the expected value
+        assertEq(protocol.getMinLongPosition(), newValue);
+        assertEq(rebalancer.getMinAssetDeposit(), newValue);
     }
 
     /**

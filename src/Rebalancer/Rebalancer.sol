@@ -17,6 +17,22 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 contract Rebalancer is Ownable, IRebalancer {
     using SafeERC20 for IERC20Metadata;
 
+    /// @notice Modifier to check if the caller is the USDN protocol or the owner
+    modifier onlyAdmin() {
+        if (msg.sender != address(_usdnProtocol) && msg.sender != owner()) {
+            revert RebalancerUnauthorized();
+        }
+        _;
+    }
+
+    /// @notice Modifier to check if the caller is the USDN protocol
+    modifier onlyProtocol() {
+        if (msg.sender != address(_usdnProtocol)) {
+            revert RebalancerUnauthorized();
+        }
+        _;
+    }
+
     /// @notice The address of the asset used by the USDN protocol
     IERC20Metadata internal immutable _asset;
 
@@ -60,11 +76,13 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    function setMinAssetDeposit(uint256 minAssetDeposit) external onlyOwner {
+    function setMinAssetDeposit(uint256 minAssetDeposit) external onlyAdmin {
         if (_usdnProtocol.getMinLongPosition() > minAssetDeposit) {
             revert RebalancerInvalidMinAssetDeposit();
         }
+
         _minAssetDeposit = minAssetDeposit;
+        emit MinAssetDepositUpdated(minAssetDeposit);
     }
 
     /// @inheritdoc IRebalancer
