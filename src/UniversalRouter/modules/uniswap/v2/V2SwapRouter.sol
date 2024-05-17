@@ -30,7 +30,9 @@ abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
 
     function _v2Swap(address[] calldata path, address recipient, address pair) private {
         unchecked {
-            if (path.length < 2) revert V2InvalidPath();
+            if (path.length < 2) {
+                revert V2InvalidPath();
+            }
 
             // cached to save on duplicate operations
             (address token0,) = UniswapV2Library.sortTokens(path[0], path[1]);
@@ -91,7 +93,9 @@ abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
         _v2Swap(path, recipient, firstPair);
 
         uint256 amountOut = tokenOut.balanceOf(recipient) - balanceBefore;
-        if (amountOut < amountOutMinimum) revert V2TooLittleReceived();
+        if (amountOut < amountOutMinimum) {
+            revert V2TooLittleReceived();
+        }
     }
 
     /// @notice Performs a Uniswap v2 exact output swap
@@ -109,7 +113,9 @@ abstract contract V2SwapRouter is UniswapImmutables, Permit2Payments {
     ) internal {
         (uint256 amountIn, address firstPair) =
             UniswapV2Library.getAmountInMultihop(UNISWAP_V2_FACTORY, UNISWAP_V2_PAIR_INIT_CODE_HASH, amountOut, path);
-        if (amountIn > amountInMaximum) revert V2TooMuchRequested();
+        if (amountIn > amountInMaximum) {
+            revert V2TooMuchRequested();
+        }
 
         payOrPermit2Transfer(path[0], payer, firstPair, amountIn);
         _v2Swap(path, recipient, firstPair);

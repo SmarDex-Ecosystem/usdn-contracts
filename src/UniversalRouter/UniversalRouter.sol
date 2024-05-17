@@ -44,7 +44,9 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
         bool success;
         bytes memory output;
         uint256 numCommands = commands.length;
-        if (inputs.length != numCommands) revert LengthMismatch();
+        if (inputs.length != numCommands) {
+            revert LengthMismatch();
+        }
 
         // loop through all given commands, execute them and pass along outputs as defined
         for (uint256 commandIndex = 0; commandIndex < numCommands;) {
@@ -68,6 +70,6 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
         return command & Commands.FLAG_ALLOW_REVERT == 0;
     }
 
-    /// @notice To receive ETH from WETH and NFT protocols
+    /// @notice To receive ETH from WETH
     receive() external payable { }
 }
