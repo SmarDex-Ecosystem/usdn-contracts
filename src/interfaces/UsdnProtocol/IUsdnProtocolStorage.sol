@@ -263,7 +263,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
 
     /**
      * @notice Get the expo imbalance limit when opening a position (in basis points)
-     * @return openExpoImbalanceLimitBps_ The close expo imbalance limit
+     * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
      */
     function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_);
 
