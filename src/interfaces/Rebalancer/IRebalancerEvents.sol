@@ -17,4 +17,10 @@ interface IRebalancerEvents {
      * @param to The address the assets will be sent to
      */
     event PendingAssetsWithdrawn(address user, uint256 amount, address to);
+
+    /**
+     * @notice Emitted when the minimum amount of assets to be deposited by a user is updated
+     * @param minAssetDeposit The new minimum amount of assets to be deposited
+     */
+    event MinAssetDepositUpdated(uint256 minAssetDeposit);
 }
