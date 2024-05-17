@@ -15,35 +15,35 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
         super._setUp();
     }
 
-    function test_RevertWhen_setMaxLeverageWithLeverageTooLow() external adminPrank {
+    function test_RevertWhen_setPositionMaxLeverageWithLeverageTooLow() external adminPrank {
         uint256 minLeverage = usdnProtocol.getMinLeverage();
 
         vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
-        rebalancer.setMaxLeverage(minLeverage - 1);
+        rebalancer.setPositionMaxLeverage(minLeverage - 1);
     }
 
-    function test_RevertWhen_setMaxLeverageWithLeverageTooHigh() external adminPrank {
+    function test_RevertWhen_setPositionMaxLeverageWithLeverageTooHigh() external adminPrank {
         uint256 maxLeverage = usdnProtocol.getMaxLeverage();
 
         vm.expectRevert(RebalancerInvalidMaxLeverage.selector);
-        rebalancer.setMaxLeverage(maxLeverage + 1);
+        rebalancer.setPositionMaxLeverage(maxLeverage + 1);
     }
 
-    function test_RevertWhen_setMaxLeverageWithCallerNotTheOwner() external {
+    function test_RevertWhen_setPositionMaxLeverageWithCallerNotTheOwner() external {
         uint256 maxLeverage = usdnProtocol.getMaxLeverage();
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        rebalancer.setMaxLeverage(maxLeverage - 1);
+        rebalancer.setPositionMaxLeverage(maxLeverage - 1);
     }
 
-    function test_setMaxLeverage() external adminPrank {
+    function test_setPositionMaxLeverage() external adminPrank {
         uint256 maxLeverage = usdnProtocol.getMaxLeverage();
         uint256 newMaxLeverage = maxLeverage - 1;
 
         vm.expectEmit();
         emit PositionMaxLeverageUpdated(newMaxLeverage);
-        rebalancer.setMaxLeverage(newMaxLeverage);
+        rebalancer.setPositionMaxLeverage(newMaxLeverage);
 
-        assertEq(rebalancer.getMaxLeverage(), newMaxLeverage, "The max leverage should have been updated");
+        assertEq(rebalancer.getPositionMaxLeverage(), newMaxLeverage, "The max leverage should have been updated");
     }
 }

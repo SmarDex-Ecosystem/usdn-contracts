@@ -45,6 +45,16 @@ contract TestRebalancer is RebalancerFixture {
     }
 
     /**
+     * @custom:scenario Check the _positionMaxLeverage value of the rebalancer contract
+     * @custom:given A deployed rebalancer contract
+     * @custom:when The getPositionMaxLeverage function is called
+     * @custom:then The value of the _positionMaxLeverage should be equal to the USDN protocol's max leverage
+     */
+    function test_getPositionMaxLeverage() public {
+        assertEq(rebalancer.getPositionMaxLeverage(), usdnProtocol.getMaxLeverage());
+    }
+
+    /**
      * @custom:scenario Check the _minAssetDeposit value of the rebalancer contract
      * @custom:given A deployed rebalancer contract
      * @custom:when The getMinAssetDeposit function is called

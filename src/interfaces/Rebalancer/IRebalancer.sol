@@ -32,14 +32,14 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      * @dev Cannot be higher than the max leverage permitted by the USDN protocol
      * @return The max leverage a position can have
      */
-    function getMaxLeverage() external view returns (uint256);
+    function getPositionMaxLeverage() external view returns (uint256);
 
     /**
      * @notice Update the max leverage a position can have
      * @dev `newMaxLeverage` must be between the min and max leverage of the USDN protocol
      * @param newMaxLeverage The new max leverage
      */
-    function setMaxLeverage(uint256 newMaxLeverage) external;
+    function setPositionMaxLeverage(uint256 newMaxLeverage) external;
 
     /**
      * @notice Returns the minimum amount of assets to be deposited by a user

@@ -75,12 +75,12 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    function getMaxLeverage() external view returns (uint256) {
+    function getPositionMaxLeverage() external view returns (uint256) {
         return _maxLeverage;
     }
 
     /// @inheritdoc IRebalancer
-    function setMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
+    function setPositionMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
         IUsdnProtocol protocol = _usdnProtocol;
         if (newMaxLeverage < protocol.getMinLeverage() || newMaxLeverage > protocol.getMaxLeverage()) {
             revert RebalancerInvalidMaxLeverage();
