@@ -359,6 +359,11 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setMinLongPosition(uint256 newMinLongPosition) external onlyOwner {
         _minLongPosition = newMinLongPosition;
         emit MinLongPositionUpdated(newMinLongPosition);
+
+        IRebalancer rebalancer = _rebalancer;
+        if (address(rebalancer) != address(0) && rebalancer.getMinAssetDeposit() < newMinLongPosition) {
+            rebalancer.setMinAssetDeposit(newMinLongPosition);
+        }
     }
 
     /**
