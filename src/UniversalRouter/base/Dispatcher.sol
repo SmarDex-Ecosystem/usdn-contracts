@@ -9,11 +9,11 @@ import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.so
 
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { V2SwapRouter } from "src/UniversalRouter/modules/uniswap/v2/V2SwapRouter.sol";
-import { SmardexRouter } from "src/UniversalRouter/modules/smardex/SmardexRouter.sol";
+import { UsdnRouter } from "src/UniversalRouter/modules/usdn/UsdnRouter.sol";
 
 /// @title Decodes and Executes Commands
 /// @notice Called by the UniversalRouter contract to efficiently decode and execute a singular command
-abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, SmardexRouter, LockAndMsgSender {
+abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnRouter, LockAndMsgSender {
     using BytesLib for bytes;
 
     error InvalidCommandType(uint256 commandType);
@@ -224,7 +224,16 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, SmardexRou
                     }
                     _wrapUSDN(assetAmount, map(recipient));
                 } else if (command == Commands.UNWRAP_WUSDN) {
-                    // TODO UNWRAP_WUSDN
+                    // equivalent: abi.decode(inputs, (uint256, address))
+                    uint256 assetAmount;
+                    address recipient;
+                    address owner;
+                    assembly {
+                        assetAmount := calldataload(inputs.offset)
+                        recipient := calldataload(add(inputs.offset, 0x20))
+                        owner := calldataload(add(inputs.offset, 0x40))
+                    }
+                    _unwrapUSDN(assetAmount, map(recipient), map(owner));
                 } else if (command == Commands.WRAP_STETH) {
                     // TODO WRAP_STETH
                 } else if (command == Commands.UNWRAP_WSTETH) {

@@ -64,7 +64,6 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
     MockChainlinkOnChain public mockChainlinkOnChain;
     WstEthOracleMiddleware public oracleMiddleware;
     LiquidationRewardsManager public liquidationRewardsManager;
-    bytes public priceData;
 
     PreviousActionsData internal EMPTY_PREVIOUS_DATA =
         PreviousActionsData({ priceData: new bytes[](0), rawIndices: new uint128[](0) });
@@ -78,11 +77,10 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             if (testParams.forkWarp > 0) {
                 vm.warp(testParams.forkWarp);
             }
-            (uint256 price,, uint256 decimals,, bytes memory data) =
-                getHermesApiSignature(PYTH_STETH_USD, block.timestamp - 86_400);
+            (uint256 price,, uint256 decimals,,) = getHermesApiSignature(PYTH_STETH_USD, block.timestamp - 1000);
+
             testParams.initialPrice = uint128(price * 10 ** (18 - decimals));
             testParams.initialLiqPrice = testParams.initialPrice / 2;
-            priceData = data;
             dealAccounts(); // provide test accounts with ETH again
             wstETH = WstETH(payable(WSTETH));
             sdex = Sdex(SDEX);
