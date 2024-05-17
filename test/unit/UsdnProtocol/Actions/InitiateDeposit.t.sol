@@ -292,13 +292,13 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario A initiate deposit liquidates a pending tick but is not validated
-     * because a tick still need to be liquidated
+     * because a tick still needs to be liquidated
      * @custom:given The initial open position
      * @custom:and A user open position
-     * @custom:and The price drop below all position liquidation prices
+     * @custom:and The price drops below all position liquidation prices
      * @custom:when The first `initiateDeposit` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still need to be liquidated
+     * @custom:and The user open position tick still needs to be liquidated
      * @custom:and The user deposit isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `initiateDeposit` is called
@@ -365,14 +365,14 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario A initiate deposit liquidates a tick but is not validated
-     * because a tick still need to be liquidated. In the same block another deposit
+     * because a tick still needs to be liquidated. In the same block another deposit
      * liquid the remaining tick and is validated
      * @custom:given The initial open position
      * @custom:and A user open position
-     * @custom:and The price drop below all position liquidation prices
+     * @custom:and The price drops below all position liquidation prices
      * @custom:when The first `initiateDeposit` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still need to be liquidated
+     * @custom:and The user open position tick still needs to be liquidated
      * @custom:and The user deposit isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `initiateDeposit` is called in the same block
@@ -437,14 +437,14 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario A validate deposit liquidates a pending tick but is not validated
-     * because a tick still need to be liquidated
+     * because a tick still needs to be liquidated
      * @custom:given The initial open position
      * @custom:and A user open position
      * @custom:and A user initiateDeposit position is pending
-     * @custom:and The price drop below all position liquidation prices
+     * @custom:and The price drops below all position liquidation prices
      * @custom:when The first `validateDeposit` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still need to be liquidated
+     * @custom:and The user open position tick still needs to be liquidated
      * @custom:and The user deposit isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `validateDeposit` is called
@@ -520,14 +520,14 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario A validate deposit liquidates a tick but is not validated
-     * because a tick still need to be liquidated. In the same block another deposit
+     * because a tick still needs to be liquidated. In the same block another deposit
      * liquid the remaining tick and is validated
      * @custom:given The initial open position
      * @custom:and A user open position
-     * @custom:and The price drop below all position liquidation prices
+     * @custom:and The price drops below all position liquidation prices
      * @custom:when The first `validateDeposit` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still need to be liquidated
+     * @custom:and The user open position tick still needs to be liquidated
      * @custom:and The user deposit isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `validateDeposit` is called in the same block

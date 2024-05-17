@@ -177,7 +177,7 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      * @custom:given The initial protocol
      * @custom:and The initial long position
      * @custom:and A user long position
-     * @custom:and The price drop under all long positions
+     * @custom:and The price drops under all long positions
      * @custom:and The initial long position is liquidated
      * @custom:and The user long position is pending for liquidation
      * @custom:when The function `validateActionablePendingActions` is called

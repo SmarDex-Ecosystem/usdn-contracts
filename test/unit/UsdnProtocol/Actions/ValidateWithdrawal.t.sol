@@ -152,14 +152,14 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario A initiate withdrawal liquidates a tick but is not validated
-     * because a tick still need to be liquidated. In the same block another withdrawal
+     * because a tick still needs to be liquidated. In the same block another withdrawal
      * liquid the remaining tick and is validated
      * @custom:given The initial open position
      * @custom:and A user open position
-     * @custom:and The price drop below all position liquidation prices
+     * @custom:and The price drops below all position liquidation prices
      * @custom:when The first `initiateWithdrawal` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still need to be liquidated
+     * @custom:and The user open position tick still needs to be liquidated
      * @custom:and The user withdrawal isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `initiateWithdrawal` is called in the same block

@@ -600,14 +600,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario A validate close position liquidates a pending tick but is not validated
-     * because a tick still need to be liquidated
+     * because a tick still needs to be liquidated
      * @custom:given The initial open position
      * @custom:and A first user open position
      * @custom:and A second user open position with a liquidation price below all others
-     * @custom:and The price drop below the initiate and the first user open position
+     * @custom:and The price drops below the initiate and the first user open position
      * @custom:when The first `validateClosePosition` is called
      * @custom:and The user open position tick still is liquidated
-     * @custom:and The initial open position tick still need to be liquidated
+     * @custom:and The initial open position tick still needs to be liquidated
      * @custom:and The user close isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `validateClosePosition` is called
@@ -677,14 +677,14 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario A validate close position liquidates a pending tick but is not validated
-     * because a tick still need to be liquidated
+     * because a tick still needs to be liquidated
      * @custom:given The initial open position
      * @custom:and A first user open position
      * @custom:and A second user open position with a liquidation price below all others
-     * @custom:and The price drop below the initiate and the first user open position
+     * @custom:and The price drops below the initiate and the first user open position
      * @custom:when The first `validateClosePosition` is called
      * @custom:and The user open position tick still is liquidated
-     * @custom:and The initial open position tick still need to be liquidated
+     * @custom:and The initial open position tick still needs to be liquidated
      * @custom:and The user close isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `validateClosePosition` is called

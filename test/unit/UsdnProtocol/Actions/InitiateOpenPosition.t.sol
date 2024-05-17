@@ -219,13 +219,13 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
     /**
      * @custom:scenario A initiate open position liquidates a pending tick but is not validated
-     * because a tick still need to be liquidated
+     * because a tick still needs to be liquidated
      * @custom:given The initial open position
      * @custom:and A first user open position
-     * @custom:and The price drop below all position liquidation prices
+     * @custom:and The price drops below all position liquidation prices
      * @custom:when The first `initiateOpenPosition` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The first user open position tick still need to be liquidated
+     * @custom:and The first user open position tick still needs to be liquidated
      * @custom:and The second user open position isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `initiateOpenPosition` is called
@@ -302,14 +302,14 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
     /**
      * @custom:scenario A initiate open position liquidates a tick but is not validated
-     * because a tick still need to be liquidated. In the same block another open
+     * because a tick still needs to be liquidated. In the same block another open
      * liquid the remaining tick and is validated
      * @custom:given The initial open position
      * @custom:and A first user open position
-     * @custom:and The price drop below all position liquidation prices
+     * @custom:and The price drops below all position liquidation prices
      * @custom:when The first `initiateOpenPosition` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The first user open position tick still need to be liquidated
+     * @custom:and The first user open position tick still needs to be liquidated
      * @custom:and The second user open position isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `initiateOpenPosition` is called in the same block
@@ -384,14 +384,14 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
     /**
      * @custom:scenario A validate open position liquidates a pending tick but is not validated
-     * because a tick still need to be liquidated
+     * because a tick still needs to be liquidated
      * @custom:given The initial open position
      * @custom:and A first user open position
      * @custom:and A second initiated user open position with a liquidation price below all others
-     * @custom:and The price drop below the initiate and the first user open position
+     * @custom:and The price drops below the initiate and the first user open position
      * @custom:when The first `validateDeposit` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The first user open position tick still need to be liquidated
+     * @custom:and The first user open position tick still needs to be liquidated
      * @custom:and The user initiated open position isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `validateDeposit` is called
@@ -466,15 +466,15 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
 
     /**
      * @custom:scenario A validate open position liquidates a pending tick but is not validated
-     * because a tick still need to be liquidated. In the same block another validate
+     * because a tick still needs to be liquidated. In the same block another validate
      * liquid the remaining tick and is validated
      * @custom:given The initial open position
      * @custom:and A first user open position
      * @custom:and A second initiated user open position with a liquidation price below all others
-     * @custom:and The price drop below the initiate and the first user open position
+     * @custom:and The price drops below the initiate and the first user open position
      * @custom:when The first `validateDeposit` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The first user open position tick still need to be liquidated
+     * @custom:and The first user open position tick still needs to be liquidated
      * @custom:and The user initiated open position isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `validateDeposit` is called
