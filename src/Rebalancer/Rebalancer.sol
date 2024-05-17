@@ -102,19 +102,20 @@ contract Rebalancer is Ownable, IRebalancer {
         uint128 positionVersion = _positionVersion;
         UserDeposit memory depositData = _userDeposit[to];
 
-        uint128 totDeposit = depositData.amount + amount;
-
-        if (totDeposit < _minAssetDeposit) {
-            revert RebalancerInsufficientAmount();
-        }
-        if (depositData.amount != 0 && depositData.entryPositionVersion <= positionVersion) {
-            revert RebalancerUserNotPending();
+        if (depositData.amount == 0) {
+            if (amount < _minAssetDeposit) {
+                revert RebalancerInsufficientAmount();
+            }
+        } else {
+            if (depositData.entryPositionVersion <= positionVersion) {
+                revert RebalancerUserNotPending();
+            }
         }
 
         _asset.safeTransferFrom(msg.sender, address(this), amount);
 
         depositData.entryPositionVersion = positionVersion + 1;
-        depositData.amount = totDeposit;
+        depositData.amount += amount;
         _userDeposit[to] = depositData;
 
         emit AssetsDeposited(amount, to, positionVersion + 1);
