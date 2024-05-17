@@ -26,6 +26,9 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @notice The current position version
     uint128 internal _positionVersion;
 
+    /// @notice The maximum leverage a position can have
+    uint256 internal _maxLeverage;
+
     /// @notice The data about the assets deposited in this contract by users
     mapping(address => UserDeposit) internal _userDeposit;
 
@@ -33,6 +36,7 @@ contract Rebalancer is Ownable, IRebalancer {
     constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) {
         _usdnProtocol = usdnProtocol;
         _asset = usdnProtocol.getAsset();
+        _maxLeverage = usdnProtocol.getMaxLeverage();
     }
 
     /// @inheritdoc IRebalancer
@@ -43,6 +47,23 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @inheritdoc IRebalancer
     function getPositionVersion() external view returns (uint128 positionVersion_) {
         positionVersion_ = _positionVersion;
+    }
+
+    /// @inheritdoc IRebalancer
+    function getMaxLeverage() external view returns (uint256) {
+        return _maxLeverage;
+    }
+
+    /// @inheritdoc IRebalancer
+    function setMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
+        IUsdnProtocol protocol = _usdnProtocol;
+        if (newMaxLeverage < protocol.getMinLeverage() || newMaxLeverage > protocol.getMaxLeverage()) {
+            revert RebalancerInvalidMaxLeverage();
+        }
+
+        _maxLeverage = newMaxLeverage;
+
+        emit MaxLeverageUpdated(newMaxLeverage);
     }
 
     /// @inheritdoc IRebalancer

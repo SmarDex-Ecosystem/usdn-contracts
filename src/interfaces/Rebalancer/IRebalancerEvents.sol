@@ -17,4 +17,10 @@ interface IRebalancerEvents {
      * @param to The address the assets will be sent to
      */
     event PendingAssetsWithdrawn(address user, uint256 amount, address to);
+
+    /**
+     * @notice Emitted when the max leverage is updated
+     * @param newMaxLeverage The new value for the max leverage
+     */
+    event MaxLeverageUpdated(uint256 newMaxLeverage);
 }

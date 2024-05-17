@@ -55,6 +55,7 @@ contract RebalancerFixture is BaseFixture, IRebalancerTypes, IRebalancerErrors, 
 
         // separate the roles ADMIN and DEPLOYER
         usdnProtocol.transferOwnership(ADMIN);
+        rebalancer.transferOwnership(ADMIN);
         vm.stopPrank();
     }
 }
