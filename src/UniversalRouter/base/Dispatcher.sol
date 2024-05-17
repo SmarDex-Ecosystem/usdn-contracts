@@ -16,10 +16,6 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsg
     using BytesLib for bytes;
 
     error InvalidCommandType(uint256 commandType);
-    error BuyPunkFailed();
-    error InvalidOwnerERC721();
-    error InvalidOwnerERC1155();
-    error BalanceTooLow();
 
     /// @notice Decodes and executes the given command with the given inputs
     /// @param commandType The command type to execute
