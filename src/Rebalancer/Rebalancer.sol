@@ -70,8 +70,14 @@ contract Rebalancer is Ownable, IRebalancer {
 
         uint128 positionVersion = _positionVersion;
         UserDeposit memory depositData = _userDeposit[to];
-        if (depositData.amount != 0 && depositData.entryPositionVersion <= positionVersion) {
-            revert RebalancerUserNotPending();
+        if (depositData.amount != 0) {
+            if (depositData.entryPositionVersion <= _lastLiquidatedVersion) {
+                // if the user was in a position that got liquidated, we should reset its data
+                delete depositData;
+            } else if (depositData.entryPositionVersion <= positionVersion) {
+                // if the user already deposited assets that are in a position, revert
+                revert RebalancerUserNotPending();
+            }
         }
 
         _asset.safeTransferFrom(msg.sender, address(this), amount);
