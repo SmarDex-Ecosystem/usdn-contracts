@@ -37,6 +37,13 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function getPositionVersion() external view returns (uint128 positionVersion_);
 
     /**
+     * @notice Returns the version of the last position that got liquidated
+     * @dev 0 means no liquidated version yet
+     * @return The version of the last position that got liquidated
+     */
+    function getLastLiquidatedVersion() external view returns (uint128);
+
+    /**
      * @notice Returns the data regarding the assets deposited by the provided user
      * @return userDeposit_ The data regarding the assets deposited by the user
      */

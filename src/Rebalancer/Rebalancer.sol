@@ -26,6 +26,9 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @notice The current position version
     uint128 internal _positionVersion;
 
+    /// @notice The version of the last position that got liquidated
+    uint128 internal _lastLiquidatedVersion;
+
     /// @notice The data about the assets deposited in this contract by users
     mapping(address => UserDeposit) internal _userDeposit;
 
@@ -43,6 +46,11 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @inheritdoc IRebalancer
     function getPositionVersion() external view returns (uint128 positionVersion_) {
         positionVersion_ = _positionVersion;
+    }
+
+    /// @inheritdoc IRebalancer
+    function getLastLiquidatedVersion() external view returns (uint128) {
+        return _lastLiquidatedVersion;
     }
 
     /// @inheritdoc IRebalancer
