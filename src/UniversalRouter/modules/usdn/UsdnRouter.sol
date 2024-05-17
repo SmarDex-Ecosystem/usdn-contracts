@@ -20,10 +20,8 @@ abstract contract UsdnRouter is UsdnImmutables, Permit2Payments {
 
         if (value == Constants.CONTRACT_BALANCE) {
             value = balance;
-        } else {
-            if (value > balance) {
-                revert InsufficientToken();
-            }
+        } else if (value > balance) {
+            revert InsufficientToken();
         }
 
         if (value > 0) {
@@ -41,10 +39,8 @@ abstract contract UsdnRouter is UsdnImmutables, Permit2Payments {
 
         if (value == Constants.CONTRACT_BALANCE) {
             value = balance;
-        } else {
-            if (value > balance) {
-                revert InsufficientToken();
-            }
+        } else if (value > balance) {
+            revert InsufficientToken();
         }
 
         if (value > 0) {

@@ -220,7 +220,7 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnRouter
                     }
                     _wrapUSDN(assetAmount, map(recipient));
                 } else if (command == Commands.UNWRAP_WUSDN) {
-                    // equivalent: abi.decode(inputs, (uint256, address))
+                    // equivalent: abi.decode(inputs, (uint256, address, address))
                     uint256 assetAmount;
                     address recipient;
                     address owner;
