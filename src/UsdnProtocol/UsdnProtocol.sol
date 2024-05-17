@@ -347,8 +347,9 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _minLongPosition = newMinLongPosition;
         emit MinLongPositionUpdated(newMinLongPosition);
 
-        if (_rebalancer != IRebalancer(address(0)) && _rebalancer.getMinAssetDeposit() < newMinLongPosition) {
-            _rebalancer.setMinAssetDeposit(newMinLongPosition);
+        IRebalancer rebalancer = _rebalancer;
+        if (address(rebalancer) != address(0) && rebalancer.getMinAssetDeposit() < newMinLongPosition) {
+            rebalancer.setMinAssetDeposit(newMinLongPosition);
         }
     }
 
