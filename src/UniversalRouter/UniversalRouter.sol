@@ -41,7 +41,9 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
         bool success;
         bytes memory output;
         uint256 numCommands = commands.length;
-        if (inputs.length != numCommands) revert LengthMismatch();
+        if (inputs.length != numCommands) {
+            revert LengthMismatch();
+        }
 
         // loop through all given commands, execute them and pass along outputs as defined
         for (uint256 commandIndex = 0; commandIndex < numCommands;) {
