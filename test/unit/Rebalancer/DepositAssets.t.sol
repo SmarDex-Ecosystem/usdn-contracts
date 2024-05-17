@@ -74,6 +74,7 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
         uint128 expectedPositionVersion = rebalancer.getPositionVersion() + 1;
         uint256 rebalancerBalanceBefore = wstETH.balanceOf(address(rebalancer));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
+        uint256 pendingAssetsBefore = rebalancer.getPendingAssetsAmount();
 
         vm.expectEmit();
         emit AssetsDeposited(INITIAL_DEPOSIT, address(this), expectedPositionVersion);
@@ -93,6 +94,11 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
             userDeposit.entryPositionVersion, expectedPositionVersion, "The position version should be the expected one"
         );
         assertEq(userDeposit.amount, INITIAL_DEPOSIT, "The amount should have been saved");
+        assertEq(
+            rebalancer.getPendingAssetsAmount(),
+            pendingAssetsBefore + INITIAL_DEPOSIT,
+            "The amount deposited should have been added to the pending assets"
+        );
     }
 
     /**
@@ -110,6 +116,8 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
         uint128 secondDepositAmount = INITIAL_DEPOSIT;
         uint256 rebalancerBalanceBefore = wstETH.balanceOf(address(rebalancer));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
+        uint256 pendingAssetsBefore = rebalancer.getPendingAssetsAmount();
+
         vm.expectEmit();
         emit AssetsDeposited(secondDepositAmount, address(this), expectedPositionVersion);
         rebalancer.depositAssets(secondDepositAmount, address(this));
@@ -131,6 +139,11 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
         );
         assertEq(
             userDeposit.amount, firstDepositAmount + secondDepositAmount, "The sum of amounts should have been saved"
+        );
+        assertEq(
+            rebalancer.getPendingAssetsAmount(),
+            pendingAssetsBefore + secondDepositAmount,
+            "The pending assets amount should be equal to the sum of all deposits"
         );
     }
 }

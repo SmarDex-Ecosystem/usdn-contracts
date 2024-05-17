@@ -89,6 +89,7 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
     function test_withdrawPendingAssets() external {
         uint256 rebalancerBalanceBefore = wstETH.balanceOf(address(rebalancer));
         uint256 userBalanceBefore = wstETH.balanceOf(USER_1);
+        uint256 pendingAssetsBefore = rebalancer.getPendingAssetsAmount();
 
         vm.expectEmit();
         emit PendingAssetsWithdrawn(address(this), INITIAL_DEPOSIT, USER_1);
@@ -109,6 +110,11 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
         UserDeposit memory userDeposit = rebalancer.getUserDepositData(address(this));
         assertEq(userDeposit.entryPositionVersion, 0, "The position version should be back to 0");
         assertEq(userDeposit.amount, 0, "The amount should be 0");
+        assertEq(
+            rebalancer.getPendingAssetsAmount(),
+            pendingAssetsBefore - INITIAL_DEPOSIT,
+            "The amount withdrawn should have been subtracted from the pending assets"
+        );
     }
 
     /**
@@ -124,18 +130,20 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
         uint256 expectedPositionVersion = rebalancer.getPositionVersion() + 1;
         uint256 rebalancerBalanceBefore = wstETH.balanceOf(address(rebalancer));
         uint256 userBalanceBefore = wstETH.balanceOf(address(this));
+        uint256 pendingAssetsBefore = rebalancer.getPendingAssetsAmount();
+        uint128 amountToWithdraw = totDeposit * 6 / 10;
 
         vm.expectEmit();
-        emit PendingAssetsWithdrawn(address(this), totDeposit * 6 / 10, address(this));
-        rebalancer.withdrawPendingAssets(totDeposit * 6 / 10, address(this));
+        emit PendingAssetsWithdrawn(address(this), amountToWithdraw, address(this));
+        rebalancer.withdrawPendingAssets(amountToWithdraw, address(this));
 
         assertEq(
-            rebalancerBalanceBefore - totDeposit * 6 / 10,
+            rebalancerBalanceBefore - amountToWithdraw,
             wstETH.balanceOf(address(rebalancer)),
             "The rebalancer should have sent the assets"
         );
         assertEq(
-            userBalanceBefore + totDeposit * 6 / 10,
+            userBalanceBefore + amountToWithdraw,
             wstETH.balanceOf(address(this)),
             "The user address should have received the assets"
         );
@@ -145,6 +153,11 @@ contract TestRebalancerWithdrawPendingAssets is RebalancerFixture {
             userDeposit.entryPositionVersion, expectedPositionVersion, "The position version should not have changed"
         );
         assertEq(userDeposit.amount, totDeposit * 4 / 10, "The amount withdrawn should have been subtracted");
+        assertEq(
+            rebalancer.getPendingAssetsAmount(),
+            pendingAssetsBefore - amountToWithdraw,
+            "The amount withdrawn should have been subtracted from the pending assets"
+        );
     }
 
     /**

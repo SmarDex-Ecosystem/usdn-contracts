@@ -42,6 +42,9 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @notice The current position version
     uint128 internal _positionVersion;
 
+    /// @notice The amount of assets waiting to be used in the next version of the position
+    uint256 internal _pendingAssetsAmount;
+
     /// @notice The minimum amount of assets to be deposited by a user
     uint256 internal _minAssetDeposit;
 
@@ -63,6 +66,11 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @inheritdoc IRebalancer
     function getUsdnProtocol() external view returns (IUsdnProtocol) {
         return _usdnProtocol;
+    }
+
+    /// @inheritdoc IRebalancer
+    function getPendingAssetsAmount() external view returns (uint256) {
+        return _pendingAssetsAmount;
     }
 
     /// @inheritdoc IRebalancer
@@ -117,6 +125,7 @@ contract Rebalancer is Ownable, IRebalancer {
         depositData.entryPositionVersion = positionVersion + 1;
         depositData.amount += amount;
         _userDeposit[to] = depositData;
+        _pendingAssetsAmount += amount;
 
         emit AssetsDeposited(amount, to, positionVersion + 1);
     }
@@ -142,6 +151,7 @@ contract Rebalancer is Ownable, IRebalancer {
         uint128 newAmount = depositData.amount;
         unchecked {
             newAmount -= amount;
+            _pendingAssetsAmount -= amount;
         }
         if (newAmount == 0) {
             // If the new amount after the withdraw is equal to 0, delete the mapping entry
