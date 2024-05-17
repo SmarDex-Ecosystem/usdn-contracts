@@ -23,6 +23,8 @@ contract UniversalRouterBaseFixture is BaseFixture {
         RouterParameters memory params = RouterParameters({
             permit2: 0x000000000022D473030F116dDEE9F6B43aC78BA3,
             weth9: WETH,
+            steth: 0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84,
+            wsteth: 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0,
             v2Factory: 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f,
             v3Factory: 0x1F98431c8aD98523631AE4a59f267346ea31F984,
             pairInitCodeHash: 0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f, // v2 pair hash

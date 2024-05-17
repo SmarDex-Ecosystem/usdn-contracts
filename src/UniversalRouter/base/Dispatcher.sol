@@ -9,10 +9,11 @@ import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.so
 
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { V2SwapRouter } from "src/UniversalRouter/modules/uniswap/v2/V2SwapRouter.sol";
+import { LidoRouter } from "src/UniversalRouter/modules/lido/LidoRouter.sol";
 
 /// @title Decodes and Executes Commands
 /// @notice Called by the UniversalRouter contract to efficiently decode and execute a singular command
-abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsgSender {
+abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LidoRouter, LockAndMsgSender {
     using BytesLib for bytes;
 
     error InvalidCommandType(uint256 commandType);
@@ -214,9 +215,23 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsg
                 } else if (command == Commands.UNWRAP_WUSDN) {
                     // TODO UNWRAP_WUSDN
                 } else if (command == Commands.WRAP_STETH) {
-                    // TODO WRAP_STETH
+                    // equivalent: abi.decode(inputs, (address, uint256))
+                    address recipient;
+                    uint256 amount;
+                    assembly {
+                        recipient := calldataload(inputs.offset)
+                        amount := calldataload(add(inputs.offset, 0x20))
+                    }
+                    LidoRouter._wrapSTETH(map(recipient), amount);
                 } else if (command == Commands.UNWRAP_WSTETH) {
-                    // TODO UNWRAP_WSTETH
+                    // equivalent: abi.decode(inputs, (address, uint256))
+                    address recipient;
+                    uint256 amountMin;
+                    assembly {
+                        recipient := calldataload(inputs.offset)
+                        amountMin := calldataload(add(inputs.offset, 0x20))
+                    }
+                    LidoRouter._unwrapSTETH(map(recipient), amountMin);
                 } else {
                     revert InvalidCommandType(command);
                 }
