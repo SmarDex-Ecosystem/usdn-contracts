@@ -137,7 +137,7 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
     /**
      * @custom:scenario The user deposit assets after his previous assets got liquidated
      * @custom:given A user with deposited assets
-     * @custom:and the position the assets were in got liquidated
+     * @custom:and The position the assets were in got liquidated
      * @custom:when The user deposit assets again
      * @custom:then His assets are transferred to the contract
      */
