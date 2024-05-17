@@ -41,7 +41,7 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
         uint256 newMaxLeverage = maxLeverage - 1;
 
         vm.expectEmit();
-        emit MaxLeverageUpdated(newMaxLeverage);
+        emit PositionMaxLeverageUpdated(newMaxLeverage);
         rebalancer.setMaxLeverage(newMaxLeverage);
 
         assertEq(rebalancer.getMaxLeverage(), newMaxLeverage, "The max leverage should have been updated");

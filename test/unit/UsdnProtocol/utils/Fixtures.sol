@@ -159,6 +159,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         rebalancer = new RebalancerHandler(protocol);
         if (testParams.flags.enableRebalancer) {
             protocol.setRebalancer(rebalancer);
+            rebalancer.transferOwnership(ADMIN);
         }
 
         // leverage approx 2x
@@ -170,7 +171,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         );
 
         // separate the roles ADMIN and DEPLOYER
-        rebalancer.transferOwnership(ADMIN);
         protocol.transferOwnership(ADMIN);
         vm.stopPrank();
 
