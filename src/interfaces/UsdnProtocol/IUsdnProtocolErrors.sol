@@ -168,6 +168,6 @@ interface IUsdnProtocolErrors {
      */
     error UsdnProtocolZeroLongTradingExpo();
 
-    /// @dev Indicates that liquidation still pending
+    /// @dev Indicates that some ticks still need to be liquidated before new actions can be performed
     error UsdnProtocolLiquidationPending();
 }

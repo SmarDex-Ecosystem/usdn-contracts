@@ -406,7 +406,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         initialPosTickVersion_ = protocol.getTickVersion(initialPosTick_);
     }
 
-    /// @dev Wait the required delay to allow mock middleware price update
+    /// @dev Wait for the required delay to allow mock middleware price update
     function _waitMockMiddlewarePriceDelay() internal {
         skip(30 minutes - oracleMiddleware.getValidationDelay());
     }

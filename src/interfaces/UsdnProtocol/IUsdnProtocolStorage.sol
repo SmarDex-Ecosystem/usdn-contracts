@@ -71,8 +71,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function MAX_LIQUIDATION_ITERATION() external pure returns (uint16);
 
     /**
-     * @notice Get the value indicate no position tick
-     * @return The no position tick value
+     * @notice Get the sentinel value indicating that a `PositionId` represents no position
+     * @return The tick value for a `PositionId` that represents no position
      */
     function NO_POSITION_TICK() external pure returns (int24);
 

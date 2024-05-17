@@ -664,7 +664,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 // unsure if all ticks above the current tick were liquidated, but some were
                 int24 highestPopulatedTick = _findHighestPopulatedTick(data.iTick);
                 _highestPopulatedTick = highestPopulatedTick;
-                data.isLiquidationPending = data.currentTick < highestPopulatedTick;
+                data.isLiquidationPending = data.currentTick <= highestPopulatedTick;
             }
         }
 

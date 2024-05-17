@@ -620,7 +620,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
         // initial open position
         (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
 
-        // open position with a liquidation price far lower than others positions
+        // open position with a liquidation price far lower than other positions
         PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
                 address(this),

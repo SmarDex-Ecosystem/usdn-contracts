@@ -73,13 +73,13 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario A initiate withdrawal liquidates a pending tick but is not validated
-     * because a tick still need to be liquidated
+     * because a tick still needs to be liquidated
      * @custom:given The initial open position
      * @custom:and A user open position
-     * @custom:and The price drop below all position liquidation prices
+     * @custom:and The price drops below all position liquidation prices
      * @custom:when The first `initiateWithdrawal` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still need to be liquidated
+     * @custom:and The user open position tick still needs to be liquidated
      * @custom:and The user withdrawal isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `initiateWithdrawal` is called
@@ -230,13 +230,13 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario A validate withdrawal liquidates a pending tick but is not validated
-     * because a tick still need to be liquidated
+     * because a tick still needs to be liquidated
      * @custom:given The initial open position
      * @custom:and A user open position
-     * @custom:and The price drop below all position liquidation prices
+     * @custom:and The price drops below all position liquidation prices
      * @custom:when The first `validateWithdrawal` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still need to be liquidated
+     * @custom:and The user open position tick still needs to be liquidated
      * @custom:and The user withdrawal isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `validateWithdrawal` is called
@@ -313,13 +313,13 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
     /**
      * @custom:scenario A validate withdrawal liquidates a pending tick but is not validated
-     * because a tick still need to be liquidated
+     * because a tick still needs to be liquidated
      * @custom:given The initial open position
      * @custom:and A user open position
-     * @custom:and The price drop below all position liquidation prices
+     * @custom:and The price drops below all position liquidation prices
      * @custom:when The first `validateWithdrawal` is called
      * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still need to be liquidated
+     * @custom:and The user open position tick still needs to be liquidated
      * @custom:and The user withdrawal isn't validated
      * @custom:then The transaction is completed
      * @custom:when The second `validateWithdrawal` is called in the same block
@@ -404,9 +404,9 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The user initiates a deposit with parameter to defined at zero
+     * @custom:scenario The user initiates a deposit with the parameter 'to' defined at zero
      * @custom:given An initialized USDN protocol
-     * @custom:when The user initiate a withdrawal with parameter to address defined at 0
+     * @custom:when The user initiates a withdrawal with the parameter 'to' address defined at 0
      * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressTo`
      */
     function test_RevertWhen_zeroAddressTo() public {
