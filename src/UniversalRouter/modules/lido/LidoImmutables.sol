@@ -8,10 +8,10 @@ struct LidoParameters {
 
 contract LidoImmutables {
     /// @dev The address of steth
-    address internal immutable STETH;
+    address public immutable STETH;
 
     /// @dev The address of wrapped steth
-    address internal immutable WSTETH;
+    address public immutable WSTETH;
 
     constructor(LidoParameters memory params) {
         STETH = params.steth;
