@@ -8,12 +8,84 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @custom:feature The admin functions of the rebalancer contract
- * @custom:background Given an rebalancer contract
+ * @custom:background Given a rebalancer contract
  */
-contract TestRebalancerDepositAssets is RebalancerFixture {
+contract TestRebalancerAdmin is RebalancerFixture {
     function setUp() public {
         super._setUp();
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                           Caller is not the owner                          */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario Call all admin functions from not admin wallet
+     * @custom:given The initial usdnProtocol state
+     * @custom:when Non-admin wallet triggers admin contract function
+     * @custom:then Each function should revert with the same custom Ownable error
+     */
+    function test_RevertWhen_nonAdminWalletCallAdminFunctions() external {
+        // ownable contract custom error
+        bytes memory customError = abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this));
+
+        vm.expectRevert(customError);
+        rebalancer.setPositionMaxLeverage(0);
+
+        vm.expectRevert(RebalancerUnauthorized.selector);
+        rebalancer.setMinAssetDeposit(1);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                               minAssetDeposit                              */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @custom:scenario Set of the _minAssetDeposit value of the rebalancer contract
+     * @custom:given A deployed rebalancer contract
+     * @custom:when The setter is called with a valid new value
+     * @custom:then The value should have changed
+     */
+    function test_setMinAssetDeposit() public {
+        uint256 newValue = usdnProtocol.getMinLongPosition() + 1 ether;
+
+        vm.prank(ADMIN);
+        vm.expectEmit();
+        emit MinAssetDepositUpdated(newValue);
+        rebalancer.setMinAssetDeposit(newValue);
+        assertEq(newValue, rebalancer.getMinAssetDeposit());
+    }
+
+    /**
+     * @custom:scenario Try to set the _minAssetDeposit value to an amount lower than the USDN Protocol
+     * getMinLongPosition
+     * @custom:given A deployed rebalancer contract
+     * @custom:when The setter is called with a value lower than protocol.getMinLongPosition()
+     * @custom:then The transaction reverts
+     */
+    function test_RevertWhen_setMinAssetDeposit_Invalid() public {
+        uint256 minLimit = usdnProtocol.getMinLongPosition();
+        assertGt(minLimit, 0, "the minimum of the protocol should be greater than 0");
+
+        vm.prank(ADMIN);
+        vm.expectRevert(RebalancerInvalidMinAssetDeposit.selector);
+        rebalancer.setMinAssetDeposit(minLimit - 1);
+    }
+
+    /**
+     * @custom:scenario Try to set the _minAssetDeposit value without being the admin
+     * @custom:given A deployed rebalancer contract
+     * @custom:when The setter is called by an unauthorized account
+     * @custom:then The transaction reverts
+     */
+    function test_RevertWhen_setMinAssetDeposit_NotAdmin() public {
+        vm.expectRevert(RebalancerUnauthorized.selector);
+        rebalancer.setMinAssetDeposit(1);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             positionMaxLeverage                            */
+    /* -------------------------------------------------------------------------- */
 
     /**
      * @custom:scenario Trying to set the max leverage lower than the USDN protocol's value
@@ -52,23 +124,5 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         rebalancer.setPositionMaxLeverage(maxLeverage - 1);
-    }
-
-    /**
-     * @custom:scenario Setting the max leverage of the rebalancer
-     * @custom:given A value lower than the USDN protocol's max leverage
-     * @custom:when setPositionMaxLeverage is called with this value
-     * @custom:then The value of _positionMaxLeverageIsUpdated is updated
-     * @custom:and An PositionMaxLeverageUpdated event is emitted
-     */
-    function test_setPositionMaxLeverage() external adminPrank {
-        uint256 maxLeverage = usdnProtocol.getMaxLeverage();
-        uint256 newMaxLeverage = maxLeverage - 1;
-
-        vm.expectEmit();
-        emit PositionMaxLeverageUpdated(newMaxLeverage);
-        rebalancer.setPositionMaxLeverage(newMaxLeverage);
-
-        assertEq(rebalancer.getPositionMaxLeverage(), newMaxLeverage, "The max leverage should have been updated");
     }
 }
