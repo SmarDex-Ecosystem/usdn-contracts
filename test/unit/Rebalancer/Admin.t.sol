@@ -15,6 +15,12 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
         super._setUp();
     }
 
+    /**
+     * @custom:scenario Trying to set the max leverage lower than the USDN protocol's value
+     * @custom:given A value lower than the USDN protocol's max leverage
+     * @custom:when setPositionMaxLeverage is called with this value
+     * @custom:then The call reverts with a RebalancerInvalidMaxLeverage error
+     */
     function test_RevertWhen_setPositionMaxLeverageWithLeverageTooLow() external adminPrank {
         uint256 minLeverage = usdnProtocol.getMinLeverage();
 
@@ -22,6 +28,12 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
         rebalancer.setPositionMaxLeverage(minLeverage - 1);
     }
 
+    /**
+     * @custom:scenario Trying to set the max leverage lower than the USDN protocol's value
+     * @custom:given A value lower than the USDN protocol's max leverage
+     * @custom:when setPositionMaxLeverage is called with this value
+     * @custom:then The call reverts with a RebalancerInvalidMaxLeverage error
+     */
     function test_RevertWhen_setPositionMaxLeverageWithLeverageTooHigh() external adminPrank {
         uint256 maxLeverage = usdnProtocol.getMaxLeverage();
 
@@ -29,6 +41,12 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
         rebalancer.setPositionMaxLeverage(maxLeverage + 1);
     }
 
+    /**
+     * @custom:scenario Trying to set the max leverage from an address that is not the owner
+     * @custom:given The caller not being the owner
+     * @custom:when setPositionMaxLeverage is called
+     * @custom:then The call reverts with an OwnableUnauthorizedAccount error
+     */
     function test_RevertWhen_setPositionMaxLeverageWithCallerNotTheOwner() external {
         uint256 maxLeverage = usdnProtocol.getMaxLeverage();
 
@@ -36,6 +54,13 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
         rebalancer.setPositionMaxLeverage(maxLeverage - 1);
     }
 
+    /**
+     * @custom:scenario Setting the max leverage of the rebalancer
+     * @custom:given A value lower than the USDN protocol's max leverage
+     * @custom:when setPositionMaxLeverage is called with this value
+     * @custom:then The value of _positionMaxLeverageIsUpdated is updated
+     * @custom:and An PositionMaxLeverageUpdated event is emitted
+     */
     function test_setPositionMaxLeverage() external adminPrank {
         uint256 maxLeverage = usdnProtocol.getMaxLeverage();
         uint256 newMaxLeverage = maxLeverage - 1;
