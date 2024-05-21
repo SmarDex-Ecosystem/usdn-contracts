@@ -39,7 +39,7 @@ contract TestImbalanceLimitWithdrawalFuzzing is UsdnProtocolBaseFixture {
         }
 
         // initial withdrawal limit bps
-        (,, int256 withdrawalLimit,) = protocol.getExpoImbalanceLimits();
+        int256 withdrawalLimit = protocol.getWithdrawalExpoImbalanceLimitBps();
 
         uint256 totalExpo = protocol.getTotalExpo();
         if (newVaultExpo == 0) {

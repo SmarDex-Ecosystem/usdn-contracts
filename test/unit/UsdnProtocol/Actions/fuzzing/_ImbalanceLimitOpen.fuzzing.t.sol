@@ -40,7 +40,7 @@ contract TestImbalanceLimitOpenFuzzing is UsdnProtocolBaseFixture {
         ) * int256(protocol.BPS_DIVISOR()) / vaultExpo;
 
         // initial open limit bps
-        (int256 openLimit,,,) = protocol.getExpoImbalanceLimits();
+        int256 openLimit = protocol.getOpenExpoImbalanceLimitBps();
 
         if (imbalanceBps >= openLimit) {
             // should revert with above open imbalance limit
