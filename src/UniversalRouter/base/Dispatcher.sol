@@ -17,6 +17,10 @@ import { V2SwapRouter } from "src/UniversalRouter/modules/uniswap/v2/V2SwapRoute
 abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsgSender {
     using BytesLib for bytes;
 
+    /**
+     * @notice Indicates that the command type is invalid
+     * @param commandType The command type
+     */
     error InvalidCommandType(uint256 commandType);
 
     /**

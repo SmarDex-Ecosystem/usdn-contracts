@@ -15,6 +15,7 @@ import { RouterParameters } from "src/UniversalRouter/base/RouterImmutables.sol"
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 
 contract UniversalRouter is IUniversalRouter, Dispatcher {
+    /// @notice Reverts if the transaction deadline has passed
     modifier checkDeadline(uint256 deadline) {
         if (block.timestamp > deadline) revert TransactionDeadlinePassed();
         _;
