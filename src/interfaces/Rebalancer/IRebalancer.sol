@@ -41,24 +41,10 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function getPositionMaxLeverage() external view returns (uint256 maxLeverage_);
 
     /**
-     * @notice Update the max leverage a position can have
-     * @dev `newMaxLeverage` must be between the min and max leverage of the USDN protocol
-     * @param newMaxLeverage The new max leverage
-     */
-    function setPositionMaxLeverage(uint256 newMaxLeverage) external;
-
-    /**
      * @notice Returns the minimum amount of assets to be deposited by a user
      * @return The minimum amount of assets to be deposited by a user
      */
     function getMinAssetDeposit() external view returns (uint256);
-
-    /**
-     * @notice Sets the minimum amount of assets to be deposited by a user
-     * @dev The new minimum amount must be greater than or equal to the minimum long position of the USDN protocol
-     * @param minAssetDeposit The new minimum amount of assets to be deposited
-     */
-    function setMinAssetDeposit(uint256 minAssetDeposit) external;
 
     /**
      * @notice Returns the data regarding the assets deposited by the provided user
@@ -90,4 +76,31 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      * @param to The address to send the assets to
      */
     function withdrawPendingAssets(uint128 amount, address to) external;
+
+    /* -------------------------------------------------------------------------- */
+    /*                                    Admin                                   */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Update the max leverage a position can have
+     * @dev `newMaxLeverage` must be between the min and max leverage of the USDN protocol
+     * This function can only be called by the owner
+     * @param newMaxLeverage The new max leverage
+     */
+    function setPositionMaxLeverage(uint256 newMaxLeverage) external;
+
+    /**
+     * @notice Sets the minimum amount of assets to be deposited by a user
+     * @dev The new minimum amount must be greater than or equal to the minimum long position of the USDN protocol
+     * This function can only be called by the owner or the USDN protocol
+     * @param minAssetDeposit The new minimum amount of assets to be deposited
+     */
+    function setMinAssetDeposit(uint256 minAssetDeposit) external;
+
+    /**
+     * @notice Increase the allowance of assets for the USDN protocol spender by `addAllowance`.
+     * @dev This function can only be called by the owner
+     * @param addAllowance Amount to add to the allowance of the UsdnProtocol contract
+     */
+    function increaseAssetAllowance(uint256 addAllowance) external;
 }
