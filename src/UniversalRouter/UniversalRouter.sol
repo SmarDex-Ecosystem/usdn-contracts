@@ -40,8 +40,8 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
         execute(commands, inputs);
     }
 
-    /// @inheritdoc Dispatcher
-    function execute(bytes calldata commands, bytes[] calldata inputs) public payable override isNotLocked {
+    /// @inheritdoc IUniversalRouter
+    function execute(bytes calldata commands, bytes[] calldata inputs) public payable isNotLocked {
         bool success;
         bytes memory output;
         uint256 numCommands = commands.length;
