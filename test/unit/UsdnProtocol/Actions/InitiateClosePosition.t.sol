@@ -415,7 +415,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         wstETH.approve(address(protocol), type(uint256).max);
         rebalancerPos_ = protocol.initiateOpenPosition(
             2 * userDeposit,
-            500 ether,
+            params.initialPrice / 2,
             address(rebalancer),
             address(rebalancer),
             abi.encode(params.initialPrice),
