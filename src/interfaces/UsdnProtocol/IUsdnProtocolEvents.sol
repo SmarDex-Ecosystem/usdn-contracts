@@ -308,9 +308,14 @@ interface IUsdnProtocolEvents {
      * @param newDepositLimitBps The new deposit limit
      * @param newWithdrawalLimitBps The new withdrawal limit
      * @param newCloseLimitBps The new close limit
+     * @param newLongImbalanceTargetBps The new long imbalance target
      */
     event ImbalanceLimitsUpdated(
-        uint256 newOpenLimitBps, uint256 newDepositLimitBps, uint256 newWithdrawalLimitBps, uint256 newCloseLimitBps
+        uint256 newOpenLimitBps,
+        uint256 newDepositLimitBps,
+        uint256 newWithdrawalLimitBps,
+        uint256 newCloseLimitBps,
+        int256 newLongImbalanceTargetBps
     );
 
     /**

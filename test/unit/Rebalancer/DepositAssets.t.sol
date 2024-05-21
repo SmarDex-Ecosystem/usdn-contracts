@@ -146,4 +146,30 @@ contract TestRebalancerDepositAssets is RebalancerFixture {
             "The pending assets amount should be equal to the sum of all deposits"
         );
     }
+
+    /**
+     * @custom:scenario The user deposit assets after his previous assets got liquidated
+     * @custom:given A user with deposited assets
+     * @custom:and The position the assets were in got liquidated
+     * @custom:when The user deposit assets again
+     * @custom:then His assets are transferred to the contract
+     */
+    function test_depositAssetsAfterBeingLiquidated() external {
+        rebalancer.depositAssets(INITIAL_DEPOSIT, address(this));
+        rebalancer.incrementPositionVersion();
+        rebalancer.setLastLiquidatedVersion(rebalancer.getPositionVersion());
+
+        uint128 expectedPositionVersion = rebalancer.getPositionVersion() + 1;
+
+        uint128 newDepositAmount = 1.5 ether;
+        vm.expectEmit();
+        emit AssetsDeposited(newDepositAmount, address(this), expectedPositionVersion);
+        rebalancer.depositAssets(newDepositAmount, address(this));
+
+        UserDeposit memory userDeposit = rebalancer.getUserDepositData(address(this));
+        assertEq(
+            userDeposit.entryPositionVersion, expectedPositionVersion, "The position version should be the expected one"
+        );
+        assertEq(userDeposit.amount, newDepositAmount, "The amount should have been saved");
+    }
 }
