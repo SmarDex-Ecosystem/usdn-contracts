@@ -54,6 +54,12 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function getUserDepositData(address user) external view returns (UserDeposit memory);
 
     /**
+     * @notice Increase the allowance of assets for the USDN protocol spender by `addAllowance`.
+     * @param addAllowance Amount to add to the allowance of the UsdnProtocol contract
+     */
+    function increaseAssetAllowance(uint256 addAllowance) external;
+
+    /**
      * @notice Deposit assets into this contract to be included in the next position
      * @dev If `to` is already in a position, they need to close it completely before adding more assets
      * @param amount The amount to deposit (in _assetDecimals)
@@ -96,11 +102,4 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      * @param minAssetDeposit The new minimum amount of assets to be deposited
      */
     function setMinAssetDeposit(uint256 minAssetDeposit) external;
-
-    /**
-     * @notice Increase the allowance of assets for the USDN protocol spender by `addAllowance`.
-     * @dev This function can only be called by the owner
-     * @param addAllowance Amount to add to the allowance of the UsdnProtocol contract
-     */
-    function increaseAssetAllowance(uint256 addAllowance) external;
 }

@@ -114,6 +114,11 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
+    function increaseAssetAllowance(uint256 addAllowance) external {
+        _asset.safeIncreaseAllowance(address(_usdnProtocol), addAllowance);
+    }
+
+    /// @inheritdoc IRebalancer
     function depositAssets(uint128 amount, address to) external {
         if (to == address(0)) {
             revert RebalancerInvalidAddressTo();
@@ -212,10 +217,5 @@ contract Rebalancer is Ownable, IRebalancer {
 
         _minAssetDeposit = minAssetDeposit;
         emit MinAssetDepositUpdated(minAssetDeposit);
-    }
-
-    /// @inheritdoc IRebalancer
-    function increaseAssetAllowance(uint256 addAllowance) external onlyOwner {
-        _asset.safeIncreaseAllowance(address(_usdnProtocol), addAllowance);
     }
 }
