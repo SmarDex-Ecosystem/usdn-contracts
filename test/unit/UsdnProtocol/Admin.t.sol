@@ -7,9 +7,9 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ADMIN } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IRebalancerEvents } from "src/interfaces/Rebalancer/IRebalancerEvents.sol";
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 
 /**
@@ -801,9 +801,9 @@ contract TestUsdnProtocolAdmin is UsdnProtocolBaseFixture, IRebalancerEvents {
         assertLt(rebalancer.getMinAssetDeposit(), newValue);
 
         // expected events
-        vm.expectEmit();
+        vm.expectEmit(address(protocol));
         emit MinLongPositionUpdated(newValue);
-        vm.expectEmit();
+        vm.expectEmit(address(rebalancer));
         emit MinAssetDepositUpdated(newValue);
 
         // set minimum long position

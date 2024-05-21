@@ -42,6 +42,9 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @notice The current position version
     uint128 internal _positionVersion;
 
+    /// @notice The maximum leverage a position can have
+    uint256 internal _maxLeverage;
+
     /// @notice The version of the last position that got liquidated
     uint128 internal _lastLiquidatedVersion;
 
@@ -55,6 +58,7 @@ contract Rebalancer is Ownable, IRebalancer {
     constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) {
         _usdnProtocol = usdnProtocol;
         _asset = usdnProtocol.getAsset();
+        _maxLeverage = usdnProtocol.getMaxLeverage();
         _minAssetDeposit = usdnProtocol.getMinLongPosition();
     }
 
@@ -71,6 +75,27 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @inheritdoc IRebalancer
     function getPositionVersion() external view returns (uint128) {
         return _positionVersion;
+    }
+
+    /// @inheritdoc IRebalancer
+    function getPositionMaxLeverage() external view returns (uint256 maxLeverage_) {
+        maxLeverage_ = _maxLeverage;
+        uint256 protocolMaxLeverage = _usdnProtocol.getMaxLeverage();
+        if (protocolMaxLeverage < maxLeverage_) {
+            return protocolMaxLeverage;
+        }
+    }
+
+    /// @inheritdoc IRebalancer
+    function setPositionMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
+        IUsdnProtocol protocol = _usdnProtocol;
+        if (newMaxLeverage < protocol.getMinLeverage() || newMaxLeverage > protocol.getMaxLeverage()) {
+            revert RebalancerInvalidMaxLeverage();
+        }
+
+        _maxLeverage = newMaxLeverage;
+
+        emit PositionMaxLeverageUpdated(newMaxLeverage);
     }
 
     /// @inheritdoc IRebalancer

@@ -17,6 +17,9 @@ interface IRebalancerErrors {
     /// @dev The amount to withdraw is greater than the amount deposited
     error RebalancerWithdrawAmountTooLarge();
 
+    /// @dev Indicates that the provided max leverage is invalid
+    error RebalancerInvalidMaxLeverage();
+
     /// @dev The wanted minimum asset deposit is invalid
     error RebalancerInvalidMinAssetDeposit();
 

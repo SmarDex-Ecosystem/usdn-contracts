@@ -45,6 +45,41 @@ contract TestRebalancer is RebalancerFixture {
     }
 
     /**
+     * @custom:scenario Check the _positionMaxLeverage value of the rebalancer contract
+     * @custom:given A deployed rebalancer contract
+     * @custom:when The getPositionMaxLeverage function is called
+     * @custom:then The value of the _positionMaxLeverage should be equal to the USDN protocol's max leverage
+     */
+    function test_getPositionMaxLeverage() public {
+        assertEq(rebalancer.getPositionMaxLeverage(), usdnProtocol.getMaxLeverage());
+    }
+
+    /**
+     * @custom:scenario _positionMaxLeverage is higher than the max leverage of the USDN protocol
+     * @custom:given A deployed rebalancer contract with a max leverage higher than the USDN protocol
+     * @custom:when The getPositionMaxLeverage function is called
+     * @custom:then The returned value should be equal to the USDN protocol's max leverage
+     */
+    function test_getPositionMaxLeverageWhenHigherThanProtocol() public {
+        // Sanity check
+        assertEq(
+            rebalancer.getPositionMaxLeverage(),
+            usdnProtocol.getMaxLeverage(),
+            "Both max leverage values should be equal for this test to work"
+        );
+
+        uint256 protocolMaxLeverage = usdnProtocol.getMaxLeverage() - 1;
+        vm.prank(ADMIN);
+        usdnProtocol.setMaxLeverage(protocolMaxLeverage);
+
+        assertEq(
+            rebalancer.getPositionMaxLeverage(),
+            usdnProtocol.getMaxLeverage(),
+            "The max leverage of the USDN protocol should have been returned"
+        );
+    }
+
+    /**
      * @custom:scenario Check the _minAssetDeposit value of the rebalancer contract
      * @custom:given A deployed rebalancer contract
      * @custom:when The getMinAssetDeposit function is called
@@ -52,48 +87,5 @@ contract TestRebalancer is RebalancerFixture {
      */
     function test_minAssetDeposit() public {
         assertEq(usdnProtocol.getMinLongPosition(), rebalancer.getMinAssetDeposit());
-    }
-
-    /**
-     * @custom:scenario Set of the _minAssetDeposit value of the rebalancer contract
-     * @custom:given A deployed rebalancer contract
-     * @custom:when The setter is called with a valid new value
-     * @custom:then The value should have changed
-     */
-    function test_setMinAssetDeposit() public {
-        uint256 newValue = usdnProtocol.getMinLongPosition() + 1 ether;
-
-        vm.prank(ADMIN);
-        vm.expectEmit();
-        emit MinAssetDepositUpdated(newValue);
-        rebalancer.setMinAssetDeposit(newValue);
-        assertEq(newValue, rebalancer.getMinAssetDeposit());
-    }
-
-    /**
-     * @custom:scenario Try to set the _minAssetDeposit value to an amount lower than the USDN Protocol
-     * getMinLongPosition
-     * @custom:given A deployed rebalancer contract
-     * @custom:when The setter is called with a value lower than protocol.getMinLongPosition()
-     * @custom:then The transaction reverts
-     */
-    function test_RevertWhen_setMinAssetDeposit_Invalid() public {
-        uint256 minLimit = usdnProtocol.getMinLongPosition();
-        assertGt(minLimit, 0, "the minimum of the protocol should be greater than 0");
-
-        vm.prank(ADMIN);
-        vm.expectRevert(RebalancerInvalidMinAssetDeposit.selector);
-        rebalancer.setMinAssetDeposit(minLimit - 1);
-    }
-
-    /**
-     * @custom:scenario Try to set the _minAssetDeposit value without being the admin
-     * @custom:given A deployed rebalancer contract
-     * @custom:when The setter is called by an unauthorized account
-     * @custom:then The transaction reverts
-     */
-    function test_RevertWhen_setMinAssetDeposit_NotAdmin() public {
-        vm.expectRevert(RebalancerUnauthorized.selector);
-        rebalancer.setMinAssetDeposit(1);
     }
 }
