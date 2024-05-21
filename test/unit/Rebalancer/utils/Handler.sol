@@ -17,4 +17,12 @@ contract RebalancerHandler is Rebalancer, Test {
     function incrementPositionVersion() external {
         ++_positionVersion;
     }
+
+    /**
+     * @dev Sets the _lastLiquidatedVersion to the provided value
+     * @param version The version to set
+     */
+    function setLastLiquidatedVersion(uint128 version) external {
+        _lastLiquidatedVersion = version;
+    }
 }

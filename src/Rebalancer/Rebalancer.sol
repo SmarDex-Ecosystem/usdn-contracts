@@ -42,6 +42,9 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @notice The current position version
     uint128 internal _positionVersion;
 
+    /// @notice The version of the last position that got liquidated
+    uint128 internal _lastLiquidatedVersion;
+
     /// @notice The minimum amount of assets to be deposited by a user
     uint256 internal _minAssetDeposit;
 
@@ -68,6 +71,11 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @inheritdoc IRebalancer
     function getPositionVersion() external view returns (uint128) {
         return _positionVersion;
+    }
+
+    /// @inheritdoc IRebalancer
+    function getLastLiquidatedVersion() external view returns (uint128) {
+        return _lastLiquidatedVersion;
     }
 
     /// @inheritdoc IRebalancer
@@ -107,7 +115,11 @@ contract Rebalancer is Ownable, IRebalancer {
                 revert RebalancerInsufficientAmount();
             }
         } else {
-            if (depositData.entryPositionVersion <= positionVersion) {
+            if (depositData.entryPositionVersion <= _lastLiquidatedVersion) {
+                // if the user was in a position that got liquidated, we should reset its data
+                delete depositData;
+            } else if (depositData.entryPositionVersion <= positionVersion) {
+                // if the user already deposited assets that are in a position, revert
                 revert RebalancerUserNotPending();
             }
         }
