@@ -224,9 +224,37 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, SmardexSwa
             }
         } else {
             if (command == Commands.SMARDEX_SWAP_EXACT_IN) {
-                // TODO SMARDEX_SWAP_EXACT_IN
+                // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
+                address recipient;
+                uint256 amountIn;
+                uint256 amountOutMin;
+                bool payerIsUser;
+                assembly {
+                    recipient := calldataload(inputs.offset)
+                    amountIn := calldataload(add(inputs.offset, 0x20))
+                    amountOutMin := calldataload(add(inputs.offset, 0x40))
+                    // 0x60 offset is the path, decoded below
+                    payerIsUser := calldataload(add(inputs.offset, 0x80))
+                }
+                bytes calldata path = inputs.toBytes(3);
+                address payer = payerIsUser ? lockedBy : address(this);
+                smardexSwapExactInput(map(recipient), amountIn, amountOutMin, path, payer);
             } else if (command == Commands.SMARDEX_SWAP_EXACT_OUT) {
-                // TODO SMARDEX_SWAP_EXACT_OUT
+                // equivalent: abi.decode(inputs, (address, uint256, uint256, bytes, bool))
+                address recipient;
+                uint256 amountOut;
+                uint256 amountInMax;
+                bool payerIsUser;
+                assembly {
+                    recipient := calldataload(inputs.offset)
+                    amountOut := calldataload(add(inputs.offset, 0x20))
+                    amountInMax := calldataload(add(inputs.offset, 0x40))
+                    // 0x60 offset is the path, decoded below
+                    payerIsUser := calldataload(add(inputs.offset, 0x80))
+                }
+                bytes calldata path = inputs.toBytes(3);
+                address payer = payerIsUser ? lockedBy : address(this);
+                smardexSwapExactOutput(map(recipient), amountOut, amountInMax, path, payer);
             } else {
                 revert InvalidCommandType(command);
             }

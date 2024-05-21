@@ -6,21 +6,25 @@ import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.so
 import { RouterParameters } from "src/UniversalRouter/base/RouterImmutables.sol";
 
 import { DEPLOYER, WETH } from "test/utils/Constants.sol";
-import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UniversalRouterHandler } from "test/integration/UniversalRouter/utils/Handler.sol";
+import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
+import { Wusdn } from "src/Wusdn.sol";
 
 /**
  * @title UniversalRouterBaseFixture
  * @dev Utils for testing the Universal Router
  */
-contract UniversalRouterBaseFixture is BaseFixture {
+contract UniversalRouterBaseIntegrationFixture is UsdnProtocolBaseIntegrationFixture {
     UniversalRouterHandler public router;
     IAllowanceTransfer permit2;
 
     function _setUp() internal {
-        vm.createSelectFork(vm.rpcUrl("mainnet"));
+        params = DEFAULT_PARAMS;
+        params.initialDeposit = 4.919970269703463156 ether;
+        params.fork = true;
+        _setUp(params);
 
-        RouterParameters memory params = RouterParameters({
+        RouterParameters memory routerParams = RouterParameters({
             permit2: 0x000000000022D473030F116dDEE9F6B43aC78BA3,
             weth9: WETH,
             v2Factory: 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f,
@@ -31,7 +35,7 @@ contract UniversalRouterBaseFixture is BaseFixture {
          });
 
         vm.prank(DEPLOYER);
-        router = new UniversalRouterHandler(params);
-        permit2 = IAllowanceTransfer(params.permit2);
+        router = new UniversalRouterHandler(routerParams);
+        permit2 = IAllowanceTransfer(routerParams.permit2);
     }
 }

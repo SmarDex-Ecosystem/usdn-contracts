@@ -2,19 +2,27 @@
 pragma solidity ^0.8.17;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { TransferHelper } from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
+import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
+import { IWETH9 } from "@uniswap/universal-router/contracts/interfaces/external/IWETH9.sol";
+import { V3Path } from "@uniswap/universal-router/contracts/modules/uniswap/v3/V3Path.sol";
 
 import { ISmardexFactory } from "src/UniversalRouter/interfaces/ISmardexFactory.sol";
 import { ISmardexPair } from "src/UniversalRouter/interfaces/ISmardexPair.sol";
-import { IWETH } from "src/UniversalRouter/interfaces/IWETH.sol";
 import { Path } from "src/UniversalRouter/libraries/Path.sol";
 import { SmardexImmutables } from "src/UniversalRouter/modules/smardex/SmardexImmutables.sol";
 
 /// @title Router for Smardex
 abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
+    error tooLittleReceived();
+
+    // using V3Path for bytes;
     using Path for bytes;
+    using Path for address[];
     using SafeCast for uint256;
+    using SafeCast for int256;
 
     /**
      * @notice callback data for swap from SmardexRouter
@@ -25,8 +33,13 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
         bytes path;
         address payer;
     }
+    /// @dev Used as the placeholder value for maxAmountIn, because the computed amount in for an exact output swap
+    /// can never actually be this value
 
-    uint256 amountInCached;
+    uint256 private constant DEFAULT_MAX_AMOUNT_IN = type(uint256).max;
+
+    /// @dev Transient storage variable used for checking slippage
+    uint256 private amountInCached = DEFAULT_MAX_AMOUNT_IN;
 
     function smardexSwapCallback(int256 _amount0Delta, int256 _amount1Delta, bytes calldata _data) external {
         require(_amount0Delta > 0 || _amount1Delta > 0, "SmardexRouter: Callback Invalid amount");
@@ -55,6 +68,73 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
         }
     }
 
+    /// @notice Performs a Smardex exact input swap
+    /// @param recipient The recipient of the output tokens
+    /// @param amountIn The amount of input tokens for the trade
+    /// @param amountOutMinimum The minimum desired amount of output tokens
+    /// @param path The path of the trade as a bytes string
+    /// @param payer The address that will be paying the input
+    function smardexSwapExactInput(
+        address recipient,
+        uint256 amountIn,
+        uint256 amountOutMinimum,
+        bytes calldata path,
+        address payer
+    ) internal {
+        // use amountIn == Constants.CONTRACT_BALANCE as a flag to swap the entire balance of the contract
+        if (amountIn == Constants.CONTRACT_BALANCE) {
+            address tokenIn = V3Path.decodeFirstToken(path);
+            amountIn = IERC20(tokenIn).balanceOf(payer);
+        }
+
+        uint256 amountOut;
+        while (true) {
+            bool hasMultiplePools = path.hasMultiplePools();
+
+            amountIn = _swapExactIn(
+                amountIn,
+                // for intermediate swaps, this contract custodies
+                hasMultiplePools ? address(this) : recipient,
+                // only the first pool in the path is necessary
+                SwapCallbackData({ path: path.getFirstPool(), payer: payer })
+            );
+
+            // decide whether to continue or terminate
+            if (hasMultiplePools) {
+                payer = address(this);
+                path = V3Path.skipToken(path);
+            } else {
+                amountOut = amountIn;
+                break;
+            }
+        }
+
+        if (amountOut < amountOutMinimum) revert tooLittleReceived();
+    }
+
+    /// @notice Performs a Smardex exact output swap
+    /// @param recipient The recipient of the output tokens
+    /// @param amountOut The amount of output tokens to receive for the trade
+    /// @param amountInMaximum The maximum desired amount of input tokens
+    /// @param path The path of the trade as a bytes string
+    /// @param payer The address that will be paying the input
+    function smardexSwapExactOutput(
+        address recipient,
+        uint256 amountOut,
+        uint256 amountInMaximum,
+        bytes calldata path,
+        address payer
+    ) internal {
+        amountInCached = amountInMaximum;
+        // Path needs to be reversed as to get the amountIn that we will ask from next pair hop
+        bytes memory _reversedPath = path.encodeTightlyPackedReversed();
+        uint256 amountIn = _swapExactOut(amountOut, recipient, SwapCallbackData({ path: _reversedPath, payer: payer }));
+        // amount In is only the right one for one Hop, otherwise we need cached amountIn from callback
+        if (path.length > 2) amountIn = amountInCached;
+        require(amountIn <= amountInMaximum, "SmarDexRouter: EXCESSIVE_INPUT_AMOUNT");
+        amountInCached = DEFAULT_MAX_AMOUNT_IN;
+    }
+
     /**
      * @notice internal function to swap quantity of token to receive a determined quantity
      * @param _amountOut quantity to receive
@@ -78,6 +158,30 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
     }
 
     /**
+     * @notice internal function to swap a determined quantity of token
+     * @param _amountIn quantity to swap
+     * @param _to address that will receive the token
+     * @param _data SwapCallbackData data of the swap to transmit
+     * @return amountOut_ amount of token that _to will receive
+     */
+    function _swapExactIn(uint256 _amountIn, address _to, SwapCallbackData memory _data)
+        internal
+        returns (uint256 amountOut_)
+    {
+        // allow swapping to the router address with address 0
+        if (_to == address(0)) {
+            _to = address(this);
+        }
+
+        (address _tokenIn, address _tokenOut) = _data.path.decodeFirstPool();
+        bool _zeroForOne = _tokenIn < _tokenOut;
+        (int256 _amount0, int256 _amount1) = ISmardexPair(ISmardexFactory(SMARDEX_FACTORY).getPair(_tokenIn, _tokenOut))
+            .swap(_to, _zeroForOne, _amountIn.toInt256(), abi.encode(_data));
+
+        amountOut_ = (_zeroForOne ? -_amount1 : -_amount0).toUint256();
+    }
+
+    /**
      * @notice send tokens to a user. Handle transfer/transferFrom and WETH / ETH or any ERC20 token
      * @param _token The token to pay
      * @param _payer The entity that must pay
@@ -90,8 +194,8 @@ abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
     function _pay(address _token, address _payer, address _to, uint256 _value) internal {
         if (_token == WETH && address(this).balance >= _value) {
             // pay with WETH
-            IWETH(WETH).deposit{ value: _value }(); // wrap only what is needed to pay
-            IWETH(WETH).transfer(_to, _value);
+            IWETH9(WETH).deposit{ value: _value }(); // wrap only what is needed to pay
+            IWETH9(WETH).transfer(_to, _value);
             //refund dust eth, if any ?
         } else if (_payer == address(this)) {
             // pay with tokens already in the contract (for the exact input multihop case)

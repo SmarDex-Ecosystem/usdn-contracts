@@ -85,4 +85,19 @@ library Path {
             }
         }
     }
+
+    /// @notice Returns the _path addresses concatenated in a reversed order as a packed bytes array
+    /// @param _path The swap path
+    /// @return encoded_ The bytes array containing the packed addresses
+    function encodeTightlyPackedReversed(bytes calldata _path) external pure returns (bytes memory encoded_) {
+        address[] memory pathAddress = abi.decode(_path, (address[]));
+
+        uint256 len = pathAddress.length;
+        for (uint256 i = len; i != 0;) {
+            encoded_ = bytes.concat(encoded_, abi.encodePacked(pathAddress[i - 1]));
+            unchecked {
+                --i;
+            }
+        }
+    }
 }
