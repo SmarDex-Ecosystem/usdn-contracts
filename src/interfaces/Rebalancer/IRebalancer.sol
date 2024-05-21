@@ -30,9 +30,9 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     /**
      * @notice Returns the max leverage a position can have
      * @dev Returns the max leverage of the USDN Protocol if it's lower than the rebalancer's
-     * @return The max leverage a position can have
+     * @return maxLeverage_ The max leverage a position can have
      */
-    function getPositionMaxLeverage() external view returns (uint256);
+    function getPositionMaxLeverage() external view returns (uint256 maxLeverage_);
 
     /**
      * @notice Update the max leverage a position can have
