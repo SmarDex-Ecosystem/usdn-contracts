@@ -18,7 +18,7 @@ import {
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
- * @custom:feature The validate close position functions of the USDN Protocol
+ * @custom:feature The initiate close position functions of the USDN Protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x
  * @custom:and a validated long position of 1 ether with 10x leverage
