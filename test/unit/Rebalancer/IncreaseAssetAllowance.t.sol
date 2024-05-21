@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import { RebalancerFixture } from "test/unit/Rebalancer/utils/Fixtures.sol";
 
 /// @custom:feature The `increaseAssetAllowance` function of the Rebalancer
-contract TestRebalancerAdmin is RebalancerFixture {
+contract TestRebalancerIncreaseAssetAllowance is RebalancerFixture {
     function setUp() public {
         super._setUp();
     }
