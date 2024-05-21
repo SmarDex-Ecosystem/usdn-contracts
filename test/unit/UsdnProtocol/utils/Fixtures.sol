@@ -172,6 +172,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
+        rebalancer.transferOwnership(ADMIN);
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();

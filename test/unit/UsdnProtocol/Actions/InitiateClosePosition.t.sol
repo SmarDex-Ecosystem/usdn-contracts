@@ -5,7 +5,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN, USER_1 } from "test/utils/Constants.sol";
+import { ADMIN, USER_1, USER_2 } from "test/utils/Constants.sol";
 
 import {
     LongPendingAction,
@@ -390,6 +390,84 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             balanceLongBefore - assetToTransfer,
             protocol.getBalanceLong(),
             "assetToTransfer should have been subtracted from the long balance of the protocol"
+        );
+    }
+
+    /**
+     * @notice Helper function to set up a mock rebalancer position with two users
+     * @param userDeposit Amount to deposit for a single user
+     * @return rebalancerPos_ The position ID of the rebalancer position
+     */
+    function _setUpMockRebalancerPosition(uint128 userDeposit) internal returns (PositionId memory rebalancerPos_) {
+        vm.startPrank(ADMIN);
+        rebalancer.setMinAssetDeposit(userDeposit);
+        protocol.setRebalancer(rebalancer);
+        vm.stopPrank();
+
+        wstETH.mintAndApprove(USER_1, userDeposit, address(rebalancer), type(uint256).max);
+        wstETH.mintAndApprove(USER_2, userDeposit, address(rebalancer), type(uint256).max);
+        vm.prank(USER_1);
+        rebalancer.depositAssets(userDeposit, USER_1);
+        vm.prank(USER_2);
+        rebalancer.depositAssets(userDeposit, USER_2);
+
+        vm.startPrank(address(rebalancer));
+        wstETH.approve(address(protocol), type(uint256).max);
+        rebalancerPos_ = protocol.initiateOpenPosition(
+            2 * userDeposit,
+            500 ether,
+            address(rebalancer),
+            address(rebalancer),
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        protocol.validateOpenPosition(address(rebalancer), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
+    }
+
+    /**
+     * @custom:scenario A rebalancer user closes their position completely
+     * @custom:given The user has deposited 2 ether in the rebalancer
+     * @custom:and The rebalancer's position has 4 ether of initial collateral
+     * @custom:and The minimum long position in the protocol is changed to 6 ether
+     * @custom:when The user closes their position completely (2 ether) through a rebalancer partial close
+     * @custom:then The partial close is authorized and successful
+     */
+    function test_closePartialFromRebalancerPositionTooSmall() public {
+        uint128 minAssetDeposit = 2 ether;
+
+        PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
+
+        vm.prank(ADMIN);
+        protocol.setMinLongPosition(3 * minAssetDeposit);
+
+        vm.prank(address(rebalancer));
+        protocol.initiateClosePosition(
+            rebalancerPos, minAssetDeposit, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario A rebalancer user closes their position partially when the position is too small
+     * @custom:given The user has deposited 2 ether in the rebalancer
+     * @custom:and The rebalancer's position has 4 ether of initial collateral
+     * @custom:and The minimum long position in the protocol is changed to 6 ether
+     * @custom:when The user closes their position partially (1 ether) through a rebalancer partial close
+     * @custom:then The partial close is unauthorized and reverts with `UsdnProtocolLongPositionTooSmall`
+     */
+    function test_RevertWhen_closePartialFromRebalancerPartialUserClose() public {
+        uint128 minAssetDeposit = 2 ether;
+
+        PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
+
+        vm.prank(ADMIN);
+        protocol.setMinLongPosition(3 * minAssetDeposit);
+
+        vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
+        vm.prank(address(rebalancer));
+        protocol.initiateClosePosition(
+            rebalancerPos, minAssetDeposit / 2, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
         );
     }
 
