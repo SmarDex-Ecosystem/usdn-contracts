@@ -60,9 +60,13 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @param usdnProtocol The address of the USDN protocol
     constructor(IUsdnProtocol usdnProtocol) Ownable(msg.sender) {
         _usdnProtocol = usdnProtocol;
-        _asset = usdnProtocol.getAsset();
+        IERC20Metadata asset = usdnProtocol.getAsset();
+        _asset = asset;
         _maxLeverage = usdnProtocol.getMaxLeverage();
         _minAssetDeposit = usdnProtocol.getMinLongPosition();
+
+        // Set allowance to allow the protocol to pull assets from this contract
+        asset.forceApprove(address(usdnProtocol), type(uint256).max);
     }
 
     /// @inheritdoc IRebalancer
@@ -95,18 +99,6 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    function setPositionMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
-        IUsdnProtocol protocol = _usdnProtocol;
-        if (newMaxLeverage < protocol.getMinLeverage() || newMaxLeverage > protocol.getMaxLeverage()) {
-            revert RebalancerInvalidMaxLeverage();
-        }
-
-        _maxLeverage = newMaxLeverage;
-
-        emit PositionMaxLeverageUpdated(newMaxLeverage);
-    }
-
-    /// @inheritdoc IRebalancer
     function getLastLiquidatedVersion() external view returns (uint128) {
         return _lastLiquidatedVersion;
     }
@@ -117,18 +109,13 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    function setMinAssetDeposit(uint256 minAssetDeposit) external onlyAdmin {
-        if (_usdnProtocol.getMinLongPosition() > minAssetDeposit) {
-            revert RebalancerInvalidMinAssetDeposit();
-        }
-
-        _minAssetDeposit = minAssetDeposit;
-        emit MinAssetDepositUpdated(minAssetDeposit);
+    function getUserDepositData(address user) external view returns (UserDeposit memory) {
+        return _userDeposit[user];
     }
 
     /// @inheritdoc IRebalancer
-    function getUserDepositData(address user) external view returns (UserDeposit memory) {
-        return _userDeposit[user];
+    function increaseAssetAllowance(uint256 addAllowance) external {
+        _asset.safeIncreaseAllowance(address(_usdnProtocol), addAllowance);
     }
 
     /// @inheritdoc IRebalancer
@@ -204,5 +191,31 @@ contract Rebalancer is Ownable, IRebalancer {
         _asset.safeTransfer(to, amount);
 
         emit PendingAssetsWithdrawn(msg.sender, amount, to);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                    Admin                                   */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc IRebalancer
+    function setPositionMaxLeverage(uint256 newMaxLeverage) external onlyOwner {
+        IUsdnProtocol protocol = _usdnProtocol;
+        if (newMaxLeverage < protocol.getMinLeverage() || newMaxLeverage > protocol.getMaxLeverage()) {
+            revert RebalancerInvalidMaxLeverage();
+        }
+
+        _maxLeverage = newMaxLeverage;
+
+        emit PositionMaxLeverageUpdated(newMaxLeverage);
+    }
+
+    /// @inheritdoc IRebalancer
+    function setMinAssetDeposit(uint256 minAssetDeposit) external onlyAdmin {
+        if (_usdnProtocol.getMinLongPosition() > minAssetDeposit) {
+            revert RebalancerInvalidMinAssetDeposit();
+        }
+
+        _minAssetDeposit = minAssetDeposit;
+        emit MinAssetDepositUpdated(minAssetDeposit);
     }
 }
