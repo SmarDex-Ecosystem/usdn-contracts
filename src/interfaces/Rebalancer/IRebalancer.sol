@@ -70,6 +70,13 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function depositAssets(uint128 amount, address to) external;
 
     /**
+     * @notice Returns the version of the last position that got liquidated
+     * @dev 0 means no liquidated version yet
+     * @return The version of the last position that got liquidated
+     */
+    function getLastLiquidatedVersion() external view returns (uint128);
+
+    /**
      * @notice Withdraw assets if the user is not in a position yet
      * @dev If the entry position version of the user is lower than or equal to the current one,
      * the transaction will revert
