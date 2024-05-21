@@ -28,6 +28,12 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     function getPositionVersion() external view returns (uint128);
 
     /**
+     * @notice Returns the amount of assets deposited and waiting for the next version to be opened
+     * @return The amount of pending assets
+     */
+    function getPendingAssetsAmount() external view returns (uint256);
+
+    /**
      * @notice Returns the max leverage a position can have
      * @dev Returns the max leverage of the USDN Protocol if it's lower than the rebalancer's
      * @return maxLeverage_ The max leverage a position can have
