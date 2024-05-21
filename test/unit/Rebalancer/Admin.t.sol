@@ -20,10 +20,11 @@ contract TestRebalancerAdmin is RebalancerFixture {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @custom:scenario Call all admin functions from not admin wallet
-     * @custom:given The initial usdnProtocol state
-     * @custom:when Non-admin wallet triggers admin contract function
-     * @custom:then Each function should revert with the same custom Ownable error
+     * @custom:scenario Call all admin functions from a non-admin wallet
+     * @custom:given A deployed rebalancer contract
+     * @custom:when Non-admin wallet triggers admin contract functions
+     * @custom:then The functions should revert with an Ownable.OwnableUnauthorizedAccount error
+     * @custom:or The functions should revert with a RebalancerUnauthorized error
      */
     function test_RevertWhen_nonAdminWalletCallAdminFunctions() external {
         // ownable contract custom error
