@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import { SmardexImmutables } from "src/UniversalRouter/modules/smardex/SmardexImmutables.sol";
-import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-
+import { TransferHelper } from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import { ISmardexFactory } from "src/UniversalRouter/interfaces/ISmardexFactory.sol";
 import { ISmardexPair } from "src/UniversalRouter/interfaces/ISmardexPair.sol";
 import { IWETH } from "src/UniversalRouter/interfaces/IWETH.sol";
-import { TransferHelper } from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import { Path } from "src/UniversalRouter/libraries/Path.sol";
+import { SmardexImmutables } from "src/UniversalRouter/modules/smardex/SmardexImmutables.sol";
 
 /// @title Router for Smardex
 abstract contract SmardexSwapRouter is SmardexImmutables, Permit2Payments {
