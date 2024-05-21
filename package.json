@@ -41,6 +41,7 @@
     "@uniswap/universal-router": "^1.6.0",
     "@uniswap/v2-core": "^1.0.1",
     "@uniswap/v3-core": "^1.0.1",
+    "@uniswap/v3-periphery": "^1.4.4",
     "abitype": "^1.0.2",
     "commander": "^12.0.0",
     "glob": "^10.3.12",

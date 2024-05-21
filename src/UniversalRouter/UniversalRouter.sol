@@ -9,6 +9,7 @@ import {
     PaymentsImmutables, PaymentsParameters
 } from "@uniswap/universal-router/contracts/modules/PaymentsImmutables.sol";
 
+import { SmardexImmutables, SmardexParameters } from "src/UniversalRouter/modules/smardex/SmardexImmutables.sol";
 import { Dispatcher } from "src/UniversalRouter/base/Dispatcher.sol";
 import { IUniversalRouter } from "src/UniversalRouter/interfaces/IUniversalRouter.sol";
 import { RouterParameters } from "src/UniversalRouter/base/RouterImmutables.sol";
@@ -24,6 +25,7 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
         UniswapImmutables(
             UniswapParameters(params.v2Factory, params.v3Factory, params.pairInitCodeHash, params.poolInitCodeHash)
         )
+        SmardexImmutables(SmardexParameters(params.smardexFactory, params.weth9))
         PaymentsImmutables(PaymentsParameters(params.permit2, params.weth9, address(0), address(0)))
     { }
 
