@@ -63,6 +63,11 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
         }
     }
 
+    /**
+     * @notice Verifies if a command requires success or not
+     * @param command The command to check
+     * @return True if the command requires success, false otherwise
+     */
     function successRequired(bytes1 command) internal pure returns (bool) {
         return command & Commands.FLAG_ALLOW_REVERT == 0;
     }
