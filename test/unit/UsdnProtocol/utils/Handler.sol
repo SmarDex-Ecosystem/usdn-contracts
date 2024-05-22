@@ -37,6 +37,7 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
     using LibBitmap for LibBitmap.Bitmap;
     using SafeCast for uint256;
     using SignedMath for int256;
+    using SafeCast for int256;
 
     constructor(
         IUsdn usdn,
@@ -56,7 +57,7 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
     /// @dev Push a pending item to the front of the pending actions queue
     function queuePushFront(PendingAction memory action) external returns (uint128 rawIndex_) {
         rawIndex_ = s._pendingActionsQueue.pushFront(action);
-        s._pendingActions[action.user] = uint256(rawIndex_) + 1;
+        s._pendingActions[action.validator] = uint256(rawIndex_) + 1;
     }
 
     /**
@@ -100,14 +101,24 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         s._balanceVault = 0;
     }
 
+    function updateBalances(uint128 currentPrice) external {
+        (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
+            _applyPnlAndFunding(currentPrice, uint128(block.timestamp));
+        if (!priceUpdated) {
+            revert("price was not updated");
+        }
+        s._balanceLong = tempLongBalance.toUint256();
+        s._balanceVault = tempVaultBalance.toUint256();
+    }
+
     function i_initiateClosePosition(
-        address user,
+        address owner,
         address to,
         PositionId memory posId,
         uint128 amountToClose,
         bytes calldata currentPriceData
     ) external returns (uint256 securityDepositValue_) {
-        return _initiateClosePosition(user, to, posId, amountToClose, currentPriceData);
+        return _initiateClosePosition(owner, to, posId, amountToClose, currentPriceData);
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
@@ -329,7 +340,7 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         return _updateEMA(secondsElapsed);
     }
 
-    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool) {
+    function i_usdnRebase(uint128 assetPrice, bool ignoreInterval) external returns (bool, bytes memory) {
         return _usdnRebase(assetPrice, ignoreInterval);
     }
 
@@ -349,8 +360,8 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         return _calcRebaseTotalSupply(vaultBalance, assetPrice, targetPrice, assetDecimals);
     }
 
-    function i_addPendingAction(address user, PendingAction memory action) external {
-        _addPendingAction(user, action);
+    function i_addPendingAction(address user, PendingAction memory action) external returns (uint256) {
+        return _addPendingAction(user, action);
     }
 
     function i_getPendingAction(address user) external view returns (PendingAction memory, uint128) {
@@ -370,6 +381,10 @@ contract UsdnProtocolHandler is UsdnProtocolProxy, Test {
         payable
     {
         _refundExcessEther(securityDepositValue, amountToRefund, balanceBefore);
+    }
+
+    function i_refundEther(uint256 amount, address to) external payable {
+        _refundEther(amount, to);
     }
 
     function i_mergeWithdrawalAmountParts(uint24 sharesLSB, uint128 sharesMSB) external pure returns (uint256) {

@@ -9,6 +9,7 @@ import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolEr
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { Position, PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
@@ -135,6 +136,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager);
 
     /**
+     * @notice Get the rebalancer contract
+     * @return The address of the rebalancer contract
+     */
+    function getRebalancer() external view returns (IRebalancer);
+
+    /**
      * @notice Get the lowest leverage used to open a position
      * @return The minimum leverage (with LEVERAGE_DECIMALS decimals)
      */
@@ -205,6 +212,13 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getVaultFeeBps() external view returns (uint16);
 
     /**
+     * @notice Get the part of the remaining collateral that is given as bonus to the Rebalancer upon liquidation of a
+     * tick
+     * @return The collateral bonus for the Rebalancer (in basis points)
+     */
+    function getRebalancerBonusBps() external view returns (uint16);
+
+    /**
      * @notice Get the ratio of USDN to SDEX tokens to burn on deposit
      * @return The ratio (to be divided by SDEX_BURN_ON_DEPOSIT_DIVISOR)
      */
@@ -236,21 +250,35 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getMiddlewareValidationDelay() external view returns (uint256);
 
     /**
-     * @notice Get expo imbalance limits (in basis points)
-     * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
+     * @notice Get the expo imbalance limit when depositing assets (in basis points)
      * @return depositExpoImbalanceLimitBps_ The deposit expo imbalance limit
+     */
+    function getDepositExpoImbalanceLimitBps() external view returns (int256 depositExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Get the expo imbalance limit when withdrawing assets (in basis points)
      * @return withdrawalExpoImbalanceLimitBps_ The withdrawal expo imbalance limit
+     */
+    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256 withdrawalExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Get the expo imbalance limit when opening a position (in basis points)
+     * @return openExpoImbalanceLimitBps_ The open expo imbalance limit
+     */
+    function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Get the expo imbalance limit when closing a position (in basis points)
      * @return closeExpoImbalanceLimitBps_ The close expo imbalance limit
      */
-    function getExpoImbalanceLimits()
-        external
-        view
-        returns (
-            int256 openExpoImbalanceLimitBps_,
-            int256 depositExpoImbalanceLimitBps_,
-            int256 withdrawalExpoImbalanceLimitBps_,
-            int256 closeExpoImbalanceLimitBps_
-        );
+    function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_);
+
+    /**
+     * @notice Returns the target imbalance to have on the long side after the creation of a rebalancer position
+     * @dev The creation of the rebalancer position aims for this target, but does not guarantee hitting it
+     * @return targetLongImbalance_ The target long imbalance
+     */
+    function getLongImbalanceTargetBps() external view returns (int256 targetLongImbalance_);
 
     /**
      * @notice Get the nominal (target) price of USDN

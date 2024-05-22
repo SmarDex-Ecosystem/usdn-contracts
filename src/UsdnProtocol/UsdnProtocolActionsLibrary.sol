@@ -582,7 +582,7 @@ library UsdnProtocolActionsLibrary {
         s._balanceVault += deposit.amount;
 
         s._usdn.mint(deposit.to, usdnToMint);
-        emit ValidatedDeposit(deposit.user, deposit.to, deposit.amount, usdnToMint, deposit.timestamp);
+        emit ValidatedDeposit(deposit.validator, deposit.to, deposit.amount, usdnToMint, deposit.timestamp);
     }
 
     /**
@@ -612,7 +612,7 @@ library UsdnProtocolActionsLibrary {
             // The current tick version doesn't match the version from the pending action.
             // This means the position has been liquidated in the mean time
             emit StalePendingActionRemoved(
-                data_.action.user,
+                data_.action.validator,
                 PositionId({ tick: data_.action.tick, tickVersion: data_.action.tickVersion, index: data_.action.index })
             );
             return (data_, true);
@@ -673,7 +673,7 @@ library UsdnProtocolActionsLibrary {
             return (false, false, 0);
         }
         bytes calldata priceData = data.priceData[offset];
-        _clearPendingAction(s, pending.user);
+        _clearPendingAction(s, pending.validator);
         if (pending.action == ProtocolAction.ValidateDeposit) {
             _validateDepositWithAction(s, pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
@@ -686,7 +686,7 @@ library UsdnProtocolActionsLibrary {
         success_ = true;
         executed_ = true;
         securityDepositValue_ = pending.securityDepositValue;
-        emit SecurityDepositRefunded(pending.user, msg.sender, securityDepositValue_);
+        emit SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
     }
 
     function _validateWithdrawalWithAction(Storage storage s, PendingAction memory pending, bytes calldata priceData)
@@ -739,7 +739,7 @@ library UsdnProtocolActionsLibrary {
         }
 
         emit ValidatedWithdrawal(
-            withdrawal.user, withdrawal.to, assetToTransfer, usdn.convertToTokens(shares), withdrawal.timestamp
+            withdrawal.validator, withdrawal.to, assetToTransfer, usdn.convertToTokens(shares), withdrawal.timestamp
         );
     }
 
@@ -778,7 +778,7 @@ library UsdnProtocolActionsLibrary {
             // Credit the full amount to the vault to preserve the total balance invariant.
             s._balanceVault += data.long.closeBoundedPositionValue;
             emit LiquidatedPosition(
-                data.long.user,
+                data.long.validator,
                 PositionId({ tick: data.long.tick, tickVersion: data.long.tickVersion, index: data.long.index }),
                 data.currentPrice.neutralPrice,
                 data.liquidationPrice
@@ -846,7 +846,7 @@ library UsdnProtocolActionsLibrary {
         }
 
         emit ValidatedClosePosition(
-            data.long.user,
+            data.long.validator,
             data.long.to,
             PositionId({ tick: data.long.tick, tickVersion: data.long.tickVersion, index: data.long.index }),
             assetToTransfer,
@@ -924,7 +924,9 @@ library UsdnProtocolActionsLibrary {
                 PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index }),
                 newPosId
             );
-            emit ValidatedOpenPosition(data.action.user, data.action.to, data.pos.totalExpo, data.startPrice, newPosId);
+            emit ValidatedOpenPosition(
+                data.action.validator, data.action.to, data.pos.totalExpo, data.startPrice, newPosId
+            );
             return;
         }
 
@@ -951,11 +953,29 @@ library UsdnProtocolActionsLibrary {
         }
 
         emit ValidatedOpenPosition(
-            data.action.user,
+            data.action.validator,
             data.action.to,
             expoAfter,
             data.startPrice,
             PositionId({ tick: data.action.tick, tickVersion: data.action.tickVersion, index: data.action.index })
         );
+    }
+
+    /**
+     * @notice Refunds an amount of ether to the given address
+     * @param amount The amount of ether to refund
+     * @param to The address that should receive the refund
+     */
+    function _refundEther(uint256 amount, address to) internal {
+        if (to == address(0)) {
+            revert IUsdnProtocolErrors.UsdnProtocolInvalidAddressTo();
+        }
+        if (amount != 0) {
+            // slither-disable-next-line arbitrary-send-eth
+            (bool success,) = payable(to).call{ value: amount }("");
+            if (!success) {
+                revert IUsdnProtocolErrors.UsdnProtocolEtherRefundFailed();
+            }
+        }
     }
 }

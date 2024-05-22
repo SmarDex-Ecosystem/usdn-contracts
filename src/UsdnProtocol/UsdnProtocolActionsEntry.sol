@@ -86,4 +86,8 @@ abstract contract UsdnProtocolActionsEntry is UsdnProtocolBaseStorage {
     function _getActionablePendingAction() internal returns (PendingAction memory action_, uint128 rawIndex_) {
         return actionsLib._getActionablePendingAction(s);
     }
+
+    function _refundEther(uint256 amount, address to) internal {
+        actionsLib._refundEther(amount, to);
+    }
 }

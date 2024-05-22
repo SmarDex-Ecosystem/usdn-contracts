@@ -570,7 +570,7 @@ library UsdnProtocolCommonLibrary {
         uint16 iterations,
         bool ignoreInterval,
         bytes memory priceData
-    ) public returns (uint256 liquidatedPositions_) {
+    ) internal returns (uint256 liquidatedPositions_) {
         // adjust balances
         (bool priceUpdated, int256 tempLongBalance, int256 tempVaultBalance) =
             _applyPnlAndFunding(s, neutralPrice.toUint128(), timestamp.toUint128());
@@ -583,13 +583,17 @@ library UsdnProtocolCommonLibrary {
             s._balanceLong = liquidationEffects.newLongBalance;
             s._balanceVault = liquidationEffects.newVaultBalance;
 
-            bool rebased = _usdnRebase(s, uint128(neutralPrice), ignoreInterval); // safecast not needed since already
-                // done
-                // earlier
+            // safecast not needed since done above
+            (bool rebased, bytes memory callbackResult) = _usdnRebase(s, uint128(neutralPrice), ignoreInterval);
 
             if (liquidationEffects.liquidatedTicks > 0) {
                 _sendRewardsToLiquidator(
-                    s, liquidationEffects.liquidatedTicks, liquidationEffects.remainingCollateral, rebased, priceData
+                    s,
+                    liquidationEffects.liquidatedTicks,
+                    liquidationEffects.remainingCollateral,
+                    rebased,
+                    callbackResult,
+                    priceData
                 );
             }
 
@@ -822,29 +826,36 @@ library UsdnProtocolCommonLibrary {
      * happened
      * @return rebased_ Whether a rebase was performed
      */
-    function _usdnRebase(Storage storage s, uint128 assetPrice, bool ignoreInterval) public returns (bool rebased_) {
+    function _usdnRebase(Storage storage s, uint128 assetPrice, bool ignoreInterval)
+        internal
+        returns (bool rebased_, bytes memory callbackResult_)
+    {
         if (!ignoreInterval && block.timestamp - s._lastRebaseCheck < s._usdnRebaseInterval) {
-            return false;
+            return (false, callbackResult_);
         }
         s._lastRebaseCheck = block.timestamp;
         IUsdn usdn = s._usdn;
         uint256 divisor = usdn.divisor();
         if (divisor <= s._usdnMinDivisor) {
             // no need to rebase, the USDN divisor cannot go lower
-            return false;
+            return (false, callbackResult_);
         }
         uint256 balanceVault = s._balanceVault;
         uint8 assetDecimals = s._assetDecimals;
         uint256 usdnTotalSupply = usdn.totalSupply();
         uint256 uPrice = _calcUsdnPrice(s, balanceVault, assetPrice, usdnTotalSupply, assetDecimals);
         if (uPrice <= s._usdnRebaseThreshold) {
-            return false;
+            return (false, callbackResult_);
         }
         uint256 targetTotalSupply =
             _calcRebaseTotalSupply(s, balanceVault, assetPrice, s._targetUsdnPrice, assetDecimals);
         uint256 newDivisor = FixedPointMathLib.fullMulDiv(usdnTotalSupply, divisor, targetTotalSupply);
-        usdn.rebase(newDivisor);
-        rebased_ = true;
+        // since the USDN token can call a handler after the rebase, we want to make sure we do not block the user
+        // action in case the rebase fails
+        try usdn.rebase(newDivisor) returns (bool rebased, uint256, bytes memory callbackResult) {
+            rebased_ = rebased;
+            callbackResult_ = callbackResult;
+        } catch { }
     }
 
     /**
@@ -902,23 +913,25 @@ library UsdnProtocolCommonLibrary {
         uint16 liquidatedTicks,
         int256 remainingCollateral,
         bool rebased,
+        bytes memory rebaseCallbackResult,
         bytes memory priceData
-    ) public {
-        // Get how much we should give to the liquidator as rewards
-        uint256 liquidationRewards =
-            s._liquidationRewardsManager.getLiquidationRewards(liquidatedTicks, remainingCollateral, rebased, priceData);
+    ) internal {
+        // get how much we should give to the liquidator as rewards
+        uint256 liquidationRewards = s._liquidationRewardsManager.getLiquidationRewards(
+            liquidatedTicks, remainingCollateral, rebased, rebaseCallbackResult, priceData
+        );
 
-        // Avoid underflows in situation of extreme bad debt
+        // avoid underflows in situation of extreme bad debt
         if (s._balanceVault < liquidationRewards) {
             liquidationRewards = s._balanceVault;
         }
 
-        // Update the vault's balance
+        // update the vault's balance
         unchecked {
             s._balanceVault -= liquidationRewards;
         }
 
-        // Transfer rewards (wsteth) to the liquidator
+        // transfer rewards (wsteth) to the liquidator
         s._asset.safeTransfer(msg.sender, liquidationRewards);
 
         emit LiquidatorRewarded(msg.sender, liquidationRewards);

@@ -141,7 +141,7 @@ library UsdnProtocolVaultLibrary {
             // by this user (it will get validated automatically by their action)
             // and so we need to return the next item in the queue so that they can validate a third-party pending
             // action (if any)
-            if (candidate.timestamp == 0 || candidate.user == currentUser) {
+            if (candidate.timestamp == 0 || candidate.validator == currentUser) {
                 rawIndices_[i] = rawIndex;
                 // try the next one
                 unchecked {
@@ -375,7 +375,7 @@ library UsdnProtocolVaultLibrary {
             WithdrawalPendingAction({
                 action: ProtocolAction.ValidateWithdrawal,
                 timestamp: uint40(block.timestamp),
-                user: user,
+                validator: user,
                 to: to,
                 securityDepositValue: s._securityDepositValue,
                 sharesLSB: _calcWithdrawalAmountLSB(usdnShares),
@@ -499,7 +499,7 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (pending.user != user) {
+        if (pending.validator != user) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
 
@@ -566,7 +566,7 @@ library UsdnProtocolVaultLibrary {
         data.pendingAction = DepositPendingAction({
             action: ProtocolAction.ValidateDeposit,
             timestamp: uint40(block.timestamp),
-            user: user,
+            validator: user,
             to: to,
             securityDepositValue: s._securityDepositValue,
             _unused: 0,
@@ -651,7 +651,7 @@ library UsdnProtocolVaultLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (pending.user != user) {
+        if (pending.validator != user) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
 

@@ -372,7 +372,7 @@ library UsdnProtocolLongLibrary {
         LongPendingAction memory action = LongPendingAction({
             action: ProtocolAction.ValidateOpenPosition,
             timestamp: uint40(block.timestamp),
-            user: user,
+            validator: user,
             to: to,
             securityDepositValue: s._securityDepositValue,
             tick: data.posId.tick,
@@ -527,7 +527,7 @@ library UsdnProtocolLongLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (pending.user != user) {
+        if (pending.validator != user) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
 
@@ -622,7 +622,7 @@ library UsdnProtocolLongLibrary {
         LongPendingAction memory action = LongPendingAction({
             action: ProtocolAction.ValidateClosePosition,
             timestamp: uint40(block.timestamp),
-            user: user,
+            validator: user,
             to: to,
             securityDepositValue: data.securityDepositValue,
             tick: posId.tick,
@@ -835,7 +835,7 @@ library UsdnProtocolLongLibrary {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
         // sanity check
-        if (pending.user != user) {
+        if (pending.validator != user) {
             revert IUsdnProtocolErrors.UsdnProtocolInvalidPendingAction();
         }
 

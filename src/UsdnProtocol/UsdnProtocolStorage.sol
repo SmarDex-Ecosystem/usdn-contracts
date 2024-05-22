@@ -9,6 +9,7 @@ import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyG
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
@@ -85,6 +86,9 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The liquidation rewards manager contract.
     ILiquidationRewardsManager internal _liquidationRewardsManager;
 
+    /// @notice The rebalancer contract.
+    IRebalancer internal _rebalancer;
+
     /// @notice The minimum leverage for a position (1.000000001)
     uint256 internal _minLeverage = 10 ** LEVERAGE_DECIMALS + 10 ** 12;
 
@@ -102,6 +106,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The protocol fee percentage (in bps)
     uint16 internal _protocolFeeBps = 10;
+
+    /**
+     * @notice Part of the remaining collateral that is given as bonus to the Rebalancer upon liquidation of a tick,
+     * in basis points
+     * @dev The rest is sent to the Vault balance
+     */
+    uint16 internal _rebalancerBonusBps = 8000; // 80%
 
     /// @notice The liquidation penalty (in tick spacing units)
     uint8 internal _liquidationPenalty = 2; // 200 ticks -> ~2.02%
@@ -142,6 +153,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      * the withdrawal vault rebalancing mechanism is triggered, preventing the close of existing long position.
      */
     int256 internal _closeExpoImbalanceLimitBps = 600;
+
+    /**
+     * @notice The target imbalance on the long side (in basis points)
+     * @dev This value will be used to calculate how much of the missing trading expo
+     * the rebalancer position will try to compensate
+     */
+    int256 internal _longImbalanceTargetBps = 300;
 
     /// @notice The position fee in basis points
     uint16 internal _positionFeeBps = 4; // 0.04%
@@ -351,6 +369,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
+    function getRebalancer() external view returns (IRebalancer) {
+        return _rebalancer;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
     function getMinLeverage() external view returns (uint256) {
         return _minLeverage;
     }
@@ -403,6 +426,11 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getVaultFeeBps() external view returns (uint16) {
         return _vaultFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getRebalancerBonusBps() external view returns (uint16) {
+        return _rebalancerBonusBps;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -549,21 +577,27 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getExpoImbalanceLimits()
-        external
-        view
-        returns (
-            int256 openExpoImbalanceLimitBps_,
-            int256 depositExpoImbalanceLimitBps_,
-            int256 withdrawalExpoImbalanceLimitBps_,
-            int256 closeExpoImbalanceLimitBps_
-        )
-    {
-        return (
-            _openExpoImbalanceLimitBps,
-            _depositExpoImbalanceLimitBps,
-            _withdrawalExpoImbalanceLimitBps,
-            _closeExpoImbalanceLimitBps
-        );
+    function getDepositExpoImbalanceLimitBps() external view returns (int256 depositExpoImbalanceLimitBps_) {
+        depositExpoImbalanceLimitBps_ = _depositExpoImbalanceLimitBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256 withdrawalExpoImbalanceLimitBps_) {
+        withdrawalExpoImbalanceLimitBps_ = _withdrawalExpoImbalanceLimitBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_) {
+        openExpoImbalanceLimitBps_ = _openExpoImbalanceLimitBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_) {
+        closeExpoImbalanceLimitBps_ = _closeExpoImbalanceLimitBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getLongImbalanceTargetBps() external view returns (int256 longImbalanceTargetBps_) {
+        longImbalanceTargetBps_ = _longImbalanceTargetBps;
     }
 }
