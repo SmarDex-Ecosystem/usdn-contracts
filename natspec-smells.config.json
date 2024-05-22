@@ -1,9 +1,5 @@
 {
   "include": "src/**/*.sol",
-  "exclude": [
-    "**/mock/**/*.sol",
-    "(test|scripts)/**/*.sol",
-    "src/UniversalRouter/libraries/Commands.sol"
-  ],
+  "exclude": ["**/mock/**/*.sol", "src/UniversalRouter/libraries/Commands.sol"],
   "constructorNatspec": true
 }
