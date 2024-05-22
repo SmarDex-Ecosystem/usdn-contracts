@@ -4,9 +4,9 @@ pragma solidity 0.8.20;
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
+import { IStETH } from "src/UniversalRouter/interfaces/ISTETH.sol";
 
 import { UniversalRouterBaseIntegrationFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
-import { IStETH } from "test/integration/UniversalRouter/utils/IStEth.sol";
 
 /**
  * @custom:feature Test commands lower than fourth boundary of the `execute` function
