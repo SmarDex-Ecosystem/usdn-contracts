@@ -8,7 +8,7 @@ import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEv
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { Position, PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { IBaseLiquidationRewardsManager } from "src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 
@@ -133,7 +133,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @notice Get the liquidation rewards manager contract
      * @return The address of the liquidation rewards manager contract
      */
-    function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager);
+    function getLiquidationRewardsManager() external view returns (IBaseLiquidationRewardsManager);
 
     /**
      * @notice Get the rebalancer contract
