@@ -170,7 +170,4 @@ interface IUsdnProtocolErrors {
      * price.
      */
     error UsdnProtocolZeroLongTradingExpo();
-
-    /// @dev Indicates that some ticks still need to be liquidated before new actions can be performed
-    error UsdnProtocolLiquidationPending();
 }

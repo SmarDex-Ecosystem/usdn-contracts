@@ -358,10 +358,6 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         initializedAndNonReentrant
         returns (uint256 validatedActions_)
     {
-        if (_lastPrice < getEffectivePriceForTick(_highestPopulatedTick)) {
-            revert UsdnProtocolLiquidationPending();
-        }
-
         uint256 balanceBefore = address(this).balance;
         uint256 amountToRefund;
 
@@ -1698,20 +1694,27 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             return (false, false, 0);
         }
         bytes calldata priceData = data.priceData[offset];
-        _clearPendingAction(pending.validator, rawIndex);
+
+        // for safety we consider that no pending action was validated by default
+        bool isLiquidationPending = true;
         if (pending.action == ProtocolAction.ValidateDeposit) {
-            _validateDepositWithAction(pending, priceData);
+            isLiquidationPending = _validateDepositWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateWithdrawal) {
-            _validateWithdrawalWithAction(pending, priceData);
+            isLiquidationPending = _validateWithdrawalWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateOpenPosition) {
-            _validateOpenPositionWithAction(pending, priceData);
+            (isLiquidationPending,) = _validateOpenPositionWithAction(pending, priceData);
         } else if (pending.action == ProtocolAction.ValidateClosePosition) {
-            _validateClosePositionWithAction(pending, priceData);
+            isLiquidationPending = _validateClosePositionWithAction(pending, priceData);
         }
+
         success_ = true;
-        executed_ = true;
-        securityDepositValue_ = pending.securityDepositValue;
-        emit SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
+        executed_ = !isLiquidationPending;
+
+        if (executed_) {
+            _clearPendingAction(pending.validator, rawIndex);
+            securityDepositValue_ = pending.securityDepositValue;
+            emit SecurityDepositRefunded(pending.validator, msg.sender, securityDepositValue_);
+        }
     }
 
     function _getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
