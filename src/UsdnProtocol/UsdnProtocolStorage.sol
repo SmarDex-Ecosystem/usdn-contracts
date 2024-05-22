@@ -7,9 +7,9 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { IUsdnProtocolStorage } from "src/interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
+import { IBaseLiquidationRewardsManager } from "src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
@@ -81,13 +81,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /* -------------------------------------------------------------------------- */
 
     /// @notice The oracle middleware contract.
-    IOracleMiddleware internal _oracleMiddleware;
+    IBaseOracleMiddleware internal _oracleMiddleware;
 
     /// @notice The liquidation rewards manager contract.
-    ILiquidationRewardsManager internal _liquidationRewardsManager;
+    IBaseLiquidationRewardsManager internal _liquidationRewardsManager;
 
-    /// @notice The order manager contract.
-    IOrderManager internal _orderManager;
+    /// @notice The rebalancer contract.
+    IRebalancer internal _rebalancer;
 
     /// @notice The minimum leverage for a position (1.000000001)
     uint256 internal _minLeverage = 10 ** LEVERAGE_DECIMALS + 10 ** 12;
@@ -106,6 +106,13 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
 
     /// @notice The protocol fee percentage (in bps)
     uint16 internal _protocolFeeBps = 10;
+
+    /**
+     * @notice Part of the remaining collateral that is given as bonus to the Rebalancer upon liquidation of a tick,
+     * in basis points
+     * @dev The rest is sent to the Vault balance
+     */
+    uint16 internal _rebalancerBonusBps = 8000; // 80%
 
     /// @notice The liquidation penalty (in tick spacing units)
     uint8 internal _liquidationPenalty = 2; // 200 ticks -> ~2.02%
@@ -147,8 +154,18 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
      */
     int256 internal _closeExpoImbalanceLimitBps = 600;
 
-    /// @notice The position fee in basis point
+    /**
+     * @notice The target imbalance on the long side (in basis points)
+     * @dev This value will be used to calculate how much of the missing trading expo
+     * the rebalancer position will try to compensate
+     */
+    int256 internal _longImbalanceTargetBps = 300;
+
+    /// @notice The position fee in basis points
     uint16 internal _positionFeeBps = 4; // 0.04%
+
+    /// @notice The fee for vault deposits and withdrawals, in basis points
+    uint16 internal _vaultFeeBps = 4; // 0.04%
 
     /// @notice The ratio of USDN to SDEX tokens to burn on deposit
     uint32 internal _sdexBurnOnDepositRatio = 1e6; // 1%
@@ -261,8 +278,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         IUsdn usdn,
         IERC20Metadata sdex,
         IERC20Metadata asset,
-        IOracleMiddleware oracleMiddleware,
-        ILiquidationRewardsManager liquidationRewardsManager,
+        IBaseOracleMiddleware oracleMiddleware,
+        IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
     ) {
@@ -342,18 +359,18 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getOracleMiddleware() external view returns (IOracleMiddleware) {
+    function getOracleMiddleware() external view returns (IBaseOracleMiddleware) {
         return _oracleMiddleware;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager) {
+    function getLiquidationRewardsManager() external view returns (IBaseLiquidationRewardsManager) {
         return _liquidationRewardsManager;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getOrderManager() external view returns (IOrderManager) {
-        return _orderManager;
+    function getRebalancer() external view returns (IRebalancer) {
+        return _rebalancer;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -404,6 +421,16 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @inheritdoc IUsdnProtocolStorage
     function getPositionFeeBps() external view returns (uint16) {
         return _positionFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getVaultFeeBps() external view returns (uint16) {
+        return _vaultFeeBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getRebalancerBonusBps() external view returns (uint16) {
+        return _rebalancerBonusBps;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
@@ -550,21 +577,27 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getExpoImbalanceLimits()
-        external
-        view
-        returns (
-            int256 openExpoImbalanceLimitBps_,
-            int256 depositExpoImbalanceLimitBps_,
-            int256 withdrawalExpoImbalanceLimitBps_,
-            int256 closeExpoImbalanceLimitBps_
-        )
-    {
-        return (
-            _openExpoImbalanceLimitBps,
-            _depositExpoImbalanceLimitBps,
-            _withdrawalExpoImbalanceLimitBps,
-            _closeExpoImbalanceLimitBps
-        );
+    function getDepositExpoImbalanceLimitBps() external view returns (int256 depositExpoImbalanceLimitBps_) {
+        depositExpoImbalanceLimitBps_ = _depositExpoImbalanceLimitBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getWithdrawalExpoImbalanceLimitBps() external view returns (int256 withdrawalExpoImbalanceLimitBps_) {
+        withdrawalExpoImbalanceLimitBps_ = _withdrawalExpoImbalanceLimitBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getOpenExpoImbalanceLimitBps() external view returns (int256 openExpoImbalanceLimitBps_) {
+        openExpoImbalanceLimitBps_ = _openExpoImbalanceLimitBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getCloseExpoImbalanceLimitBps() external view returns (int256 closeExpoImbalanceLimitBps_) {
+        closeExpoImbalanceLimitBps_ = _closeExpoImbalanceLimitBps;
+    }
+
+    /// @inheritdoc IUsdnProtocolStorage
+    function getLongImbalanceTargetBps() external view returns (int256 longImbalanceTargetBps_) {
+        longImbalanceTargetBps_ = _longImbalanceTargetBps;
     }
 }

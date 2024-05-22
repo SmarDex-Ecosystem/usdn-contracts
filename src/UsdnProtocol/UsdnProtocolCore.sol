@@ -119,12 +119,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         do {
             // since `i` cannot be greater or equal to `queueLength`, there is no risk of reverting
             (PendingAction memory candidate, uint128 rawIndex) = _pendingActionsQueue.at(i);
-
-            // if the msg.sender is equal to the user of the pending action, then the pending action is not actionable
-            // by this user (it will get validated automatically by their action)
+            // if the msg.sender is equal to the validator of the pending action, then the pending action is not
+            // actionable by this user (it will get validated automatically by their action)
             // and so we need to return the next item in the queue so that they can validate a third-party pending
             // action (if any)
-            if (candidate.timestamp == 0 || candidate.user == currentUser) {
+            if (candidate.timestamp == 0 || candidate.validator == currentUser) {
                 rawIndices_[i] = rawIndex;
                 // try the next one
                 unchecked {
@@ -259,50 +258,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Calculate the new liquidation multiplier
-     * @param fund The funding rate
-     * @param liquidationMultiplier The current liquidation multiplier
-     * @return multiplier_ The new liquidation multiplier
-     */
-    function _getLiquidationMultiplier(int256 fund, uint256 liquidationMultiplier)
-        internal
-        pure
-        returns (uint256 multiplier_)
-    {
-        multiplier_ = liquidationMultiplier;
-
-        // newMultiplier = oldMultiplier * (1 + funding)
-        if (fund > 0) {
-            multiplier_ += FixedPointMathLib.fullMulDiv(multiplier_, uint256(fund), 10 ** FUNDING_RATE_DECIMALS);
-        } else {
-            multiplier_ -= FixedPointMathLib.fullMulDiv(multiplier_, uint256(-fund), 10 ** FUNDING_RATE_DECIMALS);
-        }
-    }
-
-    /**
-     * @notice Calculate the PnL in asset units of the long side, considering the overall total expo and change in
-     * price
-     * @param totalExpo The total exposure of the long side
-     * @param balanceLong The (old) balance of the long side
-     * @param newPrice The new price
-     * @param oldPrice The old price when the old balance was updated
-     * @return pnl_ The PnL in asset units
-     */
-    function _pnlAsset(uint256 totalExpo, uint256 balanceLong, uint128 newPrice, uint128 oldPrice)
-        internal
-        pure
-        returns (int256 pnl_)
-    {
-        // in case of a negative trading expo, we can't allow calculation of PnL because it would invert the sign of the
-        // calculated amount. We thus disable any balance update due to PnL in such a case
-        if (balanceLong >= totalExpo) {
-            return 0;
-        }
-        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
-        pnl_ = totalExpo.toInt256().safeSub(balanceLong.toInt256()).safeMul(priceDiff).safeDiv(_toInt256(newPrice));
-    }
-
-    /**
      * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
      * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
      * due to the price change to `currentPrice`
@@ -326,13 +281,22 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         pure
         returns (int256 available_)
     {
-        // Avoid division by zero
-        // slither-disable-next-line incorrect-equality
-        if (totalExpo == 0) {
-            return 0;
+        // if balanceLong == totalExpo or the long trading expo is negative (theoretically impossible), the PnL is
+        // zero
+        // we can't calculate a proper PnL value if the long trading expo is negative because it would invert the
+        // sign of the amount
+        if (balanceLong >= totalExpo) {
+            return balanceLong.toInt256();
         }
+        int256 priceDiff = _toInt256(newPrice) - _toInt256(oldPrice);
+        uint256 tradingExpo;
+        // balanceLong is strictly inferior to totalExpo
+        unchecked {
+            tradingExpo = totalExpo - balanceLong;
+        }
+        int256 pnl = tradingExpo.toInt256().safeMul(priceDiff).safeDiv(_toInt256(newPrice));
 
-        available_ = balanceLong.toInt256().safeAdd(_pnlAsset(totalExpo, balanceLong, newPrice, oldPrice));
+        available_ = balanceLong.toInt256().safeAdd(pnl);
     }
 
     /**
@@ -491,7 +455,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     {
         int256 protocolFeeBps = _toInt256(_protocolFeeBps);
         fundWithFee_ = fund;
-        fee_ = (fundAsset * protocolFeeBps) / int256(BPS_DIVISOR);
+        fee_ = fundAsset * protocolFeeBps / int256(BPS_DIVISOR);
         // fundAsset and fee_ have the same sign, we can safely subtract them to reduce the absolute amount of asset
         fundAssetWithFee_ = fundAsset - fee_;
 

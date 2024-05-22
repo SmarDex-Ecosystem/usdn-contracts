@@ -5,7 +5,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN, USER_1 } from "test/utils/Constants.sol";
+import { ADMIN, USER_1, USER_2 } from "test/utils/Constants.sol";
 
 import {
     LongPendingAction,
@@ -18,7 +18,7 @@ import {
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
- * @custom:feature The validate close position functions of the USDN Protocol
+ * @custom:feature The initiate close position functions of the USDN Protocol
  * @custom:background Given a protocol initialized with 10 wstETH in the vault and 5 wstETH in a long position with a
  * leverage of ~2x
  * @custom:and a validated long position of 1 ether with 10x leverage
@@ -98,7 +98,8 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     function test_RevertWhen_notUser() public {
         bytes memory priceData = abi.encode(params.initialPrice);
         vm.expectRevert(UsdnProtocolUnauthorized.selector);
-        protocol.i_initiateClosePosition(USER_1, USER_1, posId, positionAmount, priceData);
+        vm.prank(USER_1);
+        protocol.i_initiateClosePosition(USER_1, address(this), posId, positionAmount, priceData);
     }
 
     /**
@@ -167,7 +168,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         uint256 etherBalanceBefore = address(this).balance;
 
         protocol.initiateClosePosition{ value: 1 ether }(
-            posId, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this)
+            posId, positionAmount, address(this), priceData, EMPTY_PREVIOUS_DATA
         );
 
         assertEq(
@@ -207,7 +208,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, PositionId(0, 0, 0));
         protocol.initiateClosePosition(
-            posId, positionAmount, priceData, PreviousActionsData(previousData, rawIndices), USER_1
+            posId, positionAmount, address(this), priceData, PreviousActionsData(previousData, rawIndices)
         );
     }
 
@@ -222,7 +223,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         vm.expectEmit();
         emit InitiatedClosePosition(address(this), address(this), posId, positionAmount, positionAmount, 0);
-        protocol.initiateClosePosition(posId, positionAmount, priceData, EMPTY_PREVIOUS_DATA, address(this));
+        protocol.initiateClosePosition(posId, positionAmount, address(this), priceData, EMPTY_PREVIOUS_DATA);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -355,11 +356,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         protocol.i_initiateClosePosition(address(this), to, posId, amountToClose, abi.encode(params.initialPrice));
 
         /* ------------------------- Pending action's state ------------------------- */
-        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(address(this)));
+        LongPendingAction memory action = protocol.i_toLongPendingAction(protocol.getUserPendingAction(posBefore.user));
         assertTrue(action.action == ProtocolAction.ValidateClosePosition, "The action type is wrong");
         assertEq(action.timestamp, block.timestamp, "The block timestamp should be now");
-        assertEq(action.user, address(this), "The user should be the transaction sender");
         assertEq(action.to, to, "To is wrong");
+        assertEq(action.validator, posBefore.user, "Validator is wrong");
         assertEq(action.tick, posId.tick, "The position tick is wrong");
         assertEq(
             action.closePosTotalExpo,
@@ -393,6 +394,84 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
+     * @notice Helper function to set up a mock rebalancer position with two users
+     * @param userDeposit Amount to deposit for a single user
+     * @return rebalancerPos_ The position ID of the rebalancer position
+     */
+    function _setUpMockRebalancerPosition(uint128 userDeposit) internal returns (PositionId memory rebalancerPos_) {
+        vm.startPrank(ADMIN);
+        rebalancer.setMinAssetDeposit(userDeposit);
+        protocol.setRebalancer(rebalancer);
+        vm.stopPrank();
+
+        wstETH.mintAndApprove(USER_1, userDeposit, address(rebalancer), type(uint256).max);
+        wstETH.mintAndApprove(USER_2, userDeposit, address(rebalancer), type(uint256).max);
+        vm.prank(USER_1);
+        rebalancer.depositAssets(userDeposit, USER_1);
+        vm.prank(USER_2);
+        rebalancer.depositAssets(userDeposit, USER_2);
+
+        vm.startPrank(address(rebalancer));
+        wstETH.approve(address(protocol), type(uint256).max);
+        rebalancerPos_ = protocol.initiateOpenPosition(
+            2 * userDeposit,
+            params.initialPrice / 2,
+            address(rebalancer),
+            address(rebalancer),
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+        _waitDelay();
+        protocol.validateOpenPosition(address(rebalancer), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA);
+        vm.stopPrank();
+    }
+
+    /**
+     * @custom:scenario A rebalancer user closes their position completely
+     * @custom:given The user has deposited 2 ether in the rebalancer
+     * @custom:and The rebalancer's position has 4 ether of initial collateral
+     * @custom:and The minimum long position in the protocol is changed to 6 ether
+     * @custom:when The user closes their position completely (2 ether) through a rebalancer partial close
+     * @custom:then The partial close is authorized and successful
+     */
+    function test_closePartialFromRebalancerPositionTooSmall() public {
+        uint128 minAssetDeposit = 2 ether;
+
+        PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
+
+        vm.prank(ADMIN);
+        protocol.setMinLongPosition(3 * minAssetDeposit);
+
+        vm.prank(address(rebalancer));
+        protocol.initiateClosePosition(
+            rebalancerPos, minAssetDeposit, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
+     * @custom:scenario A rebalancer user closes their position partially when the position is too small
+     * @custom:given The user has deposited 2 ether in the rebalancer
+     * @custom:and The rebalancer's position has 4 ether of initial collateral
+     * @custom:and The minimum long position in the protocol is changed to 6 ether
+     * @custom:when The user closes their position partially (1 ether) through a rebalancer partial close
+     * @custom:then The partial close is unauthorized and reverts with `UsdnProtocolLongPositionTooSmall`
+     */
+    function test_RevertWhen_closePartialFromRebalancerPartialUserClose() public {
+        uint128 minAssetDeposit = 2 ether;
+
+        PositionId memory rebalancerPos = _setUpMockRebalancerPosition(minAssetDeposit);
+
+        vm.prank(ADMIN);
+        protocol.setMinLongPosition(3 * minAssetDeposit);
+
+        vm.expectRevert(UsdnProtocolLongPositionTooSmall.selector);
+        vm.prank(address(rebalancer));
+        protocol.initiateClosePosition(
+            rebalancerPos, minAssetDeposit / 2, USER_1, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
+        );
+    }
+
+    /**
      * @custom:scenario The user initiates a close position action with a reentrancy attempt
      * @custom:given A user being a smart contract that calls initiateClosePosition with too much ether
      * @custom:and A receive() function that calls initiateClosePosition again
@@ -404,7 +483,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         if (_reenter) {
             vm.expectRevert(InitializableReentrancyGuard.InitializableReentrancyGuardReentrantCall.selector);
             protocol.initiateClosePosition(
-                posId, positionAmount, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this)
+                posId, positionAmount, address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
             );
             return;
         }
@@ -424,7 +503,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateClosePosition.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateClosePosition{ value: 1 }(
-            posId, positionAmount, abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA, address(this)
+            posId, positionAmount, address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
         );
     }
 

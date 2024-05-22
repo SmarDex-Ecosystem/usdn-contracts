@@ -75,8 +75,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
             // Apply conf ratio to pyth confidence
             uint256 formattedPythConf = (
-                pythConf * 10 ** (wstethMiddleware.getDecimals() - pythDecimals) * wstethMiddleware.getConfRatio()
-            ) / wstethMiddleware.getConfRatioDenom();
+                pythConf * 10 ** (wstethMiddleware.getDecimals() - pythDecimals) * wstethMiddleware.getConfRatioBps()
+            ) / wstethMiddleware.BPS_DIVISOR();
 
             // Price + conf
             if (
@@ -205,8 +205,8 @@ contract TestWstethMiddlewareParseAndValidatePriceRealData is WstethIntegrationF
 
             // Apply conf ratio to pyth confidence
             uint256 formattedPythConf = (
-                pythConf * 10 ** (wstethMiddleware.getDecimals() - pythDecimals) * wstethMiddleware.getConfRatio()
-            ) / wstethMiddleware.getConfRatioDenom();
+                pythConf * 10 ** (wstethMiddleware.getDecimals() - pythDecimals) * wstethMiddleware.getConfRatioBps()
+            ) / wstethMiddleware.BPS_DIVISOR();
 
             // Price + conf
             if (

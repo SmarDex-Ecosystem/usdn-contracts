@@ -1,10 +1,10 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 
 /**
  * @title IUsdnProtocol
@@ -48,10 +48,10 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setLiquidationRewardsManager(ILiquidationRewardsManager newLiquidationRewardsManager) external;
 
     /**
-     * @notice Replace the OrderManager contract with a new implementation.
-     * @param newOrderManager the address of the new contract.
+     * @notice Replace the Rebalancer contract with a new implementation.
+     * @param newRebalancer the address of the new contract.
      */
-    function setOrderManager(IOrderManager newOrderManager) external;
+    function setRebalancer(IRebalancer newRebalancer) external;
 
     /// @notice Set the new minimum leverage for a position.
     function setMinLeverage(uint256 newMinLeverage) external;
@@ -86,10 +86,22 @@ interface IUsdnProtocol is IUsdnProtocolActions {
     function setProtocolFeeBps(uint16 newFeeBps) external;
 
     /**
-     * @notice Update the position fees.
-     * @param newPositionFee The new position fee (in basis points).
+     * @notice Update the position fee
+     * @param newPositionFee The new position fee (in basis points)
      */
     function setPositionFeeBps(uint16 newPositionFee) external;
+
+    /**
+     * @notice Update the vault fee
+     * @param newVaultFee The new vault fee (in basis points)
+     */
+    function setVaultFeeBps(uint16 newVaultFee) external;
+
+    /**
+     * @notice Update the rebalancer bonus
+     * @param newBonus The bonus (in basis points)
+     */
+    function setRebalancerBonusBps(uint16 newBonus) external;
 
     /**
      * @notice Update the ratio of USDN to SDEX tokens to burn on deposit.
@@ -120,16 +132,19 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Set imbalance limits basis point
+     * @dev newLongImbalanceTargetBps needs to be lower than newCloseLimitBps and higher than -newWithdrawalLimitBps
      * @param newOpenLimitBps The new open limit
      * @param newDepositLimitBps The new deposit limit
      * @param newWithdrawalLimitBps The new withdrawal limit
      * @param newCloseLimitBps The new close limit
+     * @param newLongImbalanceTargetBps The new target imbalance limit for the long side
      */
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,
         uint256 newDepositLimitBps,
         uint256 newWithdrawalLimitBps,
-        uint256 newCloseLimitBps
+        uint256 newCloseLimitBps,
+        int256 newLongImbalanceTargetBps
     ) external;
 
     /**

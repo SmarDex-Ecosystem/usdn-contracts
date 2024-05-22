@@ -6,7 +6,8 @@ import { BaseFixture } from "test/utils/Fixtures.sol";
 import { UsdnProtocolHandler } from "test/unit/UsdnProtocol/utils/Handler.sol";
 import { MockOracleMiddleware } from "test/unit/UsdnProtocol/utils/MockOracleMiddleware.sol";
 import { MockChainlinkOnChain } from "test/unit/Middlewares/utils/MockChainlinkOnChain.sol";
-import { IEvents } from "test/utils/IEvents.sol";
+import { RebalancerHandler } from "test/unit/Rebalancer/utils/Handler.sol";
+import { IEventsErrors } from "test/utils/IEventsErrors.sol";
 import { Sdex } from "test/utils/Sdex.sol";
 import { WstETH } from "test/utils/WstEth.sol";
 
@@ -20,14 +21,13 @@ import {
     PreviousActionsData,
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { Usdn } from "src/Usdn.sol";
-import { OrderManagerHandler } from "test/unit/OrderManager/utils/Handler.sol";
+import { Usdn } from "src/Usdn/Usdn.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
  * @dev Utils for testing the USDN Protocol
  */
-contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, IUsdnProtocolEvents {
+contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErrors, IUsdnProtocolEvents {
     struct Flags {
         bool enablePositionFees;
         bool enableProtocolFees;
@@ -37,6 +37,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         bool enableSecurityDeposit;
         bool enableSdexBurnOnDeposit;
         bool enableLongLimit;
+        bool enableRebalancer;
     }
 
     struct SetUpParams {
@@ -63,7 +64,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
             enableUsdnRebase: false,
             enableSecurityDeposit: false,
             enableSdexBurnOnDeposit: false,
-            enableLongLimit: false
+            enableLongLimit: false,
+            enableRebalancer: false
         })
     });
 
@@ -81,8 +83,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
     MockOracleMiddleware public oracleMiddleware;
     MockChainlinkOnChain public chainlinkGasPriceFeed;
     LiquidationRewardsManager public liquidationRewardsManager;
+    RebalancerHandler public rebalancer;
     UsdnProtocolHandler public protocol;
-    OrderManagerHandler public orderManager;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
 
@@ -119,6 +121,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         if (!testParams.flags.enablePositionFees) {
             protocol.setPositionFeeBps(0);
+            protocol.setVaultFeeBps(0);
         }
         if (!testParams.flags.enableProtocolFees) {
             protocol.setProtocolFeeBps(0);
@@ -138,7 +141,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         // disable imbalance limits
         if (!testParams.flags.enableLimits) {
-            protocol.setExpoImbalanceLimits(0, 0, 0, 0);
+            protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
         }
 
         // disable burn sdex on deposit
@@ -153,7 +156,11 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         wstETH.approve(address(protocol), type(uint256).max);
 
-        orderManager = new OrderManagerHandler(protocol);
+        rebalancer = new RebalancerHandler(protocol);
+        if (testParams.flags.enableRebalancer) {
+            protocol.setRebalancer(rebalancer);
+            rebalancer.transferOwnership(ADMIN);
+        }
 
         // leverage approx 2x
         protocol.initialize(
@@ -165,7 +172,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
 
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
-        orderManager.transferOwnership(ADMIN);
+        rebalancer.transferOwnership(ADMIN);
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();
@@ -221,24 +228,26 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         wstETH.mintAndApprove(user, positionSize, address(protocol), positionSize);
         bytes memory priceData = abi.encode(price);
 
-        protocol.initiateDeposit{ value: securityDepositValue }(positionSize, priceData, EMPTY_PREVIOUS_DATA, user);
+        protocol.initiateDeposit{ value: securityDepositValue }(
+            positionSize, user, user, priceData, EMPTY_PREVIOUS_DATA
+        );
         _waitDelay();
         if (untilAction == ProtocolAction.InitiateDeposit) return;
 
-        protocol.validateDeposit(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
         uint256 balanceOf = usdn.balanceOf(user);
         usdn.approve(address(protocol), balanceOf);
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint128(balanceOf), priceData, EMPTY_PREVIOUS_DATA, user
+            uint128(balanceOf), user, user, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 
         if (untilAction == ProtocolAction.InitiateWithdrawal) return;
 
-        protocol.validateWithdrawal(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateWithdrawal(user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
     }
 
@@ -259,22 +268,27 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         bytes memory priceData = abi.encode(openParams.price);
 
         posId_ = protocol.initiateOpenPosition{ value: securityDepositValue }(
-            openParams.positionSize, openParams.desiredLiqPrice, priceData, EMPTY_PREVIOUS_DATA, openParams.user
+            openParams.positionSize,
+            openParams.desiredLiqPrice,
+            openParams.user,
+            openParams.user,
+            priceData,
+            EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateOpenPosition) return (posId_);
 
-        protocol.validateOpenPosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateOpenPosition(openParams.user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.ValidateOpenPosition) return (posId_);
 
         protocol.initiateClosePosition{ value: securityDepositValue }(
-            posId_, openParams.positionSize, priceData, EMPTY_PREVIOUS_DATA, openParams.user
+            posId_, openParams.positionSize, openParams.user, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
         if (openParams.untilAction == ProtocolAction.InitiateClosePosition) return (posId_);
 
-        protocol.validateClosePosition(priceData, EMPTY_PREVIOUS_DATA);
+        protocol.validateClosePosition(openParams.user, priceData, EMPTY_PREVIOUS_DATA);
         _waitDelay();
     }
 
@@ -309,7 +323,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
     function _assertActionsEqual(PendingAction memory a, PendingAction memory b, string memory err) internal {
         assertTrue(a.action == b.action, string.concat(err, " - action type"));
         assertEq(a.timestamp, b.timestamp, string.concat(err, " - action timestamp"));
-        assertEq(a.user, b.user, string.concat(err, " - action user"));
+        assertEq(a.to, b.to, string.concat(err, " - action to"));
+        assertEq(a.validator, b.validator, string.concat(err, " - action validator"));
         assertEq(a.securityDepositValue, b.securityDepositValue, string.concat(err, " - action security deposit"));
         assertEq(a.var1, b.var1, string.concat(err, " - action var1"));
         assertEq(a.var2, b.var2, string.concat(err, " - action var2"));
@@ -327,6 +342,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         skip(31);
     }
 
+    function _waitBeforeActionablePendingAction() internal {
+        skip(protocol.getValidationDeadline() + 1);
+    }
+
     /// @dev Calculate proper initial values from randoms to initiate a balanced protocol
     function _randInitBalanced(uint128 initialDeposit, uint128 initialLong) internal {
         // deploy protocol at equilibrium temporarily to get access to constants and calculations
@@ -340,7 +359,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEvents, I
         // cannot be less than 1 ether
         initialDeposit = uint128(bound(initialDeposit, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
 
-        (int256 openLimit,,,) = protocol.getExpoImbalanceLimits();
+        int256 openLimit = protocol.getOpenExpoImbalanceLimitBps();
         uint128 margin = uint128(initialDeposit * uint256(openLimit) / protocol.BPS_DIVISOR());
 
         // min long expo to initiate a balanced protocol

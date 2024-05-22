@@ -13,8 +13,8 @@ import { UsdnProtocolActions } from "src/UsdnProtocol/UsdnProtocolActions.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
-import { IOrderManager } from "src/interfaces/OrderManager/IOrderManager.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 
 contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     using SafeERC20 for IERC20Metadata;
@@ -84,14 +84,7 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         // Create long position
         _createInitialPosition(longAmount, currentPrice.price.toUint128(), tick, positionTotalExpo);
 
-        uint256 balance = address(this).balance;
-        if (balance != 0) {
-            // slither-disable-next-line arbitrary-send-eth
-            (bool success,) = payable(msg.sender).call{ value: balance }("");
-            if (!success) {
-                revert UsdnProtocolEtherRefundFailed();
-            }
-        }
+        _refundEther(address(this).balance, msg.sender);
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -116,10 +109,10 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
-    function setOrderManager(IOrderManager newOrderManager) external onlyOwner {
-        _orderManager = newOrderManager;
+    function setRebalancer(IRebalancer newRebalancer) external onlyOwner {
+        _rebalancer = newRebalancer;
 
-        emit OrderManagerUpdated(address(newOrderManager));
+        emit RebalancerUpdated(address(newRebalancer));
     }
 
     /// @inheritdoc IUsdnProtocol
@@ -245,6 +238,26 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     }
 
     /// @inheritdoc IUsdnProtocol
+    function setVaultFeeBps(uint16 newVaultFee) external onlyOwner {
+        // newVaultFee greater than max 2000: 20%
+        if (newVaultFee > 2000) {
+            revert UsdnProtocolInvalidVaultFee();
+        }
+        _vaultFeeBps = newVaultFee;
+        emit VaultFeeUpdated(newVaultFee);
+    }
+
+    /// @inheritdoc IUsdnProtocol
+    function setRebalancerBonusBps(uint16 newBonus) external onlyOwner {
+        // newBonus greater than max 100%
+        if (newBonus > BPS_DIVISOR) {
+            revert UsdnProtocolInvalidRebalancerBonus();
+        }
+        _rebalancerBonusBps = newBonus;
+        emit RebalancerBonusUpdated(newBonus);
+    }
+
+    /// @inheritdoc IUsdnProtocol
     function setSdexBurnOnDepositRatio(uint32 newRatio) external onlyOwner {
         // If newRatio is greater than 5%
         if (newRatio > SDEX_BURN_ON_DEPOSIT_DIVISOR / 20) {
@@ -282,7 +295,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         uint256 newOpenLimitBps,
         uint256 newDepositLimitBps,
         uint256 newWithdrawalLimitBps,
-        uint256 newCloseLimitBps
+        uint256 newCloseLimitBps,
+        int256 newLongImbalanceTargetBps
     ) external onlyOwner {
         _openExpoImbalanceLimitBps = newOpenLimitBps.toInt256();
         _depositExpoImbalanceLimitBps = newDepositLimitBps.toInt256();
@@ -299,7 +313,19 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
 
-        emit ImbalanceLimitsUpdated(newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps);
+        // Casts are safe here as values are safe casted earlier
+        if (
+            newLongImbalanceTargetBps > int256(newCloseLimitBps)
+                || newLongImbalanceTargetBps < -int256(newWithdrawalLimitBps)
+        ) {
+            revert UsdnProtocolInvalidLongImbalanceTarget();
+        }
+
+        _longImbalanceTargetBps = newLongImbalanceTargetBps;
+
+        emit ImbalanceLimitsUpdated(
+            newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
+        );
     }
 
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
@@ -333,6 +359,11 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setMinLongPosition(uint256 newMinLongPosition) external onlyOwner {
         _minLongPosition = newMinLongPosition;
         emit MinLongPositionUpdated(newMinLongPosition);
+
+        IRebalancer rebalancer = _rebalancer;
+        if (address(rebalancer) != address(0) && rebalancer.getMinAssetDeposit() < newMinLongPosition) {
+            rebalancer.setMinAssetDeposit(newMinLongPosition);
+        }
     }
 
     /**

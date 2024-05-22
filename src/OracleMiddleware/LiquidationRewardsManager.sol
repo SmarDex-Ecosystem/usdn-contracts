@@ -6,7 +6,9 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
+import { IBaseLiquidationRewardsManager } from "src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title LiquidationRewardsManager contract
@@ -38,9 +40,14 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
      */
     RewardsParameters private _rewardsParameters;
 
-    constructor(address chainlinkGasPriceFeed, IWstETH wstETH, uint256 chainlinkElapsedTimeLimit)
+    /**
+     * @param chainlinkGasPriceFeed The address of the Chainlink gas price feed
+     * @param wstETH The address of the wstETH token
+     * @param chainlinkTimeElapsedLimit Time after which the price feed data is considered stale
+     */
+    constructor(address chainlinkGasPriceFeed, IWstETH wstETH, uint256 chainlinkTimeElapsedLimit)
         Ownable(msg.sender)
-        ChainlinkOracle(chainlinkGasPriceFeed, chainlinkElapsedTimeLimit)
+        ChainlinkOracle(chainlinkGasPriceFeed, chainlinkTimeElapsedLimit)
     {
         _wstEth = wstETH;
         _rewardsParameters = RewardsParameters({
@@ -53,15 +60,18 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     }
 
     /**
-     * @inheritdoc ILiquidationRewardsManager
-     * @dev In the current implementation, the `int256 remainingCollateral` and `bytes calldata priceData` parameters
-     * are not used
+     * @inheritdoc IBaseLiquidationRewardsManager
+     * @dev In the current implementation, the `int256 remainingCollateral`, `ProtocolAction action`,
+     * `bytes calldata rebaseCallbackResult` and `bytes calldata priceData` parameters are not used
      */
-    function getLiquidationRewards(uint16 tickAmount, int256, bool rebased, bytes calldata)
-        external
-        view
-        returns (uint256 wstETHRewards_)
-    {
+    function getLiquidationRewards(
+        uint16 tickAmount,
+        int256,
+        bool rebased,
+        ProtocolAction,
+        bytes calldata,
+        bytes calldata
+    ) external view returns (uint256 wstETHRewards_) {
         // Do not give rewards if no ticks were liquidated
         if (tickAmount == 0) {
             return 0;
@@ -119,6 +129,7 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     /**
      * @notice Get the gas price from Chainlink or tx.gasprice, the lesser of the 2 values
      * @dev This function cannot return a value higher than the _gasPriceLimit storage variable
+     * @param rewardsParameters The rewards parameters
      * @return gasPrice_ The gas price
      */
     function _getGasPrice(RewardsParameters memory rewardsParameters) internal view returns (uint256 gasPrice_) {

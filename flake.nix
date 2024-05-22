@@ -36,10 +36,10 @@
                 slither-analyzer
                 lcov
               ];
-              dotenv.enable = true;
               languages.javascript.enable = true;
               languages.javascript.package = pkgs.nodejs_20;
               enterShell = ''
+                set -a; source .env; set +a
                 npm i
                 forge install
               '';

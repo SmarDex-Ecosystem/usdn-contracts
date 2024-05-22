@@ -9,6 +9,7 @@ import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
+import { IRebaseCallback } from "src/interfaces/Usdn/IRebaseCallback.sol";
 
 /**
  * @title USDN token contract
@@ -24,6 +25,18 @@ import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
  * Balances and total supply can only grow over time and never shrink
  */
 contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
+    /**
+     * @dev Control the rounding when converting from shares to tokens
+     * @param Down Round down (towards zero)
+     * @param Closest Round towards the closest integer (0.5 rounds up)
+     * @param Up Round up (towards positive infinity)
+     */
+    enum Rounding {
+        Down,
+        Closest,
+        Up
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
@@ -59,6 +72,9 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @notice Divisor used to convert between shares and tokens
     uint256 internal _divisor = MAX_DIVISOR;
 
+    /// @notice A contract that will be called whenever a rebase happens
+    IRebaseCallback internal _rebaseHandler;
+
     /**
      * @notice Create an instance of the USDN token
      * @param minter Address which should have the minter role by default (zero address to skip)
@@ -80,12 +96,12 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
 
     /// @inheritdoc IERC20
     function totalSupply() public view override(ERC20, IERC20) returns (uint256) {
-        return convertToTokens(_totalShares);
+        return _convertToTokens(_totalShares, Rounding.Closest, _divisor);
     }
 
     /// @inheritdoc IERC20
     function balanceOf(address account) public view override(ERC20, IERC20) returns (uint256) {
-        return convertToTokens(sharesOf(account));
+        return _convertToTokens(sharesOf(account), Rounding.Closest, _divisor);
     }
 
     /**
@@ -125,22 +141,13 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /// @inheritdoc IUsdn
-    function convertToTokens(uint256 amountShares) public view returns (uint256 tokens_) {
-        uint256 tokensDown = amountShares / _divisor;
-        if (tokensDown == maxTokens()) {
-            // Early return, we can't have a token amount larger than maxTokens()
-            return tokensDown;
-        }
-        uint256 tokensUp = tokensDown + 1;
-        // slither-disable-next-line divide-before-multiply
-        uint256 sharesDown = tokensDown * _divisor;
-        // slither-disable-next-line divide-before-multiply
-        uint256 sharesUp = tokensUp * _divisor;
-        if (amountShares - sharesDown <= sharesUp - amountShares) {
-            tokens_ = tokensDown;
-        } else {
-            tokens_ = tokensUp;
-        }
+    function convertToTokens(uint256 amountShares) external view returns (uint256 tokens_) {
+        tokens_ = _convertToTokens(amountShares, Rounding.Closest, _divisor);
+    }
+
+    /// @inheritdoc IUsdn
+    function convertToTokensRoundUp(uint256 amountShares) external view returns (uint256 tokens_) {
+        tokens_ = _convertToTokens(amountShares, Rounding.Up, _divisor);
     }
 
     /// @inheritdoc IUsdn
@@ -157,6 +164,11 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     }
 
     /// @inheritdoc IUsdn
+    function rebaseHandler() external view returns (IRebaseCallback) {
+        return _rebaseHandler;
+    }
+
+    /// @inheritdoc IUsdn
     function maxTokens() public view returns (uint256) {
         return type(uint256).max / _divisor;
     }
@@ -164,29 +176,35 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
     /// @inheritdoc IUsdn
     function transferShares(address to, uint256 value) external returns (bool) {
         address owner = _msgSender();
-        _transferShares(owner, to, value, convertToTokens(value));
+        _transferShares(owner, to, value, _convertToTokens(value, Rounding.Closest, _divisor));
         return true;
     }
 
     /// @inheritdoc IUsdn
     function transferSharesFrom(address from, address to, uint256 value) external returns (bool) {
         address spender = _msgSender();
-        uint256 tokenValue = convertToTokens(value);
-        _spendAllowance(from, spender, tokenValue);
-        _transferShares(from, to, value, tokenValue);
+        uint256 d = _divisor;
+        // to make sure we spend 1 wei of allowance in case the amount of shares is less than 1 wei of tokens,
+        // we round up
+        _spendAllowance(from, spender, _convertToTokens(value, Rounding.Up, d));
+        // the amount of tokens below is only used for emitting an event, we round to the closest value
+        _transferShares(from, to, value, _convertToTokens(value, Rounding.Closest, d));
         return true;
     }
 
     /// @inheritdoc IUsdn
-    function burnShares(uint256 value) external virtual {
-        _burnShares(_msgSender(), value, convertToTokens(value));
+    function burnShares(uint256 value) external {
+        _burnShares(_msgSender(), value, _convertToTokens(value, Rounding.Closest, _divisor));
     }
 
     /// @inheritdoc IUsdn
-    function burnSharesFrom(address account, uint256 value) public virtual {
-        uint256 tokenValue = convertToTokens(value);
-        _spendAllowance(account, _msgSender(), tokenValue);
-        _burnShares(account, value, tokenValue);
+    function burnSharesFrom(address account, uint256 value) public {
+        uint256 d = _divisor;
+        // to make sure we spend 1 wei of allowance in case the amount of shares is less than 1 wei of tokens,
+        // we round up
+        _spendAllowance(account, _msgSender(), _convertToTokens(value, Rounding.Up, d));
+        // the amount of tokens below is only used for emitting an event, we round to the closest value
+        _burnShares(account, value, _convertToTokens(value, Rounding.Closest, d));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -203,27 +221,96 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
         if (to == address(0)) {
             revert ERC20InvalidReceiver(address(0));
         }
-        _updateShares(address(0), to, amount, convertToTokens(amount));
+        _updateShares(address(0), to, amount, _convertToTokens(amount, Rounding.Closest, _divisor));
     }
 
     /// @inheritdoc IUsdn
-    function rebase(uint256 newDivisor) external onlyRole(REBASER_ROLE) {
-        uint256 oldDivisor = _divisor;
-        if (newDivisor > oldDivisor) {
+    function rebase(uint256 newDivisor)
+        external
+        onlyRole(REBASER_ROLE)
+        returns (bool rebased_, uint256 oldDivisor_, bytes memory callbackResult_)
+    {
+        oldDivisor_ = _divisor;
+        if (newDivisor > oldDivisor_) {
             // Divisor can only be decreased
-            newDivisor = oldDivisor;
+            newDivisor = oldDivisor_;
         } else if (newDivisor < MIN_DIVISOR) {
+            // Divisor cannot be lower than `MIN_DIVISOR`
             newDivisor = MIN_DIVISOR;
         }
-        if (newDivisor != oldDivisor) {
-            emit Rebase(oldDivisor, newDivisor);
-            _divisor = newDivisor;
+        if (newDivisor == oldDivisor_) {
+            // No rebase necessary
+            return (false, oldDivisor_, callbackResult_);
         }
+
+        _divisor = newDivisor;
+        rebased_ = true;
+        IRebaseCallback handler = _rebaseHandler;
+        if (address(handler) != address(0)) {
+            callbackResult_ = handler.rebaseCallback(oldDivisor_, newDivisor);
+        }
+        emit Rebase(oldDivisor_, newDivisor);
+    }
+
+    /// @inheritdoc IUsdn
+    function setRebaseHandler(IRebaseCallback newHandler) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _rebaseHandler = newHandler;
+        emit RebaseHandlerUpdated(newHandler);
     }
 
     /* -------------------------------------------------------------------------- */
     /*                             Internal functions                             */
     /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Convert an amount of shares into the corresponding amount of tokens, rounding the division according to
+     * `rounding`
+     * @dev The conversion never overflows as we are performing a division
+     * If rounding to the nearest integer and the result is exactly at the half-way point, we round up
+     * @param amountShares The amount of shares to convert to tokens
+     * @param rounding Whether to round towards zero, the closest integer, or positive infinity
+     * @param d Current value of the divisor
+     * @return tokens_ The corresponding amount of tokens
+     */
+    function _convertToTokens(uint256 amountShares, Rounding rounding, uint256 d)
+        internal
+        pure
+        returns (uint256 tokens_)
+    {
+        if (d <= 1) {
+            // this should never happen, but the check allows to perform unchecked math below
+            revert UsdnInvalidDivisor();
+        }
+        unchecked {
+            // division & modulo can't error because d > 0
+            uint256 tokensDown = amountShares / d;
+            uint256 remainder = amountShares % d;
+            if (rounding == Rounding.Down || remainder == 0) {
+                // if we want to round down, or there is no remainder to the division, we can return the result
+                return tokensDown;
+            }
+
+            // division can't error because d > 0
+            if (tokensDown == type(uint256).max / d) {
+                // early return, we can't have a token amount larger than maxTokens() = uint256.max / _divisor
+                return tokensDown;
+            }
+            uint256 tokensUp = tokensDown + 1; // this can't overflow because d > 1
+            if (rounding == Rounding.Up) {
+                // we know there is a remainder to the division, so this value is the result of rounding up the quotient
+                return tokensUp;
+            }
+
+            // below, we round to the closest integer
+            uint256 half = d >> 1; // divide `d` by 2
+            // if the remainder is equal to or larger than half of the divisor, we round up, else down
+            if (remainder >= half) {
+                tokens_ = tokensUp;
+            } else {
+                tokens_ = tokensDown;
+            }
+        }
+    }
 
     /**
      * @notice Transfer some shares from `from` to `to`
@@ -266,7 +353,7 @@ contract Usdn is IUsdn, ERC20Permit, ERC20Burnable, AccessControl {
      * @param value The number of shares to transfer
      * @param tokenValue The value converted to tokens, for inclusion in the `Transfer` event
      */
-    function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal virtual {
+    function _updateShares(address from, address to, uint256 value, uint256 tokenValue) internal {
         if (from == address(0)) {
             // Overflow check required: The rest of the code assumes that totalShares never overflows
             _totalShares += value;
