@@ -11,15 +11,22 @@ import { IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracle
 /**
  * @title PythOracle contract
  * @notice This contract is used to get the price of an asset from pyth. It is used by the USDN protocol to get the
- * price of the USDN underlying asset.
+ * price of the USDN underlying asset
  */
 abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
+    /// @notice The ID of the Pyth price feed
     bytes32 internal immutable _priceID;
+
+    /// @notice The address of the Pyth contract
     IPyth internal immutable _pyth;
 
     /// @notice The maximum age of a recent price to be considered valid
     uint64 internal _recentPriceDelay = 45 seconds;
 
+    /**
+     * @param pythAddress The address of the Pyth contract
+     * @param pythPriceID The ID of the Pyth price feed
+     */
     constructor(address pythAddress, bytes32 pythPriceID) {
         _pyth = IPyth(pythAddress);
         _priceID = pythPriceID;
@@ -43,14 +50,14 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     /**
      * @notice Get the price of the asset from pyth
      * @param priceUpdateData The data required to update the price feed
-     * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices.
+     * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices
      * @return price_ The price of the asset
      */
     function _getPythPrice(bytes calldata priceUpdateData, uint128 targetTimestamp)
         internal
         returns (PythStructs.Price memory)
     {
-        // Parse the price feed update and get the price feed
+        // parse the price feed update and get the price feed
         bytes32[] memory priceIds = new bytes32[](1);
         priceIds[0] = _priceID;
 
@@ -88,7 +95,7 @@ abstract contract PythOracle is IPythOracle, IOracleMiddlewareErrors {
     /**
      * @notice Get the price of the asset from pyth, formatted to the specified number of decimals
      * @param priceUpdateData The data required to update the price feed
-     * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices.
+     * @param targetTimestamp The target timestamp to validate the price. If zero, then we accept all recent prices
      * @param middlewareDecimals The number of decimals to format the price to
      * @return price_ The Pyth price formatted with `middlewareDecimals`
      */

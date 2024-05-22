@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -9,24 +9,40 @@ import { IOracleMiddlewareEvents } from "src/interfaces/OracleMiddleware/IOracle
 /**
  * @title Oracle Middleware interface
  * @notice The oracle middleware is a contract that is called by the USDN protocol to validate price data. Using a
- * middleware allows the protocol to later upgrade to a new oracle logic without having modify the vault contract.
+ * middleware allows the protocol to later upgrade to a new oracle logic without having modify the vault contract
  */
 interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents {
+    /* -------------------------------------------------------------------------- */
+    /*                                  Constants                                 */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Denominator for the confidence ratio, will give us a 0.01% basis point
+     * @return The BPS divisor
+     */
+    function BPS_DIVISOR() external pure returns (uint16);
+
+    /**
+     * @notice Maximum value for `_confRatioBps`
+     * @return The max allowed confidence ratio
+     */
+    function MAX_CONF_RATIO() external pure returns (uint16);
+
     /* -------------------------------------------------------------------------- */
     /*                          Price retrieval features                          */
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Parses and validates price data.
-     * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata.
-     * A fee amounting to exactly validationCost(data, action) must be sent or the transaction will revert.
+     * @notice Parse and validate some price data
+     * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata
+     * A fee amounting to exactly validationCost(data, action) must be sent or the transaction will revert
      * @param targetTimestamp The target timestamp for validating the price data. For validation actions, this is the
-     * timestamp of the initiation.
+     * timestamp of the initiation
      * @param action Type of action for which the price is requested. The middleware may use this to alter the
-     * validation of the price or the returned price.
+     * validation of the price or the returned price
      * @param data Price data, the format varies from middleware to middleware and can be different depending on the
-     * action.
-     * @return result_ The price and timestamp as `PriceInfo`.
+     * action
+     * @return result_ The price and timestamp as `PriceInfo`
      */
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         external
@@ -38,30 +54,28 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Returns the delay (in seconds) between the moment an action is initiated and the timestamp of the
-     * price data used to validate that action.
+     * @notice Get the required delay (in seconds) between the moment an action is initiated and the timestamp of the
+     * price data used to validate that action
+     * @return The validation delay
      */
     function getValidationDelay() external view returns (uint256);
 
-    /// @notice Returns the number of decimals for the price (constant)
+    /**
+     * @notice Returns the number of decimals for the price (constant)
+     * @return The number of decimals
+     */
     function getDecimals() external view returns (uint8);
-
-    /// @notice get max confidence ratio
-    function getMaxConfRatio() external pure returns (uint16);
-
-    /// @notice get confidence ratio denominator
-    function getConfRatioDenom() external pure returns (uint16);
 
     /**
      * @notice Return the confidence ratio. This ratio is used to apply a specific portion of the confidence interval
-     * provided by an oracle, which is used to adjust the precision of predictions or estimations.
+     * provided by an oracle, which is used to adjust the precision of predictions or estimations
      */
-    function getConfRatio() external view returns (uint16);
+    function getConfRatioBps() external view returns (uint16);
 
     /**
      * @notice Returns the ETH cost of one price validation for the given action
      * @param data Pyth price data to be validated for which to get fee prices
-     * @param action Type of action for which the price is requested.
+     * @param action Type of action for which the price is requested
      * @return The ETH cost of one price validation
      */
     function validationCost(bytes calldata data, ProtocolAction action) external view returns (uint256);
@@ -71,14 +85,14 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Set confidence ratio (admin).
-     * @param newConfRatio the new confidence ratio.
-     * @dev New value should be lower than max confidence ratio.
+     * @notice Set confidence ratio (admin)
+     * @param newConfRatio the new confidence ratio
+     * @dev New value should be lower than max confidence ratio
      */
     function setConfRatio(uint16 newConfRatio) external;
 
     /**
-     * @notice Set the elapsed time tolerated before we consider the price invalid for the chainlink oracle.
+     * @notice Set the elapsed time tolerated before we consider the price invalid for the chainlink oracle
      * @param newTimeElapsedLimit The new time elapsed limit
      */
     function setChainlinkTimeElapsedLimit(uint256 newTimeElapsedLimit) external;
@@ -91,7 +105,7 @@ interface IOracleMiddleware is IOracleMiddlewareErrors, IOracleMiddlewareEvents 
 
     /**
      * @notice Set the "validation delay" (in seconds) between an action timestamp and the price
-     * data timestamp used to validate that action.
+     * data timestamp used to validate that action
      * @param newValidationDelay The new validation delay
      */
     function setValidationDelay(uint256 newValidationDelay) external;

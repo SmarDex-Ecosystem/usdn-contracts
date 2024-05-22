@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { ProtocolAction, PendingAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol
@@ -351,5 +351,118 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         uint128 ts = protocol.getLastUpdateTimestamp();
         vm.expectRevert(UsdnProtocolTimestampTooOld.selector);
         protocol.vaultAssetAvailableWithFunding(0, ts - 1);
+    }
+
+    /**
+     * @custom:scenario The `getPendingAction` function returns an empty pending action when there is none
+     * @custom:given There is no pending action for this user
+     * @custom:when getPendingAction is called
+     * @custom:then it returns an empty action and 0 as the rawIndex
+     */
+    function test_getPendingActionWithoutPendingAction() public {
+        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        assertTrue(action.action == ProtocolAction.None, "action should be None");
+        assertEq(action.validator, address(0), "user should be empty");
+        assertEq(action.to, address(0), "to should be empty");
+        assertEq(rawIndex, 0, "rawIndex should be 0");
+    }
+
+    /**
+     * @custom:scenario The `getPendingAction` function returns the action when there is one
+     * @custom:given There is a pending action for this user
+     * @custom:when getPendingAction is called
+     * @custom:then The function should return the action and the rawIndex
+     */
+    function test_getPendingAction() public {
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 2000 ether / 2,
+                price: 2000 ether
+            })
+        );
+        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "action should be ValidateClosePosition");
+        assertEq(action.to, address(this), "to should be this contract");
+        assertEq(action.validator, address(this), "validator should be this contract");
+        assertEq(rawIndex, 1, "rawIndex should be 1");
+    }
+
+    /**
+     * @custom:scenario The `addPendingAction` function revert when there are multiple pending actions
+     * @custom:given There is a pending action for this user
+     * @custom:when addPendingAction is called
+     * @custom:then The protocol reverts with `UsdnProtocolPendingAction`
+     */
+    function test_RevertWhen_addPendingActionAlreadyHavePendingAction() public {
+        PendingAction memory pendingAction = PendingAction({
+            action: ProtocolAction.ValidateDeposit,
+            timestamp: uint40(block.timestamp),
+            to: address(this),
+            validator: address(this),
+            securityDepositValue: 0.1 ether,
+            var1: 0,
+            var2: 0,
+            var3: 0,
+            var4: 0,
+            var5: 0,
+            var6: 0,
+            var7: 0
+        });
+        protocol.i_addPendingAction(address(this), pendingAction);
+
+        vm.expectRevert(UsdnProtocolPendingAction.selector);
+        protocol.i_addPendingAction(address(this), pendingAction);
+    }
+
+    /**
+     * @custom:scenario The `addPendingAction` function return the security deposit value and save the action
+     * @custom:given There is a pending action that can be deleted for this user
+     * @custom:when addPendingAction is called
+     * @custom:then Return the security deposit value and save the expected action
+     */
+    function test_addPendingAction() public {
+        PendingAction memory pendingAction = PendingAction({
+            action: ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp),
+            to: address(this),
+            validator: address(this),
+            securityDepositValue: 0.01 ether,
+            var1: 0,
+            var2: 0,
+            var3: 0,
+            var4: 1,
+            var5: 0,
+            var6: 0,
+            var7: 0
+        });
+        protocol.i_addPendingAction(address(this), pendingAction);
+        _waitDelay();
+
+        (, uint128 rawIndexBefore) = protocol.i_getPendingAction(address(this));
+
+        uint256 securityDepositValue = protocol.i_addPendingAction(address(this), pendingAction);
+
+        (, uint128 rawIndexAfter) = protocol.i_getPendingAction(address(this));
+        PendingAction memory actionSaved = protocol.getPendingActionAt(rawIndexAfter - 1);
+
+        assertEq(securityDepositValue, 0.01 ether, "securityDepositValue should be 0.01 ether");
+        assertEq(rawIndexBefore + 1, rawIndexAfter, "rawIndex should be incremented by 1");
+        assertTrue(actionSaved.action == pendingAction.action, "action saved(action)");
+        assertEq(actionSaved.timestamp, pendingAction.timestamp, "action saved(timestamp)");
+        assertEq(actionSaved.to, pendingAction.to, "action saved(to)");
+        assertEq(actionSaved.validator, pendingAction.validator, "action saved(validator)");
+        assertEq(
+            actionSaved.securityDepositValue, pendingAction.securityDepositValue, "action saved(securityDepositValue)"
+        );
+        assertEq(actionSaved.var1, pendingAction.var1, "action saved(var1)");
+        assertEq(actionSaved.var2, pendingAction.var2, "action saved(var2)");
+        assertEq(actionSaved.var3, pendingAction.var3, "action saved(var3)");
+        assertEq(actionSaved.var4, pendingAction.var4, "action saved(var4)");
+        assertEq(actionSaved.var5, pendingAction.var5, "action saved(var5)");
+        assertEq(actionSaved.var6, pendingAction.var6, "action saved(var6)");
+        assertEq(actionSaved.var7, pendingAction.var7, "action saved(var7)");
     }
 }

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
 import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -10,50 +10,50 @@ import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 interface IUsdnProtocolEvents {
     /**
      * @notice Emitted when a user initiates a deposit
-     * @param user The user address
      * @param to The address that will receive the USDN tokens
+     * @param validator The address of the validator that will validate the deposit
      * @param amount The amount of asset that were deposited
      * @param timestamp The timestamp of the action
      */
-    event InitiatedDeposit(address indexed user, address indexed to, uint256 amount, uint256 timestamp);
+    event InitiatedDeposit(address indexed to, address indexed validator, uint256 amount, uint256 timestamp);
 
     /**
      * @notice Emitted when a user validates a deposit
-     * @param user The user address
      * @param to The address that received the USDN tokens
+     * @param validator The address of the validator that validated the deposit
      * @param amountDeposited The amount of asset that were deposited
      * @param usdnMinted The amount of USDN that were minted
      * @param timestamp The timestamp of the InitiatedDeposit action
      */
     event ValidatedDeposit(
-        address indexed user, address indexed to, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
+        address indexed to, address indexed validator, uint256 amountDeposited, uint256 usdnMinted, uint256 timestamp
     );
 
     /**
      * @notice Emitted when a user initiates a withdrawal
-     * @param user The user address
      * @param to The address that will receive the assets
+     * @param validator The address of the validator that will validate the withdrawal
      * @param usdnAmount The amount of USDN that will be burned
      * @param timestamp The timestamp of the action
      */
-    event InitiatedWithdrawal(address indexed user, address indexed to, uint256 usdnAmount, uint256 timestamp);
+    event InitiatedWithdrawal(address indexed to, address indexed validator, uint256 usdnAmount, uint256 timestamp);
 
     /**
      * @notice Emitted when a user validates a withdrawal
-     * @param user The user address
      * @param to The address that received the assets
+     * @param validator The address of the validator that validated the withdrawal
      * @param amountWithdrawn The amount of asset that were withdrawn
      * @param usdnBurned The amount of USDN that were burned
      * @param timestamp The timestamp of the InitiatedWithdrawal action
      */
     event ValidatedWithdrawal(
-        address indexed user, address indexed to, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp
+        address indexed to, address indexed validator, uint256 amountWithdrawn, uint256 usdnBurned, uint256 timestamp
     );
 
     /**
      * @notice Emitted when a user initiates the opening of a long position
-     * @param user The user address
-     * @param to The address that will be the owner of the position
+     * @param owner The address that owns the position
+     * @param validator The address of the validator that will validate the position
      * @param timestamp The timestamp of the action
      * @param totalExpo The initial total expo of the position (pending validation)
      * @param amount The amount of asset that were deposited as collateral
@@ -61,8 +61,8 @@ interface IUsdnProtocolEvents {
      * @param posId The unique position identifier
      */
     event InitiatedOpenPosition(
-        address indexed user,
-        address indexed to,
+        address indexed owner,
+        address indexed validator,
         uint40 timestamp,
         uint128 totalExpo,
         uint128 amount,
@@ -72,15 +72,15 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user validates the opening of a long position
-     * @param user The user address
-     * @param to The address that will be the owner of the position
+     * @param owner The address that owns the position
+     * @param validator The address of the validator that validated the position
      * @param totalExpo The total expo of the position
      * @param newStartPrice The asset price at the moment of the position creation (final)
      * @param posId The unique position identifier
      * If changed compared to `InitiatedOpenLong`, then `LiquidationPriceUpdated` will be emitted too
      */
     event ValidatedOpenPosition(
-        address indexed user, address indexed to, uint128 totalExpo, uint128 newStartPrice, PositionId posId
+        address indexed owner, address indexed validator, uint128 totalExpo, uint128 newStartPrice, PositionId posId
     );
 
     /**
@@ -92,17 +92,17 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user initiates the closing of all or part of a long position
-     * @param user The user address
+     * @param owner The owner of this position
      * @param to The address that will receive the assets
      * @param posId The unique position identifier
      * @param originalAmount The amount of collateral originally on the position
-     * @param amountToClose The amount of collateral to close from the position
+     * @param amountToClose The amount of collateral to close from the position.
      * If the entirety of the position is being closed, this value equals originalAmount
-     * @param totalExpoRemaining The total expo remaining in the position
+     * @param totalExpoRemaining The total expo remaining in the position.
      * If the entirety of the position is being closed, this value is zero
      */
     event InitiatedClosePosition(
-        address indexed user,
+        address indexed owner,
         address indexed to,
         PositionId posId,
         uint128 originalAmount,
@@ -112,14 +112,14 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user validates the closing of a long position
-     * @param user The user address
+     * @param owner The owner of the initial position
      * @param to The address that received the assets
      * @param posId The unique position identifier
      * @param amountReceived The amount of asset that were sent to the user
      * @param profit The profit that the user made
      */
     event ValidatedClosePosition(
-        address indexed user, address indexed to, PositionId posId, uint256 amountReceived, int256 profit
+        address indexed owner, address indexed to, PositionId posId, uint256 amountReceived, int256 profit
     );
 
     /**
@@ -141,7 +141,7 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a position is individually liquidated
-     * @param user The user address
+     * @param user the address of the user that owned the position
      * @param posId The unique identifier for the position that was liquidated
      * @param liquidationPrice The asset price at the moment of liquidation
      * @param effectiveTickPrice The effective liquidated tick price
@@ -152,17 +152,28 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a user's position was liquidated while pending validation and we remove the pending action
-     * @param user The user address
+     * @param validator The validator address
      * @param posId The unique position identifier
      */
-    event StalePendingActionRemoved(address indexed user, PositionId posId);
+    event StalePendingActionRemoved(address indexed validator, PositionId posId);
 
     /**
-     * @notice Emitted when the position fees are updated
-     * @param positionFee The new position fee (in percentage)
+     * @notice Emitted when the position fee is updated
+     * @param positionFee The new position fee (in basis points)
      */
     event PositionFeeUpdated(uint256 positionFee);
 
+    /**
+     * @notice Emitted when the vault fee is updated
+     * @param vaultFee The new vault fee (in basis points)
+     */
+    event VaultFeeUpdated(uint256 vaultFee);
+
+    /**
+     * @notice Emitted when the rebalancer bonus is updated
+     * @param bonus The new bonus (in basis points)
+     */
+    event RebalancerBonusUpdated(uint256 bonus);
     /**
      * @notice Emitted when the ratio of USDN to SDEX tokens to burn on deposit is updated
      * @param newRatio The new ratio
@@ -243,10 +254,10 @@ interface IUsdnProtocolEvents {
     event LiquidationRewardsManagerUpdated(address newAddress);
 
     /**
-     * @notice Emitted when the OrderManager contract is updated
+     * @notice Emitted when the Rebalancer contract is updated
      * @param newAddress The address of the new (current) contract
      */
-    event OrderManagerUpdated(address newAddress);
+    event RebalancerUpdated(address newAddress);
 
     /**
      * @notice Emitted when the pending protocol fee is distributed
@@ -297,9 +308,14 @@ interface IUsdnProtocolEvents {
      * @param newDepositLimitBps The new deposit limit
      * @param newWithdrawalLimitBps The new withdrawal limit
      * @param newCloseLimitBps The new close limit
+     * @param newLongImbalanceTargetBps The new long imbalance target
      */
     event ImbalanceLimitsUpdated(
-        uint256 newOpenLimitBps, uint256 newDepositLimitBps, uint256 newWithdrawalLimitBps, uint256 newCloseLimitBps
+        uint256 newOpenLimitBps,
+        uint256 newDepositLimitBps,
+        uint256 newWithdrawalLimitBps,
+        uint256 newCloseLimitBps,
+        int256 newLongImbalanceTargetBps
     );
 
     /**
@@ -310,9 +326,9 @@ interface IUsdnProtocolEvents {
 
     /**
      * @notice Emitted when a security deposit is refunded
-     * @param paidBy Address of the user who paid the security deposit
+     * @param pendingActionValidator Address of the validator
      * @param receivedBy Address of the user who received the security deposit
      * @param amount Amount of security deposit refunded
      */
-    event SecurityDepositRefunded(address indexed paidBy, address indexed receivedBy, uint256 amount);
+    event SecurityDepositRefunded(address indexed pendingActionValidator, address indexed receivedBy, uint256 amount);
 }
