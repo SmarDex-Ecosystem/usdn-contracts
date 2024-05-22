@@ -3,12 +3,10 @@ pragma solidity 0.8.20;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {
-    IOracleMiddleware,
-    ProtocolAction,
-    PriceInfo,
-    IOracleMiddlewareErrors
-} from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
+import { IOracleMiddleware, IOracleMiddlewareErrors } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     uint16 public constant BPS_DIVISOR = 10_000;
@@ -23,7 +21,7 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
 
     constructor() Ownable(msg.sender) { }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         external
         payable
@@ -53,17 +51,17 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         return price;
     }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function getDecimals() external pure returns (uint8) {
         return DECIMALS;
     }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function getValidationDelay() external view returns (uint256) {
         return _validationDelay;
     }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function validationCost(bytes calldata, ProtocolAction) external view returns (uint256) {
         return _requireValidationCost ? 1 : 0;
     }

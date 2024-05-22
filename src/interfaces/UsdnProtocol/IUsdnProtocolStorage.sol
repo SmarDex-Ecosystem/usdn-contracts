@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IUsdnProtocolEvents } from "src/interfaces/UsdnProtocol/IUsdnProtocolEvents.sol";
 import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolErrors.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
@@ -127,7 +127,7 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
      * @notice Get the oracle middleware contract
      * @return The address of the oracle middleware contract
      */
-    function getOracleMiddleware() external view returns (IOracleMiddleware);
+    function getOracleMiddleware() external view returns (IBaseOracleMiddleware);
 
     /**
      * @notice Get the liquidation rewards manager contract
