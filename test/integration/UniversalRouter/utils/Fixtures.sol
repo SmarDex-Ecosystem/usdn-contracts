@@ -8,7 +8,7 @@ import { RouterParameters } from "src/UniversalRouter/base/RouterImmutables.sol"
 import { DEPLOYER, WETH, WSTETH } from "test/utils/Constants.sol";
 import { UniversalRouterHandler } from "test/integration/UniversalRouter/utils/Handler.sol";
 import { UsdnProtocolBaseIntegrationFixture } from "test/integration/UsdnProtocol/utils/Fixtures.sol";
-import { Wusdn } from "src/Wusdn.sol";
+import { Wusdn } from "src/Usdn/Wusdn.sol";
 
 /**
  * @title UniversalRouterBaseFixture
