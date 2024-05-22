@@ -132,16 +132,19 @@ interface IUsdnProtocol is IUsdnProtocolActions {
 
     /**
      * @notice Set imbalance limits basis point
+     * @dev newLongImbalanceTargetBps needs to be lower than newCloseLimitBps and higher than -newWithdrawalLimitBps
      * @param newOpenLimitBps The new open limit
      * @param newDepositLimitBps The new deposit limit
      * @param newWithdrawalLimitBps The new withdrawal limit
      * @param newCloseLimitBps The new close limit
+     * @param newLongImbalanceTargetBps The new target imbalance limit for the long side
      */
     function setExpoImbalanceLimits(
         uint256 newOpenLimitBps,
         uint256 newDepositLimitBps,
         uint256 newWithdrawalLimitBps,
-        uint256 newCloseLimitBps
+        uint256 newCloseLimitBps,
+        int256 newLongImbalanceTargetBps
     ) external;
 
     /**

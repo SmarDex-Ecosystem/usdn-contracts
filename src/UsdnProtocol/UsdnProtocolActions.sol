@@ -4,28 +4,29 @@ pragma solidity 0.8.20;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
+import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
-import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
-import {
-    Position,
-    ProtocolAction,
-    PendingAction,
-    DepositPendingAction,
-    WithdrawalPendingAction,
-    LongPendingAction,
-    LiquidationsEffects,
-    PreviousActionsData,
-    PositionId,
-    TickData
-} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
+import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
-import { SignedMath } from "src/libraries/SignedMath.sol";
+import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
+import {
+    DepositPendingAction,
+    LiquidationsEffects,
+    LongPendingAction,
+    PendingAction,
+    Position,
+    PositionId,
+    PreviousActionsData,
+    ProtocolAction,
+    TickData,
+    WithdrawalPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
+import { SignedMath } from "src/libraries/SignedMath.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -1264,11 +1265,19 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         // make sure the remaining position is higher than _minLongPosition
+        // for the Rebalancer, we allow users to close their position fully in every case
         uint128 remainingAmount = pos.amount - amountToClose;
         if (remainingAmount > 0 && remainingAmount < _minLongPosition) {
-            revert UsdnProtocolLongPositionTooSmall();
+            IRebalancer rebalancer = _rebalancer;
+            if (owner == address(rebalancer)) {
+                uint128 userPosAmount = rebalancer.getUserDepositData(to).amount;
+                if (amountToClose != userPosAmount) {
+                    revert UsdnProtocolLongPositionTooSmall();
+                }
+            } else {
+                revert UsdnProtocolLongPositionTooSmall();
+            }
         }
-
         if (amountToClose == 0) {
             revert UsdnProtocolAmountToCloseIsZero();
         }

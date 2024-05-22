@@ -295,7 +295,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         uint256 newOpenLimitBps,
         uint256 newDepositLimitBps,
         uint256 newWithdrawalLimitBps,
-        uint256 newCloseLimitBps
+        uint256 newCloseLimitBps,
+        int256 newLongImbalanceTargetBps
     ) external onlyOwner {
         _openExpoImbalanceLimitBps = newOpenLimitBps.toInt256();
         _depositExpoImbalanceLimitBps = newDepositLimitBps.toInt256();
@@ -312,7 +313,19 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         }
         _closeExpoImbalanceLimitBps = newCloseLimitBps.toInt256();
 
-        emit ImbalanceLimitsUpdated(newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps);
+        // Casts are safe here as values are safe casted earlier
+        if (
+            newLongImbalanceTargetBps > int256(newCloseLimitBps)
+                || newLongImbalanceTargetBps < -int256(newWithdrawalLimitBps)
+        ) {
+            revert UsdnProtocolInvalidLongImbalanceTarget();
+        }
+
+        _longImbalanceTargetBps = newLongImbalanceTargetBps;
+
+        emit ImbalanceLimitsUpdated(
+            newOpenLimitBps, newDepositLimitBps, newWithdrawalLimitBps, newCloseLimitBps, newLongImbalanceTargetBps
+        );
     }
 
     function setTargetUsdnPrice(uint128 newPrice) external onlyOwner {
@@ -346,6 +359,11 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
     function setMinLongPosition(uint256 newMinLongPosition) external onlyOwner {
         _minLongPosition = newMinLongPosition;
         emit MinLongPositionUpdated(newMinLongPosition);
+
+        IRebalancer rebalancer = _rebalancer;
+        if (address(rebalancer) != address(0) && rebalancer.getMinAssetDeposit() < newMinLongPosition) {
+            rebalancer.setMinAssetDeposit(newMinLongPosition);
+        }
     }
 
     /**

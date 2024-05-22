@@ -142,7 +142,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // disable imbalance limits
         if (!testParams.flags.enableLimits) {
-            protocol.setExpoImbalanceLimits(0, 0, 0, 0);
+            protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0);
         }
 
         // disable burn sdex on deposit
@@ -160,6 +160,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         rebalancer = new RebalancerHandler(protocol);
         if (testParams.flags.enableRebalancer) {
             protocol.setRebalancer(rebalancer);
+            rebalancer.transferOwnership(ADMIN);
         }
 
         // leverage approx 2x
@@ -173,8 +174,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         initialPosition.tick = protocol.getHighestPopulatedTick();
 
         // separate the roles ADMIN and DEPLOYER
-        rebalancer.transferOwnership(ADMIN);
         protocol.transferOwnership(ADMIN);
+        rebalancer.transferOwnership(ADMIN);
         vm.stopPrank();
 
         usdnInitialTotalSupply = usdn.totalSupply();
@@ -361,7 +362,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         // cannot be less than 1 ether
         initialDeposit = uint128(bound(initialDeposit, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
 
-        (int256 openLimit,,,) = protocol.getExpoImbalanceLimits();
+        int256 openLimit = protocol.getOpenExpoImbalanceLimitBps();
         uint128 margin = uint128(initialDeposit * uint256(openLimit) / protocol.BPS_DIVISOR());
 
         // min long expo to initiate a balanced protocol

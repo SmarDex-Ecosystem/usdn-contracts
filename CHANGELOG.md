@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.14.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.13.0...v0.14.0) (2024-05-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **actions:** add to and validator in pending actions ([#242](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/242))
+* **rebalancer:** adds the Rebalancer in the USDN protocol, deployment script etc. ([#259](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/259))
+* **usdn:** The `LiquidationRewardsManager.getLiquidationRewards` function has an additional argument `rebaseCallbackResult` of type `bytes`.
+* **middleware:** `getConfRatio` is now called `getConfRatioBps`. `getMaxConfRatio` has been replaced by `MAX_CONF_RATIO`. `getConfRatioDenom` has been replaced by `BPS_DIVISOR`.
+* **order-manager:** everything related to the order manager has been removed
+
+### Features
+
+* **actions:** add to and validator in pending actions ([#242](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/242)) ([5d134a8](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/5d134a8731380e79f6d92e3c65c44dbdd4d9fc40))
+* add separate fee parameter for vault actions ([#244](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/244)) ([ccad861](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/ccad861bf3448990af1f92536ed9820da86f8b25))
+* **order-manager:** adds the order manager and tests ([#249](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/249)) ([1a59ba0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/1a59ba03c617f8c370e8b1ce29b5afc611d31bfb))
+* **order-manager:** remove all the components of the order manager as well as the contract itself ([#246](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/246)) ([fcaee82](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/fcaee829976c7a623fb2e88d500fbf34150f72f2))
+* **params:** add new parameter for the rebalancer bonus ([#260](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/260)) ([f775065](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/f77506506741f98e8c01f6fdf094b6b871212603))
+* **rebalancer:** adds the Rebalancer in the USDN protocol, deployment script etc. ([#259](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/259)) ([924f73f](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/924f73fde95cca7d2cfbf8c2098a4a614bbd5d10))
+* set a minimum deposit for user in the rebalancer ([#265](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/265)) ([f542684](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/f5426847edc765871a2055ab9a8d935f3bcb1c6b))
+* **usdn:** add rebase callback ([#253](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/253)) ([0f75211](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/0f75211c0536e97ea859bbed6e017a9b5f77e6a0))
+
+
+### Bug Fixes
+
+* **usdn:** decrease allowance even if token amount is zero ([#248](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/248)) ([030d90f](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/030d90ff3b94ffffc51033d3ddc65c7c4f3fad74))
+
+
+### Code Refactoring
+
+* **middleware:** cleanup + natspec ([#256](https://github.com/Blockchain-RA2-Tech/usdn-contracts/issues/256)) ([a9b763f](https://github.com/Blockchain-RA2-Tech/usdn-contracts/commit/a9b763f0cf299ad1a8dfa3d42f70dc623b63018f))
+
 ## [0.13.0](https://github.com/Blockchain-RA2-Tech/usdn-contracts/compare/v0.12.1...v0.13.0) (2024-05-03)
 
 
