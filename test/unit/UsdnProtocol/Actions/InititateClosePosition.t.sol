@@ -360,9 +360,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The transaction is completed
      */
     function test_initiateClosePositionIsPendingLiquidation() public {
-        // initial open position
-        (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
-
         // open position with a liquidation price far lower than others positions
         PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
@@ -388,7 +385,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 posId.tickVersion + 1, protocol.getTickVersion(posId.tick), "first user position is not liquidated"
             );
 
-            assertEq(initialPosTickVersion, protocol.getTickVersion(initialPosTick), "initial position is liquidated");
+            assertEq(
+                initialPosition.tickVersion,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position is liquidated"
+            );
         }
 
         _waitMockMiddlewarePriceDelay();
@@ -402,7 +403,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateClosePosition), "action is not initiated");
 
             assertEq(
-                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position isn't liquidated"
+                initialPosition.tickVersion + 1,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position isn't liquidated"
             );
         }
     }
@@ -427,9 +430,6 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The transaction is completed
      */
     function test_initiateClosePositionSameBlockIsPendingLiquidation() public {
-        // initial open position
-        (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
-
         // open position with a liquidation price far lower than others positions
         PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
@@ -455,7 +455,11 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
                 posId.tickVersion + 1, protocol.getTickVersion(posId.tick), "first user position is not liquidated"
             );
 
-            assertEq(initialPosTickVersion, protocol.getTickVersion(initialPosTick), "initial position is liquidated");
+            assertEq(
+                initialPosition.tickVersion,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position is liquidated"
+            );
         }
 
         {
@@ -467,7 +471,9 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
             assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateClosePosition), "action is not initiated");
 
             assertEq(
-                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position isn't liquidated"
+                initialPosition.tickVersion + 1,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position isn't liquidated"
             );
         }
     }

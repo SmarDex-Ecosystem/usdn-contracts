@@ -308,9 +308,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:then The transaction is completed
      */
     function test_initiateDepositIsPendingLiquidation() public {
-        // initial open position
-        (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
-
         // user open position
         PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
@@ -335,7 +332,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is initiated");
 
             assertEq(
-                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
+                initialPosition.tickVersion + 1,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position is not liquidated"
             );
 
             assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
@@ -382,9 +381,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:then The transaction is completed
      */
     function test_initiateDepositSameBlockIsPendingLiquidation() public {
-        // initial open position
-        (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
-
         // user open position
         PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
@@ -409,7 +405,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is initiated");
 
             assertEq(
-                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
+                initialPosition.tickVersion + 1,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position is not liquidated"
             );
 
             assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
@@ -454,9 +452,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:then The transaction is completed
      */
     function test_validateDepositIsPendingLiquidation() public {
-        // initial open position
-        (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
-
         // user open position
         PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
@@ -490,7 +485,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated");
 
             assertEq(
-                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
+                initialPosition.tickVersion + 1,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position is not liquidated"
             );
 
             assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
@@ -537,9 +534,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
      * @custom:then The transaction is completed
      */
     function test_validateDepositSameBlockIsPendingLiquidation() public {
-        // initial open position
-        (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
-
         // user open position
         PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
@@ -573,7 +567,9 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
             assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated");
 
             assertEq(
-                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
+                initialPosition.tickVersion + 1,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position is not liquidated"
             );
 
             assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");

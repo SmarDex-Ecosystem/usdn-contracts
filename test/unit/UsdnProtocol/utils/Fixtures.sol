@@ -85,6 +85,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     UsdnProtocolHandler public protocol;
+    PositionId public initialPosition;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
 
@@ -168,6 +169,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
+
+        initialPosition.tick = protocol.getHighestPopulatedTick();
 
         // separate the roles ADMIN and DEPLOYER
         rebalancer.transferOwnership(ADMIN);
@@ -391,19 +394,6 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // init protocol
         _setUp(params);
-    }
-
-    /**
-     * @dev Get the initial long position tick and tick version
-     * @return initialPosTick_ The initial position tick
-     * @return initialPosTickVersion_ The initial position tick version
-     */
-    function _getInitialLongPosition() internal view returns (int24 initialPosTick_, uint256 initialPosTickVersion_) {
-        uint128 initialLiqPriceWithoutPenalty = (params.initialPrice / 2)
-            + params.initialPrice / 2 * uint128(protocol.getProtocolFeeBps()) / uint128(protocol.BPS_DIVISOR());
-        initialPosTick_ = protocol.getEffectiveTickForPrice(initialLiqPriceWithoutPenalty)
-            + int24(int8(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
-        initialPosTickVersion_ = protocol.getTickVersion(initialPosTick_);
     }
 
     /// @dev Wait for the required delay to allow mock middleware price update

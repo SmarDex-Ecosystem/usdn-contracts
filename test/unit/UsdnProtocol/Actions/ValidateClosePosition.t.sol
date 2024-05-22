@@ -617,9 +617,6 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The transaction is completed
      */
     function test_validateCloseIsPendingLiquidation() public {
-        // initial open position
-        (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
-
         // open position with a liquidation price far lower than other positions
         PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
@@ -652,7 +649,11 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
             assertEq(posId.tickVersion + 1, protocol.getTickVersion(posId.tick), "user position is not liquidated");
 
-            assertEq(initialPosTickVersion, protocol.getTickVersion(initialPosTick), "initial position is liquidated");
+            assertEq(
+                initialPosition.tickVersion,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position is liquidated"
+            );
         }
 
         _waitMockMiddlewarePriceDelay();
@@ -668,7 +669,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action is not validated");
 
             assertEq(
-                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
+                initialPosition.tickVersion + 1,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position is not liquidated"
             );
 
             assertLt(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance not changed");
@@ -694,9 +697,6 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
      * @custom:then The transaction is completed
      */
     function test_validateCloseSameBlockIsPendingLiquidation() public {
-        // initial open position
-        (int24 initialPosTick, uint256 initialPosTickVersion) = _getInitialLongPosition();
-
         // open position with a liquidation price far lower than others positions
         PositionId memory userPosId = setUpUserPositionInLong(
             OpenParams(
@@ -729,7 +729,11 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
             assertEq(posId.tickVersion + 1, protocol.getTickVersion(posId.tick), "user position is not liquidated");
 
-            assertEq(initialPosTickVersion, protocol.getTickVersion(initialPosTick), "initial position is liquidated");
+            assertEq(
+                initialPosition.tickVersion,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position is liquidated"
+            );
         }
 
         {
@@ -743,7 +747,9 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
             assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action is not validated");
 
             assertEq(
-                initialPosTickVersion + 1, protocol.getTickVersion(initialPosTick), "initial position is not liquidated"
+                initialPosition.tickVersion + 1,
+                protocol.getTickVersion(initialPosition.tick),
+                "initial position is not liquidated"
             );
 
             assertLt(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance not changed");
