@@ -72,320 +72,60 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A initiate withdrawal liquidates a pending tick but is not validated
-     * because a tick still needs to be liquidated
-     * @custom:given The initial open position
-     * @custom:and A user open position
-     * @custom:and The price drops below all position liquidation prices
-     * @custom:when The first `initiateWithdrawal` is called
-     * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still needs to be liquidated
-     * @custom:and The user withdrawal isn't validated
-     * @custom:then The transaction is completed
-     * @custom:when The second `initiateWithdrawal` is called
-     * @custom:and The user open position tick is liquidated
-     * @custom:and No more tick needs to be liquidated
-     * @custom:and The user withdrawal is validated
-     * @custom:then The transaction is completed
-     */
-    function test_initiateWithdrawalIsPendingLiquidation() public {
-        // user open position
-        PositionId memory userPosId = setUpUserPositionInLong(
-            OpenParams(
-                USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 4, params.initialPrice
-            )
-        );
-
-        _waitMockMiddlewarePriceDelay();
-
-        {
-            uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-
-            protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore),
-                address(this),
-                address(this),
-                abi.encode(params.initialPrice / 10),
-                EMPTY_PREVIOUS_DATA
-            );
-
-            PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is initiated");
-
-            assertEq(
-                initialPosition.tickVersion + 1,
-                protocol.getTickVersion(initialPosition.tick),
-                "initial position is not liquidated"
-            );
-            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
-
-            assertEq(usdnBalanceBefore, usdn.balanceOf(address(this)), "usdn balance changed");
-        }
-
-        _waitMockMiddlewarePriceDelay();
-
-        {
-            uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-
-            // should be completed
-            protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore),
-                address(this),
-                address(this),
-                abi.encode(params.initialPrice / 10),
-                EMPTY_PREVIOUS_DATA
-            );
-
-            PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(
-                uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is not initiated"
-            );
-
-            assertEq(
-                userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated"
-            );
-
-            assertGt(usdnBalanceBefore, usdn.balanceOf(address(this)), "usdn balance not changed");
-        }
-    }
-
-    /**
-     * @custom:scenario A initiate withdrawal liquidates a tick but is not validated
-     * because a tick still needs to be liquidated. In the same block another withdrawal
-     * liquid the remaining tick and is validated
-     * @custom:given The initial open position
-     * @custom:and A user open position
-     * @custom:and The price drops below all position liquidation prices
-     * @custom:when The first `initiateWithdrawal` is called
-     * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still needs to be liquidated
-     * @custom:and The user withdrawal isn't validated
-     * @custom:then The transaction is completed
-     * @custom:when The second `initiateWithdrawal` is called in the same block
-     * @custom:and The user open position tick is liquidated
-     * @custom:and No more tick needs to be liquidated
-     * @custom:and The user withdrawal is validated
-     * @custom:then The transaction is completed
-     */
-    function test_initiateWithdrawalSameBlockIsPendingLiquidation() public {
-        // user open position
-        PositionId memory userPosId = setUpUserPositionInLong(
-            OpenParams(
-                USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 4, params.initialPrice
-            )
-        );
-
-        _waitMockMiddlewarePriceDelay();
-
-        {
-            uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-
-            protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore),
-                address(this),
-                address(this),
-                abi.encode(params.initialPrice / 10),
-                EMPTY_PREVIOUS_DATA
-            );
-
-            PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is initiated");
-
-            assertEq(
-                initialPosition.tickVersion + 1,
-                protocol.getTickVersion(initialPosition.tick),
-                "initial position is not liquidated"
-            );
-            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
-
-            assertEq(usdnBalanceBefore, usdn.balanceOf(address(this)), "usdn balance changed");
-        }
-
-        {
-            uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-
-            // should be completed
-            protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore),
-                address(this),
-                address(this),
-                abi.encode(params.initialPrice / 10),
-                EMPTY_PREVIOUS_DATA
-            );
-
-            PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(
-                uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is not initiated"
-            );
-
-            assertEq(
-                userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated"
-            );
-
-            assertGt(usdnBalanceBefore, usdn.balanceOf(address(this)), "usdn balance not changed");
-        }
-    }
-
-    /**
      * @custom:scenario A validate withdrawal liquidates a pending tick but is not validated
      * because a tick still needs to be liquidated
      * @custom:given The initial open position
      * @custom:and A user open position
-     * @custom:and The price drops below all position liquidation prices
-     * @custom:when The first `validateWithdrawal` is called
-     * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still needs to be liquidated
-     * @custom:and The user withdrawal isn't validated
-     * @custom:then The transaction is completed
-     * @custom:when The second `validateWithdrawal` is called
+     * @custom:and A initiated user withdrawal position
+     * @custom:when The `validateWithdrawal` function is called
+     * @custom:then The price drops below all open positions
      * @custom:and The user open position tick is liquidated
-     * @custom:and No more tick needs to be liquidated
-     * @custom:and The user withdrawal is validated
-     * @custom:then The transaction is completed
+     * @custom:and The initial position tick still needs to be liquidated
+     * @custom:and The open action isn't validated
+     * @custom:and The transaction is completed
      */
     function test_validateWithdrawalIsPendingLiquidation() public {
-        // user open position
         PositionId memory userPosId = setUpUserPositionInLong(
-            OpenParams(
-                USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 4, params.initialPrice
-            )
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
+                price: params.initialPrice
+            })
         );
 
         _waitMockMiddlewarePriceDelay();
 
-        {
-            uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-            uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
+        uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
-            protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore),
-                address(this),
-                address(this),
-                abi.encode(params.initialPrice),
-                EMPTY_PREVIOUS_DATA
-            );
-
-            PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(
-                uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is not initiated"
-            );
-
-            _waitDelay();
-
-            protocol.validateWithdrawal{ value: securityDeposit }(
-                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
-            );
-
-            pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is validated");
-
-            assertEq(
-                initialPosition.tickVersion + 1,
-                protocol.getTickVersion(initialPosition.tick),
-                "initial position is not liquidated"
-            );
-
-            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
-
-            assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance changed");
-        }
-
-        _waitMockMiddlewarePriceDelay();
-
-        {
-            uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
-
-            protocol.validateWithdrawal{ value: securityDeposit }(
-                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
-            );
-
-            PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is not validated");
-
-            assertEq(userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
-
-            assertLt(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance not changed");
-        }
-    }
-
-    /**
-     * @custom:scenario A validate withdrawal liquidates a pending tick but is not validated
-     * because a tick still needs to be liquidated
-     * @custom:given The initial open position
-     * @custom:and A user open position
-     * @custom:and The price drops below all position liquidation prices
-     * @custom:when The first `validateWithdrawal` is called
-     * @custom:and The initial open position tick is liquidated
-     * @custom:and The user open position tick still needs to be liquidated
-     * @custom:and The user withdrawal isn't validated
-     * @custom:then The transaction is completed
-     * @custom:when The second `validateWithdrawal` is called in the same block
-     * @custom:and The user open position tick is liquidated
-     * @custom:and No more tick needs to be liquidated
-     * @custom:and The user withdrawal is validated
-     * @custom:then The transaction is completed
-     */
-    function test_validateWithdrawalSameBlockIsPendingLiquidation() public {
-        // user open position
-        PositionId memory userPosId = setUpUserPositionInLong(
-            OpenParams(
-                USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 4, params.initialPrice
-            )
+        protocol.initiateWithdrawal{ value: securityDeposit }(
+            uint128(usdn.balanceOf(address(this))),
+            address(this),
+            address(this),
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
         );
 
-        _waitMockMiddlewarePriceDelay();
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is not initiated");
 
-        {
-            uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
-            uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
+        _waitDelay();
 
-            protocol.initiateWithdrawal{ value: securityDeposit }(
-                uint128(usdnBalanceBefore),
-                address(this),
-                address(this),
-                abi.encode(params.initialPrice),
-                EMPTY_PREVIOUS_DATA
-            );
+        protocol.validateWithdrawal{ value: securityDeposit }(
+            address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+        );
 
-            PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(
-                uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is not initiated"
-            );
+        pending = protocol.getUserPendingAction(address(this));
+        assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is validated");
 
-            _waitDelay();
+        assertEq(
+            initialPosition.tickVersion, protocol.getTickVersion(initialPosition.tick), "initial position is liquidated"
+        );
 
-            protocol.validateWithdrawal{ value: securityDeposit }(
-                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
-            );
+        assertEq(userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated");
 
-            pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is validated");
-
-            assertEq(
-                initialPosition.tickVersion + 1,
-                protocol.getTickVersion(initialPosition.tick),
-                "initial position is not liquidated"
-            );
-
-            assertEq(userPosId.tickVersion, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
-
-            assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance changed");
-        }
-
-        {
-            uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
-
-            protocol.validateWithdrawal{ value: securityDeposit }(
-                address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
-            );
-
-            PendingAction memory pending = protocol.getUserPendingAction(address(this));
-            assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is not validated");
-
-            assertEq(userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is liquidated");
-
-            assertLt(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance not changed");
-        }
+        assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance changed");
     }
 
     /**

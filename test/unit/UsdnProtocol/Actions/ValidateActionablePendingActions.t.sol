@@ -185,9 +185,13 @@ contract TestUsdnProtocolValidateActionablePendingActions is UsdnProtocolBaseFix
      */
     function test_RevertWhen_validateActionablePendingActionsLiquidationPending() public {
         setUpUserPositionInLong(
-            OpenParams(
-                USER_1, ProtocolAction.ValidateOpenPosition, 1 ether, params.initialPrice / 2, params.initialPrice
-            )
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice / 2,
+                price: params.initialPrice
+            })
         );
 
         _waitMockMiddlewarePriceDelay();

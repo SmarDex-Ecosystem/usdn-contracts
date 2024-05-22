@@ -7,7 +7,10 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { USER_1 } from "test/utils/Constants.sol";
 
 import {
-    PendingAction, ProtocolAction, WithdrawalPendingAction
+    PendingAction,
+    ProtocolAction,
+    WithdrawalPendingAction,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
@@ -27,6 +30,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     uint256 internal initialUsdnShares;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
+    uint256 internal securityDeposit;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -37,6 +41,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         initialUsdnBalance = usdn.balanceOf(address(this));
         initialUsdnShares = usdn.sharesOf(address(this));
         initialWstETHBalance = wstETH.balanceOf(address(this));
+        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -78,6 +83,50 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
      */
     function test_initiateWithdrawForAnotherAddress() public {
         _initiateWithdraw(USER_1);
+    }
+
+    /**
+     * @custom:scenario A initiate withdrawal position liquidates a pending tick but is not initiated
+     * because a tick still needs to be liquidated
+     * @custom:given The initial open position
+     * @custom:and A user open position
+     * @custom:and A validated deposit user position
+     * @custom:when The `initiateWithdrawal` function is called
+     * @custom:then The price drops below all open positions
+     * @custom:and The user open position tick is liquidated
+     * @custom:and The initial open position tick still needs to be liquidated
+     * @custom:and The withdrawal action isn't initiated
+     * @custom:and The user usdn
+     * @custom:and The transaction is completed
+     */
+    function test_initiateWithdrawalIsPendingLiquidation() public {
+        PositionId memory userPosId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
+                price: params.initialPrice
+            })
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        protocol.initiateWithdrawal{ value: securityDeposit }(
+            uint128(usdn.balanceOf(address(this))),
+            address(this),
+            address(this),
+            abi.encode(params.initialPrice / 10),
+            EMPTY_PREVIOUS_DATA
+        );
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is initiated");
+
+        assertEq(
+            initialPosition.tickVersion, protocol.getTickVersion(initialPosition.tick), "initial position is liquidated"
+        );
+        assertEq(userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated");
     }
 
     function _initiateWithdraw(address to) internal {

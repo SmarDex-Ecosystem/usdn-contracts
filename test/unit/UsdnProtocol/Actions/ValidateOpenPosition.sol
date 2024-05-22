@@ -4,7 +4,13 @@ pragma solidity 0.8.20;
 import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction, Position, PositionId, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    ProtocolAction,
+    Position,
+    PositionId,
+    TickData,
+    PendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -19,6 +25,8 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
+
+    uint256 securityDeposit;
 
     struct TestData {
         uint128 validatePrice;
@@ -36,6 +44,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         params.flags.enableFunding = false;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
+        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -74,6 +83,60 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      */
     function test_validateOpenPositionDifferentValidator() public {
         _validateOpenPositionScenario(address(this), USER_1);
+    }
+
+    /**
+     * @custom:scenario A validate open position liquidates a pending tick but is not validated
+     * because a tick still needs to be liquidated
+     * @custom:given The initial open position
+     * @custom:and A user open position
+     * @custom:and A initiated user open position
+     * @custom:when The `validateOpenPosition` function is called
+     * @custom:then The price drops below two highest open positions
+     * @custom:and The user open position tick is liquidated
+     * @custom:and The initial position tick still needs to be liquidated
+     * @custom:and The open action isn't validated
+     * @custom:and The transaction is completed
+     */
+    function test_validateOpenIsPendingLiquidation() public {
+        PositionId memory userPosId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: uint128(LONG_AMOUNT),
+                desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
+                price: params.initialPrice
+            })
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        protocol.initiateOpenPosition{ value: securityDeposit }(
+            uint128(LONG_AMOUNT),
+            params.initialPrice / 30,
+            address(this),
+            address(this),
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateOpenPosition), "user action is not initiated");
+
+        _waitDelay();
+
+        protocol.validateOpenPosition{ value: securityDeposit }(
+            address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+        );
+
+        pending = protocol.getUserPendingAction(address(this));
+        assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateOpenPosition), "user action was validated");
+
+        assertEq(
+            initialPosition.tickVersion, protocol.getTickVersion(initialPosition.tick), "initial position is liquidated"
+        );
+
+        assertEq(userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated");
     }
 
     function _validateOpenPositionScenario(address to, address validator) internal {
