@@ -10,6 +10,21 @@ import { ProtocolAction, PendingAction, Position, PositionId } from "src/interfa
  * @custom:background Given a protocol instance that was initialized at equilibrium
  */
 contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
+    PendingAction defaultPendingAction = PendingAction({
+        action: ProtocolAction.ValidateOpenPosition,
+        timestamp: uint40(block.timestamp),
+        to: address(this),
+        validator: address(this),
+        securityDepositValue: 0.01 ether,
+        var1: 0,
+        var2: 0,
+        var3: 0,
+        var4: 0,
+        var5: 0,
+        var6: 0,
+        var7: 0
+    });
+
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.flags.enableFunding = true;
@@ -397,24 +412,10 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The protocol reverts with `UsdnProtocolPendingAction`
      */
     function test_RevertWhen_addPendingActionAlreadyHavePendingAction() public {
-        PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.ValidateDeposit,
-            timestamp: uint40(block.timestamp),
-            to: address(this),
-            validator: address(this),
-            securityDepositValue: 0.1 ether,
-            var1: 0,
-            var2: 0,
-            var3: 0,
-            var4: 0,
-            var5: 0,
-            var6: 0,
-            var7: 0
-        });
-        protocol.i_addPendingAction(address(this), pendingAction);
+        protocol.i_addPendingAction(address(this), defaultPendingAction);
 
         vm.expectRevert(UsdnProtocolPendingAction.selector);
-        protocol.i_addPendingAction(address(this), pendingAction);
+        protocol.i_addPendingAction(address(this), defaultPendingAction);
     }
 
     /**
@@ -466,6 +467,28 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertEq(actionSaved.var7, pendingAction.var7, "action saved(var7)");
     }
 
+    function test_getAndClearPendingAction() public {
+        protocol.i_addPendingAction(address(this), defaultPendingAction);
+
+        PendingAction memory action = protocol.i_getAndClearPendingAction(address(this));
+
+        assertTrue(action.action == defaultPendingAction.action, "action saved(action)");
+        assertEq(action.timestamp, defaultPendingAction.timestamp, "action saved(timestamp)");
+        assertEq(action.to, defaultPendingAction.to, "action saved(to)");
+        assertEq(action.validator, defaultPendingAction.validator, "action saved(validator)");
+        assertEq(
+            action.securityDepositValue, defaultPendingAction.securityDepositValue, "action saved(securityDepositValue)"
+        );
+        assertEq(action.var1, defaultPendingAction.var1, "action saved(var1)");
+        assertEq(action.var2, defaultPendingAction.var2, "action saved(var2)");
+        assertEq(action.var3, defaultPendingAction.var3, "action saved(var3)");
+        assertEq(action.var4, defaultPendingAction.var4, "action saved(var4)");
+        assertEq(action.var5, defaultPendingAction.var5, "action saved(var5)");
+        assertEq(action.var6, defaultPendingAction.var6, "action saved(var6)");
+        assertEq(action.var7, defaultPendingAction.var7, "action saved(var7)");
+        assertTrue(protocol.queueEmpty(), "queue should be empty");
+    }
+
     /**
      * @custom:scenario The `clearPendingAction` function revert when user doesn't have pending actions
      * @custom:given A protocol without pending action for a user
@@ -484,21 +507,7 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
      * @custom:then The pending action should be deleted
      */
     function test_clearPendingAction() public {
-        PendingAction memory pendingAction = PendingAction({
-            action: ProtocolAction.ValidateOpenPosition,
-            timestamp: uint40(block.timestamp),
-            to: address(this),
-            validator: address(this),
-            securityDepositValue: 0.01 ether,
-            var1: 0,
-            var2: 0,
-            var3: 0,
-            var4: 1,
-            var5: 0,
-            var6: 0,
-            var7: 0
-        });
-        protocol.i_addPendingAction(address(this), pendingAction);
+        protocol.i_addPendingAction(address(this), defaultPendingAction);
         protocol.i_clearPendingAction(address(this));
 
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));

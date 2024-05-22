@@ -454,6 +454,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
     }
 
+    function i_getAndClearPendingAction(address user) external returns (PendingAction memory) {
+        return _getAndClearPendingAction(user);
+    }
+
     function i_clearPendingAction(address user) external {
         _clearPendingAction(user);
     }
