@@ -6,7 +6,9 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
 import { ChainlinkPriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { ChainlinkOracle } from "src/OracleMiddleware/oracles/ChainlinkOracle.sol";
+import { IBaseLiquidationRewardsManager } from "src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title LiquidationRewardsManager contract
@@ -58,15 +60,18 @@ contract LiquidationRewardsManager is ILiquidationRewardsManager, ChainlinkOracl
     }
 
     /**
-     * @inheritdoc ILiquidationRewardsManager
-     * @dev In the current implementation, the `int256 remainingCollateral`, `bytes calldata rebaseCallbackResult`
-     * and `bytes calldata priceData` parameters are not used
+     * @inheritdoc IBaseLiquidationRewardsManager
+     * @dev In the current implementation, the `int256 remainingCollateral`, `ProtocolAction action`,
+     * `bytes calldata rebaseCallbackResult` and `bytes calldata priceData` parameters are not used
      */
-    function getLiquidationRewards(uint16 tickAmount, int256, bool rebased, bytes calldata, bytes calldata)
-        external
-        view
-        returns (uint256 wstETHRewards_)
-    {
+    function getLiquidationRewards(
+        uint16 tickAmount,
+        int256,
+        bool rebased,
+        ProtocolAction,
+        bytes calldata,
+        bytes calldata
+    ) external view returns (uint256 wstETHRewards_) {
         // Do not give rewards if no ticks were liquidated
         if (tickAmount == 0) {
             return 0;

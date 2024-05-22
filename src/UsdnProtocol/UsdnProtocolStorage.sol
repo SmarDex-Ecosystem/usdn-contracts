@@ -7,8 +7,8 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { IUsdnProtocolStorage } from "src/interfaces/UsdnProtocol/IUsdnProtocolStorage.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
-import { ILiquidationRewardsManager } from "src/interfaces/OracleMiddleware/ILiquidationRewardsManager.sol";
-import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IBaseLiquidationRewardsManager } from "src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
+import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { Position } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PendingAction, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -81,10 +81,10 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /* -------------------------------------------------------------------------- */
 
     /// @notice The oracle middleware contract.
-    IOracleMiddleware internal _oracleMiddleware;
+    IBaseOracleMiddleware internal _oracleMiddleware;
 
     /// @notice The liquidation rewards manager contract.
-    ILiquidationRewardsManager internal _liquidationRewardsManager;
+    IBaseLiquidationRewardsManager internal _liquidationRewardsManager;
 
     /// @notice The rebalancer contract.
     IRebalancer internal _rebalancer;
@@ -278,8 +278,8 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
         IUsdn usdn,
         IERC20Metadata sdex,
         IERC20Metadata asset,
-        IOracleMiddleware oracleMiddleware,
-        ILiquidationRewardsManager liquidationRewardsManager,
+        IBaseOracleMiddleware oracleMiddleware,
+        IBaseLiquidationRewardsManager liquidationRewardsManager,
         int24 tickSpacing,
         address feeCollector
     ) {
@@ -359,12 +359,12 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getOracleMiddleware() external view returns (IOracleMiddleware) {
+    function getOracleMiddleware() external view returns (IBaseOracleMiddleware) {
         return _oracleMiddleware;
     }
 
     /// @inheritdoc IUsdnProtocolStorage
-    function getLiquidationRewardsManager() external view returns (ILiquidationRewardsManager) {
+    function getLiquidationRewardsManager() external view returns (IBaseLiquidationRewardsManager) {
         return _liquidationRewardsManager;
     }
 
