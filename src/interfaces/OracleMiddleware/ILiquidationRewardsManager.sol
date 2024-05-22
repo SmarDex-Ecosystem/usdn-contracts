@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import { IBaseLiquidationRewardsManager } from "src/interfaces/OracleMiddleware/IBaseLiquidationRewardsManager.sol";
 import { ILiquidationRewardsManagerErrorsEventsTypes } from
     "src/interfaces/OracleMiddleware/ILiquidationRewardsManagerErrorsEventsTypes.sol";
+import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTypes {
+interface ILiquidationRewardsManager is IBaseLiquidationRewardsManager, ILiquidationRewardsManagerErrorsEventsTypes {
     /* -------------------------------------------------------------------------- */
     /*                                  Constants                                 */
     /* -------------------------------------------------------------------------- */
@@ -25,25 +27,6 @@ interface ILiquidationRewardsManager is ILiquidationRewardsManagerErrorsEventsTy
     /* -------------------------------------------------------------------------- */
     /*                                  Getters Setters                           */
     /* -------------------------------------------------------------------------- */
-
-    /**
-     * @notice Returns the amount of wstETH that needs to be sent to the liquidator
-     * @param tickAmount The amount of tick to liquidate
-     * @param remainingCollateral The amount of collateral remaining after liquidations. If negative, it means there was
-     * not enough collateral to cover the losses caused by the liquidations (can happen during heavy price fluctuations)
-     * @param rebased Whether an optional USDN rebase was performed
-     * @param rebaseCallbackResult The result of the rebase callback, if any
-     * @param priceData The oracle price data blob, if any. This can be used to reward users differently depending on
-     * which oracle they used to provide a liquidation price.
-     * @return wstETHRewards_ The wstETH to send to the liquidator as rewards (in wei)
-     */
-    function getLiquidationRewards(
-        uint16 tickAmount,
-        int256 remainingCollateral,
-        bool rebased,
-        bytes calldata rebaseCallbackResult,
-        bytes calldata priceData
-    ) external view returns (uint256 wstETHRewards_);
 
     /**
      * @notice Returns the parameters used to calculate the rewards for a liquidation
