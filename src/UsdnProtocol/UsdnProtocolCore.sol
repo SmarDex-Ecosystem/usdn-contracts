@@ -258,27 +258,6 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Calculate the new liquidation multiplier
-     * @param fund The funding rate
-     * @param liquidationMultiplier The current liquidation multiplier
-     * @return multiplier_ The new liquidation multiplier
-     */
-    function _getLiquidationMultiplier(int256 fund, uint256 liquidationMultiplier)
-        internal
-        pure
-        returns (uint256 multiplier_)
-    {
-        multiplier_ = liquidationMultiplier;
-
-        // newMultiplier = oldMultiplier * (1 + funding)
-        if (fund > 0) {
-            multiplier_ += FixedPointMathLib.fullMulDiv(multiplier_, uint256(fund), 10 ** FUNDING_RATE_DECIMALS);
-        } else {
-            multiplier_ -= FixedPointMathLib.fullMulDiv(multiplier_, uint256(-fund), 10 ** FUNDING_RATE_DECIMALS);
-        }
-    }
-
-    /**
      * @notice Calculate the long balance taking into account unreflected PnL (but not funding)
      * @dev This function uses the latest total expo, balance and stored price as the reference values, and adds the PnL
      * due to the price change to `currentPrice`
