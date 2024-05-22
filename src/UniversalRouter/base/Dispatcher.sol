@@ -11,19 +11,27 @@ import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { V2SwapRouter } from "src/UniversalRouter/modules/uniswap/v2/V2SwapRouter.sol";
 import { LidoRouter } from "src/UniversalRouter/modules/lido/LidoRouter.sol";
 
-/// @title Decodes and Executes Commands
-/// @notice Called by the UniversalRouter contract to efficiently decode and execute a singular command
+/**
+ * @title Decodes and Executes Commands
+ * @notice Called by the UniversalRouter contract to efficiently decode and execute a singular command
+ */
 abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LidoRouter, LockAndMsgSender {
     using BytesLib for bytes;
 
+    /**
+     * @notice Indicates that the command type is invalid
+     * @param commandType The command type
+     */
     error InvalidCommandType(uint256 commandType);
 
-    /// @notice Decodes and executes the given command with the given inputs
-    /// @param commandType The command type to execute
-    /// @param inputs The inputs to execute the command with
-    /// @dev 2 masks are used to enable use of a nested-if statement in execution for efficiency reasons
-    /// @return success True on success of the command, false on failure
-    /// @return output The outputs or error messages, if any, from the command
+    /**
+     * @notice Decodes and executes the given command with the given inputs
+     * @dev 2 masks are used to enable use of a nested-if statement in execution for efficiency reasons
+     * @param commandType The command type to execute
+     * @param inputs The inputs to execute the command with
+     * @return success True on success of the command, false on failure
+     * @return output The outputs or error messages, if any, from the command
+     */
     function dispatch(bytes1 commandType, bytes calldata inputs) internal returns (bool success, bytes memory output) {
         // TODO CHECK IF USEFUL
         output = "";
@@ -246,9 +254,4 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LidoRouter
             }
         }
     }
-
-    /// @notice Executes encoded commands along with provided inputs.
-    /// @param commands A set of concatenated commands, each 1 byte in length
-    /// @param inputs An array of byte strings containing abi encoded inputs for each command
-    function execute(bytes calldata commands, bytes[] calldata inputs) external payable virtual;
 }
