@@ -505,6 +505,6 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
 
         assertTrue(action.action == ProtocolAction.None, "action should be None");
         assertEq(rawIndex, 0, "rawIndex should be 0");
-        assertTrue(protocol.queueEmpty(), "queue should be empty")
+        assertTrue(protocol.queueEmpty(), "queue should be empty");
     }
 }
