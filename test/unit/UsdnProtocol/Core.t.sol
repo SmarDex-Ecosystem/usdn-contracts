@@ -465,4 +465,46 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertEq(actionSaved.var6, pendingAction.var6, "action saved(var6)");
         assertEq(actionSaved.var7, pendingAction.var7, "action saved(var7)");
     }
+
+    /**
+     * @custom:scenario The `clearPendingAction` function revert when user doesn't have pending actions
+     * @custom:given A protocol without pending action for a user
+     * @custom:when clearPendingAction is called
+     * @custom:then The protocol reverts with `UsdnProtocolNoPendingAction`
+     */
+    function test_RevertWhen_clearPendingActionWithoutPendingAction() public {
+        vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+        protocol.i_clearPendingAction(address(this));
+    }
+
+    /**
+     * @custom:scenario The `clearPendingAction` function delete the pending action
+     * @custom:given A protocol with a pending action for a user
+     * @custom:when clearPendingAction is called
+     * @custom:then The pending action should be deleted
+     */
+    function test_clearPendingAction() public {
+        PendingAction memory pendingAction = PendingAction({
+            action: ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp),
+            to: address(this),
+            validator: address(this),
+            securityDepositValue: 0.01 ether,
+            var1: 0,
+            var2: 0,
+            var3: 0,
+            var4: 1,
+            var5: 0,
+            var6: 0,
+            var7: 0
+        });
+        protocol.i_addPendingAction(address(this), pendingAction);
+        protocol.i_clearPendingAction(address(this));
+
+        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
+
+        assertTrue(action.action == ProtocolAction.None, "action should be None");
+        assertEq(rawIndex, 0, "rawIndex should be 0");
+        assertTrue(protocol.queueEmpty(), "queue should be empty");
+    }
 }
