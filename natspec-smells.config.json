@@ -1,6 +1,9 @@
 {
-    "include": "src/**/*.sol",
-    "exclude": "(test|scripts)/**/*.sol",
-    "enforceInheritdoc": true,
-    "constructorNatspec": false
+  "include": "src/**/*.sol",
+  "exclude": [
+    "(test|scripts)/**/*.sol",
+    "src/UniversalRouter/libraries/Commands.sol"
+  ],
+  "enforceInheritdoc": true,
+  "constructorNatspec": false
 }
