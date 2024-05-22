@@ -3,6 +3,10 @@ pragma solidity >=0.8.0;
 
 import { ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
+/**
+ * @notice This interface exposes the only function used by the UsdnProtocol
+ * @dev Any future implementation of the rewards manager must implement this interface without modification
+ */
 interface IBaseLiquidationRewardsManager {
     /**
      * @notice Returns the amount of asset that needs to be sent to the liquidator
