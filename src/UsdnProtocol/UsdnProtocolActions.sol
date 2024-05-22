@@ -339,7 +339,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Liquidation, 0, currentPriceData);
 
         (liquidatedPositions_,) = _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice, currentPrice.timestamp, iterations, true, currentPriceData
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            iterations,
+            true,
+            ProtocolAction.Liquidation,
+            currentPriceData
         );
 
         _refundExcessEther(0, 0, balanceBefore);
@@ -510,6 +515,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param liquidatedTicks The number of ticks that were liquidated
      * @param remainingCollateral The amount of collateral remaining after liquidations
      * @param rebased Whether a USDN rebase was performed
+     * @param action The protocol action that triggered liquidations
      * @param rebaseCallbackResult The rebase callback result, if any
      * @param priceData The price oracle update data
      */
@@ -517,12 +523,13 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint16 liquidatedTicks,
         int256 remainingCollateral,
         bool rebased,
+        ProtocolAction action,
         bytes memory rebaseCallbackResult,
         bytes memory priceData
     ) internal {
         // get how much we should give to the liquidator as rewards
         uint256 liquidationRewards = _liquidationRewardsManager.getLiquidationRewards(
-            liquidatedTicks, remainingCollateral, rebased, rebaseCallbackResult, priceData
+            liquidatedTicks, remainingCollateral, rebased, action, rebaseCallbackResult, priceData
         );
 
         // avoid underflows in situation of extreme bad debt
@@ -579,7 +586,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _getOraclePrice(ProtocolAction.InitiateDeposit, block.timestamp, currentPriceData);
 
         (, isLiquidationPending_) = _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, currentPriceData
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            _liquidationIteration,
+            false,
+            ProtocolAction.InitiateDeposit,
+            currentPriceData
         );
 
         // early return in case there are still pending liquidations
@@ -668,7 +680,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         // adjust balances
         (, isLiquidationPending_) = _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            _liquidationIteration,
+            false,
+            ProtocolAction.ValidateDeposit,
+            priceData
         );
 
         // early return in case there are still pending liquidations
@@ -723,7 +740,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _getOraclePrice(ProtocolAction.InitiateWithdrawal, block.timestamp, currentPriceData);
 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, currentPriceData
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            _liquidationIteration,
+            false,
+            ProtocolAction.InitiateWithdrawal,
+            currentPriceData
         );
 
         // early return in case there are still pending liquidations
@@ -862,7 +884,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, priceData);
 
         (, isLiquidationPending_) = _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            _liquidationIteration,
+            false,
+            ProtocolAction.ValidateWithdrawal,
+            priceData
         );
 
         // early return in case there are still pending liquidations
@@ -931,7 +958,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint128 neutralPrice = currentPrice.neutralPrice.toUint128();
 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
-            neutralPrice, currentPrice.timestamp, _liquidationIteration, false, currentPriceData
+            neutralPrice,
+            currentPrice.timestamp,
+            _liquidationIteration,
+            false,
+            ProtocolAction.InitiateOpenPosition,
+            currentPriceData
         );
 
         // early return in case there are still pending liquidations
@@ -1102,7 +1134,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         data_.startPrice = (currentPrice.price + currentPrice.price * _positionFeeBps / BPS_DIVISOR).toUint128();
 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            _liquidationIteration,
+            false,
+            ProtocolAction.ValidateOpenPosition,
+            priceData
         );
 
         uint256 version;
@@ -1310,7 +1347,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             _getOraclePrice(ProtocolAction.InitiateClosePosition, block.timestamp, currentPriceData);
 
         (, data_.isLiquidationPending) = _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, currentPriceData
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            _liquidationIteration,
+            false,
+            ProtocolAction.InitiateClosePosition,
+            currentPriceData
         );
 
         (, uint256 version) = _tickHash(posId.tick);
@@ -1464,7 +1506,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.ValidateClosePosition, long.timestamp, priceData);
 
         (, isLiquidationPending_) = _applyPnlAndFundingAndLiquidate(
-            currentPrice.neutralPrice, currentPrice.timestamp, _liquidationIteration, false, priceData
+            currentPrice.neutralPrice,
+            currentPrice.timestamp,
+            _liquidationIteration,
+            false,
+            ProtocolAction.ValidateClosePosition,
+            priceData
         );
 
         // early return in case there are still pending liquidations
@@ -1684,6 +1731,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param timestamp The timestamp at which the operation is performed.
      * @param iterations The number of iterations for the liquidation process.
      * @param ignoreInterval A boolean indicating whether to ignore the interval for USDN rebase.
+     * @param action The type of action that is being performed by the user
      * @param priceData The price oracle update data.
      * @return liquidatedPositions_ The number of positions that were liquidated.
      * @return isLiquidationPending_ If there are pending position to liquidate
@@ -1694,6 +1742,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         uint256 timestamp,
         uint16 iterations,
         bool ignoreInterval,
+        ProtocolAction action,
         bytes calldata priceData
     ) internal returns (uint256 liquidatedPositions_, bool isLiquidationPending_) {
         // adjust balances
@@ -1717,6 +1766,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
                     liquidationEffects.liquidatedTicks,
                     liquidationEffects.remainingCollateral,
                     rebased,
+                    action,
                     callbackResult,
                     priceData
                 );

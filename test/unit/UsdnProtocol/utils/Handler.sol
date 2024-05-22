@@ -56,6 +56,11 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         _pendingActions[action.validator] = uint256(rawIndex_) + 1;
     }
 
+    /// @dev Verify if the pending actions queue is empty
+    function queueEmpty() external view returns (bool) {
+        return _pendingActionsQueue.empty();
+    }
+
     /**
      * @dev Use this function in unit tests to make sure we provide a fresh price that updates the balances
      * The function reverts the price given by the mock oracle middleware is not fresh enough to trigger a balance
@@ -447,5 +452,9 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         HugeUint.Uint512 memory accumulator
     ) external pure returns (uint256) {
         return _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
+    }
+
+    function i_clearPendingAction(address user, uint128 rawIndex) external {
+        _clearPendingAction(user, rawIndex);
     }
 }

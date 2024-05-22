@@ -13,6 +13,7 @@ import {
     FormattedPythPrice
 } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IOracleMiddleware } from "src/interfaces/OracleMiddleware/IOracleMiddleware.sol";
+import { IBaseOracleMiddleware } from "src/interfaces/OracleMiddleware/IBaseOracleMiddleware.sol";
 
 /**
  * @title OracleMiddleware contract
@@ -60,7 +61,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /*                           Public view functions                            */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
         public
         payable
@@ -105,12 +106,12 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         }
     }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function getValidationDelay() external view returns (uint256) {
         return _validationDelay;
     }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function getDecimals() external pure returns (uint8) {
         return MIDDLEWARE_DECIMALS;
     }
@@ -120,7 +121,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
         return _confRatioBps;
     }
 
-    /// @inheritdoc IOracleMiddleware
+    /// @inheritdoc IBaseOracleMiddleware
     function validationCost(bytes calldata data, ProtocolAction) public view virtual returns (uint256 result_) {
         if (data.length > 0) {
             result_ = _getPythUpdateFee(data);
