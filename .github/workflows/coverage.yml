@@ -19,7 +19,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: nightly-cafc2606a2187a42b236df4aa65f4e8cdfcea970
 
       - name: Install Node 20
         uses: actions/setup-node@v4
