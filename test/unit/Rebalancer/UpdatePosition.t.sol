@@ -72,14 +72,16 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
             "Entry multiplier accumulator should be 1"
         );
         assertEq(positionData.pnlMultiplier, 0, "PnL multiplier should be 0");
-        assertEq(positionData.id.tick, newPosId.tick, "The tick of the position ID should be equal to newPosId.tick");
+        assertEq(
+            positionData.id.tick, newPosId.tick, "The tick of the position ID should be equal to the provided value"
+        );
         assertEq(
             positionData.id.tickVersion,
             newPosId.tickVersion,
-            "The tick version of the position ID should be equal to newPosId.tickVersion"
+            "The tick version of the position ID should be equal to the provided value"
         );
         assertEq(
-            positionData.id.index, newPosId.index, "The index of the position ID should be equal to newPosId.index"
+            positionData.id.index, newPosId.index, "The index of the position ID should be equal to the provided value"
         );
 
         // check the rebalancer state
@@ -94,7 +96,7 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
     /**
      * @custom:scenario The position is updated 2 times
      * @custom:given A new position was created for the rebalancer twice
-     * @custom:and Another user deposits between the updates
+     * @custom:and Another user deposited assets between the updates
      * @custom:when The usdn protocol calls updatePosition with the new position ID
      * @custom:then The data is saved in the new position version
      * @custom:and The amount of pending assets is set back to 0
@@ -120,6 +122,12 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         vm.prank(address(usdnProtocol));
         rebalancer.updatePosition(posId2, posVersion2Value);
 
+        assertEq(
+            rebalancer.getPositionVersion(),
+            positionVersionBefore + 2,
+            "The position version should have been incremented twice"
+        );
+
         // check the position data of the first version
         PositionData memory positionData = rebalancer.getPositionData(positionVersionBefore + 1);
         assertEq(
@@ -129,12 +137,6 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         );
 
         // check the position data of the second version
-        assertEq(
-            rebalancer.getPositionVersion(),
-            positionVersionBefore + 2,
-            "The position version should have been incremented twice"
-        );
-
         positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
         assertEq(positionData.amount, posVersion2Value + user2DepositedAmount);
         assertEq(
@@ -146,5 +148,54 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
         assertEq(positionData.id.tick, posId2.tick, "Tick mismatch");
         assertEq(positionData.id.tickVersion, posId2.tickVersion, "Tick version mismatch");
         assertEq(positionData.id.index, posId2.index, "Index mismatch");
+    }
+
+    /**
+     * @custom:scenario The position is updated after the previous version got liquidated
+     * @custom:given A new position was created for the rebalancer for the first time
+     * @custom:and It got liquidated
+     * @custom:and A user deposited some assets
+     * @custom:when The usdn protocol calls updatePosition with the new position ID
+     * @custom:and The value of the previous version being 0
+     * @custom:then The data is saved in the new position version
+     * @custom:and The last liquidated version is set to the previous version
+     */
+    function test_updatePositionWithALiquidatedPosition() external {
+        PositionId memory posId1 = PositionId({ tick: 200, tickVersion: 1, index: 3 });
+        PositionId memory posId2 = PositionId({ tick: 400, tickVersion: 8, index: 27 });
+        uint128 positionVersionBefore = rebalancer.getPositionVersion();
+
+        vm.prank(address(usdnProtocol));
+        rebalancer.updatePosition(posId1, 0);
+
+        // add some pending assets before updating again
+        uint128 user2DepositedAmount = 5 ether;
+        vm.prank(USER_2);
+        rebalancer.depositAssets(user2DepositedAmount, USER_2);
+
+        vm.expectEmit();
+        emit PositionVersionUpdated(positionVersionBefore + 2);
+        vm.prank(address(usdnProtocol));
+        // 0 as a value here means there was no collateral left in the closed position
+        rebalancer.updatePosition(posId2, 0);
+
+        assertEq(
+            rebalancer.getLastLiquidatedVersion(),
+            positionVersionBefore + 1,
+            "The last liquidated version should be the version that was supposed to be closed"
+        );
+
+        // check the first position's data
+        PositionData memory positionData = rebalancer.getPositionData(rebalancer.getPositionVersion() - 1);
+        assertEq(positionData.pnlMultiplier, 0, "PnL multiplier of the first position should be 0");
+
+        // check the second position's data
+        positionData = rebalancer.getPositionData(rebalancer.getPositionVersion());
+        assertEq(positionData.amount, user2DepositedAmount, "Only the funds of USER_2 should be in the position");
+        assertEq(
+            positionData.entryAccMultiplier,
+            10 ** rebalancer.MULTIPLIER_DECIMALS(),
+            "Entry multiplier accumulator should be 1"
+        );
     }
 }
