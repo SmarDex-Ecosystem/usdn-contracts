@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
+import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 
 /**
  * @dev Structure to hold the immutable parameters for the router
@@ -14,6 +15,7 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
  * @param pairInitCodeHash The v2 pair hash
  * @param poolInitCodeHash The v3 pool hash
  * @param usdnProtocol The USDN protocol address
+ * @param usdn The USDN token address
  * @param sdex The SDEX token address
  */
 struct RouterParameters {
@@ -24,5 +26,6 @@ struct RouterParameters {
     bytes32 pairInitCodeHash;
     bytes32 poolInitCodeHash;
     IUsdnProtocol usdnProtocol;
+    IUsdn usdn;
     IERC20Metadata sdex;
 }
