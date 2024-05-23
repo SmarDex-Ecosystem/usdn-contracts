@@ -30,7 +30,6 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
     uint256 internal initialWstETHBalance;
     uint256 internal initialUsdnBalance;
     uint256 internal initialUsdnShares;
-    uint256 internal securityDeposit;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
 
@@ -55,7 +54,6 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         initialUsdnBalance = usdn.balanceOf(address(this));
         initialUsdnShares = usdn.sharesOf(address(this));
         initialWstETHBalance = wstETH.balanceOf(address(this));
-        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -99,7 +97,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
-        protocol.initiateWithdrawal{ value: securityDeposit }(
+        protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
             address(this),
             address(this),
@@ -112,9 +110,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         _waitDelay();
 
-        protocol.validateWithdrawal{ value: securityDeposit }(
-            address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
-        );
+        protocol.validateWithdrawal(address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
         pending = protocol.getUserPendingAction(address(this));
         assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateWithdrawal), "user action is validated");

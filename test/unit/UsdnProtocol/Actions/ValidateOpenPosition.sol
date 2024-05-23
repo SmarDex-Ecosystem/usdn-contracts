@@ -26,8 +26,6 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
 
-    uint256 securityDeposit;
-
     struct TestData {
         uint128 validatePrice;
         int24 validateTick;
@@ -44,7 +42,6 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         params.flags.enableFunding = false;
         super._setUp(params);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
-        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -92,7 +89,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      * @custom:and A user open position
      * @custom:and A initiated user open position
      * @custom:when The `validateOpenPosition` function is called
-     * @custom:then The price drops below two highest open positions
+     * @custom:then The price drops below the two highest open positions
      * @custom:and The user open position tick is liquidated
      * @custom:and The initial position tick still needs to be liquidated
      * @custom:and The open action isn't validated
@@ -111,7 +108,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitMockMiddlewarePriceDelay();
 
-        protocol.initiateOpenPosition{ value: securityDeposit }(
+        protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             params.initialPrice / 30,
             address(this),
@@ -125,9 +122,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitDelay();
 
-        protocol.validateOpenPosition{ value: securityDeposit }(
-            address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
-        );
+        protocol.validateOpenPosition(address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
         pending = protocol.getUserPendingAction(address(this));
         assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateOpenPosition), "user action was validated");

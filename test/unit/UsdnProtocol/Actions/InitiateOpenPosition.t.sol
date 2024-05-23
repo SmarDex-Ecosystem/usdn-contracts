@@ -23,7 +23,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     uint256 internal constant LONG_AMOUNT = 1 ether;
     uint128 internal constant CURRENT_PRICE = 2000 ether;
-    uint256 internal securityDeposit;
 
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
@@ -49,7 +48,6 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
-        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**

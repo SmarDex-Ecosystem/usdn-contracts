@@ -16,7 +16,6 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
-    uint256 internal securityDeposit;
     uint128 constant DEPOSIT_AMOUNT = 1 ether;
 
     function setUp() public {
@@ -30,7 +29,6 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
         sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
-        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -127,7 +125,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
         uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
 
-        protocol.initiateDeposit{ value: securityDeposit }(
+        protocol.initiateDeposit(
             DEPOSIT_AMOUNT, address(this), address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
         );
 
@@ -136,9 +134,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
 
         _waitDelay();
 
-        protocol.validateDeposit{ value: securityDeposit }(
-            address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
-        );
+        protocol.validateDeposit(address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
         pending = protocol.getUserPendingAction(address(this));
         assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated");

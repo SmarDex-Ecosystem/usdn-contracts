@@ -21,7 +21,6 @@ import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyG
 contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
     uint128 internal constant POSITION_AMOUNT = 1 ether;
-    uint256 internal securityDeposit;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
 
@@ -35,7 +34,6 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         wstETH.mintAndApprove(address(this), INITIAL_WSTETH_BALANCE, address(protocol), type(uint256).max);
         sdex.mintAndApprove(address(this), 200_000_000 ether, address(protocol), type(uint256).max);
-        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -318,7 +316,7 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
-        protocol.initiateDeposit{ value: securityDeposit }(
+        protocol.initiateDeposit(
             POSITION_AMOUNT, address(this), address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
         );
 

@@ -30,7 +30,6 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     uint256 internal initialUsdnShares;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
-    uint256 internal securityDeposit;
 
     function setUp() public {
         super._setUp(DEFAULT_PARAMS);
@@ -41,7 +40,6 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
         initialUsdnBalance = usdn.balanceOf(address(this));
         initialUsdnShares = usdn.sharesOf(address(this));
         initialWstETHBalance = wstETH.balanceOf(address(this));
-        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /**
@@ -96,7 +94,6 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:and The user open position tick is liquidated
      * @custom:and The initial open position tick still needs to be liquidated
      * @custom:and The withdrawal action isn't initiated
-     * @custom:and The user usdn
      * @custom:and The transaction is completed
      */
     function test_initiateWithdrawalIsPendingLiquidation() public {
@@ -112,7 +109,7 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
 
         _waitMockMiddlewarePriceDelay();
 
-        protocol.initiateWithdrawal{ value: securityDeposit }(
+        protocol.initiateWithdrawal(
             uint128(usdn.balanceOf(address(this))),
             address(this),
             address(this),

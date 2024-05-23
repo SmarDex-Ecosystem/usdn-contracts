@@ -44,7 +44,6 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     }
 
     uint128 private constant POSITION_AMOUNT = 1 ether;
-    uint256 internal securityDeposit;
     PositionId private posId;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
@@ -61,8 +60,6 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
                 price: params.initialPrice
             })
         );
-
-        securityDeposit = protocol.getSecurityDepositValue();
     }
 
     /* -------------------------------------------------------------------------- */
@@ -625,7 +622,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         _waitMockMiddlewarePriceDelay();
 
-        protocol.initiateClosePosition{ value: securityDeposit }(
+        protocol.initiateClosePosition(
             userPosId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
         );
 
@@ -634,9 +631,7 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
 
         _waitDelay();
 
-        protocol.validateClosePosition{ value: securityDeposit }(
-            address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
-        );
+        protocol.validateClosePosition(address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
 
         pending = protocol.getUserPendingAction(address(this));
         assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateClosePosition), "user action is validated");
