@@ -35,7 +35,7 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
             UniswapParameters(params.v2Factory, params.v3Factory, params.pairInitCodeHash, params.poolInitCodeHash)
         )
         PaymentsImmutables(PaymentsParameters(params.permit2, params.weth9, address(0), address(0)))
-        UsdnProtocolImmutables(UsdnProtocolParameters(params.usdnProtocol, params.usdn))
+        UsdnProtocolImmutables(UsdnProtocolParameters(params.usdnProtocol, params.sdex))
     { }
 
     /// @inheritdoc IUniversalRouter

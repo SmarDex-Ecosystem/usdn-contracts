@@ -47,7 +47,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
-        initialDeposit: 10 ether,
+        initialDeposit: 4.919970269703463156 ether,
         initialLong: 5 ether,
         initialLiqPrice: 1000 ether, // leverage approx 2x
         initialPrice: 2000 ether, // 2000 USD per wstETH
