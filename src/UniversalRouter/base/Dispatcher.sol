@@ -212,16 +212,16 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnProtoc
                         Payments.sweep(address(PROTOCOL_ASSET), Constants.MSG_SENDER, 0);
                         Payments.sweep(address(SDEX), Constants.MSG_SENDER, 0);
                         Payments.sweep(Constants.ETH, Constants.MSG_SENDER, 0);
-                    } else if (command == Commands.INITIATE_WITHDRAW) {
-                        // TODO INITIATE_WITHDRAW
+                    } else if (command == Commands.INITIATE_WITHDRAWAL) {
+                        // TODO INITIATE_WITHDRAWAL
                     } else if (command == Commands.INITIATE_OPEN) {
                         // TODO INITIATE_OPEN
                     } else if (command == Commands.INITIATE_CLOSE) {
                         // TODO INITIATE_CLOSE
                     } else if (command == Commands.VALIDATE_DEPOSIT) {
                         // TODO VALIDATE_DEPOSIT
-                    } else if (command == Commands.VALIDATE_WITHDRAW) {
-                        // TODO VALIDATE_WITHDRAW
+                    } else if (command == Commands.VALIDATE_WITHDRAWAL) {
+                        // TODO VALIDATE_WITHDRAWAL
                     } else if (command == Commands.VALIDATE_OPEN) {
                         // TODO VALIDATE_OPEN
                     } else if (command == Commands.VALIDATE_CLOSE) {
