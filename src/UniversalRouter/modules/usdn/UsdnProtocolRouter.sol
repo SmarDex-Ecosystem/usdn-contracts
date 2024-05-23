@@ -25,21 +25,24 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @return success_ Whether the deposit was successful
      */
     function usdnInitiateDeposit(
-        uint128 amount,
+        uint256 amount,
         address to,
         address validator,
         bytes memory currentPriceData,
         PreviousActionsData memory previousActionsData
     ) internal returns (bool success_) {
         // use amount == Constants.CONTRACT_BALANCE as a flag to deposit the entire balance of the contract
+        uint128 depositAmount;
         if (amount == Constants.CONTRACT_BALANCE) {
-            amount = PROTOCOL_ASSET.balanceOf(address(this)).toUint128();
+            depositAmount = PROTOCOL_ASSET.balanceOf(address(this)).toUint128();
+        } else {
+            depositAmount = amount.toUint128();
         }
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         SDEX.approve(address(USDN_PROTOCOL), type(uint256).max);
         // we send the full ETH balance, the protocol will refund any excess
         USDN_PROTOCOL.initiateDeposit{ value: address(this).balance }(
-            amount, to, validator, currentPriceData, previousActionsData
+            depositAmount, to, validator, currentPriceData, previousActionsData
         );
         SDEX.approve(address(USDN_PROTOCOL), 0);
         success_ = true; // TODO: retrieve success status from initiateDeposit return value (when implemented)

@@ -201,12 +201,12 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnProtoc
                 } else {
                     if (command == Commands.INITIATE_DEPOSIT) {
                         (
-                            uint128 amount,
+                            uint256 amount,
                             address to,
                             address validator,
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData
-                        ) = abi.decode(inputs, (uint128, address, address, bytes, PreviousActionsData));
+                        ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData));
                         success_ =
                             usdnInitiateDeposit(amount, map(to), map(validator), currentPriceData, previousActionsData);
                         Payments.sweep(address(PROTOCOL_ASSET), map(Constants.MSG_SENDER), 0);
