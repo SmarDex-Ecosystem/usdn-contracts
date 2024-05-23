@@ -9,6 +9,10 @@ import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/uti
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { DepositPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
+/**
+ * @custom:feature Initiating a deposit through the router
+ * @custom:background Given a forked ethereum mainnet chain
+ */
 contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
     uint256 constant DEPOSIT_AMOUNT = 0.1 ether;
 
@@ -18,6 +22,15 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
         deal(address(sdex), address(this), 1e6 ether);
     }
 
+    /**
+     * @custom:scenario Initiating a deposit through the router
+     * @custom:given The user sent the exact amount of assets and an excess amount of SDEX to the router
+     * @custom:when The user initiates a deposit through the router
+     * @custom:then The deposit is initiated successfully
+     * @custom:and The user's asset balance is reduced by the deposited amount
+     * @custom:and The user's SDEX balance is reduced by the burnt amount
+     * @custom:and The user's ether balance is reduced by the security deposit value
+     */
     function test_ForkInitiateDeposit() public {
         uint256 ethBalanceBefore = address(this).balance;
         uint256 wstEthBalanceBefore = wstETH.balanceOf(address(this));
@@ -55,6 +68,13 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
         assertEq(sdex.balanceOf(address(this)), sdexBalanceBefore - burntSdex, "sdex balance");
     }
 
+    /**
+     * @custom:scenario Initiating a deposit through the router with excess assets
+     * @custom:given The user sent an excess amount of assets to the router
+     * @custom:when The user initiates a deposit through the router
+     * @custom:then The deposit is initiated successfully
+     * @custom:and The user's asset balance is reduced by the deposited amount (the excess is refunded)
+     */
     function test_ForkInitiateDepositAssetSweep() public {
         uint256 wstEthBalanceBefore = wstETH.balanceOf(address(this));
 
@@ -75,6 +95,12 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
         assertEq(wstETH.balanceOf(address(this)), wstEthBalanceBefore - DEPOSIT_AMOUNT, "asset balance");
     }
 
+    /**
+     * @custom:scenario Initiating a deposit through the router with excess ether
+     * @custom:when The user initiates a deposit through the router, sending an excess of ether
+     * @custom:then The user's ether balance is reduced by the security deposit value
+     * @custom:and The excess ether is refunded
+     */
     function test_ForkInitiateDepositEtherSweep() public {
         uint256 ethBalanceBefore = address(this).balance;
 
@@ -95,6 +121,13 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
         assertEq(address(this).balance, ethBalanceBefore - protocol.getSecurityDepositValue(), "ether balance");
     }
 
+    /**
+     * @custom:scenario Initiating a deposit through the router with a "full balance" amount
+     * @custom:given The user sent the `DEPOSIT_AMOUNT` of wstETH to the router
+     * @custom:when The user initiates a deposit through the router with amount `CONTRACT_BALANCE`
+     * @custom:then The deposit is initiated successfully with the full balance of the router
+     * @custom:and The user's asset balance is reduced by `DEPOSIT_AMOUNT`
+     */
     function test_ForkInitiateDepositFullBalance() public {
         uint256 wstEthBalanceBefore = wstETH.balanceOf(address(this));
 
