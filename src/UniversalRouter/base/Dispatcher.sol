@@ -207,7 +207,7 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnProtoc
                             PreviousActionsData memory previousActionsData
                         ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData));
                         success_ =
-                            usdnInitiateDeposit(amount, map(to), map(validator), currentPriceData, previousActionsData);
+                            _usdnInitiateDeposit(amount, map(to), map(validator), currentPriceData, previousActionsData);
                         Payments.sweep(address(PROTOCOL_ASSET), map(Constants.MSG_SENDER), 0);
                         Payments.sweep(address(SDEX), map(Constants.MSG_SENDER), 0);
                         Payments.sweep(Constants.ETH, map(Constants.MSG_SENDER), 0);

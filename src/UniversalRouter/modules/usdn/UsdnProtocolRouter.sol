@@ -24,7 +24,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the deposit was successful
      */
-    function usdnInitiateDeposit(
+    function _usdnInitiateDeposit(
         uint256 amount,
         address to,
         address validator,
