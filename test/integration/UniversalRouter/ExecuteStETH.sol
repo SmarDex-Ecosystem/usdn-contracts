@@ -9,10 +9,10 @@ import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { IStETH } from "src/UniversalRouter/interfaces/ISTETH.sol";
 
 /**
- * @custom:feature Test commands lower than fourth boundary of the `execute` function
+ * @custom:feature Test commands wrap and unwrap stETH
  * @custom:background A initiated universal router
  */
-contract ForkTestExecuteFourthBoundary is ForkUniversalRouterBaseIntegrationFixture {
+contract ForkTestExecuteStETH is ForkUniversalRouterBaseIntegrationFixture {
     uint256 constant BASE_AMOUNT = 1 ether;
     IStETH stETH;
 
@@ -26,15 +26,14 @@ contract ForkTestExecuteFourthBoundary is ForkUniversalRouterBaseIntegrationFixt
     /**
      * @custom:scenario Test the `WRAP_STETH` command using the router balance
      * @custom:given The initiated universal router
-     * @custom:given The router should be funded with some `stETH`
+     * @custom:and The router should be funded with some `stETH`
      * @custom:when The `execute` function is called for `WRAP_STETH` command
      * @custom:then The `WRAP_STETH` command should be executed
      * @custom:and The `wsteth` user balance should be increased
      */
-    function test_execute_wrap_steth() external {
+    function test_executeWrapStETH() external {
         // unwrap
-        uint256 wstETHBalance = wstETH.balanceOf(address(this));
-        wstETH.unwrap(wstETHBalance);
+        wstETH.unwrap(BASE_AMOUNT * 1e3);
         stETH.transfer(address(router), stETH.balanceOf(address(this)));
 
         // commands
@@ -49,21 +48,20 @@ contract ForkTestExecuteFourthBoundary is ForkUniversalRouterBaseIntegrationFixt
         router.execute(commands, inputs);
 
         // assert
-        assertGt(wstETH.balanceOf(address(this)), balanceWstETHBefore, "wrong wsteth balance");
+        assertGt(wstETH.balanceOf(address(this)), balanceWstETHBefore, "wrong wstETH balance");
     }
 
     /**
      * @custom:scenario Test the `UNWRAP_WSTETH` command using the router balance
      * @custom:given The initiated universal router
-     * @custom:given The router should be funded with some `stETH`
+     * @custom:and The router should be funded with some `stETH`
      * @custom:when The `execute` function is called for `UNWRAP_WSTETH` command
      * @custom:then The `UNWRAP_WSTETH` command should be executed
      * @custom:and The `stETH` user balance should be increased
      */
-    function test_execute_unwrap_steth() external {
+    function test_executeUnwrapStETH() external {
         // transfer
-        uint256 wstETHBalance = wstETH.balanceOf(address(this));
-        wstETH.transfer(address(router), wstETHBalance);
+        wstETH.transfer(address(router), BASE_AMOUNT * 1e3);
         uint256 balanceStETHBefore = stETH.balanceOf(address(this));
 
         // commands
@@ -71,7 +69,7 @@ contract ForkTestExecuteFourthBoundary is ForkUniversalRouterBaseIntegrationFixt
 
         // inputs
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.getPooledEthByShares(wstETHBalance));
+        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.getPooledEthByShares(BASE_AMOUNT * 1e3));
 
         // execution
         router.execute(commands, inputs);
