@@ -6,7 +6,6 @@ import { Payments } from "@uniswap/universal-router/contracts/modules/Payments.s
 import { BytesLib } from "@uniswap/universal-router/contracts/modules/uniswap/v3/BytesLib.sol";
 import { V3SwapRouter } from "@uniswap/universal-router/contracts/modules/uniswap/v3/V3SwapRouter.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
