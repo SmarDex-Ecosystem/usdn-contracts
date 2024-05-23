@@ -37,7 +37,10 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         }
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         SDEX.approve(address(USDN_PROTOCOL), type(uint256).max);
-        USDN_PROTOCOL.initiateDeposit(amount, to, validator, currentPriceData, previousActionsData);
+        // we send the full ETH balance, the protocol will refund any excess
+        USDN_PROTOCOL.initiateDeposit{ value: address(this).balance }(
+            amount, to, validator, currentPriceData, previousActionsData
+        );
         SDEX.approve(address(USDN_PROTOCOL), 0);
         success_ = true; // TODO: retrieve success status from initiateDeposit return value (when implemented)
     }
