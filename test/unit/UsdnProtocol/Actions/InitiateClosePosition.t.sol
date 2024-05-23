@@ -343,7 +343,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
     /**
      * @custom:scenario A initiate close liquidates a pending tick but is not initiated
-     * because a tick still needs to be liquidated
+     * because of being liquidated
      * @custom:given The initial open position
      * @custom:and A user open position
      * @custom:when The `initiateClosePosition` function is called
@@ -353,7 +353,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and The close action isn't initiated
      * @custom:and The transaction is completed
      */
-    function test_initiateClosePositionIsPendingLiquidation() public {
+    function test_initiateClosePositionLiquidated() public {
         _waitMockMiddlewarePriceDelay();
 
         protocol.initiateClosePosition{ value: securityDeposit }(
@@ -368,6 +368,53 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
         assertEq(
             initialPosition.tickVersion, protocol.getTickVersion(initialPosition.tick), "initial position is liquidated"
         );
+    }
+
+    /**
+     * @custom:scenario A initiate close liquidates a pending tick but is not initiated
+     * because a tick still needs to be liquidated
+     * @custom:given The initial open position
+     * @custom:and A user open position
+     * @custom:when The `initiateClosePosition` function is called
+     * @custom:then The price drops below all open positions
+     * @custom:and The user open position tick is liquidated
+     * @custom:and The initial open position tick still needs to be liquidated
+     * @custom:and The close action isn't initiated
+     * @custom:and The transaction is completed
+     */
+    function test_initiateClosePositionIsPendingLiquidation() public {
+        _waitMockMiddlewarePriceDelay();
+
+        protocol.liquidate(abi.encode(params.initialPrice - params.initialPrice / 4), 1);
+
+        _waitMockMiddlewarePriceDelay();
+
+        posId = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: POSITION_AMOUNT,
+                desiredLiqPrice: params.initialPrice / 6,
+                price: params.initialPrice
+            })
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        protocol.initiateClosePosition{ value: securityDeposit }(
+            posId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+        );
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action is initiated");
+
+        assertEq(
+            initialPosition.tickVersion + 1,
+            protocol.getTickVersion(initialPosition.tick),
+            "initial position is not liquidated"
+        );
+
+        assertEq(posId.tickVersion, protocol.getTickVersion(posId.tick), "user position is liquidated");
     }
 
     /**
