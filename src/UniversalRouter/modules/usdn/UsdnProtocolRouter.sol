@@ -68,7 +68,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, UsdnImmutables {
         if (amount == Constants.CONTRACT_BALANCE) {
             amount = USDN.balanceOf(address(this)).toUint128();
         }
-        USDN.transferSharesFrom(msg.sender, address(this), amount);
+        USDN.approve(address(USDN_PROTOCOL), amount);
         USDN_PROTOCOL.initiateWithdrawal{ value: address(this).balance }(
             amount, to, validator, currentPriceData, previousActionsData
         );
