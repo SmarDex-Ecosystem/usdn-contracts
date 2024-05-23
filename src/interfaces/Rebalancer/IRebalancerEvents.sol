@@ -29,4 +29,10 @@ interface IRebalancerEvents {
      * @param minAssetDeposit The new minimum amount of assets to be deposited
      */
     event MinAssetDepositUpdated(uint256 minAssetDeposit);
+
+    /**
+     * @notice Emitted when the position version is updated
+     * @param newPositionVersion The new version of the position
+     */
+    event PositionVersionUpdated(uint128 newPositionVersion);
 }
