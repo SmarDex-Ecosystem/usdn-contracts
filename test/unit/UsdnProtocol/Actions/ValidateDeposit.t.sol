@@ -108,6 +108,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
      * @custom:and The user open position tick is liquidated
      * @custom:and The initial position tick still needs to be liquidated
      * @custom:and The deposit action isn't validated
+     * @custom:and The user usdn balance should not change
      * @custom:and The transaction is completed
      */
     function test_validateDepositIsPendingLiquidation() public {

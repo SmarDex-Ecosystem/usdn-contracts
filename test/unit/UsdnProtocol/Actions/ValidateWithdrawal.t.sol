@@ -80,6 +80,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
      * @custom:and The user open position tick is liquidated
      * @custom:and The initial position tick still needs to be liquidated
      * @custom:and The open action isn't validated
+     * @custom:and The user wsteth balance should not change
      * @custom:and The transaction is completed
      */
     function test_validateWithdrawalIsPendingLiquidation() public {
@@ -122,29 +123,6 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         assertEq(userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated");
 
         assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "wsteth balance changed");
-    }
-
-    /**
-     * @custom:scenario The user initiates a withdrawal for 0 USDN
-     * @custom:when The user initiates a withdrawal for 0 USDN
-     * @custom:then The protocol reverts with `UsdnProtocolZeroAmount`
-     */
-    function test_RevertWhen_zeroAmount() public {
-        bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        vm.expectRevert(UsdnProtocolZeroAmount.selector);
-        protocol.initiateWithdrawal(0, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
-    }
-
-    /**
-     * @custom:scenario The user initiates a deposit with the parameter 'to' defined at zero
-     * @custom:given An initialized USDN protocol
-     * @custom:when The user initiates a withdrawal with the parameter 'to' address defined at 0
-     * @custom:then The protocol reverts with `UsdnProtocolInvalidAddressTo`
-     */
-    function test_RevertWhen_zeroAddressTo() public {
-        bytes memory currentPrice = abi.encode(uint128(2000 ether));
-        vm.expectRevert(UsdnProtocolInvalidAddressTo.selector);
-        protocol.initiateWithdrawal(1 ether, address(0), address(0), currentPrice, EMPTY_PREVIOUS_DATA);
     }
 
     /**
