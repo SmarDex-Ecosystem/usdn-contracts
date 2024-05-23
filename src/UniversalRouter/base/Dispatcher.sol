@@ -6,10 +6,13 @@ import { Payments } from "@uniswap/universal-router/contracts/modules/Payments.s
 import { BytesLib } from "@uniswap/universal-router/contracts/modules/uniswap/v3/BytesLib.sol";
 import { V3SwapRouter } from "@uniswap/universal-router/contracts/modules/uniswap/v3/V3SwapRouter.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { V2SwapRouter } from "src/UniversalRouter/modules/uniswap/v2/V2SwapRouter.sol";
 import { UsdnProtocolRouter } from "src/UniversalRouter/modules/usdn/UsdnProtocolRouter.sol";
+import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 /**
  * @title Decodes and Executes Commands
@@ -197,7 +200,18 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnProtoc
                     }
                 } else {
                     if (command == Commands.INITIATE_DEPOSIT) {
-                        // TODO INITIATE_DEPOSIT
+                        (
+                            uint128 amount,
+                            address to,
+                            address validator,
+                            bytes memory currentPriceData,
+                            PreviousActionsData memory previousActionsData
+                        ) = abi.decode(inputs, (uint128, address, address, bytes, PreviousActionsData));
+                        success_ =
+                            usdnInitiateDeposit(amount, map(to), map(validator), currentPriceData, previousActionsData);
+                        Payments.sweep(address(PROTOCOL_ASSET), Constants.MSG_SENDER, 0);
+                        Payments.sweep(address(SDEX), Constants.MSG_SENDER, 0);
+                        Payments.sweep(Constants.ETH, Constants.MSG_SENDER, 0);
                     } else if (command == Commands.INITIATE_WITHDRAW) {
                         // TODO INITIATE_WITHDRAW
                     } else if (command == Commands.INITIATE_OPEN) {
