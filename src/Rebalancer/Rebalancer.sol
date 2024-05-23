@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
+import { console2 } from "./../../lib/forge-std/src/console2.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -37,7 +38,7 @@ contract Rebalancer is Ownable, IRebalancer {
     }
 
     /// @inheritdoc IRebalancer
-    uint256 public constant MULTIPLIER_DECIMALS = 18;
+    uint256 public constant MULTIPLIER_DECIMALS = 21;
 
     /// @notice The address of the asset used by the USDN protocol
     IERC20Metadata internal immutable _asset;
@@ -217,6 +218,7 @@ contract Rebalancer is Ownable, IRebalancer {
         PositionData memory currentPositionData = _positionData[positionVersion];
         // set the multiplier accumulator to 1 by default
         uint256 accMultiplier = 10 ** MULTIPLIER_DECIMALS;
+
         // if the current position version exists
         if (currentPositionData.amount > 0) {
             // if the position has not been liquidated
@@ -227,7 +229,8 @@ contract Rebalancer is Ownable, IRebalancer {
 
                 // update the multiplier accumulator
                 // TODO FulMulDiv?
-                accMultiplier = currentPositionData.entryAccMultiplier * pnlMultiplier / 10 ** MULTIPLIER_DECIMALS;
+                accMultiplier =
+                    uint256(currentPositionData.entryAccMultiplier) * pnlMultiplier / 10 ** MULTIPLIER_DECIMALS;
             } else {
                 // update the last liquidated version tracker
                 _lastLiquidatedVersion = _positionVersion;
@@ -256,18 +259,15 @@ contract Rebalancer is Ownable, IRebalancer {
      * @param openAmount The amount of assets used to open the position
      * @param value The value of the position right now
      */
-    function _calcPnlMultiplier(uint128 openAmount, uint128 value) internal view returns (uint128 pnlMultiplier_) {
-        // avoid dividing by 0
+    function _calcPnlMultiplier(uint128 openAmount, uint128 value) internal pure returns (uint128 pnlMultiplier_) {
+        // prevent division by 0
         if (openAmount == 0) {
             return 0;
         }
 
         // TODO Room for optimization
         // Refactor after fuzz tests
-        pnlMultiplier_ = (
-            (value * (10 ** MULTIPLIER_DECIMALS) / _assetDecimals)
-                / (openAmount * (10 ** MULTIPLIER_DECIMALS) / _assetDecimals)
-        ).toUint128();
+        pnlMultiplier_ = (value * (10 ** MULTIPLIER_DECIMALS) / openAmount).toUint128();
     }
 
     /* -------------------------------------------------------------------------- */
