@@ -21,7 +21,6 @@ contract ForkUniversalRouterBaseIntegrationFixture is UsdnProtocolBaseIntegratio
 
     function _setUp() internal {
         params = DEFAULT_PARAMS;
-        params.initialDeposit = 4.919970269703463156 ether;
         params.fork = true;
         _setUp(params);
 

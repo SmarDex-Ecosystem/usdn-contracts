@@ -14,9 +14,11 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
     using SafeERC20 for IERC20;
     using SafeERC20 for IWSTETH;
 
-    /// @notice Wrap an amount of stETH into wstETH
-    /// @param recipient The recipient of the wstETH
-    /// @param amount The amount of wstETH desired
+    /**
+     * @notice Wrap an amount of stETH into wstETH
+     * @param recipient The recipient of the wstETH
+     * @param amount The amount of wstETH desired
+     */
     function _wrapSTETH(address recipient, uint256 amount) internal {
         IERC20 steth = IERC20(STETH);
         if (amount == Constants.CONTRACT_BALANCE) {
@@ -40,9 +42,11 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
         }
     }
 
-    /// @notice Unwraps all of the contract's wstETH into stETH
-    /// @param recipient The recipient of the stETH
-    /// @param amountMinimum The minimum amount of stETH desired
+    /**
+     * @notice Unwraps all of the contract's wstETH into stETH
+     * @param recipient The recipient of the stETH
+     * @param amountMinimum The minimum amount of stETH desired
+     */
     function _unwrapSTETH(address recipient, uint256 amountMinimum) internal {
         IWSTETH wsteth = IWSTETH(WSTETH);
         uint256 balanceWSTETH = wsteth.balanceOf(address(this));
