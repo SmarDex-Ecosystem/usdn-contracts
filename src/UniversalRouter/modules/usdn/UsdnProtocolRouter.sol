@@ -4,12 +4,14 @@ pragma solidity 0.8.20;
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { UsdnProtocolImmutables } from "src/UniversalRouter/modules/usdn/UsdnProtocolImmutables.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
 abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
     using SafeCast for uint256;
+    using SafeERC20 for IERC20Metadata;
 
     /**
      * @notice Initiate a deposit into the USDN protocol vault
@@ -33,7 +35,10 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         if (amount == Constants.CONTRACT_BALANCE) {
             amount = PROTOCOL_ASSET.balanceOf(address(this)).toUint128();
         }
+        PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
+        SDEX.approve(address(USDN_PROTOCOL), type(uint256).max);
         USDN_PROTOCOL.initiateDeposit(amount, to, validator, currentPriceData, previousActionsData);
+        SDEX.approve(address(USDN_PROTOCOL), 0);
         success_ = true; // TODO: retrieve success status from initiateDeposit return value (when implemented)
     }
 }

@@ -14,7 +14,7 @@ import { MockWstEthOracleMiddleware } from "src/OracleMiddleware/mock/MockWstEth
  * @custom:feature Checking the gas usage of a liquidation.
  * @custom:background Given a forked ethereum mainnet chain
  */
-contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationFixture, IUsdnEvents {
+contract TestForkUsdnProtocolLiquidationGasUsage is UsdnProtocolBaseIntegrationFixture, IUsdnEvents {
     uint256 securityDepositValue;
 
     function setUp() public {
@@ -54,7 +54,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
      * @custom:when A liquidator calls the function liquidate
      * @custom:then The gas usage matches the LiquidationRewardsManager parameters
      */
-    function test_forkGasUsageOfLiquidateFunction() public {
+    function test_ForkGasUsageOfLiquidateFunction() public {
         _forkGasUsageHelper(false);
     }
 
@@ -66,7 +66,7 @@ contract ForkUsdnProtocolLiquidationGasUsageTest is UsdnProtocolBaseIntegrationF
      * @custom:when A liquidator calls the function liquidate
      * @custom:then The gas usage matches the LiquidationRewardsManager parameters
      */
-    function test_forkGasUsageOfLiquidateFunctionRebase() public {
+    function test_ForkGasUsageOfLiquidateFunctionRebase() public {
         _forkGasUsageHelper(true);
     }
 

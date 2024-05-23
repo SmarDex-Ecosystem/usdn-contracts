@@ -10,7 +10,7 @@ import { PendingAction, ProtocolAction, PreviousActionsData } from "src/interfac
  * @custom:feature Validating two positions with Pyth prices at the same time
  * @custom:background Given a forked ethereum mainnet chain
  */
-contract ForkUsdnProtocolValidateTwoPosTest is UsdnProtocolBaseIntegrationFixture {
+contract TestForkUsdnProtocolValidateTwoPos is UsdnProtocolBaseIntegrationFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
         params.fork = true; // all tests in this contract must be labelled `Fork`
