@@ -2,17 +2,17 @@
 pragma solidity ^0.8.17;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
 
 import { LidoImmutables } from "src/UniversalRouter/modules/lido/LidoImmutables.sol";
-import { IWSTETH } from "src/UniversalRouter/interfaces/IWSTETH.sol";
+import { IWstETH } from "src/interfaces/IWstETH.sol";
+import { IStETH } from "src/UniversalRouter/interfaces/IStETH.sol";
 
 /// @title Router for StEth
 abstract contract LidoRouter is LidoImmutables, Permit2Payments {
-    using SafeERC20 for IERC20;
-    using SafeERC20 for IWSTETH;
+    using SafeERC20 for IStETH;
+    using SafeERC20 for IWstETH;
 
     /**
      * @notice Wrap an amount of stETH into wstETH
@@ -20,24 +20,22 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
      * @param amount The amount of wstETH desired
      */
     function _wrapSTETH(address recipient, uint256 amount) internal {
-        IERC20 steth = IERC20(STETH);
         if (amount == Constants.CONTRACT_BALANCE) {
-            amount = steth.balanceOf(address(this));
-        } else if (amount > steth.balanceOf(address(this))) {
+            amount = STETH.balanceOf(address(this));
+        } else if (amount > STETH.balanceOf(address(this))) {
             revert InsufficientToken();
         }
 
         if (amount > 0) {
-            uint256 allowance = steth.allowance(address(this), WSTETH);
+            uint256 allowance = STETH.allowance(address(this), address(WSTETH));
             if (allowance < amount) {
-                steth.safeIncreaseAllowance(WSTETH, amount - allowance);
+                STETH.safeIncreaseAllowance(address(WSTETH), amount - allowance);
             }
 
-            IWSTETH wsteth = IWSTETH(WSTETH);
-            amount = wsteth.wrap(amount);
+            amount = WSTETH.wrap(amount);
 
             if (recipient != address(this)) {
-                wsteth.safeTransfer(recipient, amount);
+                WSTETH.safeTransfer(recipient, amount);
             }
         }
     }
@@ -48,17 +46,16 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
      * @param amountMinimum The minimum amount of stETH desired
      */
     function _unwrapSTETH(address recipient, uint256 amountMinimum) internal {
-        IWSTETH wsteth = IWSTETH(WSTETH);
-        uint256 balanceWSTETH = wsteth.balanceOf(address(this));
+        uint256 balanceWSTETH = WSTETH.balanceOf(address(this));
         if (balanceWSTETH > 0) {
-            uint256 amountSTETH = wsteth.unwrap(balanceWSTETH);
+            uint256 amountSTETH = WSTETH.unwrap(balanceWSTETH);
 
             if (amountSTETH < amountMinimum) {
                 revert InsufficientToken();
             }
 
             if (recipient != address(this)) {
-                IERC20(STETH).transfer(recipient, amountSTETH);
+                STETH.transfer(recipient, amountSTETH);
             }
         }
     }

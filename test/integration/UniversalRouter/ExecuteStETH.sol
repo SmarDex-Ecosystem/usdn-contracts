@@ -6,7 +6,7 @@ import { Constants } from "@uniswap/universal-router/contracts/libraries/Constan
 import { ForkUniversalRouterBaseIntegrationFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
 
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
-import { IStETH } from "src/UniversalRouter/interfaces/ISTETH.sol";
+import { IStETH } from "src/UniversalRouter/interfaces/IStETH.sol";
 
 /**
  * @custom:feature Test commands wrap and unwrap stETH

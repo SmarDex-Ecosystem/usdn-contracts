@@ -10,7 +10,6 @@ pragma solidity ^0.8.17;
  * @param usdn The USDN address
  * @param wusdn The WUSDN address
  * @param usdnProtocol The USDN protocol address
- * @param steth The stETH address
  * @param wsteth The WstETH address
  * @param pairInitCodeHash The v2 pair hash
  * @param poolInitCodeHash The v3 pool hash
@@ -23,7 +22,6 @@ struct RouterParameters {
     address usdn;
     address wusdn;
     address usdnProtocol;
-    address steth;
     address wsteth;
     bytes32 pairInitCodeHash;
     bytes32 poolInitCodeHash;
