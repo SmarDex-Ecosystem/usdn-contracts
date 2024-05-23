@@ -17,14 +17,11 @@ import { Wusdn } from "src/Usdn/Wusdn.sol";
 contract ForkUniversalRouterBaseIntegrationFixture is UsdnProtocolBaseIntegrationFixture {
     UniversalRouterHandler public router;
     IAllowanceTransfer permit2;
-    Wusdn wusdn;
 
     function _setUp() internal {
         params = DEFAULT_PARAMS;
         params.fork = true;
         _setUp(params);
-
-        wusdn = new Wusdn(usdn);
 
         RouterParameters memory routerParams = RouterParameters({
             // uniswap
@@ -34,10 +31,6 @@ contract ForkUniversalRouterBaseIntegrationFixture is UsdnProtocolBaseIntegratio
             v3Factory: 0x1F98431c8aD98523631AE4a59f267346ea31F984,
             pairInitCodeHash: 0x96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f, // v2 pair hash
             poolInitCodeHash: 0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54, // v3 pool hash
-            // usdn
-            usdn: address(usdn),
-            wusdn: address(wusdn),
-            usdnProtocol: address(protocol),
             // steth
             wsteth: WSTETH
         });
