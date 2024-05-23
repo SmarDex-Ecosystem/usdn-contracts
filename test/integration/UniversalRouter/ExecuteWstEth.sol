@@ -3,16 +3,16 @@ pragma solidity 0.8.20;
 
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 
+import { ForkUniversalRouterBaseIntegrationFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
+
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { IStETH } from "src/UniversalRouter/interfaces/ISTETH.sol";
-
-import { UniversalRouterBaseIntegrationFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
 
 /**
  * @custom:feature Test commands lower than fourth boundary of the `execute` function
  * @custom:background A initiated universal router
  */
-contract TestExecuteFourthBoundary is UniversalRouterBaseIntegrationFixture {
+contract TestExecuteFourthBoundary is ForkUniversalRouterBaseIntegrationFixture {
     uint256 constant BASE_AMOUNT = 1 ether;
     IStETH stETH;
 
