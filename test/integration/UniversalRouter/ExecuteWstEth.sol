@@ -12,7 +12,7 @@ import { IStETH } from "src/UniversalRouter/interfaces/ISTETH.sol";
  * @custom:feature Test commands lower than fourth boundary of the `execute` function
  * @custom:background A initiated universal router
  */
-contract TestExecuteFourthBoundary is ForkUniversalRouterBaseIntegrationFixture {
+contract ForkTestExecuteFourthBoundary is ForkUniversalRouterBaseIntegrationFixture {
     uint256 constant BASE_AMOUNT = 1 ether;
     IStETH stETH;
 
