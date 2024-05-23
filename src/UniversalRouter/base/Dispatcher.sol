@@ -9,12 +9,13 @@ import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.so
 
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { V2SwapRouter } from "src/UniversalRouter/modules/uniswap/v2/V2SwapRouter.sol";
+import { UsdnProtocolRouter } from "src/UniversalRouter/modules/usdn/UsdnProtocolRouter.sol";
 
 /**
  * @title Decodes and Executes Commands
  * @notice Called by the UniversalRouter contract to efficiently decode and execute a singular command
  */
-abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsgSender {
+abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnProtocolRouter, LockAndMsgSender {
     using BytesLib for bytes;
 
     /**
@@ -28,15 +29,18 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LockAndMsg
      * @dev 2 masks are used to enable use of a nested-if statement in execution for efficiency reasons
      * @param commandType The command type to execute
      * @param inputs The inputs to execute the command with
-     * @return success True on success of the command, false on failure
-     * @return output The outputs or error messages, if any, from the command
+     * @return success_ True on success of the command, false on failure
+     * @return output_ The outputs or error messages, if any, from the command
      */
-    function dispatch(bytes1 commandType, bytes calldata inputs) internal returns (bool success, bytes memory output) {
+    function dispatch(bytes1 commandType, bytes calldata inputs)
+        internal
+        returns (bool success_, bytes memory output_)
+    {
         // TODO CHECK IF USEFUL
-        output = "";
+        output_ = "";
         uint256 command = uint8(commandType & Commands.COMMAND_TYPE_MASK);
 
-        success = true;
+        success_ = true;
 
         if (command < Commands.FOURTH_IF_BOUNDARY) {
             if (command < Commands.THIRD_IF_BOUNDARY) {
