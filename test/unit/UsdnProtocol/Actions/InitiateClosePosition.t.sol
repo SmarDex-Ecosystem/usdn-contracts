@@ -370,12 +370,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
      * @custom:and The transaction is completed
      */
     function test_initiateClosePositionIsPendingLiquidation() public {
-        _waitMockMiddlewarePriceDelay();
-
-        protocol.liquidate(abi.encode(params.initialPrice - params.initialPrice / 4), 1);
-
-        _waitMockMiddlewarePriceDelay();
-
+        super._setUp(DEFAULT_PARAMS);
         posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),

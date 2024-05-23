@@ -27,6 +27,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     using DoubleEndedQueue for DoubleEndedQueue.Deque;
 
     /// @inheritdoc IUsdnProtocolCore
+
     address public constant DEAD_ADDRESS = address(0xdead);
 
     /// @inheritdoc IUsdnProtocolCore

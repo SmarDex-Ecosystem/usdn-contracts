@@ -5,11 +5,11 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 
 import { ProtocolAction, PendingAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
+
 /**
  * @custom:feature The functions of the core of the protocol
  * @custom:background Given a protocol instance that was initialized at equilibrium
  */
-
 contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     function setUp() public {
         params = DEFAULT_PARAMS;
