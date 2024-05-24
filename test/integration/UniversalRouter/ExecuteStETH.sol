@@ -20,7 +20,7 @@ contract ForkTestExecuteStETH is ForkUniversalRouterBaseIntegrationFixture {
         _setUp();
 
         deal(address(wstETH), address(this), BASE_AMOUNT * 1e3);
-        stETH = IStETH(router.STETH());
+        stETH = IStETH(address(router.STETH()));
     }
 
     /**
