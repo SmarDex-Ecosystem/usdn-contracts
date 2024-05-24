@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.20;
 
-import { console2 } from "./../../lib/forge-std/src/console2.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
 import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
@@ -228,9 +228,9 @@ contract Rebalancer is Ownable, IRebalancer {
                 _positionData[positionVersion].pnlMultiplier = pnlMultiplier;
 
                 // update the multiplier accumulator
-                // TODO FulMulDiv?
-                accMultiplier =
-                    uint256(currentPositionData.entryAccMultiplier) * pnlMultiplier / 10 ** MULTIPLIER_DECIMALS;
+                accMultiplier = FixedPointMathLib.fullMulDiv(
+                    currentPositionData.entryAccMultiplier, pnlMultiplier, 10 ** MULTIPLIER_DECIMALS
+                );
             } else {
                 // update the last liquidated version tracker
                 _lastLiquidatedVersion = _positionVersion;
@@ -242,7 +242,6 @@ contract Rebalancer is Ownable, IRebalancer {
         _positionVersion = positionVersion;
 
         // save the data of the new position's version
-        // TODO check gas usage vs writing whole struct at once (_positionData[positionVersion] = PositionData({...}))
         PositionData storage newPositionData = _positionData[positionVersion];
         newPositionData.entryAccMultiplier = accMultiplier.toUint128();
         newPositionData.amount = _pendingAssetsAmount + previousPosValue;
@@ -266,9 +265,7 @@ contract Rebalancer is Ownable, IRebalancer {
             return 0;
         }
 
-        // TODO Room for optimization
-        // Refactor after fuzz tests
-        pnlMultiplier_ = (value * (10 ** MULTIPLIER_DECIMALS) / openAmount).toUint128();
+        pnlMultiplier_ = FixedPointMathLib.fullMulDiv(value, 10 ** MULTIPLIER_DECIMALS, openAmount).toUint128();
     }
 
     /* -------------------------------------------------------------------------- */

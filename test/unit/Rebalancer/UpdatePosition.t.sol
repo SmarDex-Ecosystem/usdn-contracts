@@ -45,6 +45,17 @@ contract TestRebalancerUpdatePosition is RebalancerFixture {
     }
 
     /**
+     * @custom:scenario An address that is not the USDN protocol calls updatePosition
+     * @custom:given The caller not being the USDN protocol
+     * @custom:when updatePosition is called
+     * @custom:then The call reverts with a RebalancerUnauthorized error
+     */
+    function test_RevertWhen_callerIsNotTheProtocol() external {
+        vm.expectRevert(RebalancerUnauthorized.selector);
+        rebalancer.updatePosition(PositionId(0, 0, 0), 0);
+    }
+
+    /**
      * @custom:scenario The position is updated for the first time (no previous version)
      * @custom:given A new position was created for the rebalancer for the first time
      * @custom:when The usdn protocol calls updatePosition with the new position ID
