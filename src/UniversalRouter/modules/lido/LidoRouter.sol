@@ -44,6 +44,7 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
         uint256 balanceWSTETH = WSTETH.balanceOf(address(this));
         if (balanceWSTETH > 0) {
             uint256 amountSTETH = WSTETH.unwrap(balanceWSTETH);
+            //TODO: must check for share or balance
 
             if (amountSTETH < amountMinimum) {
                 revert InsufficientToken();

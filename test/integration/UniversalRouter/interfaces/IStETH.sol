@@ -5,4 +5,6 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 
 interface IStETH is IERC20Metadata {
     function getPooledEthByShares(uint256 _sharesAmount) external view returns (uint256);
+    function getSharesByPooledEth(uint256 _ethAmount) external view returns (uint256);
+    function sharesOf(address _account) external view returns (uint256);
 }
