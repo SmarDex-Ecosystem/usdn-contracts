@@ -65,16 +65,12 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
      * @custom:then The `WRAP_STETH` command should revert
      */
     function test_RevertWhen_executeWrapStETHEnoughBalance() external {
-        // unwrap
-        wstETH.unwrap(BASE_AMOUNT);
-        stETH.transfer(address(router), stETH.balanceOf(address(this)));
-
         // commands
         bytes memory commands = abi.encodePacked(bytes1(bytes32(Commands.WRAP_STETH) << (256 - 8)));
 
         // inputs
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.balanceOf(address(this)) + 1);
+        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.getPooledEthByShares(1) + 1);
 
         // execution
         vm.expectRevert(bytes("BALANCE_EXCEEDED"));
@@ -125,7 +121,7 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
 
         // inputs
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.getPooledEthByShares(wstETH.balanceOf(address(router))) + 1);
+        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.getPooledEthByShares(1) + 1);
 
         // execution
         vm.expectRevert(InsufficientToken.selector);
