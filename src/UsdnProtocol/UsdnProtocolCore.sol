@@ -694,7 +694,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     /**
      * @notice Clear the pending action for a user
      * @param user The user's address
-     * @param rawIndex The rawIndex of the pending position
+     * @param rawIndex The rawIndex of the pending action in the queue
      */
     function _clearPendingAction(address user, uint128 rawIndex) internal {
         _pendingActionsQueue.clearAt(rawIndex);
