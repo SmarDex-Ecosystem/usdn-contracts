@@ -380,18 +380,19 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
         _balanceVault += amount;
         emit InitiatedDeposit(msg.sender, msg.sender, amount, block.timestamp);
 
-        // Calculate the total minted amount of USDN (vault balance and total supply are zero for now, we assume the
-        // USDN price to be $1)
-        uint256 usdnToMint = _calcMintUsdn(amount, 0, 0, price);
+        // Calculate the total minted amount of USDN shares (vault balance and total supply are zero for now, we assume
+        // the USDN price to be $1 per token)
+        uint256 usdnSharesToMint = _calcMintUsdnShares(amount, 0, 0, price);
+        uint256 minUsdnSharesSupply = _usdn.convertToShares(MIN_USDN_SUPPLY);
         // Mint the min amount and send to dead address so it can never be removed from the total supply
-        _usdn.mint(DEAD_ADDRESS, MIN_USDN_SUPPLY);
+        _usdn.mintShares(DEAD_ADDRESS, minUsdnSharesSupply);
         // Mint the user's share
-        uint256 mintToUser = usdnToMint - MIN_USDN_SUPPLY;
-        _usdn.mint(msg.sender, mintToUser);
+        uint256 mintSharesToUser = usdnSharesToMint - minUsdnSharesSupply;
+        uint256 mintedTokens = _usdn.mintShares(msg.sender, mintSharesToUser);
 
         // Emit events
         emit ValidatedDeposit(DEAD_ADDRESS, DEAD_ADDRESS, 0, MIN_USDN_SUPPLY, block.timestamp);
-        emit ValidatedDeposit(msg.sender, msg.sender, amount, mintToUser, block.timestamp);
+        emit ValidatedDeposit(msg.sender, msg.sender, amount, mintedTokens, block.timestamp);
     }
 
     /**

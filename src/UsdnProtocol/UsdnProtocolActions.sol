@@ -563,21 +563,22 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             balanceVault: _vaultAssetAvailable(_totalExpo, _balanceVault, _balanceLong, pendingActionPrice, _lastPrice)
                 .toUint256(),
             balanceLong: _balanceLong,
-            usdnTotalSupply: _usdn.totalSupply()
+            usdnTotalShares: _usdn.totalShares()
         });
 
         securityDepositValue_ = _addPendingAction(validator, _convertDepositPendingAction(pendingAction));
 
         // calculate the amount of SDEX tokens to burn
-        uint256 usdnToMintEstimated = _calcMintUsdn(
-            pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalSupply, pendingAction.assetPrice
+        uint256 usdnSharesToMintEstimated = _calcMintUsdnShares(
+            pendingAction.amount, pendingAction.balanceVault, pendingAction.usdnTotalShares, pendingAction.assetPrice
         );
-        uint32 burnRatio = _sdexBurnOnDepositRatio;
-        uint256 sdexToBurn = _calcSdexToBurn(usdnToMintEstimated, burnRatio);
+        uint256 usdnToMintEstimated = _usdn.convertToTokens(usdnSharesToMintEstimated);
         // we want to at least mint 1 wei of USDN
         if (usdnToMintEstimated == 0) {
             revert UsdnProtocolDepositTooSmall();
         }
+        uint32 burnRatio = _sdexBurnOnDepositRatio;
+        uint256 sdexToBurn = _calcSdexToBurn(usdnToMintEstimated, burnRatio);
         // we want to at least burn 1 wei of SDEX if SDEX burning is enabled
         if (burnRatio != 0 && sdexToBurn == 0) {
             revert UsdnProtocolDepositTooSmall();
@@ -632,31 +633,31 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         // apply fees on price
         uint128 priceWithFees = (currentPrice.price - currentPrice.price * _vaultFeeBps / BPS_DIVISOR).toUint128();
 
-        uint256 usdnToMint1 =
-            _calcMintUsdn(deposit.amount, deposit.balanceVault, deposit.usdnTotalSupply, deposit.assetPrice);
+        uint256 usdnSharesToMint1 =
+            _calcMintUsdnShares(deposit.amount, deposit.balanceVault, deposit.usdnTotalShares, deposit.assetPrice);
 
-        uint256 usdnToMint2 = _calcMintUsdn(
+        uint256 usdnSharesToMint2 = _calcMintUsdnShares(
             deposit.amount,
             // calculate the available balance in the vault side if the price moves to `priceWithFees`
             _vaultAssetAvailable(
                 deposit.totalExpo, deposit.balanceVault, deposit.balanceLong, priceWithFees, deposit.assetPrice
             ).toUint256(),
-            deposit.usdnTotalSupply,
+            deposit.usdnTotalShares,
             priceWithFees
         );
 
-        uint256 usdnToMint;
+        uint256 usdnSharesToMint;
         // we use the lower of the two amounts to mint
-        if (usdnToMint1 <= usdnToMint2) {
-            usdnToMint = usdnToMint1;
+        if (usdnSharesToMint1 <= usdnSharesToMint2) {
+            usdnSharesToMint = usdnSharesToMint1;
         } else {
-            usdnToMint = usdnToMint2;
+            usdnSharesToMint = usdnSharesToMint2;
         }
 
         _balanceVault += deposit.amount;
 
-        _usdn.mint(deposit.to, usdnToMint);
-        emit ValidatedDeposit(deposit.to, deposit.validator, deposit.amount, usdnToMint, deposit.timestamp);
+        uint256 mintedTokens = _usdn.mintShares(deposit.to, usdnSharesToMint);
+        emit ValidatedDeposit(deposit.to, deposit.validator, deposit.amount, mintedTokens, deposit.timestamp);
     }
 
     /**
