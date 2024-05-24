@@ -43,7 +43,7 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
         stETH.transfer(address(router), stETH.balanceOf(address(this)));
 
         // commands
-        bytes memory commands = abi.encodePacked(bytes1(bytes32(Commands.WRAP_STETH) << (256 - 8)));
+        bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.WRAP_STETH)));
 
         // inputs
         bytes[] memory inputs = new bytes[](1);
@@ -68,7 +68,7 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
      */
     function test_RevertWhen_executeWrapStETHEnoughBalance() external {
         // commands
-        bytes memory commands = abi.encodePacked(bytes1(bytes32(Commands.WRAP_STETH) << (256 - 8)));
+        bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.WRAP_STETH)));
 
         // inputs
         bytes[] memory inputs = new bytes[](1);
@@ -93,7 +93,7 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
         uint256 sharesOfStETHBefore = stETH.sharesOf(address(this));
 
         // commands
-        bytes memory commands = abi.encodePacked(bytes1(bytes32(Commands.UNWRAP_WSTETH) << (256 - 8)));
+        bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.UNWRAP_WSTETH)));
 
         // inputs
         bytes[] memory inputs = new bytes[](1);
@@ -123,7 +123,7 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
         wstETH.transfer(address(router), 1);
 
         // commands
-        bytes memory commands = abi.encodePacked(bytes1(bytes32(Commands.UNWRAP_WSTETH) << (256 - 8)));
+        bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.UNWRAP_WSTETH)));
 
         // inputs
         bytes[] memory inputs = new bytes[](1);
