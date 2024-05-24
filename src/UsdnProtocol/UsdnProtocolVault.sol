@@ -161,7 +161,8 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
      * @dev The amount of USDN shares to mint is calculated as follows:
      * amountUsdn = amountAsset * priceAsset / priceUsdn,
      * but since priceUsdn = vaultBalance * priceAsset / totalSupply, we can simplify to
-     * amountUsdn = amountAsset * totalSupply / vaultBalance.
+     * amountUsdn = amountAsset * totalSupply / vaultBalance, and
+     * sharesUsdn = amountAsset * totalShares / vaultBalance
      */
     function _calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
         internal
