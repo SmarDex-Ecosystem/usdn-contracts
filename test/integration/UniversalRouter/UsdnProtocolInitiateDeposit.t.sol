@@ -1,21 +1,36 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
+import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
+
 import { USER_1 } from "test/utils/Constants.sol";
 import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
 
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { DepositPendingAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
+/**
+ * @custom:feature Initiating a deposit through the router
+ * @custom:background Given a forked ethereum mainnet chain
+ */
 contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
-    uint128 constant DEPOSIT_AMOUNT = 0.1 ether;
+    uint256 constant DEPOSIT_AMOUNT = 0.1 ether;
 
     function setUp() public {
         _setUp();
-        deal(address(wstETH), address(this), DEPOSIT_AMOUNT);
+        deal(address(wstETH), address(this), DEPOSIT_AMOUNT * 2);
         deal(address(sdex), address(this), 1e6 ether);
     }
 
+    /**
+     * @custom:scenario Initiating a deposit through the router
+     * @custom:given The user sent the exact amount of assets and an excess amount of SDEX to the router
+     * @custom:when The user initiates a deposit through the router
+     * @custom:then The deposit is initiated successfully
+     * @custom:and The user's asset balance is reduced by the deposited amount
+     * @custom:and The user's SDEX balance is reduced by the burnt amount
+     * @custom:and The user's ether balance is reduced by the security deposit value
+     */
     function test_ForkInitiateDeposit() public {
         uint256 ethBalanceBefore = address(this).balance;
         uint256 wstEthBalanceBefore = wstETH.balanceOf(address(this));
@@ -23,6 +38,7 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
 
         // send funds to router
         wstETH.transfer(address(router), DEPOSIT_AMOUNT);
+        // we send too much sdex because value is kinda hard to know in advance
         sdex.transfer(address(router), sdexBalanceBefore);
 
         // commands
@@ -51,4 +67,86 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
 
         assertEq(sdex.balanceOf(address(this)), sdexBalanceBefore - burntSdex, "sdex balance");
     }
+
+    /**
+     * @custom:scenario Initiating a deposit through the router with excess assets
+     * @custom:given The user sent an excess amount of assets to the router
+     * @custom:when The user initiates a deposit through the router
+     * @custom:then The deposit is initiated successfully
+     * @custom:and The user's asset balance is reduced by the deposited amount (the excess is refunded)
+     */
+    function test_ForkInitiateDepositAssetSweep() public {
+        uint256 wstEthBalanceBefore = wstETH.balanceOf(address(this));
+
+        // send too much wstETH
+        wstETH.transfer(address(router), DEPOSIT_AMOUNT * 2);
+        sdex.transfer(address(router), sdex.balanceOf(address(this)));
+
+        // commands
+        bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_DEPOSIT)));
+
+        // inputs
+        bytes[] memory inputs = new bytes[](1);
+        inputs[0] = abi.encode(DEPOSIT_AMOUNT, USER_1, address(this), "", EMPTY_PREVIOUS_DATA);
+
+        // execution
+        router.execute{ value: protocol.getSecurityDepositValue() }(commands, inputs);
+
+        assertEq(wstETH.balanceOf(address(this)), wstEthBalanceBefore - DEPOSIT_AMOUNT, "asset balance");
+    }
+
+    /**
+     * @custom:scenario Initiating a deposit through the router with excess ether
+     * @custom:when The user initiates a deposit through the router, sending an excess of ether
+     * @custom:then The user's ether balance is reduced by the security deposit value
+     * @custom:and The excess ether is refunded
+     */
+    function test_ForkInitiateDepositEtherSweep() public {
+        uint256 ethBalanceBefore = address(this).balance;
+
+        // send assets
+        wstETH.transfer(address(router), DEPOSIT_AMOUNT);
+        sdex.transfer(address(router), sdex.balanceOf(address(this)));
+
+        // commands
+        bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_DEPOSIT)));
+
+        // inputs
+        bytes[] memory inputs = new bytes[](1);
+        inputs[0] = abi.encode(DEPOSIT_AMOUNT, USER_1, address(this), "", EMPTY_PREVIOUS_DATA);
+
+        // execution (send too much eth)
+        router.execute{ value: protocol.getSecurityDepositValue() * 2 }(commands, inputs);
+
+        assertEq(address(this).balance, ethBalanceBefore - protocol.getSecurityDepositValue(), "ether balance");
+    }
+
+    /**
+     * @custom:scenario Initiating a deposit through the router with a "full balance" amount
+     * @custom:given The user sent the `DEPOSIT_AMOUNT` of wstETH to the router
+     * @custom:when The user initiates a deposit through the router with amount `CONTRACT_BALANCE`
+     * @custom:then The deposit is initiated successfully with the full balance of the router
+     * @custom:and The user's asset balance is reduced by `DEPOSIT_AMOUNT`
+     */
+    function test_ForkInitiateDepositFullBalance() public {
+        uint256 wstEthBalanceBefore = wstETH.balanceOf(address(this));
+
+        // send assets to the router
+        wstETH.transfer(address(router), DEPOSIT_AMOUNT);
+        sdex.transfer(address(router), sdex.balanceOf(address(this)));
+
+        // commands
+        bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_DEPOSIT)));
+
+        // inputs
+        bytes[] memory inputs = new bytes[](1);
+        inputs[0] = abi.encode(Constants.CONTRACT_BALANCE, USER_1, address(this), "", EMPTY_PREVIOUS_DATA);
+
+        // execution
+        router.execute{ value: protocol.getSecurityDepositValue() }(commands, inputs);
+
+        assertEq(wstETH.balanceOf(address(this)), wstEthBalanceBefore - DEPOSIT_AMOUNT, "asset balance");
+    }
+
+    receive() external payable { }
 }
