@@ -12,14 +12,14 @@ import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
  * @custom:feature Test commands wrap and unwrap stETH
  * @custom:background A initiated universal router
  */
-contract ForkTestExecuteStETH is ForkUniversalRouterBaseIntegrationFixture {
-    uint256 constant BASE_AMOUNT = 1 ether;
+contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrationFixture {
+    uint256 constant BASE_AMOUNT = 1000 ether;
     IStETH stETH;
 
     function setUp() external {
         _setUp();
 
-        deal(address(wstETH), address(this), BASE_AMOUNT * 1e3);
+        deal(address(wstETH), address(this), BASE_AMOUNT);
         stETH = IStETH(address(router.STETH()));
     }
 
@@ -33,7 +33,7 @@ contract ForkTestExecuteStETH is ForkUniversalRouterBaseIntegrationFixture {
      */
     function test_executeWrapStETH() external {
         // unwrap
-        wstETH.unwrap(BASE_AMOUNT * 1e3);
+        wstETH.unwrap(BASE_AMOUNT);
         stETH.transfer(address(router), stETH.balanceOf(address(this)));
 
         // commands
@@ -61,7 +61,7 @@ contract ForkTestExecuteStETH is ForkUniversalRouterBaseIntegrationFixture {
      */
     function test_executeUnwrapStETH() external {
         // transfer
-        wstETH.transfer(address(router), BASE_AMOUNT * 1e3);
+        wstETH.transfer(address(router), BASE_AMOUNT);
         uint256 balanceStETHBefore = stETH.balanceOf(address(this));
 
         // commands
@@ -69,7 +69,7 @@ contract ForkTestExecuteStETH is ForkUniversalRouterBaseIntegrationFixture {
 
         // inputs
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.getPooledEthByShares(BASE_AMOUNT * 1e3));
+        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.getPooledEthByShares(BASE_AMOUNT));
 
         // execution
         router.execute(commands, inputs);
