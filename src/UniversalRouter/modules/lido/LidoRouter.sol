@@ -27,10 +27,7 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
         }
 
         if (amount > 0) {
-            uint256 allowance = STETH.allowance(address(this), address(WSTETH));
-            if (allowance < amount) {
-                STETH.safeIncreaseAllowance(address(WSTETH), amount - allowance);
-            }
+            STETH.forceApprove(address(WSTETH), amount);
 
             amount = WSTETH.wrap(amount);
 
@@ -55,7 +52,7 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
             }
 
             if (recipient != address(this)) {
-                STETH.transfer(recipient, amountSTETH);
+                STETH.safeTransfer(recipient, amountSTETH);
             }
         }
     }
