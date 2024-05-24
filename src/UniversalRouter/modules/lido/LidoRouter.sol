@@ -22,8 +22,6 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
     function _wrapSTETH(address recipient, uint256 amount) internal {
         if (amount == Constants.CONTRACT_BALANCE) {
             amount = STETH.balanceOf(address(this));
-        } else if (amount > STETH.balanceOf(address(this))) {
-            revert InsufficientToken();
         }
 
         if (amount > 0) {
