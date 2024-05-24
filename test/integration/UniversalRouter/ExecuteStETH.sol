@@ -76,5 +76,6 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
 
         // assert
         assertGt(stETH.balanceOf(address(this)), balanceStETHBefore, "wrong stETH balance");
+        assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance");
     }
 }
