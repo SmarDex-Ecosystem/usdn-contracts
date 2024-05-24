@@ -19,6 +19,9 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
     /// @notice The error message for insufficient token
     error InsufficientToken();
 
+    /// @notice The error message for balance exceeded
+    error BALANCE_EXCEEDED();
+
     function setUp() external {
         _setUp();
 
@@ -52,6 +55,30 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
 
         // assert
         assertGt(wstETH.balanceOf(address(this)), balanceWstETHBefore, "wrong wstETH balance");
+    }
+
+    /**
+     * @custom:scenario Test the `WRAP_STETH` command when the user has not enough balance
+     * @custom:given The initiated universal router
+     * @custom:and The router should be funded with some `stETH`
+     * @custom:when The `execute` function is called for `WRAP_STETH` command
+     * @custom:then The `WRAP_STETH` command should revert
+     */
+    function test_RevertWhen_executeWrapStETHEnoughBalance() external {
+        // unwrap
+        wstETH.unwrap(BASE_AMOUNT);
+        stETH.transfer(address(router), stETH.balanceOf(address(this)));
+
+        // commands
+        bytes memory commands = abi.encodePacked(bytes1(bytes32(Commands.WRAP_STETH) << (256 - 8)));
+
+        // inputs
+        bytes[] memory inputs = new bytes[](1);
+        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.balanceOf(address(this)) + 1);
+
+        // execution
+        vm.expectRevert(bytes("BALANCE_EXCEEDED"));
+        router.execute(commands, inputs);
     }
 
     /**
