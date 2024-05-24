@@ -16,6 +16,9 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
     uint256 constant BASE_AMOUNT = 1000 ether;
     IStETH stETH;
 
+    /// @notice The error message for insufficient token
+    error InsufficientToken();
+
     function setUp() external {
         _setUp();
 
@@ -54,7 +57,7 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
     /**
      * @custom:scenario Test the `UNWRAP_WSTETH` command using the router balance
      * @custom:given The initiated universal router
-     * @custom:and The router should be funded with some `stETH`
+     * @custom:and The router should be funded with some `wstETH`
      * @custom:when The `execute` function is called for `UNWRAP_WSTETH` command
      * @custom:then The `UNWRAP_WSTETH` command should be executed
      * @custom:and The `stETH` user balance should be increased
@@ -77,5 +80,28 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
         // assert
         assertGt(stETH.balanceOf(address(this)), balanceStETHBefore, "wrong stETH balance");
         assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance");
+    }
+
+    /**
+     * @custom:scenario Test the `UNWRAP_WSTETH` command when the user has not enough balance
+     * @custom:given The initiated universal router
+     * @custom:and The router should be funded with one `wstETH`
+     * @custom:when The `execute` function is called for `UNWRAP_WSTETH` command
+     * @custom:then The `UNWRAP_WSTETH` command should revert
+     */
+    function test_RevertWhen_executeUnwrapStETHEnoughBalance() external {
+        // transfer
+        wstETH.transfer(address(router), 1);
+
+        // commands
+        bytes memory commands = abi.encodePacked(bytes1(bytes32(Commands.UNWRAP_WSTETH) << (256 - 8)));
+
+        // inputs
+        bytes[] memory inputs = new bytes[](1);
+        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.getPooledEthByShares(wstETH.balanceOf(address(router))) + 1);
+
+        // execution
+        vm.expectRevert(InsufficientToken.selector);
+        router.execute(commands, inputs);
     }
 }
