@@ -462,7 +462,7 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
 
         vm.startPrank(address(rebalancer));
         wstETH.approve(address(protocol), type(uint256).max);
-        rebalancerPos_ = protocol.initiateOpenPosition(
+        (, rebalancerPos_) = protocol.initiateOpenPosition(
             2 * userDeposit,
             params.initialPrice / 2,
             address(rebalancer),

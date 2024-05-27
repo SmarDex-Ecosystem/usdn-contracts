@@ -114,7 +114,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             CURRENT_PRICE,
             PositionId(expectedTick, 0, 0)
         );
-        PositionId memory posId = protocol.initiateOpenPosition(
+        (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, to, validator, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
 
@@ -201,7 +201,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
             protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, expectedLiqPrice);
 
         // create position which ends up in the same tick
-        PositionId memory posId2 = protocol.initiateOpenPosition(
+        (, PositionId memory posId2) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             desiredLiqPrice,
             address(this),

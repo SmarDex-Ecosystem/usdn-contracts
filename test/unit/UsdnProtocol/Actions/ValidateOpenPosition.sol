@@ -154,7 +154,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
     function _validateOpenPositionScenario(address to, address validator) internal {
         uint256 initialTotalExpo = protocol.getTotalExpo();
         uint128 desiredLiqPrice = CURRENT_PRICE * 2 / 3; // leverage approx 3x
-        PositionId memory posId = protocol.initiateOpenPosition(
+        (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT), desiredLiqPrice, to, validator, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
         (Position memory tempPos,) = protocol.getLongPosition(posId);
@@ -206,7 +206,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         TestData memory testData;
         int24 liqPenalty = int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
         // leverage approx 10x
-        PositionId memory posId = protocol.initiateOpenPosition(
+        (, PositionId memory posId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
             address(this),
@@ -313,7 +313,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         uint128 initiateTimeStamp = uint128(block.timestamp);
         // initiate deposit with leverage close to 10x
-        data.tempPosId = protocol.initiateOpenPosition(
+        (, data.tempPosId) = protocol.initiateOpenPosition(
             uint128(LONG_AMOUNT),
             CURRENT_PRICE * 9 / 10,
             address(this),

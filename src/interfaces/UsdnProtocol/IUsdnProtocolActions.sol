@@ -18,11 +18,13 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The price validation might require payment according to the return value of the `getValidationCost` function
      * of the middleware
      * The transaction must have _securityDepositValue in value
+     * In case liquidations are pending, this function might not initiate the deposit (and `success_` would be false)
      * @param amount The amount of wstETH to deposit
      * @param to The address that will receive the USDN tokens
      * @param validator The address that will validate the deposit
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @return success_ Whether the deposit was initiated
      */
     function initiateDeposit(
         uint128 amount,
@@ -30,7 +32,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         address validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable;
+    ) external payable returns (bool success_);
 
     /**
      * @notice Validate a pending deposit action
@@ -44,15 +46,17 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * if the validation deadline has passed
      * Users wanting to validate an actionable pending action must use another function such as
      * `validateActionablePendingActions` to earn the corresponding security deposit
+     * In case liquidations are pending, this function might not validate the deposit (and `success_` would be false)
      * @param validator The address that has the pending deposit action to validate
      * @param depositPriceData The price data corresponding to the sender's pending deposit action
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @return success_ Whether the deposit was validated
      */
     function validateDeposit(
         address validator,
         bytes calldata depositPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable;
+    ) external payable returns (bool success_);
 
     /**
      * @notice Initiate a withdrawal of assets from the vault by providing USDN tokens
@@ -63,10 +67,12 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The transaction must have _securityDepositValue in value
      * @param usdnShares The amount of USDN shares to burn (Max 5708990770823839524233143877797980545530986495 which is
      * equivalent to 5.7B USDN token before any rebase. The token amount limit increases with each rebase)
+     * In case liquidations are pending, this function might not initiate the withdrawal (and `success_` would be false)
      * @param to The address that will receive the assets
      * @param validator The address that will validate the withdrawal
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @return success_ Whether the withdrawal was initiated
      */
     function initiateWithdrawal(
         uint152 usdnShares,
@@ -74,7 +80,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         address validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable;
+    ) external payable returns (bool success_);
 
     /**
      * @notice Validate a pending withdrawal action
@@ -88,15 +94,17 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * if the validation deadline has passed
      * Users wanting to validate an actionable pending action must use another function such as
      * `validateActionablePendingActions` to earn the corresponding security deposit
+     * In case liquidations are pending, this function might not validate the withdrawal (and `success_` would be false)
      * @param validator The address that has the pending withdrawal action to validate
      * @param withdrawalPriceData The price data corresponding to the sender's pending withdrawal action
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @return success_ Whether the withdrawal was validated
      */
     function validateWithdrawal(
         address validator,
         bytes calldata withdrawalPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable;
+    ) external payable returns (bool success_);
 
     /**
      * @notice Initiate an open position action
@@ -107,6 +115,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * The position is immediately included in the protocol calculations with a temporary entry price (and thus
      * leverage). The validation operation then updates the entry price and leverage with fresher data
      * The transaction must have _securityDepositValue in value
+     * In case liquidations are pending, this function might not initiate the position (and `success_` would be false)
      * @param amount The amount of wstETH to deposit
      * @param desiredLiqPrice The desired liquidation price, including the liquidation penalty
      * @param to The address that will be the owner of the position
@@ -114,7 +123,9 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * @param currentPriceData  The current price data (used to calculate the temporary leverage and entry price,
      * pending validation)
      * @param previousActionsData The data needed to validate actionable pending actions
-     * @return posId_ The unique position identifier
+     * @return success_ Whether the position was initiated
+     * @return posId_ The unique position identifier. In case the position could not be initiated, the tick number will
+     * be `NO_POSITION_TICK`
      */
     function initiateOpenPosition(
         uint128 amount,
@@ -123,7 +134,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         address validator,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable returns (PositionId memory posId_);
+    ) external payable returns (bool success_, PositionId memory posId_);
 
     /**
      * @notice Validate a pending open position action
@@ -140,15 +151,18 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * if the validation deadline has passed
      * Users wanting to validate an actionable pending action must use another function such as
      * `validateActionablePendingActions` to earn the corresponding security deposit
+     * In case liquidations are pending or the position was liquidated, this function might not validate the position
+     * (and `success_` would be false)
      * @param validator The address that has the pending open position action to validate
      * @param openPriceData The price data corresponding to the sender's pending open position action
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @return success_ Whether the position was validated
      */
     function validateOpenPosition(
         address validator,
         bytes calldata openPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable;
+    ) external payable returns (bool success_);
 
     /**
      * @notice Initiate a close position action
@@ -163,11 +177,14 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * Thus, calculations don't consider those anymore. The exit price (and thus profit) is not yet set definitively,
      * and will be done during the validate action
      * The transaction must have _securityDepositValue in value
+     * In case liquidations are pending or the position was liquidated, this function might not initiate the closing
+     * (and `success_` would be false)
      * @param posId The unique identifier of the position to close
      * @param amountToClose The amount of collateral to remove from the position's amount
      * @param to The address that will receive the assets
      * @param currentPriceData The current price data
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @return success_ Whether the closing was initiated
      */
     function initiateClosePosition(
         PositionId calldata posId,
@@ -175,7 +192,7 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         address to,
         bytes calldata currentPriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable;
+    ) external payable returns (bool success_);
 
     /**
      * @notice Validate a pending close position action
@@ -190,15 +207,18 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
      * if the validation deadline has passed
      * Users wanting to validate an actionable pending action must use another function such as
      * `validateActionablePendingActions` to earn the corresponding security deposit
+     * In case liquidations are pending or the position was liquidated, this function might not validate the closing
+     * (and `success_` would be false)
      * @param owner The owner of the initial position
      * @param closePriceData The price data corresponding to the sender's pending close position action
      * @param previousActionsData The data needed to validate actionable pending actions
+     * @return success_ Whether the closing was validated
      */
     function validateClosePosition(
         address owner,
         bytes calldata closePriceData,
         PreviousActionsData calldata previousActionsData
-    ) external payable;
+    ) external payable returns (bool success_);
 
     /**
      * @notice Liquidate positions according to the current asset price, limited to a maximum of `iterations` ticks
