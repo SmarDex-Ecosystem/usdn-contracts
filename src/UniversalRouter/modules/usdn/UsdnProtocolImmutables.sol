@@ -7,7 +7,6 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
 
 struct UsdnProtocolParameters {
     IUsdnProtocol usdnProtocol;
-    IERC20Metadata sdex;
 }
 
 contract UsdnProtocolImmutables {
@@ -23,6 +22,6 @@ contract UsdnProtocolImmutables {
     constructor(UsdnProtocolParameters memory params) {
         USDN_PROTOCOL = params.usdnProtocol;
         PROTOCOL_ASSET = params.usdnProtocol.getAsset();
-        SDEX = params.sdex;
+        SDEX = params.usdnProtocol.getSdex();
     }
 }

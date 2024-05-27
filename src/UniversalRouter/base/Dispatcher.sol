@@ -206,11 +206,10 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnProtoc
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData
                         ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData));
-                        success_ =
-                            _usdnInitiateDeposit(amount, map(to), map(validator), currentPriceData, previousActionsData);
-                        Payments.sweep(address(PROTOCOL_ASSET), map(Constants.MSG_SENDER), 0);
-                        Payments.sweep(address(SDEX), map(Constants.MSG_SENDER), 0);
-                        Payments.sweep(Constants.ETH, map(Constants.MSG_SENDER), 0);
+                        // we don't allow the transaction to revert if the deposit was not successful (due to pending
+                        // liquidations), so we ignore the success boolean. This is because it's important to perform
+                        // liquidations if they are needed, and it would be a big waste of gas for the user to revert
+                        _usdnInitiateDeposit(amount, map(to), map(validator), currentPriceData, previousActionsData);
                     } else if (command == Commands.INITIATE_WITHDRAWAL) {
                         (
                             uint152 usdnShares,
