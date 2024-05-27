@@ -5,7 +5,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
-import { ADMIN, USER_1, USER_2 } from "test/utils/Constants.sol";
+import { DEPLOYER, ADMIN, USER_1, USER_2 } from "test/utils/Constants.sol";
 
 import {
     LongPendingAction,
@@ -329,74 +329,49 @@ contract TestUsdnProtocolActionsInitiateClosePosition is UsdnProtocolBaseFixture
     }
 
     /**
-     * @custom:scenario A initiate close liquidates a pending tick but is not initiated
-     * because of being liquidated
-     * @custom:given The initial open position
-     * @custom:and A user open position
-     * @custom:when The `initiateClosePosition` function is called
-     * @custom:then The price drops below all open positions
-     * @custom:and The user open position tick is liquidated
-     * @custom:and The initial open position tick still needs to be liquidated
+     * @custom:scenario A initiate close liquidates a pending tick but is not initiated because of being liquidated
+     * @custom:given An existing user position
+     * @custom:when The `initiateClosePosition` function is called with a price below the position's liq price
+     * @custom:then The position's tick is liquidated
      * @custom:and The close action isn't initiated
-     * @custom:and The transaction is completed
      */
     function test_initiateClosePositionLiquidated() public {
         _waitMockMiddlewarePriceDelay();
 
         protocol.initiateClosePosition(
-            posId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+            posId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice * 2 / 3), EMPTY_PREVIOUS_DATA
         );
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action is initiated");
-
-        assertEq(posId.tickVersion + 1, protocol.getTickVersion(posId.tick), "user position is not liquidated");
+        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action should not be initiated");
 
         assertEq(
-            initialPosition.tickVersion, protocol.getTickVersion(initialPosition.tick), "initial position is liquidated"
+            posId.tickVersion + 1, protocol.getTickVersion(posId.tick), "user position should have been liquidated"
         );
     }
 
     /**
-     * @custom:scenario A initiate close liquidates a pending tick but is not initiated
-     * because a tick still needs to be liquidated
-     * @custom:given The initial open position
-     * @custom:and A user open position
-     * @custom:when The `initiateClosePosition` function is called
-     * @custom:then The price drops below all open positions
-     * @custom:and The user open position tick is liquidated
-     * @custom:and The initial open position tick still needs to be liquidated
-     * @custom:and The close action isn't initiated
-     * @custom:and The transaction is completed
+     * @custom:scenario A initiate close liquidates a pending tick but is not initiated because a tick still needs to
+     * be liquidated
+     * @custom:given The user position with a liq price above the deployer position's liq price
+     * @custom:when The deployer calls `initiateClosePosition` with a price below both positions' liq price
+     * @custom:then The user position's tick is liquidated
+     * @custom:and The deployer's close action isn't initiated due to its own position needing to be liquidated
      */
     function test_initiateClosePositionIsPendingLiquidation() public {
-        super._setUp(DEFAULT_PARAMS);
-        posId = setUpUserPositionInLong(
-            OpenParams({
-                user: address(this),
-                untilAction: ProtocolAction.ValidateOpenPosition,
-                positionSize: POSITION_AMOUNT,
-                desiredLiqPrice: params.initialPrice / 6,
-                price: params.initialPrice
-            })
-        );
-
         _waitMockMiddlewarePriceDelay();
 
+        vm.prank(DEPLOYER);
         protocol.initiateClosePosition(
-            posId, POSITION_AMOUNT, address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+            initialPosition, POSITION_AMOUNT, DEPLOYER, abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA
         );
 
-        PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "action is initiated");
+        PendingAction memory pending = protocol.getUserPendingAction(DEPLOYER);
+        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "pending action should not exist");
 
         assertEq(
-            initialPosition.tickVersion + 1,
-            protocol.getTickVersion(initialPosition.tick),
-            "initial position is not liquidated"
+            posId.tickVersion + 1, protocol.getTickVersion(posId.tick), "setup position should have been liquidated"
         );
-
-        assertEq(posId.tickVersion, protocol.getTickVersion(posId.tick), "user position is liquidated");
     }
 
     /**

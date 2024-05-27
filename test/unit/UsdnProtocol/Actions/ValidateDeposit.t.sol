@@ -98,18 +98,14 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A validate deposit liquidates a pending tick but is not validated
-     * because a tick still needs to be liquidated
-     * @custom:given The initial open position
-     * @custom:and A user open position
-     * @custom:and A initiated user deposit position
-     * @custom:when The `validateDeposit` function is called
-     * @custom:then The price drops below all open positions
-     * @custom:and The user open position tick is liquidated
-     * @custom:and The initial position tick still needs to be liquidated
+     * @custom:scenario A validate deposit liquidates a tick but is not validated because another tick still needs to
+     * be liquidated
+     * @custom:given Two positions with different liquidation prices
+     * @custom:and A user initiated a deposit action
+     * @custom:when The `validateDeposit` function is called with a price below the liq price of both positions
+     * @custom:then One of the positions is liquidated
      * @custom:and The deposit action isn't validated
-     * @custom:and The user usdn balance should not change
-     * @custom:and The transaction is completed
+     * @custom:and The user's usdn balance should not change
      */
     function test_validateDepositIsPendingLiquidation() public {
         PositionId memory userPosId = setUpUserPositionInLong(
@@ -130,23 +126,24 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
             DEPOSIT_AMOUNT, address(this), address(this), abi.encode(params.initialPrice), EMPTY_PREVIOUS_DATA
         );
 
-        PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated");
-
         _waitDelay();
 
-        protocol.validateDeposit(address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA);
+        protocol.validateDeposit(address(this), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
 
-        pending = protocol.getUserPendingAction(address(this));
-        assertEq(uint256(pending.action), uint256(ProtocolAction.ValidateDeposit), "user action was validated");
-
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(
-            initialPosition.tickVersion, protocol.getTickVersion(initialPosition.tick), "initial position is liquidated"
+            uint256(pending.action),
+            uint256(ProtocolAction.ValidateDeposit),
+            "user 0 pending action should not have been cleared"
         );
 
-        assertEq(userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated");
+        assertEq(
+            userPosId.tickVersion + 1,
+            protocol.getTickVersion(userPosId.tick),
+            "user 1 position should have been liquidated"
+        );
 
-        assertEq(usdnBalanceBefore, usdn.balanceOf(address(this)), "user usdn balance increased");
+        assertEq(usdnBalanceBefore, usdn.balanceOf(address(this)), "user 0 should not have gotten any USDN");
     }
 
     /**

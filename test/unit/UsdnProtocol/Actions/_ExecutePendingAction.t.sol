@@ -31,10 +31,11 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
 
         vm.expectEmit(true, true, false, false);
         emit ValidatedOpenPosition(USER_1, USER_1, 0, 0, PositionId(0, 0, 0));
-        (bool success, bool executed,) = protocol.i_executePendingAction(previousActionsData);
+        (bool success, bool executed, bool liq,) = protocol.i_executePendingAction(previousActionsData);
 
         assertTrue(success, "success");
         assertTrue(executed, "executed");
+        assertFalse(liq, "liq");
 
         (PendingAction[] memory actions,) = protocol.getActionablePendingActions(address(this));
         assertEq(actions.length, 0, "remaining pending actions");
@@ -47,12 +48,13 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
      * @custom:scenario Execute a pending action when there is none
      * @custom:given No pending actions in the queue
      * @custom:when The `_executePendingAction` internal function is called
-     * @custom:then The function returns true for `success` and false for `executed`
+     * @custom:then The function returns true for `success`, false for `executed` and false for `liq`
      */
     function test_executePendingActionNone() public {
-        (bool success, bool executed,) = protocol.i_executePendingAction(EMPTY_PREVIOUS_DATA);
+        (bool success, bool executed, bool liq,) = protocol.i_executePendingAction(EMPTY_PREVIOUS_DATA);
         assertTrue(success, "success");
-        assertEq(executed, false, "executed");
+        assertFalse(executed, "executed");
+        assertFalse(liq, "liq");
     }
 
     /**
@@ -60,28 +62,30 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
      * @custom:given A pending action in the queue
      * @custom:when The `_executePendingAction` internal function is called with a `PreviousActionsData` with different
      * lengths of price data and raw indices
-     * @custom:then The function returns false for `success` and `executed`
+     * @custom:then The function returns false for `success`, `executed` and `liq`
      */
     function test_executePendingActionLengthMismatch() public {
         PreviousActionsData memory previousActionsData = _setUpPendingAction();
         previousActionsData.rawIndices = new uint128[](0);
 
-        (bool success, bool executed,) = protocol.i_executePendingAction(previousActionsData);
-        assertEq(success, false, "success");
-        assertEq(executed, false, "executed");
+        (bool success, bool executed, bool liq,) = protocol.i_executePendingAction(previousActionsData);
+        assertFalse(success, "success");
+        assertFalse(executed, "executed");
+        assertFalse(liq, "liq");
     }
 
     /**
      * @custom:scenario Execute a pending action when the price data and raw indices are empty
      * @custom:given A pending action in the queue
      * @custom:when The `_executePendingAction` internal function is called with an empty `PreviousActionsData`
-     * @custom:then The function returns false for `success` and `executed`
+     * @custom:then The function returns false for `success`, `executed` and `liq`
      */
     function test_executePendingActionEmptyData() public {
         _setUpPendingAction();
-        (bool success, bool executed,) = protocol.i_executePendingAction(EMPTY_PREVIOUS_DATA);
-        assertEq(success, false, "success");
-        assertEq(executed, false, "executed");
+        (bool success, bool executed, bool liq,) = protocol.i_executePendingAction(EMPTY_PREVIOUS_DATA);
+        assertFalse(success, "success");
+        assertFalse(executed, "executed");
+        assertFalse(liq, "liq");
     }
 
     /**
@@ -89,15 +93,16 @@ contract TestUsdnProtocolActionsExecutePendingAction is UsdnProtocolBaseFixture 
      * @custom:given A pending action in the queue
      * @custom:when The `_executePendingAction` internal function is called with a `PreviousActionsData` with a bad raw
      * index
-     * @custom:then The function returns false for `success` and `executed`
+     * @custom:then The function returns false for `success`, `executed` and `liq`
      */
     function test_executePendingActionBadData() public {
         PreviousActionsData memory previousActionsData = _setUpPendingAction();
         previousActionsData.rawIndices[0] = 69;
 
-        (bool success, bool executed,) = protocol.i_executePendingAction(previousActionsData);
-        assertEq(success, false, "success");
-        assertEq(executed, false, "executed");
+        (bool success, bool executed, bool liq,) = protocol.i_executePendingAction(previousActionsData);
+        assertFalse(success, "success");
+        assertFalse(executed, "executed");
+        assertFalse(liq, "liq");
     }
 
     /**

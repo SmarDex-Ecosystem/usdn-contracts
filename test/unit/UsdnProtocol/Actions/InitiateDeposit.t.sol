@@ -289,17 +289,13 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A initiate deposit liquidates a pending tick but is not initiated
-     * because a tick still needs to be liquidated
-     * @custom:given The initial open position
-     * @custom:and A user open position
-     * @custom:when The `initiateDeposit` function is called
-     * @custom:then The price drops below all open positions
-     * @custom:and The user open position tick is liquidated
-     * @custom:and The initial open position tick still needs to be liquidated
-     * @custom:and The deposit action isn't initiated
+     * @custom:scenario A initiate deposit liquidates a tick but is not initiated because another tick still needs to
+     * be liquidated
+     * @custom:given Two long positions in different ticks
+     * @custom:when A user calls `initiateDeposit` with a price below both liquidation prices
+     * @custom:then One of the two long positions is liquidated
+     * @custom:and The deposit action isn't initiated due to a pending liquidation
      * @custom:and The user wsteth balance should not change
-     * @custom:and The transaction is completed
      */
     function test_initiateDepositIsPendingLiquidation() public {
         PositionId memory userPosId = setUpUserPositionInLong(
@@ -321,14 +317,13 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         );
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is initiated");
+        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 deposit should not be initiated");
 
-        assertEq(userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated");
         assertEq(
-            initialPosition.tickVersion, protocol.getTickVersion(initialPosition.tick), "initial position is liquidated"
+            userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user 1 position should be liquidated"
         );
 
-        assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user loss wsteth");
+        assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user 1 should not have spent wstETH");
     }
 
     // test refunds

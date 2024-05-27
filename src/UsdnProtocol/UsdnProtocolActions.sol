@@ -379,8 +379,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             maxValidations = previousActionsData.rawIndices.length;
         }
         do {
-            (, bool executed, uint256 securityDepositValue) = _executePendingAction(previousActionsData);
-            if (!executed) {
+            (, bool executed, bool liq, uint256 securityDepositValue) = _executePendingAction(previousActionsData);
+            if (!executed && !liq) {
                 break;
             }
             unchecked {
@@ -1684,7 +1684,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         returns (uint256 securityDepositValue_)
     {
         bool success;
-        (success,, securityDepositValue_) = _executePendingAction(data);
+        (success,,, securityDepositValue_) = _executePendingAction(data);
         if (!success) {
             revert UsdnProtocolInvalidPendingActionData();
         }
@@ -1695,20 +1695,21 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param data The price data and raw indices
      * @return success_ Whether the price data is valid
      * @return executed_ Whether the pending action was executed (false if the queue has no actionable item)
+     * @return liq_ Whether the position corresponding to the pending action was liquidated
      * @return securityDepositValue_ The security deposit value of the executed action
      */
     function _executePendingAction(PreviousActionsData calldata data)
         internal
-        returns (bool success_, bool executed_, uint256 securityDepositValue_)
+        returns (bool success_, bool executed_, bool liq_, uint256 securityDepositValue_)
     {
         (PendingAction memory pending, uint128 rawIndex) = _getActionablePendingAction();
         if (pending.action == ProtocolAction.None) {
             // no pending action
-            return (true, false, 0);
+            return (true, false, false, 0);
         }
         uint256 length = data.priceData.length;
         if (data.rawIndices.length != length || length < 1) {
-            return (false, false, 0);
+            return (false, false, false, 0);
         }
         uint128 offset;
         unchecked {
@@ -1716,10 +1717,9 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             offset = rawIndex - data.rawIndices[0];
         }
         if (offset >= length || data.rawIndices[offset] != rawIndex) {
-            return (false, false, 0);
+            return (false, false, false, 0);
         }
         bytes calldata priceData = data.priceData[offset];
-        bool liq_;
         // for safety we consider that no pending action was validated by default
         if (pending.action == ProtocolAction.ValidateDeposit) {
             executed_ = _validateDepositWithAction(pending, priceData);

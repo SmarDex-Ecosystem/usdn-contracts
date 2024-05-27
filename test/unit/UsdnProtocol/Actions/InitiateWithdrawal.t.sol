@@ -84,17 +84,12 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario A initiate withdrawal position liquidates a pending tick but is not initiated
-     * because a tick still needs to be liquidated
-     * @custom:given The initial open position
-     * @custom:and A user open position
-     * @custom:and A validated deposit user position
-     * @custom:when The `initiateWithdrawal` function is called
-     * @custom:then The price drops below all open positions
-     * @custom:and The user open position tick is liquidated
-     * @custom:and The initial open position tick still needs to be liquidated
+     * @custom:scenario A initiate withdrawal action liquidates a tick but is not initiated because another tick still
+     * needs to be liquidated
+     * @custom:given Two positions in different ticks
+     * @custom:when The `initiateWithdrawal` function is called with a price below the liq price of both positions
+     * @custom:then One of the positions is liquidated
      * @custom:and The withdrawal action isn't initiated
-     * @custom:and The transaction is completed
      */
     function test_initiateWithdrawalIsPendingLiquidation() public {
         PositionId memory userPosId = setUpUserPositionInLong(
@@ -113,17 +108,18 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
             uint128(usdn.balanceOf(address(this))),
             address(this),
             address(this),
-            abi.encode(params.initialPrice / 10),
+            abi.encode(params.initialPrice / 3),
             EMPTY_PREVIOUS_DATA
         );
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
-        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user action is initiated");
+        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 should not have a pending action");
 
         assertEq(
-            initialPosition.tickVersion, protocol.getTickVersion(initialPosition.tick), "initial position is liquidated"
+            userPosId.tickVersion + 1,
+            protocol.getTickVersion(userPosId.tick),
+            "user 1 position should have been liquidated"
         );
-        assertEq(userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user position is not liquidated");
     }
 
     function _initiateWithdraw(address to) internal {

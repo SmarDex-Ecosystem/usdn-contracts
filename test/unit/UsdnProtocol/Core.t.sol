@@ -468,8 +468,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `clearPendingAction` function revert when user doesn't have pending actions
-     * @custom:given A protocol without pending action for a user
+     * @custom:scenario The `clearPendingAction` function revert when the queue is empty
+     * @custom:given A protocol without any pending action
      * @custom:when clearPendingAction is called
      * @custom:then The protocol reverts with `QueueEmpty`
      */

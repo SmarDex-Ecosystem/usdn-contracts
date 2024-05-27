@@ -370,7 +370,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _getPendingAction(user);
     }
 
-    function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool, uint256) {
+    function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool, bool, uint256) {
         return _executePendingAction(data);
     }
 
