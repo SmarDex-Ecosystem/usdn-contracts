@@ -232,4 +232,12 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
         external
         payable
         returns (uint256 validatedActions_);
+
+    /**
+     * @notice Transfer the ownership of a position to another address
+     * @dev This function reverts if the msg.sender is not the position owner or if the position does not exist
+     * @param posId The unique position ID
+     * @param newOwner The new position owner
+     */
+    function transferPositionOwnership(PositionId calldata posId, address newOwner) external;
 }

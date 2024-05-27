@@ -392,6 +392,28 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         _checkPendingFee();
     }
 
+    /// @inheritdoc IUsdnProtocolActions
+    function transferPositionOwnership(PositionId calldata posId, address newOwner)
+        external
+        initializedAndNonReentrant
+    {
+        (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
+        if (posId.tickVersion != version) {
+            revert UsdnProtocolOutdatedTick(version, posId.tickVersion);
+        }
+        Position storage pos = _longPositions[tickHash][posId.index];
+
+        if (msg.sender != pos.user) {
+            revert UsdnProtocolUnauthorized();
+        }
+        if (newOwner == address(0)) {
+            revert UsdnProtocolInvalidAddressTo();
+        }
+
+        pos.user = newOwner;
+        emit PositionOwnershipTransferred(msg.sender, newOwner, posId);
+    }
+
     /**
      * @notice The deposit vault imbalance limit state verification
      * @dev To ensure that the protocol does not imbalance more than
