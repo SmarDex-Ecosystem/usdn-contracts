@@ -56,9 +56,9 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
             1,
             "wrong wstETH balance(user)"
         );
-        assertApproxEqAbs(stETH.sharesOf(address(this)), 0, 1, "wrong stETH balance(user)");
+        assertEq(stETH.sharesOf(address(this)), 0, "wrong stETH balance(user)");
         assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance(router)");
-        assertEq(stETH.sharesOf(address(router)), 0, "wrong stETH balance(router)");
+        assertApproxEqAbs(stETH.sharesOf(address(router)), 0, 1, "wrong stETH balance(router)");
     }
 
     /**

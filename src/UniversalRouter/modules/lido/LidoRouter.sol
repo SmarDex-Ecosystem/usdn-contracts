@@ -26,10 +26,6 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
 
             if (recipient != address(this)) {
                 WSTETH.safeTransfer(recipient, amount);
-                uint256 dust = STETH.sharesOf(address(this));
-                if (dust > 0) {
-                    STETH.transferShares(recipient, dust);
-                }
             }
         }
     }
