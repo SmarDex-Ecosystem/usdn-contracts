@@ -357,19 +357,19 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * update the balances. This is left to the caller
      * @param currentPrice The current price
      * @param timestamp The timestamp of the current price
-     * @return priceUpdated_ Whether the price was updated
+     * @return isPriceRecent_ Whether the price was updated or was already the most recent price
      * @return tempLongBalance_ The new balance of the long side, could be negative (temporarily)
      * @return tempVaultBalance_ The new balance of the vault side, could be negative (temporarily)
      */
     function _applyPnlAndFunding(uint128 currentPrice, uint128 timestamp)
         internal
-        returns (bool priceUpdated_, int256 tempLongBalance_, int256 tempVaultBalance_)
+        returns (bool isPriceRecent_, int256 tempLongBalance_, int256 tempVaultBalance_)
     {
         // cache variable for optimization
         uint128 lastUpdateTimestamp = _lastUpdateTimestamp;
         // if the price is not fresh, do nothing
         if (timestamp <= lastUpdateTimestamp) {
-            return (false, _balanceLong.toInt256(), _balanceVault.toInt256());
+            return (timestamp == lastUpdateTimestamp, _balanceLong.toInt256(), _balanceVault.toInt256());
         }
 
         // update the funding EMA
@@ -403,7 +403,7 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
         _lastUpdateTimestamp = timestamp;
         _lastFunding = fundWithFee;
 
-        priceUpdated_ = true;
+        isPriceRecent_ = true;
     }
 
     /**
@@ -639,13 +639,10 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
      * @dev This reverts if there is already a pending action for this user
      * @param user The user's address
      * @param action The pending action struct
-     * @return securityDepositValue_ The security deposit value of the stale pending action
+     * @return amountToRefund_ The security deposit value of the stale pending action
      */
-    function _addPendingAction(address user, PendingAction memory action)
-        internal
-        returns (uint256 securityDepositValue_)
-    {
-        securityDepositValue_ = _removeStalePendingAction(user); // check if there is a pending action that was
+    function _addPendingAction(address user, PendingAction memory action) internal returns (uint256 amountToRefund_) {
+        amountToRefund_ = _removeStalePendingAction(user); // check if there is a pending action that was
             // liquidated and remove it
         if (_pendingActions[user] > 0) {
             revert UsdnProtocolPendingAction();
@@ -695,28 +692,11 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
     }
 
     /**
-     * @notice Clear the user pending action and return it
-     * @param user The user's address
-     * @return action_ The cleared pending action struct
-     */
-    function _getAndClearPendingAction(address user) internal returns (PendingAction memory action_) {
-        uint128 rawIndex;
-        (action_, rawIndex) = _getPendingActionOrRevert(user);
-        _pendingActionsQueue.clearAt(rawIndex);
-        delete _pendingActions[user];
-    }
-
-    /**
      * @notice Clear the pending action for a user
      * @param user The user's address
+     * @param rawIndex The rawIndex of the pending action in the queue
      */
-    function _clearPendingAction(address user) internal {
-        uint256 pendingActionIndex = _pendingActions[user];
-        // slither-disable-next-line incorrect-equality
-        if (pendingActionIndex == 0) {
-            revert UsdnProtocolNoPendingAction();
-        }
-        uint128 rawIndex = uint128(pendingActionIndex - 1);
+    function _clearPendingAction(address user, uint128 rawIndex) internal {
         _pendingActionsQueue.clearAt(rawIndex);
         delete _pendingActions[user];
     }

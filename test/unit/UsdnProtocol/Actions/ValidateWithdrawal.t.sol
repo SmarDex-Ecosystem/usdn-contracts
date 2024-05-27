@@ -8,7 +8,10 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 
 import {
-    PendingAction, ProtocolAction, WithdrawalPendingAction
+    PendingAction,
+    ProtocolAction,
+    WithdrawalPendingAction,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
@@ -64,6 +67,59 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         assertEq(initialUsdnBalance, 2000 * DEPOSIT_AMOUNT, "initial usdn balance");
         assertEq(initialUsdnShares, 2000 * DEPOSIT_AMOUNT * usdn.MAX_DIVISOR(), "initial usdn shares");
         assertEq(initialWstETHBalance, 0, "initial wstETH balance");
+    }
+
+    /**
+     * @custom:scenario A validate withdrawal liquidates a tick but is not validated because another tick still needs
+     * to be liquidated
+     * @custom:given Two user positions in different ticks
+     * @custom:when The `validateWithdrawal` function is called with a price below the liquidation price of both
+     * positions
+     * @custom:then One position is liquidated
+     * @custom:and The withdrawal action isn't validated
+     * @custom:and The user's wsteth balance doesn't not change
+     */
+    function test_validateWithdrawalIsPendingLiquidation() public {
+        PositionId memory userPosId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
+                price: params.initialPrice
+            })
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
+
+        protocol.initiateWithdrawal(
+            uint128(usdn.balanceOf(address(this))),
+            address(this),
+            address(this),
+            abi.encode(params.initialPrice),
+            EMPTY_PREVIOUS_DATA
+        );
+
+        _waitDelay();
+
+        protocol.validateWithdrawal(address(this), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(
+            uint256(pending.action),
+            uint256(ProtocolAction.ValidateWithdrawal),
+            "user 0 pending action should not have been cleared"
+        );
+
+        assertEq(
+            userPosId.tickVersion + 1,
+            protocol.getTickVersion(userPosId.tick),
+            "user 1 position should have been liquidated"
+        );
+
+        assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user 0 should not have gotten any wstETH");
     }
 
     /**

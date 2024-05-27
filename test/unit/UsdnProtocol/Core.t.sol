@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
 import { ProtocolAction, PendingAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 /**
  * @custom:feature The functions of the core of the protocol
@@ -467,14 +468,14 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `clearPendingAction` function revert when user doesn't have pending actions
-     * @custom:given A protocol without pending action for a user
+     * @custom:scenario The `clearPendingAction` function revert when the queue is empty
+     * @custom:given A protocol without any pending action
      * @custom:when clearPendingAction is called
-     * @custom:then The protocol reverts with `UsdnProtocolNoPendingAction`
+     * @custom:then The protocol reverts with `QueueEmpty`
      */
     function test_RevertWhen_clearPendingActionWithoutPendingAction() public {
-        vm.expectRevert(UsdnProtocolNoPendingAction.selector);
-        protocol.i_clearPendingAction(address(this));
+        vm.expectRevert(DoubleEndedQueue.QueueEmpty.selector);
+        protocol.i_clearPendingAction(address(this), 0);
     }
 
     /**
@@ -499,7 +500,8 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             var7: 0
         });
         protocol.i_addPendingAction(address(this), pendingAction);
-        protocol.i_clearPendingAction(address(this));
+        (, uint128 previousRawIndex) = protocol.i_getPendingAction(address(this));
+        protocol.i_clearPendingAction(address(this), previousRawIndex);
 
         (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingAction(address(this));
 
