@@ -23,6 +23,8 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
             })
         );
 
+        vm.expectEmit();
+        emit PositionOwnershipTransferred(address(this), USER_1, posId);
         protocol.transferPositionOwnership(posId, USER_1);
 
         (Position memory pos,) = protocol.getLongPosition(posId);
@@ -46,6 +48,8 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
             })
         );
 
+        vm.expectEmit();
+        emit PositionOwnershipTransferred(address(this), USER_1, posId);
         protocol.transferPositionOwnership(posId, USER_1);
 
         (Position memory pos,) = protocol.getLongPosition(posId);
