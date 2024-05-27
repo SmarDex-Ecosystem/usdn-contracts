@@ -4,9 +4,9 @@ pragma solidity 0.8.20;
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 
 import { ForkUniversalRouterBaseIntegrationFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
-import { IStETH } from "test/integration/UniversalRouter/interfaces/IStETH.sol";
 
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
+import { IStETH } from "src/UniversalRouter/interfaces/IStETH.sol";
 
 /**
  * @custom:feature Test commands wrap and unwrap stETH
@@ -18,9 +18,6 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
 
     /// @notice The error message for insufficient token
     error InsufficientToken();
-
-    /// @notice The error message for balance exceeded
-    error BALANCE_EXCEEDED();
 
     function setUp() external {
         _setUp();
@@ -47,7 +44,7 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
 
         // inputs
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(Constants.MSG_SENDER, Constants.CONTRACT_BALANCE);
+        inputs[0] = abi.encode(Constants.MSG_SENDER);
 
         // execution
         router.execute(commands, inputs);
@@ -59,30 +56,9 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
             1,
             "wrong wstETH balance(user)"
         );
-        assertEq(stETH.balanceOf(address(this)), 0, "wrong stETH balance(user)");
+        assertApproxEqAbs(stETH.sharesOf(address(this)), 0, 1, "wrong stETH balance(user)");
         assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance(router)");
-        assertApproxEqAbs(stETH.balanceOf(address(router)), 0, 1, "wrong stETH balance(router)");
-        // assertEq(stETH.balanceOf(address(router)), 0, "wrong stETH balance(router)");
-    }
-
-    /**
-     * @custom:scenario Test the `WRAP_STETH` command when the user has not enough balance
-     * @custom:given The initiated universal router
-     * @custom:and The router should be funded with some `stETH`
-     * @custom:when The `execute` function is called for `WRAP_STETH` command
-     * @custom:then The `WRAP_STETH` command should revert
-     */
-    function test_RevertWhen_executeWrapStETHEnoughBalance() external {
-        // commands
-        bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.WRAP_STETH)));
-
-        // inputs
-        bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.getPooledEthByShares(1) + 1);
-
-        // execution
-        vm.expectRevert(bytes("BALANCE_EXCEEDED"));
-        router.execute(commands, inputs);
+        assertEq(stETH.sharesOf(address(router)), 0, "wrong stETH balance(router)");
     }
 
     /**
@@ -112,10 +88,10 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
         assertEq(
             stETH.sharesOf(address(this)),
             sharesOfStETHBefore + stETH.getSharesByPooledEth(stETH.getPooledEthByShares(BASE_AMOUNT)),
-            "wrong stETH balance"
+            "wrong stETH balance(user)"
         );
-        assertEq(stETH.sharesOf(address(router)), 0, "wrong stETH balance");
-        assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance");
+        assertEq(stETH.sharesOf(address(router)), 0, "wrong stETH balance(router)");
+        assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance(router)");
     }
 
     /**

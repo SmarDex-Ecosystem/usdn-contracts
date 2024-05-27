@@ -7,30 +7,29 @@ import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Per
 
 import { LidoImmutables } from "src/UniversalRouter/modules/lido/LidoImmutables.sol";
 import { IWstETH } from "src/interfaces/IWstETH.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { IStETH } from "src/UniversalRouter/interfaces/IStETH.sol";
 
 /// @title Router for StEth
 abstract contract LidoRouter is LidoImmutables, Permit2Payments {
-    using SafeERC20 for IERC20Metadata;
+    using SafeERC20 for IStETH;
     using SafeERC20 for IWstETH;
 
     /**
-     * @notice Wrap an amount of stETH into wstETH
+     * @notice Wrap all of the contract's stETH into wstETH
      * @param recipient The recipient of the wstETH
-     * @param amount The amount of wstETH desired
      */
-    function _wrapSTETH(address recipient, uint256 amount) internal {
-        if (amount == Constants.CONTRACT_BALANCE) {
-            amount = STETH.balanceOf(address(this));
-        }
-
+    function _wrapSTETH(address recipient) internal {
+        uint256 amount = STETH.balanceOf(address(this));
         if (amount > 0) {
             STETH.forceApprove(address(WSTETH), amount);
-
             amount = WSTETH.wrap(amount);
 
             if (recipient != address(this)) {
                 WSTETH.safeTransfer(recipient, amount);
+                uint256 dust = STETH.sharesOf(address(this));
+                if (dust > 0) {
+                    STETH.transferShares(recipient, dust);
+                }
             }
         }
     }
@@ -41,16 +40,16 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
      * @param amountMinimum The minimum amount of stETH desired
      */
     function _unwrapSTETH(address recipient, uint256 amountMinimum) internal {
-        uint256 balanceWSTETH = WSTETH.balanceOf(address(this));
-        if (balanceWSTETH > 0) {
-            uint256 amountSTETH = WSTETH.unwrap(balanceWSTETH);
+        uint256 amount = WSTETH.balanceOf(address(this));
+        if (amount > 0) {
+            amount = WSTETH.unwrap(amount);
 
-            if (amountSTETH < amountMinimum) {
+            if (amount < amountMinimum) {
                 revert InsufficientToken();
             }
 
             if (recipient != address(this)) {
-                STETH.safeTransfer(recipient, amountSTETH);
+                STETH.safeTransfer(recipient, amount);
             }
         }
     }

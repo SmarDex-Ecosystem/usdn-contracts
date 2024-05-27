@@ -225,12 +225,10 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, LidoRouter
                 } else if (command == Commands.WRAP_STETH) {
                     // equivalent: abi.decode(inputs, (address, uint256))
                     address recipient;
-                    uint256 amount;
                     assembly {
                         recipient := calldataload(inputs.offset)
-                        amount := calldataload(add(inputs.offset, 0x20))
                     }
-                    LidoRouter._wrapSTETH(map(recipient), amount);
+                    LidoRouter._wrapSTETH(map(recipient));
                 } else if (command == Commands.UNWRAP_WSTETH) {
                     // equivalent: abi.decode(inputs, (address, uint256))
                     address recipient;
