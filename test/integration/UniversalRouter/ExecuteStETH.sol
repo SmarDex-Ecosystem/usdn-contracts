@@ -40,7 +40,7 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
     function test_executeWrapStETH() external {
         // unwrap
         wstETH.unwrap(BASE_AMOUNT);
-        stETH.transfer(address(router), stETH.balanceOf(address(this)));
+        stETH.transferShares(address(router), stETH.sharesOf(address(this)));
 
         // commands
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.WRAP_STETH)));
@@ -48,15 +48,21 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
         // inputs
         bytes[] memory inputs = new bytes[](1);
         inputs[0] = abi.encode(Constants.MSG_SENDER, Constants.CONTRACT_BALANCE);
-        uint256 balanceWstETHBefore = wstETH.balanceOf(address(this));
 
         // execution
         router.execute(commands, inputs);
 
         // assert
-        assertGe(wstETH.balanceOf(address(this)), balanceWstETHBefore, "wrong wstETH balance");
-        assertLe(stETH.balanceOf(address(this)), stETH.getPooledEthByShares(1), "wrong stETH balance(user)");
+        assertApproxEqAbs(
+            wstETH.balanceOf(address(this)),
+            stETH.getPooledEthByShares(stETH.getSharesByPooledEth(BASE_AMOUNT)),
+            1,
+            "wrong wstETH balance(user)"
+        );
+        assertEq(stETH.balanceOf(address(this)), 0, "wrong stETH balance(user)");
+        assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance(router)");
         assertApproxEqAbs(stETH.balanceOf(address(router)), 0, 1, "wrong stETH balance(router)");
+        // assertEq(stETH.balanceOf(address(router)), 0, "wrong stETH balance(router)");
     }
 
     /**

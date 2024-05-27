@@ -7,4 +7,5 @@ interface IStETH is IERC20Metadata {
     function getPooledEthByShares(uint256 _sharesAmount) external view returns (uint256);
     function getSharesByPooledEth(uint256 _ethAmount) external view returns (uint256);
     function sharesOf(address _account) external view returns (uint256);
+    function transferShares(address _recipient, uint256 _sharesAmount) external returns (uint256);
 }
