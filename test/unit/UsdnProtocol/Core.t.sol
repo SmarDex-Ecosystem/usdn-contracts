@@ -392,6 +392,29 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The `getPendingActionOrRevert` function return the expected action
+     * @custom:given There is a pending action for this user
+     * @custom:when getPendingActionOrRevert is called
+     * @custom:then The function should return the action and the rawIndex
+     */
+    function test_getPendingActionOrRevert() public {
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateClosePosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: 2000 ether / 2,
+                price: 2000 ether
+            })
+        );
+        (PendingAction memory action, uint128 rawIndex) = protocol.i_getPendingActionOrRevert(address(this));
+        assertTrue(action.action == ProtocolAction.ValidateClosePosition, "action should be ValidateClosePosition");
+        assertEq(action.to, address(this), "to should be this contract");
+        assertEq(action.validator, address(this), "validator should be this contract");
+        assertEq(rawIndex, 1, "rawIndex should be 1");
+    }
+
+    /**
      * @custom:scenario The `addPendingAction` function revert when there are multiple pending actions
      * @custom:given There is a pending action for this user
      * @custom:when addPendingAction is called
