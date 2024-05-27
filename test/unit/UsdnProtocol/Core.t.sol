@@ -415,6 +415,17 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario The `getPendingActionOrRevert` function revert when there are no pending actions
+     * @custom:given There is no pending action for this user
+     * @custom:when getPendingActionOrRevert is called
+     * @custom:then The protocol reverts with `UsdnProtocolNoPendingAction`
+     */
+    function test_RevertWhen_getPendingActionOrRevertWithoutPendingAction() public {
+        vm.expectRevert(UsdnProtocolNoPendingAction.selector);
+        protocol.i_getPendingActionOrRevert(address(this));
+    }
+
+    /**
      * @custom:scenario The `addPendingAction` function revert when there are multiple pending actions
      * @custom:given There is a pending action for this user
      * @custom:when addPendingAction is called
