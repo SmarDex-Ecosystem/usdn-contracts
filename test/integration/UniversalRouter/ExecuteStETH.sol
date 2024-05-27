@@ -125,6 +125,7 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
             sharesOfStETHBefore + stETH.getSharesByPooledEth(stETH.getPooledEthByShares(BASE_AMOUNT)),
             "wrong stETH balance(user)"
         );
+        assertEq(wstETH.balanceOf(address(this)), 0, "wrong wstETH balance(user)");
         assertEq(stETH.sharesOf(address(router)), 0, "wrong stETH balance(router)");
         assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance(router)");
     }
@@ -158,6 +159,7 @@ contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrati
             sharesOfStETHBefore + stETH.getSharesByPooledEth(stETH.getPooledEthByShares(BASE_AMOUNT)),
             "wrong stETH balance(router)"
         );
+        assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance(router)");
         assertEq(stETH.sharesOf(address(this)), 0, "wrong stETH balance(user)");
         assertEq(wstETH.balanceOf(address(this)), 0, "wrong wstETH balance(user)");
     }
