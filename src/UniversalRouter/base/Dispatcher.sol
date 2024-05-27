@@ -218,10 +218,9 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnProtoc
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData
                         ) = abi.decode(inputs, (uint152, address, address, bytes, PreviousActionsData));
-                        success_ = usdnInitiateWithdrawal(
+                        success_ = _usdnInitiateWithdrawal(
                             usdnShares, map(to), map(validator), currentPriceData, previousActionsData
                         );
-                        Payments.sweep(Constants.ETH, map(Constants.MSG_SENDER), 0);
                     } else if (command == Commands.INITIATE_OPEN) {
                         // TODO INITIATE_OPEN
                     } else if (command == Commands.INITIATE_CLOSE) {

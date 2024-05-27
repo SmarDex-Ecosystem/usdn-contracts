@@ -60,7 +60,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, UsdnImmutables {
      * @param previousActionsData The data needed to validate actionable pending actions
      * @return success_ Whether the withdrawal was successful
      */
-    function usdnInitiateWithdrawal(
+    function _usdnInitiateWithdrawal(
         uint152 amount,
         address to,
         address validator,
@@ -72,9 +72,10 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, UsdnImmutables {
             amount = USDN.balanceOf(address(this)).toUint128();
         }
         USDN.approve(address(USDN_PROTOCOL), amount);
+        // we send the full ETH balance, the protocol will refund any excess
         USDN_PROTOCOL.initiateWithdrawal{ value: address(this).balance }(
             amount, to, validator, currentPriceData, previousActionsData
         );
-        success_ = true; // TODO: retrieve success status from initiateDeposit return value (when implemented)
+        success_ = true; // TODO: retrieve success status from initiateWithdraw return value (when implemented)
     }
 }
