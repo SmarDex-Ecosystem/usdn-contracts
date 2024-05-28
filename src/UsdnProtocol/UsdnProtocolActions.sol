@@ -27,6 +27,7 @@ import {
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { SignedMath } from "src/libraries/SignedMath.sol";
 import { TickMath } from "src/libraries/TickMath.sol";
+import { IOwnershipCallback } from "src/interfaces/UsdnProtocol/IOwnershipCallback.sol";
 
 abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong {
     using SafeERC20 for IERC20Metadata;
@@ -411,6 +412,12 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
         }
 
         pos.user = newOwner;
+
+        if (newOwner.code.length > 0) {
+            // try to notify the new owner of the change of ownership
+            try IOwnershipCallback(newOwner).ownershipCallback(msg.sender, posId) { } catch { }
+        }
+
         emit PositionOwnershipTransferred(msg.sender, newOwner, posId);
     }
 
