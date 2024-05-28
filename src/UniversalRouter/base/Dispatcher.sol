@@ -11,12 +11,20 @@ import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { V2SwapRouter } from "src/UniversalRouter/modules/uniswap/v2/V2SwapRouter.sol";
 import { UsdnProtocolRouter } from "src/UniversalRouter/modules/usdn/UsdnProtocolRouter.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import { LidoRouter } from "src/UniversalRouter/modules/lido/LidoRouter.sol";
 
 /**
  * @title Decodes and Executes Commands
  * @notice Called by the UniversalRouter contract to efficiently decode and execute a singular command
  */
-abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnProtocolRouter, LockAndMsgSender {
+abstract contract Dispatcher is
+    Payments,
+    V2SwapRouter,
+    V3SwapRouter,
+    UsdnProtocolRouter,
+    LidoRouter,
+    LockAndMsgSender
+{
     using BytesLib for bytes;
 
     /**
@@ -237,9 +245,19 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnProtoc
                 } else if (command == Commands.UNWRAP_WUSDN) {
                     // TODO UNWRAP_WUSDN
                 } else if (command == Commands.WRAP_STETH) {
-                    // TODO WRAP_STETH
+                    // equivalent: abi.decode(inputs, address)
+                    address recipient;
+                    assembly {
+                        recipient := calldataload(inputs.offset)
+                    }
+                    success_ = LidoRouter._wrapSTETH(map(recipient));
                 } else if (command == Commands.UNWRAP_WSTETH) {
-                    // TODO UNWRAP_WSTETH
+                    // equivalent: abi.decode(inputs, address)
+                    address recipient;
+                    assembly {
+                        recipient := calldataload(inputs.offset)
+                    }
+                    success_ = LidoRouter._unwrapSTETH(map(recipient));
                 } else {
                     revert InvalidCommandType(command);
                 }
