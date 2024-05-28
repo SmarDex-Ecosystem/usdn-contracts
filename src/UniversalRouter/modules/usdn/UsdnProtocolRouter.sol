@@ -32,17 +32,14 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         PreviousActionsData memory previousActionsData
     ) internal returns (bool success_) {
         // use amount == Constants.CONTRACT_BALANCE as a flag to deposit the entire balance of the contract
-        uint128 depositAmount;
         if (amount == Constants.CONTRACT_BALANCE) {
-            depositAmount = PROTOCOL_ASSET.balanceOf(address(this)).toUint128();
-        } else {
-            depositAmount = amount.toUint128();
+            amount = PROTOCOL_ASSET.balanceOf(address(this));
         }
         PROTOCOL_ASSET.forceApprove(address(USDN_PROTOCOL), amount);
         SDEX.approve(address(USDN_PROTOCOL), type(uint256).max);
         // we send the full ETH balance, the protocol will refund any excess
         USDN_PROTOCOL.initiateDeposit{ value: address(this).balance }(
-            depositAmount, to, validator, currentPriceData, previousActionsData
+            amount.toUint128(), to, validator, currentPriceData, previousActionsData
         );
         SDEX.approve(address(USDN_PROTOCOL), 0);
         success_ = true; // TODO: retrieve success status from initiateDeposit return value (when implemented)
@@ -70,7 +67,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
         if (amount == Constants.CONTRACT_BALANCE) {
             amount = USDN.sharesOf(address(this));
         }
-        USDN.approve(address(USDN_PROTOCOL), amount);
+        USDN.approve(address(USDN_PROTOCOL), USDN.convertToTokensRoundUp(amount));
         // we send the full ETH balance, the protocol will refund any excess
         USDN_PROTOCOL.initiateWithdrawal{ value: address(this).balance }(
             amount.toUint152(), to, validator, currentPriceData, previousActionsData
