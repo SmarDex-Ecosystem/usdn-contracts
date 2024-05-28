@@ -86,9 +86,9 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario Transfer position ownership to a contract that implements the ownership callback
+     * @custom:scenario Transfer position ownership to a contract that implements the ownership callback interface
      * @custom:given A position that has been validated
-     * @custom:when The position ownership is transferred to a contract that implements the ownership callback
+     * @custom:when The position ownership is transferred to a contract that implements the ownership callback interface
      * @custom:then The position's owner is changed
      * @custom:and The callback function is called on the new owner
      */
@@ -111,12 +111,11 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
     /**
      * @custom:scenario Transfer position ownership to a contract that implements the ownership callback but fails
      * @custom:given A position that has been validated
-     * @custom:and A new owner that does not successfully implement the ownership callback (reverts)
-     * @custom:when The position ownership is transferred to the new owner
-     * @custom:then The position's owner is changed
-     * @custom:and The transaction does not revert
+     * @custom:and A new owner reverts in the callback
+     * @custom:when The position ownership is transferred
+     * @custom:then The transaction reverts
      */
-    function test_transferOwnershipCallbackFails() public {
+    function test_RevertWhen_transferOwnershipCallbackFails() public {
         PositionId memory posId = setUpUserPositionInLong(
             OpenParams({
                 user: address(this),
@@ -128,6 +127,7 @@ contract TestUsdnProtocolTransferPositionOwnership is UsdnProtocolBaseFixture {
         );
 
         callbackHandler.setShouldFail(true);
+        vm.expectRevert(OwnershipCallbackFailure.selector);
         protocol.transferPositionOwnership(posId, address(callbackHandler));
     }
 

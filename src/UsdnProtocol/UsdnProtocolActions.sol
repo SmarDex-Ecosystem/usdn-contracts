@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 
@@ -413,9 +414,8 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
         pos.user = newOwner;
 
-        if (newOwner.code.length > 0) {
-            // try to notify the new owner of the change of ownership
-            try IOwnershipCallback(newOwner).ownershipCallback(msg.sender, posId) { } catch { }
+        if (ERC165Checker.supportsInterface(newOwner, type(IOwnershipCallback).interfaceId)) {
+            IOwnershipCallback(newOwner).ownershipCallback(msg.sender, posId);
         }
 
         emit PositionOwnershipTransferred(msg.sender, newOwner, posId);

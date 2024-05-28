@@ -1,9 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import { PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-interface IOwnershipCallback {
+/**
+ * @notice This interface can be implemented by contracts that wish to be notified when they become owner of an USDN
+ * protocol position
+ * @dev The contract must implement the ERC-165 interface detection mechanism
+ */
+interface IOwnershipCallback is IERC165 {
     /**
      * @notice This function is called by the USDN protocol on the new position owner after a transfer of ownership
      * @param oldOwner The previous owner of the position
