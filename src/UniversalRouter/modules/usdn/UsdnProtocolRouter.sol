@@ -48,34 +48,4 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, UsdnImmutables {
         SDEX.approve(address(USDN_PROTOCOL), 0);
         success_ = true; // TODO: retrieve success status from initiateDeposit return value (when implemented)
     }
-
-    /**
-     * @notice Initiate a withdrawal from the USDN protocol vault
-     * @dev Check the protocol's documentation for information about how this function should be used
-     * Note: the withdrawal can fail without reverting, in case there are some pending liquidations in the protocol
-     * @param amount The amount of USDN shares to withdraw from the vault
-     * @param to The address that will receive the asset upon validation
-     * @param validator The address that should validate the withdrawal (receives the security deposit back)
-     * @param currentPriceData The current price data
-     * @param previousActionsData The data needed to validate actionable pending actions
-     * @return success_ Whether the withdrawal was successful
-     */
-    function _usdnInitiateWithdrawal(
-        uint152 amount,
-        address to,
-        address validator,
-        bytes memory currentPriceData,
-        PreviousActionsData memory previousActionsData
-    ) internal returns (bool success_) {
-        // use amount == Constants.CONTRACT_BALANCE as a flag to withdraw the entire balance of the contract
-        if (amount == Constants.CONTRACT_BALANCE) {
-            amount = USDN.balanceOf(address(this)).toUint128();
-        }
-        USDN.approve(address(USDN_PROTOCOL), amount);
-        // we send the full ETH balance, the protocol will refund any excess
-        USDN_PROTOCOL.initiateWithdrawal{ value: address(this).balance }(
-            amount, to, validator, currentPriceData, previousActionsData
-        );
-        success_ = true; // TODO: retrieve success status from initiateWithdraw return value (when implemented)
-    }
 }

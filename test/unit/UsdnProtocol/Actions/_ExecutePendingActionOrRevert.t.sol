@@ -83,7 +83,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         assertEq(rawIndex2, 0, "raw index 2");
 
         PendingAction memory pending;
-        pending.action = ProtocolAction.InitiateDeposit;
+        pending.action = ProtocolAction.ValidateDeposit;
         pending.to = USER_1;
         pending.validator = USER_1;
         pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);
@@ -91,6 +91,10 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
         assertEq(rawIndex1, type(uint128).max, "raw index 1");
 
         bytes[] memory priceData = new bytes[](2);
+        bytes memory price = abi.encode(params.initialPrice);
+        priceData[0] = price;
+        priceData[1] = price;
+
         uint128[] memory rawIndices = new uint128[](2);
         rawIndices[0] = rawIndex1;
         rawIndices[1] = rawIndex2;
@@ -110,7 +114,7 @@ contract TestUsdnProtocolActionsExecutePendingActionOrRevert is UsdnProtocolBase
      */
     function _addDummyPendingAction() internal returns (uint128 rawIndex_) {
         PendingAction memory pending;
-        pending.action = ProtocolAction.InitiateDeposit;
+        pending.action = ProtocolAction.ValidateDeposit;
         pending.to = address(this);
         pending.validator = address(this);
         pending.timestamp = uint40(block.timestamp - protocol.getValidationDeadline() - 1);

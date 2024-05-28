@@ -25,7 +25,6 @@ import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareType
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 import { HugeUint } from "src/libraries/HugeUint.sol";
 import { Position, LiquidationsEffects } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
-import { TickMath } from "src/libraries/TickMath.sol";
 
 /**
  * @title UsdnProtocolHandler
@@ -118,9 +117,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         address to,
         PositionId memory posId,
         uint128 amountToClose,
+        uint64 securityDepositValue,
         bytes calldata currentPriceData
-    ) external returns (uint256 securityDepositValue_) {
-        return _initiateClosePosition(owner, to, posId, amountToClose, currentPriceData);
+    ) external returns (uint256 securityDepositValue_, bool isLiquidationPending_) {
+        return _initiateClosePosition(owner, to, posId, amountToClose, securityDepositValue, currentPriceData);
     }
 
     function i_validateClosePosition(address user, bytes calldata priceData) external {
@@ -370,7 +370,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _getPendingAction(user);
     }
 
-    function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool, uint256) {
+    function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool, bool, uint256) {
         return _executePendingAction(data);
     }
 
@@ -454,7 +454,7 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _unadjustPrice(price, assetPrice, longTradingExpo, accumulator);
     }
 
-    function i_clearPendingAction(address user) external {
-        _clearPendingAction(user);
+    function i_clearPendingAction(address user, uint128 rawIndex) external {
+        _clearPendingAction(user, rawIndex);
     }
 }

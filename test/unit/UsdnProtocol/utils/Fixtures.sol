@@ -87,6 +87,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     UsdnProtocolHandler public protocol;
+    PositionId public initialPosition;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
 
@@ -171,6 +172,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
+
+        initialPosition.tick = protocol.getHighestPopulatedTick();
 
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
@@ -400,5 +403,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // init protocol
         _setUp(params);
+    }
+
+    /// @dev Wait for the required delay to allow mock middleware price update
+    function _waitMockMiddlewarePriceDelay() internal {
+        skip(30 minutes - oracleMiddleware.getValidationDelay());
     }
 }
