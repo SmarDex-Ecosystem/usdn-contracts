@@ -2,7 +2,6 @@
 pragma solidity 0.8.20;
 
 import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
-import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 
 /**
  * @dev Structure to hold the immutable parameters for the router
