@@ -236,7 +236,7 @@ contract Deploy is Script {
             // for forks, we want a leverage of ~2x so we get the current
             // price from the middleware and divide it by two
             desiredLiqPrice = WstEthOracleMiddleware_.parseAndValidatePrice(
-                uint128(block.timestamp), ProtocolAction.Initialize, ""
+                "", uint128(block.timestamp), ProtocolAction.Initialize, ""
             ).price / 2;
         }
 
