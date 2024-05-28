@@ -245,14 +245,14 @@ abstract contract Dispatcher is
                 } else if (command == Commands.UNWRAP_WUSDN) {
                     // TODO UNWRAP_WUSDN
                 } else if (command == Commands.WRAP_STETH) {
-                    // equivalent: abi.decode(inputs, (address, uint256))
+                    // equivalent: abi.decode(inputs, address)
                     address recipient;
                     assembly {
                         recipient := calldataload(inputs.offset)
                     }
                     success_ = LidoRouter._wrapSTETH(map(recipient));
                 } else if (command == Commands.UNWRAP_WSTETH) {
-                    // equivalent: abi.decode(inputs, (address, uint256))
+                    // equivalent: abi.decode(inputs, address)
                     address recipient;
                     assembly {
                         recipient := calldataload(inputs.offset)
