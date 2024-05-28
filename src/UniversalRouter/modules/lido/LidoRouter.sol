@@ -17,6 +17,7 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
     /**
      * @notice Wrap all of the contract's stETH into wstETH
      * @param recipient The recipient of the wstETH
+     * @return Whether the wrapping was successful
      */
     function _wrapSTETH(address recipient) internal returns (bool) {
         uint256 amount = STETH.balanceOf(address(this));
@@ -35,6 +36,7 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
     /**
      * @notice Unwraps all of the contract's wstETH into stETH
      * @param recipient The recipient of the stETH
+     * @return Whether the unwrapping was successful
      */
     function _unwrapSTETH(address recipient) internal returns (bool) {
         uint256 amount = WSTETH.balanceOf(address(this));
