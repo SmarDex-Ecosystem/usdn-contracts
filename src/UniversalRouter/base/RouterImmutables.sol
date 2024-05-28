@@ -9,18 +9,18 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
  * @param weth9 The WETH9 address
  * @param v2Factory The v2 factory address
  * @param v3Factory The v3 factory address
- * @param wstEth The WstETH address
  * @param pairInitCodeHash The v2 pair hash
  * @param poolInitCodeHash The v3 pool hash
  * @param usdnProtocol The USDN protocol address
+ * @param wstEth The WstETH address
  */
 struct RouterParameters {
     address permit2;
     address weth9;
     address v2Factory;
     address v3Factory;
-    address wstEth;
     bytes32 pairInitCodeHash;
     bytes32 poolInitCodeHash;
     IUsdnProtocol usdnProtocol;
+    address wstEth;
 }
