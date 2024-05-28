@@ -235,7 +235,10 @@ interface IUsdnProtocolActions is IUsdnProtocolLong {
 
     /**
      * @notice Transfer the ownership of a position to another address
-     * @dev This function reverts if the msg.sender is not the position owner or if the position does not exist
+     * @dev This function reverts if the msg.sender is not the position owner, if the position does not exist or if the
+     * new owner address is the zero address
+     * If the new owner is a contract that supports the `IOwnershipCallback` interface, its `ownershipCallback` function
+     * will be called after the transfer of ownership
      * @param posId The unique position ID
      * @param newOwner The new position owner
      */
