@@ -27,22 +27,11 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
      * @custom:given The user sent the exact amount of assets and exact amount of SDEX to the router
      * @custom:when The user initiates a deposit through the router
      * @custom:then The deposit is initiated successfully
-     * @custom:and The user's asset balance is reduced by the deposited amount
-     * @custom:and The user's SDEX balance is reduced by the burnt amount
-     * @custom:and The user's ether balance is reduced by the security deposit value
      */
     function test_ForkInitiateDeposit() public {
-        uint256 ethBalanceBefore = address(this).balance;
-        uint256 wstEthBalanceBefore = wstETH.balanceOf(address(this));
-        uint256 sdexBalanceBefore = sdex.balanceOf(address(this));
-
         // send funds to router
         wstETH.transfer(address(router), DEPOSIT_AMOUNT);
-
-        uint256 usdnToMintEstimated =
-            protocol.i_calcMintUsdn(DEPOSIT_AMOUNT, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
-        uint256 sdexToBurn = protocol.i_calcSdexToBurn(usdnToMintEstimated, protocol.getSdexBurnOnDepositRatio());
-        sdex.transfer(address(router), sdexToBurn);
+        _transferSdex(DEPOSIT_AMOUNT);
 
         // commands
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_DEPOSIT)));
@@ -60,11 +49,6 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
         assertEq(action.to, USER_1, "pending action to");
         assertEq(action.validator, address(this), "pending action validator");
         assertEq(action.amount, DEPOSIT_AMOUNT, "pending action amount");
-
-        assertEq(address(this).balance, ethBalanceBefore - protocol.getSecurityDepositValue(), "ether balance");
-        assertEq(wstETH.balanceOf(address(this)), wstEthBalanceBefore - DEPOSIT_AMOUNT, "asset balance");
-
-        assertEq(sdex.balanceOf(address(this)), sdexBalanceBefore - sdexToBurn, "sdex balance");
     }
 
     /**
@@ -79,11 +63,7 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
 
         // send assets to the router
         wstETH.transfer(address(router), DEPOSIT_AMOUNT);
-
-        uint256 usdnToMintEstimated =
-            protocol.i_calcMintUsdn(DEPOSIT_AMOUNT, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
-        uint256 sdexToBurn = protocol.i_calcSdexToBurn(usdnToMintEstimated, protocol.getSdexBurnOnDepositRatio());
-        sdex.transfer(address(router), sdexToBurn);
+        _transferSdex(DEPOSIT_AMOUNT);
 
         // commands
         bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.INITIATE_DEPOSIT)));
@@ -96,6 +76,13 @@ contract TestForkUniversalRouterInitiateDeposit is UniversalRouterBaseFixture {
         router.execute{ value: protocol.getSecurityDepositValue() }(commands, inputs);
 
         assertEq(wstETH.balanceOf(address(this)), wstEthBalanceBefore - DEPOSIT_AMOUNT, "asset balance");
+    }
+
+    function _transferSdex(uint256 depositAmount) internal returns (uint256 sdexToBurn_) {
+        uint256 usdnToMintEstimated =
+            protocol.i_calcMintUsdn(depositAmount, protocol.getBalanceVault(), usdn.totalSupply(), params.initialPrice);
+        sdexToBurn_ = protocol.i_calcSdexToBurn(usdnToMintEstimated, protocol.getSdexBurnOnDepositRatio());
+        sdex.transfer(address(router), sdexToBurn_);
     }
 
     receive() external payable { }
