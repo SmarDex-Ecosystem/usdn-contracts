@@ -16,9 +16,6 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
     uint256 constant BASE_AMOUNT = 1000 ether;
     IStETH stETH;
 
-    /// @notice The error message for insufficient token
-    error InsufficientToken();
-
     function setUp() external {
         _setUp();
 
@@ -114,7 +111,7 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
 
         // inputs
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.getPooledEthByShares(BASE_AMOUNT));
+        inputs[0] = abi.encode(Constants.MSG_SENDER);
 
         // execution
         router.execute(commands, inputs);
@@ -148,7 +145,7 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
 
         // inputs
         bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(Constants.ADDRESS_THIS, stETH.getPooledEthByShares(BASE_AMOUNT));
+        inputs[0] = abi.encode(Constants.ADDRESS_THIS);
 
         // execution
         router.execute(commands, inputs);
@@ -162,28 +159,5 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
         assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance(router)");
         assertEq(stETH.sharesOf(address(this)), 0, "wrong stETH balance(user)");
         assertEq(wstETH.balanceOf(address(this)), 0, "wrong wstETH balance(user)");
-    }
-
-    /**
-     * @custom:scenario Test the `UNWRAP_WSTETH` command when the user has not enough balance
-     * @custom:given The initiated universal router
-     * @custom:and The router should be funded with one `wstETH`
-     * @custom:when The `execute` function is called for `UNWRAP_WSTETH` command
-     * @custom:then The `UNWRAP_WSTETH` command should revert
-     */
-    function test_RevertWhen_executeUnwrapStETHEnoughBalance() external {
-        // transfer
-        wstETH.transfer(address(router), 1);
-
-        // commands
-        bytes memory commands = abi.encodePacked(bytes1(uint8(Commands.UNWRAP_WSTETH)));
-
-        // inputs
-        bytes[] memory inputs = new bytes[](1);
-        inputs[0] = abi.encode(Constants.MSG_SENDER, stETH.getPooledEthByShares(1) + 1);
-
-        // execution
-        vm.expectRevert(InsufficientToken.selector);
-        router.execute(commands, inputs);
     }
 }

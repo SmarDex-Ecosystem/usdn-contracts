@@ -254,12 +254,10 @@ abstract contract Dispatcher is
                 } else if (command == Commands.UNWRAP_WSTETH) {
                     // equivalent: abi.decode(inputs, (address, uint256))
                     address recipient;
-                    uint256 amountMin;
                     assembly {
                         recipient := calldataload(inputs.offset)
-                        amountMin := calldataload(add(inputs.offset, 0x20))
                     }
-                    LidoRouter._unwrapSTETH(map(recipient), amountMin);
+                    LidoRouter._unwrapSTETH(map(recipient));
                 } else {
                     revert InvalidCommandType(command);
                 }

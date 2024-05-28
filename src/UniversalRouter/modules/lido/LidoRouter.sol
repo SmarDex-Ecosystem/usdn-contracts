@@ -33,16 +33,11 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
     /**
      * @notice Unwraps all of the contract's wstETH into stETH
      * @param recipient The recipient of the stETH
-     * @param amountMinimum The minimum amount of stETH desired
      */
-    function _unwrapSTETH(address recipient, uint256 amountMinimum) internal {
+    function _unwrapSTETH(address recipient) internal {
         uint256 amount = WSTETH.balanceOf(address(this));
         if (amount > 0) {
             amount = WSTETH.unwrap(amount);
-
-            if (amount < amountMinimum) {
-                revert InsufficientToken();
-            }
 
             if (recipient != address(this)) {
                 STETH.safeTransfer(recipient, amount);
