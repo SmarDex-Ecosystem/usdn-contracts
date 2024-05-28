@@ -212,12 +212,12 @@ abstract contract Dispatcher is Payments, V2SwapRouter, V3SwapRouter, UsdnProtoc
                         _usdnInitiateDeposit(amount, map(to), map(validator), currentPriceData, previousActionsData);
                     } else if (command == Commands.INITIATE_WITHDRAWAL) {
                         (
-                            uint152 usdnShares,
+                            uint256 usdnShares,
                             address to,
                             address validator,
                             bytes memory currentPriceData,
                             PreviousActionsData memory previousActionsData
-                        ) = abi.decode(inputs, (uint152, address, address, bytes, PreviousActionsData));
+                        ) = abi.decode(inputs, (uint256, address, address, bytes, PreviousActionsData));
                         _usdnInitiateWithdrawal(
                             usdnShares, map(to), map(validator), currentPriceData, previousActionsData
                         );

@@ -61,7 +61,7 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, UsdnImmutables {
      * @return success_ Whether the withdrawal was successful
      */
     function _usdnInitiateWithdrawal(
-        uint152 amount,
+        uint256 amount,
         address to,
         address validator,
         bytes memory currentPriceData,
@@ -69,12 +69,12 @@ abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, UsdnImmutables {
     ) internal returns (bool success_) {
         // use amount == Constants.CONTRACT_BALANCE as a flag to withdraw the entire balance of the contract
         if (amount == Constants.CONTRACT_BALANCE) {
-            amount = USDN.balanceOf(address(this)).toUint128();
+            amount = USDN.sharesOf(address(this));
         }
         USDN.approve(address(USDN_PROTOCOL), amount);
         // we send the full ETH balance, the protocol will refund any excess
         USDN_PROTOCOL.initiateWithdrawal{ value: address(this).balance }(
-            amount, to, validator, currentPriceData, previousActionsData
+            amount.toUint152(), to, validator, currentPriceData, previousActionsData
         );
         success_ = true; // TODO: retrieve success status from initiateWithdraw return value (when implemented)
     }
