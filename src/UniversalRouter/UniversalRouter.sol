@@ -16,7 +16,6 @@ import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import {
     UsdnProtocolImmutables, UsdnProtocolParameters
 } from "src/UniversalRouter/modules/usdn/UsdnProtocolImmutables.sol";
-import { UsdnImmutables } from "src/UniversalRouter/modules/usdn/UsdnImmutables.sol";
 
 contract UniversalRouter is IUniversalRouter, Dispatcher {
     /**
@@ -37,7 +36,6 @@ contract UniversalRouter is IUniversalRouter, Dispatcher {
         )
         PaymentsImmutables(PaymentsParameters(params.permit2, params.weth9, address(0), address(0)))
         UsdnProtocolImmutables(UsdnProtocolParameters(params.usdnProtocol))
-        UsdnImmutables(params.usdn)
     { }
 
     /// @inheritdoc IUniversalRouter

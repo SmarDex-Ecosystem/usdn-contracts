@@ -7,10 +7,9 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { UsdnProtocolImmutables } from "src/UniversalRouter/modules/usdn/UsdnProtocolImmutables.sol";
-import { UsdnImmutables } from "src/UniversalRouter/modules/usdn/UsdnImmutables.sol";
 import { PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 
-abstract contract UsdnProtocolRouter is UsdnProtocolImmutables, UsdnImmutables {
+abstract contract UsdnProtocolRouter is UsdnProtocolImmutables {
     using SafeCast for uint256;
     using SafeERC20 for IERC20Metadata;
 
