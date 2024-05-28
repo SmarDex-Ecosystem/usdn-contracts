@@ -18,30 +18,35 @@ abstract contract LidoRouter is LidoImmutables, Permit2Payments {
      * @notice Wrap all of the contract's stETH into wstETH
      * @param recipient The recipient of the wstETH
      */
-    function _wrapSTETH(address recipient) internal {
+    function _wrapSTETH(address recipient) internal returns (bool) {
         uint256 amount = STETH.balanceOf(address(this));
-        if (amount > 0) {
-            STETH.forceApprove(address(WSTETH), amount);
-            amount = WSTETH.wrap(amount);
-
-            if (recipient != address(this)) {
-                WSTETH.safeTransfer(recipient, amount);
-            }
+        if (amount == 0) {
+            return false;
         }
+        STETH.forceApprove(address(WSTETH), amount);
+        amount = WSTETH.wrap(amount);
+
+        if (recipient != address(this)) {
+            WSTETH.safeTransfer(recipient, amount);
+        }
+        return true;
     }
 
     /**
      * @notice Unwraps all of the contract's wstETH into stETH
      * @param recipient The recipient of the stETH
      */
-    function _unwrapSTETH(address recipient) internal {
+    function _unwrapSTETH(address recipient) internal returns (bool) {
         uint256 amount = WSTETH.balanceOf(address(this));
-        if (amount > 0) {
-            amount = WSTETH.unwrap(amount);
-
-            if (recipient != address(this)) {
-                STETH.safeTransfer(recipient, amount);
-            }
+        if (amount == 0) {
+            return false;
         }
+        amount = WSTETH.unwrap(amount);
+
+        if (recipient != address(this)) {
+            STETH.safeTransfer(recipient, amount);
+        }
+
+        return true;
     }
 }

@@ -250,14 +250,14 @@ abstract contract Dispatcher is
                     assembly {
                         recipient := calldataload(inputs.offset)
                     }
-                    LidoRouter._wrapSTETH(map(recipient));
+                    success_ = LidoRouter._wrapSTETH(map(recipient));
                 } else if (command == Commands.UNWRAP_WSTETH) {
                     // equivalent: abi.decode(inputs, (address, uint256))
                     address recipient;
                     assembly {
                         recipient := calldataload(inputs.offset)
                     }
-                    LidoRouter._unwrapSTETH(map(recipient));
+                    success_ = LidoRouter._unwrapSTETH(map(recipient));
                 } else {
                     revert InvalidCommandType(command);
                 }
