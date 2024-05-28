@@ -1901,7 +1901,7 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
      * @param initiateTimestamp The timestamp of the initiate action
      * @return actionId_ The unique action ID
      */
-    function _calcActionId(address validator, uint128 initiateTimestamp) internal returns (bytes32 actionId_) {
+    function _calcActionId(address validator, uint128 initiateTimestamp) internal pure returns (bytes32 actionId_) {
         actionId_ = keccak256(abi.encodePacked(validator, initiateTimestamp));
     }
 }
