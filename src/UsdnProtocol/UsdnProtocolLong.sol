@@ -31,6 +31,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
      * @param longTradingExpo The long trading expo
      * @param currentPrice The current price of the asset
      * @param accumulator The liquidation multiplier accumulator before the liquidation
+     * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
      */
     struct LiquidationData {
         int256 tempLongBalance;
@@ -42,6 +43,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         uint256 longTradingExpo;
         uint256 currentPrice;
         HugeUint.Uint512 accumulator;
+        bool isLiquidationPending;
     }
 
     /// @inheritdoc IUsdnProtocolLong
@@ -633,7 +635,7 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         } while (effects_.liquidatedTicks < iteration);
 
         data = _updateStateAfterLiquidation(data, effects_);
-
+        effects_.isLiquidationPending = data.isLiquidationPending;
         (effects_.newLongBalance, effects_.newVaultBalance) =
             _handleNegativeBalances(data.tempLongBalance, data.tempVaultBalance);
     }
@@ -660,7 +662,9 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
                 _highestPopulatedTick = _findHighestPopulatedTick(data.currentTick);
             } else {
                 // unsure if all ticks above the current tick were liquidated, but some were
-                _highestPopulatedTick = _findHighestPopulatedTick(data.iTick);
+                int24 highestPopulatedTick = _findHighestPopulatedTick(data.iTick);
+                _highestPopulatedTick = highestPopulatedTick;
+                data.isLiquidationPending = data.currentTick <= highestPopulatedTick;
             }
         }
 

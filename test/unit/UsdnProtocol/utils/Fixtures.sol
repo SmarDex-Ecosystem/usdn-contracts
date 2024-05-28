@@ -22,6 +22,8 @@ import {
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn/Usdn.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -85,6 +87,7 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
     LiquidationRewardsManager public liquidationRewardsManager;
     RebalancerHandler public rebalancer;
     UsdnProtocolHandler public protocol;
+    PositionId public initialPosition;
     uint256 public usdnInitialTotalSupply;
     address[] public users;
 
@@ -169,6 +172,8 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             testParams.initialPrice / 2,
             abi.encode(testParams.initialPrice)
         );
+
+        initialPosition.tick = protocol.getHighestPopulatedTick();
 
         // separate the roles ADMIN and DEPLOYER
         protocol.transferOwnership(ADMIN);
@@ -367,8 +372,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         // max long expo to initiate a balanced protocol
         uint256 maxLongExpo = initialDeposit + margin;
 
-        uint128 liquidationPriceWithoutPenalty =
-            protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
+        uint128 liquidationPriceWithoutPenalty = protocol.getEffectivePriceForTick(
+            protocol.getEffectiveTickForPrice(
+                params.initialPrice / 2, 0, 0, HugeUint.wrap(0), protocol.getTickSpacing()
+            ),
+            0,
+            0,
+            HugeUint.wrap(0)
+        );
 
         // min long amount
         uint128 minLongAmount = uint128(
@@ -392,5 +403,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
 
         // init protocol
         _setUp(params);
+    }
+
+    /// @dev Wait for the required delay to allow mock middleware price update
+    function _waitMockMiddlewarePriceDelay() internal {
+        skip(30 minutes - oracleMiddleware.getValidationDelay());
     }
 }

@@ -34,11 +34,11 @@ library Commands {
     uint256 constant SECOND_IF_BOUNDARY = 0x10;
 
     uint256 constant INITIATE_DEPOSIT = 0x10;
-    uint256 constant INITIATE_WITHDRAW = 0x11;
+    uint256 constant INITIATE_WITHDRAWAL = 0x11;
     uint256 constant INITIATE_OPEN = 0x12;
     uint256 constant INITIATE_CLOSE = 0x13;
     uint256 constant VALIDATE_DEPOSIT = 0x14;
-    uint256 constant VALIDATE_WITHDRAW = 0x15;
+    uint256 constant VALIDATE_WITHDRAWAL = 0x15;
     uint256 constant VALIDATE_OPEN = 0x16;
     uint256 constant VALIDATE_CLOSE = 0x17;
     uint256 constant LIQUIDATE = 0x18;

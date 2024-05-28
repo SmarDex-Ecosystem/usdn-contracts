@@ -7,7 +7,10 @@ import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.s
 import { USER_1 } from "test/utils/Constants.sol";
 
 import {
-    PendingAction, ProtocolAction, WithdrawalPendingAction
+    PendingAction,
+    ProtocolAction,
+    WithdrawalPendingAction,
+    PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
@@ -78,6 +81,45 @@ contract TestUsdnProtocolActionsInitiateWithdrawal is UsdnProtocolBaseFixture {
      */
     function test_initiateWithdrawForAnotherAddress() public {
         _initiateWithdraw(USER_1);
+    }
+
+    /**
+     * @custom:scenario A initiate withdrawal action liquidates a tick but is not initiated because another tick still
+     * needs to be liquidated
+     * @custom:given Two positions in different ticks
+     * @custom:when The `initiateWithdrawal` function is called with a price below the liq price of both positions
+     * @custom:then One of the positions is liquidated
+     * @custom:and The withdrawal action isn't initiated
+     */
+    function test_initiateWithdrawalIsPendingLiquidation() public {
+        PositionId memory userPosId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: 1 ether,
+                desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
+                price: params.initialPrice
+            })
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        protocol.initiateWithdrawal(
+            uint128(usdn.balanceOf(address(this))),
+            address(this),
+            address(this),
+            abi.encode(params.initialPrice / 3),
+            EMPTY_PREVIOUS_DATA
+        );
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 should not have a pending action");
+
+        assertEq(
+            userPosId.tickVersion + 1,
+            protocol.getTickVersion(userPosId.tick),
+            "user 1 position should have been liquidated"
+        );
     }
 
     function _initiateWithdraw(address to) internal {

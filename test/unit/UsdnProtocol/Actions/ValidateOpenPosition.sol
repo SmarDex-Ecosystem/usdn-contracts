@@ -4,7 +4,13 @@ pragma solidity 0.8.20;
 import { ADMIN, USER_1 } from "test/utils/Constants.sol";
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 
-import { ProtocolAction, Position, PositionId, TickData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    ProtocolAction,
+    Position,
+    PositionId,
+    TickData,
+    PendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -74,6 +80,75 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
      */
     function test_validateOpenPositionDifferentValidator() public {
         _validateOpenPositionScenario(address(this), USER_1);
+    }
+
+    /**
+     * @custom:scenario A validate open position liquidates a tick but is not validated because another tick still
+     * needs to be liquidated
+     * @custom:given The deployer position and another user position which was only initiated
+     * @custom:when The `validateOpenPosition` function is called by the user with a price below the liq price of both
+     * positions
+     * @custom:then The deployer's tick is liquidated
+     * @custom:and The open action isn't validated because the user's position still needs to be liquidated
+     */
+    function test_validateOpenIsPendingLiquidation() public {
+        setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: uint128(LONG_AMOUNT),
+                desiredLiqPrice: params.initialPrice / 3,
+                price: params.initialPrice
+            })
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        protocol.validateOpenPosition(address(this), abi.encode(params.initialPrice / 4), EMPTY_PREVIOUS_DATA);
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(
+            uint256(pending.action),
+            uint256(ProtocolAction.ValidateOpenPosition),
+            "user 0 pending action should not have been cleared"
+        );
+
+        assertEq(
+            initialPosition.tickVersion + 1,
+            protocol.getTickVersion(initialPosition.tick),
+            "deployer position should have been liquidated"
+        );
+    }
+
+    /**
+     * @custom:scenario A validate open position liquidates itself
+     * @custom:given The user has initiated an open position
+     * @custom:when The `validateOpenPosition` function is called with a price below the liq price
+     * @custom:then The position is liquidated
+     * @custom:and The pending action is cleared
+     */
+    function test_validateOpenWasLiquidated() public {
+        PositionId memory posId = setUpUserPositionInLong(
+            OpenParams({
+                user: address(this),
+                untilAction: ProtocolAction.InitiateOpenPosition,
+                positionSize: uint128(LONG_AMOUNT),
+                desiredLiqPrice: params.initialPrice * 4 / 5,
+                price: params.initialPrice
+            })
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        protocol.validateOpenPosition(address(this), abi.encode(params.initialPrice * 2 / 3), EMPTY_PREVIOUS_DATA);
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(
+            uint256(pending.action), uint256(ProtocolAction.None), "user 0 pending action should have been cleared"
+        );
+        assertEq(
+            posId.tickVersion + 1, protocol.getTickVersion(posId.tick), "user 0 position should have been liquidated"
+        );
     }
 
     function _validateOpenPositionScenario(address to, address validator) internal {
