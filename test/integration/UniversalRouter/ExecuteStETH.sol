@@ -24,10 +24,10 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
     }
 
     /**
-     * @custom:scenario Test the `WRAP_STETH` command using the router balance
+     * @custom:scenario Test the `WRAP_STETH` command using the router balance and send to user
      * @custom:given The initiated universal router
      * @custom:and The router should be funded with some `stETH`
-     * @custom:when The `execute` function is called for `WRAP_STETH` command
+     * @custom:when The `execute` function is called for `WRAP_STETH` command with MSG_SENDER
      * @custom:then The `WRAP_STETH` command should be executed
      * @custom:and The `wsteth` user balance should be increased
      */
@@ -58,10 +58,10 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
     }
 
     /**
-     * @custom:scenario Test the `WRAP_STETH` command using the router balance
+     * @custom:scenario Test the `WRAP_STETH` command using the router balance and stay in router
      * @custom:given The initiated universal router
      * @custom:and The router should be funded with some `stETH`
-     * @custom:when The `execute` function is called for `WRAP_STETH` command
+     * @custom:when The `execute` function is called for `WRAP_STETH` command with ADDRESS_THIS
      * @custom:then The `WRAP_STETH` command should be executed
      * @custom:and The `wsteth` router balance should be increased
      */
