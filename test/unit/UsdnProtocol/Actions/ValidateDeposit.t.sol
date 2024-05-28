@@ -170,6 +170,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
         emit InitiatedDeposit(to, address(this), DEPOSIT_AMOUNT, initiateDepositTimestamp); // expected event
         protocol.initiateDeposit(DEPOSIT_AMOUNT, to, address(this), currentPrice, EMPTY_PREVIOUS_DATA);
         uint256 vaultBalance = protocol.getBalanceVault(); // save for mint amount calculation in case price increases
+        bytes32 actionId = oracleMiddleware.lastActionId();
 
         // wait the required delay between initiation and validation
         _waitDelay();
@@ -196,6 +197,7 @@ contract TestUsdnProtocolActionsValidateDeposit is UsdnProtocolBaseFixture {
             assertEq(usdn.balanceOf(address(this)), 0, "USDN user balance");
         }
         assertEq(usdn.totalSupply(), usdnInitialTotalSupply + mintedAmount, "USDN total supply");
+        assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
     }
 
     /**
