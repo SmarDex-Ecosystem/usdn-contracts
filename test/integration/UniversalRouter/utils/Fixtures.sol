@@ -26,7 +26,7 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
         params.fork = true;
         _setUp(params);
 
-        RouterParameters memory routerParams = RouterParameters({
+        RouterParameters memory params = RouterParameters({
             permit2: 0x000000000022D473030F116dDEE9F6B43aC78BA3,
             weth9: WETH,
             v2Factory: 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f,
@@ -38,7 +38,7 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
         });
 
         vm.prank(DEPLOYER);
-        router = new UniversalRouterHandler(routerParams);
-        permit2 = IAllowanceTransfer(routerParams.permit2);
+        router = new UniversalRouterHandler(params);
+        permit2 = IAllowanceTransfer(params.permit2);
     }
 }
