@@ -29,7 +29,7 @@ contract TestForkUniversalRouterInitiateWithdrawal is UniversalRouterBaseFixture
      */
     function test_ForkInitiateWithdraw() public {
         uint256 ethBalanceBefore = address(this).balance;
-        uint256 usdnBalanceBefore = usdn.sharesOf(address(this));
+        uint256 usdnSharesBefore = usdn.sharesOf(address(this));
 
         // send funds to router
         usdn.transferShares(address(router), WITHDRAW_AMOUNT);
@@ -45,7 +45,7 @@ contract TestForkUniversalRouterInitiateWithdrawal is UniversalRouterBaseFixture
         router.execute{ value: protocol.getSecurityDepositValue() }(commands, inputs);
 
         assertEq(address(this).balance, ethBalanceBefore - protocol.getSecurityDepositValue(), "ether balance");
-        assertEq(usdn.sharesOf(address(this)), usdnBalanceBefore - WITHDRAW_AMOUNT, "asset balance");
+        assertEq(usdn.sharesOf(address(this)), usdnSharesBefore - WITHDRAW_AMOUNT, "usdn shares");
     }
 
     /**
@@ -57,7 +57,7 @@ contract TestForkUniversalRouterInitiateWithdrawal is UniversalRouterBaseFixture
      */
     function test_ForkInitiateWithdrawFullBalance() public {
         uint256 ethBalanceBefore = address(this).balance;
-        uint256 usdnBalanceBefore = usdn.sharesOf(address(this));
+        uint256 usdnSharesBefore = usdn.sharesOf(address(this));
 
         // send funds to router
         usdn.transferShares(address(router), WITHDRAW_AMOUNT);
@@ -73,6 +73,6 @@ contract TestForkUniversalRouterInitiateWithdrawal is UniversalRouterBaseFixture
         router.execute{ value: protocol.getSecurityDepositValue() }(commands, inputs);
 
         assertEq(address(this).balance, ethBalanceBefore - protocol.getSecurityDepositValue(), "ether balance");
-        assertEq(usdn.sharesOf(address(this)), usdnBalanceBefore - WITHDRAW_AMOUNT, "asset balance");
+        assertEq(usdn.sharesOf(address(this)), usdnSharesBefore - WITHDRAW_AMOUNT, "usdn shares");
     }
 }
