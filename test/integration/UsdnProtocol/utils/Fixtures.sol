@@ -33,6 +33,7 @@ import { IUsdnProtocolErrors } from "src/interfaces/UsdnProtocol/IUsdnProtocolEr
 import { ProtocolAction, PreviousActionsData } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn/Usdn.sol";
 import { WstEthOracleMiddleware } from "src/OracleMiddleware/WstEthOracleMiddleware.sol";
+import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 
 contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors, IUsdnProtocolEvents {
     struct SetUpParams {
@@ -47,11 +48,11 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
 
     SetUpParams public params;
     SetUpParams public DEFAULT_PARAMS = SetUpParams({
-        initialDeposit: 10 ether,
-        initialLong: 5 ether,
-        initialLiqPrice: 1000 ether, // leverage approx 2x
-        initialPrice: 2000 ether, // 2000 USD per wstETH
-        initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC,
+        initialDeposit: 99.474794733414559008 ether,
+        initialLong: 100 ether,
+        initialLiqPrice: 1000 ether, // leverage approx 2x, recalculated if forking (to ensure leverage approx 2x)
+        initialPrice: 2000 ether, // 2000 USD per wstETH, ignored if forking
+        initialTimestamp: 1_704_092_400, // 2024-01-01 07:00:00 UTC
         fork: false,
         forkWarp: 0
     });
@@ -85,6 +86,9 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
             oracleMiddleware = new WstEthOracleMiddleware(
                 address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
             );
+            PriceInfo memory currentPrice =
+                oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.Initialize, "");
+            testParams.initialLiqPrice = uint128(currentPrice.neutralPrice) / 2;
         } else {
             wstETH = new WstETH();
             sdex = new Sdex();

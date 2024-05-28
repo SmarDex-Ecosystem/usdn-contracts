@@ -27,15 +27,9 @@ abstract contract UsdnProtocolVault is IUsdnProtocolVault, UsdnProtocolCore {
         price_ = usdnPrice(currentPrice, uint128(block.timestamp));
     }
 
-    /**
-     * @notice Calculate an estimation of assets received when withdrawing
-     * @param usdnShares The amount of USDN shares
-     * @param price The price of the asset
-     * @param timestamp The timestamp of the operation
-     * @return assetExpected_ The expected amount of asset to be received
-     */
+    /// @inheritdoc IUsdnProtocolVault
     function previewWithdraw(uint256 usdnShares, uint256 price, uint128 timestamp)
-        public
+        external
         view
         returns (uint256 assetExpected_)
     {
