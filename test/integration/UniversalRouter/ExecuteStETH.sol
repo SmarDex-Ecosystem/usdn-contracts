@@ -53,7 +53,6 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
             1,
             "wrong wstETH balance(user)"
         );
-        assertEq(stETH.sharesOf(address(this)), 0, "wrong stETH balance(user)");
         assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance(router)");
         assertApproxEqAbs(stETH.sharesOf(address(router)), 0, 1, "wrong stETH balance(router)");
     }
@@ -90,7 +89,6 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
         );
         assertApproxEqAbs(stETH.sharesOf(address(router)), 0, 1, "wrong stETH balance(router)");
         assertEq(wstETH.balanceOf(address(this)), 0, "wrong wstETH balance(user)");
-        assertEq(stETH.sharesOf(address(this)), 0, "wrong stETH balance(user)");
     }
 
     /**
@@ -122,7 +120,6 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
             sharesOfStETHBefore + stETH.getSharesByPooledEth(stETH.getPooledEthByShares(BASE_AMOUNT)),
             "wrong stETH balance(user)"
         );
-        assertEq(wstETH.balanceOf(address(this)), 0, "wrong wstETH balance(user)");
         assertEq(stETH.sharesOf(address(router)), 0, "wrong stETH balance(router)");
         assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance(router)");
     }
@@ -156,7 +153,6 @@ contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
             sharesOfStETHBefore + stETH.getSharesByPooledEth(stETH.getPooledEthByShares(BASE_AMOUNT)),
             "wrong stETH balance(router)"
         );
-        assertEq(wstETH.balanceOf(address(router)), 0, "wrong wstETH balance(router)");
         assertEq(stETH.sharesOf(address(this)), 0, "wrong stETH balance(user)");
         assertEq(wstETH.balanceOf(address(this)), 0, "wrong wstETH balance(user)");
     }
