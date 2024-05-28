@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import { Constants } from "@uniswap/universal-router/contracts/libraries/Constants.sol";
 
-import { ForkUniversalRouterBaseIntegrationFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
+import { UniversalRouterBaseFixture } from "test/integration/UniversalRouter/utils/Fixtures.sol";
 
 import { Commands } from "src/UniversalRouter/libraries/Commands.sol";
 import { IStETH } from "src/UniversalRouter/interfaces/IStETH.sol";
@@ -12,7 +12,7 @@ import { IStETH } from "src/UniversalRouter/interfaces/IStETH.sol";
  * @custom:feature Test commands wrap and unwrap stETH
  * @custom:background A initiated universal router
  */
-contract TestForkUniversalRouterExecuteStETH is ForkUniversalRouterBaseIntegrationFixture {
+contract TestForkUniversalRouterExecuteStETH is UniversalRouterBaseFixture {
     uint256 constant BASE_AMOUNT = 1000 ether;
     IStETH stETH;
 

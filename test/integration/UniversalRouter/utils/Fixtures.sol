@@ -38,7 +38,7 @@ contract UniversalRouterBaseFixture is UsdnProtocolBaseIntegrationFixture {
         });
 
         vm.prank(DEPLOYER);
-        router = new UniversalRouterHandler(params);
-        permit2 = IAllowanceTransfer(params.permit2);
+        router = new UniversalRouterHandler(routerParams);
+        permit2 = IAllowanceTransfer(routerParams.permit2);
     }
 }
