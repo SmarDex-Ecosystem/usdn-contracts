@@ -216,6 +216,51 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
     }
 
     /**
+     * @custom:scenario A initiate open position liquidates a tick but is not initiated because another tick still
+     * needs to be liquidated
+     * @custom:given Two positions in different ticks
+     * @custom:when The `initiateOpenPosition` function is called with a price below the liq price of both positions
+     * @custom:then One of the positions is liquidated
+     * @custom:and The new position isn't initiated
+     * @custom:and The user wsteth balance does not change
+     */
+    function test_initiateOpenPositionIsPendingLiquidation() public {
+        PositionId memory userPosId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: uint128(LONG_AMOUNT),
+                desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
+                price: params.initialPrice
+            })
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
+
+        protocol.initiateOpenPosition(
+            uint128(LONG_AMOUNT),
+            params.initialPrice / 10,
+            address(this),
+            address(this),
+            abi.encode(params.initialPrice / 3),
+            EMPTY_PREVIOUS_DATA
+        );
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 should not have a pending action");
+
+        assertEq(
+            userPosId.tickVersion + 1,
+            protocol.getTickVersion(userPosId.tick),
+            "user 1 position should have been liquidated"
+        );
+
+        assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user 0 wsteth balance should not change");
+    }
+
+    /**
      * @custom:scenario The user initiates an open position action with a zero amount
      * @custom:when The user initiates an open position with 0 wstETH
      * @custom:then The protocol reverts with UsdnProtocolZeroAmount

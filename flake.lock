@@ -41,11 +41,11 @@
         "pre-commit-hooks": "pre-commit-hooks"
       },
       "locked": {
-        "lastModified": 1715593316,
-        "narHash": "sha256-S7XatU9uV3q9bVBcg/ER0VMQcnPZprrVlN209ne7LDw=",
+        "lastModified": 1716463093,
+        "narHash": "sha256-gsuCe0KNRyOWttjhODssvth1VP9aW8B+Z57ywQInnNM=",
         "owner": "cachix",
         "repo": "devenv",
-        "rev": "725c90407ef53cc2a1b53701c6d2d0745cf2484f",
+        "rev": "ad2be5aa0923b2399432df77df38d1aff45256b8",
         "type": "github"
       },
       "original": {
@@ -373,11 +373,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1715623576,
-        "narHash": "sha256-ofUOGRGQk6GpQ+HKGXRb0DSzy9BqveubutyJFWQRAJI=",
+        "lastModified": 1716358718,
+        "narHash": "sha256-NQbegJb2ZZnAqp2EJhWwTf6DrZXSpA6xZCEq+RGV1r0=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1daef0114a6074be56586f2cf81898ed142e1e44",
+        "rev": "3f316d2a50699a78afe5e77ca486ad553169061e",
         "type": "github"
       },
       "original": {
@@ -458,11 +458,11 @@
         "solc-macos-amd64-list-json": "solc-macos-amd64-list-json"
       },
       "locked": {
-        "lastModified": 1714911716,
-        "narHash": "sha256-xBaHwC6YCZZUwkt3JG0YRFaIRoVagPWYTMndLiGnSNg=",
+        "lastModified": 1716193854,
+        "narHash": "sha256-acIXxq64SwV8GktROR8ZmHbNCWmPTSGbshd2MEAxPBw=",
         "owner": "hellwolf",
         "repo": "solc.nix",
-        "rev": "2eda57da0e1cf13e82b849a67965c7c43afc11fc",
+        "rev": "b49e5b975bba402d4fdbdaf4c6fd1817822f2b85",
         "type": "github"
       },
       "original": {
@@ -474,7 +474,7 @@
     "solc-macos-amd64-list-json": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-akcOahJE/QR0jCPvo4aBf0loJt9P8zvP2E7oCBCRIho=",
+        "narHash": "sha256-f5kzXsfnxgad+1FxaGOlflIUVt8RPNBGS5wkqb63DVA=",
         "type": "file",
         "url": "https://binaries.soliditylang.org/macosx-amd64/list.json"
       },

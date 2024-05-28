@@ -4,7 +4,13 @@ pragma solidity 0.8.20;
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
 import { USER_1 } from "test/utils/Constants.sol";
 
-import { PendingAction, ProtocolAction } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    PendingAction,
+    ProtocolAction,
+    Position,
+    PositionId,
+    DepositPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyGuard.sol";
 
 /**
@@ -14,6 +20,7 @@ import { InitializableReentrancyGuard } from "src/utils/InitializableReentrancyG
  */
 contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
     uint256 internal constant INITIAL_WSTETH_BALANCE = 10 ether;
+    uint128 internal constant POSITION_AMOUNT = 1 ether;
     /// @notice Trigger a reentrancy after receiving ether
     bool internal _reenter;
 
@@ -286,6 +293,44 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         vm.expectCall(address(protocol), abi.encodeWithSelector(protocol.initiateDeposit.selector), 2);
         // The value sent will cause a refund, which will trigger the receive() function of this contract
         protocol.initiateDeposit{ value: 1 }(1 ether, address(this), address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+    }
+
+    /**
+     * @custom:scenario A initiate deposit liquidates a tick but is not initiated because another tick still needs to
+     * be liquidated
+     * @custom:given Two long positions in different ticks
+     * @custom:when A user calls `initiateDeposit` with a price below both liquidation prices
+     * @custom:then One of the two long positions is liquidated
+     * @custom:and The deposit action isn't initiated due to a pending liquidation
+     * @custom:and The user wsteth balance should not change
+     */
+    function test_initiateDepositIsPendingLiquidation() public {
+        PositionId memory userPosId = setUpUserPositionInLong(
+            OpenParams({
+                user: USER_1,
+                untilAction: ProtocolAction.ValidateOpenPosition,
+                positionSize: POSITION_AMOUNT,
+                desiredLiqPrice: params.initialPrice - params.initialPrice / 5,
+                price: params.initialPrice
+            })
+        );
+
+        _waitMockMiddlewarePriceDelay();
+
+        uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
+
+        protocol.initiateDeposit(
+            POSITION_AMOUNT, address(this), address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
+        );
+
+        PendingAction memory pending = protocol.getUserPendingAction(address(this));
+        assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 deposit should not be initiated");
+
+        assertEq(
+            userPosId.tickVersion + 1, protocol.getTickVersion(userPosId.tick), "user 1 position should be liquidated"
+        );
+
+        assertEq(wstethBalanceBefore, wstETH.balanceOf(address(this)), "user 1 should not have spent wstETH");
     }
 
     // test refunds

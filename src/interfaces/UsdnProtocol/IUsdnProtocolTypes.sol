@@ -186,6 +186,7 @@ struct PreviousActionsData {
  * @param remainingCollateral The collateral remaining after the liquidations
  * @param newLongBalance The new balance of the long side
  * @param newVaultBalance The new balance of the vault side
+ * @param isLiquidationPending Whether some ticks are still populated above the current price (left to liquidate)
  */
 struct LiquidationsEffects {
     uint256 liquidatedPositions;
@@ -193,6 +194,7 @@ struct LiquidationsEffects {
     int256 remainingCollateral;
     uint256 newLongBalance;
     uint256 newVaultBalance;
+    bool isLiquidationPending;
 }
 
 /**
