@@ -167,7 +167,7 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
             tickWithoutPenalty + int24(uint24(protocol.getLiquidationPenalty())) * protocol.getTickSpacing();
         uint128 liquidationPriceWithoutPenalty = protocol.getEffectivePriceForTick(tickWithoutPenalty);
         uint128 expectedPosTotalExpo =
-            protocol.i_calculatePositionTotalExpo(INITIAL_DEPOSIT, INITIAL_PRICE, liquidationPriceWithoutPenalty);
+            protocol.i_calcPositionTotalExpo(INITIAL_DEPOSIT, INITIAL_PRICE, liquidationPriceWithoutPenalty);
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
 
         vm.expectEmit();

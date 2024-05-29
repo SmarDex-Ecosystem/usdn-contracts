@@ -93,7 +93,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint128 liqPriceWithoutPenalty =
             protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(expectedTick));
         uint128 expectedPosTotalExpo =
-            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, liqPriceWithoutPenalty);
+            protocol.i_calcPositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, liqPriceWithoutPenalty);
 
         // state before opening the position
         ValueToCheckBefore memory before = ValueToCheckBefore({
@@ -198,7 +198,7 @@ contract TestUsdnProtocolActionsInitiateOpenPosition is UsdnProtocolBaseFixture 
         uint128 expectedLiqPrice =
             protocol.getEffectivePriceForTick(protocol.i_calcTickWithoutPenalty(posId.tick, storedLiqPenalty));
         uint256 expectedTotalExpo =
-            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, expectedLiqPrice);
+            protocol.i_calcPositionTotalExpo(uint128(LONG_AMOUNT), CURRENT_PRICE, expectedLiqPrice);
 
         // create position which ends up in the same tick
         PositionId memory posId2 = protocol.initiateOpenPosition(

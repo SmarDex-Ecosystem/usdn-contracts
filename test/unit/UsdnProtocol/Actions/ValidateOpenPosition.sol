@@ -173,7 +173,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             ),
             protocol.getLiqMultiplierAccumulator()
         );
-        uint128 expectedPosTotalExpo = protocol.i_calculatePositionTotalExpo(tempPos.amount, newPrice, expectedLiqPrice);
+        uint128 expectedPosTotalExpo = protocol.i_calcPositionTotalExpo(tempPos.amount, newPrice, expectedLiqPrice);
 
         vm.expectEmit();
         emit ValidatedOpenPosition(to, validator, expectedPosTotalExpo, newPrice, posId);
@@ -247,7 +247,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getLiqMultiplierAccumulator()
         );
         uint128 expectedPosTotalExpo =
-            protocol.i_calculatePositionTotalExpo(tempPos.amount, testData.validatePrice, expectedLiqPrice);
+            protocol.i_calcPositionTotalExpo(tempPos.amount, testData.validatePrice, expectedLiqPrice);
 
         vm.expectEmit();
         emit LiquidationPriceUpdated(
@@ -350,7 +350,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             protocol.getLiqMultiplierAccumulator()
         );
         uint128 expectedPosTotalExpo =
-            protocol.i_calculatePositionTotalExpo(uint128(LONG_AMOUNT), data.validatePrice, expectedLiqPrice);
+            protocol.i_calcPositionTotalExpo(uint128(LONG_AMOUNT), data.validatePrice, expectedLiqPrice);
 
         {
             // Sanity check
