@@ -31,6 +31,9 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @notice The number of decimals for the returned price
     uint8 internal constant MIDDLEWARE_DECIMALS = 18;
 
+    /// @notice The duration during which the low latency price will be returned
+    uint256 internal constant LOW_LATENCY_DURATION = 20 minutes;
+
     /**
      * @notice The delay (in seconds) between the moment an action is initiated and the timestamp of the
      * price data used to validate that action
@@ -74,20 +77,20 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             return _getInitiateActionPrice(data, ConfidenceInterval.None);
         } else if (action == ProtocolAction.ValidateDeposit) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies
-            return _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.Down);
+            // of price inaccuracies until low latency duration is exceeded then use chainlink
+            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == ProtocolAction.ValidateWithdrawal) {
             // Use the highest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies
-            return _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.Up);
+            // of price inaccuracies until low latency duration is exceeded then use chainlink
+            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == ProtocolAction.ValidateOpenPosition) {
             // Use the highest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies
-            return _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.Up);
+            // of price inaccuracies until low latency duration is exceeded then use chainlink
+            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Up);
         } else if (action == ProtocolAction.ValidateClosePosition) {
             // Use the lowest price in the confidence interval to ensure a minimum benefit for the user in case
-            // of price inaccuracies
-            return _getLowLatencyPrice(data, targetTimestamp, ConfidenceInterval.Down);
+            // of price inaccuracies until low latency duration is exceeded then use chainlink
+            return _getValidateActionPrice(data, targetTimestamp, ConfidenceInterval.Down);
         } else if (action == ProtocolAction.Liquidation) {
             // Special case, if we pass a timestamp of zero, then we accept all prices newer than `_recentPriceDelay`
             return _getLowLatencyPrice(data, 0, ConfidenceInterval.None);
@@ -181,7 +184,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
             revert OracleMiddlewareIncorrectFee();
         }
 
-        ChainlinkPriceInfo memory chainlinkOnChainPrice = _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS);
+        ChainlinkPriceInfo memory chainlinkOnChainPrice = _getFormattedChainlinkLatestPrice(MIDDLEWARE_DECIMALS);
 
         // check if the cached pyth price is more recent and return it instead
         FormattedPythPrice memory latestPythPrice = _getLatestStoredPythPrice(MIDDLEWARE_DECIMALS);
@@ -240,6 +243,45 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
 
         price_.timestamp = pythPrice.publishTime;
         price_.neutralPrice = pythPrice.price;
+    }
+
+    /**
+     * @notice Get the price for an validate action of the protocol
+     * @dev If if the low latency duration is not exceeded, validate the price with PythOracle. Else, get the specified
+     * roundId on-chain price from Chainlink. In case of chainlink price, we don't have a confidence interval
+     * and so both `neutralPrice` and `price` are equal
+     * @param data An optional VAA from Pyth or roundId for chainlink
+     * @param targetedTimestamp The targeted timestamp
+     * @param dir The direction for applying the confidence interval (in case we use a Pyth price)
+     * @return price_ The price to use for the user action
+     */
+    function _getValidateActionPrice(bytes calldata data, uint128 targetedTimestamp, ConfidenceInterval dir)
+        internal
+        returns (PriceInfo memory price_)
+    {
+        if (block.timestamp < targetedTimestamp + LOW_LATENCY_DURATION) {
+            return _getLowLatencyPrice(data, targetedTimestamp, dir);
+        } else {
+            uint80 nextRoundId = abi.decode(data, (uint80)) + 1;
+            ChainlinkPriceInfo memory chainlinkOnChainPrice =
+                _getFormattedChainlinkPrice(MIDDLEWARE_DECIMALS, nextRoundId);
+
+            // if the price is negative or zero, revert
+            if (chainlinkOnChainPrice.price <= 0) {
+                revert OracleMiddlewareWrongPrice(chainlinkOnChainPrice.price);
+            }
+
+            // if the next roundId timestamp is too early
+            if (targetedTimestamp + LOW_LATENCY_DURATION <= chainlinkOnChainPrice.timestamp) {
+                revert OracleMiddlewarePriceTooEarly(targetedTimestamp, chainlinkOnChainPrice.timestamp);
+            }
+
+            price_ = PriceInfo({
+                price: uint256(chainlinkOnChainPrice.price),
+                neutralPrice: uint256(chainlinkOnChainPrice.price),
+                timestamp: chainlinkOnChainPrice.timestamp
+            });
+        }
     }
 
     /* -------------------------------------------------------------------------- */

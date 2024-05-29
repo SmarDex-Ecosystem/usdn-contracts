@@ -47,11 +47,11 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
     }
 
     /**
-     * @notice Get the price of the asset from Chainlink
+     * @notice Get the latest price of the asset from Chainlink
      * @dev If the price returned equals PRICE_TOO_OLD, it means the price is too old
      * @return price_ The price of the asset
      */
-    function _getChainlinkPrice() internal view virtual returns (ChainlinkPriceInfo memory price_) {
+    function _getChainlinkLatestPrice() internal view virtual returns (ChainlinkPriceInfo memory price_) {
         // slither-disable-next-line unused-return
         (, int256 price,, uint256 timestamp,) = _priceFeed.latestRoundData();
 
@@ -63,21 +63,46 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
     }
 
     /**
-     * @notice Get the price of the asset from Chainlink, formatted to the specified number of decimals
+     * @notice Get the latest price of the asset from Chainlink, formatted to the specified number of decimals
      * @param middlewareDecimals The number of decimals to format the price to
      * @return formattedPrice_ The formatted price of the asset
      */
-    function _getFormattedChainlinkPrice(uint256 middlewareDecimals)
+    function _getFormattedChainlinkLatestPrice(uint256 middlewareDecimals)
         internal
         view
         returns (ChainlinkPriceInfo memory formattedPrice_)
     {
         uint8 oracleDecimals = _priceFeed.decimals();
-        formattedPrice_ = _getChainlinkPrice();
+        formattedPrice_ = _getChainlinkLatestPrice();
         if (formattedPrice_.price == PRICE_TOO_OLD) {
             return formattedPrice_;
         }
 
         formattedPrice_.price = formattedPrice_.price * int256(10 ** middlewareDecimals) / int256(10 ** oracleDecimals);
+    }
+
+    /**
+     * @notice Get a specific roundId price of the asset from Chainlink, formatted to the specified number of decimals
+     * @param middlewareDecimals The number of decimals to format the price to
+     * @param roundId The targeted roundId
+     * @return formattedPrice_ The formatted price of the asset
+     */
+    function _getFormattedChainlinkPrice(uint256 middlewareDecimals, uint80 roundId)
+        internal
+        view
+        returns (ChainlinkPriceInfo memory formattedPrice_)
+    {
+        uint8 oracleDecimals = _priceFeed.decimals();
+        formattedPrice_ = _getChainlinkPrice(roundId);
+        formattedPrice_.price = formattedPrice_.price * int256(10 ** middlewareDecimals) / int256(10 ** oracleDecimals);
+    }
+
+    /**
+     * @notice Get the targeted roundId price of the asset from Chainlink
+     * @return price_ The price of the asset
+     */
+    function _getChainlinkPrice(uint80 roundId) internal view virtual returns (ChainlinkPriceInfo memory price_) {
+        // slither-disable-next-line unused-return
+        (, price_.price,, price_.timestamp,) = _priceFeed.getRoundData(roundId);
     }
 }
