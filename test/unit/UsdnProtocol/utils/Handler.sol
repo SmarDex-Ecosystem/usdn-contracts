@@ -461,4 +461,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function i_clearPendingAction(address user, uint128 rawIndex) external {
         _clearPendingAction(user, rawIndex);
     }
+
+    function i__removeStalePendingAction(address user) external returns (uint256) {
+        return _removeStalePendingAction(user);
+    }
 }
