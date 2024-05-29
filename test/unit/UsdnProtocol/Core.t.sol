@@ -545,12 +545,34 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `removeStalePendingAction` function return 0 when there is no pending action
-     * @custom:given A protocol without any pending action
+     * @custom:scenario The `removeStalePendingAction` function return 0 when there is no pending action or the action
+     * is different than ValidateOpenPosition
+     * @custom:given A protocol without any pending action or with a pending action different than ValidateOpenPosition
      * @custom:when removeStalePendingAction is called
      * @custom:then The protocol should return 0
      */
     function test_removeStalePendingActionWithoutPendingAction() public {
         assertEq(protocol.i_removeStalePendingAction(address(this)), 0, "should return 0");
+
+        PendingAction memory pendingAction = PendingAction({
+            action: ProtocolAction.InitiateWithdrawal,
+            timestamp: uint40(block.timestamp - 1 days),
+            to: address(this),
+            validator: address(this),
+            securityDepositValue: 0.01 ether,
+            var1: 0,
+            var2: 0,
+            var3: 0,
+            var4: 1,
+            var5: 0,
+            var6: 0,
+            var7: 0
+        });
+        protocol.i_addPendingAction(address(this), pendingAction);
+        assertEq(
+            protocol.i_removeStalePendingAction(address(this)),
+            0,
+            "should return 0, action is different than ValidateOpenPosition"
+        );
     }
 }
