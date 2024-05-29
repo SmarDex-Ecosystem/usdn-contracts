@@ -362,6 +362,12 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getBalanceVault() external view returns (uint256);
 
     /**
+     * @notice Get the pending balance updates due to unvalidated vault actions
+     * @return The pending balance change due to unvalidated vault actions (with asset decimals)
+     */
+    function getPendingBalanceVault() external view returns (int256);
+
+    /**
      * @notice Get the timestamp when the last USDN rebase check was performed
      * @return The timestamp of the last USDN rebase check
      */
