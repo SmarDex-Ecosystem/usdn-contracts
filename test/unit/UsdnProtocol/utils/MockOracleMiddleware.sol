@@ -19,14 +19,17 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
     // if true, then the middleware requires a payment of 1 wei for any action
     bool internal _requireValidationCost = false;
 
+    bytes32 public lastActionId;
+
     constructor() Ownable(msg.sender) { }
 
     /// @inheritdoc IBaseOracleMiddleware
-    function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
-        external
-        payable
-        returns (PriceInfo memory)
-    {
+    function parseAndValidatePrice(
+        bytes32 actionId,
+        uint128 targetTimestamp,
+        ProtocolAction action,
+        bytes calldata data
+    ) external payable returns (PriceInfo memory) {
         require(block.timestamp >= 30 minutes, "MockOracleMiddleware: set block timestamp before calling");
         uint256 priceValue = abi.decode(data, (uint128));
         uint256 ts;
@@ -46,6 +49,8 @@ contract MockOracleMiddleware is IOracleMiddleware, Ownable {
         }
         // the timestamp cannot be in the future (the caller must `skip` before calling this function)
         require(ts < block.timestamp, "MockOracleMiddleware: timestamp is in the future");
+
+        lastActionId = actionId;
 
         PriceInfo memory price = PriceInfo({ price: priceValue, neutralPrice: priceValue, timestamp: ts });
         return price;

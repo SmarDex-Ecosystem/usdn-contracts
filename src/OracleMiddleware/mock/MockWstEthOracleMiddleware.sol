@@ -35,16 +35,16 @@ contract MockWstEthOracleMiddleware is WstEthOracleMiddleware {
     ) WstEthOracleMiddleware(pythContract, pythPriceID, chainlinkPriceFeed, wsteth, chainlinkTimeElapsedLimit) { }
 
     /// @inheritdoc OracleMiddleware
-    function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
-        public
-        payable
-        override
-        returns (PriceInfo memory price_)
-    {
+    function parseAndValidatePrice(
+        bytes32 actionId,
+        uint128 targetTimestamp,
+        ProtocolAction action,
+        bytes calldata data
+    ) public payable override returns (PriceInfo memory price_) {
         // parse and validate from parent wsteth middleware
         // this aim to verify pyth price hermes signature in any case
         if (_verifySignature || _wstethMockedPrice == 0) {
-            price_ = super.parseAndValidatePrice(targetTimestamp, action, data);
+            price_ = super.parseAndValidatePrice(actionId, targetTimestamp, action, data);
         } else {
             price_.timestamp = targetTimestamp;
         }

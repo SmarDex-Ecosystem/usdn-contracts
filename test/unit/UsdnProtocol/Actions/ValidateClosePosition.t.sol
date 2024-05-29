@@ -160,11 +160,15 @@ contract TestUsdnProtocolActionsValidateClosePosition is UsdnProtocolBaseFixture
     function test_validateClosePosition() external {
         bytes memory priceData = abi.encode(params.initialPrice);
         protocol.initiateClosePosition(posId, POSITION_AMOUNT, address(this), priceData, EMPTY_PREVIOUS_DATA);
+        bytes32 actionId = oracleMiddleware.lastActionId();
+
         _waitDelay();
 
         vm.expectEmit(true, true, false, false);
         emit ValidatedClosePosition(address(this), address(this), posId, POSITION_AMOUNT, -1);
         protocol.validateClosePosition(address(this), priceData, EMPTY_PREVIOUS_DATA);
+
+        assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
     }
 
     /* -------------------------------------------------------------------------- */

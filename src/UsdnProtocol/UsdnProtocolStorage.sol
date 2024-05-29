@@ -99,7 +99,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     uint256 internal _maxLeverage = 10 * 10 ** LEVERAGE_DECIMALS;
 
     /// @notice The deadline for a user to confirm their own action
-    uint256 internal _validationDeadline = 20 minutes;
+    uint256 internal _validationDeadline = 90 minutes;
 
     /// @notice Safety margin for the liquidation price of newly open positions, in basis points
     uint256 internal _safetyMarginBps = 200; // 2%

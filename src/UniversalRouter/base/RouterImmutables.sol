@@ -12,6 +12,7 @@ import { IUsdnProtocol } from "src/interfaces/UsdnProtocol/IUsdnProtocol.sol";
  * @param pairInitCodeHash The v2 pair hash
  * @param poolInitCodeHash The v3 pool hash
  * @param usdnProtocol The USDN protocol address
+ * @param wstEth The WstETH address
  */
 struct RouterParameters {
     address permit2;
@@ -21,4 +22,5 @@ struct RouterParameters {
     bytes32 pairInitCodeHash;
     bytes32 poolInitCodeHash;
     IUsdnProtocol usdnProtocol;
+    address wstEth;
 }

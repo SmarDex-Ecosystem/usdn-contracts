@@ -248,12 +248,12 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _tickValue(tick, currentPrice, longTradingExpo, accumulator, tickData);
     }
 
-    function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes calldata priceData)
+    function i_getOraclePrice(ProtocolAction action, uint256 timestamp, bytes32 actionId, bytes calldata priceData)
         external
         payable
         returns (PriceInfo memory)
     {
-        return _getOraclePrice(action, timestamp, priceData);
+        return _getOraclePrice(action, timestamp, actionId, priceData);
     }
 
     function i_calcMintUsdnShares(uint256 amount, uint256 vaultBalance, uint256 usdnTotalShares, uint256 price)
@@ -368,6 +368,10 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
 
     function i_getPendingAction(address user) external view returns (PendingAction memory, uint128) {
         return _getPendingAction(user);
+    }
+
+    function i_getPendingActionOrRevert(address user) external view returns (PendingAction memory, uint128) {
+        return _getPendingActionOrRevert(user);
     }
 
     function i_executePendingAction(PreviousActionsData calldata data) external returns (bool, bool, bool, uint256) {
