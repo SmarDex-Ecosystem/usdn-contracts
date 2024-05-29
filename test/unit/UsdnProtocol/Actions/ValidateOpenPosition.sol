@@ -160,6 +160,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
             uint128(LONG_AMOUNT), desiredLiqPrice, to, validator, abi.encode(CURRENT_PRICE), EMPTY_PREVIOUS_DATA
         );
         (Position memory tempPos,) = protocol.getLongPosition(posId);
+        bytes32 actionId = oracleMiddleware.lastActionId();
 
         _waitDelay();
 
@@ -192,6 +193,7 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
         TickData memory tickData = protocol.getTickData(posId.tick);
         assertEq(tickData.totalExpo, pos.totalExpo, "total expo in tick");
         assertEq(protocol.getTotalExpo(), initialTotalExpo + pos.totalExpo, "total expo");
+        assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
     }
 
     /**

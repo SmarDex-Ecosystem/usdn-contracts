@@ -14,6 +14,8 @@ interface IBaseOracleMiddleware {
      * @notice Parse and validate some price data
      * @dev The data format is specific to the middleware and is simply forwarded from the user transaction's calldata
      * A fee amounting to exactly validationCost(data, action) must be sent or the transaction will revert
+     * @param actionId A unique identifier for the current action. This identifier can be used to link a `Initiate`
+     * call with the corresponding `Validate` call
      * @param targetTimestamp The target timestamp for validating the price data. For validation actions, this is the
      * timestamp of the initiation
      * @param action Type of action for which the price is requested. The middleware may use this to alter the
@@ -22,10 +24,12 @@ interface IBaseOracleMiddleware {
      * action
      * @return result_ The price and timestamp as `PriceInfo`
      */
-    function parseAndValidatePrice(uint128 targetTimestamp, ProtocolAction action, bytes calldata data)
-        external
-        payable
-        returns (PriceInfo memory result_);
+    function parseAndValidatePrice(
+        bytes32 actionId,
+        uint128 targetTimestamp,
+        ProtocolAction action,
+        bytes calldata data
+    ) external payable returns (PriceInfo memory result_);
 
     /**
      * @notice Get the required delay (in seconds) between the moment an action is initiated and the timestamp of the

@@ -209,6 +209,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         bytes memory currentPrice = abi.encode(initialPrice);
         protocol.initiateWithdrawal(withdrawShares, to, address(this), currentPrice, EMPTY_PREVIOUS_DATA);
 
+        bytes32 actionId = oracleMiddleware.lastActionId();
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         WithdrawalPendingAction memory withdrawal = protocol.i_toWithdrawalPendingAction(pending);
 
@@ -225,8 +226,9 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             vaultBalance = uint256(protocol.i_vaultAssetAvailable(assetPrice));
         }
 
-        PriceInfo memory withdrawalPrice =
-            protocol.i_getOraclePrice(ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, abi.encode(assetPrice));
+        PriceInfo memory withdrawalPrice = protocol.i_getOraclePrice(
+            ProtocolAction.ValidateWithdrawal, withdrawal.timestamp, "", abi.encode(assetPrice)
+        );
 
         // Apply fees on price
         uint256 withdrawalPriceWithFees =
@@ -269,6 +271,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             assertEq(wstETH.balanceOf(to), withdrawnAmount, "final wstETH balance");
             assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance, "final wstETH balance");
         }
+        assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
     }
 
     /**

@@ -87,7 +87,7 @@ contract UsdnProtocolBaseIntegrationFixture is BaseFixture, IUsdnProtocolErrors,
                 address(pyth), PYTH_STETH_USD, address(chainlinkOnChain), address(wstETH), 1 hours
             );
             PriceInfo memory currentPrice =
-                oracleMiddleware.parseAndValidatePrice(uint128(block.timestamp), ProtocolAction.Initialize, "");
+                oracleMiddleware.parseAndValidatePrice("", uint128(block.timestamp), ProtocolAction.Initialize, "");
             testParams.initialLiqPrice = uint128(currentPrice.neutralPrice) / 2;
         } else {
             wstETH = new WstETH();
