@@ -40,7 +40,7 @@ contract OracleMiddleware is IOracleMiddleware, PythOracle, ChainlinkOracle, Own
     /// @notice confidence ratio in basis points: default 40%
     uint16 internal _confRatioBps = 4000; // to divide by BPS_DIVISOR
 
-    /// @notice The penalty if using a non-Pyth price with low latency oracle, in basis points: default 0.25%
+    /// @notice The penalty for using a non-Pyth price with low latency oracle, in basis points: default 0.25%
     uint16 internal _penaltyBps = 25; // to divide by BPS_DIVISOR
 
     /**
