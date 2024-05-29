@@ -2,8 +2,15 @@
 pragma solidity 0.8.20;
 
 import { UsdnProtocolBaseFixture } from "test/unit/UsdnProtocol/utils/Fixtures.sol";
+import { USER_1 } from "test/utils/Constants.sol";
 
-import { ProtocolAction, PendingAction, Position, PositionId } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
+import {
+    ProtocolAction,
+    PendingAction,
+    Position,
+    PositionId,
+    LongPendingAction
+} from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { DoubleEndedQueue } from "src/libraries/DoubleEndedQueue.sol";
 
 /**
@@ -545,14 +552,15 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
     }
 
     /**
-     * @custom:scenario The `removeStalePendingAction` function return 0 when there is no pending action or the action
-     * is different than ValidateOpenPosition
-     * @custom:given A protocol without any pending action or with a pending action different than ValidateOpenPosition
+     * @custom:scenario The `removeStalePendingAction` function return 0 when there is no pending action, the action
+     * is different than ValidateOpenPosition or version calculated equal to tickVersion
+     * @custom:given A protocol without any pending action, a pending action different than ValidateOpenPosition or a
+     * version calculated equal to tickVersion
      * @custom:when removeStalePendingAction is called
      * @custom:then The protocol should return 0
      */
-    function test_removeStalePendingActionWithoutPendingAction() public {
-        assertEq(protocol.i_removeStalePendingAction(address(this)), 0, "should return 0");
+    function test_removeStalePendingActionReturnZero() public {
+        assertEq(protocol.i_removeStalePendingAction(address(this)), 0, "should return 0, no pending action");
 
         PendingAction memory pendingAction = PendingAction({
             action: ProtocolAction.InitiateWithdrawal,
@@ -573,6 +581,25 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
             protocol.i_removeStalePendingAction(address(this)),
             0,
             "should return 0, action is different than ValidateOpenPosition"
+        );
+
+        LongPendingAction memory longPendingAction = LongPendingAction({
+            action: ProtocolAction.ValidateOpenPosition,
+            timestamp: uint40(block.timestamp - 1 days),
+            to: address(this),
+            validator: USER_1,
+            securityDepositValue: 0.01 ether,
+            tick: 1,
+            closeAmount: 0,
+            closePosTotalExpo: 0,
+            tickVersion: 0,
+            index: 0,
+            closeLiqMultiplier: 0,
+            closeBoundedPositionValue: 0
+        });
+        protocol.i_addPendingAction(USER_1, protocol.i_convertLongPendingAction(longPendingAction));
+        assertEq(
+            protocol.i_removeStalePendingAction(USER_1), 0, "should return 0, version calculated equal to tickVersion"
         );
     }
 }
