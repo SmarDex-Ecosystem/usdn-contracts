@@ -263,6 +263,7 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
         emit ValidatedWithdrawal(to, address(this), withdrawnAmount, USDN_AMOUNT, withdrawal.timestamp);
         bool success = protocol.validateWithdrawal(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
         assertTrue(success, "success");
+        assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");
         if (to == address(this)) {
@@ -271,7 +272,6 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
             assertEq(wstETH.balanceOf(to), withdrawnAmount, "final wstETH balance");
             assertEq(wstETH.balanceOf(address(this)), initialWstETHBalance, "final wstETH balance");
         }
-        assertEq(oracleMiddleware.lastActionId(), actionId, "middleware action ID");
     }
 
     /**
