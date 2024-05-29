@@ -362,8 +362,8 @@ interface IUsdnProtocolStorage is IUsdnProtocolEvents, IUsdnProtocolErrors {
     function getBalanceVault() external view returns (uint256);
 
     /**
-     * @notice Get the pending balance updates due to unvalidated vault actions
-     * @return The pending balance change due to unvalidated vault actions (with asset decimals)
+     * @notice Get the pending balance updates due to pending vault actions
+     * @return The unreflected balance change due to pending vault actions (with asset decimals)
      */
     function getPendingBalanceVault() external view returns (int256);
 

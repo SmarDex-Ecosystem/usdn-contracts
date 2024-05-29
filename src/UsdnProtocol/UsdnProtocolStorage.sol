@@ -227,7 +227,7 @@ abstract contract UsdnProtocolStorage is IUsdnProtocolStorage, InitializableReen
     /// @notice The balance of deposits (with asset decimals)
     uint256 internal _balanceVault;
 
-    /// @notice The pending balance adjustment due to unvalidated vault actions (with asset decimals)
+    /// @notice The unreflected balance change due to pending vault actions (with asset decimals)
     int256 internal _pendingBalanceVault;
 
     /// @notice The timestamp when the last USDN rebase check was performed
