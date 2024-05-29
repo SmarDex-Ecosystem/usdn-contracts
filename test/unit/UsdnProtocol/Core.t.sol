@@ -543,4 +543,14 @@ contract TestUsdnProtocolCore is UsdnProtocolBaseFixture {
         assertEq(rawIndex, 0, "rawIndex should be 0");
         assertTrue(protocol.queueEmpty(), "queue should be empty");
     }
+
+    /**
+     * @custom:scenario The `removeStalePendingAction` function return 0 when there is no pending action
+     * @custom:given A protocol without any pending action
+     * @custom:when removeStalePendingAction is called
+     * @custom:then The protocol should return 0
+     */
+    function test_removeStalePendingActionWithoutPendingAction() public {
+        assertEq(protocol.i_removeStalePendingAction(address(this)), 0, "should return 0");
+    }
 }
