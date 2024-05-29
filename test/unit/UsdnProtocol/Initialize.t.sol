@@ -148,6 +148,77 @@ contract TestUsdnProtocolInitialize is UsdnProtocolBaseFixture {
     }
 
     /**
+     * @custom:scenario Balanced protocol initialization
+     * @custom:given Imbalance checks are 2% for deposit and 2% for open long
+     * @custom:when The deployer initializes the protocol with balanced amounts
+     * @custom:then The transaction completes successfully
+     */
+    function test_checkInitImbalance() public {
+        protocol.setExpoImbalanceLimits(200, 200, 0, 0, 0); // 2%
+
+        uint128 depositAmount = 100 ether;
+        uint128 longAmount = 100 ether;
+        protocol.i_checkInitImbalance(longAmount * 2, longAmount, depositAmount);
+
+        depositAmount = 102 ether;
+        protocol.i_checkInitImbalance(longAmount * 2, longAmount, depositAmount);
+
+        depositAmount = 100 ether;
+        longAmount = 102 ether;
+        protocol.i_checkInitImbalance(longAmount * 2, longAmount, depositAmount);
+    }
+
+    /**
+     * @custom:scenario Imbalanced protocol initialization with disabled imbalance checks
+     * @custom:given Imbalance checks are disabled
+     * @custom:when The deployer initializes the protocol with imbalanced amounts
+     * @custom:then The transaction completes successfully
+     */
+    function test_checkInitImbalanceDisabled() public {
+        protocol.setExpoImbalanceLimits(0, 0, 0, 0, 0); // disabled
+
+        uint128 depositAmount = 1000 ether;
+        uint128 longAmount = 100 ether;
+        protocol.i_checkInitImbalance(longAmount * 2, longAmount, depositAmount);
+
+        depositAmount = 100 ether;
+        longAmount = 1000 ether;
+        protocol.i_checkInitImbalance(longAmount * 2, longAmount, depositAmount);
+    }
+
+    /**
+     * @custom:scenario Imbalanced protocol initialization with too big deposit
+     * @custom:given Imbalance checks are 2% for deposits
+     * @custom:when The deployer initializes the protocol with a deposit amount that is too big
+     * @custom:then The transaction reverts with the error `UsdnProtocolImbalanceLimitReached`
+     */
+    function test_RevertWhen_checkInitImbalanceDepositTooBig() public {
+        protocol.setExpoImbalanceLimits(0, 200, 0, 0, 0); // 2% for deposit
+
+        uint128 depositAmount = 102.01 ether;
+        uint128 longAmount = 100 ether;
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolImbalanceLimitReached.selector, 201));
+        protocol.i_checkInitImbalance(longAmount * 2, longAmount, depositAmount);
+    }
+
+    /**
+     * @custom:scenario Imbalanced protocol initialization with too big long position
+     * @custom:given Imbalance checks are 2% for open long
+     * @custom:when The deployer initializes the protocol with a long amount that is too big
+     * @custom:then The transaction reverts with the error `UsdnProtocolImbalanceLimitReached`
+     */
+    function test_RevertWhen_checkInitImbalanceLongTooBig() public {
+        protocol.setExpoImbalanceLimits(200, 0, 0, 0, 0); // 2% for open
+
+        uint128 depositAmount = 100 ether;
+        uint128 longAmount = 102.01 ether;
+
+        vm.expectRevert(abi.encodeWithSelector(UsdnProtocolImbalanceLimitReached.selector, 201));
+        protocol.i_checkInitImbalance(longAmount * 2, longAmount, depositAmount);
+    }
+
+    /**
      * @custom:scenario Deployer initializes the protocol
      * @custom:when The deployer calls the `initialize` function
      * @custom:then The deployer's wstETH balance is decreased by the deposit and position amounts

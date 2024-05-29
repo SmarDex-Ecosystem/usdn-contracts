@@ -461,4 +461,8 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
     function i_clearPendingAction(address user, uint128 rawIndex) external {
         _clearPendingAction(user, rawIndex);
     }
+
+    function i_checkInitImbalance(uint128 positionTotalExpo, uint128 longAmount, uint128 depositAmount) external view {
+        _checkInitImbalance(positionTotalExpo, longAmount, depositAmount);
+    }
 }
