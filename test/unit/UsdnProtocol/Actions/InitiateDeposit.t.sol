@@ -90,7 +90,8 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
         emit Transfer(address(this), deadAddress, expectedSdexBurnAmount); // SDEX transfer
         vm.expectEmit();
         emit InitiatedDeposit(to, validator, depositAmount, block.timestamp);
-        protocol.initiateDeposit(depositAmount, to, validator, currentPrice, EMPTY_PREVIOUS_DATA);
+        bool success = protocol.initiateDeposit(depositAmount, to, validator, currentPrice, EMPTY_PREVIOUS_DATA);
+        assertTrue(success, "success");
 
         assertEq(wstETH.balanceOf(address(this)), INITIAL_WSTETH_BALANCE - depositAmount, "wstETH user balance");
         assertEq(
@@ -312,9 +313,10 @@ contract TestUsdnProtocolActionsInitiateDeposit is UsdnProtocolBaseFixture {
 
         uint256 wstethBalanceBefore = wstETH.balanceOf(address(this));
 
-        protocol.initiateDeposit(
+        bool success = protocol.initiateDeposit(
             POSITION_AMOUNT, address(this), address(this), abi.encode(params.initialPrice / 10), EMPTY_PREVIOUS_DATA
         );
+        assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(uint256(pending.action), uint256(ProtocolAction.None), "user 0 deposit should not be initiated");

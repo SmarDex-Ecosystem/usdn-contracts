@@ -104,7 +104,9 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         _waitMockMiddlewarePriceDelay();
 
-        protocol.validateOpenPosition(address(this), abi.encode(params.initialPrice / 4), EMPTY_PREVIOUS_DATA);
+        bool success =
+            protocol.validateOpenPosition(address(this), abi.encode(params.initialPrice / 4), EMPTY_PREVIOUS_DATA);
+        assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(
@@ -176,7 +178,8 @@ contract TestUsdnProtocolActionsValidateOpenPosition is UsdnProtocolBaseFixture 
 
         vm.expectEmit();
         emit ValidatedOpenPosition(to, validator, expectedPosTotalExpo, newPrice, posId);
-        protocol.validateOpenPosition(validator, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        bool success = protocol.validateOpenPosition(validator, abi.encode(newPrice), EMPTY_PREVIOUS_DATA);
+        assertTrue(success, "success");
 
         (Position memory pos,) = protocol.getLongPosition(posId);
         assertEq(pos.user, tempPos.user, "user");

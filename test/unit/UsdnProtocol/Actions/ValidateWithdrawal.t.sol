@@ -104,7 +104,9 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         _waitDelay();
 
-        protocol.validateWithdrawal(address(this), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+        bool success =
+            protocol.validateWithdrawal(address(this), abi.encode(params.initialPrice / 3), EMPTY_PREVIOUS_DATA);
+        assertFalse(success, "success");
 
         PendingAction memory pending = protocol.getUserPendingAction(address(this));
         assertEq(
@@ -257,7 +259,8 @@ contract TestUsdnProtocolActionsValidateWithdrawal is UsdnProtocolBaseFixture {
 
         vm.expectEmit();
         emit ValidatedWithdrawal(to, address(this), withdrawnAmount, USDN_AMOUNT, withdrawal.timestamp);
-        protocol.validateWithdrawal(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        bool success = protocol.validateWithdrawal(address(this), currentPrice, EMPTY_PREVIOUS_DATA);
+        assertTrue(success, "success");
 
         assertEq(usdn.balanceOf(address(this)), initialUsdnBalance - USDN_AMOUNT, "final usdn balance");
         if (to == address(this)) {
