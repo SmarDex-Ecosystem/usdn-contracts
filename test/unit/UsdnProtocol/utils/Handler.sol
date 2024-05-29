@@ -330,6 +330,14 @@ contract UsdnProtocolHandler is UsdnProtocol, Test {
         return _calcBitmapIndexFromTick(tick, tickSpacing);
     }
 
+    function i_calcLiqPriceFromTradingExpo(uint128 currentPrice, uint128 amount, uint256 tradingExpo)
+        external
+        pure
+        returns (uint128 liqPrice_)
+    {
+        return _calcLiqPriceFromTradingExpo(currentPrice, amount, tradingExpo);
+    }
+
     function i_findHighestPopulatedTick(int24 searchStart) external view returns (int24 tick_) {
         return _findHighestPopulatedTick(searchStart);
     }

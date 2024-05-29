@@ -371,6 +371,26 @@ abstract contract UsdnProtocolLong is IUsdnProtocolLong, UsdnProtocolVault {
         totalExpo_ = FixedPointMathLib.fullMulDiv(amount, startPrice, startPrice - liquidationPrice).toUint128();
     }
 
+    /**
+     * @notice Calculate the liquidation price of a position with the trading expo
+     * @dev If the sum of `amount` and `tradingExpo` equals 0, reverts
+     * @param currentPrice The price of the asset
+     * @param amount the amount of asset
+     * @param tradingExpo the trading expo
+     */
+    function _calcLiqPriceFromTradingExpo(uint128 currentPrice, uint128 amount, uint256 tradingExpo)
+        internal
+        pure
+        returns (uint128 liqPrice_)
+    {
+        uint256 totalExpo = amount + tradingExpo;
+        if (totalExpo == 0) {
+            revert UsdnProtocolZeroTotalExpo();
+        }
+
+        liqPrice_ = FixedPointMathLib.fullMulDiv(currentPrice, tradingExpo, totalExpo).toUint128();
+    }
+
     function _checkSafetyMargin(uint128 currentPrice, uint128 liquidationPrice) internal view {
         uint128 maxLiquidationPrice = (currentPrice * (BPS_DIVISOR - _safetyMarginBps) / BPS_DIVISOR).toUint128();
         if (liquidationPrice >= maxLiquidationPrice) {
