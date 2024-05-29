@@ -351,26 +351,26 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         skip(protocol.getValidationDeadline() + 1);
     }
 
-    /// @dev Calculate proper initial values from randoms to initiate a balanced protocol
-    function _randInitBalanced(uint128 initialDeposit, uint128 initialLong) internal {
-        // deploy protocol at equilibrium temporarily to get access to constants and calculations
+    /// @dev Calculate proper initial values from randoms to initialize a balanced protocol
+    function _randInitBalanced(uint128 initialAmount) internal {
+        // deploy protocol temporarily to get access to constants and calculations
         // it will be re-deployed at the end of the function with new initial values
         params = DEFAULT_PARAMS;
         params.flags.enableLimits = true;
-        params.initialDeposit = 5 ether;
-        params.initialLong = 5 ether;
         _setUp(params);
 
         // cannot be less than 1 ether
-        initialDeposit = uint128(bound(initialDeposit, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
+        initialAmount = uint128(bound(initialAmount, protocol.MIN_INIT_DEPOSIT(), 5000 ether));
 
-        int256 openLimit = protocol.getOpenExpoImbalanceLimitBps();
-        uint128 margin = uint128(initialDeposit * uint256(openLimit) / protocol.BPS_DIVISOR());
+        int256 depositLimit = protocol.getDepositExpoImbalanceLimitBps();
+        uint128 margin = uint128(initialAmount * uint256(depositLimit) / protocol.BPS_DIVISOR());
 
-        // min long expo to initiate a balanced protocol
-        uint256 minLongExpo = initialDeposit - margin;
-        // max long expo to initiate a balanced protocol
-        uint256 maxLongExpo = initialDeposit + margin;
+        uint128 initialDeposit = uint128(bound(initialAmount, initialAmount, initialAmount + margin));
+
+        int256 longLimit = protocol.getOpenExpoImbalanceLimitBps();
+        margin = uint128(initialAmount * uint256(longLimit) / protocol.BPS_DIVISOR());
+
+        uint256 initialLongExpo = bound(initialAmount, initialAmount, initialAmount + margin);
 
         uint128 liquidationPriceWithoutPenalty = protocol.getEffectivePriceForTick(
             protocol.getEffectiveTickForPrice(
@@ -381,21 +381,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
             HugeUint.wrap(0)
         );
 
-        // min long amount
-        uint128 minLongAmount = uint128(
-            minLongExpo * (params.initialPrice - liquidationPriceWithoutPenalty) / liquidationPriceWithoutPenalty
+        // long amount
+        uint128 initialLong = uint128(
+            initialLongExpo * (params.initialPrice - liquidationPriceWithoutPenalty) / liquidationPriceWithoutPenalty
         );
-        // bound to the minimum value
-        if (minLongAmount < protocol.MIN_INIT_DEPOSIT()) {
-            minLongAmount = uint128(protocol.MIN_INIT_DEPOSIT());
-        }
-        // max long amount
-        uint128 maxLongAmount = uint128(
-            maxLongExpo * (params.initialPrice - liquidationPriceWithoutPenalty) / liquidationPriceWithoutPenalty
-        );
-
-        // assign initial long amount in range min max
-        initialLong = uint128(bound(initialLong, minLongAmount, maxLongAmount));
 
         // assign initial values
         params.initialDeposit = initialDeposit;
