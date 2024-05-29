@@ -65,7 +65,8 @@ contract UsdnProtocol is IUsdnProtocol, UsdnProtocolActions, Ownable {
             revert UsdnProtocolInvalidUsdn(address(usdn));
         }
 
-        PriceInfo memory currentPrice = _getOraclePrice(ProtocolAction.Initialize, block.timestamp, currentPriceData);
+        PriceInfo memory currentPrice =
+            _getOraclePrice(ProtocolAction.Initialize, block.timestamp, "", currentPriceData);
 
         // Create vault deposit
         _createInitialDeposit(depositAmount, currentPrice.price.toUint128());

@@ -25,7 +25,7 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
         // ValidateDeposit adjusts down with conf
         PriceInfo memory price = oracleMiddleware.parseAndValidatePrice{
             value: oracleMiddleware.validationCost("beef", ProtocolAction.ValidateDeposit)
-        }(uint128(block.timestamp), ProtocolAction.ValidateDeposit, "beef");
+        }("", uint128(block.timestamp), ProtocolAction.ValidateDeposit, "beef");
         assertEq(price.price, 1, "price should be 1");
     }
 
@@ -40,7 +40,7 @@ contract TestOracleMiddlewarePythOracle is OracleMiddlewareBaseFixture {
         uint256 validationCost = oracleMiddleware.validationCost("beef", ProtocolAction.Liquidation);
         vm.expectRevert(abi.encodeWithSelector(OracleMiddlewarePythPositiveExponent.selector, 1));
         oracleMiddleware.parseAndValidatePrice{ value: validationCost }(
-            uint128(block.timestamp), ProtocolAction.Liquidation, "beef"
+            "", uint128(block.timestamp), ProtocolAction.Liquidation, "beef"
         );
     }
 }
