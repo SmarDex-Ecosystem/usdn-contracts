@@ -53,4 +53,10 @@ interface IWstETH is IERC20Metadata, IERC20Permit {
      * @return Amount of wstETH for a 1 stETH
      */
     function tokensPerStEth() external view returns (uint256);
+
+    /**
+     * @notice Get the address of stETH
+     * @return Address of stETH
+     */
+    function stETH() external view returns (address);
 }

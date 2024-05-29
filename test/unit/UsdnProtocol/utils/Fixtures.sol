@@ -22,6 +22,8 @@ import {
     PositionId
 } from "src/interfaces/UsdnProtocol/IUsdnProtocolTypes.sol";
 import { Usdn } from "src/Usdn/Usdn.sol";
+import { TickMath } from "src/libraries/TickMath.sol";
+import { HugeUint } from "src/libraries/HugeUint.sol";
 
 /**
  * @title UsdnProtocolBaseFixture
@@ -372,8 +374,14 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         // max long expo to initiate a balanced protocol
         uint256 maxLongExpo = initialDeposit + margin;
 
-        uint128 liquidationPriceWithoutPenalty =
-            protocol.getEffectivePriceForTick(protocol.getEffectiveTickForPrice(params.initialPrice / 2));
+        uint128 liquidationPriceWithoutPenalty = protocol.getEffectivePriceForTick(
+            protocol.getEffectiveTickForPrice(
+                params.initialPrice / 2, 0, 0, HugeUint.wrap(0), protocol.getTickSpacing()
+            ),
+            0,
+            0,
+            HugeUint.wrap(0)
+        );
 
         // min long amount
         uint128 minLongAmount = uint128(
