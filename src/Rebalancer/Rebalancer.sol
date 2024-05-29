@@ -40,6 +40,9 @@ contract Rebalancer is Ownable, IRebalancer {
     /// @inheritdoc IRebalancer
     uint256 public constant MULTIPLIER_DECIMALS = 21;
 
+    /// @inheritdoc IRebalancer
+    int24 public constant NO_POSITION_TICK = type(int24).min;
+
     /// @notice The address of the asset used by the USDN protocol
     IERC20Metadata internal immutable _asset;
 
@@ -81,6 +84,9 @@ contract Rebalancer is Ownable, IRebalancer {
 
         // Set allowance to allow the protocol to pull assets from this contract
         asset.forceApprove(address(usdnProtocol), type(uint256).max);
+
+        // indicate that there are no position for version 0
+        _positionData[0].id = PositionId({ tick: NO_POSITION_TICK, tickVersion: 0, index: 0 });
     }
 
     /// @inheritdoc IRebalancer
@@ -110,6 +116,16 @@ contract Rebalancer is Ownable, IRebalancer {
         if (protocolMaxLeverage < maxLeverage_) {
             return protocolMaxLeverage;
         }
+    }
+
+    // TODO name sucks, find a better one
+    /// @inheritdoc IRebalancer
+    function getRebalancerData()
+        external
+        view
+        returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_)
+    {
+        return (_pendingAssetsAmount, _maxLeverage, _positionData[_positionVersion].id);
     }
 
     /// @inheritdoc IRebalancer
@@ -233,7 +249,7 @@ contract Rebalancer is Ownable, IRebalancer {
                 );
             } else {
                 // update the last liquidated version tracker
-                _lastLiquidatedVersion = _positionVersion;
+                _lastLiquidatedVersion = positionVersion;
             }
         }
 

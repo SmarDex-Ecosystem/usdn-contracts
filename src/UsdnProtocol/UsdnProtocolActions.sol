@@ -10,6 +10,7 @@ import { LibBitmap } from "solady/src/utils/LibBitmap.sol";
 import { UsdnProtocolLong } from "src/UsdnProtocol/UsdnProtocolLong.sol";
 import { PriceInfo } from "src/interfaces/OracleMiddleware/IOracleMiddlewareTypes.sol";
 import { IRebalancer } from "src/interfaces/Rebalancer/IRebalancer.sol";
+import { IRebalancerTypes } from "src/interfaces/Rebalancer/IRebalancerTypes.sol";
 import { IUsdn } from "src/interfaces/Usdn/IUsdn.sol";
 import { IUsdnProtocolActions } from "src/interfaces/UsdnProtocol/IUsdnProtocolActions.sol";
 import {
@@ -1820,6 +1821,10 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
             LiquidationsEffects memory liquidationEffects =
                 _liquidatePositions(_lastPrice, iterations, tempLongBalance, tempVaultBalance);
 
+            _triggerRebalancer(
+                uint128(neutralPrice), liquidationEffects.newLongBalance, liquidationEffects.newVaultBalance
+            );
+
             isLiquidationPending_ = liquidationEffects.isLiquidationPending;
             _balanceLong = liquidationEffects.newLongBalance;
             _balanceVault = liquidationEffects.newVaultBalance;
@@ -1840,6 +1845,167 @@ abstract contract UsdnProtocolActions is IUsdnProtocolActions, UsdnProtocolLong 
 
             liquidatedPositions_ = liquidationEffects.liquidatedPositions;
         }
+    }
+
+    /**
+     * @notice Trigger the rebalancer if the imbalance on the long side is too high
+     * It will close the rebalancer position (if there is one) and open a new one with
+     * the pending assets, the value of the previous position and the liquidation bonus (if available)
+     * and a leverage to fill enough trading expo to reach the desired imbalance, up to the max leverages.
+     * @dev Will do nothing if no rebalancer is set in the contract
+     * @param longBalance The balance of the long side
+     * @param vaultBalance The balance of the vault side
+     * @return longBalance_ The temporary balance of the long side
+     */
+    function _triggerRebalancer(uint128 neutralPrice, uint256 longBalance, uint256 vaultBalance)
+        internal
+        returns (uint256 longBalance_)
+    {
+        longBalance_ = longBalance;
+        uint256 totalExpo = _totalExpo;
+        IRebalancer rebalancer = _rebalancer;
+
+        // if the rebalancer is not set, do nothing
+        if (address(rebalancer) == address(0)) {
+            return longBalance_;
+        }
+
+        // calculate the current imbalance
+        int256 currentImbalance = (
+            (totalExpo.toInt256().safeSub(longBalance_.toInt256())).safeSub(vaultBalance.toInt256())
+        ).safeMul(int256(BPS_DIVISOR)).safeDiv(vaultBalance.toInt256());
+        // if the imbalance is lower than the threshold, do nothing
+        if (currentImbalance < _closeExpoImbalanceLimitBps) {
+            return longBalance_;
+        }
+
+        (uint128 pendingAssets, uint256 maxLeverage, PositionId memory rebalancerPosId) = rebalancer.getRebalancerData();
+        uint128 adjustedPrice = neutralPrice + (neutralPrice * _positionFeeBps / BPS_DIVISOR).toUint128();
+
+        // Close the rebalancer position and get its value to open the next one
+        uint128 positionAmount;
+        if (rebalancerPosId.tick != rebalancer.NO_POSITION_TICK()) {
+            uint128 positionValue =
+                _flashClosePosition(rebalancerPosId, neutralPrice, adjustedPrice, totalExpo - longBalance_).toUint128();
+            // TODO Make sure positionValue > longBalance_ ?
+            // TODO technically not needed here, could just add pendingAssets + bonus to the long balance later
+            longBalance_ -= positionValue;
+
+            // cast is safe as positionValue cannot be lower than 0
+            positionAmount = positionValue + pendingAssets; // TODO add bonus
+        }
+
+        // calculate the liquidation price of the rebalancer position
+        uint128 desiredLiqPrice;
+        {
+            // calculate the trading expo missing to reach the imbalance target
+            uint256 tradingExpoToFill = vaultBalance
+                - (vaultBalance * (BPS_DIVISOR.toInt256() - _longImbalanceTargetBps).toUint256() / BPS_DIVISOR);
+
+            // TODO i'm sure there's a better way to calculate this than to calculate the leverage
+            // TODO check if position's leverage is not greater than maxLeverage of rebalancer and protocol
+            // If that's the case, open position with max leverage
+            desiredLiqPrice = _calcLiqPriceFromTradingExpo(neutralPrice, positionAmount, tradingExpoToFill);
+        }
+
+        // open a new position for the rebalancer
+        PositionId memory posId =
+            _flashOpenPosition(address(rebalancer), neutralPrice, adjustedPrice, desiredLiqPrice, positionAmount);
+
+        // update the long balance
+        longBalance_ += positionAmount;
+
+        // transfer the pending assets from the rebalancer to this contract
+        _asset.safeTransferFrom(address(rebalancer), address(this), pendingAssets);
+
+        // call the rebalancer to update the internal bookkeeping
+        rebalancer.updatePosition(posId, positionAmount - pendingAssets);
+    }
+
+    /**
+     * @notice Immediately close a position with the given price
+     * @dev Should only be used to close the rebalancer position
+     * @param posId The ID of the position to close
+     * @param neutralPrice The current neutral price
+     * @param adjustedPrice The price with the position fees
+     * @param longTradingExpo The long trading expo of the protocol
+     * @return positionValue_ The value of the closed position
+     */
+    function _flashClosePosition(
+        PositionId memory posId,
+        uint128 neutralPrice,
+        uint128 adjustedPrice,
+        uint256 longTradingExpo
+    ) internal returns (uint256 positionValue_) {
+        (bytes32 tickHash, uint256 version) = _tickHash(posId.tick);
+        // if the tick version is outdated, the position was liquidated and its value is 0
+        if (posId.tickVersion != version) {
+            return positionValue_;
+        }
+
+        Position memory pos = _longPositions[tickHash][posId.index];
+        uint8 liquidationPenalty = _tickData[tickHash].liquidationPenalty;
+
+        _removeAmountFromPosition(posId.tick, posId.index, pos, pos.amount, pos.totalExpo);
+        uint256 closeLiqMultiplier =
+            _calcFixedPrecisionMultiplier(neutralPrice, longTradingExpo, _liqMultiplierAccumulator);
+
+        int256 positionValue = _positionValue(
+            adjustedPrice,
+            _getEffectivePriceForTick(_calcTickWithoutPenalty(posId.tick, liquidationPenalty), closeLiqMultiplier),
+            pos.totalExpo
+        );
+
+        // if positionValue is lower than 0, return 0
+        if (positionValue < 0) {
+            return positionValue_;
+        }
+
+        // cast is safe as positionValue cannot be lower than 0
+        positionValue_ = uint256(positionValue);
+
+        // emit both initiate and validate events
+        // its so that the position is considered the same as other positions by event indexers
+        emit InitiatedClosePosition(pos.user, pos.user, posId, pos.amount, pos.amount, 0);
+        emit ValidatedClosePosition(pos.user, pos.user, posId, positionValue_, positionValue - _toInt256(pos.amount));
+    }
+
+    /**
+     * @notice Immediately open a position with the given price
+     * @dev Should only be used to open the rebalancer position
+     * @param user The address of the user
+     * @param neutralPrice The current neutral price
+     * @param adjustedPrice The price with the position fee
+     * @param desiredLiqPrice The desired liquidation price
+     * @param amount The amount of collateral in the position
+     * @return posId_ The ID of the position that got created
+     */
+    function _flashOpenPosition(
+        address user,
+        uint128 neutralPrice,
+        uint128 adjustedPrice,
+        uint128 desiredLiqPrice,
+        uint128 amount
+    ) internal returns (PositionId memory posId_) {
+        // we calculate the closest valid tick down for the desired liq price with liquidation penalty
+        posId_.tick = getEffectiveTickForPrice(desiredLiqPrice);
+        uint8 liquidationPenalty = getTickLiquidationPenalty(posId_.tick);
+
+        // remove liquidation penalty for the total expo calculation
+        uint128 liqPriceWithoutPenalty =
+            getEffectivePriceForTick(_calcTickWithoutPenalty(posId_.tick, liquidationPenalty));
+
+        uint128 totalExpo = _calculatePositionTotalExpo(amount, adjustedPrice, liqPriceWithoutPenalty);
+        Position memory long =
+            Position({ user: user, amount: amount, totalExpo: totalExpo, timestamp: uint40(block.timestamp) });
+
+        // save the position on the provided tick
+        (posId_.tickVersion, posId_.index) = _saveNewPosition(posId_.tick, long, liquidationPenalty);
+
+        // emit both initiate and validate events
+        // its so that the position is considered the same as other positions by event indexers
+        emit InitiatedOpenPosition(user, user, uint40(block.timestamp), totalExpo, long.amount, adjustedPrice, posId_);
+        emit ValidatedOpenPosition(user, user, totalExpo, neutralPrice, posId_);
     }
 
     /**

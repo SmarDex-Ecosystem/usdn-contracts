@@ -13,6 +13,9 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
     /// @notice Amount of decimals a multiplier has
     function MULTIPLIER_DECIMALS() external view returns (uint256);
 
+    /// @notice The tick which indicates that there is no position for the current version
+    function NO_POSITION_TICK() external view returns (int24);
+
     /**
      * @notice Returns the address of the asset used by the USDN protocol
      * @return The address of the asset used by the USDN protocol
@@ -43,6 +46,17 @@ interface IRebalancer is IRebalancerErrors, IRebalancerEvents, IRebalancerTypes 
      * @return maxLeverage_ The max leverage a position can have
      */
     function getPositionMaxLeverage() external view returns (uint256 maxLeverage_);
+
+    /**
+     * @notice Returns the necessary data for the USDN protocol to update the position
+     * @return pendingAssets_ The amount of assets pending
+     * @return maxLeverage_ The max leverage of the rebalancer
+     * @return currentPosId_ The ID of the current position (tick == NO_POSITION_TICK if no position)
+     */
+    function getRebalancerData()
+        external
+        view
+        returns (uint128 pendingAssets_, uint256 maxLeverage_, PositionId memory currentPosId_);
 
     /**
      * @notice Returns the minimum amount of assets to be deposited by a user
