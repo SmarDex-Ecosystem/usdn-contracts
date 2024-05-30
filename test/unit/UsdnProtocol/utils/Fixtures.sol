@@ -243,10 +243,10 @@ contract UsdnProtocolBaseFixture is BaseFixture, IUsdnProtocolErrors, IEventsErr
         _waitDelay();
         if (untilAction == ProtocolAction.ValidateDeposit) return;
 
-        uint256 balanceOf = usdn.balanceOf(user);
-        usdn.approve(address(protocol), balanceOf);
+        uint256 sharesOf = usdn.sharesOf(user);
+        usdn.approve(address(protocol), usdn.convertToTokensRoundUp(sharesOf));
         protocol.initiateWithdrawal{ value: securityDepositValue }(
-            uint128(balanceOf), user, user, priceData, EMPTY_PREVIOUS_DATA
+            uint152(sharesOf), user, user, priceData, EMPTY_PREVIOUS_DATA
         );
         _waitDelay();
 

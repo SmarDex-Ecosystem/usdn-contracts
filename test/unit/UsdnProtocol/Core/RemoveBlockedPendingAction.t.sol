@@ -14,8 +14,8 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
         super._setUp(params);
     }
 
-    function _removeBlockedDepositScenario(uint128 amount, bool unsafe) internal {
-        setUpUserPositionInVault(USER_1, ProtocolAction.InitiateDeposit, amount, params.initialPrice);
+    function _removeBlockedVaultScenario(ProtocolAction untilAction, uint128 amount, bool unsafe) internal {
+        setUpUserPositionInVault(USER_1, untilAction, amount, params.initialPrice);
         _wait();
 
         (, uint128 rawIndex) = protocol.i_getPendingAction(USER_1);
@@ -31,7 +31,7 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function test_removeBlockedDepositUnsafe() public {
         uint256 balanceBefore = address(this).balance;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
-        _removeBlockedDepositScenario(10 ether, true);
+        _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, true);
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore + 10 ether, "asset balance after");
         assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
     }
@@ -39,8 +39,24 @@ contract TestUsdnProtocolRemoveBlockedPendingAction is UsdnProtocolBaseFixture {
     function test_removeBlockedDepositSafe() public {
         uint256 balanceBefore = address(this).balance;
         uint256 assetBalanceBefore = wstETH.balanceOf(address(this));
-        _removeBlockedDepositScenario(10 ether, false);
+        _removeBlockedVaultScenario(ProtocolAction.InitiateDeposit, 10 ether, false);
         assertEq(wstETH.balanceOf(address(this)), assetBalanceBefore, "asset balance after");
+        assertEq(address(this).balance, balanceBefore, "balance after");
+    }
+
+    function test_removeBlockedWithdrawalUnsafe() public {
+        uint256 balanceBefore = address(this).balance;
+        uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
+        _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, true);
+        assertEq(usdn.balanceOf(address(this)), usdnBalanceBefore + 20_000 ether, "usdn balance after");
+        assertEq(address(this).balance, balanceBefore + protocol.getSecurityDepositValue(), "balance after");
+    }
+
+    function test_removeBlockedWithdrawalSafe() public {
+        uint256 balanceBefore = address(this).balance;
+        uint256 usdnBalanceBefore = usdn.balanceOf(address(this));
+        _removeBlockedVaultScenario(ProtocolAction.InitiateWithdrawal, 10 ether, false);
+        assertEq(usdn.balanceOf(address(this)), usdnBalanceBefore, "usdn balance after");
         assertEq(address(this).balance, balanceBefore, "balance after");
     }
 
