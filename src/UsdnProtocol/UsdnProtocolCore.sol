@@ -811,10 +811,12 @@ abstract contract UsdnProtocolCore is IUsdnProtocolCore, UsdnProtocolStorage {
             _balanceVault += close.closeBoundedPositionValue;
         }
 
-        // in all cases, we retrieve the security deposit
-        (bool success,) = to.call{ value: pending.securityDepositValue }("");
-        if (!success && unsafe) {
-            revert UsdnProtocolEtherRefundFailed();
+        // we retrieve the security deposit
+        if (unsafe) {
+            (bool success,) = to.call{ value: pending.securityDepositValue }("");
+            if (!success) {
+                revert UsdnProtocolEtherRefundFailed();
+            }
         }
     }
 }
