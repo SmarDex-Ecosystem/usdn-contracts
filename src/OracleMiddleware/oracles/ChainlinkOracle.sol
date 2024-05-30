@@ -102,6 +102,7 @@ abstract contract ChainlinkOracle is IChainlinkOracle, IOracleMiddlewareErrors {
 
     /**
      * @notice Get the targeted roundId price of the asset from Chainlink
+     * @param roundId The chainlink roundId price
      * @return price_ The price of the asset
      */
     function _getChainlinkPrice(uint80 roundId) internal view virtual returns (ChainlinkPriceInfo memory price_) {
